@@ -7,8 +7,8 @@ use std::fmt;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub token: TokenType,
-    pub line: i32,
-    pub column: i32,
+    pub line: i64,
+    pub column: i64,
 }
 
 impl Display for TokenType {
@@ -36,7 +36,7 @@ impl Display for TokenType {
             TokenType::QUESTION => write!(f, "?"),
             TokenType::LESSTHAN => write!(f, "<"),       // <
             TokenType::GREATERTHAN => write!(f, ">"),    // >
-            TokenType::EQUALEQUAL => write!(f, "=="),       // ==
+            TokenType::EQUALEQUAL => write!(f, "=="),    // ==
             TokenType::BANGEQUAL => write!(f, "!="),     // !=
             TokenType::LESSTHANEQUAL => write!(f, "<="), // <=
             TokenType::GREATERTHANEQUAL => write!(f, "=>"), // =>
@@ -81,14 +81,14 @@ pub enum TokenType {
     INT(i64),
     FLOAT(f64),
     STRING(String),
-   
-   // Assignment
+
+    // Assignment
     ASSIGN,      // =
     PLUSASSIGN,  // +=
     MINUSASSIGN, // -=
     STARASSIGN,  // *=
     SLASHASSIGN, // /=
-     // Operators
+    // Operators
     PLUS,        // +
     MINUS,       // -
     BANG,        // !
@@ -98,9 +98,9 @@ pub enum TokenType {
     EXPONENTIAL, // ^
 
     // Puntuation
-    DOT,         // .
-    QUESTION,    // ?
-    COLON,       // :
+    DOT,       // .
+    QUESTION,  // ?
+    COLON,     // :
     COMMA,     // ,
     COMMENT,   // //
     SEMICOLON, // ;
@@ -114,7 +114,7 @@ pub enum TokenType {
     // Comparison
     LESSTHAN,         // <
     GREATERTHAN,      // >
-    EQUALEQUAL,          // ==
+    EQUALEQUAL,       // ==
     BANGEQUAL,        // !=
     LESSTHANEQUAL,    // <=
     GREATERTHANEQUAL, // =>
@@ -142,5 +142,4 @@ pub enum TokenType {
     // Other
     ILLEGAL,
     EOF,
-    
 }

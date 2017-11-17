@@ -4,10 +4,15 @@ extern crate nom_locate;
 
 pub mod token;
 pub mod lexer;
-
-use lexer::int_test;
+use lexer::Lexer;
 
 fn main() {
-    println!("Hello, world!");
-    int_test();
+    let mut lexer = Lexer::new("fun(x, y) {
+            x + y;
+        };");
+    let input = lexer.input;
+
+    
+
+    println!("{:?}",lexer.lex_tokens(input.as_bytes()));
 }
