@@ -1,0 +1,15 @@
+[package]
+name = "lexer"
+version = "0.1.0"
+authors = ["Lenard Pratt <striderman34@gmail.com>"]
+[features]
+default = []
+
+[dependencies]
+nom_locate = "0.1.1"
+clippy = {version = "*", optional = true}
+[dependencies.nom]
+version = "^3.2"
+git = "https://github.com/Geal/nom"
+branch = "result"
+features = ["nightly"]
