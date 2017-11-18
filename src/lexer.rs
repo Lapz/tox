@@ -1,6 +1,6 @@
 use token::{Token, TokenType};
-use nom::{alphanumeric, digit};
-use std::str::{self, FromStr};
+use nom::{alphanumeric, digit,IResult};
+use std::str::{self, FromStr,};
 
 
 
@@ -22,13 +22,15 @@ impl<'a> Lexer<'a> {
     }
 
     fn token_with_info(&mut self,change:(TokenType,i64)) -> Token {
-    self.line = self.line + change.1;
+        self.line = self.line + change.1;
         Token {
             token:change.0,
             line:self.line,
             column:self.column
         }
     }
+
+    
 
     method!(
         lex_identifier<Lexer<'a>>(&[u8]) -> (TokenType,i64),
@@ -56,6 +58,11 @@ impl<'a> Lexer<'a> {
 }
 
 named!(id,take_while!(is_alphanumeric_or_underscore));
+
+
+
+
+named!(whitespace, alt!(tag!("\n") | tag!("\t")));
 
 
 fn is_alphanumeric_or_underscore(c: u8) -> bool {
