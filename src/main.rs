@@ -7,12 +7,12 @@ pub mod lexer;
 use lexer::Lexer;
 
 fn main() {
-    let mut lexer = Lexer::new("fun(x, y) {
+    let lexer = Lexer::new("fun(x, y) {
             x + y;
         };");
     let input = lexer.input;
 
     
 
-    println!("{:?}",lexer.lex_tokens(input.as_bytes()));
+    println!("{:#?}",lexer.lex_tokens(input.as_bytes()));
 }
