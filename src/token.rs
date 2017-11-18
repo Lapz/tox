@@ -70,6 +70,7 @@ impl Display for TokenType {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
+            TokenType::NLINE | TokenType::SPACE| TokenType::TAB => write!(f, "whitespace"),
         }
     }
 }
@@ -142,4 +143,7 @@ pub enum TokenType {
     // Other
     ILLEGAL,
     EOF,
+    TAB,   // NEEDED FOR LINE REPORTING
+    NLINE, // NEEDED FOR LINE REPORTING
+    SPACE // NEEDED FOR LINE REPORTING
 }
