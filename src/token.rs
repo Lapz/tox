@@ -5,13 +5,13 @@ use std::fmt;
 /// A Token is spat out by the lexer.
 /// It contains a Type and the position and column it is found in in the lexer
 #[derive(Debug, PartialEq, Clone)]
-pub struct Token {
-    pub token: TokenType,
+pub struct Token<'a> {
+    pub token: TokenType<'a>,
     pub line: i64,
     pub column: i64,
 }
 
-impl Display for TokenType {
+impl<'a> Display for TokenType<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             TokenType::ILLEGAL => write!(f, "Illegal token"),
@@ -70,15 +70,15 @@ impl Display for TokenType {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
-            TokenType::NLINE | TokenType::SPACE| TokenType::TAB => write!(f, "whitespace"),
+            TokenType::NLINE | TokenType::SPACE | TokenType::TAB => write!(f, "whitespace"),
         }
     }
 }
 
 #[derive(Debug, PartialEq, Clone)] // Allows the prinitng of the token
-pub enum TokenType {
+pub enum TokenType<'a> {
     // All the differnet token types
-    IDENTIFIER(String),
+    IDENTIFIER(&'a str),
     INT(i64),
     FLOAT(f64),
     STRING(String),
@@ -145,5 +145,5 @@ pub enum TokenType {
     EOF,
     TAB,   // NEEDED FOR LINE REPORTING
     NLINE, // NEEDED FOR LINE REPORTING
-    SPACE // NEEDED FOR LINE REPORTING
+    SPACE, // NEEDED FOR LINE REPORTING
 }

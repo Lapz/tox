@@ -23,8 +23,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    
-// (TokenType, column,line);
+
+    // (TokenType, column,line);
 
     fn token_with_info(&mut self, change: (TokenType, i64, i64)) -> Token {
         match change.0 {
@@ -34,7 +34,7 @@ impl<'a> Lexer<'a> {
 
             TokenType::NLINE => {
                 self.line += 1;
-                self.column =1;
+                self.column = 1;
             }
 
             _ => (),
@@ -58,16 +58,18 @@ impl<'a> Lexer<'a> {
         )
     );
 
-    fn filter(&self, mut i:Vec<Token>) -> Vec<Token> {
-        i.retain(|t| t.token != TokenType::COMMENT || t.token != TokenType::NLINE|| t.token != TokenType::SPACE || t.token != TokenType::TAB );
+    fn filter(&self, mut i: Vec<Token>) -> Vec<Token> {
+        i.retain(|t| {
+            t.token != TokenType::COMMENT || t.token != TokenType::NLINE
+                || t.token != TokenType::SPACE || t.token != TokenType::TAB
+        });
 
         i
-
     }
 
-    
 
-    
+
+
     method!(lex_string<Lexer<'a>>(&[u8]) -> (TokenType,i64,i64), self, call!(string));
     method!(lex_number<Lexer<'a>>(&[u8]) ->(TokenType,i64,i64),self, alt!(float | int));
     method!(lex_whitespace<Lexer<'a>>(&[u8]) ->(TokenType,i64,i64),self,alt!(new_line |space|tab));
@@ -90,8 +92,9 @@ named!(
     new_line<(TokenType, i64, i64)>,
     do_parse!(tag!("\n") >> (TokenType::NLINE, 0, 1))
 );
-named!(space<(TokenType, i64, i64)>,
-  do_parse!(tag!(" ") >> (TokenType::SPACE, 1, 0))
+named!(
+    space<(TokenType, i64, i64)>,
+    do_parse!(tag!(" ") >> (TokenType::SPACE, 1, 0))
 );
 
 named!(
@@ -294,7 +297,7 @@ named!(
 
 
 named!(
-    string<(TokenType,i64,i64)>,
+    string<(TokenType, i64, i64)>,
     do_parse!(
         string:delimited!(
             tag!("\""),

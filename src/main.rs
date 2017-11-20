@@ -2,21 +2,9 @@
 #[macro_use]
 extern crate nom;
 pub mod token;
-pub mod lexer;
-// pub mod syntex;
-use lexer::Lexer;
+// pub mod lexer;
+pub mod syntex;
 
 
 
-fn main() {
-    let lexer = Lexer::new(
-        "fun(x, y) {
-            x + y;
-        };±",
-    );
-    let input = lexer.input;
-
-
-    println!("{:#?}", lexer.parse(input.as_bytes()));
-}
-
+fn main() {}
