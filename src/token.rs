@@ -2,19 +2,43 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
-/// A Token is spat out by the lexer.
-/// It contains a Type and the position and column it is found in in the lexer
-#[derive(Debug, PartialEq, Clone)]
-pub struct Token<'a> {
-    pub token: TokenType<'a>,
+
+#[derive(Debug, Copy, Clone)]
+pub struct Postition {
     pub line: i64,
     pub column: i64,
+    pub absolute: usize,
+}
+
+impl Postition {
+    pub fn shift(mut self, ch: char) -> Self {
+        if ch == '\n' {
+            self.line += 1;
+            self.column = 1;
+        } else if ch == '\t' {
+            self.column += 4;
+        } else {
+            self.column += 1;
+        }
+
+        self.absolute += ch.len_utf8();
+        self
+    }
+}
+
+
+/// A Token is spat out by the lexer.
+/// It contains a Type and the position and column it is found in in the lexer
+#[derive(Debug, Clone)]
+pub struct Token<'a> {
+    pub token: TokenType<'a>,
+    pub pos: Postition,
 }
 
 impl<'a> Display for TokenType<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            TokenType::ILLEGAL => write!(f, "Illegal token"),
+            TokenType::ILLEGAL(ref ch) => write!(f, "Illegal token {}", ch),
             TokenType::EOF => write!(f, "\0"),
             TokenType::IDENTIFIER(ref s) => write!(f, "id {}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
@@ -141,7 +165,7 @@ pub enum TokenType<'a> {
     NIL,
 
     // Other
-    ILLEGAL,
+    ILLEGAL(&'a char),
     EOF,
     TAB,   // NEEDED FOR LINE REPORTING
     NLINE, // NEEDED FOR LINE REPORTING

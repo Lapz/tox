@@ -1,9 +1,6 @@
-// mod test;
-//
 
-use token::{Token, TokenType};
+use token::{Postition, Token, TokenType};
 use std::str::Chars;
-use std::iter::Peekable;
 
 use std::fmt::{Display, Formatter};
 use std::fmt;
@@ -39,28 +36,6 @@ pub struct Lexer<'a> {
     end: Postition,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct Postition {
-    line: i64,
-    column: i64,
-    absolute: usize,
-}
-
-impl Postition {
-    fn shift(mut self, ch: char) -> Self {
-        if ch == '\n' {
-            self.line += 1;
-            self.column = 1;
-        } else if ch == '\t' {
-            self.column += 4;
-        } else {
-            self.column += 1;
-        }
-
-        self.absolute += ch.len_utf8();
-        self
-    }
-}
 #[derive(Debug, Clone)]
 pub struct CharPosition<'a> {
     pos: Postition,
@@ -135,15 +110,24 @@ impl<'a> Lexer<'a> {
         (self.end, self.slice(start, self.end))
     }
 
-    fn line_comment(&mut self, start: Postition) -> TokenType {
-        let (end, comment) = self.take_while(start, |ch| ch != '\n');
+    fn peek<F>(&mut self, mut check: F) -> bool
+    where
+        F: FnMut(char) -> bool,
+    {
+        self.lookahead.map_or(false, |(_, ch)| check(ch))
+    }
 
-        TokenType::COMMENT
+    fn line_comment(&mut self, start: Postition) -> Token<'a> {
+        let (_, _) = self.take_while(start, |ch| ch != '\n');
+
+        Token {
+            token:TokenType::COMMENT,
+            pos:start
+        }
     }
 
     fn block_comment(&mut self, start: Postition) -> Result<TokenType, LexerError> {
         self.advance(); // Eats the '*'
-
         loop {
             self.advance(); // Eats the '*'
 
@@ -159,10 +143,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn comparison(&mut self, start: Postition) -> TokenType {
-        let (end, op) = self.take_while(start, |c| is_operator_char(c));
+    fn comparison(&mut self, start: Postition) -> Token<'a> {
+        let (_, op) = self.take_while(start, |c| is_comparison_char(c));
 
-        match op {
+        let op = match op {
             "=" => TokenType::ASSIGN,
             ">" => TokenType::LESSTHAN,
             "<" => TokenType::LESSTHAN,
@@ -172,11 +156,16 @@ impl<'a> Lexer<'a> {
             "<=" => TokenType::LESSTHANEQUAL,
             "!=" => TokenType::BANGEQUAL,
             _ => unreachable!(),
+        };
+
+        Token {
+            token: op,
+            pos: start,
         }
     }
 
     fn punctuation(&mut self, start: Postition) -> TokenType {
-        let (end, punc) = self.take_while(start, |c| is_punctuation_char(c));
+        let (_, punc) = self.take_while(start, |c| is_punctuation_char(c));
 
         match punc {
             "(" => TokenType::LPAREN,
@@ -194,69 +183,200 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn string_literal(&mut self, start: Postition) -> Result<TokenType,LexerError> {
+    fn string_literal(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
         let mut string = String::new();
 
-        while let Some((next,ch)) = self.advance() {
+        while let Some((next, ch)) = self.advance() {
             match ch {
                 '"' => {
                     let end = next.shift(ch);
 
-                    return Ok(TokenType::STRING(string))
-            
-                },
+                    return Ok(Token {
+                        token: TokenType::STRING(string),
+                        pos: start,
+                    });
+                }
 
                 ch => string.push(ch),
             }
-
         }
 
         Err(LexerError::UnclosedString(String::from("adaf")))
-
     }
 
-    fn number(&mut self, start: Postition) -> TokenType {
-        unimplemented!()
-    }
+    fn number(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
+        let (_, int) = self.take_while(start, |c| is_digit(c));
 
-    fn identifier(&mut self, start: Postition) -> TokenType {
-        let (end, ident) = self.take_while(start, |c| ch_is_letter(c));
-        look_up_identifier(ident)
-    }
-}
+        let (start, token) = match self.lookahead {
+            Some((_, '.')) => {
+                self.advance();
 
-impl <'a> Iterator for Lexer<'a> {
-    type Item = Result<Token<'a>,LexerError>;
+                let (_, float) = self.take_while(start, |c| is_digit(c));
 
-    fn next(&mut self) -> Option<Result<Token<'a>,LexerError>> {
-        while let Some((start,ch)) = self.advance() {
-            match ch {
-                ',' => Some(Ok(token_with_info(TokenType::COMMA))),
-                '{' => Some(Ok(token_with_info(TokenType::RBRACE))),
-                '}'=> Some(Ok(token_with_info(TokenType::LBRACE))),
-                '['=> Some(Ok(token_with_info(TokenType::LBRACKET))),
-                ']'=> Some(Ok(token_with_info(TokenType::RBRACKET))),
-                '('=> Some(Ok(token_with_info(TokenType::LPAREN))),
-                ')'=> Some(Ok(token_with_info(TokenType::RPAREN))),
-                '"'=> ,
-                '.'=> Some(Ok(token_with_info(TokenType::DOT))),
-                '?'=> Some(Ok(token_with_info(TokenType::))),
-                ';'=> Some(Ok(token_with_info(TokenType::LBRACE))),
-                ':'=> Some(Ok(token_with_info(TokenType::LBRACE))),
-                _ => unimplemented!()
+                match self.lookahead {
+                    Some((_, ch)) if is_ident_start(ch) => {
+                        return Err(LexerError::EOF); // Change
+                    }
+
+                    _ => (start, TokenType::FLOAT(float.parse().unwrap())),
+                }
             }
+
+            Some((start, ch)) if is_ident_start(ch) => return Err(LexerError::EOF), // Change
+            None | Some(_) => {
+                if let Ok(val) = int.parse() {
+                    (start, TokenType::INT(val))
+                } else {
+                    return Err(LexerError::EOF); // change
+                }
+            }
+        };
+
+        Ok(Token {
+            token: token,
+            pos: start,
+        })
+    }
+
+    fn identifier(&mut self, start: Postition) -> Token<'a> {
+        let (_, ident) = self.take_while(start, |c| is_ident_continue(c));
+        Token {
+            token: look_up_identifier(ident),
+            pos: start,
         }
     }
-
 }
 
-fn ch_is_letter(ch: char) -> bool {
+fn is_ident_continue(ch: char) -> bool {
+    // TODO: Unicode?
+    match ch {
+        '0'...'9' | '\'' => true,
+        ch => is_ident_start(ch),
+    }
+}
+
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Result<Token<'a>, LexerError>;
+
+    fn next(&mut self) -> Option<Result<Token<'a>, LexerError>> {
+        while let Some((start, ch)) = self.advance() {
+            return match ch {
+                '.' => Some(Ok(token_with_info(TokenType::DOT, start))),
+                '?' => Some(Ok(token_with_info(TokenType::QUESTION, start))),
+                ';' => Some(Ok(token_with_info(TokenType::SEMICOLON, start))),
+                '{' => Some(Ok(token_with_info(TokenType::RBRACE, start))),
+                '}' => Some(Ok(token_with_info(TokenType::LBRACE, start))),
+                '[' => Some(Ok(token_with_info(TokenType::LBRACKET, start))),
+                ']' => Some(Ok(token_with_info(TokenType::RBRACKET, start))),
+                '(' => Some(Ok(token_with_info(TokenType::LPAREN, start))),
+                ')' => Some(Ok(token_with_info(TokenType::RPAREN, start))),
+                ',' => Some(Ok(token_with_info(TokenType::COMMA, start))),
+                ':' => Some(Ok(token_with_info(TokenType::COLON, start))),
+                '^' => Some(Ok(token_with_info(TokenType::EXPONENTIAL, start))),
+                '%' => Some(Ok(token_with_info(TokenType::MODULO, start))),
+
+                '=' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::EQUALEQUAL, start)))
+                } else {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::ASSIGN, start)))
+                },
+
+                '+' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::PLUSASSIGN, start)))
+                } else {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::PLUS, start)))
+                },
+
+                '-' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::MINUSASSIGN, start)))
+                } else {
+                    Some(Ok(token_with_info(TokenType::MINUS, start)))
+                },
+
+                '*' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::STARASSIGN, start)))
+                } else {
+                    Some(Ok(token_with_info(TokenType::STAR, start)))
+                },
+
+                '/' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::SLASHASSIGN, start)))
+                } else if self.peek(|ch| ch == '/') {
+                    self.advance();
+                    Some(Ok(self.line_comment(start)))
+                }
+                else {
+                    Some(Ok(token_with_info(TokenType::SLASH, start)))
+                },
+
+                '!' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::BANGEQUAL, start)))
+                } else {
+                    Some(Ok(token_with_info(TokenType::BANG, start)))
+                },
+
+                '>' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::GREATERTHANEQUAL, start)))
+                } else {
+                    Some(Ok(token_with_info(TokenType::GREATERTHAN, start)))
+                },
+                '<' => if self.peek(|ch| ch == '=') {
+                    self.advance();
+                    Some(Ok(token_with_info(TokenType::LESSTHANEQUAL, start)))
+                } else {
+                    Some(Ok(token_with_info(TokenType::LESSTHAN, start)))
+                },
+
+                '"' => Some(self.string_literal(start)),
+                ch if is_ident_start(ch) => Some(Ok(self.identifier(start))),
+                ch if is_digit(ch) => Some(self.number(start)),
+                ch if ch.is_whitespace() => continue,
+                _ => unimplemented!(),
+            };
+        }
+
+        Some(Ok(Token {
+            token: TokenType::EOF,
+            pos: self.end,
+        }))
+    }
+}
+
+
+fn token_with_info(token: TokenType, pos: Postition) -> Token {
+    Token { token, pos }
+}
+
+fn is_letter_ch(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
 }
 
 
-fn is_operator_char(ch: char) -> bool {
+fn is_comparison_char(ch: char) -> bool {
     ch == '<' || ch == '>' || ch == '=' || ch == '!'
+}
+
+
+fn is_digit(ch: char) -> bool {
+    ch.is_digit(10)
+}
+
+
+fn is_ident_start(ch: char) -> bool {
+    // TODO: Unicode?
+    match ch {
+        '_' | 'a'...'z' | 'A'...'Z' => true,
+        _ => false,
+    }
 }
 
 
@@ -294,328 +414,3 @@ fn look_up_identifier(id: &str) -> TokenType {
         _ => TokenType::IDENTIFIER(id),
     }
 }
-
-
-
-// fn peek(&mut self) -> Option<&char> {
-//     self.chars.peek()
-// }
-
-
-// fn token_with_info(&mut self, token: TokenType) -> Token {
-//     Token {
-//         token,
-//         line: self.line,
-//         column: self.column,
-//     }
-// }
-
-
-
-// fn advance(&mut self) -> Option<char> {
-//     self.column += 1;
-//     self.chars.next()
-// }
-
-
-// fn peek_ch_is_letter(&mut self) -> bool {
-//     // Checks if character is a letter
-//     match self.peek() {
-//         Some(&ch) => self.ch_is_letter(ch),
-//         None => false,
-//     }
-// }
-
-
-
-// fn skip_whitespace(&mut self) -> () {
-//     // Skips through white space
-
-//     while let Some(&c) = self.peek() {
-//         if c == '\n' {
-//             self.line += 1;
-//             self.column = 1;
-//         } else if !c.is_whitespace() {
-//             break;
-//         }
-//         self.advance();
-//     }
-// }
-
-
-// fn number(&mut self, first: char) -> Result<TokenType, LexerError> {
-//     // Parses the number and returns the f64 value
-
-//     let mut number = String::new();
-//     number.push(first);
-
-//     while let Some(&ch) = self.peek() {
-//         if !ch.is_numeric() {
-//             break;
-//         }
-//         number.push(self.advance().unwrap())
-//     }
-
-//     match self.peek() {
-//         Some(&'.') => {
-//             self.advance();
-//             while let Some(ch) = self.peek() {
-//                 if !ch.is_numeric() {
-//                     break;
-//                 }
-
-//                 number.push(self.advance().unwrap());
-//             }
-
-//             OkTokenType::FLOAT(number.parse().unwrap()))
-//         }
-
-//         Some(ch) => {
-//             if ch.is_alphabetic() {
-//                 return Err(LexerError::InvalidFloat(String::from("asdad")));
-//             }
-
-//             OkTokenType::INT(number.parse().unwrap()))
-//         }
-
-//         None => Err(LexerError::EOF),
-//     }
-// }
-
-// // var m = 10;
-// fn identifier(&mut self, first: char) -> String {
-//     let mut ident = String::new();
-
-
-
-//     ident.push(first);
-
-//     while self.peek_ch_is_letter() {
-//         ident.push(self.advance().unwrap())
-//     }
-
-
-//     ident
-// }
-
-// fn escape_code(&mut self) -> Result<char, LexerError> {
-//     match self.advance() {
-//         Some('\'') => Ok('\''),
-//         Some('"') => Ok('"'),
-//         Some('\\') => Ok('\\'),
-//         Some('/') => Ok('/'),
-//         Some('n') => Ok('\n'),
-//         Some('r') => Ok('\r'),
-//         Some('t') => Ok('\t'),
-//         None => Err(LexerError::EOF),
-//         Some(ch) => Err(LexerError::EscapeCode),
-//     }
-// }
-
-
-// fn string(&mut self) -> Result<TokenType, LexerError> {
-//     let mut string = String::new();
-
-//     while let Some(ch) = self.advance() {
-//         match ch {
-//             '"' => {
-//                 self.line += 1;
-//                 return OkTokenType::STRING(string));
-//             }
-
-//             '\\' => string.push(self.escape_code()?),
-
-//             ch => string.push(ch),
-//         }
-//     }
-
-//     unimplemented!()
-// }
-
-
-
-
-
-// fn ch_is_letter(&mut self, ch: char) -> bool {
-//     ch.is_alphanumeric() || ch == '_'
-// }
-
-// /// Gets the next token from the Lexer
-// fn next_token(&mut self) -> Result<TokenType, LexerError> {
-//     self.skip_whitespace();
-
-//     match self.advance() {
-//         Some('(') => OkTokenType::LPAREN),
-
-//         Some(')') => OkTokenType::RPAREN),
-
-//         Some('{') => OkTokenType::LBRACE),
-
-//         Some('}') => OkTokenType::RBRACE),
-
-//         Some('[') => OkTokenType::LBRACKET),
-
-//         Some(']') => OkTokenType::RBRACKET),
-
-//         Some(',') => OkTokenType::COMMA),
-
-//         Some('.') => OkTokenType::DOT),
-
-//         Some(':') => OkTokenType::COLON),
-
-//         Some('-') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-
-//                 OkTokenType::MINUSASSIGN)
-//             }
-
-//             _ => OkTokenType::MINUS),
-//         },
-
-//         Some('+') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-
-//                 OkTokenType::PLUSASSIGN)
-//             }
-
-//             _ => OkTokenType::PLUS),
-//         },
-
-//         Some(';') => OkTokenType::SEMICOLON),
-
-//         Some('*') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-
-//                 OkTokenType::STARASSIGN)
-//             }
-
-//             _ => OkTokenType::STAR),
-//         },
-
-//         Some('?') => OkTokenType::QUESTION),
-
-//         Some('^') => OkTokenType::EXPONENTIAL),
-//         Some('%') => OkTokenType::MODULO),
-
-//         Some('"') => self.string(),
-
-//         Some('/') => match self.peek() {
-//             Some(&'/') => {
-//                 while self.peek() != Some(&'\n') && self.peek() != None {
-//                     self.advance();
-//                 }
-//                 self.line += 1;
-//                 self.column = 0;
-//                 OkTokenType::COMMENT)
-//             }
-
-//             Some(&'*') => {
-//                 self.advance();
-
-//                 while self.peek() != Some(&'*') && self.peek() != None {
-//                     if self.peek() == Some(&'\n') {
-//                         self.line += 1;
-//                         self.column = 0;
-//                     }
-//                     self.advance();
-//                 }
-
-
-//                 self.advance();
-
-//                 match self.peek() {
-//                     Some(&'/') => {
-//                         self.advance();
-//                         OkTokenType::COMMENT)
-//                     }
-
-//                     _ => {
-//                         let error = format!("Unclosed block comment on line {}", self.line);
-//                         Err(LexerError::UnclosedBlockComment(error))
-//                     }
-//                 }
-//             }
-//             _ => OkTokenType::SLASH),
-//         },
-
-//         Some('!') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-
-//                 OkTokenType::BANGEQUAL)
-//             }
-
-//             _ => OkTokenType::BANG),
-//         },
-//         Some('=') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-
-//                 OkTokenType::EQUALEQUAL)
-//             }
-
-//             _ => OkTokenType::ASSIGN),
-//         },
-
-//         Some('<') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-//                 OkTokenType::LESSTHANEQUAL)
-//             }
-//             _ => OkTokenType::LESSTHAN),
-//         },
-
-//         Some('>') => match self.peek() {
-//             Some(&'=') => {
-//                 self.advance();
-//                 OkTokenType::GREATERTHANEQUAL)
-//             }
-//             _ => OkTokenType::GREATERTHAN),
-//         },
-
-//         Some(ch) => if ch.is_numeric() {
-//             self.number(ch)
-//         } else if self.ch_is_letter(ch) {
-//             let literal = self.identifier(ch);
-
-//             Ok(self.look_up_identifier(&literal))
-//         } else {
-//             OkTokenType::ILLEGAL)
-//         },
-
-//         None => OkTokenType::EOF),
-//     }
-// }
-
-// fn look_up_identifier(&self, identifier: &str) -> TokenType {
-//     match identifier {
-//         "pprint" => TokenType::PPRINT,
-//         // Class
-//         "class" => TokenType::CLASS,
-//         "super" => TokenType::SUPER,
-//         "this" => TokenType::THIS,
-//         // Functions and vars
-//         "fun" => TokenType::FUNCTION,
-//         "var" => TokenType::VAR,
-//         // Control Flow
-//         "if" => TokenType::IF,
-//         "else" => TokenType::ELSE,
-//         "for" => TokenType::FOR,
-//         "while" => TokenType::WHILE,
-//         "return" => TokenType::RETURN,
-//         "break" => TokenType::BREAK,
-//         "continue" => TokenType::CONTINUE,
-//         "do" => TokenType::DO,
-//         // Booleans
-//         "true" => TokenType::TRUE(true),
-//         "false" => TokenType::FALSE(false),
-//         "or" => TokenType::OR,
-//         "and" => TokenType::AND,
-//         "nil" => TokenType::NIL,
-//         _ => TokenType::IDENTIFIER(String::from(identifier)),
-//     }
-// }
-// }

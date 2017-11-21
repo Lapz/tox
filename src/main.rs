@@ -1,10 +1,36 @@
-#![feature(type_ascription)]
-#[macro_use]
-extern crate nom;
+
 pub mod token;
 // pub mod lexer;
 pub mod syntex;
 
+use syntex::{Lexer, LexerError};
+use token::{Token, TokenType};
 
+fn main() {
+    let input = 
+"{}(),;:+= -= - <= >= 
+\"hello\"
+ {}
+//
+";
 
-fn main() {}
+    // let tokens = tokenizer(input);
+
+    // println!("{:#?}",tokens);
+
+    for token in tokenizer(input) {
+        println!("{:?}", token)
+    }
+}
+
+fn tokenizer<'input>(
+    input: &'input str,
+) -> Box<Iterator<Item = Result<Token<'input>, LexerError>> + 'input> where {
+    Box::new(Lexer::new(input).take_while(|token| match *token {
+        Ok(Token {
+            token: TokenType::EOF,
+            ..
+        }) => false,
+        _ => true,
+    }))
+}
