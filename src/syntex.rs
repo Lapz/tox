@@ -11,6 +11,7 @@ pub enum LexerError {
     InvalidFloat(String),
     EOF,
     EscapeCode, // Add the char
+    Unexpected(char),
 }
 
 impl Display for LexerError {
@@ -21,6 +22,7 @@ impl Display for LexerError {
             LexerError::EscapeCode => write!(f, "Unexpected escape code"),
             LexerError::UnclosedBlockComment(ref e) => write!(f, "unclosed block comment {}", e),
             LexerError::InvalidFloat(ref e) => write!(f, "Inavlid Float {}", e),
+            LexerError::Unexpected(ref c) => write!(f, "Unexpected char {}",c),
         }
     }
 }
@@ -101,10 +103,11 @@ impl<'a> Lexer<'a> {
         F: FnMut(char) -> bool,
     {
         while let Some((end, ch)) = self.lookahead {
-            if terminate(ch) {
+            if !terminate(ch) {
                 return (end, self.slice(start, end));
             }
             self.advance();
+            
         }
 
         (self.end, self.slice(start, self.end))
@@ -126,15 +129,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn block_comment(&mut self, start: Postition) -> Result<TokenType, LexerError> {
+    fn block_comment(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
         self.advance(); // Eats the '*'
         loop {
             self.advance(); // Eats the '*'
 
             match self.lookahead {
-                Some((end, '/')) => {
+                Some((_, '/')) => {
                     self.advance();
-                    return Ok(TokenType::COMMENT);
+                    return Ok(Token{token:TokenType::COMMENT,pos:start});
                 }
                 Some((_, _)) => continue,
 
@@ -143,54 +146,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn comparison(&mut self, start: Postition) -> Token<'a> {
-        let (_, op) = self.take_while(start, |c| is_comparison_char(c));
-
-        let op = match op {
-            "=" => TokenType::ASSIGN,
-            ">" => TokenType::LESSTHAN,
-            "<" => TokenType::LESSTHAN,
-            "!" => TokenType::BANG,
-            "==" => TokenType::EQUALEQUAL,
-            "=>" => TokenType::GREATERTHANEQUAL,
-            "<=" => TokenType::LESSTHANEQUAL,
-            "!=" => TokenType::BANGEQUAL,
-            _ => unreachable!(),
-        };
-
-        Token {
-            token: op,
-            pos: start,
-        }
-    }
-
-    fn punctuation(&mut self, start: Postition) -> TokenType {
-        let (_, punc) = self.take_while(start, |c| is_punctuation_char(c));
-
-        match punc {
-            "(" => TokenType::LPAREN,
-            ")" => TokenType::RPAREN,
-            "{" => TokenType::LBRACE,
-            "}" => TokenType::RBRACE,
-            "[" => TokenType::LBRACKET,
-            "]" => TokenType::RBRACKET,
-            ":" => TokenType::COLON,
-            ";" => TokenType::SEMICOLON,
-            "," => TokenType::COMMA,
-            "?" => TokenType::QUESTION,
-            "." => TokenType::DOT,
-            _ => unreachable!(),
-        }
-    }
 
     fn string_literal(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
         let mut string = String::new();
 
-        while let Some((next, ch)) = self.advance() {
+        while let Some((_, ch)) = self.advance() {
             match ch {
                 '"' => {
-                    let end = next.shift(ch);
-
                     return Ok(Token {
                         token: TokenType::STRING(string),
                         pos: start,
@@ -205,24 +167,24 @@ impl<'a> Lexer<'a> {
     }
 
     fn number(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
-        let (_, int) = self.take_while(start, |c| is_digit(c));
+        let (_, int) = self.take_while(start, |c| c.is_numeric());
 
-        let (start, token) = match self.lookahead {
+        let (_, token) = match self.lookahead {
             Some((_, '.')) => {
                 self.advance();
 
-                let (_, float) = self.take_while(start, |c| is_digit(c));
+                let (_, float) = self.take_while(start, |c| c.is_numeric());
 
                 match self.lookahead {
-                    Some((_, ch)) if is_ident_start(ch) => {
-                        return Err(LexerError::EOF); // Change
+                    Some((_, ch)) if ch.is_alphabetic() => {
+                        return Err(LexerError::Unexpected(ch)); // Change
                     }
 
                     _ => (start, TokenType::FLOAT(float.parse().unwrap())),
                 }
             }
 
-            Some((start, ch)) if is_ident_start(ch) => return Err(LexerError::EOF), // Change
+            Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch)), // Change the slicened start
             None | Some(_) => {
                 if let Ok(val) = int.parse() {
                     (start, TokenType::INT(val))
@@ -239,7 +201,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn identifier(&mut self, start: Postition) -> Token<'a> {
-        let (_, ident) = self.take_while(start, |c| is_ident_continue(c));
+        let (_, ident) = self.take_while(start, is_letter_ch);
         Token {
             token: look_up_identifier(ident),
             pos: start,
@@ -247,13 +209,6 @@ impl<'a> Lexer<'a> {
     }
 }
 
-fn is_ident_continue(ch: char) -> bool {
-    // TODO: Unicode?
-    match ch {
-        '0'...'9' | '\'' => true,
-        ch => is_ident_start(ch),
-    }
-}
 
 impl<'a> Iterator for Lexer<'a> {
     type Item = Result<Token<'a>, LexerError>;
@@ -274,6 +229,7 @@ impl<'a> Iterator for Lexer<'a> {
                 ':' => Some(Ok(token_with_info(TokenType::COLON, start))),
                 '^' => Some(Ok(token_with_info(TokenType::EXPONENTIAL, start))),
                 '%' => Some(Ok(token_with_info(TokenType::MODULO, start))),
+                '"' => Some(self.string_literal(start)),
 
                 '=' => if self.peek(|ch| ch == '=') {
                     self.advance();
@@ -311,6 +267,8 @@ impl<'a> Iterator for Lexer<'a> {
                 } else if self.peek(|ch| ch == '/') {
                     self.advance();
                     Some(Ok(self.line_comment(start)))
+                }else if self.peek(|ch| ch == '*') {
+                    Some(self.block_comment(start))
                 }
                 else {
                     Some(Ok(token_with_info(TokenType::SLASH, start)))
@@ -335,12 +293,11 @@ impl<'a> Iterator for Lexer<'a> {
                 } else {
                     Some(Ok(token_with_info(TokenType::LESSTHAN, start)))
                 },
-
-                '"' => Some(self.string_literal(start)),
-                ch if is_ident_start(ch) => Some(Ok(self.identifier(start))),
-                ch if is_digit(ch) => Some(self.number(start)),
+                
+                ch if ch.is_numeric() => Some(self.number(start)),
+                ch if is_letter_ch(ch) => Some(Ok(self.identifier(start))), 
                 ch if ch.is_whitespace() => continue,
-                _ => unimplemented!(),
+                ch => Some(Err(LexerError::Unexpected(ch)))
             };
         }
 
@@ -361,29 +318,15 @@ fn is_letter_ch(ch: char) -> bool {
 }
 
 
-fn is_comparison_char(ch: char) -> bool {
-    ch == '<' || ch == '>' || ch == '=' || ch == '!'
-}
-
 
 fn is_digit(ch: char) -> bool {
     ch.is_digit(10)
 }
 
 
-fn is_ident_start(ch: char) -> bool {
-    // TODO: Unicode?
-    match ch {
-        '_' | 'a'...'z' | 'A'...'Z' => true,
-        _ => false,
-    }
-}
 
 
-fn is_punctuation_char(ch: char) -> bool {
-    ch == '[' || ch == ']' || ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == ','
-        || ch == '?' || ch == '.' || ch == ':'
-}
+
 
 #[inline]
 fn look_up_identifier(id: &str) -> TokenType {

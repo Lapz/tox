@@ -12,7 +12,10 @@ fn main() {
 \"hello\"
  {}
 //
-";
+10.53
+10
+var hello
+±";
 
     // let tokens = tokenizer(input);
 
