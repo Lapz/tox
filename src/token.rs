@@ -10,6 +10,12 @@ pub struct Postition {
     pub absolute: usize,
 }
 
+impl Display for Postition {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "line {}, column {}", self.line, self.column)
+    }
+}
+
 impl Postition {
     pub fn shift(mut self, ch: char) -> Self {
         if ch == '\n' {
@@ -33,6 +39,12 @@ impl Postition {
 pub struct Token<'a> {
     pub token: TokenType<'a>,
     pub pos: Postition,
+}
+
+impl<'a> Display for Token<'a> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{} found on {}", self.token, self.pos)
+    }
 }
 
 impl<'a> Display for TokenType<'a> {
