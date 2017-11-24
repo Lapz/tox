@@ -114,8 +114,6 @@ name = "lexer"
 version = "0.1.0"
 dependencies = [
  "clippy 0.0.172 (registry+https://github.com/rust-lang/crates.io-index)",
- "nom 3.2.1 (git+https://github.com/Geal/nom?branch=result)",
- "nom_locate 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty_assertions 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -135,31 +133,6 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nom"
-version = "3.2.1"
-source = "git+https://github.com/Geal/nom?branch=result#a7bbf3f5c3cf79d7ba1939c86cc707a318c76f2e"
-dependencies = [
- "memchr 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nom"
-version = "3.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "memchr 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nom_locate"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "memchr 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "nom 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -365,9 +338,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum libc 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)" = "5ba3df4dcb460b9dfbd070d41c94c19209620c191b0340b929ce748a2bcd42d2"
 "checksum matches 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "100aabe6b8ff4e4a7e32c1c13523379802df0772b82466207ac25b013f193376"
 "checksum memchr 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "148fab2e51b4f1cfc66da2a7c32981d1d3c083a803978268bb11fe4b86925e7a"
-"checksum nom 3.2.1 (git+https://github.com/Geal/nom?branch=result)" = "<none>"
-"checksum nom 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "05aec50c70fd288702bcd93284a8444607f3292dbdf2a30de5ea5dcdbe72287b"
-"checksum nom_locate 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "49b1c61eff39ab6b91ccedfc62aff196eae066d88355b4fe3e4100c23168f0df"
 "checksum num-traits 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "99843c856d68d8b4313b03a17e33c4bb42ae8f6610ea81b28abe076ac721b9b0"
 "checksum percent-encoding 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "31010dd2e1ac33d5b46a5b413495239882813e0369f8ed8a5e266f173602f831"
 "checksum pretty_assertions 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "94b6bbc8a323d89a019c4cdde21850522fb8405e97add70827177fc2f86c1495"
