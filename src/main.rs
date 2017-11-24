@@ -1,6 +1,6 @@
-
 #[cfg(test)]
-#[macro_use]    extern crate pretty_assertions;
+#[macro_use]
+extern crate pretty_assertions;
 pub mod token;
 pub mod lexer;
 
@@ -8,8 +8,7 @@ use lexer::Lexer;
 
 
 fn main() {
-    let input = 
-"{}(),;:+= -= - <= >= 
+    let input = "{}(),;:+= -= - <= >= 
 \"hello\"
  {}
 //
@@ -22,7 +21,7 @@ var hello
 
     match tokens {
         Ok(tokens) => for token in tokens {
-            println!("{:?}",token);
+            println!("{:?}", token);
         },
         Err(errors) => for e in errors {
             println!("{}", e);

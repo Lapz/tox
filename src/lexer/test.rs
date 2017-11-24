@@ -1,18 +1,17 @@
-
 #[cfg(test)]
 mod tests {
 
 
-    use token::{Token, TokenType,Postition};
+    use token::{Postition, Token, TokenType};
     use lexer::Lexer;
 
 
-    fn add_token(line: i64, column: i64, absolute:usize,token: TokenType) -> Token {
+    fn add_token(line: i64, column: i64, absolute: usize, token: TokenType) -> Token {
         Token {
-            pos:Postition{
+            pos: Postition {
                 line,
                 column,
-                absolute
+                absolute,
             },
             token,
         }
@@ -28,7 +27,7 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0, TokenType::STRING(String::from("This is a string"))),
+            add_token(1, 1, 0, TokenType::STRING(String::from("This is a string"))),
         ];
 
         assert_eq!(lexer_tokens, expected_tokens);
@@ -43,13 +42,13 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0,  TokenType::LBRACKET),
-            add_token(1, 2,1, TokenType::INT(1i64)),
-            add_token(1, 3,2, TokenType::COMMA),
-            add_token(1, 4,3, TokenType::INT(2i64)),
-            add_token(1, 5,4, TokenType::COMMA),
-            add_token(1, 6,5, TokenType::INT(3i64)),
-            add_token(1, 7,6, TokenType::RBRACKET),
+            add_token(1, 1, 0, TokenType::LBRACKET),
+            add_token(1, 2, 1, TokenType::INT(1i64)),
+            add_token(1, 3, 2, TokenType::COMMA),
+            add_token(1, 4, 3, TokenType::INT(2i64)),
+            add_token(1, 5, 4, TokenType::COMMA),
+            add_token(1, 6, 5, TokenType::INT(3i64)),
+            add_token(1, 7, 6, TokenType::RBRACKET),
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }
@@ -63,8 +62,8 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0, TokenType::LBRACKET),
-            add_token(1, 2,1,TokenType::RBRACKET),
+            add_token(1, 1, 0, TokenType::LBRACKET),
+            add_token(1, 2, 1, TokenType::RBRACKET),
         ];
 
         assert_eq!(lexer_tokens, expected_tokens);
@@ -80,7 +79,6 @@ mod tests {
         let lexer_tokens = lexer.lex();
 
         assert!(lexer_tokens.is_err())
-       
     }
 
     #[test]
@@ -91,7 +89,10 @@ mod tests {
 
         let lexer_tokens = lexer.lex().unwrap();
 
-        assert_eq!(lexer_tokens[0], add_token(1, 1,0,TokenType::IDENTIFIER("a9")));
+        assert_eq!(
+            lexer_tokens[0],
+            add_token(1, 1, 0, TokenType::IDENTIFIER("a9"))
+        );
     }
 
 
@@ -105,10 +106,9 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0,TokenType::INT(10)),
-            add_token(1, 3,2, TokenType::COMMA),
-            add_token(1, 4,3, TokenType::INT(32)),
-           
+            add_token(1, 1, 0, TokenType::INT(10)),
+            add_token(1, 3, 2, TokenType::COMMA),
+            add_token(1, 4, 3, TokenType::INT(32)),
         ];
 
         assert_eq!(lexer_tokens, expected_tokens);
@@ -124,10 +124,9 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0,TokenType::FLOAT(10.1)),
-            add_token(1, 5,4, TokenType::COMMA),
-            add_token(1, 6,5, TokenType::FLOAT(32.2)),
-           
+            add_token(1, 1, 0, TokenType::FLOAT(10.1)),
+            add_token(1, 5, 4, TokenType::COMMA),
+            add_token(1, 6, 5, TokenType::FLOAT(32.2)),
         ];
 
         assert_eq!(lexer_tokens, expected_tokens);
@@ -147,241 +146,137 @@ mod tests {
     }
 
     #[test]
-
-    fn loop_keywords( ){
+    fn loop_keywords() {
         let input = "if,else,for,while,return,break,continue,do";
 
-         let mut lexer = Lexer::new(input);
+        let mut lexer = Lexer::new(input);
 
 
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0, TokenType::IF),
-            add_token(1, 3,2, TokenType::COMMA),
-            add_token(1, 4,3, TokenType::ELSE),
-            add_token(1, 8,7, TokenType::COMMA),
-            add_token(1, 9,8, TokenType::FOR),
-            add_token(1, 12,11, TokenType::COMMA),
-            add_token(1, 13,12, TokenType::WHILE),
-            add_token(1, 18,17, TokenType::COMMA),
-            add_token(1, 19,18, TokenType::RETURN),
-            add_token(1, 25,24,TokenType::COMMA),
-            add_token(1, 2 6,25, TokenType::BREAK),
-            add_token(1, 30,31, TokenType::COMMA),
-            add_token(1, 28,27, TokenType::CONTINUE),
-            add_token(1, 29,30, TokenType::COMMA),
-            add_token(1, 1,39, TokenType::DO),
-
+            add_token(1, 1, 0, TokenType::IF),
+            add_token(1, 3, 2, TokenType::COMMA),
+            add_token(1, 4, 3, TokenType::ELSE),
+            add_token(1, 8, 7, TokenType::COMMA),
+            add_token(1, 9, 8, TokenType::FOR),
+            add_token(1, 12, 11, TokenType::COMMA),
+            add_token(1, 13, 12, TokenType::WHILE),
+            add_token(1, 18, 17, TokenType::COMMA),
+            add_token(1, 19, 18, TokenType::RETURN),
+            add_token(1, 25, 24, TokenType::COMMA),
+            add_token(1, 26, 25, TokenType::BREAK),
+            add_token(1, 31, 30, TokenType::COMMA),
+            add_token(1, 32, 31, TokenType::CONTINUE),
+            add_token(1, 40, 39, TokenType::COMMA),
+            add_token(1, 41, 40, TokenType::DO),
         ];
 
-        assert_eq!(lexer_tokens,expected_tokens);
-
-
+        assert_eq!(lexer_tokens, expected_tokens);
     }
 
-    // #[test]
-    // fn keywords() {
-    //     let input = "pprint,class,super,this,fun,var,true,false,or,and,nil";
+    #[test]
+    fn value_keywords() {
+        let input = "true,false,nil";
 
-    //     let mut lexer = Lexer::new(input);
-
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 6,0, TokenType::PPRINT),
-    //         add_token(1, 7,7 ,TokenType::COMMA),
-    //         add_token(1, 13,0, TokenType::CLASS),
-    //         add_token(1, 14,0, TokenType::COMMA),
-    //         add_token(1, 19,0, TokenType::SUPER),
-    //         add_token(1, 20,0, TokenType::COMMA),
-    //         add_token(1, 24,0, TokenType::THIS),
-    //         add_token(1, 25,0, TokenType::COMMA),
-    //         add_token(1, 28,0, TokenType::FUNCTION),
-    //         add_token(1, 29,0, TokenType::COMMA),
-    //         add_token(1, 32,0, TokenType::VAR),
-    //         add_token(1, 33,0, TokenType::COMMA),
-    //         add_token(1, 76, TokenType::COMMA),
-    //         add_token(1, 80, TokenType::TRUE(true)),
-    //         add_token(1, 81, TokenType::COMMA),
-    //         add_token(1, 86, TokenType::FALSE(false)),
-    //         add_token(1, 87, TokenType::COMMA),
-    //         add_token(1, 89, TokenType::OR),
-    //         add_token(1, 90, TokenType::COMMA),
-    //         add_token(1, 93, TokenType::AND),
-    //         add_token(1, 94, TokenType::COMMA),
-    //         add_token(1, 97, TokenType::NIL),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn var_declaration_array() {
-    //     let input = "var five = [1,2,3];";
-
-    //     let mut lexer = Lexer::new(input);
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 4, TokenType::VAR),
-    //         add_token(1, 9, TokenType::IDENTIFIER("five".to_owned())),
-    //         add_token(1, 11, TokenType::ASSIGN),
-    //         add_token(1, 13, TokenType::LBRACKET),
-    //         add_token(1, 14, TokenType::INT(1f64)),
-    //         add_token(1, 15, TokenType::COMMA),
-    //         add_token(1, 16, TokenType::INT(2f64)),
-    //         add_token(1, 17, TokenType::COMMA),
-    //         add_token(1, 18, TokenType::INT(3f64)),
-    //         add_token(1, 19, TokenType::RBRACKET),
-    //         add_token(1, 20, TokenType::SEMICOLON),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn var_declaration_string() {
-    //     let input = "var five = \"hello\";";
+        let mut lexer = Lexer::new(input);
 
 
-    //     let mut lexer = Lexer::new(input);
+        let lexer_tokens = lexer.lex().unwrap();
+
+        let expected_tokens = vec![
+            add_token(1, 1, 0, TokenType::TRUE(true)),
+            add_token(1, 5, 4, TokenType::COMMA),
+            add_token(1, 6, 5, TokenType::FALSE(false)),
+            add_token(1, 11, 10, TokenType::COMMA),
+            add_token(1, 12, 11, TokenType::NIL),
+        ];
+
+        assert_eq!(lexer_tokens, expected_tokens);
+    }
+
+    #[test]
+    fn statement_keywords() {
+        let input = "pprint,class,super,this,fun,var,or,and";
+
+        let mut lexer = Lexer::new(input);
 
 
-    //     let lexer_tokens = lexer.lex().unwrap();
+        let lexer_tokens = lexer.lex().unwrap();
 
-    //     let expected_tokens = vec![
-    //         add_token(1, 4, TokenType::VAR),
-    //         add_token(1, 9, TokenType::IDENTIFIER("five".to_owned())),
-    //         add_token(1, 11, TokenType::ASSIGN),
-    //         add_token(1, 18, TokenType::STRING("hello".to_owned())),
-    //         add_token(1, 19, TokenType::SEMICOLON),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn var_declaration_int() {
-    //     let input = "var five = 5;";
-
-
-    //     let mut lexer = Lexer::new(input);
-
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 4, TokenType::VAR),
-    //         add_token(1, 9, TokenType::IDENTIFIER("five".to_owned())),
-    //         add_token(1, 11, TokenType::ASSIGN),
-    //         add_token(1, 13, TokenType::INT(5f64)),
-    //         add_token(1, 14, TokenType::SEMICOLON),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn fun_declaration_int() {
-    //     let input = "fun(x, y) {
-    //         x + y;
-    //     };";
-
-
-    //     let mut lexer = Lexer::new(input);
-
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 4, TokenType::FUNCTION),
-    //         add_token(1, 5, TokenType::LPAREN),
-    //         add_token(1, 6, TokenType::IDENTIFIER("x".to_owned())),
-    //         add_token(1, 7, TokenType::COMMA),
-    //         add_token(1, 9, TokenType::IDENTIFIER("y".to_owned())),
-    //         add_token(1, 10, TokenType::RPAREN),
-    //         add_token(1, 12, TokenType::LBRACE),
-    //         add_token(2, 14, TokenType::IDENTIFIER("x".to_owned())),
-    //         add_token(2, 16, TokenType::PLUS),
-    //         add_token(2, 18, TokenType::IDENTIFIER("y".to_owned())),
-    //         add_token(2, 19, TokenType::SEMICOLON),
-    //         add_token(3, 10, TokenType::RBRACE),
-    //         add_token(3, 11, TokenType::SEMICOLON),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn call_expression_int() {
-    //     let input = "sum([10,2]);";
-
-    //     let mut lexer = Lexer::new(input);
-
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 4, TokenType::IDENTIFIER("sum".to_owned())),
-    //         add_token(1, 5, TokenType::LPAREN),
-    //         add_token(1, 6, TokenType::LBRACKET),
-    //         add_token(1, 8, TokenType::INT(10f64)),
-    //         add_token(1, 9, TokenType::COMMA),
-    //         add_token(1, 10, TokenType::INT(2f64)),
-    //         add_token(1, 11, TokenType::RBRACKET),
-    //         add_token(1, 12, TokenType::RPAREN),
-    //         add_token(1, 13, TokenType::SEMICOLON),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
-
-    // #[test]
-    // fn symbols() {
-    //     let input = "%^!/-*<> == != <= >=";
-
-    //     let mut lexer = Lexer::new(input);
-
-    //     let lexer_tokens = lexer.lex().unwrap();
-
-    //     let expected_tokens = vec![
-    //         add_token(1, 2, TokenType::MODULO),
-    //         add_token(1, 3, TokenType::EXPONENTIAL),
-    //         add_token(1, 4, TokenType::BANG),
-    //         add_token(1, 5, TokenType::SLASH),
-    //         add_token(1, 6, TokenType::MINUS),
-    //         add_token(1, 7, TokenType::STAR),
-    //         add_token(1, 8, TokenType::LESSTHAN),
-    //         add_token(1, 9, TokenType::GREATERTHAN),
-    //         add_token(1, 12, TokenType::EQUALTO),
-    //         add_token(1, 15, TokenType::BANGEQUAL),
-    //         add_token(1, 18, TokenType::LESSTHANEQUAL),
-    //         add_token(1, 21, TokenType::GREATERTHANEQUAL),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
+        let expected_tokens = vec![
+            add_token(1, 1, 0, TokenType::PPRINT),
+            add_token(1, 7, 6, TokenType::COMMA),
+            add_token(1, 8, 7, TokenType::CLASS),
+            add_token(1, 13, 12, TokenType::COMMA),
+            add_token(1, 14, 13, TokenType::SUPER),
+            add_token(1, 19, 18, TokenType::COMMA),
+            add_token(1, 20, 19, TokenType::THIS),
+            add_token(1, 24, 23, TokenType::COMMA),
+            add_token(1, 25, 24, TokenType::FUNCTION),
+            add_token(1, 28, 27, TokenType::COMMA),
+            add_token(1, 29, 28, TokenType::VAR),
+            add_token(1, 32, 31, TokenType::COMMA),
+            add_token(1, 33,32, TokenType::OR),
+            add_token(1, 35,34, TokenType::COMMA),
+            add_token(1, 36,35, TokenType::AND),
+        ];
+        assert_eq!(lexer_tokens, expected_tokens);
+    }
 
     
 
-    // #[test]
-    // fn block() {
-    //     let input = "{
-    //                         5 < 10 > 5;
-    //                        }";
+    #[test]
+    fn symbols() {
+        let input = "%^!/-*<> == != <= >=";
 
-    //     let mut lexer = Lexer::new(input);
+        let mut lexer = Lexer::new(input);
+
+        let lexer_tokens = lexer.lex().unwrap();
+
+        let expected_tokens = vec![
+            add_token(1, 1,0, TokenType::MODULO),
+            add_token(1, 2,1, TokenType::EXPONENTIAL),
+            add_token(1, 3,2, TokenType::BANG),
+            add_token(1, 4,3, TokenType::SLASH),
+            add_token(1, 5,4,TokenType::MINUS),
+            add_token(1, 6,5,TokenType::STAR),
+            add_token(1, 7,6,TokenType::LESSTHAN),
+            add_token(1, 8,7,TokenType::GREATERTHAN),
+            add_token(1, 10,9,TokenType::EQUALEQUAL),
+            add_token(1, 13,12,TokenType::BANGEQUAL),
+            add_token(1, 16,15,TokenType::LESSTHANEQUAL),
+            add_token(1, 19,18,TokenType::GREATERTHANEQUAL),
+        ];
+        assert_eq!(lexer_tokens, expected_tokens);
+    }
 
 
-    //     let lexer_tokens = lexer.lex().unwrap();
 
-    //     let expected_tokens = vec![
-    //         add_token(1, 2, TokenType::LBRACE),
-    //         add_token(2, 30, TokenType::INT(5f64)),
-    //         add_token(2, 32, TokenType::LESSTHAN),
-    //         add_token(2, 35, TokenType::INT(10f64)),
-    //         add_token(2, 37, TokenType::GREATERTHAN),
-    //         add_token(2, 39, TokenType::INT(5f64)),
-    //         add_token(2, 40, TokenType::SEMICOLON),
-    //         add_token(3, 29, TokenType::RBRACE),
-    //     ];
-    //     assert_eq!(lexer_tokens, expected_tokens);
-    // }
+    #[test]
+    fn block() {
+        let input =
+        "{
+            5 < 10 > 5;
+        }"; 
+
+
+        let mut lexer = Lexer::new(input);
+
+
+        let lexer_tokens = lexer.lex().unwrap();
+
+        let expected_tokens = vec![
+            add_token(1, 1,0, TokenType::LBRACE),
+            add_token(2, 13,14, TokenType::INT(5)),
+            add_token(2, 15,16, TokenType::LESSTHAN),
+            add_token(2, 17,18, TokenType::INT(10)),
+            add_token(2, 20,21,TokenType::GREATERTHAN),
+            add_token(2, 22,23, TokenType::INT(5)),
+            add_token(2, 23, 24,TokenType::SEMICOLON),
+            add_token(3, 9,34,TokenType::RBRACE),
+        ];
+        assert_eq!(lexer_tokens, expected_tokens);
+    }
 
 }
