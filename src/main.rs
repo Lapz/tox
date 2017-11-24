@@ -5,6 +5,7 @@ pub mod token;
 pub mod lexer;
 pub mod pos;
 pub mod ast;
+pub mod parser;
 
 use lexer::Lexer;
 
