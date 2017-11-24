@@ -3,6 +3,8 @@
 extern crate pretty_assertions;
 pub mod token;
 pub mod lexer;
+pub mod pos;
+pub mod ast;
 
 use lexer::Lexer;
 

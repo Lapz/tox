@@ -1,7 +1,8 @@
 mod test;
 
-use token::{Postition, Token, TokenType};
-use std::str::Chars;
+use token::{Token, TokenType};
+use pos::{CharPosition,Postition};
+
 
 use std::fmt::{Display, Formatter};
 use std::fmt;
@@ -39,36 +40,6 @@ pub struct Lexer<'a> {
     chars: CharPosition<'a>,
     lookahead: Option<(Postition, char)>,
     end: Postition,
-}
-
-#[derive(Debug, Clone)]
-pub struct CharPosition<'a> {
-    pos: Postition,
-    chars: Chars<'a>,
-}
-
-impl<'a> CharPosition<'a> {
-    fn new(input: &'a str) -> Self {
-        CharPosition {
-            pos: Postition {
-                line: 1,
-                column: 1,
-                absolute: 0,
-            },
-            chars: input.chars(),
-        }
-    }
-}
-impl<'a> Iterator for CharPosition<'a> {
-    type Item = (Postition, char);
-
-    fn next(&mut self) -> Option<(Postition, char)> {
-        self.chars.next().map(|ch| {
-            let pos = self.pos;
-            self.pos = self.pos.shift(ch);
-            (pos, ch)
-        })
-    }
 }
 
 

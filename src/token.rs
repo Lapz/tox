@@ -1,36 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
-
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Postition {
-    pub line: i64,
-    pub column: i64,
-    pub absolute: usize,
-}
-
-impl Display for Postition {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "line {}, column {}", self.line, self.column)
-    }
-}
-
-impl Postition {
-    pub fn shift(mut self, ch: char) -> Self {
-        if ch == '\n' {
-            self.line += 1;
-            self.column = 1;
-        } else if ch == '\t' {
-            self.column += 4;
-        } else {
-            self.column += 1;
-        }
-
-        self.absolute += ch.len_utf8();
-        self
-    }
-}
-
+use pos::Postition;
 
 /// A Token is spat out by the lexer.
 /// It contains a Type and the position and column it is found in in the lexer
