@@ -1,9 +1,10 @@
 
+#[cfg(test)]
+#[macro_use]    extern crate pretty_assertions;
 pub mod token;
-// pub mod lexer;
-pub mod syntex;
+pub mod lexer;
 
-use syntex::Lexer;
+use lexer::Lexer;
 
 
 fn main() {

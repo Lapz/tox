@@ -1,3 +1,4 @@
+mod test;
 
 use token::{Postition, Token, TokenType};
 use std::str::Chars;

@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone,PartialEq)]
 pub struct Postition {
     pub line: i64,
     pub column: i64,
@@ -35,7 +35,7 @@ impl Postition {
 
 /// A Token is spat out by the lexer.
 /// It contains a Type and the position and column it is found in in the lexer
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,PartialEq)]
 pub struct Token<'a> {
     pub token: TokenType<'a>,
     pub pos: Postition,

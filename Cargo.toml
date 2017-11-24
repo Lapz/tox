@@ -13,3 +13,5 @@ version = "^3.2"
 git = "https://github.com/Geal/nom"
 branch = "result"
 features = ["nightly"]
+[dev-dependencies]
+pretty_assertions = "0.4.0"
