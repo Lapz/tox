@@ -217,14 +217,14 @@ mod tests {
             add_token(1, 28, 27, TokenType::COMMA),
             add_token(1, 29, 28, TokenType::VAR),
             add_token(1, 32, 31, TokenType::COMMA),
-            add_token(1, 33,32, TokenType::OR),
-            add_token(1, 35,34, TokenType::COMMA),
-            add_token(1, 36,35, TokenType::AND),
+            add_token(1, 33, 32, TokenType::OR),
+            add_token(1, 35, 34, TokenType::COMMA),
+            add_token(1, 36, 35, TokenType::AND),
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }
 
-    
+
 
     #[test]
     fn symbols() {
@@ -235,18 +235,18 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0, TokenType::MODULO),
-            add_token(1, 2,1, TokenType::EXPONENTIAL),
-            add_token(1, 3,2, TokenType::BANG),
-            add_token(1, 4,3, TokenType::SLASH),
-            add_token(1, 5,4,TokenType::MINUS),
-            add_token(1, 6,5,TokenType::STAR),
-            add_token(1, 7,6,TokenType::LESSTHAN),
-            add_token(1, 8,7,TokenType::GREATERTHAN),
-            add_token(1, 10,9,TokenType::EQUALEQUAL),
-            add_token(1, 13,12,TokenType::BANGEQUAL),
-            add_token(1, 16,15,TokenType::LESSTHANEQUAL),
-            add_token(1, 19,18,TokenType::GREATERTHANEQUAL),
+            add_token(1, 1, 0, TokenType::MODULO),
+            add_token(1, 2, 1, TokenType::EXPONENTIAL),
+            add_token(1, 3, 2, TokenType::BANG),
+            add_token(1, 4, 3, TokenType::SLASH),
+            add_token(1, 5, 4, TokenType::MINUS),
+            add_token(1, 6, 5, TokenType::STAR),
+            add_token(1, 7, 6, TokenType::LESSTHAN),
+            add_token(1, 8, 7, TokenType::GREATERTHAN),
+            add_token(1, 10, 9, TokenType::EQUALEQUAL),
+            add_token(1, 13, 12, TokenType::BANGEQUAL),
+            add_token(1, 16, 15, TokenType::LESSTHANEQUAL),
+            add_token(1, 19, 18, TokenType::GREATERTHANEQUAL),
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }
@@ -255,10 +255,9 @@ mod tests {
 
     #[test]
     fn block() {
-        let input =
-        "{
+        let input = "{
             5 < 10 > 5;
-        }"; 
+        }";
 
 
         let mut lexer = Lexer::new(input);
@@ -267,14 +266,14 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1,0, TokenType::LBRACE),
-            add_token(2, 13,14, TokenType::INT(5)),
-            add_token(2, 15,16, TokenType::LESSTHAN),
-            add_token(2, 17,18, TokenType::INT(10)),
-            add_token(2, 20,21,TokenType::GREATERTHAN),
-            add_token(2, 22,23, TokenType::INT(5)),
-            add_token(2, 23, 24,TokenType::SEMICOLON),
-            add_token(3, 9,34,TokenType::RBRACE),
+            add_token(1, 1, 0, TokenType::LBRACE),
+            add_token(2, 13, 14, TokenType::INT(5)),
+            add_token(2, 15, 16, TokenType::LESSTHAN),
+            add_token(2, 17, 18, TokenType::INT(10)),
+            add_token(2, 20, 21, TokenType::GREATERTHAN),
+            add_token(2, 22, 23, TokenType::INT(5)),
+            add_token(2, 23, 24, TokenType::SEMICOLON),
+            add_token(3, 9, 34, TokenType::RBRACE),
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }

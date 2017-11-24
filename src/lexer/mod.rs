@@ -1,7 +1,7 @@
 mod test;
 
 use token::{Token, TokenType};
-use pos::{CharPosition,Postition};
+use pos::{CharPosition, Postition};
 
 
 use std::fmt::{Display, Formatter};

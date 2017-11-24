@@ -106,7 +106,7 @@ pub struct Unary<'a> {
 pub struct Get<'a> {
     pub object: Expression<'a>,
     pub name: Variable<'a>,
-    pub handle:VariableUseHandle,
+    pub handle: VariableUseHandle,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
@@ -122,7 +122,7 @@ pub struct Variable<'a>(pub &'a str);
 // Operators
 
 
-impl <'a> Display for Variable <'a> {
+impl<'a> Display for Variable<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
