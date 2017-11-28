@@ -164,7 +164,7 @@ pub enum Operator {
     Plus,
     Minus,
     Star,
-    Divide,
+    Slash,
     Modulo,
     Exponential,
 }
@@ -180,12 +180,32 @@ pub enum AssignOperator {
 }
 
 use token::TokenType;
+#[inline]
 pub(crate) fn get_assign_type(token: &Option<TokenType>) -> AssignOperator {
     match *token {
-        Some(TokenType::STARASSIGN) => AssignOperator::StarEqual,
+        Some(TokenType::BANGEQUAL) => AssignOperator::StarEqual,
         Some(TokenType::MINUSASSIGN) => AssignOperator::MinusEqual,
         Some(TokenType::PLUSASSIGN) => AssignOperator::PlusEqual,
         Some(TokenType::ASSIGN) => AssignOperator::Equal,
+        _ => unreachable!(),
+    }
+}
+
+#[inline]
+pub(crate) fn get_operator(token: Option<TokenType>) -> Operator {
+    match token {
+        Some(TokenType::BANGEQUAL) => Operator::BangEqual,
+        Some(TokenType::EQUALEQUAL) => Operator::EqualEqual,
+        Some(TokenType::LESSTHAN) => Operator::LessThan,
+        Some(TokenType::LESSTHANEQUAL) => Operator::LessThanEqual,
+        Some(TokenType::GREATERTHAN) => Operator::GreaterThan,
+        Some(TokenType::GREATERTHANEQUAL) => Operator::GreaterThanEqual,
+        Some(TokenType::PLUS) => Operator::Plus ,
+        Some(TokenType::MINUS) => Operator::Minus,
+        Some(TokenType::STAR) => Operator::Star,
+        Some(TokenType::SLASH) => Operator::Slash,
+        Some(TokenType::MODULO) =>Operator::Modulo,
+        Some(TokenType::EXPONENTIAL) => Operator::Exponential,
         _ => unreachable!(),
     }
 }
