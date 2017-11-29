@@ -4,6 +4,7 @@ use std::vec::IntoIter;
 use pos::Postition;
 use ast::expr::*;
 use ast::statement::*;
+use pprint::PrettyPrint;
 
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -51,7 +52,7 @@ impl<'a> Display for ParserError<'a> {
 
 
 impl<'a> Parser<'a> {
-    fn new(tokens: Vec<Token<'a>>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             loop_depth: 0,
@@ -60,14 +61,68 @@ impl<'a> Parser<'a> {
     }
 
 
-    fn error(self, message: &str, pos: Postition) -> String {
+    fn error(&self, message: &str, pos: Postition) -> String {
         format!("{} on {}", message, pos)
     }
 
+    fn block(&mut self) -> Result<Vec<Statement<'a>>, ParserError<'a>> {
+        let mut statements = vec![];
+
+        while self.tokens.peek().map(|t| &t.token) != Some(&TokenType::RBRACE) {
+            statements.push(self.declaration()?);
+        }
+
+        self.check(TokenType::RBRACE, "Expected '}' after block")?;
+        Ok(statements)
+    }
+
+
+fn function_body(&mut self, kind: &str) -> Result<Expression<'a>, ParserError<'a>> {
+        self.check(TokenType::LPAREN, "Expected '(' ")?;
+
+        let mut parameters = vec![];
+
+
+
+        if self.tokens.peek().map(|t| &t.token) != Some(&TokenType::RPAREN) {
+            while {
+                if parameters.len() >= 32 {
+                    println!("Cannot have more than 32 arguments")
+                };
+
+                let identifier = match self.tokens.next().map(|t| t.token) {
+                    Some(TokenType::IDENTIFIER(ref s)) => Variable(s.to_owned()),
+
+                    _ => return Err(ParserError::Expected("Expected a parameter name".to_owned())),
+                };
+
+
+                parameters.push(identifier);
+
+
+
+                self.tokens.peek().map(|t| &t.token) == Some(&TokenType::COMMA)
+                    && self.tokens.next().map(|t| t.token) == Some(TokenType::COMMA)
+            } {}
+        }
+
+
+
+        self.check(TokenType::RPAREN, "Expected ')' after parameters.")?;
+
+
+        self.check(TokenType::LBRACE, &format!("Expected '{{' before {} body.", kind))?;
+
+        let body = self.block()?;
+
+
+
+        Ok(Expression::Func(Box::new(Func { parameters, body })))
+}
 
   
 
-    fn peek_many(&mut self, tokens: Vec<TokenType<'a>>) -> Result<bool, ParserError<'a>> {
+    fn peek_many(&mut self, tokens: Vec<TokenType<'a>>,msg:&str) -> Result<bool, ParserError<'a>> {
         for token_to_check in tokens {
             match self.tokens.peek() {
                 Some(&Token { ref token, ref pos }) => if token == &token_to_check {
@@ -82,7 +137,7 @@ impl<'a> Parser<'a> {
 
    
 
-    fn peek_check(&self, token_to_check: TokenType<'a>) -> bool {
+    fn peek_check(&mut self, token_to_check: TokenType<'a>) -> bool {
         match self.tokens.peek() {
             Some(&Token { ref token, .. }) => {
                 if token == &token_to_check {
@@ -95,7 +150,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn check_many(&self, tokens:Vec<TokenType<'a>>,msg:&str) -> Result<bool,ParserError<'a>> {
+    fn check_many(&mut self, tokens:Vec<TokenType<'a>>,msg:&str) -> Result<bool,ParserError<'a>> {
         let mut found = false;
         
         for token in tokens {
@@ -103,6 +158,8 @@ impl<'a> Parser<'a> {
                 found = true;
             }
         }
+
+        println!("{}",found );
 
         match found {
             true  => Ok(true),
@@ -113,26 +170,23 @@ impl<'a> Parser<'a> {
             }
 
         }
-
-
-
-        
+ 
     }
 
-    fn check(&self, token_to_check: TokenType<'a>,msg:&str) -> Result<bool,ParserError<'a>> {
+    fn check(&mut self, token_to_check: TokenType<'a>,msg:&str) -> Result<bool,ParserError<'a>> {
         match self.tokens.next() {
             Some(Token { ref token, ref pos }) => {
                 if token == &token_to_check {
                     return Ok(true);
                 }
 
-                Err(ParserError::IllegalExpression(self.error(msg,*pos)))
+                Err(ParserError::Expected(self.error(msg,*pos)))
             }
             None => Err(ParserError::EOF)
         }
     }
 
-    fn parse_single(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+    pub fn parse_single(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         self.expression()
     }
 }
@@ -141,6 +195,10 @@ impl<'a> Parser<'a> {
 // // Expression Parsing
 
 impl<'a> Parser<'a> {
+
+    fn declaration(&mut self) -> Result<Statement<'a>,ParserError<'a>> {
+        unimplemented!()
+    }
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         self.assignment()
     }
@@ -160,9 +218,9 @@ impl<'a> Parser<'a> {
             "Expected one of '=', '-=', '*=' '/='",
         )? {
 
-            let next = self.tokens.next();
+            let next = self.tokens.next().unwrap();
 
-            let kind = get_assign_type(&next.map(|t| t.token));
+            let kind = get_assign_type(&next.token);
 
             let value = self.assignment()?;
             
@@ -181,7 +239,7 @@ impl<'a> Parser<'a> {
                     handle: self.variable_use_maker.next(),
                 }))),
 
-                _ => return Err(ParserError::IllegalExpression(self.error(&expr.pprint(),next.unwrap().pos   )    )),
+                _ => return Err(ParserError::IllegalExpression(self.error(&expr.pprint(),next.pos   )    )),
             }
             
         }
@@ -303,9 +361,10 @@ impl<'a> Parser<'a> {
         //  factor ( ( "-" | "+" ) factor )*
 
         let mut expr = self.factor()?;
-
         if self.check_many(vec![TokenType::PLUS,TokenType::MINUS], "Expected a  '-' or '+'")? {
-            let right_expr = self.term()?;
+         
+            
+            let right_expr = self.factor()?;
 
             let operator = get_operator(self.tokens.next().map(|t| t.token));
 
@@ -324,7 +383,7 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.exponent()?;
 
-         if self.check_many(vec![TokenType::SLASH,TokenType::STAR,TokenType::MODULO], "Expected a  '-' or '+'")? {
+         if self.check_many(vec![TokenType::SLASH,TokenType::STAR,TokenType::MODULO], "Expected a  '/' or '*' or '%' ")? {
             let right_expr = self.exponent()?;
 
             let operator = get_operator(self.tokens.next().map(|t| t.token));
@@ -342,27 +401,35 @@ impl<'a> Parser<'a> {
     fn exponent(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.unary()?;
 
-        while self.tokens.peek().map(|t| &t.token) == Some(&TokenType::EXPONENTIAL) {
-            match self.tokens.next().map(|t| t.token) {
-                Some(TokenType::EXPONENTIAL) => {
-                    let right_expr = self.unary()?;
+        if self.check(TokenType::EXPONENTIAL,"Expected a '^'")? {
+            let right_expr = self.unary()?;
 
                     expr = Expression::Binary(Box::new(Binary {
                         left_expr: expr,
                         operator: Operator::Exponential,
                         right_expr,
                     }));
-                }
 
-                _ => unreachable!(),
-            }
         }
+
+      
 
         Ok(expr)
     }
 
     fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         // ( "!" | "-" ) unary | primary
+
+        if self.check(TokenType::EXPONENTIAL,"Expected a '!' or '-' ")? {
+            let right_expr = self.unary()?;
+
+                    expr = Expression::Binary(Box::new(Binary {
+                        left_expr: expr,
+                        operator: Operator::Exponential,
+                        right_expr,
+                    }));
+
+        }
 
         match self.tokens.peek().map(|t| &t.token) {
             Some(&TokenType::BANG) => {
@@ -420,11 +487,7 @@ impl<'a> Parser<'a> {
                         }) => Variable(ident.to_owned()),
 
                         Some(Token { ref pos, .. }) => {
-                            return Err(ParserError::Expected(format!(
-                                "Expected a class name on line {} column {}",
-                                line,
-                                column
-                            )))
+                            return Err(ParserError::Expected(self.error("Expected a class name",*pos)))
                         }
 
                         None => {
@@ -487,7 +550,7 @@ impl<'a> Parser<'a> {
 
         match self.tokens.next() {
             Some(Token { ref token, ref pos }) => match *token {
-                TokenType::INT(i) => Ok(Expression::Literal(Literal::Number(i))),
+                TokenType::INT(i) => Ok(Expression::Literal(Literal::Int(i))),
 
                 TokenType::STRING(ref string) => {
                     Ok(Expression::Literal(Literal::Str(string.to_owned())))
@@ -568,7 +631,7 @@ impl<'a> Parser<'a> {
                     Ok(Expression::Grouping(Box::new(Grouping { expr })))
                 }
 
-                _ => Err(ParserError::IllegalExpression(*token, *pos)),
+                _ => Err(ParserError::IllegalExpression(self.error("Illegal Expression",*pos))),
             },
 
             None => Err(ParserError::EOF),

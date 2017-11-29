@@ -70,7 +70,8 @@ pub struct Grouping<'a> {
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Literal {
     // The raw values available
-    Number(f64),
+    Float(f64),
+    Int(i64),
     Str(String),
     True(bool),
     False(bool),
@@ -181,12 +182,12 @@ pub enum AssignOperator {
 
 use token::TokenType;
 #[inline]
-pub(crate) fn get_assign_type(token: &Option<TokenType>) -> AssignOperator {
+pub(crate) fn get_assign_type(token: &TokenType) -> AssignOperator {
     match *token {
-        Some(TokenType::BANGEQUAL) => AssignOperator::StarEqual,
-        Some(TokenType::MINUSASSIGN) => AssignOperator::MinusEqual,
-        Some(TokenType::PLUSASSIGN) => AssignOperator::PlusEqual,
-        Some(TokenType::ASSIGN) => AssignOperator::Equal,
+        TokenType::BANGEQUAL => AssignOperator::StarEqual,
+       TokenType::MINUSASSIGN=> AssignOperator::MinusEqual,
+        TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
+       TokenType::ASSIGN => AssignOperator::Equal,
         _ => unreachable!(),
     }
 }
