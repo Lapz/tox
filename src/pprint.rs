@@ -11,7 +11,7 @@ pub trait PrettyPrint {
     }
 }
 
-impl <'a> PrettyPrint for Logical<'a> {
+impl<'a> PrettyPrint for Logical<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
 
@@ -25,7 +25,7 @@ impl <'a> PrettyPrint for Logical<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Unary<'a> {
+impl<'a> PrettyPrint for Unary<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         self.operator.pprint_into(pprint_printed);
@@ -35,7 +35,7 @@ impl <'a> PrettyPrint for Unary<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Binary<'a> {
+impl<'a> PrettyPrint for Binary<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         self.operator.pprint_into(pprint_printed);
@@ -47,7 +47,7 @@ impl <'a> PrettyPrint for Binary<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Ternary<'a> {
+impl<'a> PrettyPrint for Ternary<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         self.condition.pprint_into(pprint_printed);
@@ -59,7 +59,7 @@ impl <'a> PrettyPrint for Ternary<'a> {
     }
 }
 
-impl  PrettyPrint for LogicOperator {
+impl PrettyPrint for LogicOperator {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         match *self {
             LogicOperator::And => pprint_printed.push_str("and "),
@@ -67,7 +67,7 @@ impl  PrettyPrint for LogicOperator {
         }
     }
 }
-impl  PrettyPrint for Operator {
+impl PrettyPrint for Operator {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         match *self {
             Operator::Plus => pprint_printed.push_str("+ "),
@@ -87,14 +87,14 @@ impl  PrettyPrint for Operator {
 }
 
 
-impl <'a> PrettyPrint for Call<'a> {
+impl<'a> PrettyPrint for Call<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("( fn");
         self.callee.pprint_into(pprint_printed);
         pprint_printed.push_str(")");
     }
 }
-impl  PrettyPrint for UnaryOperator {
+impl PrettyPrint for UnaryOperator {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         match *self {
             UnaryOperator::Bang => pprint_printed.push_str("! "),
@@ -103,7 +103,7 @@ impl  PrettyPrint for UnaryOperator {
     }
 }
 
-impl <'a> PrettyPrint for Grouping<'a> {
+impl<'a> PrettyPrint for Grouping<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("( group");
         self.expr.pprint_into(pprint_printed);
@@ -111,7 +111,7 @@ impl <'a> PrettyPrint for Grouping<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Func<'a> {
+impl<'a> PrettyPrint for Func<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("( fn (");
 
@@ -125,7 +125,7 @@ impl <'a> PrettyPrint for Func<'a> {
 }
 
 
-impl <'a> PrettyPrint for Array<'a> {
+impl<'a> PrettyPrint for Array<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(array");
 
@@ -137,7 +137,7 @@ impl <'a> PrettyPrint for Array<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Dictionary<'a> {
+impl<'a> PrettyPrint for Dictionary<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(dict ");
 
@@ -153,7 +153,7 @@ impl <'a> PrettyPrint for Dictionary<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Variable<'a> {
+impl<'a> PrettyPrint for Variable<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         pprint_printed.push_str(&self.0);
@@ -161,7 +161,7 @@ impl <'a> PrettyPrint for Variable<'a> {
     }
 }
 
-impl <'a> PrettyPrint for Assign<'a> {
+impl<'a> PrettyPrint for Assign<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         pprint_printed.push_str(&self.name.0);
@@ -171,7 +171,7 @@ impl <'a> PrettyPrint for Assign<'a> {
     }
 }
 
-impl <'a> PrettyPrint for IndexExpr<'a> {
+impl<'a> PrettyPrint for IndexExpr<'a> {
     fn pprint_into(&self, pprint_printed: &mut String) -> () {
         pprint_printed.push_str("(");
         self.target.pprint_into(pprint_printed);
@@ -189,32 +189,32 @@ impl PrettyPrint for Literal {
                 pprint_printed.push_str(" ");
                 pprint_printed.push_str(&i.to_string());
                 pprint_printed.push_str(" ");
-            },
+            }
 
             Literal::Int(i) => {
                 pprint_printed.push_str(" ");
                 pprint_printed.push_str(&i.to_string());
                 pprint_printed.push_str(" ");
-            
-            },
+
+            }
             Literal::Str(ref s) => {
                 pprint_printed.push_str(" ");
                 pprint_printed.push_str(s.as_str())
-            },
+            }
             Literal::False(_) => {
                 pprint_printed.push_str(" false");
-            },
+            }
             Literal::True(_) => {
                 pprint_printed.push_str(" true");
-            },
+            }
             Literal::Nil => {
                 pprint_printed.push_str(" nil");
-            },
+            }
         }
     }
 }
 
-impl <'a> PrettyPrint for Expression<'a> {
+impl<'a> PrettyPrint for Expression<'a> {
     fn pprint_into(&self, pprinted: &mut String) -> () {
         match *self {
             Expression::Grouping(ref g) => g.pprint_into(pprinted),

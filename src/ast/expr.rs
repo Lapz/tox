@@ -185,9 +185,9 @@ use token::TokenType;
 pub(crate) fn get_assign_type(token: &TokenType) -> AssignOperator {
     match *token {
         TokenType::BANGEQUAL => AssignOperator::StarEqual,
-       TokenType::MINUSASSIGN=> AssignOperator::MinusEqual,
+        TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
         TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
-       TokenType::ASSIGN => AssignOperator::Equal,
+        TokenType::ASSIGN => AssignOperator::Equal,
         _ => unreachable!(),
     }
 }
@@ -201,12 +201,21 @@ pub(crate) fn get_operator(token: Option<TokenType>) -> Operator {
         Some(TokenType::LESSTHANEQUAL) => Operator::LessThanEqual,
         Some(TokenType::GREATERTHAN) => Operator::GreaterThan,
         Some(TokenType::GREATERTHANEQUAL) => Operator::GreaterThanEqual,
-        Some(TokenType::PLUS) => Operator::Plus ,
+        Some(TokenType::PLUS) => Operator::Plus,
         Some(TokenType::MINUS) => Operator::Minus,
         Some(TokenType::STAR) => Operator::Star,
         Some(TokenType::SLASH) => Operator::Slash,
-        Some(TokenType::MODULO) =>Operator::Modulo,
+        Some(TokenType::MODULO) => Operator::Modulo,
         Some(TokenType::EXPONENTIAL) => Operator::Exponential,
+        _ => unreachable!(),
+    }
+}
+
+#[inline]
+pub(crate) fn get_unary_operator(token: Option<TokenType>) -> UnaryOperator {
+    match token {
+        Some(TokenType::BANG) => UnaryOperator::Bang,
+        Some(TokenType::MINUS) => UnaryOperator::Minus,
         _ => unreachable!(),
     }
 }
