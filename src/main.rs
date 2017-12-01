@@ -12,7 +12,7 @@ use lexer::Lexer;
 use parser::Parser;
 
 fn main() {
-    let input = "!=";
+    let input = "12+1";
 
     let tokens = Lexer::new(input).lex();
 

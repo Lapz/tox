@@ -54,7 +54,7 @@ impl<'a> Display for ParserError<'a> {
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
-            tokens:tokens.into_iter().peekable(),
+            tokens: tokens.into_iter().peekable(),
             loop_depth: 0,
             variable_use_maker: VariableUseMaker::new(),
         }
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
         format!("{} on {}", message, pos)
     }
 
-    
+
 
     fn advance(&mut self) -> Option<Token<'a>> {
         self.tokens.next()
@@ -75,10 +75,16 @@ impl<'a> Parser<'a> {
         self.advance().map(|t| t.token)
     }
 
-    
 
-    fn peek<F>(&mut self, mut check:F) -> bool where F:FnMut(&TokenType<'a>) ->bool, {
-        self.tokens.peek().map_or(false, |token| check(&token.token) )
+
+    fn peek<F>(&mut self, mut check: F) -> bool
+    where
+        F: FnMut(&TokenType<'a>) -> bool,
+    {
+        self.tokens.peek().map_or(
+            false,
+            |token| check(&token.token),
+        )
     }
 
     fn matched(&mut self, tokens: Vec<TokenType<'a>>, msg: &str) -> Result<bool, ParserError<'a>> {
@@ -106,11 +112,11 @@ impl<'a> Parser<'a> {
 
 
 
-    fn check(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<bool, ParserError<'a>> {
+    fn consume(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<(), ParserError<'a>> {
         match self.tokens.next() {
             Some(Token { ref token, ref pos }) => {
                 if token == &token_to_check {
-                    return Ok(true);
+                    return Ok(());
                 }
 
                 Err(ParserError::Expected(self.error(msg, *pos)))
@@ -136,96 +142,116 @@ impl<'a> Parser<'a> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
+    fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.comparison()?;
 
-        while self.matched(vec![TokenType::BANGEQUAL,TokenType::EQUALEQUAL], "Expected a \'!\' or a \'==\' ")? {
+        while self.matched(
+            vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL],
+            "Expected a \'!\' or a \'==\' ",
+        )?
+        {
 
             let operator = get_operator(self.token_type());
 
             let right_expr = self.comparison()?;
 
-            expr =  Expression::Binary(Box::new(Binary{
-                left_expr:expr,
+            expr = Expression::Binary(Box::new(Binary {
+                left_expr: expr,
                 operator,
-                right_expr
+                right_expr,
             }));
 
-            println!("token {:#?}",self.tokens);
+            println!("token {:#?}", self.tokens);
 
         }
 
-       Ok(expr)
+        Ok(expr)
 
     }
 
-    fn comparison(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
-        
+    fn comparison(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+
         let mut expr = self.addition()?;
-        
-        while self.matched(vec![], "Expected either of a \'>\', \'>=\', \'<\' , \'>= \' ")? {
+
+        while self.matched(
+            vec![],
+            "Expected either of a \'>\', \'>=\', \'<\' , \'>= \' ",
+        )?
+        {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.addition()?;
-            
-            expr = Expression::Binary(Box::new(Binary{
-                left_expr:expr,
+
+            expr = Expression::Binary(Box::new(Binary {
+                left_expr: expr,
                 operator,
-                right_expr
+                right_expr,
             }))
         }
 
         Ok(expr)
     }
 
-    fn addition(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
-        
+    fn addition(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+
         let mut expr = self.multiplication()?;
-        
-        while self.matched(vec![TokenType::MINUS,TokenType::PLUS],"Expected a \'-\' or a \'+\' ")? {
+
+        while self.matched(
+            vec![TokenType::MINUS, TokenType::PLUS],
+            "Expected a \'-\' or a \'+\' ",
+        )?
+        {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.multiplication()?;
 
-            expr = Expression::Binary(Box::new(Binary{
-                left_expr:expr,
+            expr = Expression::Binary(Box::new(Binary {
+                left_expr: expr,
                 operator,
-                right_expr
+                right_expr,
             }))
-        
+
         }
 
         Ok(expr)
     }
 
-    fn multiplication(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
+    fn multiplication(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.unary()?;
 
-        while self.matched(vec![TokenType::SLASH,TokenType::STAR], "Expected a \' \\ \' or a \'*\'")? {
+        while self.matched(
+            vec![TokenType::SLASH, TokenType::STAR],
+            "Expected a \' \\ \' or a \'*\'",
+        )?
+        {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.unary()?;
 
-            expr = Expression::Binary(Box::new(Binary{
-                left_expr:expr,
+            expr = Expression::Binary(Box::new(Binary {
+                left_expr: expr,
                 operator,
-                right_expr
+                right_expr,
             }))
         }
 
         Ok(expr)
     }
 
-    fn unary(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
-        if self.matched(vec![TokenType::BANG,TokenType::MINUS], "Expected a \' -\' or a \'! \' ")? {
+    fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        if self.matched(
+            vec![TokenType::BANG, TokenType::MINUS],
+            "Expected a \' -\' or a \'! \' ",
+        )?
+        {
             let operator = get_unary_operator(self.token_type());
 
             let right = self.unary()?;
 
-            return Ok(Expression::Unary(Box::new(Unary{
-                expr:right,
-                operator
-            })))
+            return Ok(Expression::Unary(Box::new(Unary {
+                expr: right,
+                operator,
+            })));
         }
 
         self.primary()
@@ -233,24 +259,32 @@ impl<'a> Parser<'a> {
     }
 
 
-    fn primary(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
-       match self.advance() {
-           Some(Token{ref token, ref pos}) => {
-               match *token {
-            TokenType::FALSE(ref f) => Ok(Expression::Literal(Literal::False(f))),
-          TokenType::TRUE(ref t)=> Ok(Expression::Literal(Literal::True(t))),
-           TokenType::NIL=> Ok(Expression::Literal(Literal::False)),
-          TokenType::INT(ref i)=> Ok(Expression::Literal(Literal::False)),
-           TokenType::FLOAT(ref f)=> Ok(Expression::Literal(Literal::False)),
-           TokenType::STRING(ref s) => Ok(Expression::Literal(Literal::False)),
-           TokenType::LPAREN=> Ok(Expression::Literal(Literal::False)),
+    fn primary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        match self.advance() {
+            Some(Token { ref token, ref pos }) => {
+                match *token {
+                    TokenType::FALSE(_) => Ok(Expression::Literal(Literal::False(false))),
+                    TokenType::TRUE(_) => Ok(Expression::Literal(Literal::True(true))),
+                    TokenType::NIL => Ok(Expression::Literal(Literal::Nil)),
+                    TokenType::INT(ref i) => Ok(Expression::Literal(Literal::Int(*i))),
+                    TokenType::FLOAT(ref f) => Ok(Expression::Literal(Literal::Float(*f))),
+                    TokenType::STRING(ref s) => Ok(Expression::Literal(Literal::Str(s.clone()))),
+                    TokenType::LPAREN => {
+                        let expr = self.expression()?;
+                        self.consume(
+                            TokenType::RPAREN,
+                            "Expect \')\' after expression",
+                        )?;
 
-               }
-           }
-           
-           _ => unimplemented!(),
-           None => Err(ParserError::EOF)
-       }
+                        return Ok(Expression::Grouping(Box::new(Grouping { expr })));
+
+                    }
+
+                    _ => unimplemented!(),
+                }
+            }
+            _ => unimplemented!(),
+            None => Err(ParserError::EOF),
+        }
     }
-    
 }
