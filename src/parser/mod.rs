@@ -7,7 +7,8 @@ use ast::statement::*;
 use pprint::PrettyPrint;
 
 pub struct Parser<'a> {
-    tokens: Peekable<IntoIter<Token<'a>>>,
+    tokens:Peekable<IntoIter<Token<'a>>>,
+    current:usize,
     loop_depth: i32,
     variable_use_maker: VariableUseMaker,
 }
@@ -54,7 +55,8 @@ impl<'a> Display for ParserError<'a> {
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
-            tokens: tokens.into_iter().peekable(),
+            tokens:tokens.into_iter().peekable(),
+            current:0,
             loop_depth: 0,
             variable_use_maker: VariableUseMaker::new(),
         }
@@ -64,17 +66,6 @@ impl<'a> Parser<'a> {
     fn error(&self, message: &str, pos: Postition) -> String {
         format!("{} on {}", message, pos)
     }
-
-
-
-    fn advance(&mut self) -> Option<Token<'a>> {
-        self.tokens.next()
-    }
-
-    fn token_type(&mut self) -> Option<TokenType<'a>> {
-        self.advance().map(|t| t.token)
-    }
-
 
 
     fn peek<F>(&mut self, mut check: F) -> bool
@@ -87,7 +78,7 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn matched(&mut self, tokens: Vec<TokenType<'a>>, msg: &str) -> Result<bool, ParserError<'a>> {
+    fn matched(&mut self, tokens: Vec<TokenType<'a>>, msg: &str) -> bool {
 
         let mut found = false;
 
@@ -98,19 +89,21 @@ impl<'a> Parser<'a> {
         }
 
         if found {
-            Ok(true)
+            true
         } else {
-            match self.tokens.next().map(|t| t.pos) {
-                Some(pos) => Err(ParserError::Expected(self.error(msg, pos))),
-                None => Err(ParserError::EOF),
-
-            }
+            false
         }
 
     }
 
+    fn advance(&mut self) -> Option<Token<'a>> {
+        self.tokens.next()
+    }
 
 
+    fn token_type(&mut self) -> TokenType<'a> {
+        self.advance().map(|t| t.token).unwrap()
+    }
 
     fn consume(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<(), ParserError<'a>> {
         match self.tokens.next() {
@@ -134,10 +127,7 @@ impl<'a> Parser<'a> {
 // // Expression Parsing
 
 impl<'a> Parser<'a> {
-    fn declaration(&mut self) -> Result<Statement<'a>, ParserError<'a>> {
-        unimplemented!()
-    }
-
+  
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         self.equality()
     }
@@ -148,7 +138,7 @@ impl<'a> Parser<'a> {
         while self.matched(
             vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL],
             "Expected a \'!\' or a \'==\' ",
-        )?
+        )
         {
 
             let operator = get_operator(self.token_type());
@@ -176,7 +166,7 @@ impl<'a> Parser<'a> {
         while self.matched(
             vec![],
             "Expected either of a \'>\', \'>=\', \'<\' , \'>= \' ",
-        )?
+        )
         {
             let operator = get_operator(self.token_type());
 
@@ -199,7 +189,7 @@ impl<'a> Parser<'a> {
         while self.matched(
             vec![TokenType::MINUS, TokenType::PLUS],
             "Expected a \'-\' or a \'+\' ",
-        )?
+        )
         {
             let operator = get_operator(self.token_type());
 
@@ -222,7 +212,7 @@ impl<'a> Parser<'a> {
         while self.matched(
             vec![TokenType::SLASH, TokenType::STAR],
             "Expected a \' \\ \' or a \'*\'",
-        )?
+        )
         {
             let operator = get_operator(self.token_type());
 
@@ -240,9 +230,9 @@ impl<'a> Parser<'a> {
 
     fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         if self.matched(
-            vec![TokenType::BANG, TokenType::MINUS],
-            "Expected a \' -\' or a \'! \' ",
-        )?
+            vec![TokenType::BANG, TokenType::MINUS,TokenType::PLUS],
+            "Expected a '-' or a '!' ",
+        )
         {
             let operator = get_unary_operator(self.token_type());
 
