@@ -6,7 +6,7 @@ pub mod lexer;
 pub mod pos;
 pub mod ast;
 pub mod parser;
-pub mod pprint;
+// pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;

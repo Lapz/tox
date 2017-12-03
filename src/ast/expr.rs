@@ -5,67 +5,75 @@ use std::fmt;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression<'a> {
     // The different type of expressions availabe
-    IndexExpr(Box<IndexExpr<'a>>),
-    Array(Array<'a>),
-    Assign(Box<Assign<'a>>),
-    Dict(Dictionary<'a>),
-    Binary(Box<Binary<'a>>),
-    Call(Box<Call<'a>>),
-    Grouping(Box<Grouping<'a>>),
+    IndexExpr {
+        target: Box<Expression<'a>>,
+        index: Box<Expression<'a>>,
+    },
+    Array { items: Vec<Expression<'a>> },
+    Assign {
+        handle: VariableUseHandle,
+        name: Variable<'a>,
+        kind: AssignOperator,
+        value: Box<Expression<'a>>,
+    },
+
+    Binary {
+        left_expr: Box<Expression<'a>>,
+        operator: Operator,
+        right_expr: Box<Expression<'a>>,
+    },
+    Call {
+        callee: Box<Expression<'a>>,
+        arguments: Vec<Expression<'a>>,
+    },
+    Dict { items: Vec<(Expression<'a>, Expression<'a>)>, },
+    Func {
+        parameters: Vec<Variable<'a>>,
+        body: Vec<Statement<'a>>,
+    },
+    Get {
+        object: Box<Expression<'a>>,
+        name: Variable<'a>,
+        handle: VariableUseHandle,
+    },
+    Grouping { expr: Box<Expression<'a>> },
     Literal(Literal),
-    Logical(Box<Logical<'a>>),
-    Ternary(Box<Ternary<'a>>),
-    Unary(Box<Unary<'a>>),
-    Var(Variable<'a>, VariableUseHandle),
-    Func(Box<Func<'a>>),
-    Get(Box<Get<'a>>),
-    Set(Box<Set<'a>>),
+    Logical {
+        left: Box<Expression<'a>>,
+        operator: LogicOperator,
+        right: Box<Expression<'a>>,
+    },
+
+    Set {
+        object: Box<Expression<'a>>,
+        handle: VariableUseHandle,
+        name: Variable<'a>,
+        value: Box<Expression<'a>>,
+    },
+
+    Ternary {
+        condition: Box<Expression<'a>>,
+        then_branch: Box<Expression<'a>>,
+        else_branch: Box<Expression<'a>>,
+    },
+    Unary {
+        operator: UnaryOperator,
+        expr: Box<Expression<'a>>,
+    },
+
     This(VariableUseHandle),
-}
-
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct IndexExpr<'a> {
-    pub target: Expression<'a>,
-    pub index: Expression<'a>,
+    Var(Variable<'a>, VariableUseHandle),
 }
 
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Array<'a> {
-    pub items: Vec<Expression<'a>>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Func<'a> {
-    pub parameters: Vec<Variable<'a>>,
-    pub body: Vec<Statement<'a>>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Assign<'a> {
-    pub handle: VariableUseHandle,
-    pub name: Variable<'a>,
-    pub kind: AssignOperator,
-    pub value: Expression<'a>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Binary<'a> {
-    pub left_expr: Expression<'a>,
-    pub operator: Operator,
-    pub right_expr: Expression<'a>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Call<'a> {
-    pub callee: Expression<'a>,
-    pub arguments: Vec<Expression<'a>>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Grouping<'a> {
-    pub expr: Expression<'a>,
-}
+
+
+
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Literal {
@@ -79,44 +87,8 @@ pub enum Literal {
 }
 
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Logical<'a> {
-    pub left: Expression<'a>,
-    pub operator: LogicOperator,
-    pub right: Expression<'a>,
-}
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct Dictionary<'a> {
-    pub items: Vec<(Expression<'a>, Expression<'a>)>,
-}
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Ternary<'a> {
-    pub condition: Expression<'a>,
-    pub then_branch: Expression<'a>,
-    pub else_branch: Expression<'a>,
-}
 
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Unary<'a> {
-    pub operator: UnaryOperator,
-    pub expr: Expression<'a>,
-}
-
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Get<'a> {
-    pub object: Expression<'a>,
-    pub name: Variable<'a>,
-    pub handle: VariableUseHandle,
-}
-
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Set<'a> {
-    pub object: Expression<'a>,
-    pub handle: VariableUseHandle,
-    pub name: Variable<'a>,
-    pub value: Expression<'a>,
-}
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Eq, Hash)]
 pub struct Variable<'a>(pub &'a str);

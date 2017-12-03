@@ -4,7 +4,7 @@ use std::vec::IntoIter;
 use pos::Postition;
 use ast::expr::*;
 use ast::statement::*;
-use pprint::PrettyPrint;
+// use pprint::PrettyPrint;
 
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -153,13 +153,13 @@ impl<'a> Parser<'a> {
 
             let operator = get_operator(self.token_type());
 
-            let right_expr = self.comparison()?;
+            let right_expr = Box::new(self.comparison()?);
 
-            expr = Expression::Binary(Box::new(Binary {
-                left_expr: expr,
+            expr = Expression::Binary {
+                left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }));
+            };
 
             println!("token {:#?}", self.tokens);
 
@@ -176,13 +176,13 @@ impl<'a> Parser<'a> {
         while self.matched(vec![]) {
             let operator = get_operator(self.token_type());
 
-            let right_expr = self.addition()?;
+            let right_expr = Box::new(self.addition()?);
 
-            expr = Expression::Binary(Box::new(Binary {
-                left_expr: expr,
+            expr = Expression::Binary {
+                left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }))
+            }
         }
 
         Ok(expr)
@@ -195,13 +195,13 @@ impl<'a> Parser<'a> {
         while self.matched(vec![TokenType::MINUS, TokenType::PLUS]) {
             let operator = get_operator(self.token_type());
 
-            let right_expr = self.multiplication()?;
+            let right_expr = Box::new(self.multiplication()?);
 
-            expr = Expression::Binary(Box::new(Binary {
-                left_expr: expr,
+            expr = Expression::Binary {
+                left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }))
+            }
 
         }
 
@@ -214,13 +214,13 @@ impl<'a> Parser<'a> {
         while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
             let operator = get_operator(self.token_type());
 
-            let right_expr = self.unary()?;
+            let right_expr = Box::new(self.unary()?);
 
-            expr = Expression::Binary(Box::new(Binary {
-                left_expr: expr,
+            expr = Expression::Binary {
+                left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }))
+            }
         }
 
         Ok(expr)
@@ -230,12 +230,12 @@ impl<'a> Parser<'a> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
             let operator = get_unary_operator(self.token_type());
 
-            let right = self.unary()?;
+            let right = Box::new(self.unary()?);
 
-            return Ok(Expression::Unary(Box::new(Unary {
+            return Ok(Expression::Unary {
                 expr: right,
                 operator,
-            })));
+            });
         }
 
         self.primary()
@@ -254,13 +254,13 @@ impl<'a> Parser<'a> {
                     TokenType::FLOAT(ref f) => Ok(Expression::Literal(Literal::Float(*f))),
                     TokenType::STRING(ref s) => Ok(Expression::Literal(Literal::Str(s.clone()))),
                     TokenType::LPAREN => {
-                        let expr = self.expression()?;
+                        let expr = Box::new(self.expression()?);
                         self.consume(
                             TokenType::RPAREN,
                             "Expect \')\' after expression",
                         )?;
 
-                        return Ok(Expression::Grouping(Box::new(Grouping { expr })));
+                        return Ok(Expression::Grouping { expr });
 
                     }
 
