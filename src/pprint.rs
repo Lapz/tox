@@ -99,6 +99,7 @@ impl PrettyPrint for UnaryOperator {
         match *self {
             UnaryOperator::Bang => pprint_printed.push_str("! "),
             UnaryOperator::Minus => pprint_printed.push_str("- "),
+            UnaryOperator::Plus => pprint_printed.push_str("+ "),
         }
     }
 }

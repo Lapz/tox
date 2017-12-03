@@ -12,7 +12,7 @@ use lexer::Lexer;
 use parser::Parser;
 
 fn main() {
-    let input = "12+1.1";
+    let input = "+12";
 
     let tokens = Lexer::new(input).lex();
 
@@ -29,5 +29,5 @@ fn main() {
 
     let ast = Parser::new(tokens.unwrap()).parse_single();
 
-    println!("{:?}", ast);
+    println!("{:#?}", ast);
 }

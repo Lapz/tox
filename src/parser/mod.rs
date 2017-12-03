@@ -7,8 +7,8 @@ use ast::statement::*;
 use pprint::PrettyPrint;
 
 pub struct Parser<'a> {
-    tokens:Peekable<IntoIter<Token<'a>>>,
-    current:usize,
+    tokens: Peekable<IntoIter<Token<'a>>>,
+    current: usize,
     loop_depth: i32,
     variable_use_maker: VariableUseMaker,
 }
@@ -55,11 +55,34 @@ impl<'a> Display for ParserError<'a> {
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
-            tokens:tokens.into_iter().peekable(),
-            current:0,
+            tokens: tokens.into_iter().peekable(),
+            current: 0,
             loop_depth: 0,
             variable_use_maker: VariableUseMaker::new(),
         }
+    }
+
+    pub fn parse_single(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        self.expression()
+    }
+
+    pub fn synchronize(&mut self) {
+        self.advance();
+
+        while self.peek(|token| token == &TokenType::EOF) {
+            match self.advance().map(|t| t.token) {
+                Some(TokenType::CLASS) |
+                Some(TokenType::FUNCTION) |
+                Some(TokenType::IDENTIFIER(_)) |
+                Some(TokenType::FOR) |
+                Some(TokenType::IF) |
+                Some(TokenType::WHILE) |
+                Some(TokenType::RETURN) => break,
+                None => unreachable!(),
+                _ => self.tokens.next(),
+            };
+        }
+
     }
 
 
@@ -78,7 +101,7 @@ impl<'a> Parser<'a> {
         )
     }
 
-    fn matched(&mut self, tokens: Vec<TokenType<'a>>, msg: &str) -> bool {
+    fn matched(&mut self, tokens: Vec<TokenType<'a>>) -> bool {
 
         let mut found = false;
 
@@ -88,11 +111,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        if found {
-            true
-        } else {
-            false
-        }
+        if found { true } else { false }
 
     }
 
@@ -117,17 +136,12 @@ impl<'a> Parser<'a> {
             None => Err(ParserError::EOF),
         }
     }
-
-    pub fn parse_single(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        self.expression()
-    }
 }
 
 
 // // Expression Parsing
 
 impl<'a> Parser<'a> {
-  
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         self.equality()
     }
@@ -135,11 +149,7 @@ impl<'a> Parser<'a> {
     fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.comparison()?;
 
-        while self.matched(
-            vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL],
-            "Expected a \'!\' or a \'==\' ",
-        )
-        {
+        while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
 
             let operator = get_operator(self.token_type());
 
@@ -163,11 +173,7 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.addition()?;
 
-        while self.matched(
-            vec![],
-            "Expected either of a \'>\', \'>=\', \'<\' , \'>= \' ",
-        )
-        {
+        while self.matched(vec![]) {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.addition()?;
@@ -186,11 +192,7 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.multiplication()?;
 
-        while self.matched(
-            vec![TokenType::MINUS, TokenType::PLUS],
-            "Expected a \'-\' or a \'+\' ",
-        )
-        {
+        while self.matched(vec![TokenType::MINUS, TokenType::PLUS]) {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.multiplication()?;
@@ -209,11 +211,7 @@ impl<'a> Parser<'a> {
     fn multiplication(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.unary()?;
 
-        while self.matched(
-            vec![TokenType::SLASH, TokenType::STAR],
-            "Expected a \' \\ \' or a \'*\'",
-        )
-        {
+        while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
             let operator = get_operator(self.token_type());
 
             let right_expr = self.unary()?;
@@ -229,11 +227,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        if self.matched(
-            vec![TokenType::BANG, TokenType::MINUS,TokenType::PLUS],
-            "Expected a '-' or a '!' ",
-        )
-        {
+        if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
             let operator = get_unary_operator(self.token_type());
 
             let right = self.unary()?;
@@ -273,8 +267,9 @@ impl<'a> Parser<'a> {
                     _ => unimplemented!(),
                 }
             }
-            _ => unimplemented!(),
             None => Err(ParserError::EOF),
+            Some(other) => unimplemented!(),
+
         }
     }
 }
