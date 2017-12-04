@@ -85,7 +85,7 @@ impl<'a> Lexer<'a> {
 
         (self.end, self.slice(start, self.end))
     }
-    
+
 
     fn peek<F>(&mut self, mut check: F) -> bool
     where
@@ -161,7 +161,7 @@ impl<'a> Lexer<'a> {
                 }
             }
 
-            Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch, start)), // Change the slicened start
+            Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch, start)),
             None | Some(_) => {
                 if let Ok(val) = int.parse() {
                     (end, TokenType::INT(val))

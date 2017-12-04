@@ -143,7 +143,52 @@ impl<'a> Parser<'a> {
 
 impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        self.equality()
+        self.ternary()
+    }
+
+
+    fn ternary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+        let mut condition = self.comma()?;
+
+        while self.matched(vec![TokenType::QUESTION]) {
+            self.consume(TokenType::QUESTION, "Expected a '?'")?;
+
+            let then_branch = Box::new(self.expression()?);
+
+            self.consume(
+                TokenType::COLON,
+                "Expected ':' after lhs ternary condition.",
+            )?;
+
+            let else_branch = Box::new(self.ternary()?);
+
+            condition = Expression::Ternary {
+                condition: Box::new(condition),
+                then_branch,
+                else_branch,
+            }
+        }
+
+        Ok(condition)
+    }
+
+    fn comma(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
+
+        let mut expr = self.equality()?;
+
+        while self.matched(vec![TokenType::COMMA]) {
+            let operator = get_operator(self.token_type());
+
+            let right_expr = Box::new(self.equality()?);
+
+            expr = Expression::Binary {
+                left_expr: Box::new(expr),
+                operator,
+                right_expr,
+            }
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expression<'a>, ParserError<'a>> {

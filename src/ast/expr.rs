@@ -136,6 +136,7 @@ pub enum Operator {
     GreaterThan,
     Plus,
     Minus,
+    Comma,
     Star,
     Slash,
     Modulo,
@@ -179,6 +180,7 @@ pub(crate) fn get_operator(token: TokenType) -> Operator {
         TokenType::SLASH => Operator::Slash,
         TokenType::MODULO => Operator::Modulo,
         TokenType::EXPONENTIAL => Operator::Exponential,
+        TokenType::COMMA => Operator::Comma,
         _ => unreachable!(),
     }
 }
