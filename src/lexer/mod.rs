@@ -50,9 +50,10 @@ impl<'a> Lexer<'a> {
         let end = chars.pos;
         Lexer {
             input: input,
+             end: end,
             lookahead: chars.next(),
             chars: chars,
-            end: end,
+           
         }
     }
 
@@ -187,9 +188,8 @@ impl<'a> Lexer<'a> {
 
 
     fn next(&mut self) -> Result<Token<'a>, LexerError> {
-        match self.advance() {
-            Some((start, ch)) => {
-                match ch {
+        while let Some((start, ch)) = self.advance() {
+                return match ch {
                     '.' => Ok(token_with_info(TokenType::DOT, start)),
                     '?' => Ok(token_with_info(TokenType::QUESTION, start)),
                     ';' => Ok(token_with_info(TokenType::SEMICOLON, start)),
@@ -210,7 +210,6 @@ impl<'a> Lexer<'a> {
                             self.advance();
                             Ok(token_with_info(TokenType::EQUALEQUAL, start))
                         } else {
-                            self.advance();
                             Ok(token_with_info(TokenType::ASSIGN, start))
                         }
                     }
@@ -220,7 +219,7 @@ impl<'a> Lexer<'a> {
                             self.advance();
                             Ok(token_with_info(TokenType::PLUSASSIGN, start))
                         } else {
-                            self.advance();
+    
                             Ok(token_with_info(TokenType::PLUS, start))
                         }
                     }
@@ -285,16 +284,15 @@ impl<'a> Lexer<'a> {
 
                     ch if ch.is_numeric() => self.number(start),
                     ch if is_letter_ch(ch) => Ok(self.identifier(start)),
-                    ch if ch.is_whitespace() => self.next(),
+                    ch if ch.is_whitespace() => continue,
                     ch => Err(LexerError::Unexpected(ch, start)),
                 }
             }
 
-            None => Ok(Token {
+           Ok(Token {
                 token: TokenType::EOF,
                 pos: self.end,
-            }),
-        }
+            })
     }
 
 
@@ -361,3 +359,4 @@ fn look_up_identifier(id: &str) -> TokenType {
         _ => TokenType::IDENTIFIER(id),
     }
 }
+

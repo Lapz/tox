@@ -8,7 +8,6 @@ use ast::statement::*;
 
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
-    current: usize,
     loop_depth: i32,
     variable_use_maker: VariableUseMaker,
 }
@@ -56,7 +55,7 @@ impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
-            current: 0,
+           
             loop_depth: 0,
             variable_use_maker: VariableUseMaker::new(),
         }

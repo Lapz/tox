@@ -12,7 +12,9 @@ use lexer::Lexer;
 use parser::Parser;
 
 fn main() {
-    let input = "10 == 12 ? true : false";
+    let input = "10+12";
+
+    println!("{}",input);
 
     let tokens = Lexer::new(input).lex();
 
