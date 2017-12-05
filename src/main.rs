@@ -12,26 +12,23 @@ pub mod interpreter;
 
 use lexer::Lexer;
 use parser::Parser;
+use interpreter::Interpreter;
 
 fn main() {
-    let input = "10+12";
+    let input = "10 *\"h\"";
 
     println!("{}",input);
 
     let tokens = Lexer::new(input).lex();
 
-    // match tokens {
-    //     Ok(tokens) => for token in tokens {
-    //         println!("{:?}", token);
-    //     },
-    //     Err(errors) => for e in errors {
-    //         println!("{}", e);
-    //     },
-    // };
 
     println!("{:?}", tokens);
 
     let ast = Parser::new(tokens.unwrap()).parse_single();
 
     println!("{:#?}", ast);
+
+    let result = Interpreter::new().interpret(&ast.unwrap()).unwrap();
+
+    println!("{:#?}",result);
 }

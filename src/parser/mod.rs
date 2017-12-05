@@ -217,7 +217,7 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.addition()?;
 
-        while self.matched(vec![]) {
+        while self.matched(vec![TokenType::LESSTHAN,TokenType::LESSTHANEQUAL,TokenType::GREATERTHAN,TokenType::GREATERTHANEQUAL]) {
             let operator = get_operator(self.token_type());
 
             let right_expr = Box::new(self.addition()?);
