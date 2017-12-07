@@ -4,6 +4,7 @@ use std::vec::IntoIter;
 use pos::Postition;
 use ast::expr::*;
 use ast::statement::*;
+use pos::WithPos;
 // use pprint::PrettyPrint;
 
 pub struct Parser<'a> {
@@ -61,8 +62,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_single(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        self.expression()
+    pub fn parse_single(&mut self) -> Result<WithPos<Expression<'a>>, ParserError<'a>> {
+        let pos = self.tokens.peek().map(|t| t.pos).unwrap();
+        
+        Ok(WithPos::new(self.expression()?,pos))
     }
 
     pub fn synchronize(&mut self) {

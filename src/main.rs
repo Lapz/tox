@@ -18,7 +18,7 @@ use interpreter::Interpreter;
 use inference::analyse;
 
 fn main() {
-    let input = "10+10";
+    let input = "10/0";
 
     println!("{}",input);
 

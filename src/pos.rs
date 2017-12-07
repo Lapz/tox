@@ -8,6 +8,21 @@ pub struct CharPosition<'a> {
     pub chars: Chars<'a>,
 }
 
+#[derive(Debug)]
+pub struct WithPos<T> {
+    pub node:T,
+    pos:Postition
+}
+
+impl <T> WithPos<T> {
+   pub fn new(node:T,pos:Postition) -> Self {
+        WithPos{
+            node,
+            pos
+        }
+    }
+}
+
 impl<'a> CharPosition<'a> {
     pub fn new(input: &'a str) -> Self {
         CharPosition {
