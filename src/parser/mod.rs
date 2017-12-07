@@ -55,7 +55,7 @@ impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
-           
+
             loop_depth: 0,
             variable_use_maker: VariableUseMaker::new(),
         }
@@ -217,7 +217,13 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.addition()?;
 
-        while self.matched(vec![TokenType::LESSTHAN,TokenType::LESSTHANEQUAL,TokenType::GREATERTHAN,TokenType::GREATERTHANEQUAL]) {
+        while self.matched(vec![
+            TokenType::LESSTHAN,
+            TokenType::LESSTHANEQUAL,
+            TokenType::GREATERTHAN,
+            TokenType::GREATERTHANEQUAL,
+        ])
+        {
             let operator = get_operator(self.token_type());
 
             let right_expr = Box::new(self.addition()?);

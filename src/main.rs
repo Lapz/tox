@@ -8,14 +8,17 @@ pub mod ast;
 pub mod parser;
 pub mod object;
 pub mod interpreter;
+pub mod inference;
+pub mod types;
 // pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
 use interpreter::Interpreter;
+use inference::analyse;
 
 fn main() {
-    let input = "10 *\"h\"";
+    let input = "10+10";
 
     println!("{}",input);
 
@@ -24,11 +27,14 @@ fn main() {
 
     println!("{:?}", tokens);
 
-    let ast = Parser::new(tokens.unwrap()).parse_single();
+    let ast = Parser::new(tokens.unwrap()).parse_single().unwrap();
 
     println!("{:#?}", ast);
 
-    let result = Interpreter::new().interpret(&ast.unwrap()).unwrap();
+    println!("{:#?}",analyse(&ast));
+
+
+    let result = Interpreter::new().interpret(&ast).unwrap();
 
     println!("{:#?}",result);
 }

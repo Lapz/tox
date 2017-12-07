@@ -1,8 +1,8 @@
-use std::ops::{Not};
+use std::ops::Not;
 use std::cmp::Ordering;
 
 
-#[derive(Debug,PartialEq,Clone,PartialOrd)]
+#[derive(Debug, PartialEq, Clone, PartialOrd)]
 pub enum Object {
     Float(f64),
     Int(i64),
@@ -16,7 +16,7 @@ impl Not for Object {
     type Output = Object;
 
     fn not(self) -> Object {
-        match self  {
+        match self {
             Object::Nil => Object::Bool(true),
             Object::Bool(b) => Object::Bool(!b),
             _ => Object::Bool(false),
