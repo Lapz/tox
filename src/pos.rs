@@ -11,7 +11,7 @@ pub struct CharPosition<'a> {
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub struct WithPos<T> {
     pub node: T,
-    pos: Postition,
+    pub pos: Postition,
 }
 
 #[derive(Debug, Copy, PartialOrd, Clone, PartialEq)]

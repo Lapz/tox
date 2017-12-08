@@ -20,6 +20,13 @@ pub enum Statement<'a> {
         body: Box<WithPos<Statement<'a>>>,
     },
 
+    ForStmt {
+        initializer: Box<WithPos<Statement<'a>>>,
+        condition: Expression<'a>,
+        increment: Expression<'a>,
+        body: Box<WithPos<Statement<'a>>>,
+    },
+
     Function {
         name: Variable<'a>,
         body: Expression<'a>,
@@ -38,13 +45,4 @@ pub enum Statement<'a> {
 pub struct Class<'a> {
     pub name: Variable<'a>,
     pub methods: Vec<Statement<'a>>,
-}
-
-
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct For<'a> {
-    pub initializer: Statement<'a>,
-    pub condition: Expression<'a>,
-    pub increment: Expression<'a>,
-    pub body: Statement<'a>,
 }

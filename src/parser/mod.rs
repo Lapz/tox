@@ -221,7 +221,28 @@ impl<'a> Parser<'a> {
 
         if self.recognise(TokenType::LBRACE) {
             self.block()
-        } else {
+        } else if self.recognise(TokenType::BREAK) {
+            self.break_statement()
+        }
+        else if self.recognise(TokenType::CONTINUE) {
+            self.continue_statement()
+        }
+        else if self.recognise(TokenType::RETURN){
+            self.return_statement()
+        }
+        else if self.recognise(TokenType::IF){
+            self.if_statement()
+        }
+        else if self.recognise(TokenType::DO){
+            self.do_statement()
+        }
+        else if self.recognise(TokenType::WHILE) {
+            self.while_statement()
+        }
+        else if self.recognise(TokenType::FOR) {
+            self.for_statement()
+        }
+        else {
             self.expression_statement()
         }
     }
@@ -275,6 +296,77 @@ impl<'a> Parser<'a> {
 
     // Control Flow Statements
 
+
+    fn for_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
+        let for_pos = self.get_pos();
+        self.consume(TokenType::LPAREN, "Expected '(' after 'for'")?;
+
+        let mut initi = None;
+
+        if self.recognise(TokenType::SEMICOLON) {
+            self.advance();
+        } else if self.recognise(TokenType::VAR) {
+            initi = Some(self.var_declaration()?);
+        } else {
+            initi = Some(self.expression_statement()?);
+        }
+
+        let mut condition = None;
+
+        if self.peek(|token| token != &TokenType::SEMICOLON) {
+            condition = Some(self.expression()?);
+        }
+
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expected ';' after loop condition .",
+        )?;
+
+        let mut increment = None;
+
+        if self.peek(|token| token != &TokenType::RPAREN) {
+            increment = Some(self.expression()?);
+        }
+
+        let increment_pos = self.consume_get_pos(
+            TokenType::RPAREN,
+            "Expected ')' after for clauses.",
+        )?;
+
+        self.loop_depth += 1;
+
+        let mut body = self.statement()?;
+        let body_pos = body.pos.clone();
+
+        if increment != None {
+            body = WithPos::new(
+                Statement::Block(vec![body, WithPos::new(Statement::ExpressionStmt(increment.unwrap()),increment_pos)]),
+                body_pos
+            );
+        }else if condition == None {
+            condition = Some(Expression::Literal(Literal::True(true)));
+        }
+
+        body = WithPos::new(Statement::WhileStmt{
+            condition:condition.unwrap(),
+            body:Box::new(body),
+        },body_pos);
+
+        if initi != None {
+            let mut statements = vec![];
+
+            statements.push(initi.unwrap());
+            statements.push(body);
+
+            body = WithPos::new(Statement::Block(statements),body_pos)
+        }
+
+        self.loop_depth -= 1;
+ 
+        Ok(body)
+
+    }
+
     fn do_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
         let do_pos = self.get_pos();
 
@@ -304,7 +396,7 @@ impl<'a> Parser<'a> {
     }
 
     fn while_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
-        let pos = self.get_pos(); // Eats the while;
+        let while_pos = self.get_pos(); // Eats the while;
 
         self.consume(TokenType::LPAREN, "Expected '(' after while'")?;
 
@@ -326,11 +418,11 @@ impl<'a> Parser<'a> {
 
         self.loop_depth -= 1;
 
-        Ok(WithPos::new(while_st, pos))
+        Ok(WithPos::new(while_st, while_pos))
     }
 
     fn if_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
-        let pos = self.get_pos(); // Eats the if ;
+        let if_pos = self.get_pos(); // Eats the if ;
 
         self.consume(
             TokenType::LPAREN,
@@ -354,7 +446,7 @@ impl<'a> Parser<'a> {
                     then_branch,
                     else_branch,
                 },
-                pos,
+                if_pos,
             ));
         }
 
@@ -364,7 +456,7 @@ impl<'a> Parser<'a> {
                 then_branch,
                 else_branch,
             },
-            pos,
+            if_pos,
         ))
 
     }
@@ -404,10 +496,10 @@ impl<'a> Parser<'a> {
 
     fn declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
         if self.recognise(TokenType::VAR) {
-            return self.var_declaration();
+            self.var_declaration()
+        } else {
+            self.statement()
         }
-
-        unimplemented!()
     }
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
@@ -699,7 +791,10 @@ impl<'a> Parser<'a> {
 
                     }
 
-                    _ => unimplemented!(),
+                    _ => {
+                        println!("{:?}",token.clone());
+                        unimplemented!()
+                    },
                 }
             }
             None => Err(ParserError::EOF),
