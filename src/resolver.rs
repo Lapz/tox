@@ -107,7 +107,7 @@ impl<'a> Resolver<'a> {
         !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&false)
     }
 
-    pub fn declare(&mut self, name: Variable<'a>, pos: Postition) -> Result<(), ResolverError> {
+    fn declare(&mut self, name: Variable<'a>, pos: Postition) -> Result<(), ResolverError> {
         if self.scopes.is_empty() {
             return Ok(());
         }
@@ -121,7 +121,7 @@ impl<'a> Resolver<'a> {
             );
             return Err(ResolverError::AllReadyDecleared(self.error(&msg, pos)));
         }
-
+        
         self.scopes[index].insert(name, false);
 
         Ok(())
@@ -175,7 +175,7 @@ impl<'a> Resolver<'a> {
                     self.declare(param.clone(), pos)?;
                     self.define(param.clone());
                 }
-                
+
                 self.resolve_statement(body)?;
 
                 self.end_scope();
