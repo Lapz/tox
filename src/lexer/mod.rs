@@ -50,9 +50,9 @@ impl<'a> Lexer<'a> {
         let end = chars.pos;
         Lexer {
             input: input,
+            end: end,
             lookahead: chars.next(),
             chars: chars,
-            end: end,
         }
     }
 
@@ -85,6 +85,7 @@ impl<'a> Lexer<'a> {
 
         (self.end, self.slice(start, self.end))
     }
+
 
     fn peek<F>(&mut self, mut check: F) -> bool
     where
@@ -143,7 +144,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn number(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
-        let (_, int) = self.take_whilst(start, |c| c.is_numeric());
+        let (end, int) = self.take_whilst(start, |c| c.is_numeric());
 
         let (_, token) = match self.lookahead {
             Some((_, '.')) => {
@@ -160,10 +161,10 @@ impl<'a> Lexer<'a> {
                 }
             }
 
-            Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch, start)), // Change the slicened start
+            Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch, start)),
             None | Some(_) => {
                 if let Ok(val) = int.parse() {
-                    (start, TokenType::INT(val))
+                    (end, TokenType::INT(val))
                 } else {
                     return Err(LexerError::EOF); // change
                 }
@@ -186,114 +187,110 @@ impl<'a> Lexer<'a> {
 
 
     fn next(&mut self) -> Result<Token<'a>, LexerError> {
-        match self.advance() {
-            Some((start, ch)) => {
-                match ch {
-                    '.' => Ok(token_with_info(TokenType::DOT, start)),
-                    '?' => Ok(token_with_info(TokenType::QUESTION, start)),
-                    ';' => Ok(token_with_info(TokenType::SEMICOLON, start)),
-                    '{' => Ok(token_with_info(TokenType::LBRACE, start)),
-                    '}' => Ok(token_with_info(TokenType::RBRACE, start)),
-                    '[' => Ok(token_with_info(TokenType::LBRACKET, start)),
-                    ']' => Ok(token_with_info(TokenType::RBRACKET, start)),
-                    '(' => Ok(token_with_info(TokenType::LPAREN, start)),
-                    ')' => Ok(token_with_info(TokenType::RPAREN, start)),
-                    ',' => Ok(token_with_info(TokenType::COMMA, start)),
-                    ':' => Ok(token_with_info(TokenType::COLON, start)),
-                    '^' => Ok(token_with_info(TokenType::EXPONENTIAL, start)),
-                    '%' => Ok(token_with_info(TokenType::MODULO, start)),
-                    '"' => self.string_literal(start),
+        while let Some((start, ch)) = self.advance() {
+            return match ch {
+                '.' => Ok(token_with_info(TokenType::DOT, start)),
+                '?' => Ok(token_with_info(TokenType::QUESTION, start)),
+                ';' => Ok(token_with_info(TokenType::SEMICOLON, start)),
+                '{' => Ok(token_with_info(TokenType::LBRACE, start)),
+                '}' => Ok(token_with_info(TokenType::RBRACE, start)),
+                '[' => Ok(token_with_info(TokenType::LBRACKET, start)),
+                ']' => Ok(token_with_info(TokenType::RBRACKET, start)),
+                '(' => Ok(token_with_info(TokenType::LPAREN, start)),
+                ')' => Ok(token_with_info(TokenType::RPAREN, start)),
+                ',' => Ok(token_with_info(TokenType::COMMA, start)),
+                ':' => Ok(token_with_info(TokenType::COLON, start)),
+                '^' => Ok(token_with_info(TokenType::EXPONENTIAL, start)),
+                '%' => Ok(token_with_info(TokenType::MODULO, start)),
+                '"' => self.string_literal(start),
 
-                    '=' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::EQUALEQUAL, start))
-                        } else {
-                            self.advance();
-                            Ok(token_with_info(TokenType::ASSIGN, start))
-                        }
+                '=' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::EQUALEQUAL, start))
+                    } else {
+                        Ok(token_with_info(TokenType::ASSIGN, start))
                     }
-
-                    '+' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::PLUSASSIGN, start))
-                        } else {
-                            self.advance();
-                            Ok(token_with_info(TokenType::PLUS, start))
-                        }
-                    }
-
-                    '-' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::MINUSASSIGN, start))
-                        } else {
-                            Ok(token_with_info(TokenType::MINUS, start))
-                        }
-                    }
-
-                    '*' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::STARASSIGN, start))
-                        } else {
-                            Ok(token_with_info(TokenType::STAR, start))
-                        }
-                    }
-
-                    '/' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::SLASHASSIGN, start))
-                        } else if self.peek(|ch| ch == '/') {
-                            self.advance();
-                            Ok(self.line_comment(start))
-                        } else if self.peek(|ch| ch == '*') {
-                            self.block_comment(start)
-                        } else {
-                            Ok(token_with_info(TokenType::SLASH, start))
-                        }
-                    }
-
-                    '!' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::BANGEQUAL, start))
-                        } else {
-                            Ok(token_with_info(TokenType::BANG, start))
-                        }
-                    }
-
-                    '>' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::GREATERTHANEQUAL, start))
-                        } else {
-                            Ok(token_with_info(TokenType::GREATERTHAN, start))
-                        }
-                    }
-                    '<' => {
-                        if self.peek(|ch| ch == '=') {
-                            self.advance();
-                            Ok(token_with_info(TokenType::LESSTHANEQUAL, start))
-                        } else {
-                            Ok(token_with_info(TokenType::LESSTHAN, start))
-                        }
-                    }
-
-                    ch if ch.is_numeric() => self.number(start),
-                    ch if is_letter_ch(ch) => Ok(self.identifier(start)),
-                    ch if ch.is_whitespace() => self.next(),
-                    ch => Err(LexerError::Unexpected(ch, start)),
                 }
-            }
 
-            None => Ok(Token {
-                token: TokenType::EOF,
-                pos: self.end,
-            }),
+                '+' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::PLUSASSIGN, start))
+                    } else {
+                        Ok(token_with_info(TokenType::PLUS, start))
+                    }
+                }
+
+                '-' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::MINUSASSIGN, start))
+                    } else {
+                        Ok(token_with_info(TokenType::MINUS, start))
+                    }
+                }
+
+                '*' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::STARASSIGN, start))
+                    } else {
+                        Ok(token_with_info(TokenType::STAR, start))
+                    }
+                }
+
+                '/' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::SLASHASSIGN, start))
+                    } else if self.peek(|ch| ch == '/') {
+                        self.advance();
+                        Ok(self.line_comment(start))
+                    } else if self.peek(|ch| ch == '*') {
+                        self.block_comment(start)
+                    } else {
+                        Ok(token_with_info(TokenType::SLASH, start))
+                    }
+                }
+
+                '!' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::BANGEQUAL, start))
+                    } else {
+                        Ok(token_with_info(TokenType::BANG, start))
+                    }
+                }
+
+                '>' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::GREATERTHANEQUAL, start))
+                    } else {
+                        Ok(token_with_info(TokenType::GREATERTHAN, start))
+                    }
+                }
+                '<' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::LESSTHANEQUAL, start))
+                    } else {
+                        Ok(token_with_info(TokenType::LESSTHAN, start))
+                    }
+                }
+
+                ch if ch.is_numeric() => self.number(start),
+                ch if is_letter_ch(ch) => Ok(self.identifier(start)),
+                ch if ch.is_whitespace() => continue,
+                ch => Err(LexerError::Unexpected(ch, start)),
+            };
         }
+
+        Ok(Token {
+            token: TokenType::EOF,
+            pos: self.end,
+        })
     }
 
 

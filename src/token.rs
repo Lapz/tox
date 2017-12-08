@@ -89,40 +89,40 @@ pub enum TokenType<'a> {
     STRING(String),
 
     // Assignment
-    ASSIGN, // =
-    PLUSASSIGN, // +=
+    ASSIGN,      // =
+    PLUSASSIGN,  // +=
     MINUSASSIGN, // -=
-    STARASSIGN, // *=
+    STARASSIGN,  // *=
     SLASHASSIGN, // /=
     // Operators
-    PLUS, // +
-    MINUS, // -
-    BANG, // !
-    STAR, // *
-    SLASH, // /
-    MODULO, // %
+    PLUS,        // +
+    MINUS,       // -
+    BANG,        // !
+    STAR,        // *
+    SLASH,       // /
+    MODULO,      // %
     EXPONENTIAL, // ^
 
     // Puntuation
-    DOT, // .
-    QUESTION, // ?
-    COLON, // :
-    COMMA, // ,
-    COMMENT, // //
+    DOT,       // .
+    QUESTION,  // ?
+    COLON,     // :
+    COMMA,     // ,
+    COMMENT,   // //
     SEMICOLON, // ;
-    LPAREN, // (
-    RPAREN, // )
-    LBRACKET, // [
-    RBRACKET, // ]
-    LBRACE, // {
-    RBRACE, // }
+    LPAREN,    // (
+    RPAREN,    // )
+    LBRACKET,  // [
+    RBRACKET,  // ]
+    LBRACE,    // {
+    RBRACE,    // }
 
     // Comparison
-    LESSTHAN, // <
-    GREATERTHAN, // >
-    EQUALEQUAL, // ==
-    BANGEQUAL, // !=
-    LESSTHANEQUAL, // <=
+    LESSTHAN,         // <
+    GREATERTHAN,      // >
+    EQUALEQUAL,       // ==
+    BANGEQUAL,        // !=
+    LESSTHANEQUAL,    // <=
     GREATERTHANEQUAL, // =>
     // Keywords,
     FUNCTION,
@@ -148,7 +148,7 @@ pub enum TokenType<'a> {
     // Other
     ILLEGAL(&'a char),
     EOF,
-    TAB, // NEEDED FOR LINE REPORTING
+    TAB,   // NEEDED FOR LINE REPORTING
     NLINE, // NEEDED FOR LINE REPORTING
     SPACE, // NEEDED FOR LINE REPORTING
 }

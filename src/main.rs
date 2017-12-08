@@ -6,28 +6,45 @@ pub mod lexer;
 pub mod pos;
 pub mod ast;
 pub mod parser;
-pub mod pprint;
+pub mod object;
+pub mod interpreter;
+pub mod inference;
+pub mod types;
+// pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
+use interpreter::Interpreter;
+use inference::analyse;
 
 fn main() {
-    let input = "12+1";
+    let input = "
+var a = 0;
+var b = 1;
+
+while (a < 10000) {
+    print(a);
+    var temp = a;
+    a = b;
+    b = temp + b;
+}
+";
+
+    println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
 
-    // match tokens {
-    //     Ok(tokens) => for token in tokens {
-    //         println!("{:?}", token);
-    //     },
-    //     Err(errors) => for e in errors {
-    //         println!("{}", e);
-    //     },
-    // };
 
-    println!("{:?}", tokens);
+    println!("{:#?}", tokens);
 
-    let ast = Parser::new(tokens.unwrap()).parse_single();
+    let ast = Parser::new(tokens.unwrap()).parse().unwrap();
 
-    println!("{:?}", ast);
+    println!("{:#?}", ast);
+
+    // println!("{:#?}",analyse(&ast));
+
+
+    // let result = Interpreter::new().interpret(&ast).unwrap();
+
+    // println!("{:#?}", result);
 }

@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
-
-
-    use token::{Postition, Token, TokenType};
+    use pos::Postition;
+    use token::{Token, TokenType};
     use lexer::Lexer;
 
 
@@ -26,10 +25,9 @@ mod tests {
 
         let lexer_tokens = lexer.lex().unwrap();
 
-        let expected_tokens =
-            vec![
-                add_token(1, 1, 0, TokenType::STRING(String::from("This is a string"))),
-            ];
+        let expected_tokens = vec![
+            add_token(1, 1, 0, TokenType::STRING(String::from("This is a string"))),
+        ];
 
         assert_eq!(lexer_tokens, expected_tokens);
     }
