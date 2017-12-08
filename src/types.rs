@@ -4,19 +4,19 @@ use ast::expr::Variable;
 #[derive(Debug)]
 pub enum TypeError {
     Recursive,
-    Expected(Type)
+    Expected(Type),
 }
 pub struct Unique {
-    id:i64
+    id: i64,
 }
 
-pub struct TypeEnv<'a>(HashMap<Variable<'a>,Type>);
+pub struct TypeEnv<'a>(HashMap<Variable<'a>, Type>);
 
 pub struct TypeVar(i64);
 
 impl Unique {
     fn new() -> Self {
-        Unique{id:0}
+        Unique { id: 0 }
     }
 
     fn next(&mut self) -> TypeVar {
@@ -27,7 +27,7 @@ impl Unique {
     }
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Int,
     Str,

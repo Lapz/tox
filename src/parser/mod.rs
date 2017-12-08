@@ -6,7 +6,7 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 // use pprint::PrettyPrint;
-
+#[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
@@ -62,13 +62,40 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_single(&mut self) -> Result<WithPos<Expression<'a>>, ParserError<'a>> {
-        let pos = self.tokens.peek().map(|t| t.pos).unwrap();
-        
-        Ok(WithPos::new(self.expression()?,pos))
+    pub fn parse(&mut self) -> Result<Vec<WithPos<Statement<'a>>>, Vec<ParserError<'a>>> {
+        let mut statements = vec![];
+
+        let mut errors = vec![];
+
+        while self.tokens.peek() != None {
+            match self.declaration(){
+                Ok(statement) => statements.push(statement),
+                Err(e) => {
+                    match self.synchronize() {
+                        Ok(()) => (),
+                        Err(e) => errors.push(e),
+                    }
+                    errors.push(e)
+                }
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(statements)
+        } else {
+            Err(errors)
+        }
+
+
     }
 
-    pub fn synchronize(&mut self) {
+    pub fn parse_single(&mut self) -> Result<WithPos<Expression<'a>>, ParserError<'a>> {
+        let pos = self.tokens.peek().map(|t| t.pos).unwrap();
+
+        Ok(WithPos::new(self.expression()?, pos))
+    }
+
+    pub fn synchronize(&mut self) -> Result<(),ParserError<'a>> {
         self.advance();
 
         while self.peek(|token| token == &TokenType::EOF) {
@@ -84,6 +111,8 @@ impl<'a> Parser<'a> {
                 _ => self.tokens.next(),
             };
         }
+
+        Ok(())
 
     }
 
@@ -101,6 +130,14 @@ impl<'a> Parser<'a> {
             false,
             |token| check(&token.token),
         )
+    }
+
+    fn recognise(&mut self, token:TokenType<'a>) -> bool {
+        if self.peek(|peeked| peeked == &token) {
+            return true
+        }
+
+        false
     }
 
     fn matched(&mut self, tokens: Vec<TokenType<'a>>) -> bool {
@@ -125,7 +162,7 @@ impl<'a> Parser<'a> {
     fn token_type(&mut self) -> TokenType<'a> {
         self.advance().map(|t| t.token).unwrap()
     }
-
+    
     fn consume(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<(), ParserError<'a>> {
         match self.tokens.next() {
             Some(Token { ref token, ref pos }) => {
@@ -138,11 +175,92 @@ impl<'a> Parser<'a> {
             None => Err(ParserError::EOF),
         }
     }
+
+    fn consume_get_pos(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<Postition, ParserError<'a>> {
+        match self.tokens.next() {
+            Some(Token { ref token, ref pos }) => {
+                if token == &token_to_check {
+                    return Ok(*pos);
+                }
+
+                Err(ParserError::Expected(self.error(msg, *pos)))
+            }
+            None => Err(ParserError::EOF),
+        }
+    }
+
+     fn consume_name_pos(&mut self,msg: &str) -> Result<(Variable<'a>,Postition), ParserError<'a>> {
+        match self.tokens.next() {
+            Some(Token {token:TokenType::IDENTIFIER(ref ident),  pos }) => Ok((Variable(ident),pos)),
+            Some (Token{ ref pos,..}) => Err(ParserError::Expected(self.error(msg, *pos))),
+            None => Err(ParserError::EOF),
+        }
+    }
+
+    fn get_pos(&mut self) -> Postition {
+        match self.tokens.next() {
+            Some(Token {ref pos, ..}) => {
+                    return *pos
+            }
+            _ => unreachable!()
+        }
+    }
+
+
+
+}
+
+// Statements
+impl<'a> Parser<'a> {
+    fn statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
+        self.expression_statement()
+    }
+
+    fn expression_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
+        let expr = self.expression()?;
+
+        let pos = self.consume_get_pos(
+            TokenType::SEMICOLON,
+            "Expected \';\' after value.",
+        )?;
+
+
+        Ok(WithPos::new(Statement::ExpressionStmt(expr), pos))
+    }
+
+    fn declaration(&mut self) -> Result<WithPos<Statement<'a>>,ParserError<'a>> {
+        if self.recognise(TokenType::VAR) {
+            return self.var_declaration();
+        }
+
+        unimplemented!()
+    }
+
+    fn var_declaration(&mut self) -> Result<WithPos<Statement<'a>>,ParserError<'a>> {
+        let (name,pos) = self.consume_name_pos("Expected an IDENTIFIER after a \'var\' ")?;
+        
+        if self.recognise(TokenType::SEMICOLON) {
+            self.advance();
+
+            let value = Expression::Literal(Literal::Nil);
+
+            return Ok(WithPos::new(Statement::Var(name,value),pos  ))
+        }
+
+        if self.matched(vec![TokenType::ASSIGN,TokenType::MINUSASSIGN, TokenType::PLUSASSIGN,TokenType::SLASHASSIGN,TokenType::STARASSIGN]) {
+            self.advance();
+            let expr = self.expression()?;
+            self.consume(TokenType::SEMICOLON,"Expect \';\' after variable decleration.")?;
+            return Ok(WithPos::new(Statement::Var(name,expr),pos))
+        }
+
+       Err(ParserError::Expected(self.error("Expected an assignment",pos)))
+
+    }
 }
 
 
-// // Expression Parsing
-
+// Expression Parsing
 impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         self.ternary()
@@ -306,6 +424,7 @@ impl<'a> Parser<'a> {
                     TokenType::INT(ref i) => Ok(Expression::Literal(Literal::Int(*i))),
                     TokenType::FLOAT(ref f) => Ok(Expression::Literal(Literal::Float(*f))),
                     TokenType::STRING(ref s) => Ok(Expression::Literal(Literal::Str(s.clone()))),
+                    TokenType::IDENTIFIER(ref i) => Ok(Expression::Var(Variable(i),self.variable_use_maker.next()  )),
                     TokenType::LPAREN => {
                         let expr = Box::new(self.expression()?);
                         self.consume(

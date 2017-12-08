@@ -18,23 +18,23 @@ use interpreter::Interpreter;
 use inference::analyse;
 
 fn main() {
-    let input = "10/0";
+    let input = "var a = 10/2;";
 
-    println!("{}",input);
+    println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
 
 
-    println!("{:?}", tokens);
+    println!("{:#?}", tokens);
 
-    let ast = Parser::new(tokens.unwrap()).parse_single().unwrap();
+    let ast = Parser::new(tokens.unwrap()).parse().unwrap();
 
     println!("{:#?}", ast);
 
-    println!("{:#?}",analyse(&ast));
+    // println!("{:#?}",analyse(&ast));
 
 
-    let result = Interpreter::new().interpret(&ast).unwrap();
+    // let result = Interpreter::new().interpret(&ast).unwrap();
 
-    println!("{:#?}",result);
+    // println!("{:#?}", result);
 }

@@ -10,16 +10,13 @@ pub struct CharPosition<'a> {
 
 #[derive(Debug)]
 pub struct WithPos<T> {
-    pub node:T,
-    pos:Postition
+    pub node: T,
+    pos: Postition,
 }
 
-impl <T> WithPos<T> {
-   pub fn new(node:T,pos:Postition) -> Self {
-        WithPos{
-            node,
-            pos
-        }
+impl<T> WithPos<T> {
+    pub fn new(node: T, pos: Postition) -> Self {
+        WithPos { node, pos }
     }
 }
 
