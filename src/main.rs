@@ -38,7 +38,7 @@ fn main() {
     
     let mut resolver = Resolver::new();
 
-    println!("{#:?}",resolver.resolve(ast).unwrap());
+    println!("{:#?}",resolver.resolve(ast).unwrap());
 
     println!("{:#?}", resolver);
 
