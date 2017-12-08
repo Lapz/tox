@@ -1,23 +1,23 @@
 use ast::expr::{Expression, Variable};
-
+use pos::WithPos;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement<'a> {
     ExpressionStmt(Expression<'a>),
     PPrint(Expression<'a>),
     Var(Variable<'a>, Expression<'a>),
-    Block(Vec<Statement<'a>>),
+    Block(Vec<WithPos<Statement<'a>>>),
     Class {
         name: Variable<'a>,
         methods: Vec<Statement<'a>>,
     },
     IfStmt {
         condition: Expression<'a>,
-        then_branch: Box<Statement<'a>>,
-        else_branch: Option<Box<Statement<'a>>>,
+        then_branch: Box<WithPos<Statement<'a>>>,
+        else_branch: Option<Box<WithPos<Statement<'a>>>>,
     },
     WhileStmt {
         condition: Expression<'a>,
-        body: Box<Statement<'a>>,
+        body: Box<WithPos<Statement<'a>>>,
     },
 
     Function {
@@ -27,7 +27,7 @@ pub enum Statement<'a> {
 
     DoStmt {
         condition: Expression<'a>,
-        bodu: Box<Statement<'a>>,
+        body: Box<WithPos<Statement<'a>>>,
     },
     Break,
     Continue,

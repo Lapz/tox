@@ -8,12 +8,18 @@ pub struct CharPosition<'a> {
     pub chars: Chars<'a>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub struct WithPos<T> {
     pub node: T,
     pos: Postition,
 }
 
+#[derive(Debug, Copy, PartialOrd, Clone, PartialEq)]
+pub struct Postition {
+    pub line: i64,
+    pub column: i64,
+    pub absolute: usize,
+}
 impl<T> WithPos<T> {
     pub fn new(node: T, pos: Postition) -> Self {
         WithPos { node, pos }
@@ -45,12 +51,7 @@ impl<'a> Iterator for CharPosition<'a> {
 }
 
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Postition {
-    pub line: i64,
-    pub column: i64,
-    pub absolute: usize,
-}
+
 
 impl Display for Postition {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
