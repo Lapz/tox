@@ -1,4 +1,5 @@
 use ast::statement::Statement;
+use pos::WithPos;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
@@ -29,7 +30,7 @@ pub enum Expression<'a> {
     Dict { items: Vec<(Expression<'a>, Expression<'a>)>, },
     Func {
         parameters: Vec<Variable<'a>>,
-        body: Vec<Statement<'a>>,
+        body: Box<WithPos<Statement<'a>>>,
     },
     Get {
         object: Box<Expression<'a>>,

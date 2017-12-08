@@ -67,15 +67,12 @@ impl<'a> Parser<'a> {
 
         let mut errors = vec![];
 
-        while self.tokens.peek() != None {
+        while self.peek(|token| token != &TokenType::EOF) {
             match self.declaration() {
                 Ok(statement) => statements.push(statement),
                 Err(e) => {
-                    match self.synchronize() {
-                        Ok(()) => (),
-                        Err(e) => errors.push(e),
-                    }
-                    errors.push(e)
+                    errors.push(e);
+                    self.synchronize();
                 }
             }
         }
@@ -95,7 +92,7 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(self.expression()?, pos))
     }
 
-    pub fn synchronize(&mut self) -> Result<(), ParserError<'a>> {
+    pub fn synchronize(&mut self) {
         self.advance();
 
         while self.peek(|token| token == &TokenType::EOF) {
@@ -110,9 +107,9 @@ impl<'a> Parser<'a> {
                 None => unreachable!(),
                 _ => self.tokens.next(),
             };
-        }
+        };
 
-        Ok(())
+    
 
     }
 
@@ -206,6 +203,19 @@ impl<'a> Parser<'a> {
             None => Err(ParserError::EOF),
         }
     }
+    fn consume_name(
+        &mut self,
+        msg: &str,
+    ) -> Result<Variable<'a>, ParserError<'a>> {
+        match self.tokens.next() {
+            Some(Token {
+                     token: TokenType::IDENTIFIER(ref ident),
+                     ..
+                 }) => Ok(Variable(ident)),
+            Some(Token { ref pos, .. }) => Err(ParserError::Expected(self.error(msg, *pos))),
+            None => Err(ParserError::EOF),
+        }
+    }
 
     fn get_pos(&mut self) -> Postition {
         match self.tokens.next() {
@@ -215,34 +225,42 @@ impl<'a> Parser<'a> {
     }
 }
 
+
+
 // Statements
 impl<'a> Parser<'a> {
+
+
+    fn declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
+        if self.recognise(TokenType::VAR) {
+            self.var_declaration()
+        } else if self.recognise(TokenType::FUNCTION) {
+            self.function("function")
+        }
+        else {
+            self.statement()
+        }
+    }
+
     fn statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
 
         if self.recognise(TokenType::LBRACE) {
             self.block()
         } else if self.recognise(TokenType::BREAK) {
             self.break_statement()
-        }
-        else if self.recognise(TokenType::CONTINUE) {
+        } else if self.recognise(TokenType::CONTINUE) {
             self.continue_statement()
-        }
-        else if self.recognise(TokenType::RETURN){
+        } else if self.recognise(TokenType::RETURN) {
             self.return_statement()
-        }
-        else if self.recognise(TokenType::IF){
+        } else if self.recognise(TokenType::IF) {
             self.if_statement()
-        }
-        else if self.recognise(TokenType::DO){
+        } else if self.recognise(TokenType::DO) {
             self.do_statement()
-        }
-        else if self.recognise(TokenType::WHILE) {
+        } else if self.recognise(TokenType::WHILE) {
             self.while_statement()
-        }
-        else if self.recognise(TokenType::FOR) {
+        } else if self.recognise(TokenType::FOR) {
             self.for_statement()
-        }
-        else {
+        } else {
             self.expression_statement()
         }
     }
@@ -260,6 +278,20 @@ impl<'a> Parser<'a> {
 
         Ok(WithPos::new(Statement::ExpressionStmt(expr), pos))
     }
+
+    fn function(&mut self,kind:&str) ->Result<WithPos<Statement<'a>>, ParserError<'a>> {
+        let func_pos = self.get_pos();
+        let name = self.consume_name(
+           &format!("Expected a {} name",kind) 
+        )?;
+        Ok(WithPos::new(Statement::Function {
+            name,
+            body:self.fun_body(kind)?,
+        },func_pos))
+    }
+
+
+    // Keyword statements
 
     fn break_statement(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
         let break_pos = self.get_pos();
@@ -340,17 +372,26 @@ impl<'a> Parser<'a> {
 
         if increment != None {
             body = WithPos::new(
-                Statement::Block(vec![body, WithPos::new(Statement::ExpressionStmt(increment.unwrap()),increment_pos)]),
-                body_pos
+                Statement::Block(vec![
+                    body,
+                    WithPos::new(
+                        Statement::ExpressionStmt(increment.unwrap()),
+                        increment_pos
+                    ),
+                ]),
+                body_pos,
             );
-        }else if condition == None {
+        } else if condition == None {
             condition = Some(Expression::Literal(Literal::True(true)));
         }
 
-        body = WithPos::new(Statement::WhileStmt{
-            condition:condition.unwrap(),
-            body:Box::new(body),
-        },body_pos);
+        body = WithPos::new(
+            Statement::WhileStmt {
+                condition: condition.unwrap(),
+                body: Box::new(body),
+            },
+            body_pos,
+        );
 
         if initi != None {
             let mut statements = vec![];
@@ -358,11 +399,11 @@ impl<'a> Parser<'a> {
             statements.push(initi.unwrap());
             statements.push(body);
 
-            body = WithPos::new(Statement::Block(statements),body_pos)
+            body = WithPos::new(Statement::Block(statements), body_pos)
         }
 
         self.loop_depth -= 1;
- 
+
         Ok(body)
 
     }
@@ -494,16 +535,11 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(Statement::Block(statement), pos))
     }
 
-    fn declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
-        if self.recognise(TokenType::VAR) {
-            self.var_declaration()
-        } else {
-            self.statement()
-        }
-    }
+    
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
-        let (name, pos) = self.consume_name_pos(
+        let var_pos = self.get_pos();  
+        let name = self.consume_name(
             "Expected an IDENTIFIER after a \'var\' ",
         )?;
 
@@ -512,7 +548,7 @@ impl<'a> Parser<'a> {
 
             let value = Expression::Literal(Literal::Nil);
 
-            return Ok(WithPos::new(Statement::Var(name, value), pos));
+            return Ok(WithPos::new(Statement::Var(name, value), var_pos));
         }
 
         if self.matched(vec![
@@ -529,11 +565,11 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr), pos));
+            return Ok(WithPos::new(Statement::Var(name, expr), var_pos));
         }
 
         Err(ParserError::Expected(
-            self.error("Expected an assignment", pos),
+            self.error("Expected an assignment", var_pos),
         ))
     }
 }
@@ -552,8 +588,8 @@ impl<'a> Parser<'a> {
             TokenType::ASSIGN,
             TokenType::PLUSASSIGN,
             TokenType::MINUSASSIGN,
-            TokenType::SLASHASSIGN,
             TokenType::STARASSIGN,
+            TokenType::SLASHASSIGN,
         ])
         {
             let kind = get_assign_operator(self.token_type());
@@ -611,7 +647,7 @@ impl<'a> Parser<'a> {
     fn or(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.and()?;
 
-        if self.recognise(TokenType::OR) {
+        while self.recognise(TokenType::OR) {
             let operator = get_logic_operator(self.token_type());
 
             let right = Box::new(self.and()?);
@@ -629,7 +665,7 @@ impl<'a> Parser<'a> {
     fn and(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
         let mut expr = self.comma()?;
 
-        if self.recognise(TokenType::AND) {
+        while self.recognise(TokenType::AND) {
             let operator = get_logic_operator(self.token_type());
 
             let right = Box::new(self.comma()?);
@@ -780,6 +816,67 @@ impl<'a> Parser<'a> {
                         Variable(i),
                         self.variable_use_maker.next(),
                     )),
+                    TokenType::THIS => Ok(Expression::This(self.variable_use_maker.next())),
+                    TokenType::FUNCTION => self.fun_body("function"),
+                    TokenType::LBRACKET => {
+                        let mut items = vec![];
+
+                        if self.peek(|token| token == &TokenType::RBRACKET) {
+                            self.advance();
+                            return Ok(Expression::Array { items });
+                        }
+
+                        while {
+                            items.push(self.expression()?);
+
+                            self.peek(|token| token == &TokenType::COMMA) &&
+                                self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+                        }
+                        {}
+
+                        println!("{:#?}", self);
+
+                        self.consume(
+                            TokenType::RBRACKET,
+                            "Expected a ']' to close the brackets .",
+                        )?;
+
+                        Ok(Expression::Array { items })
+
+                    }
+
+                    TokenType::LBRACE => {
+                        let mut items: Vec<(Expression, Expression)> = vec![];
+
+
+                        if self.peek(|token| token == &TokenType::RBRACE) {
+                            self.advance();
+                            return Ok(Expression::Dict { items });
+                        }
+
+                        while {
+                            let left = self.expression()?;
+                            self.consume(
+                                TokenType::COLON,
+                                "Expected a ':' after dict key ",
+                            )?;
+                            let right = self.expression()?;
+
+                            items.push((left, right));
+                            self.tokens.peek().map(|t| &t.token) == Some(&TokenType::COMMA) &&
+                                self.tokens.next().map(|t| t.token) == Some(TokenType::COMMA)
+                        }
+                        {}
+
+
+                        self.consume(
+                            TokenType::RBRACE,
+                            "Expected a '}' to close a dictionary.",
+                        )?;
+
+                        Ok(Expression::Dict { items })
+                    }
+
                     TokenType::LPAREN => {
                         let expr = Box::new(self.expression()?);
                         self.consume(
@@ -791,15 +888,55 @@ impl<'a> Parser<'a> {
 
                     }
 
-                    _ => {
-                        println!("{:?}",token.clone());
-                        unimplemented!()
-                    },
+                    _ =>{
+                        println!("{:#?}",token);
+                        Err(ParserError::IllegalExpression(self.error("Cannot parse the expression", *pos)))
+
+                       
+                    } 
                 }
             }
             None => Err(ParserError::EOF),
-            Some(other) => unimplemented!(),
 
         }
+    }
+}
+
+
+// Helper parsing functions
+impl <'a> Parser<'a> {
+    fn fun_body(&mut self,kind:&str) -> Result<Expression<'a>, ParserError<'a>> {
+        self.consume(TokenType::LPAREN, "Expected '(' ")?;
+
+        let mut parameters = vec![];
+
+        if self.peek(|token| token != &TokenType::RPAREN) {
+            while {
+                if parameters.len() >= 32 {
+                    println!("Cannot have more than 32 arguments")
+                };
+
+                let identifier = match self.advance(){
+                    Some(Token{token:TokenType::IDENTIFIER(ref s),..}) => Variable(s),
+                    Some(Token{ref pos,..}) => return Err(ParserError::Expected(self.error("Expected a parameter name", *pos))),
+                    None => return Err(ParserError::EOF),
+                };
+
+                parameters.push(identifier);
+
+
+
+                self.peek(|token| token == &TokenType::COMMA) &&
+                self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+            } {}
+        }
+
+        self.consume(TokenType::RPAREN, "Expected ')' after parameters.")?;
+
+        self.consume(TokenType::LBRACE, &format!("Expected '{{' before {} body.", kind))?;
+
+        let body = Box::new(self.block()?);
+        
+        Ok(Expression::Func{parameters, body })
     }
 }

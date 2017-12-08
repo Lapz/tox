@@ -18,7 +18,17 @@ use interpreter::Interpreter;
 use inference::analyse;
 
 fn main() {
-    let input = "var a = 10/2;";
+    let input = "
+var a = 0;
+var b = 1;
+
+while (a < 10000) {
+    print(a);
+    var temp = a;
+    a = b;
+    b = temp + b;
+}
+";
 
     println!("{}", input);
 
