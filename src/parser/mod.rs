@@ -263,12 +263,38 @@ impl<'a> Parser<'a> {
 // Expression Parsing
 impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        self.ternary()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
+        let expr = self.ternary()?;
+
+        if self.matched(vec![TokenType::ASSIGN,TokenType::PLUSASSIGN,TokenType::MINUSASSIGN,TokenType::SLASHASSIGN,TokenType::STARASSIGN]) {
+            let kind  = get_assign_operator(self.token_type());
+
+            let value = self.assignment()?;
+
+            match expr {
+                Expression::Var(name,_) => return Ok(Expression::Assign{
+                    handle:self.variable_use_maker.next(),
+                    name,
+                    value:Box::new(value),
+                    kind
+                }),
+                _ => return Err(ParserError::IllegalExpression(
+                     "Error at '=': Invalid assignment target.".to_owned()
+                )),
+            }
+        }
+
+        Ok(expr)
+
+        
     }
 
 
     fn ternary(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut condition = self.comma()?;
+        let mut condition = self.or()?;
 
         while self.matched(vec![TokenType::QUESTION]) {
             self.consume(TokenType::QUESTION, "Expected a '?'")?;
@@ -290,6 +316,42 @@ impl<'a> Parser<'a> {
         }
 
         Ok(condition)
+    }
+
+    fn or(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
+        let mut expr = self.and()?;
+
+        if self.recognise(TokenType::OR) {
+            let operator = get_logic_operator(self.token_type());
+
+            let right = Box::new(self.and()?);
+
+            expr = Expression::Logical {
+                left:Box::new(expr),
+                operator,
+                right
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expression<'a>,ParserError<'a>> {
+        let mut expr = self.comma()?;
+
+        if self.recognise(TokenType::AND) {
+            let operator = get_logic_operator(self.token_type());
+
+            let right = Box::new(self.comma()?);
+
+            expr  = Expression::Logical {
+                left:Box::new(expr),
+                operator,
+                right
+            }
+        }
+
+        Ok(expr)
     }
 
     fn comma(&mut self) -> Result<Expression<'a>, ParserError<'a>> {

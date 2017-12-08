@@ -155,7 +155,7 @@ pub enum AssignOperator {
 
 use token::TokenType;
 #[inline]
-pub(crate) fn get_assign_type(token: TokenType) -> AssignOperator {
+pub(crate) fn get_assign_operator(token: TokenType) -> AssignOperator {
     match token {
         TokenType::BANGEQUAL => AssignOperator::StarEqual,
         TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
@@ -191,6 +191,16 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
         TokenType::BANG => UnaryOperator::Bang,
         TokenType::MINUS => UnaryOperator::Minus,
         TokenType::PLUS => UnaryOperator::Plus,
+        _ => unreachable!(),
+    }
+}
+
+#[inline]
+pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {
+    match token {
+        TokenType::AND => LogicOperator::And,
+        TokenType::OR=> LogicOperator::Or,
+       
         _ => unreachable!(),
     }
 }
