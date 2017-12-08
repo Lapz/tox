@@ -8,28 +8,21 @@ pub mod ast;
 pub mod parser;
 pub mod object;
 pub mod interpreter;
-pub mod inference;
-pub mod types;
+// pub mod inference;
+// pub mod types;
 pub mod resolver;
 // pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
-use interpreter::Interpreter;
-use inference::analyse;
+use resolver::Resolver;
+// use interpreter::Interpreter;
+// use inference::analyse;
 
 fn main() {
-    let input = "
-var a = 0;
-var b = 1;
-
-while (a < 10000) {
-    print(a);
-    var temp = a;
-    a = b;
-    b = temp + b;
-}
-";
+    let input = "{
+        print(a);
+        }";
 
     println!("{}", input);
 
@@ -41,6 +34,13 @@ while (a < 10000) {
     let ast = Parser::new(tokens.unwrap()).parse().unwrap();
 
     println!("{:#?}", ast);
+
+    
+    let mut resolver = Resolver::new();
+
+    println!("{#:?}",resolver.resolve(ast).unwrap());
+
+    println!("{:#?}", resolver);
 
     // println!("{:#?}",analyse(&ast));
 

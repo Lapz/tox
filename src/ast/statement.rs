@@ -3,7 +3,6 @@ use pos::WithPos;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement<'a> {
     ExpressionStmt(Expression<'a>),
-    PPrint(Expression<'a>),
     Var(Variable<'a>, Expression<'a>),
     Block(Vec<WithPos<Statement<'a>>>),
     Class {
@@ -36,13 +35,8 @@ pub enum Statement<'a> {
         condition: Expression<'a>,
         body: Box<WithPos<Statement<'a>>>,
     },
+
     Break,
     Continue,
     Return(Option<Expression<'a>>),
-}
-
-#[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub struct Class<'a> {
-    pub name: Variable<'a>,
-    pub methods: Vec<Statement<'a>>,
 }

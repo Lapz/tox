@@ -10,9 +10,7 @@ pub enum Expression<'a> {
         target: Box<Expression<'a>>,
         index: Box<Expression<'a>>,
     },
-    Array {
-        items: Vec<Expression<'a>>,
-    },
+    Array { items: Vec<Expression<'a>> },
     Assign {
         handle: VariableUseHandle,
         name: Variable<'a>,
@@ -29,9 +27,7 @@ pub enum Expression<'a> {
         callee: Box<Expression<'a>>,
         arguments: Vec<Expression<'a>>,
     },
-    Dict {
-        items: Vec<(Expression<'a>, Expression<'a>)>,
-    },
+    Dict { items: Vec<(Expression<'a>, Expression<'a>)>, },
     Func {
         parameters: Vec<Variable<'a>>,
         body: Box<WithPos<Statement<'a>>>,
@@ -41,9 +37,7 @@ pub enum Expression<'a> {
         name: Variable<'a>,
         handle: VariableUseHandle,
     },
-    Grouping {
-        expr: Box<Expression<'a>>,
-    },
+    Grouping { expr: Box<Expression<'a>> },
     Literal(Literal),
     Logical {
         left: Box<Expression<'a>>,
