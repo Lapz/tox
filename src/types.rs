@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use ast::expr::Variable;
 
 #[derive(Debug)]

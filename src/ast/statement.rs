@@ -8,7 +8,7 @@ pub enum Statement<'a> {
     Block(Vec<WithPos<Statement<'a>>>),
     Class {
         name: Variable<'a>,
-        methods: Vec<Statement<'a>>,
+        methods: Vec<WithPos<Statement<'a>>>,
     },
     IfStmt {
         condition: Expression<'a>,

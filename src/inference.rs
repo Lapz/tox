@@ -10,9 +10,7 @@ pub struct ExpressionType {
 }
 
 pub fn analyse(expr: &Expression) -> Result<ExpressionType, TypeError> {
-
     transform_expr(expr)
-
 }
 
 /// Function that takes an expression and transforms it to

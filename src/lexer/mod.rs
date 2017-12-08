@@ -218,7 +218,6 @@ impl<'a> Lexer<'a> {
                         self.advance();
                         Ok(token_with_info(TokenType::PLUSASSIGN, start))
                     } else {
-
                         Ok(token_with_info(TokenType::PLUS, start))
                     }
                 }
