@@ -15,7 +15,7 @@ mod test {
         let ast = Parser::new(tokens).parse().unwrap();
 
         let condition = Expression::Literal(Literal::True(true));
-        
+
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
                 callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
@@ -28,12 +28,19 @@ mod test {
             },
         );
 
-        let body = WithPos::new(Statement::Block(vec![call]),Postition{line:1,column:4,absolute:3});
+        let body = WithPos::new(
+            Statement::Block(vec![call]),
+            Postition {
+                line: 1,
+                column: 4,
+                absolute: 3,
+            },
+        );
 
         let expected = WithPos::new(
-            Statement::DoStmt{
+            Statement::DoStmt {
                 condition,
-                body:Box::new(body),
+                body: Box::new(body),
             },
             Postition {
                 line: 1,
