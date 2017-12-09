@@ -6,50 +6,134 @@ mod test {
     use ast::statement::*;
     use pos::{Postition, WithPos};
 
-    // #[test]
-    // fn for_statement() {
-    //     let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
-    //     let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let ast = Parser::new(tokens).parse().unwrap();
+    #[test]
+    fn do_while_statement() {
+        let input = "do {print(10);} while (true)";
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+        let condition = Expression::Literal(Literal::True(true));
+        
+        let call = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                arguments: vec![Expression::Literal(Literal::Int(10))],
+            }),
+            Postition {
+                line: 1,
+                column: 14,
+                absolute: 13,
+            },
+        );
+
+        let body = WithPos::new(Statement::Block(vec![call]),Postition{line:1,column:4,absolute:3});
+
+        let expected = WithPos::new(
+            Statement::DoStmt{
+                condition,
+                body:Box::new(body),
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
+
+        assert_eq!(ast, vec![expected]);
+    }
 
 
-    //     let expected = Statement::Block(vec![
-    //         Statement::Var(Variable("i"), Expression::Literal(Literal::Int(0))),
-    //         Statement::WhileStmt(Box::new(While {
-    //             condition: Expression::Binary(Box::new(Binary {
-    //                 left_expr: Expression::Var(Variable("i"), VariableUseHandle(0)),
-    //                 operator: Operator::LessThan,
-    //                 right_expr: Expression::Literal(Literal::Int(2)),
-    //             })),
-    //             body: Statement::Block(vec![
-    //                 Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //                     callee: Expression::Var(Variable("print"), VariableUseHandle(4)),
-    //                     arguments: vec![
-    //                         Expression::Var(Variable("i"), VariableUseHandle(5)),
-    //                     ],
-    //                 }))),
-    //                 Statement::ExpressionStmt(Expression::Assign(Box::new(Assign {
-    //                     handle: VariableUseHandle(3),
-    //                     name: Variable("i"),
-    //                     kind: AssignOperator::Equal,
-    //                     value: Expression::Binary(Box::new(Binary {
-    //                         left_expr: Expression::Var(
-    //                             Variable("i"),
-    //                             VariableUseHandle(2),
-    //                         ),
-    //                         operator: Operator::Plus,
-    //                         right_expr: Expression::Literal(Literal::Int(1)),
-    //                     })),
-    //                 }))),
-    //             ]),
-    //         })),
-    //     ]);
+    #[test]
+    fn for_statement() {
+        let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     assert_eq!(ast, vec![expected]);
-    // }
+        let ast = Parser::new(tokens).parse().unwrap();
 
-     #[test]
+        let init = WithPos::new(
+            Statement::Var(Variable("i"), Expression::Literal(Literal::Int(0))),
+            Postition {
+                line: 1,
+                column: 6,
+                absolute: 5,
+            },
+        );
+
+        let condition = Expression::Binary {
+            left_expr: Box::new(Expression::Var(Variable("i"), VariableUseHandle(0))),
+            operator: Operator::LessThan,
+            right_expr: Box::new(Expression::Literal(Literal::Int(2))),
+        };
+
+        let call = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(4))),
+                arguments: vec![Expression::Var(Variable("i"), VariableUseHandle(5))],
+            }),
+            Postition {
+                line: 1,
+                column: 42,
+                absolute: 41,
+            },
+        );
+
+        let increment = WithPos::new(
+            Statement::ExpressionStmt(Expression::Assign {
+                handle: VariableUseHandle(3),
+                name: Variable("i"),
+                kind: AssignOperator::Equal,
+                value: Box::new(Expression::Binary {
+                    left_expr: Box::new(Expression::Var(Variable("i"), VariableUseHandle(2))),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(1))),
+                }),
+            }),
+            Postition {
+                line: 1,
+                column: 33,
+                absolute: 32,
+            },
+        );
+
+
+        let while_statement = WithPos::new(
+            Statement::WhileStmt {
+                condition,
+                body: Box::new(WithPos::new(
+                    Statement::Block(vec![call, increment]),
+                    Postition {
+                        line: 1,
+                        column: 42,
+                        absolute: 41,
+                    },
+                )),
+            },
+            Postition {
+                line: 1,
+                column: 42,
+                absolute: 41,
+            },
+        );
+
+
+
+
+        let expected = WithPos::new(
+            Statement::Block(vec![init, while_statement]),
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
+
+        assert_eq!(ast, vec![expected]);
+    }
+
+    #[test]
     fn class_statement() {
         let input = "class Foo {}";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -57,16 +141,23 @@ mod test {
         let ast = Parser::new(tokens).parse().unwrap();
 
         let name = Variable("Foo");
-        
-        let expected = WithPos::new(Statement::Class{
-            name,
-            methods:vec![],
-        },Postition{line:1,column:1,absolute:0});
+
+        let expected = WithPos::new(
+            Statement::Class {
+                name,
+                methods: vec![],
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
         assert_eq!(ast, vec![expected]);
     }
 
-    
+
 
     #[test]
     fn break_statement() {
@@ -90,21 +181,38 @@ mod test {
             },
         );
 
-        let break_statement = WithPos::new(Statement::Break,Postition{line:3,column:13,absolute:55});
-
-        let body = WithPos::new(Statement::Block(vec![call,break_statement]),Postition{
-            line:1,
-            column:15,
-            absolute:14
-        });
-
-        let expected = WithPos::new(Statement::WhileStmt{
-            condition: Expression::Unary {
-                operator: UnaryOperator::Bang,
-                expr: Box::new(Expression::Literal(Literal::True(true))),
+        let break_statement = WithPos::new(
+            Statement::Break,
+            Postition {
+                line: 3,
+                column: 13,
+                absolute: 55,
             },
-            body: Box::new(body),
-        },Postition{line:1,column:1,absolute:0});
+        );
+
+        let body = WithPos::new(
+            Statement::Block(vec![call, break_statement]),
+            Postition {
+                line: 1,
+                column: 15,
+                absolute: 14,
+            },
+        );
+
+        let expected = WithPos::new(
+            Statement::WhileStmt {
+                condition: Expression::Unary {
+                    operator: UnaryOperator::Bang,
+                    expr: Box::new(Expression::Literal(Literal::True(true))),
+                },
+                body: Box::new(body),
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
         assert_eq!(ast, vec![expected]);
     }
@@ -133,21 +241,38 @@ mod test {
             },
         );
 
-        let break_statement = WithPos::new(Statement::Continue,Postition{line:3,column:13,absolute:55});
-
-        let body = WithPos::new(Statement::Block(vec![call,break_statement]),Postition{
-            line:1,
-            column:15,
-            absolute:14
-        });
-
-        let expected = WithPos::new(Statement::WhileStmt{
-            condition: Expression::Unary {
-                operator: UnaryOperator::Bang,
-                expr: Box::new(Expression::Literal(Literal::True(true))),
+        let break_statement = WithPos::new(
+            Statement::Continue,
+            Postition {
+                line: 3,
+                column: 13,
+                absolute: 55,
             },
-            body: Box::new(body),
-        },Postition{line:1,column:1,absolute:0});
+        );
+
+        let body = WithPos::new(
+            Statement::Block(vec![call, break_statement]),
+            Postition {
+                line: 1,
+                column: 15,
+                absolute: 14,
+            },
+        );
+
+        let expected = WithPos::new(
+            Statement::WhileStmt {
+                condition: Expression::Unary {
+                    operator: UnaryOperator::Bang,
+                    expr: Box::new(Expression::Literal(Literal::True(true))),
+                },
+                body: Box::new(body),
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
         assert_eq!(ast, vec![expected]);
     }
@@ -173,19 +298,29 @@ mod test {
             },
         );
 
-        let body = WithPos::new(Statement::Block(vec![call]),Postition{
-            line:1,
-            column:15,
-            absolute:14
-        });
-
-        let expected = WithPos::new(Statement::WhileStmt{
-            condition: Expression::Unary {
-                operator: UnaryOperator::Bang,
-                expr: Box::new(Expression::Literal(Literal::True(true))),
+        let body = WithPos::new(
+            Statement::Block(vec![call]),
+            Postition {
+                line: 1,
+                column: 15,
+                absolute: 14,
             },
-            body: Box::new(body),
-        },Postition{line:1,column:1,absolute:0});
+        );
+
+        let expected = WithPos::new(
+            Statement::WhileStmt {
+                condition: Expression::Unary {
+                    operator: UnaryOperator::Bang,
+                    expr: Box::new(Expression::Literal(Literal::True(true))),
+                },
+                body: Box::new(body),
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
         assert_eq!(ast, vec![expected]);
     }
