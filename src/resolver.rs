@@ -8,8 +8,8 @@ use pos::{Postition, WithPos};
 #[derive(Debug)]
 pub struct Resolver<'a> {
     scopes: Vec<HashMap<Variable<'a>, bool>>,
-    pub current_function: FunctionType,
-    pub current_class: ClassType,
+    current_function: FunctionType,
+    current_class: ClassType,
     locals: HashMap<VariableUseHandle, usize>,
 }
 
@@ -25,12 +25,11 @@ pub enum ResolverError {
 impl Display for ResolverError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            ResolverError::ReadInInit(ref s) |
-            ResolverError::Init(ref s) |
-            ResolverError::Return(ref s) |
-            ResolverError::This(ref s) |
-            ResolverError::AllReadyDecleared(ref s) => write!(f, "{}", s),
-
+            ResolverError::ReadInInit(ref s)
+            | ResolverError::Init(ref s)
+            | ResolverError::Return(ref s)
+            | ResolverError::This(ref s)
+            | ResolverError::AllReadyDecleared(ref s) => write!(f, "{}", s),
         }
     }
 }
@@ -47,10 +46,6 @@ pub enum FunctionType {
 pub enum ClassType {
     None,
     Class,
-}
-
-pub trait Resolve {
-    fn resolve(&self, resolver: &mut Resolver) -> Result<(), ResolverError>;
 }
 
 impl<'a> Default for Resolver<'a> {
@@ -77,10 +72,9 @@ impl<'a> Resolver<'a> {
         let mut errors = vec![];
 
         for statement in statements {
-
             match self.resolve_statement(&statement) {
                 Ok(_) => (),
-                Err(e) => errors.push(e), 
+                Err(e) => errors.push(e),
             }
         }
 
@@ -121,7 +115,7 @@ impl<'a> Resolver<'a> {
             );
             return Err(ResolverError::AllReadyDecleared(self.error(&msg, pos)));
         }
-        
+
         self.scopes[index].insert(name, false);
 
         Ok(())
@@ -183,13 +177,10 @@ impl<'a> Resolver<'a> {
                 self.current_function = enclosing_function;
 
                 Ok(())
-
             }
 
-            _ => unreachable!(), 
+            _ => unreachable!(),
         }
-
-
     }
 
     fn error(&self, message: &str, pos: Postition) -> String {
@@ -205,15 +196,20 @@ impl<'a> Resolver<'a> {
         match statement.node {
             Statement::Block(ref statements) => {
                 self.begin_scope();
+
                 for statement in statements {
                     self.resolve_statement(statement)?;
                 }
+
                 self.end_scope();
 
                 Ok(())
             }
 
-            Statement::ExpressionStmt(ref expr) => self.resolve_expr(expr, statement.pos),
+            Statement::ExpressionStmt(ref expr) => {
+                self.resolve_expr(expr, statement.pos)?;
+                Ok(())   
+            },
 
             Statement::IfStmt {
                 ref condition,
@@ -223,9 +219,9 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(condition, statement.pos)?;
                 self.resolve_statement(then_branch)?;
 
-                match else_branch {
-                    &Some(ref expr) => self.resolve_statement(expr)?,
-                    &None => return Ok(()),
+                match *else_branch {
+                    Some(ref expr) => self.resolve_statement(expr)?,
+                    None => return Ok(()),
                 };
 
                 Ok(())
@@ -266,10 +262,10 @@ impl<'a> Resolver<'a> {
 
             Statement::Return(ref r) => {
                 if self.current_function == FunctionType::None {
-                            return Err(ResolverError::Return(self.error(
-                                 "Cannot return from top-level code.",
-                                statement.pos,
-                            )));
+                    return Err(ResolverError::Return(self.error(
+                        "Cannot return from top-level code",
+                        statement.pos,
+                    )));
                 }
 
                 match *r {
@@ -277,7 +273,7 @@ impl<'a> Resolver<'a> {
                     Some(ref value) => {
                         if self.current_function == FunctionType::Init {
                             return Err(ResolverError::Init(self.error(
-                                 "Cannot return a value from an initializer.",
+                                "Cannot return a value from an initializer",
                                 statement.pos,
                             )));
                         }
@@ -303,13 +299,9 @@ impl<'a> Resolver<'a> {
                 self.declare(name.clone(), statement.pos)?;
                 self.define(name.clone());
 
-                self.resolve_func(
-                    body,
-                    FunctionType::Function,
-                    statement.pos,
-                )?;
+                self.resolve_func(body, FunctionType::Function, statement.pos)?;
                 Ok(())
-            } 
+            }
 
             Statement::Class {
                 ref name,
@@ -330,23 +322,17 @@ impl<'a> Resolver<'a> {
                     let mut declaration = FunctionType::Method;
 
                     match method {
-                        &WithPos { ref node, ref pos } => {
-                            match node {
-                                &Statement::Function { ref name, ref body } => {
-                                    if name.0 == "init" {
-                                        declaration = FunctionType::Init;
-                                    }
-
-                                    self.resolve_func(body, declaration, *pos)?;
+                        &WithPos { ref node, ref pos } => match node {
+                            &Statement::Function { ref name, ref body } => {
+                                if name.0 == "init" {
+                                    declaration = FunctionType::Init;
                                 }
-                                _ => unreachable!(),
+
+                                self.resolve_func(body, declaration, *pos)?;
                             }
-                        }
-
+                            _ => unreachable!(),
+                        },
                     };
-
-
-
                 }
 
                 self.current_class = enclosing_class;
@@ -355,7 +341,6 @@ impl<'a> Resolver<'a> {
 
                 Ok(())
             }
-
         }
     }
 }
@@ -416,7 +401,6 @@ impl<'a> Resolver<'a> {
                 ref parameters,
                 ref body,
             } => {
-
                 let enclosing_function = self.current_function;
 
                 self.current_function = FunctionType::Function;
@@ -493,9 +477,10 @@ impl<'a> Resolver<'a> {
 
             Expression::This(ref handle) => {
                 if self.current_class == ClassType::None {
-                    return Err(ResolverError::This(
-                        self.error("Cannot use 'this' outside of a class.", pos),
-                    ));
+                    return Err(ResolverError::This(self.error(
+                        "Cannot use 'this' outside of a class.",
+                        pos,
+                    )));
                 }
 
                 self.resolve_local(&Variable("this"), *handle);
@@ -512,7 +497,6 @@ impl<'a> Resolver<'a> {
                 self.resolve_local(v, *handle);
                 Ok(())
             }
-
         }
     }
 }

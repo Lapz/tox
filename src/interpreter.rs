@@ -22,8 +22,7 @@ impl Interpreter {
             Literal::Int(i) => Ok(Object::Int(i)),
             Literal::Str(ref s) => Ok(Object::Str(s.to_owned())),
             Literal::Nil => Ok(Object::Nil),
-            Literal::True(ref b) |
-            Literal::False(ref b) => Ok(Object::Bool(*b)),
+            Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
         }
     }
 

@@ -20,9 +20,12 @@ use resolver::Resolver;
 // use inference::analyse;
 
 fn main() {
-    let input = "{
-        print(a);
-        }";
+    let input = "var a = 10;
+var a = 10;
+{
+  var a = 10;
+  var a = 10;
+}";
 
     println!("{}", input);
 
@@ -35,10 +38,10 @@ fn main() {
 
     println!("{:#?}", ast);
 
-    
+
     let mut resolver = Resolver::new();
 
-    println!("{:#?}",resolver.resolve(ast).unwrap());
+    println!("{:#?}", resolver.resolve(ast).unwrap());
 
     println!("{:#?}", resolver);
 
