@@ -11,11 +11,13 @@ pub mod interpreter;
 // pub mod inference;
 // pub mod types;
 pub mod resolver;
+pub mod symbol;
 // pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
+
 // use interpreter::Interpreter;
 // use inference::analyse;
 
