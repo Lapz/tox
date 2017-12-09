@@ -1,3 +1,4 @@
+mod test;
 use token::{Token, TokenType};
 use std::iter::Peekable;
 use std::vec::IntoIter;
