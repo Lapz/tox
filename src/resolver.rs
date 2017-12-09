@@ -500,3 +500,71 @@ impl<'a> Resolver<'a> {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use ast::statement::Statement;
+    use lexer::Lexer;
+    use parser::Parser;
+    use resolver::Resolver;
+    use pos::WithPos;
+
+    fn get_ast(input:&str) -> Vec<WithPos<Statement>> {
+        let tokens = Lexer::new(input).lex().unwrap();
+        Parser::new(tokens).parse().unwrap()
+    }
+    
+    #[test]
+    fn global() {
+        let input = "var a = 0;{fun f() {print a;}}";
+        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+    }
+
+    #[test]
+    fn captured() {
+        let input = "{var a = 0;fun f() {print a;}}";
+        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+    }
+
+    #[test]
+    fn lexical_capture() {
+        let input = "var a = 0;{fun f() {print a;} var a = 1;}";
+        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+    }
+
+    #[test]
+    #[should_panic]
+    fn shadowing_error() {
+        let input = "var a = 0;{var a = a;}";
+        Resolver::new().resolve(get_ast(input)).unwrap()
+    }
+
+    #[test]
+    #[should_panic]
+    fn local_redeclar_error() {
+        let input = "{var a = 1;var a = 2;}";
+        Resolver::new().resolve(get_ast(input)).unwrap()
+    }
+
+     #[test]
+    fn global_redeclar() {
+        let input = "var a = 1;var a = 2;";
+         assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+    }
+
+    #[test]
+    #[should_panic]
+    fn return_top_level() {
+        let input = "return 10;";
+        Resolver::new().resolve(get_ast(input)).unwrap()
+    }
+
+    #[test]
+    #[should_panic]
+    fn this_outside_class() {
+        let input = "this.name;";
+        Resolver::new().resolve(get_ast(input)).unwrap()
+    }
+    
+}
