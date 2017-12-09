@@ -619,35 +619,17 @@ impl<'a> Parser<'a> {
     }
 
     fn and(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.comma()?;
+        let mut expr = self.equality()?;
 
         while self.recognise(TokenType::AND) {
             let operator = get_logic_operator(self.token_type());
 
-            let right = Box::new(self.comma()?);
+            let right = Box::new(self.equality()?);
 
             expr = Expression::Logical {
                 left: Box::new(expr),
                 operator,
                 right,
-            }
-        }
-
-        Ok(expr)
-    }
-
-    fn comma(&mut self) -> Result<Expression<'a>, ParserError<'a>> {
-        let mut expr = self.equality()?;
-
-        while self.matched(vec![TokenType::COMMA]) {
-            let operator = get_operator(self.token_type());
-
-            let right_expr = Box::new(self.equality()?);
-
-            expr = Expression::Binary {
-                left_expr: Box::new(expr),
-                operator,
-                right_expr,
             }
         }
 

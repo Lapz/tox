@@ -53,8 +53,6 @@ impl Interpreter {
                     Operator::Slash => divide(left, right),
                     Operator::Modulo => modulo(left, right),
                     Operator::Exponential => expon(left, right),
-
-                    _ => unimplemented!(),
                 }
             }
 

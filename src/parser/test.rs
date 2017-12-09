@@ -1,256 +1,395 @@
-
 #[cfg(test)]
 mod test {
     use lexer::Lexer;
     use parser::Parser;
     use ast::expr::*;
     use ast::statement::*;
-    use pos::{WithPos,Postition};
+    use pos::{Postition, WithPos};
 
     // #[test]
     // fn for_statement() {
     //     let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
+    //     let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+    //     let ast = Parser::new(tokens).parse().unwrap();
 
 
     //     let expected = Statement::Block(vec![
-    //         Statement::Var(Variable("i".to_owned()), Expression::Literal(Literal::Number(0.0))),
+    //         Statement::Var(Variable("i"), Expression::Literal(Literal::Int(0))),
     //         Statement::WhileStmt(Box::new(While {
     //             condition: Expression::Binary(Box::new(Binary {
-    //                 left_expr: Expression::Var(Variable("i".to_owned()), VariableUseHandle(0)),
+    //                 left_expr: Expression::Var(Variable("i"), VariableUseHandle(0)),
     //                 operator: Operator::LessThan,
-    //                 right_expr: Expression::Literal(Literal::Number(2.0)),
+    //                 right_expr: Expression::Literal(Literal::Int(2)),
     //             })),
     //             body: Statement::Block(vec![
     //                 Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //                     callee: Expression::Var(Variable("print".to_owned()), VariableUseHandle(4)),
+    //                     callee: Expression::Var(Variable("print"), VariableUseHandle(4)),
     //                     arguments: vec![
-    //                         Expression::Var(Variable("i".to_owned()), VariableUseHandle(5)),
+    //                         Expression::Var(Variable("i"), VariableUseHandle(5)),
     //                     ],
     //                 }))),
     //                 Statement::ExpressionStmt(Expression::Assign(Box::new(Assign {
     //                     handle: VariableUseHandle(3),
-    //                     name: Variable("i".to_owned()),
+    //                     name: Variable("i"),
     //                     kind: AssignOperator::Equal,
     //                     value: Expression::Binary(Box::new(Binary {
     //                         left_expr: Expression::Var(
-    //                             Variable("i".to_owned()),
+    //                             Variable("i"),
     //                             VariableUseHandle(2),
     //                         ),
     //                         operator: Operator::Plus,
-    //                         right_expr: Expression::Literal(Literal::Number(1.0)),
+    //                         right_expr: Expression::Literal(Literal::Int(1)),
     //                     })),
     //                 }))),
     //             ]),
     //         })),
     //     ]);
 
-    //     assert_eq!(parsed, vec![expected]);
+    //     assert_eq!(ast, vec![expected]);
     // }
 
-    // #[test]
-    // fn break_statement() {
-    //     let input = "while (!true) {
-    //         print(\"true\");
-    //         break;
-    //         }";
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
+     #[test]
+    fn class_statement() {
+        let input = "class Foo {}";
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+        let ast = Parser::new(tokens).parse().unwrap();
 
-    //     let expected = Statement::WhileStmt(Box::new(While {
-    //         condition: Expression::Unary(Box::new(Unary {
-    //             operator: UnaryOperator::Bang,
-    //             expr: Expression::Literal(Literal::True(true)),
-    //         })),
-    //         body: Statement::Block(vec![
-    //             Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //                 callee: Expression::Var(Variable("print".to_owned()), VariableUseHandle(0)),
-    //                 arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
-    //             }))),
-    //             Statement::Break,
-    //         ]),
-    //     }));
+        let name = Variable("Foo");
+        
+        let expected = WithPos::new(Statement::Class{
+            name,
+            methods:vec![],
+        },Postition{line:1,column:1,absolute:0});
 
-    //     assert_eq!(parsed, vec![expected]);
-    // }
+        assert_eq!(ast, vec![expected]);
+    }
 
-    // #[test]
-    // fn while_statement() {
-    //     let input = "while (!true) {
-    //         print(\"true\");
-    //         }";
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
+    
 
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+    #[test]
+    fn break_statement() {
+        let input = "while (!true) {
+            print(\"true\");
+            break;
+            }";
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let expected = Statement::WhileStmt(Box::new(While {
-    //         condition: Expression::Unary(Box::new(Unary {
-    //             operator: UnaryOperator::Bang,
-    //             expr: Expression::Literal(Literal::True(true)),
-    //         })),
-    //         body: Statement::Block(vec![
-    //             Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //                 callee: Expression::Var(Variable("print".to_owned()), VariableUseHandle(0)),
-    //                 arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
-    //             }))),
-    //         ]),
-    //     }));
+        let ast = Parser::new(tokens).parse().unwrap();
 
-    //     assert_eq!(parsed, vec![expected]);
-    // }
+        let call = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
+            }),
+            Postition {
+                line: 2,
+                column: 26,
+                absolute: 41,
+            },
+        );
 
+        let break_statement = WithPos::new(Statement::Break,Postition{line:3,column:13,absolute:55});
 
+        let body = WithPos::new(Statement::Block(vec![call,break_statement]),Postition{
+            line:1,
+            column:15,
+            absolute:14
+        });
 
-    // #[test]
-    // fn if_stmt() {
-    //     let input = "
-    //     if (10 < 5) {
-    //         print(10);
-    //     }";
+        let expected = WithPos::new(Statement::WhileStmt{
+            condition: Expression::Unary {
+                operator: UnaryOperator::Bang,
+                expr: Box::new(Expression::Literal(Literal::True(true))),
+            },
+            body: Box::new(body),
+        },Postition{line:1,column:1,absolute:0});
 
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
-
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+        assert_eq!(ast, vec![expected]);
+    }
 
 
 
-    //     let call = Call {
-    //         callee: Expression::Var(Variable("print".to_owned()), VariableUseHandle(0)),
-    //         arguments: vec![Expression::Literal(Literal::Number(10.0))],
-    //     };
+    #[test]
+    fn continue_statement() {
+        let input = "while (!true) {
+            print(\"true\");
+            continue;
+            }";
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+        let call = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
+            }),
+            Postition {
+                line: 2,
+                column: 26,
+                absolute: 41,
+            },
+        );
+
+        let break_statement = WithPos::new(Statement::Continue,Postition{line:3,column:13,absolute:55});
+
+        let body = WithPos::new(Statement::Block(vec![call,break_statement]),Postition{
+            line:1,
+            column:15,
+            absolute:14
+        });
+
+        let expected = WithPos::new(Statement::WhileStmt{
+            condition: Expression::Unary {
+                operator: UnaryOperator::Bang,
+                expr: Box::new(Expression::Literal(Literal::True(true))),
+            },
+            body: Box::new(body),
+        },Postition{line:1,column:1,absolute:0});
+
+        assert_eq!(ast, vec![expected]);
+    }
+
+    #[test]
+    fn while_statement() {
+        let input = "while (!true) {
+            print(\"true\");
+            }";
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+        let call = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
+            }),
+            Postition {
+                line: 2,
+                column: 26,
+                absolute: 41,
+            },
+        );
+
+        let body = WithPos::new(Statement::Block(vec![call]),Postition{
+            line:1,
+            column:15,
+            absolute:14
+        });
+
+        let expected = WithPos::new(Statement::WhileStmt{
+            condition: Expression::Unary {
+                operator: UnaryOperator::Bang,
+                expr: Box::new(Expression::Literal(Literal::True(true))),
+            },
+            body: Box::new(body),
+        },Postition{line:1,column:1,absolute:0});
+
+        assert_eq!(ast, vec![expected]);
+    }
 
 
-    //     let expected = Statement::IfStmt(Box::new(If {
-    //         condition: Expression::Binary(Box::new(Binary {
-    //             left_expr: Expression::Literal(Literal::Number(10.0)),
-    //             operator: Operator::LessThan,
-    //             right_expr: Expression::Literal(Literal::Number(5.0)),
-    //         })),
-    //         then_branch: Statement::Block(
-    //             vec![Statement::ExpressionStmt(Expression::Call(Box::new(call)))],
-    //         ),
-    //         else_branch: None,
-    //     }));
+    #[test]
+    fn if_stmt() {
+        let input = "if (10 < 5) {
+            print(10);
+        }";
 
-    //     assert_eq!(parsed, vec![expected]);
-    // }
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    // #[test]
-    // fn block() {
-    //     let input = "{}";
+        let ast = Parser::new(tokens).parse().unwrap();
 
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
+        let call = Expression::Call {
+            callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+            arguments: vec![Expression::Literal(Literal::Int(10))],
+        };
 
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+        let expected = WithPos::new(
+            Statement::IfStmt {
+                condition: Expression::Binary {
+                    left_expr: Box::new(Expression::Literal(Literal::Int(10))),
+                    operator: Operator::LessThan,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(5))),
+                },
+                then_branch: Box::new(WithPos::new(
+                    Statement::Block(vec![
+                        WithPos::new(
+                            Statement::ExpressionStmt(call),
+                            Postition {
+                                line: 2,
+                                column: 22,
+                                absolute: 35,
+                            },
+                        ),
+                    ]),
+                    Postition {
+                        line: 1,
+                        column: 13,
+                        absolute: 12,
+                    },
+                )),
+                else_branch: None,
+            },
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
-    //     let expected = Statement::Block(vec![]);
+        assert_eq!(ast, vec![expected]);
+    }
 
-    //     assert_eq!(parsed, vec![expected]);
-    // }
+    #[test]
+    fn block() {
+        let input = "{}";
 
-    // #[test]
-    // fn function_call() {
-    //     let input = "clock();len(\"hello\",25);";
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
+        let ast = Parser::new(tokens).parse().unwrap();
 
-    //     let parsed = Parser::new(tokens).parse().unwrap();
+        let expected = WithPos::new(
+            Statement::Block(vec![]),
+            Postition {
+                line: 1,
+                column: 1,
+                absolute: 0,
+            },
+        );
 
-    //     let clock_fun = Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //         callee: Expression::Var(Variable("clock".to_owned()), VariableUseHandle(0)),
-    //         arguments: vec![],
-    //     })));
+        assert_eq!(ast, vec![expected]);
+    }
 
-    //     let len_fun = Statement::ExpressionStmt(Expression::Call(Box::new(Call {
-    //         callee: Expression::Var(Variable("len".to_owned()), VariableUseHandle(1)),
-    //         arguments: vec![
-    //             Expression::Literal(Literal::Str("hello".to_owned())),
-    //             Expression::Literal(Literal::Number(25f64)),
-    //         ],
-    //     })));
+    #[test]
+    fn function_call() {
+        let input = "clock();len(\"hello\",25);";
 
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     assert_eq!(parsed, vec![clock_fun, len_fun]);
-    // }
+        let ast = Parser::new(tokens).parse().unwrap();
 
-    // #[test]
-    // fn array() {
-    //     let input = "[10,12,13];";
+        let clock_fun = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("clock"), VariableUseHandle(0))),
+                arguments: vec![],
+            }),
+            Postition {
+                line: 1,
+                column: 8,
+                absolute: 7,
+            },
+        );
 
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
-
-    //     let parsed = Parser::new(tokens).parse().unwrap();
-
-    //     let expected = vec![
-    //         Expression::Literal(Literal::Number(10f64)),
-    //         Expression::Literal(Literal::Number(12f64)),
-    //         Expression::Literal(Literal::Number(13f64)),
-    //     ];
-
-    //     assert_eq!(
-    //         parsed,
-    //         vec![
-    //             Statement::ExpressionStmt(Expression::Array(Array { items: expected })),
-    //         ]
-    //     );
-    // }
-
-    // #[test]
-    // fn indexing() {
-    //     let input = "a[2+1];";
-
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
-
-    //     let parsed = Parser::new(tokens).parse().unwrap();
-
-
-    //     let expected = IndexExpr {
-    //         target: Expression::Var(Variable("a".to_owned()), VariableUseHandle(0)),
-    //         index: Expression::Binary(Box::new(Binary {
-    //             left_expr: Expression::Literal(Literal::Number(2f64)),
-    //             operator: Operator::Plus,
-    //             right_expr: Expression::Literal(Literal::Number(1f64)),
-    //         })),
-    //     };
-
-    //     assert_eq!(
-    //         parsed,
-    //         vec![
-    //             Statement::ExpressionStmt(Expression::IndexExpr(Box::new(expected))),
-    //         ]
-    //     );
-    // }
-
-
-
-    // #[test]
-    // fn print() {
-    //     let input = "print(9+9);";
-
-    //     let (tokens, _) = Lexer::new(input).lex().unwrap();
-
-    //     let parsed = Parser::new(tokens).parse().unwrap();
-
-    //     let call = Call {
-    //         callee: Expression::Var(Variable("print".to_owned()), VariableUseHandle(0)),
-    //         arguments: vec![
-    //             Expression::Binary(Box::new(Binary {
-    //                 left_expr: Expression::Literal(Literal::Number(9.0)),
-    //                 operator: Operator::Plus,
-    //                 right_expr: Expression::Literal(Literal::Number(9.0)),
-    //             })),
-    //         ],
-    //     };
+        let len_fun = WithPos::new(
+            Statement::ExpressionStmt(Expression::Call {
+                callee: Box::new(Expression::Var(Variable("len"), VariableUseHandle(1))),
+                arguments: vec![
+                    Expression::Literal(Literal::Str("hello".to_owned())),
+                    Expression::Literal(Literal::Int(25)),
+                ],
+            }),
+            Postition {
+                line: 1,
+                column: 24,
+                absolute: 23,
+            },
+        );
 
 
+        assert_eq!(ast, vec![clock_fun, len_fun]);
+    }
 
-    //     let expected = Statement::ExpressionStmt(Expression::Call(Box::new(call)));
+    #[test]
+    fn array() {
+        let input = "[10,12,13];";
 
-    //     assert_eq!(parsed, vec![expected]);
-    // }
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+        let array = Expression::Array {
+            items: vec![
+                Expression::Literal(Literal::Int(10)),
+                Expression::Literal(Literal::Int(12)),
+                Expression::Literal(Literal::Int(13)),
+            ],
+        };
+
+        let expected = WithPos::new(
+            Statement::ExpressionStmt(array),
+            Postition {
+                line: 1,
+                column: 11,
+                absolute: 10,
+            },
+        );
+
+        assert_eq!(ast, vec![expected]);
+    }
+
+    #[test]
+    fn indexing() {
+        let input = "a[2+1];";
+
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+
+        let index = Expression::IndexExpr {
+            target: Box::new(Expression::Var(Variable("a"), VariableUseHandle(0))),
+            index: Box::new(Expression::Binary {
+                left_expr: Box::new(Expression::Literal(Literal::Int(2))),
+                operator: Operator::Plus,
+                right_expr: Box::new(Expression::Literal(Literal::Int(1))),
+            }),
+        };
+
+        let expected = WithPos::new(
+            Statement::ExpressionStmt(index),
+            Postition {
+                line: 1,
+                column: 7,
+                absolute: 6,
+            },
+        );
+
+        assert_eq!(ast, vec![expected]);
+    }
+
+
+
+    #[test]
+    fn print() {
+        let input = "print(9+9);";
+
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let ast = Parser::new(tokens).parse().unwrap();
+
+        let call = Expression::Call {
+            callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+            arguments: vec![
+                Expression::Binary {
+                    left_expr: Box::new(Expression::Literal(Literal::Int(9))),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(9))),
+                },
+            ],
+        };
+
+        let expected = WithPos::new(
+            Statement::ExpressionStmt(call),
+            Postition {
+                line: 1,
+                column: 11,
+                absolute: 10,
+            },
+        );
+        assert_eq!(ast, vec![expected]);
+    }
 
     #[test]
     fn literal() {
@@ -258,19 +397,20 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens)
-            .parse()
-            .unwrap();
+        let ast = Parser::new(tokens).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Literal(Literal::Int(123))),Postition{
-                line:1,
-                column:4,
-                absolute:3
-            })
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Literal(Literal::Int(123))),
+                Postition {
+                    line: 1,
+                    column: 4,
+                    absolute: 3,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -285,7 +425,7 @@ mod test {
     fn unary_with_no_operand() {
         let input = "-<5";
 
-        let  tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse();
 
@@ -299,20 +439,23 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
+
         let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Literal(Literal::Int(123))),
-                operator:Operator::Plus,
-                right_expr:Box::new(Expression::Literal(Literal::Int(456))),
-            }),Postition{
-            line:1,
-            column:8,
-            absolute:7
-            })
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Literal(Literal::Int(123))),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(456))),
+                }),
+                Postition {
+                    line: 1,
+                    column: 8,
+                    absolute: 7,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -322,27 +465,28 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
-        let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Unary{
-                    operator:UnaryOperator::Minus,
-                    expr:Box::new(Expression::Literal(Literal::Int(123)))
-                    
-                }),
-                operator:Operator::Star,
-                right_expr:Box::new(Expression::Grouping{
-                    expr: Box::new(Expression::Literal(Literal::Float(45.67))),
-                })
 
-            }),Postition{
-            line:1,
-            column:13,
-            absolute:12
-            })
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Unary {
+                        operator: UnaryOperator::Minus,
+                        expr: Box::new(Expression::Literal(Literal::Int(123))),
+                    }),
+                    operator: Operator::Star,
+                    right_expr: Box::new(Expression::Grouping {
+                        expr: Box::new(Expression::Literal(Literal::Float(45.67))),
+                    }),
+                }),
+                Postition {
+                    line: 1,
+                    column: 13,
+                    absolute: 12,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -352,25 +496,27 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
-        let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Literal(Literal::Int(123))),
-                operator:Operator::Plus,
-                right_expr:Box::new(Expression::Binary{
-                    left_expr: Box::new(Expression::Literal(Literal::Int(456))),
-                    operator: Operator::Star,
-                    right_expr:Box::new(Expression::Literal(Literal::Int(789)))
-                })
 
-            }),Postition{
-            line:1,
-            column:12,
-            absolute:11
-            })
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Literal(Literal::Int(123))),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Binary {
+                        left_expr: Box::new(Expression::Literal(Literal::Int(456))),
+                        operator: Operator::Star,
+                        right_expr: Box::new(Expression::Literal(Literal::Int(789))),
+                    }),
+                }),
+                Postition {
+                    line: 1,
+                    column: 12,
+                    absolute: 11,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
 
@@ -381,31 +527,33 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
-        let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Literal(Literal::Int(123))),
-                operator:Operator::Plus,
-                right_expr:Box::new(Expression::Grouping{
-                    expr:Box::new(Expression::Binary{
-                        left_expr:Box::new(Expression::Binary{
-                            left_expr:Box::new(Expression::Literal(Literal::Float(45.76))),
-                            operator:Operator::Star,
-                            right_expr:Box::new(Expression::Literal(Literal::Int(789)))
-                        }),
-                        operator:Operator::Minus,
-                        right_expr:Box::new(Expression::Literal(Literal::Int(3)))
-                    })
-                })
 
-            }),Postition{
-            line:1,
-            column:18,
-            absolute:17
-            })
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Literal(Literal::Int(123))),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Grouping {
+                        expr: Box::new(Expression::Binary {
+                            left_expr: Box::new(Expression::Binary {
+                                left_expr: Box::new(Expression::Literal(Literal::Float(45.76))),
+                                operator: Operator::Star,
+                                right_expr: Box::new(Expression::Literal(Literal::Int(789))),
+                            }),
+                            operator: Operator::Minus,
+                            right_expr: Box::new(Expression::Literal(Literal::Int(3))),
+                        }),
+                    }),
+                }),
+                Postition {
+                    line: 1,
+                    column: 18,
+                    absolute: 17,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -415,25 +563,27 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
-        let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Binary{
-                    left_expr: Box::new(Expression::Literal(Literal::Int(123))),
-                    operator: Operator::Star,
-                    right_expr:Box::new(Expression::Literal(Literal::Int(456)))
-                }),
-                operator:Operator::Plus,
-                right_expr:Box::new(Expression::Literal(Literal::Int(789)))
 
-            }),Postition{
-            line:1,
-            column:12,
-            absolute:11
-            })
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Binary {
+                        left_expr: Box::new(Expression::Literal(Literal::Int(123))),
+                        operator: Operator::Star,
+                        right_expr: Box::new(Expression::Literal(Literal::Int(456))),
+                    }),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(789))),
+                }),
+                Postition {
+                    line: 1,
+                    column: 12,
+                    absolute: 11,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -443,25 +593,27 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-        
-        let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Binary{
-                    left_expr: Box::new(Expression::Literal(Literal::Int(123))),
-                    operator: Operator::Star,
-                    right_expr:Box::new(Expression::Literal(Literal::Int(456)))
-                }),
-                operator:Operator::Star,
-                right_expr:Box::new(Expression::Literal(Literal::Int(789)))
 
-            }),Postition{
-            line:1,
-            column:12,
-            absolute:11
-            })
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Binary {
+                        left_expr: Box::new(Expression::Literal(Literal::Int(123))),
+                        operator: Operator::Star,
+                        right_expr: Box::new(Expression::Literal(Literal::Int(456))),
+                    }),
+                    operator: Operator::Star,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(789))),
+                }),
+                Postition {
+                    line: 1,
+                    column: 12,
+                    absolute: 11,
+                },
+            ),
         ];
 
-        assert_eq!(expected,ast);
+        assert_eq!(expected, ast);
     }
 
     #[test]
@@ -470,25 +622,28 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let ast = Parser::new(tokens).parse().unwrap();
-           
+
 
         let expected = vec![
-            WithPos::new(Statement::ExpressionStmt(Expression::Binary{
-                left_expr:Box::new(Expression::Binary{
-                    left_expr:Box::new(Expression::Unary {
-                        operator:UnaryOperator::Minus,
-                        expr: Box::new(Expression::Literal(Literal::Int(123)))
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(Expression::Binary {
+                        left_expr: Box::new(Expression::Unary {
+                            operator: UnaryOperator::Minus,
+                            expr: Box::new(Expression::Literal(Literal::Int(123))),
+                        }),
+                        operator: Operator::Star,
+                        right_expr: Box::new(Expression::Literal(Literal::Int(456))),
                     }),
-                    operator: Operator::Star,
-                    right_expr:Box::new(Expression::Literal(Literal::Int(456)))
+                    operator: Operator::Plus,
+                    right_expr: Box::new(Expression::Literal(Literal::Int(789))),
                 }),
-                operator:Operator::Plus,
-                right_expr: Box::new(Expression::Literal(Literal::Int(789)))
-            }),Postition{
-                line:1,
-                column:13,
-                absolute:12
-            })
+                Postition {
+                    line: 1,
+                    column: 13,
+                    absolute: 12,
+                },
+            ),
         ];
 
         assert_eq!(expected, ast);

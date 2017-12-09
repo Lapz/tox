@@ -208,8 +208,8 @@ impl<'a> Resolver<'a> {
 
             Statement::ExpressionStmt(ref expr) => {
                 self.resolve_expr(expr, statement.pos)?;
-                Ok(())   
-            },
+                Ok(())
+            }
 
             Statement::IfStmt {
                 ref condition,
@@ -510,11 +510,11 @@ mod test {
     use resolver::Resolver;
     use pos::WithPos;
 
-    fn get_ast(input:&str) -> Vec<WithPos<Statement>> {
+    fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
         let tokens = Lexer::new(input).lex().unwrap();
         Parser::new(tokens).parse().unwrap()
     }
-    
+
     #[test]
     fn global() {
         let input = "var a = 0;{fun f() {print a;}}";
@@ -547,10 +547,10 @@ mod test {
         Resolver::new().resolve(get_ast(input)).unwrap()
     }
 
-     #[test]
+    #[test]
     fn global_redeclar() {
         let input = "var a = 1;var a = 2;";
-         assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
     }
 
     #[test]
@@ -566,5 +566,5 @@ mod test {
         let input = "this.name;";
         Resolver::new().resolve(get_ast(input)).unwrap()
     }
-    
+
 }
