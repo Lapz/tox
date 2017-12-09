@@ -20,7 +20,8 @@ use resolver::Resolver;
 // use inference::analyse;
 
 fn main() {
-    let input = "{var a = 1;var a = 2;}";
+    let input = "do {print(10);} while (true)
+        ";
 
     println!("{}", input);
 
