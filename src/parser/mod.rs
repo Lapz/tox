@@ -215,8 +215,7 @@ impl<'a> Parser<'a> {
             self.function("function")
         } else if self.recognise(TokenType::CLASS) {
             self.class_declaration()
-        }
-        else {
+        } else {
             self.statement()
         }
     }
@@ -479,10 +478,10 @@ impl<'a> Parser<'a> {
     }
 
 
-    fn class_declaration(&mut self) -> Result<WithPos<Statement<'a>>,ParserError<'a>> {
+    fn class_declaration(&mut self) -> Result<WithPos<Statement<'a>>, ParserError<'a>> {
         let class_pos = self.get_pos();
         let name = self.consume_name("Expected a class name")?;
-        
+
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
@@ -493,11 +492,7 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RBRACE, "Expect \'}\'' after class body")?;
 
-        Ok(WithPos::new(Statement::Class{
-            methods,
-            name
-        },class_pos))
-        
+        Ok(WithPos::new(Statement::Class { methods, name }, class_pos))
     }
 
 
@@ -884,7 +879,7 @@ impl<'a> Parser<'a> {
                     println!("Cannot have more than 32 arguments")
                 };
 
-                let identifier = self.consume_name( "Expected a parameter name")?;
+                let identifier = self.consume_name("Expected a parameter name")?;
 
                 parameters.push(identifier);
 
