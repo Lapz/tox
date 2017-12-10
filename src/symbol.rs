@@ -3,14 +3,16 @@ use std::fmt::Formatter;
 use std::fmt::Display;
 use std::collections::HashMap;
 
-#[derive(Debug,Clone,Eq,PartialEq,Hash,Copy)]
+#[derive(Debug,Clone,Eq,PartialEq,PartialOrd,Hash,Copy)]
 pub struct Symbol(u64);
 
+#[derive(Debug)]
 struct SymbolFactory<'a>{
     next:u64,
     mappings:HashMap<Symbol,&'a str>,
 }
 
+#[derive(Debug)]
 pub struct Symbols<'a,T> {
     strings: SymbolFactory<'a>,
     table:HashMap<Symbol,Vec<T>>,
@@ -83,9 +85,6 @@ impl <'a>  SymbolFactory<'a> {
             mappings:map
         }
     }
-
-  
-
 }
 
 #[cfg(test)]

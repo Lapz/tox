@@ -10,13 +10,14 @@ pub mod object;
 pub mod interpreter;
 // pub mod inference;
 // pub mod types;
-pub mod resolver;
+// pub mod resolver;
 pub mod symbol;
 // pub mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
-use resolver::Resolver;
+// use resolver::Resolver;
+use symbol::Symbols;
 
 // use interpreter::Interpreter;
 // use inference::analyse;
@@ -31,17 +32,18 @@ fn main() {
 
 
     println!("{:#?}", tokens);
+    let mut symbols = Symbols::new();
 
-    let ast = Parser::new(tokens.unwrap()).parse().unwrap();
+    let ast = Parser::new(tokens.unwrap(),&mut symbols).parse().unwrap();
 
     println!("{:#?}", ast);
 
 
-    let mut resolver = Resolver::new();
+    // let mut resolver = Resolver::new();
 
-    println!("{:#?}", resolver.resolve(ast).unwrap());
+    // println!("{:#?}", resolver.resolve(ast).unwrap());
 
-    println!("{:#?}", resolver);
+    // println!("{:#?}", resolver);
 
     // println!("{:#?}",analyse(&ast));
 
