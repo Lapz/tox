@@ -10,7 +10,7 @@ pub mod object;
 pub mod interpreter;
 // pub mod inference;
 // pub mod types;
-// pub mod resolver;
+pub mod resolver;
 pub mod symbol;
 // pub mod pprint;
 

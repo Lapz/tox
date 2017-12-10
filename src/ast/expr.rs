@@ -1,7 +1,5 @@
 use ast::statement::Statement;
 use pos::WithPos;
-use std::fmt::{Display, Formatter};
-use std::fmt;
 use symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]

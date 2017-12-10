@@ -1,11 +1,14 @@
-use std::fmt;
-use std::fmt::Formatter;
-use std::fmt::Display;
+
+use std::fmt::{Display,Formatter,Result};
 use std::collections::HashMap;
 
 #[derive(Debug,Clone,Eq,PartialEq,PartialOrd,Hash,Copy)]
-pub struct Symbol(u64);
-
+pub struct Symbol(pub u64);
+impl Display for Symbol {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "Symbol {}", self.0)
+    }
+}
 #[derive(Debug)]
 struct SymbolFactory<'a>{
     next:u64,

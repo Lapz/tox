@@ -4,10 +4,11 @@ use ast::expr::*;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use pos::{Postition, WithPos};
+use symbol::Symbol;
 
 #[derive(Debug)]
-pub struct Resolver<'a> {
-    scopes: Vec<HashMap<Variable<'a>, bool>>,
+pub struct Resolver{
+    scopes: Vec<HashMap<Symbol, bool>>,
     current_function: FunctionType,
     current_class: ClassType,
     locals: HashMap<VariableUseHandle, usize>,
@@ -48,7 +49,7 @@ pub enum ClassType {
     Class,
 }
 
-impl<'a> Default for Resolver<'a> {
+impl Default for Resolver {
     fn default() -> Self {
         Resolver {
             scopes: vec![],
@@ -60,14 +61,14 @@ impl<'a> Default for Resolver<'a> {
 }
 
 
-impl<'a> Resolver<'a> {
+impl Resolver {
     pub fn new() -> Self {
         Self::default()
     }
 
     pub fn resolve(
         &mut self,
-        statements: Vec<WithPos<Statement<'a>>>,
+        statements: Vec<WithPos<Statement>>,
     ) -> Result<(), Vec<ResolverError>> {
         let mut errors = vec![];
 
@@ -97,11 +98,11 @@ impl<'a> Resolver<'a> {
         self.scopes.len() - 1
     }
 
-    fn not_resolved(&self, name: &Variable<'a>) -> bool {
+    fn not_resolved(&self, name: &Symbol) -> bool {
         !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&false)
     }
 
-    fn declare(&mut self, name: Variable<'a>, pos: Postition) -> Result<(), ResolverError> {
+    fn declare(&mut self, name: Symbol, pos: Postition) -> Result<(), ResolverError> {
         if self.scopes.is_empty() {
             return Ok(());
         }
@@ -121,12 +122,12 @@ impl<'a> Resolver<'a> {
         Ok(())
     }
 
-    pub fn insert(&mut self, name: Variable<'a>, state: bool) {
+    pub fn insert(&mut self, name: Symbol, state: bool) {
         let top = self.peek();
         self.scopes[top].insert(name, state);
     }
 
-    pub fn define(&mut self, name: Variable<'a>) {
+    pub fn define(&mut self, name: Symbol) {
         if self.scopes.is_empty() {
             return;
         };
@@ -135,7 +136,7 @@ impl<'a> Resolver<'a> {
         self.scopes[index].insert(name, true);
     }
 
-    pub fn resolve_local(&mut self, name: &Variable<'a>, handle: VariableUseHandle) {
+    pub fn resolve_local(&mut self, name: &Symbol, handle: VariableUseHandle) {
         let max_depth = self.scopes.len();
 
         for i in 0..max_depth {
@@ -150,7 +151,7 @@ impl<'a> Resolver<'a> {
 
     fn resolve_func(
         &mut self,
-        body: &Expression<'a>,
+        body: &Expression,
         kind: FunctionType,
         pos: Postition,
     ) -> Result<(), ResolverError> {
@@ -188,10 +189,10 @@ impl<'a> Resolver<'a> {
     }
 }
 
-impl<'a> Resolver<'a> {
+impl Resolver {
     fn resolve_statement(
         &mut self,
-        statement: &WithPos<Statement<'a>>,
+        statement: &WithPos<Statement>,
     ) -> Result<(), ResolverError> {
         match statement.node {
             Statement::Block(ref statements) => {
@@ -316,7 +317,7 @@ impl<'a> Resolver<'a> {
 
                 self.begin_scope();
 
-                self.insert(Variable("this"), true);
+                self.insert(Symbol(0), true);
 
                 for method in methods {
                     let mut declaration = FunctionType::Method;
@@ -324,7 +325,7 @@ impl<'a> Resolver<'a> {
                     match method {
                         &WithPos { ref node, ref pos } => match node {
                             &Statement::Function { ref name, ref body } => {
-                                if name.0 == "init" {
+                                if name == &Symbol(1) {
                                     declaration = FunctionType::Init;
                                 }
 
@@ -344,8 +345,8 @@ impl<'a> Resolver<'a> {
         }
     }
 }
-impl<'a> Resolver<'a> {
-    fn resolve_expr(&mut self, expr: &Expression<'a>, pos: Postition) -> Result<(), ResolverError> {
+impl Resolver {
+    fn resolve_expr(&mut self, expr: &Expression, pos: Postition) -> Result<(), ResolverError> {
         match *expr {
             Expression::Array { ref items } => {
                 for ref item in items {
@@ -483,7 +484,7 @@ impl<'a> Resolver<'a> {
                     )));
                 }
 
-                self.resolve_local(&Variable("this"), *handle);
+                self.resolve_local(&Symbol(0), *handle);
 
                 Ok(())
             }
@@ -506,13 +507,15 @@ impl<'a> Resolver<'a> {
 mod test {
     use ast::statement::Statement;
     use lexer::Lexer;
+    use symbol::Symbols;
     use parser::Parser;
     use resolver::Resolver;
     use pos::WithPos;
 
     fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
         let tokens = Lexer::new(input).lex().unwrap();
-        Parser::new(tokens).parse().unwrap()
+        let mut symbols = Symbols::new();
+        Parser::new(tokens,&mut symbols).parse().unwrap()
     }
 
     #[test]
@@ -536,7 +539,7 @@ mod test {
     #[test]
     #[should_panic]
     fn shadowing_error() {
-        let input = "var a = 0;{var a = a;}";
+        let input = "var a = 0; { var a = a;}";
         Resolver::new().resolve(get_ast(input)).unwrap()
     }
 
