@@ -331,7 +331,6 @@ fn is_letter_ch(ch: char) -> bool {
 #[inline]
 fn look_up_identifier(id: &str) -> TokenType {
     match id {
-        "pprint" => TokenType::PPRINT,
         // Class
         "class" => TokenType::CLASS,
         "super" => TokenType::SUPER,

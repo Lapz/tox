@@ -7,7 +7,6 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
-// use pprint::PrettyPrint;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,

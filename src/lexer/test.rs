@@ -204,7 +204,7 @@ mod tests {
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1, 0, TokenType::PPRINT),
+            add_token(1, 1, 0, TokenType::IDENTIFIER("pprint")),
             add_token(1, 7, 6, TokenType::COMMA),
             add_token(1, 8, 7, TokenType::CLASS),
             add_token(1, 13, 12, TokenType::COMMA),

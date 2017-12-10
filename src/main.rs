@@ -12,7 +12,7 @@ pub mod interpreter;
 // pub mod types;
 pub mod resolver;
 pub mod symbol;
-// pub mod pprint;
+
 
 use lexer::Lexer;
 use parser::Parser;
