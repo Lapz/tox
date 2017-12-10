@@ -6,13 +6,13 @@ use pos::Postition;
 use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
-use symbol::{Symbol,Symbols};
+use symbol::{Symbol, Symbols};
 // use pprint::PrettyPrint;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    pub symbols:&'a mut Symbols<'a,()>,
+    pub symbols: &'a mut Symbols<'a, ()>,
     variable_use_maker: VariableUseMaker,
 }
 
@@ -55,7 +55,7 @@ impl<'a> Display for ParserError<'a> {
 
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>,symbols:&'a mut Symbols<'a,()>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<'a, ()>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,
@@ -188,7 +188,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn consume_name(&mut self, msg: &str) -> Result<Symbol,ParserError<'a>> {
+    fn consume_name(&mut self, msg: &str) -> Result<Symbol, ParserError<'a>> {
         match self.advance() {
             Some(Token {
                 token: TokenType::IDENTIFIER(ref ident),
@@ -775,9 +775,10 @@ impl<'a> Parser<'a> {
                 TokenType::INT(ref i) => Ok(Expression::Literal(Literal::Int(*i))),
                 TokenType::FLOAT(ref f) => Ok(Expression::Literal(Literal::Float(*f))),
                 TokenType::STRING(ref s) => Ok(Expression::Literal(Literal::Str(s.clone()))),
-                TokenType::IDENTIFIER(ref ident) => {
-                    Ok(Expression::Var(self.symbols.symbol(ident),self.variable_use_maker.next()))
-                }
+                TokenType::IDENTIFIER(ref ident) => Ok(Expression::Var(
+                    self.symbols.symbol(ident),
+                    self.variable_use_maker.next(),
+                )),
                 TokenType::THIS => Ok(Expression::This(self.variable_use_maker.next())),
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {

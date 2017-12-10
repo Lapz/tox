@@ -16,7 +16,7 @@ pub mod symbol;
 
 use lexer::Lexer;
 use parser::Parser;
-// use resolver::Resolver;
+use resolver::Resolver;
 use symbol::Symbols;
 
 // use interpreter::Interpreter;
@@ -33,16 +33,16 @@ fn main() {
     println!("{:#?}", tokens);
     let mut symbols = Symbols::new();
 
-    let ast = Parser::new(tokens.unwrap(),&mut symbols).parse().unwrap();
+    let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
     println!("{:#?}", ast);
 
 
-    // let mut resolver = Resolver::new();
+    let mut resolver = Resolver::new();
 
-    // println!("{:#?}", resolver.resolve(ast).unwrap());
+    println!("{:#?}", resolver.resolve(ast).unwrap());
 
-    // println!("{:#?}", resolver);
+    println!("{:#?}", resolver);
 
     // println!("{:#?}",analyse(&ast));
 

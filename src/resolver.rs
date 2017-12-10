@@ -7,7 +7,7 @@ use pos::{Postition, WithPos};
 use symbol::Symbol;
 
 #[derive(Debug)]
-pub struct Resolver{
+pub struct Resolver {
     scopes: Vec<HashMap<Symbol, bool>>,
     current_function: FunctionType,
     current_class: ClassType,
@@ -190,10 +190,7 @@ impl Resolver {
 }
 
 impl Resolver {
-    fn resolve_statement(
-        &mut self,
-        statement: &WithPos<Statement>,
-    ) -> Result<(), ResolverError> {
+    fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
         match statement.node {
             Statement::Block(ref statements) => {
                 self.begin_scope();
@@ -515,7 +512,7 @@ mod test {
     fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
         let tokens = Lexer::new(input).lex().unwrap();
         let mut symbols = Symbols::new();
-        Parser::new(tokens,&mut symbols).parse().unwrap()
+        Parser::new(tokens, &mut symbols).parse().unwrap()
     }
 
     #[test]

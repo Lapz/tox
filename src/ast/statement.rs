@@ -1,4 +1,4 @@
-use ast::expr::{Expression};
+use ast::expr::Expression;
 use pos::WithPos;
 use symbol::Symbol;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
