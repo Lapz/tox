@@ -12,7 +12,7 @@ use symbol::{Symbol,Symbols};
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    symbols:&'a mut Symbols<'a,()>,
+    pub symbols:&'a mut Symbols<'a,()>,
     variable_use_maker: VariableUseMaker,
 }
 

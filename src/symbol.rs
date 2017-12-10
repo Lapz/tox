@@ -70,6 +70,7 @@ impl <'a,T> Symbols<'a,T> {
             }
         }
         let symbol = Symbol(self.strings.next);
+        self.strings.mappings.insert(symbol,name);
         self.strings.next +=1;
         symbol
     }
