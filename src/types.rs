@@ -1,11 +1,10 @@
 // use std::collections::{HashMap, HashSet};
-// use ast::expr::Variable;
 
-// #[derive(Debug)]
-// pub enum TypeError {
-//     Recursive,
-//     Expected(Type),
-// }
+#[derive(Debug, Clone)]
+pub enum TypeError {
+    Recursive,
+    Expected(Type),
+}
 
 pub struct Unique {
     id: i64,

@@ -8,10 +8,11 @@ mod ast;
 mod parser;
 // mod object;
 //  mod interpreter;
-// pub mod inference;
+mod inference;
 mod types;
 mod resolver;
 mod symbol;
+mod env;
 
 use lexer::Lexer;
 use parser::Parser;

@@ -8,13 +8,13 @@ impl Display for Symbol {
         write!(f, "Symbol {}", self.0)
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SymbolFactory<'a> {
     next: u64,
     mappings: HashMap<Symbol, &'a str>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Symbols<'a, T> {
     strings: SymbolFactory<'a>,
     table: HashMap<Symbol, Vec<T>>,
