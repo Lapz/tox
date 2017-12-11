@@ -21,7 +21,6 @@ pub struct Symbols<'a, T> {
     scopes: Vec<Option<Symbol>>,
 }
 
-
 impl<'a, T> Symbols<'a, T> {
     pub fn new() -> Self {
         Symbols {

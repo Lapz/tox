@@ -19,7 +19,6 @@ pub struct Parser<'a> {
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
-
 #[derive(Clone, Debug)]
 pub enum ParserError {
     IllegalExpression(String),
@@ -38,7 +37,6 @@ impl Display for ParserError {
         }
     }
 }
-
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<'a, ()>) -> Self {
@@ -90,11 +88,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-
     fn error(&self, message: &str, pos: Postition) -> String {
         format!("{} on {}", message, pos)
     }
-
 
     fn peek<F>(&mut self, mut check: F) -> bool
     where
@@ -132,7 +128,6 @@ impl<'a> Parser<'a> {
     fn advance(&mut self) -> Option<Token<'a>> {
         self.tokens.next()
     }
-
 
     fn token_type(&mut self) -> TokenType<'a> {
         self.advance().map(|t| t.token).unwrap()
@@ -186,10 +181,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-   
-
-
-    fn get_type(&mut self) ->  Result<Option<Type>,ParserError> {
+    fn get_type(&mut self) -> Result<Option<Type>, ParserError> {
         if self.recognise(TokenType::COLON) {
             self.advance();
 
@@ -198,18 +190,18 @@ impl<'a> Parser<'a> {
             let var_type = get_type(possilbe_type.token);
 
             if var_type.is_none() {
-                return Err(ParserError::Expected(self.error("Expected a proper type", possilbe_type.pos)));
+                return Err(ParserError::Expected(self.error(
+                    "Expected a proper type",
+                    possilbe_type.pos,
+                )));
             }
 
-            return Ok(var_type)
-
+            return Ok(var_type);
         }
 
         Ok(None)
     }
 }
-
-
 
 // Statements
 impl<'a> Parser<'a> {
@@ -247,9 +239,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-
-
-
     fn expression_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let expr = self.expression()?;
 
@@ -269,7 +258,6 @@ impl<'a> Parser<'a> {
             func_pos,
         ))
     }
-
 
     // Keyword statements
 
@@ -301,7 +289,6 @@ impl<'a> Parser<'a> {
     }
 
     // Control Flow Statements
-
 
     fn for_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let for_pos = self.get_pos();
@@ -386,7 +373,6 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RPAREN, "Expected ')' after 'while'")?;
 
-
         let do_statement = Statement::DoStmt {
             body: Box::new(body),
             condition,
@@ -453,7 +439,6 @@ impl<'a> Parser<'a> {
         ))
     }
 
-
     fn return_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let pos = self.get_pos();
 
@@ -482,7 +467,6 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(Statement::Block(statement), pos))
     }
 
-
     fn class_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let class_pos = self.get_pos();
         let name = self.consume_name("Expected a class name")?;
@@ -500,19 +484,16 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(Statement::Class { methods, name }, class_pos))
     }
 
-
-
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let var_pos = self.get_pos();
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
-        
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
 
             let value = Expression::Literal(Literal::Nil);
 
-            return Ok(WithPos::new(Statement::Var(name, value,None), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value, None), var_pos));
         }
 
         let var_type = self.get_type()?;
@@ -530,7 +511,7 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr,var_type), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, expr, var_type), var_pos));
         }
 
         Err(ParserError::Expected(self.error(
@@ -539,7 +520,6 @@ impl<'a> Parser<'a> {
         )))
     }
 }
-
 
 // Expression Parsing
 impl<'a> Parser<'a> {
@@ -580,7 +560,6 @@ impl<'a> Parser<'a> {
 
         Ok(expr)
     }
-
 
     fn ternary(&mut self) -> Result<Expression, ParserError> {
         let mut condition = self.or()?;
@@ -770,7 +749,6 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-
     fn primary(&mut self) -> Result<Expression, ParserError> {
         match self.advance() {
             Some(Token { ref token, ref pos }) => match *token {
@@ -814,7 +792,6 @@ impl<'a> Parser<'a> {
                 TokenType::LBRACE => {
                     let mut items: Vec<(Expression, Expression)> = vec![];
 
-
                     if self.recognise(TokenType::RBRACE) {
                         self.advance();
                         return Ok(Expression::Dict { items });
@@ -829,7 +806,6 @@ impl<'a> Parser<'a> {
                         self.recognise(TokenType::COMMA)
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
-
 
                     self.consume(TokenType::RBRACE, "Expected a '}' to close a dictionary.")?;
 
@@ -856,7 +832,6 @@ impl<'a> Parser<'a> {
     }
 }
 
-
 // Helper parsing functions
 impl<'a> Parser<'a> {
     fn fun_body(&mut self, kind: &str) -> Result<Expression, ParserError> {
@@ -874,7 +849,7 @@ impl<'a> Parser<'a> {
                 let identifier = self.consume_name("Expected a parameter name")?;
                 let id_type = self.get_type()?;
 
-                parameters.push((identifier,id_type));
+                parameters.push((identifier, id_type));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
@@ -886,11 +861,11 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-            returns  = get_type(self.token_type());
+            returns = get_type(self.token_type());
 
             if returns.is_none() {
                 let msg = format!("Expected a proper return type");
-                return Err(ParserError::Expected(msg))
+                return Err(ParserError::Expected(msg));
             }
         }
 
@@ -901,7 +876,11 @@ impl<'a> Parser<'a> {
 
         let body = Box::new(self.block()?);
 
-        Ok(Expression::Func { parameters, body,returns })
+        Ok(Expression::Func {
+            parameters,
+            body,
+            returns,
+        })
     }
 
     fn finish_call(&mut self, callee: Expression) -> Result<Expression, ParserError> {

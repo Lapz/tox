@@ -3,7 +3,6 @@ mod test;
 use token::{Token, TokenType};
 use pos::{CharPosition, Postition};
 
-
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
@@ -26,9 +25,6 @@ impl Display for LexerError {
     }
 }
 
-
-
-
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     // A lexer instance
@@ -37,7 +33,6 @@ pub struct Lexer<'a> {
     lookahead: Option<(Postition, char)>,
     end: Postition,
 }
-
 
 impl<'a> Lexer<'a> {
     /// Returns a new Lexer
@@ -82,7 +77,6 @@ impl<'a> Lexer<'a> {
         (self.end, self.slice(start, self.end))
     }
 
-
     fn peek<F>(&mut self, mut check: F) -> bool
     where
         F: FnMut(char) -> bool,
@@ -118,7 +112,6 @@ impl<'a> Lexer<'a> {
             }
         }
     }
-
 
     fn string_literal(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
         let mut string = String::new();
@@ -181,7 +174,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-
     fn next(&mut self) -> Result<Token<'a>, LexerError> {
         while let Some((start, ch)) = self.advance() {
             return match ch {
@@ -222,9 +214,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         Ok(token_with_info(TokenType::MINUSASSIGN, start))
-                    }else if self.peek(|ch| ch == '>') {
+                    } else if self.peek(|ch| ch == '>') {
                         self.advance();
-                        Ok(token_with_info(TokenType::FRETURN, start)) 
+                        Ok(token_with_info(TokenType::FRETURN, start))
                     } else {
                         Ok(token_with_info(TokenType::MINUS, start))
                     }
@@ -292,8 +284,6 @@ impl<'a> Lexer<'a> {
         })
     }
 
-
-
     pub fn lex(&mut self) -> Result<Vec<Token<'a>>, Vec<LexerError>> {
         let mut tokens = vec![];
 
@@ -316,7 +306,6 @@ impl<'a> Lexer<'a> {
     }
 }
 
-
 fn token_with_info(token: TokenType, pos: Postition) -> Token {
     Token { token, pos }
 }
@@ -324,8 +313,6 @@ fn token_with_info(token: TokenType, pos: Postition) -> Token {
 fn is_letter_ch(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
 }
-
-
 
 #[inline]
 fn look_up_identifier(id: &str) -> TokenType {

@@ -8,7 +8,7 @@ mod test {
     use symbol::{Symbol, Symbols};
     use types::Type;
 
-     #[test]
+    #[test]
     fn types() {
         let input = "var a:int = 10;";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -17,7 +17,11 @@ mod test {
 
         let expected = vec![
             WithPos::new(
-                Statement::Var(Symbol(2),Expression::Literal(Literal::Int(10)),Some(Type::Int)),
+                Statement::Var(
+                    Symbol(2),
+                    Expression::Literal(Literal::Int(10)),
+                    Some(Type::Int),
+                ),
                 Postition {
                     line: 1,
                     column: 1,
@@ -28,7 +32,7 @@ mod test {
 
         assert_eq!(expected, ast);
     }
-     
+
     #[test]
     fn function_types() {
         let input = "fun add(a:int,b:int){ return a+b;}";
@@ -92,17 +96,16 @@ mod test {
         assert_eq!(ast, vec![expected]);
     }
 
-
     #[test]
     fn for_statement() {
         let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
         let tokens = Lexer::new(input).lex().unwrap();
 
         let mut symbols = Symbols::new();
-    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let init = WithPos::new(
-            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0)),None),
+            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0)), None),
             Postition {
                 line: 1,
                 column: 6,
@@ -146,7 +149,6 @@ mod test {
             },
         );
 
-
         let while_statement = WithPos::new(
             Statement::WhileStmt {
                 condition,
@@ -166,9 +168,6 @@ mod test {
             },
         );
 
-
-
-
         let expected = WithPos::new(
             Statement::Block(vec![init, while_statement]),
             Postition {
@@ -187,7 +186,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let mut symbols = Symbols::new();
-    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let name = Symbol(2);
 
@@ -206,8 +205,6 @@ mod test {
         assert_eq!(ast, vec![expected]);
     }
 
-
-
     #[test]
     fn break_statement() {
         let input = "while (!true) {
@@ -217,7 +214,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let mut symbols = Symbols::new();
-    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
@@ -267,8 +264,6 @@ mod test {
         assert_eq!(ast, vec![expected]);
     }
 
-
-
     #[test]
     fn continue_statement() {
         let input = "while (!true) {
@@ -278,7 +273,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
 
         let mut symbols = Symbols::new();
-        let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
@@ -376,7 +371,6 @@ mod test {
 
         assert_eq!(ast, vec![expected]);
     }
-
 
     #[test]
     fn if_stmt() {
@@ -487,7 +481,6 @@ mod test {
             },
         );
 
-
         assert_eq!(ast, vec![clock_fun, len_fun]);
     }
 
@@ -529,7 +522,6 @@ mod test {
         let mut symbols = Symbols::new();
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-
         let index = Expression::IndexExpr {
             target: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
             index: Box::new(Expression::Binary {
@@ -550,8 +542,6 @@ mod test {
 
         assert_eq!(ast, vec![expected]);
     }
-
-
 
     #[test]
     fn print() {
@@ -719,8 +709,6 @@ mod test {
         assert_eq!(expected, ast);
     }
 
-    
-
     #[test]
     fn precedence_group() {
         let input = "123+(45.76*789-3);";
@@ -827,7 +815,6 @@ mod test {
 
         let mut symbols = Symbols::new();
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
-
 
         let expected = vec![
             WithPos::new(

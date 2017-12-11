@@ -6,7 +6,7 @@ use symbol::Symbol;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
     ExpressionStmt(Expression),
-    Var(Symbol, Expression,Option<Type>),
+    Var(Symbol, Expression, Option<Type>),
     Block(Vec<WithPos<Statement>>),
     Class {
         name: Symbol,
@@ -21,7 +21,6 @@ pub enum Statement {
         condition: Expression,
         body: Box<WithPos<Statement>>,
     },
-
 
     Function {
         name: Symbol,

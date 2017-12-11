@@ -33,7 +33,7 @@ pub enum Expression {
         items: Vec<(Expression, Expression)>,
     },
     Func {
-        parameters: Vec<(Symbol,Option<types::Type>)>,
+        parameters: Vec<(Symbol, Option<types::Type>)>,
         body: Box<WithPos<Statement>>,
         returns: Option<types::Type>,
     },
@@ -87,12 +87,10 @@ pub enum Literal {
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Hash, Eq)]
 pub struct VariableUseHandle(pub u64);
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct VariableUseMaker {
     next_value: u64,
 }
-
 
 impl VariableUseMaker {
     pub fn new() -> Self {
@@ -101,7 +99,6 @@ impl VariableUseMaker {
 
     pub fn next(&mut self) -> VariableUseHandle {
         let value = self.next_value;
-
 
         self.next_value += 1;
         VariableUseHandle(value)
@@ -124,7 +121,6 @@ pub enum Operator {
     Modulo,
     Exponential,
 }
-
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
 pub enum AssignOperator {
@@ -183,11 +179,11 @@ pub(crate) fn get_type(token: TokenType) -> Option<types::Type> {
 
     match token {
         TokenType::TINT => Some(Type::Int),
-        TokenType::TFLOAT =>  Some(Type::Float),
-        TokenType::TSTR=>  Some(Type::Str),
-        TokenType::NIL =>  Some(Type::Nil),
-        TokenType::TBOOL =>  Some(Type::Bool),
-        _ => None
+        TokenType::TFLOAT => Some(Type::Float),
+        TokenType::TSTR => Some(Type::Str),
+        TokenType::NIL => Some(Type::Nil),
+        TokenType::TBOOL => Some(Type::Bool),
+        _ => None,
     }
 }
 
@@ -213,4 +209,3 @@ pub enum LogicOperator {
     Or,
     And,
 }
-

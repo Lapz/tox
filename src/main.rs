@@ -3,16 +3,15 @@
 extern crate pretty_assertions;
 mod token;
 mod lexer;
- mod pos;
+mod pos;
 mod ast;
 mod parser;
 // mod object;
 //  mod interpreter;
 // pub mod inference;
 mod types;
- mod resolver;
- mod symbol;
-
+mod resolver;
+mod symbol;
 
 use lexer::Lexer;
 use parser::Parser;
@@ -36,9 +35,7 @@ fn main() {
 
     Resolver::new().resolve(ast).unwrap();
 
-
     // println!("{:#?}",analyse(&ast));
-
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 

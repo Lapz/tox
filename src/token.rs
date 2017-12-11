@@ -78,7 +78,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
-            
         }
     }
 }
@@ -90,11 +89,10 @@ pub enum TokenType<'a> {
     INT(i64),
     FLOAT(f64),
     STRING(String),
-    TINT, // int
+    TINT,   // int
     TFLOAT, // float
-    TBOOL, // bool
-    TSTR, // str
-
+    TBOOL,  // bool
+    TSTR,   // str
 
     // Assignment
     ASSIGN,      // =
