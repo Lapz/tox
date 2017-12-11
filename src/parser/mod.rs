@@ -526,7 +526,6 @@ impl<'a> Parser<'a> {
         let var_pos = self.get_pos();
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
         
-        let mut var_type = None;
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
@@ -536,7 +535,7 @@ impl<'a> Parser<'a> {
             return Ok(WithPos::new(Statement::Var(name, value,None), var_pos));
         }
 
-        var_type = self.get_type()?;
+        let var_type = self.get_type()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
