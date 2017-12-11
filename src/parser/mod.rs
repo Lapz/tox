@@ -206,6 +206,9 @@ impl<'a> Parser<'a> {
         }
     }
 
+   
+
+
     fn get_type(&mut self) ->  Result<Option<Type>,ParserError<'a>> {
         if self.recognise(TokenType::COLON) {
             self.advance();
@@ -881,6 +884,7 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::LPAREN, "Expected '(' ")?;
 
         let mut parameters = vec![];
+        let mut returns = None;
 
         if !self.recognise(TokenType::RPAREN) {
             while {
@@ -900,6 +904,17 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RPAREN, "Expected ')' after parameters.")?;
 
+        if self.recognise(TokenType::FRETURN) {
+            self.advance();
+
+            returns  = get_type(self.token_type());
+
+            if returns.is_none() {
+                let msg = format!("Expected a proper return type");
+                return Err(ParserError::Expected(msg))
+            }
+        }
+
         self.consume(
             TokenType::LBRACE,
             &format!("Expected '{{' before {} body.", kind),
@@ -907,7 +922,7 @@ impl<'a> Parser<'a> {
 
         let body = Box::new(self.block()?);
 
-        Ok(Expression::Func { parameters, body })
+        Ok(Expression::Func { parameters, body,returns })
     }
 
     fn finish_call(&mut self, callee: Expression) -> Result<Expression, ParserError<'a>> {

@@ -226,6 +226,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         Ok(token_with_info(TokenType::MINUSASSIGN, start))
+                    }else if self.peek(|ch| ch == '>') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::FRETURN, start)) 
                     } else {
                         Ok(token_with_info(TokenType::MINUS, start))
                     }

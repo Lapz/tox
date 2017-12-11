@@ -163,6 +163,7 @@ impl Resolver {
             &Expression::Func {
                 ref body,
                 ref parameters,
+                ..
             } => {
                 self.begin_scope();
 
@@ -398,6 +399,7 @@ impl Resolver {
             Expression::Func {
                 ref parameters,
                 ref body,
+                ..
             } => {
                 let enclosing_function = self.current_function;
 

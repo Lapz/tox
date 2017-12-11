@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn symbols() {
-        let input = "%^!/-*<> == != <= >=";
+        let input = "%^!/-*<> == != <= >= ->";
 
         let mut lexer = Lexer::new(input);
 
@@ -268,6 +268,8 @@ mod tests {
             add_token(1, 13, 12, TokenType::BANGEQUAL),
             add_token(1, 16, 15, TokenType::LESSTHANEQUAL),
             add_token(1, 19, 18, TokenType::GREATERTHANEQUAL),
+            add_token(1, 22, 21, TokenType::FRETURN),
+
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }

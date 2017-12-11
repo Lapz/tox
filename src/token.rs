@@ -59,6 +59,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::RBRACKET => write!(f, "]"),  // ]
             TokenType::LBRACE => write!(f, "{{"),   // {
             TokenType::RBRACE => write!(f, "}}"),   // }
+            TokenType::FRETURN => write!(f, "->"),
             // Keywords,
             TokenType::FUNCTION => write!(f, "fun"),
             TokenType::BREAK => write!(f, "break"),
@@ -78,7 +79,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
-            TokenType::NLINE | TokenType::SPACE | TokenType::TAB => write!(f, "whitespace"),
+            
         }
     }
 }
@@ -94,6 +95,7 @@ pub enum TokenType<'a> {
     TFLOAT, // float
     TBOOL, // bool
     TSTR, // str
+
 
     // Assignment
     ASSIGN,      // =
@@ -111,6 +113,7 @@ pub enum TokenType<'a> {
     EXPONENTIAL, // ^
 
     // Puntuation
+    FRETURN,   // ->
     DOT,       // .
     QUESTION,  // ?
     COLON,     // :
@@ -154,7 +157,4 @@ pub enum TokenType<'a> {
     // Other
     ILLEGAL(&'a char),
     EOF,
-    TAB,   // NEEDED FOR LINE REPORTING
-    NLINE, // NEEDED FOR LINE REPORTING
-    SPACE, // NEEDED FOR LINE REPORTING
 }

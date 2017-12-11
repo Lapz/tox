@@ -35,6 +35,7 @@ pub enum Expression {
     Func {
         parameters: Vec<(Symbol,Option<types::Type>)>,
         body: Box<WithPos<Statement>>,
+        returns: Option<types::Type>,
     },
     Get {
         object: Box<Expression>,

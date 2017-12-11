@@ -29,7 +29,7 @@ mod test {
         assert_eq!(expected, ast);
     }
      
-     #[test]
+    #[test]
     fn function_types() {
         let input = "fun add(a:int,b:int){ return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -38,6 +38,14 @@ mod test {
         assert!(ast.is_ok())
     }
 
+    #[test]
+    fn function_return() {
+        let input = "fun add(a:int,b:int) -> int { return a+b;}";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
 
     #[test]
     fn do_while_statement() {

@@ -23,7 +23,7 @@ use symbol::Symbols;
 // use inference::analyse;
 
 fn main() {
-    let input = "fun add(a:int,b:int){ return a+b;}";
+    let input = "fun add(a:int,b:int) -> int { return a+b;}";
 
     println!("{}", input);
 
