@@ -226,18 +226,6 @@ impl Resolver {
                 Ok(())
             }
 
-            Statement::ForStmt {
-                ref initializer,
-                ref condition,
-                ref increment,
-                ref body,
-            } => {
-                self.resolve_statement(initializer)?;
-                self.resolve_expr(condition, statement.pos)?;
-                self.resolve_expr(increment, statement.pos)?;
-                self.resolve_statement(body)?;
-                Ok(())
-            }
 
             Statement::WhileStmt {
                 ref condition,

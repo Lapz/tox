@@ -1,17 +1,17 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
-pub mod token;
-pub mod lexer;
-pub mod pos;
-pub mod ast;
-pub mod parser;
-pub mod object;
-pub mod interpreter;
+mod token;
+mod lexer;
+ mod pos;
+mod ast;
+mod parser;
+// mod object;
+//  mod interpreter;
 // pub mod inference;
-pub mod types;
-pub mod resolver;
-pub mod symbol;
+mod types;
+ mod resolver;
+ mod symbol;
 
 
 use lexer::Lexer;

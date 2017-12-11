@@ -11,9 +11,7 @@ use std::fmt;
 pub enum LexerError {
     UnclosedString(String),
     UnclosedBlockComment(String),
-    InvalidFloat(String),
     EOF,
-    EscapeCode, // Add the char
     Unexpected(char, Postition),
 }
 
@@ -22,9 +20,7 @@ impl Display for LexerError {
         match *self {
             LexerError::UnclosedString(ref e) => write!(f, "unclosed string {}", e),
             LexerError::EOF => write!(f, "Unexpected EOf"),
-            LexerError::EscapeCode => write!(f, "Unexpected escape code"),
             LexerError::UnclosedBlockComment(ref e) => write!(f, "unclosed block comment {}", e),
-            LexerError::InvalidFloat(ref e) => write!(f, "Inavlid Float {}", e),
             LexerError::Unexpected(ref c, ref p) => write!(f, "Unexpected char {} on {}", c, p),
         }
     }

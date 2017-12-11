@@ -22,12 +22,6 @@ pub enum Statement {
         body: Box<WithPos<Statement>>,
     },
 
-    ForStmt {
-        initializer: Box<WithPos<Statement>>,
-        condition: Expression,
-        increment: Expression,
-        body: Box<WithPos<Statement>>,
-    },
 
     Function {
         name: Symbol,
