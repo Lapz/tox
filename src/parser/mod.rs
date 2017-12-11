@@ -502,6 +502,7 @@ impl<'a> Parser<'a> {
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError<'a>> {
         let var_pos = self.get_pos();
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
+        
         let mut var_type = None;
 
         if self.recognise(TokenType::SEMICOLON) {
@@ -536,7 +537,7 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr,None), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, expr,var_type), var_pos));
         }
 
         Err(ParserError::Expected(self.error(

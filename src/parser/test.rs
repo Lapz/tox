@@ -63,7 +63,7 @@ mod test {
     let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
         let init = WithPos::new(
-            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0))),
+            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0)),None),
             Postition {
                 line: 1,
                 column: 6,

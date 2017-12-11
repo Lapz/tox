@@ -206,11 +206,11 @@ mod tests {
         let expected_tokens = vec![
             add_token(1, 1, 0, TokenType::TINT),
             add_token(1, 4, 3, TokenType::COMMA),
-            add_token(1, 9, 8, TokenType::TBOOL),
-            add_token(1, 10, 9, TokenType::COMMA),
-            add_token(1, 12, 11, TokenType::TFLOAT),
-            add_token(1, 11, 10, TokenType::COMMA),
-            add_token(1, 12, 11, TokenType::TSTR),
+            add_token(1, 5, 4, TokenType::TBOOL),
+            add_token(1, 9, 8, TokenType::COMMA),
+            add_token(1, 10, 9, TokenType::TFLOAT),
+            add_token(1, 15, 14, TokenType::COMMA),
+            add_token(1, 16, 15, TokenType::TSTR),
         ];
 
         assert_eq!(lexer_tokens, expected_tokens);
