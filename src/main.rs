@@ -8,19 +8,19 @@ mod ast;
 mod parser;
 // mod object;
 //  mod interpreter;
-mod inference;
+// mod inference;
 mod types;
-mod resolver;
+// mod resolver;
 mod symbol;
-mod env;
+// mod env;
 
 use lexer::Lexer;
 use parser::Parser;
-use resolver::Resolver;
+// use resolver::Resolver;
 use symbol::Symbols;
 
 // use interpreter::Interpreter;
-use inference::analyse;
+// use inference::analyse;
 
 fn main() {
     let input = "12.0+10;";
@@ -34,9 +34,11 @@ fn main() {
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
-    Resolver::new().resolve(&ast).unwrap();
+    println!("{:#?}",ast);
 
-    println!("{:#?}",analyse(&ast[0]));
+    // Resolver::new().resolve(&ast).unwrap();
+
+    // println!("{:#?}",analyse(&ast[0]));
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 

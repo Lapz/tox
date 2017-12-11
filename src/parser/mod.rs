@@ -174,6 +174,17 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn consume_name_symbol(&mut self, msg: &str) -> Result<(Symbol,Postition), ParserError> {
+        match self.advance() {
+            Some(Token {
+                token: TokenType::IDENTIFIER(ref ident),
+                ref pos,
+            }) => Ok(  (self.symbols.symbol(ident),*pos)),
+            Some(Token { ref pos, .. }) => Err(ParserError::Expected(self.error(msg, *pos))),
+            None => Err(ParserError::EOF),
+        }
+    }
+
     fn get_pos(&mut self) -> Postition {
         match self.advance() {
             Some(Token { ref pos, .. }) => return *pos,
@@ -537,18 +548,20 @@ impl<'a> Parser<'a> {
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
         ]) {
-            let kind = get_assign_operator(self.token_type());
+
+            let next = self.advance().unwrap();
+            let kind = get_assign_operator(next.token);
 
             let value = self.assignment()?;
 
             match expr.node {
                 Expression::Var(name, _) => {
-                    return Ok(Expression::Assign {
+                    return Ok(WithPos::new(Expression::Assign {
                         handle: self.variable_use_maker.next(),
                         name,
                         value: Box::new(value),
                         kind,
-                    })
+                    },next.pos))
                 }
                 _ => {
                     return Err(ParserError::IllegalExpression(
@@ -565,7 +578,7 @@ impl<'a> Parser<'a> {
         let mut condition = self.or()?;
 
         while self.matched(vec![TokenType::QUESTION]) {
-            self.consume(TokenType::QUESTION, "Expected a '?'")?;
+            let ternary_pos =self.consume_get_pos(TokenType::QUESTION, "Expected a '?'")?;
 
             let then_branch = Box::new(self.expression()?);
 
@@ -576,11 +589,11 @@ impl<'a> Parser<'a> {
 
             let else_branch = Box::new(self.ternary()?);
 
-            condition = Expression::Ternary {
+            condition = WithPos::new(Expression::Ternary {
                 condition: Box::new(condition),
                 then_branch,
                 else_branch,
-            }
+            },ternary_pos)
         }
 
         Ok(condition)
@@ -590,15 +603,17 @@ impl<'a> Parser<'a> {
         let mut expr = self.and()?;
 
         while self.recognise(TokenType::OR) {
-            let operator = get_logic_operator(self.token_type());
+            let next = self.advance().unwrap();
+
+            let operator = get_logic_operator(next.token);
 
             let right = Box::new(self.and()?);
 
-            expr = Expression::Logical {
+            expr = WithPos::new(Expression::Logical {
                 left: Box::new(expr),
                 operator,
                 right,
-            }
+            },next.pos)
         }
 
         Ok(expr)
@@ -608,15 +623,17 @@ impl<'a> Parser<'a> {
         let mut expr = self.equality()?;
 
         while self.recognise(TokenType::AND) {
-            let operator = get_logic_operator(self.token_type());
+            let next = self.advance().unwrap();
+
+            let operator = get_logic_operator(next.token);
 
             let right = Box::new(self.equality()?);
 
-            expr = Expression::Logical {
+            expr = WithPos::new(Expression::Logical {
                 left: Box::new(expr),
                 operator,
                 right,
-            }
+            },next.pos)
         }
 
         Ok(expr)
@@ -626,15 +643,18 @@ impl<'a> Parser<'a> {
         let mut expr = self.comparison()?;
 
         while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
-            let operator = get_operator(self.token_type());
+
+            let next = self.advance().unwrap();
+
+            let operator = get_operator(next.token);
 
             let right_expr = Box::new(self.comparison()?);
 
-            expr = Expression::Binary {
+            expr = WithPos::new(Expression::Binary {
                 left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            };
+            },next.pos);
 
             println!("token {:#?}", self.tokens);
         }
@@ -651,15 +671,18 @@ impl<'a> Parser<'a> {
             TokenType::GREATERTHAN,
             TokenType::GREATERTHANEQUAL,
         ]) {
-            let operator = get_operator(self.token_type());
 
+            let next = self.advance().unwrap();
+
+            let operator = get_operator(next.token);
+    
             let right_expr = Box::new(self.addition()?);
 
-            expr = Expression::Binary {
+            expr = WithPos::new(Expression::Binary {
                 left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }
+            },next.pos)
         }
 
         Ok(expr)
@@ -669,15 +692,17 @@ impl<'a> Parser<'a> {
         let mut expr = self.multiplication()?;
 
         while self.matched(vec![TokenType::MINUS, TokenType::PLUS]) {
-            let operator = get_operator(self.token_type());
+            let next = self.advance().unwrap();
 
+            let operator = get_operator(next.token);
+           
             let right_expr = Box::new(self.multiplication()?);
 
-            expr = Expression::Binary {
+            expr = WithPos::new(Expression::Binary {
                 left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }
+            },next.pos)
         }
 
         Ok(expr)
@@ -687,15 +712,17 @@ impl<'a> Parser<'a> {
         let mut expr = self.unary()?;
 
         while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
-            let operator = get_operator(self.token_type());
+             let next = self.advance().unwrap();
+            
+            let operator = get_operator(next.token);
 
             let right_expr = Box::new(self.unary()?);
 
-            expr = Expression::Binary {
+            expr = WithPos::new(Expression::Binary {
                 left_expr: Box::new(expr),
                 operator,
                 right_expr,
-            }
+            },next.pos)
         }
 
         Ok(expr)
@@ -703,14 +730,16 @@ impl<'a> Parser<'a> {
 
     fn unary(&mut self) -> Result<WithPos<Expression>, ParserError> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
-            let operator = get_unary_operator(self.token_type());
+            let next = self.advance().unwrap();
+            
+            let operator = get_unary_operator(next.token);
 
             let right = Box::new(self.unary()?);
 
-            return Ok(Expression::Unary {
+            return Ok(WithPos::new(Expression::Unary {
                 expr: right,
                 operator,
-            });
+            },next.pos));
         }
 
         self.call()
@@ -723,24 +752,24 @@ impl<'a> Parser<'a> {
             if self.recognise(TokenType::LBRACKET) {
                 self.advance();
                 let index = Box::new(self.expression()?);
-                self.consume(
+                let index_pos = self.consume_get_pos(
                     TokenType::RBRACKET,
                     "Expected ']' to close an index expression",
                 )?;
-                return Ok(Expression::IndexExpr {
+                return Ok(WithPos::new(Expression::IndexExpr {
                     target: Box::new(expr),
                     index,
-                });
+                },index_pos));
             } else if self.recognise(TokenType::LPAREN) {
                 self.advance();
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::DOT) {
-                let name = self.consume_name("Expected a \'class\' name")?;
-                expr = Expression::Get {
+                let (name,pos) = self.consume_name_symbol("Expected a \'class\' name")?;
+                expr = WithPos::new(Expression::Get {
                     object: Box::new(expr),
                     name,
                     handle: self.variable_use_maker.next(),
-                }
+                },pos)
             } else {
                 break;
             }
@@ -869,21 +898,21 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.consume(
+        let func_pos = self.consume_get_pos(
             TokenType::LBRACE,
             &format!("Expected '{{' before {} body.", kind),
         )?;
 
         let body = Box::new(self.block()?);
 
-        Ok(Expression::Func {
+        Ok(WithPos::new(Expression::Func {
             parameters,
             body,
             returns,
-        })
+        },func_pos))
     }
 
-    fn finish_call(&mut self, callee: Expression) -> Result<WithPos<Expression>, ParserError> {
+    fn finish_call(&mut self, callee: WithPos<Expression>) -> Result<WithPos<Expression>, ParserError> {
         let mut arguments = vec![];
 
         if !self.recognise(TokenType::RPAREN) {
