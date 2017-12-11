@@ -109,7 +109,7 @@ impl Resolver {
 
         let index = self.peek();
 
-        if self.scopes[index].contains_key(&name) {
+        if self.scopes[index].contains_key(&name){
             let msg = format!(
                 "Variable with name '{}', already declared in this scope.",
                 name

@@ -23,26 +23,19 @@ use symbol::Symbols;
 // use inference::analyse;
 
 fn main() {
-    let input = "fun add(a:int,b:int) -> int { return a+b;}";
+    let input = "fun add(a:int,b:int) -> int { return a+b;} fun add(a:int,b:int) -> int { return a+b;} {fun add(a:int,b:int) -> int { return a+b;}}";
 
     println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
-
 
     println!("{:#?}", tokens);
     let mut symbols = Symbols::new();
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
-    println!("{:#?}", ast);
+    Resolver::new().resolve(ast).unwrap();
 
-
-    let mut resolver = Resolver::new();
-
-    println!("{:#?}", resolver.resolve(ast).unwrap());
-
-    println!("{:#?}", resolver);
 
     // println!("{:#?}",analyse(&ast));
 
