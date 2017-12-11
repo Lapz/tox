@@ -1,42 +1,43 @@
-use ast::expr::{Expression, Variable};
+use ast::expr::Expression;
 use pos::WithPos;
+use symbol::Symbol;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub enum Statement<'a> {
-    ExpressionStmt(Expression<'a>),
-    Var(Variable<'a>, Expression<'a>),
-    Block(Vec<WithPos<Statement<'a>>>),
+pub enum Statement {
+    ExpressionStmt(Expression),
+    Var(Symbol, Expression),
+    Block(Vec<WithPos<Statement>>),
     Class {
-        name: Variable<'a>,
-        methods: Vec<WithPos<Statement<'a>>>,
+        name: Symbol,
+        methods: Vec<WithPos<Statement>>,
     },
     IfStmt {
-        condition: Expression<'a>,
-        then_branch: Box<WithPos<Statement<'a>>>,
-        else_branch: Option<Box<WithPos<Statement<'a>>>>,
+        condition: Expression,
+        then_branch: Box<WithPos<Statement>>,
+        else_branch: Option<Box<WithPos<Statement>>>,
     },
     WhileStmt {
-        condition: Expression<'a>,
-        body: Box<WithPos<Statement<'a>>>,
+        condition: Expression,
+        body: Box<WithPos<Statement>>,
     },
 
     ForStmt {
-        initializer: Box<WithPos<Statement<'a>>>,
-        condition: Expression<'a>,
-        increment: Expression<'a>,
-        body: Box<WithPos<Statement<'a>>>,
+        initializer: Box<WithPos<Statement>>,
+        condition: Expression,
+        increment: Expression,
+        body: Box<WithPos<Statement>>,
     },
 
     Function {
-        name: Variable<'a>,
-        body: Expression<'a>,
+        name: Symbol,
+        body: Expression,
     },
 
     DoStmt {
-        condition: Expression<'a>,
-        body: Box<WithPos<Statement<'a>>>,
+        condition: Expression,
+        body: Box<WithPos<Statement>>,
     },
 
     Break,
     Continue,
-    Return(Option<Expression<'a>>),
+    Return(Option<Expression>),
 }

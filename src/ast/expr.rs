@@ -1,75 +1,74 @@
 use ast::statement::Statement;
 use pos::WithPos;
-use std::fmt::{Display, Formatter};
-use std::fmt;
+use symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub enum Expression<'a> {
+pub enum Expression {
     // The different type of expressions availabe
     IndexExpr {
-        target: Box<Expression<'a>>,
-        index: Box<Expression<'a>>,
+        target: Box<Expression>,
+        index: Box<Expression>,
     },
     Array {
-        items: Vec<Expression<'a>>,
+        items: Vec<Expression>,
     },
     Assign {
         handle: VariableUseHandle,
-        name: Variable<'a>,
+        name: Symbol,
         kind: AssignOperator,
-        value: Box<Expression<'a>>,
+        value: Box<Expression>,
     },
 
     Binary {
-        left_expr: Box<Expression<'a>>,
+        left_expr: Box<Expression>,
         operator: Operator,
-        right_expr: Box<Expression<'a>>,
+        right_expr: Box<Expression>,
     },
     Call {
-        callee: Box<Expression<'a>>,
-        arguments: Vec<Expression<'a>>,
+        callee: Box<Expression>,
+        arguments: Vec<Expression>,
     },
     Dict {
-        items: Vec<(Expression<'a>, Expression<'a>)>,
+        items: Vec<(Expression, Expression)>,
     },
     Func {
-        parameters: Vec<Variable<'a>>,
-        body: Box<WithPos<Statement<'a>>>,
+        parameters: Vec<Symbol>,
+        body: Box<WithPos<Statement>>,
     },
     Get {
-        object: Box<Expression<'a>>,
-        name: Variable<'a>,
+        object: Box<Expression>,
+        name: Symbol,
         handle: VariableUseHandle,
     },
     Grouping {
-        expr: Box<Expression<'a>>,
+        expr: Box<Expression>,
     },
     Literal(Literal),
     Logical {
-        left: Box<Expression<'a>>,
+        left: Box<Expression>,
         operator: LogicOperator,
-        right: Box<Expression<'a>>,
+        right: Box<Expression>,
     },
 
     Set {
-        object: Box<Expression<'a>>,
+        object: Box<Expression>,
         handle: VariableUseHandle,
-        name: Variable<'a>,
-        value: Box<Expression<'a>>,
+        name: Symbol,
+        value: Box<Expression>,
     },
 
     Ternary {
-        condition: Box<Expression<'a>>,
-        then_branch: Box<Expression<'a>>,
-        else_branch: Box<Expression<'a>>,
+        condition: Box<Expression>,
+        then_branch: Box<Expression>,
+        else_branch: Box<Expression>,
     },
     Unary {
         operator: UnaryOperator,
-        expr: Box<Expression<'a>>,
+        expr: Box<Expression>,
     },
 
     This(VariableUseHandle),
-    Var(Variable<'a>, VariableUseHandle),
+    Var(Symbol, VariableUseHandle),
 }
 
 
@@ -91,21 +90,6 @@ pub enum Literal {
     True(bool),
     False(bool),
     Nil,
-}
-
-
-
-
-
-#[derive(Debug, PartialOrd, Clone, PartialEq, Eq, Hash)]
-pub struct Variable<'a>(pub &'a str);
-// Operators
-
-
-impl<'a> Display for Variable<'a> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
 }
 
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Hash, Eq)]

@@ -5,20 +5,21 @@ mod test {
     use ast::expr::*;
     use ast::statement::*;
     use pos::{Postition, WithPos};
+    use symbol::{Symbol, Symbols};
 
 
     #[test]
     fn do_while_statement() {
         let input = "do {print(10);} while (true)";
         let tokens = Lexer::new(input).lex().unwrap();
-
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let condition = Expression::Literal(Literal::True(true));
-        
+
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
                 arguments: vec![Expression::Literal(Literal::Int(10))],
             }),
             Postition {
@@ -28,12 +29,19 @@ mod test {
             },
         );
 
-        let body = WithPos::new(Statement::Block(vec![call]),Postition{line:1,column:4,absolute:3});
+        let body = WithPos::new(
+            Statement::Block(vec![call]),
+            Postition {
+                line: 1,
+                column: 4,
+                absolute: 3,
+            },
+        );
 
         let expected = WithPos::new(
-            Statement::DoStmt{
+            Statement::DoStmt {
                 condition,
-                body:Box::new(body),
+                body: Box::new(body),
             },
             Postition {
                 line: 1,
@@ -51,10 +59,11 @@ mod test {
         let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
         let init = WithPos::new(
-            Statement::Var(Variable("i"), Expression::Literal(Literal::Int(0))),
+            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0))),
             Postition {
                 line: 1,
                 column: 6,
@@ -63,15 +72,15 @@ mod test {
         );
 
         let condition = Expression::Binary {
-            left_expr: Box::new(Expression::Var(Variable("i"), VariableUseHandle(0))),
+            left_expr: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
             operator: Operator::LessThan,
             right_expr: Box::new(Expression::Literal(Literal::Int(2))),
         };
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(4))),
-                arguments: vec![Expression::Var(Variable("i"), VariableUseHandle(5))],
+                callee: Box::new(Expression::Var(Symbol(3), VariableUseHandle(4))),
+                arguments: vec![Expression::Var(Symbol(2), VariableUseHandle(5))],
             }),
             Postition {
                 line: 1,
@@ -83,10 +92,10 @@ mod test {
         let increment = WithPos::new(
             Statement::ExpressionStmt(Expression::Assign {
                 handle: VariableUseHandle(3),
-                name: Variable("i"),
+                name: Symbol(2),
                 kind: AssignOperator::Equal,
                 value: Box::new(Expression::Binary {
-                    left_expr: Box::new(Expression::Var(Variable("i"), VariableUseHandle(2))),
+                    left_expr: Box::new(Expression::Var(Symbol(2), VariableUseHandle(2))),
                     operator: Operator::Plus,
                     right_expr: Box::new(Expression::Literal(Literal::Int(1))),
                 }),
@@ -138,9 +147,10 @@ mod test {
         let input = "class Foo {}";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
-        let name = Variable("Foo");
+        let name = Symbol(2);
 
         let expected = WithPos::new(
             Statement::Class {
@@ -167,11 +177,12 @@ mod test {
             }";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+    let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
                 arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
             }),
             Postition {
@@ -227,11 +238,12 @@ mod test {
             }";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
                 arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
             }),
             Postition {
@@ -284,11 +296,12 @@ mod test {
             }";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+                callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
                 arguments: vec![Expression::Literal(Literal::Str("true".to_owned()))],
             }),
             Postition {
@@ -334,10 +347,11 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = Expression::Call {
-            callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+            callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
             arguments: vec![Expression::Literal(Literal::Int(10))],
         };
 
@@ -383,7 +397,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = WithPos::new(
             Statement::Block(vec![]),
@@ -403,11 +418,12 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let clock_fun = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("clock"), VariableUseHandle(0))),
+                callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
                 arguments: vec![],
             }),
             Postition {
@@ -419,7 +435,7 @@ mod test {
 
         let len_fun = WithPos::new(
             Statement::ExpressionStmt(Expression::Call {
-                callee: Box::new(Expression::Var(Variable("len"), VariableUseHandle(1))),
+                callee: Box::new(Expression::Var(Symbol(3), VariableUseHandle(1))),
                 arguments: vec![
                     Expression::Literal(Literal::Str("hello".to_owned())),
                     Expression::Literal(Literal::Int(25)),
@@ -442,7 +458,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let array = Expression::Array {
             items: vec![
@@ -470,11 +487,12 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
 
         let index = Expression::IndexExpr {
-            target: Box::new(Expression::Var(Variable("a"), VariableUseHandle(0))),
+            target: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
             index: Box::new(Expression::Binary {
                 left_expr: Box::new(Expression::Literal(Literal::Int(2))),
                 operator: Operator::Plus,
@@ -502,10 +520,11 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = Expression::Call {
-            callee: Box::new(Expression::Var(Variable("print"), VariableUseHandle(0))),
+            callee: Box::new(Expression::Var(Symbol(2), VariableUseHandle(0))),
             arguments: vec![
                 Expression::Binary {
                     left_expr: Box::new(Expression::Literal(Literal::Int(9))),
@@ -532,7 +551,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -552,7 +572,9 @@ mod test {
     fn unclosed_group() {
         let input = "(123";
         let tokens = Lexer::new(input).lex().unwrap();
-        let ast = Parser::new(tokens).parse();
+
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_err());
     }
 
@@ -562,7 +584,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse();
 
         assert!(ast.is_err());
     }
@@ -573,7 +596,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -599,7 +623,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -630,7 +655,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -661,7 +687,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -697,7 +724,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -727,7 +755,8 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
             WithPos::new(
@@ -756,7 +785,8 @@ mod test {
         let input = "-123*456+789;";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let ast = Parser::new(tokens).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
 
         let expected = vec![

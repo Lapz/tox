@@ -11,17 +11,19 @@ pub mod interpreter;
 // pub mod inference;
 // pub mod types;
 pub mod resolver;
-// pub mod pprint;
+pub mod symbol;
+
 
 use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
+use symbol::Symbols;
+
 // use interpreter::Interpreter;
 // use inference::analyse;
 
 fn main() {
-    let input = "do {print(10);} while (true)
-        ";
+    let input = "{var a = 1;var a = 2;}";
 
     println!("{}", input);
 
@@ -29,8 +31,9 @@ fn main() {
 
 
     println!("{:#?}", tokens);
+    let mut symbols = Symbols::new();
 
-    let ast = Parser::new(tokens.unwrap()).parse().unwrap();
+    let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
     println!("{:#?}", ast);
 
