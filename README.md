@@ -4,13 +4,15 @@ Statements:
     program      → declaration* EOF ;
     declaration  → varDecl
                 | statement ;
-    varDecl      → "var" IDENTIFIER ( "=", "+=" , "*=" , "-=", expression )? ";" ;
+    varDecl      → "var" IDENTIFIER ( ":" type) ? ( "=", "+=" , "*=" , "-=", expression )? ";" ;
     statement    → exprStmt
                 | forStmt
                 | ifStmt
                 | printStmt
                 | whileStmt
-                | block;
+                | block
+                | list
+                | dict ;
     exprStmt     → expression ";" ;
     forStmt      → "for" "(" ( varDecl | exprStmt | ";" )
                             expression? ";"
@@ -24,6 +26,7 @@ Statements:
     block        → "{" declaration* "}" ;
     list         → "[" (expression,",")* "]" ;
     dict         → "{" (expression ":" expression)* "}"  ;
+    type         → "bool" | "int" | "str" | "float" | "nil";
 
 Expressions:
 
@@ -49,7 +52,7 @@ Expressions:
     call        → primary ( "(" arguments? ")" )* | primary ( "[" expression "]" ) ;
     arguments   → expression ( "," expression )* ;
     primary     → NUMBER | STRING | "true" | "false" | "nil"
-                | IDENTIFIER | dict |list | ("expression")
+                | IDENTIFIER | ("expression")
    
 lexical:
 
@@ -59,4 +62,5 @@ lexical:
     IDENTIFIER   → ALPHA ( ALPHA | DIGIT )* ;
     ALPHA        → 'a' ... 'z' | 'A' ... 'Z' | '_' ;
     DIGIT        → '0' ... '9' ;
-    
+
+  

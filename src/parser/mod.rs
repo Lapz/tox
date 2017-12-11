@@ -7,6 +7,7 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
+use types::Type;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -203,6 +204,28 @@ impl<'a> Parser<'a> {
             Some(Token { ref pos, .. }) => return *pos,
             _ => unreachable!(),
         }
+    }
+
+   
+
+
+    fn get_type(&mut self) ->  Result<Option<Type>,ParserError<'a>> {
+        if self.recognise(TokenType::COLON) {
+            self.advance();
+
+            let possilbe_type = self.advance().unwrap();
+
+            let var_type = get_type(possilbe_type.token);
+
+            if var_type.is_none() {
+                return Err(ParserError::Expected(self.error("Expected a proper type", possilbe_type.pos)));
+            }
+
+            return Ok(var_type)
+
+        }
+
+        Ok(None)
     }
 }
 
@@ -502,14 +525,17 @@ impl<'a> Parser<'a> {
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError<'a>> {
         let var_pos = self.get_pos();
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
+        
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
 
             let value = Expression::Literal(Literal::Nil);
 
-            return Ok(WithPos::new(Statement::Var(name, value), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value,None), var_pos));
         }
+
+        let var_type = self.get_type()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -524,7 +550,7 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, expr,var_type), var_pos));
         }
 
         Err(ParserError::Expected(self.error(
@@ -857,6 +883,7 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::LPAREN, "Expected '(' ")?;
 
         let mut parameters = vec![];
+        let mut returns = None;
 
         if !self.recognise(TokenType::RPAREN) {
             while {
@@ -865,8 +892,9 @@ impl<'a> Parser<'a> {
                 };
 
                 let identifier = self.consume_name("Expected a parameter name")?;
+                let id_type = self.get_type()?;
 
-                parameters.push(identifier);
+                parameters.push((identifier,id_type));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
@@ -875,6 +903,17 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RPAREN, "Expected ')' after parameters.")?;
 
+        if self.recognise(TokenType::FRETURN) {
+            self.advance();
+
+            returns  = get_type(self.token_type());
+
+            if returns.is_none() {
+                let msg = format!("Expected a proper return type");
+                return Err(ParserError::Expected(msg))
+            }
+        }
+
         self.consume(
             TokenType::LBRACE,
             &format!("Expected '{{' before {} body.", kind),
@@ -882,7 +921,7 @@ impl<'a> Parser<'a> {
 
         let body = Box::new(self.block()?);
 
-        Ok(Expression::Func { parameters, body })
+        Ok(Expression::Func { parameters, body,returns })
     }
 
     fn finish_call(&mut self, callee: Expression) -> Result<Expression, ParserError<'a>> {

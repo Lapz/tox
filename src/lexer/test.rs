@@ -195,6 +195,28 @@ mod tests {
     }
 
     #[test]
+    fn type_keywords() {
+        let input = "int,bool,float,str";
+
+        let mut lexer = Lexer::new(input);
+
+
+        let lexer_tokens = lexer.lex().unwrap();
+
+        let expected_tokens = vec![
+            add_token(1, 1, 0, TokenType::TINT),
+            add_token(1, 4, 3, TokenType::COMMA),
+            add_token(1, 5, 4, TokenType::TBOOL),
+            add_token(1, 9, 8, TokenType::COMMA),
+            add_token(1, 10, 9, TokenType::TFLOAT),
+            add_token(1, 15, 14, TokenType::COMMA),
+            add_token(1, 16, 15, TokenType::TSTR),
+        ];
+
+        assert_eq!(lexer_tokens, expected_tokens);
+    }
+
+    #[test]
     fn statement_keywords() {
         let input = "pprint,class,super,this,fun,var,or,and";
 
@@ -227,7 +249,7 @@ mod tests {
 
     #[test]
     fn symbols() {
-        let input = "%^!/-*<> == != <= >=";
+        let input = "%^!/-*<> == != <= >= ->";
 
         let mut lexer = Lexer::new(input);
 
@@ -246,6 +268,8 @@ mod tests {
             add_token(1, 13, 12, TokenType::BANGEQUAL),
             add_token(1, 16, 15, TokenType::LESSTHANEQUAL),
             add_token(1, 19, 18, TokenType::GREATERTHANEQUAL),
+            add_token(1, 22, 21, TokenType::FRETURN),
+
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }

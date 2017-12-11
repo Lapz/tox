@@ -1,10 +1,12 @@
 use ast::expr::Expression;
+use types::Type;
 use pos::WithPos;
 use symbol::Symbol;
+
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
     ExpressionStmt(Expression),
-    Var(Symbol, Expression),
+    Var(Symbol, Expression,Option<Type>),
     Block(Vec<WithPos<Statement>>),
     Class {
         name: Symbol,

@@ -6,7 +6,46 @@ mod test {
     use ast::statement::*;
     use pos::{Postition, WithPos};
     use symbol::{Symbol, Symbols};
+    use types::Type;
 
+     #[test]
+    fn types() {
+        let input = "var a:int = 10;";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+
+        let expected = vec![
+            WithPos::new(
+                Statement::Var(Symbol(2),Expression::Literal(Literal::Int(10)),Some(Type::Int)),
+                Postition {
+                    line: 1,
+                    column: 1,
+                    absolute: 0,
+                },
+            ),
+        ];
+
+        assert_eq!(expected, ast);
+    }
+     
+    #[test]
+    fn function_types() {
+        let input = "fun add(a:int,b:int){ return a+b;}";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn function_return() {
+        let input = "fun add(a:int,b:int) -> int { return a+b;}";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
 
     #[test]
     fn do_while_statement() {
@@ -63,7 +102,7 @@ mod test {
     let ast = Parser::new(tokens,&mut symbols).parse().unwrap();
 
         let init = WithPos::new(
-            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0))),
+            Statement::Var(Symbol(2), Expression::Literal(Literal::Int(0)),None),
             Postition {
                 line: 1,
                 column: 6,
@@ -680,6 +719,7 @@ mod test {
         assert_eq!(expected, ast);
     }
 
+    
 
     #[test]
     fn precedence_group() {

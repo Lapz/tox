@@ -109,7 +109,7 @@ impl Resolver {
 
         let index = self.peek();
 
-        if self.scopes[index].contains_key(&name) {
+        if self.scopes[index].contains_key(&name){
             let msg = format!(
                 "Variable with name '{}', already declared in this scope.",
                 name
@@ -163,12 +163,13 @@ impl Resolver {
             &Expression::Func {
                 ref body,
                 ref parameters,
+                ..
             } => {
                 self.begin_scope();
 
                 for param in parameters {
-                    self.declare(param.clone(), pos)?;
-                    self.define(param.clone());
+                    self.declare(param.0.clone(), pos)?;
+                    self.define(param.0.clone());
                 }
 
                 self.resolve_statement(body)?;
@@ -281,7 +282,7 @@ impl Resolver {
                 }
             }
 
-            Statement::Var(ref variable, ref expression) => {
+            Statement::Var(ref variable, ref expression,_) => {
                 self.declare(variable.clone(), statement.pos)?;
 
                 match *expression {
@@ -398,6 +399,7 @@ impl Resolver {
             Expression::Func {
                 ref parameters,
                 ref body,
+                ..
             } => {
                 let enclosing_function = self.current_function;
 
@@ -407,8 +409,8 @@ impl Resolver {
 
 
                 for parameter in parameters {
-                    self.declare(parameter.clone(), pos)?;
-                    self.define(parameter.clone());
+                    self.declare(parameter.0.clone(), pos)?;
+                    self.define(parameter.0.clone());
                 }
 
                 self.resolve_statement(body)?;

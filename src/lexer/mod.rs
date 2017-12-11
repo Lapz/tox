@@ -226,6 +226,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         Ok(token_with_info(TokenType::MINUSASSIGN, start))
+                    }else if self.peek(|ch| ch == '>') {
+                        self.advance();
+                        Ok(token_with_info(TokenType::FRETURN, start)) 
                     } else {
                         Ok(token_with_info(TokenType::MINUS, start))
                     }
@@ -331,6 +334,10 @@ fn is_letter_ch(ch: char) -> bool {
 #[inline]
 fn look_up_identifier(id: &str) -> TokenType {
     match id {
+        "bool" => TokenType::TBOOL,
+        "int" => TokenType::TINT,
+        "float" => TokenType::TFLOAT,
+        "str" => TokenType::TSTR,
         // Class
         "class" => TokenType::CLASS,
         "super" => TokenType::SUPER,

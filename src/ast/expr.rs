@@ -2,6 +2,7 @@ use ast::statement::Statement;
 use pos::WithPos;
 use symbol::Symbol;
 
+use types;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
@@ -32,8 +33,9 @@ pub enum Expression {
         items: Vec<(Expression, Expression)>,
     },
     Func {
-        parameters: Vec<Symbol>,
+        parameters: Vec<(Symbol,Option<types::Type>)>,
         body: Box<WithPos<Statement>>,
+        returns: Option<types::Type>,
     },
     Get {
         object: Box<Expression>,
@@ -70,16 +72,6 @@ pub enum Expression {
     This(VariableUseHandle),
     Var(Symbol, VariableUseHandle),
 }
-
-
-
-
-
-
-
-
-
-
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Literal {
@@ -186,6 +178,20 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
 }
 
 #[inline]
+pub(crate) fn get_type(token: TokenType) -> Option<types::Type> {
+    use types::Type;
+
+    match token {
+        TokenType::TINT => Some(Type::Int),
+        TokenType::TFLOAT =>  Some(Type::Float),
+        TokenType::TSTR=>  Some(Type::Str),
+        TokenType::NIL =>  Some(Type::Nil),
+        TokenType::TBOOL =>  Some(Type::Bool),
+        _ => None
+    }
+}
+
+#[inline]
 pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {
     match token {
         TokenType::AND => LogicOperator::And,
@@ -207,3 +213,4 @@ pub enum LogicOperator {
     Or,
     And,
 }
+
