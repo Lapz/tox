@@ -167,8 +167,8 @@ impl Resolver {
                 self.begin_scope();
 
                 for param in parameters {
-                    self.declare(param.clone(), pos)?;
-                    self.define(param.clone());
+                    self.declare(param.0.clone(), pos)?;
+                    self.define(param.0.clone());
                 }
 
                 self.resolve_statement(body)?;
@@ -407,8 +407,8 @@ impl Resolver {
 
 
                 for parameter in parameters {
-                    self.declare(parameter.clone(), pos)?;
-                    self.define(parameter.clone());
+                    self.declare(parameter.0.clone(), pos)?;
+                    self.define(parameter.0.clone());
                 }
 
                 self.resolve_statement(body)?;

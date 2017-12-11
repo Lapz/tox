@@ -33,7 +33,7 @@ pub enum Expression {
         items: Vec<(Expression, Expression)>,
     },
     Func {
-        parameters: Vec<Symbol>,
+        parameters: Vec<(Symbol,Option<types::Type>)>,
         body: Box<WithPos<Statement>>,
     },
     Get {
@@ -71,16 +71,6 @@ pub enum Expression {
     This(VariableUseHandle),
     Var(Symbol, VariableUseHandle),
 }
-
-
-
-
-
-
-
-
-
-
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Literal {

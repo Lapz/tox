@@ -2,6 +2,7 @@ use ast::expr::Expression;
 use types::Type;
 use pos::WithPos;
 use symbol::Symbol;
+
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
     ExpressionStmt(Expression),

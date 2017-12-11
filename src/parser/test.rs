@@ -30,12 +30,12 @@ mod test {
     }
      
      #[test]
-     #[should_panic]
-    fn fake_types() {
-        let input = "var a:strs = 10;";
+    fn function_types() {
+        let input = "fun add(a:int,b:int){ return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
         let mut symbols = Symbols::new();
-        Parser::new(tokens, &mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
     }
 
 

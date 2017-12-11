@@ -7,6 +7,7 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
+use types::Type;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -203,6 +204,25 @@ impl<'a> Parser<'a> {
             Some(Token { ref pos, .. }) => return *pos,
             _ => unreachable!(),
         }
+    }
+
+    fn get_type(&mut self) ->  Result<Option<Type>,ParserError<'a>> {
+        if self.recognise(TokenType::COLON) {
+            self.advance();
+
+            let possilbe_type = self.advance().unwrap();
+
+            let var_type = get_type(possilbe_type.token);
+
+            if var_type.is_none() {
+                return Err(ParserError::Expected(self.error("Expected a proper type", possilbe_type.pos)));
+            }
+
+            return Ok(var_type)
+
+        }
+
+        Ok(None)
     }
 }
 
@@ -513,16 +533,7 @@ impl<'a> Parser<'a> {
             return Ok(WithPos::new(Statement::Var(name, value,None), var_pos));
         }
 
-        if self.recognise(TokenType::COLON) {
-            self.advance();
-
-            var_type = get_type(self.token_type());
-
-            if var_type.is_none() {
-                return Err(ParserError::Expected(self.error("Expected a proper type", var_pos)));
-            }
-
-        }
+        var_type = self.get_type()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -878,8 +889,9 @@ impl<'a> Parser<'a> {
                 };
 
                 let identifier = self.consume_name("Expected a parameter name")?;
+                let id_type = self.get_type()?;
 
-                parameters.push(identifier);
+                parameters.push((identifier,id_type));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
