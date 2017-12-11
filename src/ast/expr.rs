@@ -7,30 +7,30 @@ use types;
 pub enum Expression {
     // The different type of expressions availabe
     IndexExpr {
-        target: Box<Expression>,
-        index: Box<Expression>,
+        target: Box<WithPos<Expression>>,
+        index: Box<WithPos<Expression>>,
     },
     Array {
-        items: Vec<Expression>,
+        items: Vec<WithPos<Expression>>,
     },
     Assign {
         handle: VariableUseHandle,
         name: Symbol,
         kind: AssignOperator,
-        value: Box<Expression>,
+        value: Box<WithPos<Expression>>,
     },
 
     Binary {
-        left_expr: Box<Expression>,
+        left_expr: Box<WithPos<Expression>>,
         operator: Operator,
-        right_expr: Box<Expression>,
+        right_expr: Box<WithPos<Expression>>,
     },
     Call {
-        callee: Box<Expression>,
-        arguments: Vec<Expression>,
+        callee: Box<WithPos<Expression>>,
+        arguments: Vec<WithPos<Expression>>,
     },
     Dict {
-        items: Vec<(Expression, Expression)>,
+        items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
         parameters: Vec<(Symbol, Option<types::Type>)>,
@@ -38,35 +38,35 @@ pub enum Expression {
         returns: Option<types::Type>,
     },
     Get {
-        object: Box<Expression>,
+        object: Box<WithPos<Expression>>,
         name: Symbol,
         handle: VariableUseHandle,
     },
     Grouping {
-        expr: Box<Expression>,
+        expr: Box<WithPos<Expression>>,
     },
     Literal(Literal),
     Logical {
-        left: Box<Expression>,
+        left: Box<WithPos<Expression>>,
         operator: LogicOperator,
-        right: Box<Expression>,
+        right: Box<WithPos<Expression>>,
     },
 
     Set {
-        object: Box<Expression>,
+        object: Box<WithPos<Expression>>,
         handle: VariableUseHandle,
         name: Symbol,
-        value: Box<Expression>,
+        value: Box<WithPos<Expression>>,
     },
 
     Ternary {
-        condition: Box<Expression>,
-        then_branch: Box<Expression>,
-        else_branch: Box<Expression>,
+        condition: Box<WithPos<Expression>>,
+        then_branch: Box<WithPos<Expression>>,
+        else_branch: Box<WithPos<Expression>>,
     },
     Unary {
         operator: UnaryOperator,
-        expr: Box<Expression>,
+        expr: Box<WithPos<Expression>>,
     },
 
     This(VariableUseHandle),
