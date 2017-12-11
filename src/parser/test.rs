@@ -6,6 +6,37 @@ mod test {
     use ast::statement::*;
     use pos::{Postition, WithPos};
     use symbol::{Symbol, Symbols};
+    use types::Type;
+
+     #[test]
+    fn types() {
+        let input = "var a:int = 10;";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+
+        let expected = vec![
+            WithPos::new(
+                Statement::Var(Symbol(2),Expression::Literal(Literal::Int(10)),Some(Type::Int)),
+                Postition {
+                    line: 1,
+                    column: 1,
+                    absolute: 0,
+                },
+            ),
+        ];
+
+        assert_eq!(expected, ast);
+    }
+     
+     #[test]
+     #[should_panic]
+    fn fake_types() {
+        let input = "var a:strs = 10;";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let mut symbols = Symbols::new();
+        Parser::new(tokens, &mut symbols).parse().unwrap();
+    }
 
 
     #[test]
@@ -680,6 +711,7 @@ mod test {
         assert_eq!(expected, ast);
     }
 
+    
 
     #[test]
     fn precedence_group() {
