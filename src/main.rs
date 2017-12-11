@@ -20,10 +20,10 @@ use resolver::Resolver;
 use symbol::Symbols;
 
 // use interpreter::Interpreter;
-// use inference::analyse;
+use inference::analyse;
 
 fn main() {
-    let input = "fun add(a:int,b:int) -> int { return a+b;} fun add(a:int,b:int) -> int { return a+b;} {fun add(a:int,b:int) -> int { return a+b;}}";
+    let input = "12.0+10;";
 
     println!("{}", input);
 
@@ -34,9 +34,9 @@ fn main() {
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
-    Resolver::new().resolve(ast).unwrap();
+    Resolver::new().resolve(&ast).unwrap();
 
-    // println!("{:#?}",analyse(&ast));
+    println!("{:#?}",analyse(&ast[0]));
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 

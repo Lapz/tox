@@ -20,8 +20,8 @@ fn trans_var(env: &mut Env, var: Expression) -> ExpressionType {
 }
 
 
-fn trans_statement(expr: &WithPos<Statement>) -> Result<ExpressionType, TypeError>  {
-    match *expr {
+fn trans_statement(statement: &WithPos<Statement>) -> Result<ExpressionType, TypeError>  {
+    match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr),
         _ => unimplemented!()
     }
@@ -39,7 +39,7 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
             let left = transform_expr(left_expr)?;
             let right = transform_expr(right_expr)?;
 
-            check_binary_float(&left, &right)
+            check_int_float(&left, &right)
         }
 
         Expression::Unary { ref expr, .. } => {
@@ -82,17 +82,8 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
     }
 }
 
-fn check_binary(left: &ExpressionType, right: &ExpressionType) -> Result<ExpressionType, TypeError> {
-    check_int(left)?;
-    check_int(right)?;
 
-    Ok(ExpressionType {
-        exp: (),
-        ty: Type::Int,
-    })
-}
-
-fn check_binary_float(
+fn check_int_float(
     left: &ExpressionType,
     right: &ExpressionType,
 ) -> Result<ExpressionType, TypeError> {
