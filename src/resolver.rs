@@ -281,7 +281,7 @@ impl Resolver {
                 }
             }
 
-            Statement::Var(ref variable, ref expression) => {
+            Statement::Var(ref variable, ref expression,_) => {
                 self.declare(variable.clone(), statement.pos)?;
 
                 match *expression {

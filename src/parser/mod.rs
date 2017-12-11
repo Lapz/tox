@@ -502,13 +502,25 @@ impl<'a> Parser<'a> {
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError<'a>> {
         let var_pos = self.get_pos();
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
+        let mut var_type = None;
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
 
             let value = Expression::Literal(Literal::Nil);
 
-            return Ok(WithPos::new(Statement::Var(name, value), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value,None), var_pos));
+        }
+
+        if self.recognise(TokenType::COLON) {
+            self.advance();
+
+            var_type = get_type(self.token_type());
+
+            if var_type.is_none() {
+                return Err(ParserError::Expected(self.error("Expected a proper type", var_pos)));
+            }
+
         }
 
         if self.matched(vec![
@@ -524,7 +536,7 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, expr,None), var_pos));
         }
 
         Err(ParserError::Expected(self.error(

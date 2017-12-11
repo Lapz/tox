@@ -27,7 +27,7 @@ impl Unique {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,PartialOrd,Clone)]
 pub enum Type {
     Int,
     Str,
@@ -35,3 +35,4 @@ pub enum Type {
     Nil,
     Float,
 }
+
