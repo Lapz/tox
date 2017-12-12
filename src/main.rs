@@ -34,7 +34,7 @@ fn main() {
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
-    println!("{:#?}",ast);
+    println!("{:#?}", ast);
 
     // Resolver::new().resolve(&ast).unwrap();
 

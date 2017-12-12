@@ -174,12 +174,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn consume_name_symbol(&mut self, msg: &str) -> Result<(Symbol,Postition), ParserError> {
+    fn consume_name_symbol(&mut self, msg: &str) -> Result<(Symbol, Postition), ParserError> {
         match self.advance() {
             Some(Token {
                 token: TokenType::IDENTIFIER(ref ident),
                 ref pos,
-            }) => Ok(  (self.symbols.symbol(ident),*pos)),
+            }) => Ok((self.symbols.symbol(ident), *pos)),
             Some(Token { ref pos, .. }) => Err(ParserError::Expected(self.error(msg, *pos))),
             None => Err(ParserError::EOF),
         }
@@ -346,7 +346,10 @@ impl<'a> Parser<'a> {
                 body_pos,
             );
         } else if condition == None {
-            condition = Some(WithPos::new(Expression::Literal(Literal::True(true)),body_pos));
+            condition = Some(WithPos::new(
+                Expression::Literal(Literal::True(true)),
+                body_pos,
+            ));
         }
 
         body = WithPos::new(
@@ -502,7 +505,7 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 
-            let value = WithPos::new(Expression::Literal(Literal::Nil),pos);
+            let value = WithPos::new(Expression::Literal(Literal::Nil), pos);
 
             return Ok(WithPos::new(Statement::Var(name, value, None), var_pos));
         }
@@ -548,7 +551,6 @@ impl<'a> Parser<'a> {
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
         ]) {
-
             let next = self.advance().unwrap();
             let kind = get_assign_operator(next.token);
 
@@ -556,12 +558,15 @@ impl<'a> Parser<'a> {
 
             match expr.node {
                 Expression::Var(name, _) => {
-                    return Ok(WithPos::new(Expression::Assign {
-                        handle: self.variable_use_maker.next(),
-                        name,
-                        value: Box::new(value),
-                        kind,
-                    },next.pos))
+                    return Ok(WithPos::new(
+                        Expression::Assign {
+                            handle: self.variable_use_maker.next(),
+                            name,
+                            value: Box::new(value),
+                            kind,
+                        },
+                        next.pos,
+                    ))
                 }
                 _ => {
                     return Err(ParserError::IllegalExpression(
@@ -578,7 +583,7 @@ impl<'a> Parser<'a> {
         let mut condition = self.or()?;
 
         while self.matched(vec![TokenType::QUESTION]) {
-            let ternary_pos =self.consume_get_pos(TokenType::QUESTION, "Expected a '?'")?;
+            let ternary_pos = self.consume_get_pos(TokenType::QUESTION, "Expected a '?'")?;
 
             let then_branch = Box::new(self.expression()?);
 
@@ -589,11 +594,14 @@ impl<'a> Parser<'a> {
 
             let else_branch = Box::new(self.ternary()?);
 
-            condition = WithPos::new(Expression::Ternary {
-                condition: Box::new(condition),
-                then_branch,
-                else_branch,
-            },ternary_pos)
+            condition = WithPos::new(
+                Expression::Ternary {
+                    condition: Box::new(condition),
+                    then_branch,
+                    else_branch,
+                },
+                ternary_pos,
+            )
         }
 
         Ok(condition)
@@ -609,11 +617,14 @@ impl<'a> Parser<'a> {
 
             let right = Box::new(self.and()?);
 
-            expr = WithPos::new(Expression::Logical {
-                left: Box::new(expr),
-                operator,
-                right,
-            },next.pos)
+            expr = WithPos::new(
+                Expression::Logical {
+                    left: Box::new(expr),
+                    operator,
+                    right,
+                },
+                next.pos,
+            )
         }
 
         Ok(expr)
@@ -629,11 +640,14 @@ impl<'a> Parser<'a> {
 
             let right = Box::new(self.equality()?);
 
-            expr = WithPos::new(Expression::Logical {
-                left: Box::new(expr),
-                operator,
-                right,
-            },next.pos)
+            expr = WithPos::new(
+                Expression::Logical {
+                    left: Box::new(expr),
+                    operator,
+                    right,
+                },
+                next.pos,
+            )
         }
 
         Ok(expr)
@@ -643,18 +657,20 @@ impl<'a> Parser<'a> {
         let mut expr = self.comparison()?;
 
         while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
-
             let next = self.advance().unwrap();
 
             let operator = get_operator(next.token);
 
             let right_expr = Box::new(self.comparison()?);
 
-            expr = WithPos::new(Expression::Binary {
-                left_expr: Box::new(expr),
-                operator,
-                right_expr,
-            },next.pos);
+            expr = WithPos::new(
+                Expression::Binary {
+                    left_expr: Box::new(expr),
+                    operator,
+                    right_expr,
+                },
+                next.pos,
+            );
 
             println!("token {:#?}", self.tokens);
         }
@@ -671,18 +687,20 @@ impl<'a> Parser<'a> {
             TokenType::GREATERTHAN,
             TokenType::GREATERTHANEQUAL,
         ]) {
-
             let next = self.advance().unwrap();
 
             let operator = get_operator(next.token);
-    
+
             let right_expr = Box::new(self.addition()?);
 
-            expr = WithPos::new(Expression::Binary {
-                left_expr: Box::new(expr),
-                operator,
-                right_expr,
-            },next.pos)
+            expr = WithPos::new(
+                Expression::Binary {
+                    left_expr: Box::new(expr),
+                    operator,
+                    right_expr,
+                },
+                next.pos,
+            )
         }
 
         Ok(expr)
@@ -695,14 +713,17 @@ impl<'a> Parser<'a> {
             let next = self.advance().unwrap();
 
             let operator = get_operator(next.token);
-           
+
             let right_expr = Box::new(self.multiplication()?);
 
-            expr = WithPos::new(Expression::Binary {
-                left_expr: Box::new(expr),
-                operator,
-                right_expr,
-            },next.pos)
+            expr = WithPos::new(
+                Expression::Binary {
+                    left_expr: Box::new(expr),
+                    operator,
+                    right_expr,
+                },
+                next.pos,
+            )
         }
 
         Ok(expr)
@@ -712,17 +733,20 @@ impl<'a> Parser<'a> {
         let mut expr = self.unary()?;
 
         while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
-             let next = self.advance().unwrap();
-            
+            let next = self.advance().unwrap();
+
             let operator = get_operator(next.token);
 
             let right_expr = Box::new(self.unary()?);
 
-            expr = WithPos::new(Expression::Binary {
-                left_expr: Box::new(expr),
-                operator,
-                right_expr,
-            },next.pos)
+            expr = WithPos::new(
+                Expression::Binary {
+                    left_expr: Box::new(expr),
+                    operator,
+                    right_expr,
+                },
+                next.pos,
+            )
         }
 
         Ok(expr)
@@ -731,15 +755,18 @@ impl<'a> Parser<'a> {
     fn unary(&mut self) -> Result<WithPos<Expression>, ParserError> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
             let next = self.advance().unwrap();
-            
+
             let operator = get_unary_operator(next.token);
 
             let right = Box::new(self.unary()?);
 
-            return Ok(WithPos::new(Expression::Unary {
-                expr: right,
-                operator,
-            },next.pos));
+            return Ok(WithPos::new(
+                Expression::Unary {
+                    expr: right,
+                    operator,
+                },
+                next.pos,
+            ));
         }
 
         self.call()
@@ -756,20 +783,26 @@ impl<'a> Parser<'a> {
                     TokenType::RBRACKET,
                     "Expected ']' to close an index expression",
                 )?;
-                return Ok(WithPos::new(Expression::IndexExpr {
-                    target: Box::new(expr),
-                    index,
-                },index_pos));
+                return Ok(WithPos::new(
+                    Expression::IndexExpr {
+                        target: Box::new(expr),
+                        index,
+                    },
+                    index_pos,
+                ));
             } else if self.recognise(TokenType::LPAREN) {
                 self.advance();
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::DOT) {
-                let (name,pos) = self.consume_name_symbol("Expected a \'class\' name")?;
-                expr = WithPos::new(Expression::Get {
-                    object: Box::new(expr),
-                    name,
-                    handle: self.variable_use_maker.next(),
-                },pos)
+                let (name, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
+                expr = WithPos::new(
+                    Expression::Get {
+                        object: Box::new(expr),
+                        name,
+                        handle: self.variable_use_maker.next(),
+                    },
+                    pos,
+                )
             } else {
                 break;
             }
@@ -781,24 +814,39 @@ impl<'a> Parser<'a> {
     fn primary(&mut self) -> Result<WithPos<Expression>, ParserError> {
         match self.advance() {
             Some(Token { ref token, ref pos }) => match *token {
-                TokenType::FALSE(_) => Ok(WithPos::new(Expression::Literal(Literal::False(false)),*pos)),
-                TokenType::TRUE(_) => Ok(WithPos::new(Expression::Literal(Literal::True(true)),*pos)),
-                TokenType::NIL => Ok(WithPos::new(Expression::Literal(Literal::Nil),*pos)),
-                TokenType::INT(ref i) => Ok(WithPos::new(Expression::Literal(Literal::Int(*i)),*pos)),
-                TokenType::FLOAT(ref f) => Ok(WithPos::new(Expression::Literal(Literal::Float(*f)), *pos)),
-                TokenType::STRING(ref s) => Ok(WithPos::new(Expression::Literal(Literal::Str(s.clone())),*pos)),
-                TokenType::IDENTIFIER(ref ident) => Ok(WithPos::new(Expression::Var(
-                    self.symbols.symbol(ident),
-                    self.variable_use_maker.next(),
-                ),*pos)),
-                TokenType::THIS => Ok(WithPos::new(Expression::This(self.variable_use_maker.next()),*pos)),
+                TokenType::FALSE(_) => Ok(WithPos::new(
+                    Expression::Literal(Literal::False(false)),
+                    *pos,
+                )),
+                TokenType::TRUE(_) => {
+                    Ok(WithPos::new(Expression::Literal(Literal::True(true)), *pos))
+                }
+                TokenType::NIL => Ok(WithPos::new(Expression::Literal(Literal::Nil), *pos)),
+                TokenType::INT(ref i) => {
+                    Ok(WithPos::new(Expression::Literal(Literal::Int(*i)), *pos))
+                }
+                TokenType::FLOAT(ref f) => {
+                    Ok(WithPos::new(Expression::Literal(Literal::Float(*f)), *pos))
+                }
+                TokenType::STRING(ref s) => Ok(WithPos::new(
+                    Expression::Literal(Literal::Str(s.clone())),
+                    *pos,
+                )),
+                TokenType::IDENTIFIER(ref ident) => Ok(WithPos::new(
+                    Expression::Var(self.symbols.symbol(ident), self.variable_use_maker.next()),
+                    *pos,
+                )),
+                TokenType::THIS => Ok(WithPos::new(
+                    Expression::This(self.variable_use_maker.next()),
+                    *pos,
+                )),
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {
                     let mut items = vec![];
 
                     if self.recognise(TokenType::RBRACKET) {
                         self.advance();
-                        return Ok(WithPos::new(Expression::Array { items },*pos));
+                        return Ok(WithPos::new(Expression::Array { items }, *pos));
                     }
 
                     while {
@@ -815,15 +863,17 @@ impl<'a> Parser<'a> {
                         "Expected a ']' to close the brackets .",
                     )?;
 
-                    Ok(WithPos::new(Expression::Array { items },*pos))
+                    Ok(WithPos::new(Expression::Array { items }, *pos))
                 }
 
                 TokenType::LBRACE => {
-                    let mut items: Vec<(WithPos<Expression>, WithPos<Expression>)> = vec![];
+                    let mut items: Vec<
+                        (WithPos<Expression>, WithPos<Expression>),
+                    > = vec![];
 
                     if self.recognise(TokenType::RBRACE) {
                         self.advance();
-                        return Ok(WithPos::new(Expression::Dict { items },*pos));
+                        return Ok(WithPos::new(Expression::Dict { items }, *pos));
                     }
 
                     while {
@@ -836,16 +886,20 @@ impl<'a> Parser<'a> {
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
-                    let pos =self.consume_get_pos(TokenType::RBRACE, "Expected a '}' to close a dictionary.")?;
+                    let pos = self.consume_get_pos(
+                        TokenType::RBRACE,
+                        "Expected a '}' to close a dictionary.",
+                    )?;
 
-                    Ok(WithPos::new(Expression::Dict { items },pos))
+                    Ok(WithPos::new(Expression::Dict { items }, pos))
                 }
 
                 TokenType::LPAREN => {
                     let expr = Box::new(self.expression()?);
-                    let pos = self.consume_get_pos(TokenType::RPAREN, "Expect \')\' after expression")?;
+                    let pos =
+                        self.consume_get_pos(TokenType::RPAREN, "Expect \')\' after expression")?;
 
-                    return Ok(WithPos::new(Expression::Grouping { expr },pos));
+                    return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
                 _ => {
@@ -905,14 +959,20 @@ impl<'a> Parser<'a> {
 
         let body = Box::new(self.block()?);
 
-        Ok(WithPos::new(Expression::Func {
-            parameters,
-            body,
-            returns,
-        },func_pos))
+        Ok(WithPos::new(
+            Expression::Func {
+                parameters,
+                body,
+                returns,
+            },
+            func_pos,
+        ))
     }
 
-    fn finish_call(&mut self, callee: WithPos<Expression>) -> Result<WithPos<Expression>, ParserError> {
+    fn finish_call(
+        &mut self,
+        callee: WithPos<Expression>,
+    ) -> Result<WithPos<Expression>, ParserError> {
         let mut arguments = vec![];
 
         if !self.recognise(TokenType::RPAREN) {
@@ -929,9 +989,12 @@ impl<'a> Parser<'a> {
 
         let pos = self.consume_get_pos(TokenType::RPAREN, "Expected ')' after arguments.")?;
 
-        Ok(WithPos::new(Expression::Call {
-            callee: Box::new(callee),
-            arguments,
-        },pos))
+        Ok(WithPos::new(
+            Expression::Call {
+                callee: Box::new(callee),
+                arguments,
+            },
+            pos,
+        ))
     }
 }
