@@ -23,7 +23,10 @@ use symbol::Symbols;
 // use inference::analyse;
 
 fn main() {
-    let input = "12.0+10;";
+    let input = "while (!true) {
+            print(\"true\");
+            break;continue;
+            }";
 
     println!("{}", input);
 

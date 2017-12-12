@@ -791,7 +791,8 @@ impl<'a> Parser<'a> {
                     index_pos,
                 ));
             } else if self.recognise(TokenType::LPAREN) {
-                self.advance();
+                let call_pos = self.advance().unwrap().pos;
+                expr.pos = call_pos;
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::DOT) {
                 let (name, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
