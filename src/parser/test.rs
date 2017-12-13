@@ -233,21 +233,23 @@ mod test {
                     kind: AssignOperator::Equal,
                     value: Box::new(WithPos::new(
                         Expression::Binary {
-                            left_expr: Box::new(
-                                WithPos::new(Expression::Var(Symbol(2), VariableUseHandle(2)),Postition{
-                                    line:1,
-                                    column:28,
-                                    absolute:27
-                                })),
+                            left_expr: Box::new(WithPos::new(
+                                Expression::Var(Symbol(2), VariableUseHandle(2)),
+                                Postition {
+                                    line: 1,
+                                    column: 28,
+                                    absolute: 27,
+                                },
+                            )),
                             operator: Operator::Plus,
-                            right_expr: Box::new(
-                                WithPos::new(Expression::Literal(Literal::Int(1)),
+                            right_expr: Box::new(WithPos::new(
+                                Expression::Literal(Literal::Int(1)),
                                 Postition {
                                     line: 1,
                                     column: 32,
                                     absolute: 31,
-                                }),
-                            ),
+                                },
+                            )),
                         },
                         Postition {
                             line: 1,
@@ -863,104 +865,186 @@ mod test {
         assert_eq!(expected, ast);
     }
 
-    // #[test]
-    // fn precedence_group() {
-    //     let input = "123+(45.76*789-3);";
+    #[test]
+    fn precedence_group() {
+        let input = "123+(45.76*789-3);";
 
-    //     let tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let mut symbols = Symbols::new();
-    //     let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-    //     let expected = vec![
-    //         WithPos::new(
-    //             Statement::ExpressionStmt(Expression::Binary {
-    //                 left_expr: Box::new(Expression::Literal(Literal::Int(123))),
-    //                 operator: Operator::Plus,
-    //                 right_expr: Box::new(Expression::Grouping {
-    //                     expr: Box::new(Expression::Binary {
-    //                         left_expr: Box::new(Expression::Binary {
-    //                             left_expr: Box::new(Expression::Literal(Literal::Float(45.76))),
-    //                             operator: Operator::Star,
-    //                             right_expr: Box::new(Expression::Literal(Literal::Int(789))),
-    //                         }),
-    //                         operator: Operator::Minus,
-    //                         right_expr: Box::new(Expression::Literal(Literal::Int(3))),
-    //                     }),
-    //                 }),
-    //             }),
-    //             Postition {
-    //                 line: 1,
-    //                 column: 18,
-    //                 absolute: 17,
-    //             },
-    //         ),
-    //     ];
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(Expression::Binary {
+                    left_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(123)), Postition{
 
-    //     assert_eq!(expected, ast);
-    // }
+                    })),
+                    operator: Operator::Plus,
+                    right_expr: Box::new(WithPos::new(Expression::Grouping {
+                        expr: Box::new(WithPos::new(Expression::Binary {
+                            left_expr: Box::new(Expression::Binary {
+                                left_expr: Box::new(WithPos::new(Expression::Literal(Literal::Float(45.76)), Postition{
+                                    
+                                })),
+                                operator: Operator::Star,
+                                right_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(789)), Postition{
 
-    // #[test]
-    // fn precedence_mul_add() {
-    //     let input = "123*456+789;";
+                                })),
+                            }),
+                            operator: Operator::Minus,
+                            right_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(3)),Postition{
 
-    //     let tokens = Lexer::new(input).lex().unwrap();
+                            })),
+                        }, Postition{
 
-    //     let mut symbols = Symbols::new();
-    //     let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+                        })),
+                    }, Postition{
 
-    //     let expected = vec![
-    //         WithPos::new(
-    //             Statement::ExpressionStmt(Expression::Binary {
-    //                 left_expr: Box::new(Expression::Binary {
-    //                     left_expr: Box::new(Expression::Literal(Literal::Int(123))),
-    //                     operator: Operator::Star,
-    //                     right_expr: Box::new(Expression::Literal(Literal::Int(456))),
-    //                 }),
-    //                 operator: Operator::Plus,
-    //                 right_expr: Box::new(Expression::Literal(Literal::Int(789))),
-    //             }),
-    //             Postition {
-    //                 line: 1,
-    //                 column: 12,
-    //                 absolute: 11,
-    //             },
-    //         ),
-    //     ];
+                    })),
+                }),
+                Postition {
+                    line: 1,
+                    column: 18,
+                    absolute: 17,
+                },
+            ),
+        ];
 
-    //     assert_eq!(expected, ast);
-    // }
+        assert_eq!(expected, ast);
+    }
 
-    // #[test]
-    // fn precedence_mul_mul() {
-    //     let input = "123*456*789;";
+    #[test]
+    fn precedence_mul_add() {
+        let input = "123*456+789;";
 
-    //     let tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input).lex().unwrap();
 
-    //     let mut symbols = Symbols::new();
-    //     let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-    //     let expected = vec![
-    //         WithPos::new(
-    //             Statement::ExpressionStmt(Expression::Binary {
-    //                 left_expr: Box::new(Expression::Binary {
-    //                     left_expr: Box::new(Expression::Literal(Literal::Int(123))),
-    //                     operator: Operator::Star,
-    //                     right_expr: Box::new(Expression::Literal(Literal::Int(456))),
-    //                 }),
-    //                 operator: Operator::Star,
-    //                 right_expr: Box::new(Expression::Literal(Literal::Int(789))),
-    //             }),
-    //             Postition {
-    //                 line: 1,
-    //                 column: 12,
-    //                 absolute: 11,
-    //             },
-    //         ),
-    //     ];
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(WithPos::new(
+                    Expression::Binary {
+                        left_expr: Box::new(WithPos::new(
+                            Expression::Binary {
+                                left_expr: Box::new(WithPos::new(
+                                    Expression::Literal(Literal::Int(123)),
+                                    Postition {
+                                        line: 1,
+                                        column: 1,
+                                        absolute: 0,
+                                    },
+                                )),
+                                operator: Operator::Star,
+                                right_expr: Box::new(WithPos::new(
+                                    Expression::Literal(Literal::Int(456)),
+                                    Postition {
+                                        line: 1,
+                                        column: 5,
+                                        absolute: 4,
+                                    },
+                                )),
+                            },
+                            Postition {
+                                line: 1,
+                                column: 4,
+                                absolute: 3,
+                            },
+                        )),
+                        operator: Operator::Plus,
+                        right_expr: Box::new(WithPos::new(
+                            Expression::Literal(Literal::Int(789)),
+                            Postition {
+                                line: 1,
+                                column: 9,
+                                absolute: 8,
+                            },
+                        )),
+                    },
+                    Postition {
+                        line: 1,
+                        column: 8,
+                        absolute: 7,
+                    },
+                )),
+                Postition {
+                    line: 1,
+                    column: 12,
+                    absolute: 11,
+                },
+            ),
+        ];
 
-    //     assert_eq!(expected, ast);
-    // }
+        assert_eq!(expected, ast);
+    }
+
+    #[test]
+    fn precedence_mul_mul() {
+        let input = "123*456*789;";
+
+        let tokens = Lexer::new(input).lex().unwrap();
+
+        let mut symbols = Symbols::new();
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+
+        let expected = vec![
+            WithPos::new(
+                Statement::ExpressionStmt(WithPos::new(
+                    Expression::Binary {
+                        left_expr: Box::new(WithPos::new(
+                            Expression::Binary {
+                                left_expr: Box::new(WithPos::new(
+                                    Expression::Literal(Literal::Int(123)),
+                                    Postition {
+                                        line: 1,
+                                        column: 1,
+                                        absolute: 0,
+                                    },
+                                )),
+                                operator: Operator::Star,
+                                right_expr: Box::new(WithPos::new(
+                                    Expression::Literal(Literal::Int(456)),
+                                    Postition {
+                                        line: 1,
+                                        column: 5,
+                                        absolute: 4,
+                                    },
+                                )),
+                            },
+                            Postition {
+                                line: 1,
+                                column: 4,
+                                absolute: 3,
+                            },
+                        )),
+                        operator: Operator::Star,
+                        right_expr: Box::new(WithPos::new(
+                            Expression::Literal(Literal::Int(789)),
+                            Postition {
+                                line: 1,
+                                column: 9,
+                                absolute: 8,
+                            },
+                        )),
+                    },
+                    Postition {
+                        line: 1,
+                        column: 8,
+                        absolute: 7,
+                    },
+                )),
+                Postition {
+                    line: 1,
+                    column: 12,
+                    absolute: 11,
+                },
+            ),
+        ];
+
+        assert_eq!(expected, ast);
+    }
 
     #[test]
     fn precedence_mul_add_unary() {
