@@ -1,9 +1,9 @@
 // use std::collections::{HashMap, HashSet};
-
+use pos::Postition;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Recursive,
-    Expected(Type),
+    Expected(Type,Postition),
 }
 
 pub struct Unique {

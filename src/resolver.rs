@@ -205,7 +205,7 @@ impl Resolver {
             }
 
             Statement::ExpressionStmt(ref expr) => {
-                self.resolve_expr(expr, statement.pos)?;
+                self.resolve_expr(&expr.node, statement.pos)?;
                 Ok(())
             }
 
@@ -214,7 +214,7 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expr(condition, statement.pos)?;
+                self.resolve_expr(&condition.node, statement.pos)?;
                 self.resolve_statement(then_branch)?;
 
                 match *else_branch {
@@ -229,7 +229,7 @@ impl Resolver {
                 ref condition,
                 ref body,
             } => {
-                self.resolve_expr(condition, statement.pos)?;
+                self.resolve_expr(&condition.node, statement.pos)?;
                 self.resolve_statement(body)?;
                 Ok(())
             }
@@ -238,7 +238,7 @@ impl Resolver {
                 ref condition,
                 ref body,
             } => {
-                self.resolve_expr(condition, statement.pos)?;
+                self.resolve_expr(&condition.node, statement.pos)?;
                 self.resolve_statement(body)?;
                 Ok(())
             }
@@ -263,7 +263,7 @@ impl Resolver {
                             )));
                         }
 
-                        self.resolve_expr(value, statement.pos)
+                        self.resolve_expr(&value.node, statement.pos)
                     }
                 }
             }
@@ -271,9 +271,9 @@ impl Resolver {
             Statement::Var(ref variable, ref expression, _) => {
                 self.declare(variable.clone(), statement.pos)?;
 
-                match *expression {
+                match expression.node {
                     Expression::Literal(Literal::Nil) => (),
-                    _ => self.resolve_expr(expression, statement.pos)?,
+                    _ => self.resolve_expr(&expression.node, statement.pos)?,
                 }
 
                 self.define(variable.to_owned());
@@ -284,7 +284,7 @@ impl Resolver {
                 self.declare(name.clone(), statement.pos)?;
                 self.define(name.clone());
 
-                self.resolve_func(body, FunctionType::Function, statement.pos)?;
+                self.resolve_func(&body.node, FunctionType::Function, statement.pos)?;
                 Ok(())
             }
 
@@ -313,7 +313,7 @@ impl Resolver {
                                     declaration = FunctionType::Init;
                                 }
 
-                                self.resolve_func(body, declaration, *pos)?;
+                                self.resolve_func(&body.node, declaration, *pos)?;
                             }
                             _ => unreachable!(),
                         },
@@ -334,7 +334,7 @@ impl Resolver {
         match *expr {
             Expression::Array { ref items } => {
                 for ref item in items {
-                    self.resolve_expr(item, pos)?;
+                    self.resolve_expr(&item.node, pos)?;
                 }
                 Ok(())
             }
@@ -345,7 +345,7 @@ impl Resolver {
                 ref value,
                 ..
             } => {
-                self.resolve_expr(value, pos)?;
+                self.resolve_expr(&value.node, pos)?;
                 self.resolve_local(name, *handle);
                 Ok(())
             }
@@ -355,8 +355,8 @@ impl Resolver {
                 ref right_expr,
                 ..
             } => {
-                self.resolve_expr(left_expr, pos)?;
-                self.resolve_expr(right_expr, pos)?;
+                self.resolve_expr(&left_expr.node, pos)?;
+                self.resolve_expr(&right_expr.node, pos)?;
                 Ok(())
             }
 
@@ -364,10 +364,10 @@ impl Resolver {
                 ref callee,
                 ref arguments,
             } => {
-                self.resolve_expr(callee, pos)?;
+                self.resolve_expr(&callee.node, pos)?;
 
                 for ref argument in arguments {
-                    self.resolve_expr(argument, pos)?;
+                    self.resolve_expr(&argument.node, pos)?;
                 }
 
                 Ok(())
@@ -375,8 +375,8 @@ impl Resolver {
 
             Expression::Dict { ref items } => {
                 for &(ref key, ref value) in items {
-                    self.resolve_expr(key, pos)?;
-                    self.resolve_expr(value, pos)?;
+                    self.resolve_expr(&key.node, pos)?;
+                    self.resolve_expr(&value.node, pos)?;
                 }
 
                 Ok(())
@@ -407,18 +407,18 @@ impl Resolver {
             }
 
             Expression::Get { ref object, .. } => {
-                self.resolve_expr(object, pos)?;
+                self.resolve_expr(&object.node, pos)?;
                 Ok(())
             }
 
-            Expression::Grouping { ref expr } => self.resolve_expr(expr, pos),
+            Expression::Grouping { ref expr } => self.resolve_expr(&expr.node, pos),
 
             Expression::IndexExpr {
                 ref index,
                 ref target,
             } => {
-                self.resolve_expr(index, pos)?;
-                self.resolve_expr(target, pos)?;
+                self.resolve_expr(&index.node, pos)?;
+                self.resolve_expr(&target.node, pos)?;
                 Ok(())
             }
 
@@ -429,8 +429,8 @@ impl Resolver {
                 ref right,
                 ..
             } => {
-                self.resolve_expr(left, pos)?;
-                self.resolve_expr(right, pos)?;
+                self.resolve_expr(&left.node, pos)?;
+                self.resolve_expr(&right.node, pos)?;
                 Ok(())
             }
 
@@ -439,8 +439,8 @@ impl Resolver {
                 ref object,
                 ..
             } => {
-                self.resolve_expr(value, pos)?;
-                self.resolve_expr(object, pos)?;
+                self.resolve_expr(&value.node, pos)?;
+                self.resolve_expr(&object.node, pos)?;
                 Ok(())
             }
 
@@ -449,14 +449,14 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expr(condition, pos)?;
-                self.resolve_expr(else_branch, pos)?;
-                self.resolve_expr(then_branch, pos)?;
+                self.resolve_expr(&condition.node, pos)?;
+                self.resolve_expr(&else_branch.node, pos)?;
+                self.resolve_expr(&then_branch.node, pos)?;
                 Ok(())
             }
 
             Expression::Unary { ref expr, .. } => {
-                self.resolve_expr(expr, pos)?;
+                self.resolve_expr(&expr.node, pos)?;
                 Ok(())
             }
 
@@ -504,53 +504,53 @@ mod test {
     #[test]
     fn global() {
         let input = "var a = 0;{fun f() {print a;}}";
-        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn captured() {
         let input = "{var a = 0;fun f() {print a;}}";
-        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn lexical_capture() {
         let input = "var a = 0;{fun f() {print a;} var a = 1;}";
-        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     #[should_panic]
     fn shadowing_error() {
         let input = "var a = 0; { var a = a;}";
-        Resolver::new().resolve(get_ast(input)).unwrap()
+        Resolver::new().resolve(&get_ast(input)).unwrap()
     }
 
     #[test]
     #[should_panic]
     fn local_redeclar_error() {
         let input = "{var a = 1;var a = 2;}";
-        Resolver::new().resolve(get_ast(input)).unwrap()
+        Resolver::new().resolve(&get_ast(input)).unwrap()
     }
 
     #[test]
     fn global_redeclar() {
         let input = "var a = 1;var a = 2;";
-        assert!(Resolver::new().resolve(get_ast(input)).is_ok())
+        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     #[should_panic]
     fn return_top_level() {
         let input = "return 10;";
-        Resolver::new().resolve(get_ast(input)).unwrap()
+        Resolver::new().resolve(&get_ast(input)).unwrap()
     }
 
     #[test]
     #[should_panic]
     fn this_outside_class() {
         let input = "this.name;";
-        Resolver::new().resolve(get_ast(input)).unwrap()
+        Resolver::new().resolve(&get_ast(input)).unwrap()
     }
 
 }

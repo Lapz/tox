@@ -2,9 +2,11 @@ use ast::expr::*;
 use ast::statement::Statement;
 use types::{Type, TypeError};
 use env::Env;
-use pos::WithPos;
+use pos::{WithPos,Postition};
+
 
 type Exp = ();
+
 #[derive(Debug)]
 pub struct ExpressionType {
     pub exp: Exp,
@@ -27,8 +29,8 @@ fn trans_statement(statement: &WithPos<Statement>) -> Result<ExpressionType, Typ
     }
 }
 
-fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
-    match *expr {
+fn transform_expr(expr: &WithPos<Expression>) -> Result<ExpressionType, TypeError> {
+    match expr.node {
         Expression::Grouping { ref expr } => transform_expr(expr),
 
         Expression::Binary {
@@ -39,12 +41,12 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
             let left = transform_expr(left_expr)?;
             let right = transform_expr(right_expr)?;
 
-            check_int_float(&left, &right)
+            check_int_float(&left, &right,left_expr.pos)
         }
 
         Expression::Unary { ref expr, .. } => {
-            let expr = transform_expr(expr)?;
-            check_int(&expr)?;
+            let unary_expr = transform_expr(&expr)?;
+            check_int(&unary_expr,expr.pos)?;
 
             Ok(ExpressionType {
                 exp: (),
@@ -86,10 +88,11 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
 fn check_int_float(
     left: &ExpressionType,
     right: &ExpressionType,
+    pos:Postition,
 ) -> Result<ExpressionType, TypeError> {
-    if check_int(left).is_err() {
-        check_float(left)?;
-        check_float(right)?;
+    if check_int(left,pos).is_err() {
+        check_float(left,pos)?;
+        check_float(right,pos)?;
 
         return Ok(ExpressionType {
             exp: (),
@@ -97,7 +100,7 @@ fn check_int_float(
         });
     }
 
-    check_int(right)?;
+    check_int(right,pos)?;
 
     Ok(ExpressionType {
         exp: (),
@@ -110,16 +113,16 @@ fn check_unary(right: ExpressionType) -> Result<ExpressionType, TypeError> {
     unimplemented!()
 }
 
-fn check_int(expr: &ExpressionType) -> Result<(), TypeError> {
+fn check_int(expr: &ExpressionType,pos:Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
-        return Err(TypeError::Expected(Type::Int));
+        return Err(TypeError::Expected(Type::Int,pos));
     }
     Ok(())
 }
 
-fn check_float(expr: &ExpressionType) -> Result<(), TypeError> {
+fn check_float(expr: &ExpressionType,pos:Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {
-        return Err(TypeError::Expected(Type::Int));
+        return Err(TypeError::Expected(Type::Int,pos));
     }
     Ok(())
 }
