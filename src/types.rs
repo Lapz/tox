@@ -3,7 +3,8 @@ use pos::Postition;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Recursive,
-    Expected(Type,Postition),
+    Expected(Type, Postition),
+    Undefinded,
 }
 
 pub struct Unique {

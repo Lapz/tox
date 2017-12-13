@@ -9,6 +9,6 @@ enum Entry {
 
 #[derive(Debug, Clone)]
 pub struct Env<'a> {
-    types: Symbols<'a, Type>,
+    pub types: Symbols<'a, Type>,
     varialbes: Symbols<'a, Entry>,
 }

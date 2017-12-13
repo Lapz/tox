@@ -65,10 +65,7 @@ impl Resolver {
         Self::default()
     }
 
-    pub fn resolve(
-        &mut self,
-        statements: &[WithPos<Statement>],
-    ) -> Result<(), Vec<ResolverError>> {
+    pub fn resolve(&mut self, statements: &[WithPos<Statement>]) -> Result<(), Vec<ResolverError>> {
         let mut errors = vec![];
 
         for statement in statements {

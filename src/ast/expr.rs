@@ -6,10 +6,6 @@ use types;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
-    IndexExpr {
-        target: Box<WithPos<Expression>>,
-        index: Box<WithPos<Expression>>,
-    },
     Array {
         items: Vec<WithPos<Expression>>,
     },
@@ -45,6 +41,12 @@ pub enum Expression {
     Grouping {
         expr: Box<WithPos<Expression>>,
     },
+
+    IndexExpr {
+        target: Box<WithPos<Expression>>,
+        index: Box<WithPos<Expression>>,
+    },
+
     Literal(Literal),
     Logical {
         left: Box<WithPos<Expression>>,
@@ -129,6 +131,7 @@ pub enum AssignOperator {
     MinusEqual,
     PlusEqual,
     StarEqual,
+    SlashEqual,
 }
 
 use token::TokenType;

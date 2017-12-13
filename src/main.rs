@@ -38,7 +38,7 @@ fn main() {
 
     Resolver::new().resolve(&ast).unwrap();
 
-    println!("{:#?}",analyse(&ast[0]));
+    println!("{:#?}", analyse(&ast[0]));
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 
