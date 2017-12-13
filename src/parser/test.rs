@@ -876,33 +876,77 @@ mod test {
 
         let expected = vec![
             WithPos::new(
-                Statement::ExpressionStmt(Expression::Binary {
-                    left_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(123)), Postition{
-
-                    })),
-                    operator: Operator::Plus,
-                    right_expr: Box::new(WithPos::new(Expression::Grouping {
-                        expr: Box::new(WithPos::new(Expression::Binary {
-                            left_expr: Box::new(Expression::Binary {
-                                left_expr: Box::new(WithPos::new(Expression::Literal(Literal::Float(45.76)), Postition{
-                                    
-                                })),
-                                operator: Operator::Star,
-                                right_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(789)), Postition{
-
-                                })),
-                            }),
-                            operator: Operator::Minus,
-                            right_expr: Box::new(WithPos::new(Expression::Literal(Literal::Int(3)),Postition{
-
-                            })),
-                        }, Postition{
-
-                        })),
-                    }, Postition{
-
-                    })),
-                }),
+                Statement::ExpressionStmt(WithPos::new(
+                    Expression::Binary {
+                        left_expr: Box::new(WithPos::new(
+                            Expression::Literal(Literal::Int(123)),
+                            Postition {
+                                line: 1,
+                                column: 1,
+                                absolute: 0,
+                            },
+                        )),
+                        operator: Operator::Plus,
+                        right_expr: Box::new(WithPos::new(
+                            Expression::Grouping {
+                                expr: Box::new(WithPos::new(
+                                    Expression::Binary {
+                                        left_expr: Box::new(WithPos::new(
+                                            Expression::Binary {
+                                                left_expr: Box::new(WithPos::new(
+                                                    Expression::Literal(Literal::Float(45.76)),
+                                                    Postition {
+                                                        line: 1,
+                                                        column: 6,
+                                                        absolute: 5,
+                                                    },
+                                                )),
+                                                operator: Operator::Star,
+                                                right_expr: Box::new(WithPos::new(
+                                                    Expression::Literal(Literal::Int(789)),
+                                                    Postition {
+                                                        line: 1,
+                                                        column: 12,
+                                                        absolute: 11,
+                                                    },
+                                                )),
+                                            },
+                                            Postition {
+                                                line: 1,
+                                                column: 11,
+                                                absolute: 10,
+                                            },
+                                        )),
+                                        operator: Operator::Minus,
+                                        right_expr: Box::new(WithPos::new(
+                                            Expression::Literal(Literal::Int(3)),
+                                            Postition {
+                                                line: 1,
+                                                column: 16,
+                                                absolute: 15,
+                                            },
+                                        )),
+                                    },
+                                    Postition {
+                                        line: 1,
+                                        column: 15,
+                                        absolute: 14,
+                                    },
+                                )),
+                            },
+                            Postition {
+                                line: 1,
+                                column: 17,
+                                absolute: 16,
+                            },
+                        )),
+                    },
+                    Postition {
+                        line: 1,
+                        column: 4,
+                        absolute: 3,
+                    },
+                )),
                 Postition {
                     line: 1,
                     column: 18,
