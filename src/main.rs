@@ -1,18 +1,18 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
-pub mod token;
-pub mod lexer;
-pub mod pos;
-pub mod ast;
-pub mod parser;
-pub mod object;
-pub mod interpreter;
-// pub mod inference;
-pub mod types;
-pub mod resolver;
-pub mod symbol;
-
+mod token;
+mod lexer;
+mod pos;
+mod ast;
+mod parser;
+// mod object;
+//  mod interpreter;
+mod inference;
+mod types;
+mod resolver;
+mod symbol;
+mod env;
 
 use lexer::Lexer;
 use parser::Parser;
@@ -20,10 +20,10 @@ use resolver::Resolver;
 use symbol::Symbols;
 
 // use interpreter::Interpreter;
-// use inference::analyse;
+use inference::analyse;
 
 fn main() {
-    let input = "fun add(a:int,b:int) -> int { return a+b;} fun add(a:int,b:int) -> int { return a+b;} {fun add(a:int,b:int) -> int { return a+b;}}";
+    let input = "123+456;";
 
     println!("{}", input);
 
@@ -34,11 +34,11 @@ fn main() {
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
-    Resolver::new().resolve(ast).unwrap();
+    println!("{:#?}", ast);
 
+    Resolver::new().resolve(&ast).unwrap();
 
-    // println!("{:#?}",analyse(&ast));
-
+    println!("{:#?}",analyse(&ast[0]));
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 

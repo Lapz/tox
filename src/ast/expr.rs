@@ -7,66 +7,66 @@ use types;
 pub enum Expression {
     // The different type of expressions availabe
     IndexExpr {
-        target: Box<Expression>,
-        index: Box<Expression>,
+        target: Box<WithPos<Expression>>,
+        index: Box<WithPos<Expression>>,
     },
     Array {
-        items: Vec<Expression>,
+        items: Vec<WithPos<Expression>>,
     },
     Assign {
         handle: VariableUseHandle,
         name: Symbol,
         kind: AssignOperator,
-        value: Box<Expression>,
+        value: Box<WithPos<Expression>>,
     },
 
     Binary {
-        left_expr: Box<Expression>,
+        left_expr: Box<WithPos<Expression>>,
         operator: Operator,
-        right_expr: Box<Expression>,
+        right_expr: Box<WithPos<Expression>>,
     },
     Call {
-        callee: Box<Expression>,
-        arguments: Vec<Expression>,
+        callee: Box<WithPos<Expression>>,
+        arguments: Vec<WithPos<Expression>>,
     },
     Dict {
-        items: Vec<(Expression, Expression)>,
+        items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
-        parameters: Vec<(Symbol,Option<types::Type>)>,
+        parameters: Vec<(Symbol, Option<types::Type>)>,
         body: Box<WithPos<Statement>>,
         returns: Option<types::Type>,
     },
     Get {
-        object: Box<Expression>,
+        object: Box<WithPos<Expression>>,
         name: Symbol,
         handle: VariableUseHandle,
     },
     Grouping {
-        expr: Box<Expression>,
+        expr: Box<WithPos<Expression>>,
     },
     Literal(Literal),
     Logical {
-        left: Box<Expression>,
+        left: Box<WithPos<Expression>>,
         operator: LogicOperator,
-        right: Box<Expression>,
+        right: Box<WithPos<Expression>>,
     },
 
     Set {
-        object: Box<Expression>,
+        object: Box<WithPos<Expression>>,
         handle: VariableUseHandle,
         name: Symbol,
-        value: Box<Expression>,
+        value: Box<WithPos<Expression>>,
     },
 
     Ternary {
-        condition: Box<Expression>,
-        then_branch: Box<Expression>,
-        else_branch: Box<Expression>,
+        condition: Box<WithPos<Expression>>,
+        then_branch: Box<WithPos<Expression>>,
+        else_branch: Box<WithPos<Expression>>,
     },
     Unary {
         operator: UnaryOperator,
-        expr: Box<Expression>,
+        expr: Box<WithPos<Expression>>,
     },
 
     This(VariableUseHandle),
@@ -87,12 +87,10 @@ pub enum Literal {
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Hash, Eq)]
 pub struct VariableUseHandle(pub u64);
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct VariableUseMaker {
     next_value: u64,
 }
-
 
 impl VariableUseMaker {
     pub fn new() -> Self {
@@ -101,7 +99,6 @@ impl VariableUseMaker {
 
     pub fn next(&mut self) -> VariableUseHandle {
         let value = self.next_value;
-
 
         self.next_value += 1;
         VariableUseHandle(value)
@@ -124,7 +121,6 @@ pub enum Operator {
     Modulo,
     Exponential,
 }
-
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
 pub enum AssignOperator {
@@ -183,11 +179,11 @@ pub(crate) fn get_type(token: TokenType) -> Option<types::Type> {
 
     match token {
         TokenType::TINT => Some(Type::Int),
-        TokenType::TFLOAT =>  Some(Type::Float),
-        TokenType::TSTR=>  Some(Type::Str),
-        TokenType::NIL =>  Some(Type::Nil),
-        TokenType::TBOOL =>  Some(Type::Bool),
-        _ => None
+        TokenType::TFLOAT => Some(Type::Float),
+        TokenType::TSTR => Some(Type::Str),
+        TokenType::NIL => Some(Type::Nil),
+        TokenType::TBOOL => Some(Type::Bool),
+        _ => None,
     }
 }
 
@@ -213,4 +209,3 @@ pub enum LogicOperator {
     Or,
     And,
 }
-

@@ -4,7 +4,6 @@ mod tests {
     use token::{Token, TokenType};
     use lexer::Lexer;
 
-
     fn add_token(line: i64, column: i64, absolute: usize, token: TokenType) -> Token {
         Token {
             pos: Postition {
@@ -15,7 +14,6 @@ mod tests {
             token,
         }
     }
-
 
     #[test]
     fn string_parsing() {
@@ -68,7 +66,6 @@ mod tests {
         assert_eq!(lexer_tokens, expected_tokens);
     }
 
-
     #[test]
     fn unterminated_string_parsing() {
         let input = "\"";
@@ -94,13 +91,11 @@ mod tests {
         );
     }
 
-
     #[test]
     fn test_integer_parsing() {
         let input = "10,32";
 
         let mut lexer = Lexer::new(input);
-
 
         let lexer_tokens = lexer.lex().unwrap();
 
@@ -119,7 +114,6 @@ mod tests {
 
         let mut lexer = Lexer::new(input);
 
-
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
@@ -130,8 +124,6 @@ mod tests {
 
         assert_eq!(lexer_tokens, expected_tokens);
     }
-
-
 
     #[test]
     fn test_comments_are_discarded() {
@@ -149,7 +141,6 @@ mod tests {
         let input = "if,else,for,while,return,break,continue,do";
 
         let mut lexer = Lexer::new(input);
-
 
         let lexer_tokens = lexer.lex().unwrap();
 
@@ -180,7 +171,6 @@ mod tests {
 
         let mut lexer = Lexer::new(input);
 
-
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
@@ -199,7 +189,6 @@ mod tests {
         let input = "int,bool,float,str";
 
         let mut lexer = Lexer::new(input);
-
 
         let lexer_tokens = lexer.lex().unwrap();
 
@@ -221,7 +210,6 @@ mod tests {
         let input = "pprint,class,super,this,fun,var,or,and";
 
         let mut lexer = Lexer::new(input);
-
 
         let lexer_tokens = lexer.lex().unwrap();
 
@@ -245,8 +233,6 @@ mod tests {
         assert_eq!(lexer_tokens, expected_tokens);
     }
 
-
-
     #[test]
     fn symbols() {
         let input = "%^!/-*<> == != <= >= ->";
@@ -269,12 +255,9 @@ mod tests {
             add_token(1, 16, 15, TokenType::LESSTHANEQUAL),
             add_token(1, 19, 18, TokenType::GREATERTHANEQUAL),
             add_token(1, 22, 21, TokenType::FRETURN),
-
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }
-
-
 
     #[test]
     fn block() {
@@ -282,9 +265,7 @@ mod tests {
             5 < 10 > 5;
         }";
 
-
         let mut lexer = Lexer::new(input);
-
 
         let lexer_tokens = lexer.lex().unwrap();
 

@@ -1,22 +1,36 @@
 use ast::expr::*;
+use ast::statement::Statement;
 use types::{Type, TypeError};
+use env::Env;
+use pos::{WithPos,Postition};
 
-
+ 
 type Exp = ();
+
 #[derive(Debug)]
 pub struct ExpressionType {
     pub exp: Exp,
     pub ty: Type,
 }
 
-pub fn analyse(expr: &Expression) -> Result<ExpressionType, TypeError> {
-    transform_expr(expr)
+pub fn analyse(expr: &WithPos<Statement>) -> Result<ExpressionType, TypeError> {
+    trans_statement(expr)
 }
 
-/// Function that takes an expression and transforms it to
-/// a simply typed AST
-fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
-    match *expr {
+fn trans_var(env: &mut Env, var: Expression) -> ExpressionType {
+    unimplemented!()
+}
+
+
+fn trans_statement(statement: &WithPos<Statement>) -> Result<ExpressionType, TypeError>  {
+    match statement.node {
+        Statement::ExpressionStmt(ref expr) => transform_expr(expr),
+        _ => unimplemented!()
+    }
+}
+
+fn transform_expr(expr: &WithPos<Expression>) -> Result<ExpressionType, TypeError> {
+    match expr.node {
         Expression::Grouping { ref expr } => transform_expr(expr),
 
         Expression::Binary {
@@ -27,12 +41,12 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
             let left = transform_expr(left_expr)?;
             let right = transform_expr(right_expr)?;
 
-            check_binary(left, right)
+            check_int_float(&left, &right,left_expr.pos)
         }
 
         Expression::Unary { ref expr, .. } => {
-            let expr = transform_expr(expr)?;
-            check_int(expr)?;
+            let unary_expr = transform_expr(&expr)?;
+            check_int(&unary_expr,expr.pos)?;
 
             Ok(ExpressionType {
                 exp: (),
@@ -70,21 +84,55 @@ fn transform_expr(expr: &Expression) -> Result<ExpressionType, TypeError> {
     }
 }
 
-fn check_binary(left: ExpressionType, right: ExpressionType) -> Result<ExpressionType, TypeError> {
-    check_int(left)?;
-    check_int(right)?;
+
+fn check_int_float(
+    left: &ExpressionType,
+    right: &ExpressionType,
+    pos:Postition,
+) -> Result<ExpressionType, TypeError> {
+    if check_int(left,pos).is_err() {
+        check_float(left,pos)?;
+        check_float(right,pos)?;
+
+        return Ok(ExpressionType {
+            exp: (),
+            ty: Type::Float,
+        });
+    }
+
+    check_int(right,pos)?;
 
     Ok(ExpressionType {
         exp: (),
         ty: Type::Int,
     })
 }
+
+
 fn check_unary(right: ExpressionType) -> Result<ExpressionType, TypeError> {
     unimplemented!()
 }
-fn check_int(expr: ExpressionType) -> Result<(), TypeError> {
+
+fn check_int(expr: &ExpressionType,pos:Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
-        return Err(TypeError::Expected(Type::Int));
+        return Err(TypeError::Expected(Type::Int,pos));
     }
     Ok(())
+}
+
+fn check_float(expr: &ExpressionType,pos:Postition) -> Result<(), TypeError> {
+    if expr.ty != Type::Float {
+        return Err(TypeError::Expected(Type::Int,pos));
+    }
+    Ok(())
+}
+
+
+
+// fn trans_statement(env: &mut Env, statement: WithPos<Statement>) -> ExpressionType {
+//     unimplemented!()
+// }
+
+fn trans_ty(env: &mut Env) -> Type {
+    unimplemented!()
 }

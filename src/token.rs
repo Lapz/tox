@@ -19,7 +19,6 @@ impl<'a> Display for Token<'a> {
 impl<'a> Display for TokenType<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            TokenType::ILLEGAL(ref ch) => write!(f, "Illegal token {}", ch),
             TokenType::EOF => write!(f, "\0"),
             TokenType::IDENTIFIER(ref s) => write!(f, "id {}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
@@ -79,7 +78,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
-            
         }
     }
 }
@@ -91,11 +89,10 @@ pub enum TokenType<'a> {
     INT(i64),
     FLOAT(f64),
     STRING(String),
-    TINT, // int
+    TINT,   // int
     TFLOAT, // float
-    TBOOL, // bool
-    TSTR, // str
-
+    TBOOL,  // bool
+    TSTR,   // str
 
     // Assignment
     ASSIGN,      // =
@@ -155,6 +152,5 @@ pub enum TokenType<'a> {
     NIL,
 
     // Other
-    ILLEGAL(&'a char),
     EOF,
 }
