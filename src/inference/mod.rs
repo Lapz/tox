@@ -1,3 +1,4 @@
+mod test;
 use ast::expr::*;
 use ast::statement::Statement;
 use types::{Type, TypeError};
@@ -7,7 +8,7 @@ use pos::{WithPos,Postition};
  
 type Exp = ();
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct ExpressionType {
     pub exp: Exp,
     pub ty: Type,
