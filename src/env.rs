@@ -22,7 +22,7 @@ impl  Env {
             vars:Symbols::new(Rc::clone(strings))
         }
     }
-    pub fn look(&mut self,symbol:Symbol) -> Option<&Type> {
+    pub fn look_type(&mut self,symbol:Symbol) -> Option<&Type> {
         self.types.look(symbol)
     } 
 
@@ -30,5 +30,5 @@ impl  Env {
         self.vars.enter(symbol, data)
     }
 
-    pub fn
+    
 }

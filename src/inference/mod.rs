@@ -49,7 +49,7 @@ fn trans_statement(statement: &WithPos<Statement>,env: &mut Env) -> Result<Expre
 }
 
 fn get_type(ident:&Symbol,env:&mut Env) -> Result<Type,TypeError> {
-    if let Some(ty) = env.look_type(symbol) {
+    if let Some(ty) = env.look_type(*ident) {
         return Ok(ty.clone())
     }
 
