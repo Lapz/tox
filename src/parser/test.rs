@@ -5,14 +5,16 @@ mod test {
     use ast::expr::*;
     use ast::statement::*;
     use pos::{Postition, WithPos};
-    use symbol::{Symbol, Symbols};
+    use symbol::{Symbol, SymbolFactory, Symbols};
     use types::Type;
+    use std::rc::Rc;
 
     #[test]
     fn types() {
         let input = "var a:int = 10;";
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -44,7 +46,8 @@ mod test {
     fn function_types() {
         let input = "fun add(a:int,b:int){ return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -53,7 +56,8 @@ mod test {
     fn function_return() {
         let input = "fun add(a:int,b:int) -> int { return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -62,7 +66,8 @@ mod test {
     fn do_while_statement() {
         let input = "do {print(10);} while (true)";
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let condition = WithPos::new(
@@ -140,7 +145,9 @@ mod test {
         let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let init = WithPos {
@@ -306,8 +313,8 @@ mod test {
     fn class_statement() {
         let input = "class Foo {}";
         let tokens = Lexer::new(input).lex().unwrap();
-
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let name = Symbol(2);
@@ -334,8 +341,9 @@ mod test {
             break;continue;
             }";
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = WithPos::new(
@@ -437,8 +445,9 @@ mod test {
         let input = "if (true) {}";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = WithPos::new(
@@ -476,8 +485,9 @@ mod test {
         let input = "{}";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = WithPos::new(
@@ -497,8 +507,9 @@ mod test {
         let input = "[10,12,13];";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let array = WithPos::new(
@@ -554,8 +565,9 @@ mod test {
         let input = "a[2+1];";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let index = WithPos::new(
@@ -619,8 +631,9 @@ mod test {
         let input = "print(9+9);";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let call = WithPos::new(
@@ -683,10 +696,11 @@ mod test {
     #[test]
     fn literal() {
         let input = "123;";
+        let strings = Rc::new(SymbolFactory::new());
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -714,8 +728,9 @@ mod test {
     fn unclosed_group() {
         let input = "(123";
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_err());
     }
@@ -723,10 +738,11 @@ mod test {
     #[test]
     fn unary_with_no_operand() {
         let input = "-<5";
+        let strings = Rc::new(SymbolFactory::new());
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
 
         assert!(ast.is_err());
@@ -737,8 +753,9 @@ mod test {
         let input = "-123*(45.67);";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -802,10 +819,11 @@ mod test {
     #[test]
     fn precedence_add_mul() {
         let input = "123+456*789;";
+        let strings = Rc::new(SymbolFactory::new());
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -868,10 +886,11 @@ mod test {
     #[test]
     fn precedence_group() {
         let input = "123+(45.76*789-3);";
+        let strings = Rc::new(SymbolFactory::new());
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -963,8 +982,9 @@ mod test {
         let input = "123*456+789;";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -1029,8 +1049,9 @@ mod test {
         let input = "123*456*789;";
 
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -1094,8 +1115,9 @@ mod test {
     fn precedence_mul_add_unary() {
         let input = "-123*456+789;";
         let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new();
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![

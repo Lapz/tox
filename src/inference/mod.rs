@@ -2,7 +2,7 @@ mod test;
 use ast::expr::*;
 use ast::statement::Statement;
 use types::{Type, TypeError};
-use env::{Env,Entry};
+use env::{Entry, Env};
 use pos::{Postition, WithPos};
 use symbol::Symbol;
 
@@ -14,49 +14,60 @@ pub struct ExpressionType {
     pub ty: Type,
 }
 
-pub fn analyse(expr: &WithPos<Statement>,env: &mut Env) -> Result<ExpressionType, TypeError> {
-    trans_statement(expr,env)
+pub fn analyse(expr: &WithPos<Statement>, env: &mut Env) -> Result<ExpressionType, TypeError> {
+    trans_statement(expr, env)
 }
 
-fn trans_var(symbol: &Symbol,env: &mut Env) ->  Result<ExpressionType, TypeError> {
-    match env.look(*symbol) {
-        Some(ty) => Ok(ExpressionType{exp:(),ty:ty.clone()}),
-        None => Err(TypeError::Undefinded)
+/// Checks if two types are eqvilant
+fn check_types(ty: &Type, expected: &Type) -> Result<(), ExpressionType> {
+    unimplemented!()
+}
+
+fn trans_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
+    match env.look_type(*symbol) {
+        Some(ty) => Ok(ExpressionType {
+            exp: (),
+            ty: ty.clone(),
+        }),
+        None => Err(TypeError::Undefinded),
     }
 }
 
-fn trans_statement(statement: &WithPos<Statement>,env: &mut Env) -> Result<ExpressionType, TypeError> {
+fn trans_statement(
+    statement: &WithPos<Statement>,
+    env: &mut Env,
+) -> Result<ExpressionType, TypeError> {
     match statement.node {
-        Statement::ExpressionStmt(ref expr) => transform_expr(expr,env),
-        Statement::Var(symbol,ref expr, ref ty) => {
+        Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
+        Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env);
 
-            if let Some(ref ident) = *ty {
-                let ty = get_type(ident)?;
+            // if let Some(ref ident) = *ty {
+            //     let ty = get_type(symbol,env)?;
 
-                check_types(&ty)?;
+            //     check_types(&ty,exp_ty)?;
 
-                return Ok(ExpressionType{exp:(),ty})
-                
-            }
+            //     return Ok(ExpressionType{exp:(),ty})
 
-            env.add_var(symbol, Entry::VarEntry(ty));
+            // }
 
-            unimplemented!()
+            env.add_var(*symbol, Entry::VarEntry(Type::Nil));
+
+            exp_ty
         }
         _ => unimplemented!(),
     }
 }
 
-fn get_type(ident:&Symbol,env:&mut Env) -> Result<Type,TypeError> {
+fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
     if let Some(ty) = env.look_type(*ident) {
-        return Ok(ty.clone())
+        return Ok(ty.clone());
     }
 
     Err(TypeError::Undefinded)
 }
 
-fn transform_expr(expr: &WithPos<Expression>,env: &mut Env) -> Result<ExpressionType, TypeError> {
+fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
     match expr.node {
         // Expression::Array{ref items} => {
         //     for item in items {
@@ -71,11 +82,11 @@ fn transform_expr(expr: &WithPos<Expression>,env: &mut Env) -> Result<Expression
         } => {
             use ast::expr::AssignOperator::*;
             match *kind {
-                Equal => transform_expr(value,env),
-                MinusEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
-                PlusEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
-                StarEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
-                SlashEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
+                Equal => transform_expr(value, env),
+                MinusEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
+                PlusEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
+                StarEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
+                SlashEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
             }
         }
 
@@ -84,30 +95,33 @@ fn transform_expr(expr: &WithPos<Expression>,env: &mut Env) -> Result<Expression
             ref right_expr,
             ..
         } => {
-            let left = transform_expr(left_expr,env)?;
-            let right = transform_expr(right_expr,env)?;
+            let left = transform_expr(left_expr, env)?;
+            let right = transform_expr(right_expr, env)?;
 
             check_int_float(&left, &right, left_expr.pos)
         }
 
-        Expression::Call {ref callee,ref arguments} => {
+        Expression::Call {
+            ref callee,
+            ref arguments,
+        } => {
             let callee = match callee.node {
-                Expression::Var(sym,_) => sym,
-                _ => unreachable!()
+                Expression::Var(sym, _) => sym,
+                _ => unreachable!(),
             };
 
-            if let Some(entry) = env.look(callee) {
+            // if let Some(entry) = env.look(callee) {
 
-            }
+            // }
 
             Err(TypeError::Undefinded)
         }
 
-        Expression::Var(ref symbol,_) => trans_var(symbol,env),
-        Expression::Grouping { ref expr } => transform_expr(expr,env),
+        Expression::Var(ref symbol, _) => trans_var(symbol, env),
+        Expression::Grouping { ref expr } => transform_expr(expr, env),
 
         Expression::Unary { ref expr, .. } => {
-            let unary_expr = transform_expr(&expr,env)?;
+            let unary_expr = transform_expr(&expr, env)?;
             check_bool(unary_expr, expr.pos)?;
             Ok(ExpressionType {
                 exp: (),
@@ -179,7 +193,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
     })
 }
 
-fn check_bool(right: ExpressionType,pos:Postition) -> Result<(), TypeError> {
+fn check_bool(right: ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
         return Err(TypeError::Expected(Type::Bool, pos));
     }

@@ -1,7 +1,6 @@
 use types::Type;
-use symbol::{Symbol,Symbols,SymbolFactory};
+use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
-
 
 #[derive(Debug, Clone)]
 pub enum Entry {
@@ -15,20 +14,18 @@ pub struct Env {
     pub vars: Symbols<Entry>,
 }
 
-impl  Env {
-    pub fn new(strings:&Rc<SymbolFactory>) -> Self {
+impl Env {
+    pub fn new(strings: &Rc<SymbolFactory>) -> Self {
         Env {
             types: Symbols::new(Rc::clone(strings)),
-            vars:Symbols::new(Rc::clone(strings))
+            vars: Symbols::new(Rc::clone(strings)),
         }
     }
-    pub fn look_type(&mut self,symbol:Symbol) -> Option<&Type> {
+    pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
         self.types.look(symbol)
-    } 
-
-    pub fn add_var(&mut self, symbol:Symbol,data:Entry)  {
-        self.vars.enter(symbol, data)
     }
 
-    
+    pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
+        self.vars.enter(symbol, data)
+    }
 }

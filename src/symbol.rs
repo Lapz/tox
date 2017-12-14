@@ -91,23 +91,25 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, Symbols};
+    use symbol::{Symbol, Symbols,SymbolFactory};
+    use std::rc::Rc;
 
     #[test]
     fn test() {
-        let mut map = Symbols::new();
-        map.enter(Symbol(0), "a");
-        map.enter(Symbol(1), "b");
+        let strings = Rc::new(SymbolFactory::new());
+        let mut map:Symbols<String> = Symbols::new(strings);
+        map.enter(Symbol(0), "a".into());
+        map.enter(Symbol(1), "b".into());
         map.begin_scope();
-        assert_eq!(Some(&"a"), map.look(Symbol(0)));
-        assert_eq!(Some(&"b"), map.look(Symbol(1)));
+        assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
+        assert_eq!(Some(&"b".into()), map.look(Symbol(1)));
         assert_eq!(None, map.look(Symbol(2)));
-        map.enter(Symbol(1), "a");
-        map.enter(Symbol(2), "c");
-        assert_eq!(Some(&"a"), map.look(Symbol(1)));
-        assert_eq!(Some(&"c"), map.look(Symbol(2)));
+        map.enter(Symbol(1), "a".into());
+        map.enter(Symbol(2), "c".into());
+        assert_eq!(Some(&"a".into()), map.look(Symbol(1)));
+        assert_eq!(Some(&"c".into()), map.look(Symbol(2)));
         map.end_scope();
-        assert_eq!(Some(&"a"), map.look(Symbol(0)));
-        assert_eq!(map.symbol("c"), Symbol(2));
+        assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
+        assert_eq!(map.symbol("c".into()), Symbol(2));
     }
 }

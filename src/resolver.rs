@@ -487,14 +487,18 @@ impl Resolver {
 mod test {
     use ast::statement::Statement;
     use lexer::Lexer;
-    use symbol::Symbols;
+    use symbol::{SymbolFactory,Symbols};
     use parser::Parser;
     use resolver::Resolver;
     use pos::WithPos;
+    
 
     fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
+        use std::rc::Rc;
+        
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         Parser::new(tokens, &mut symbols).parse().unwrap()
     }
 
