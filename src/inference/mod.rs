@@ -14,22 +14,25 @@ pub struct ExpressionType {
     pub ty: Type,
 }
 
-pub fn analyse(expr: &WithPos<Statement>) -> Result<ExpressionType, TypeError> {
-    trans_statement(expr)
+pub fn analyse(expr: &WithPos<Statement>,env: &mut Env) -> Result<ExpressionType, TypeError> {
+    trans_statement(expr,env)
 }
 
-fn trans_var(env: &mut Env, var: Expression) -> ExpressionType {
-    unimplemented!()
+fn trans_var(symbol: &Symbol,env: &mut Env) ->  Result<ExpressionType, TypeError> {
+    match env.look(*symbol) {
+        Some(ty) => Ok(ExpressionType{exp:(),ty:ty.clone()}),
+        None => Err(TypeError::Undefinded)
+    }
 }
 
-fn trans_statement(statement: &WithPos<Statement>) -> Result<ExpressionType, TypeError> {
+fn trans_statement(statement: &WithPos<Statement>,env: &mut Env) -> Result<ExpressionType, TypeError> {
     match statement.node {
-        Statement::ExpressionStmt(ref expr) => transform_expr(expr),
+        Statement::ExpressionStmt(ref expr) => transform_expr(expr,env),
         _ => unimplemented!(),
     }
 }
 
-fn transform_expr(expr: &WithPos<Expression>) -> Result<ExpressionType, TypeError> {
+fn transform_expr(expr: &WithPos<Expression>,env: &mut Env) -> Result<ExpressionType, TypeError> {
     match expr.node {
         // Expression::Array{ref items} => {
         //     for item in items {
@@ -44,11 +47,11 @@ fn transform_expr(expr: &WithPos<Expression>) -> Result<ExpressionType, TypeErro
         } => {
             use ast::expr::AssignOperator::*;
             match *kind {
-                Equal => transform_expr(value),
-                MinusEqual => s_check_int_float(&transform_expr(value)?, value.pos),
-                PlusEqual => s_check_int_float(&transform_expr(value)?, value.pos),
-                StarEqual => s_check_int_float(&transform_expr(value)?, value.pos),
-                SlashEqual => s_check_int_float(&transform_expr(value)?, value.pos),
+                Equal => transform_expr(value,env),
+                MinusEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
+                PlusEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
+                StarEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
+                SlashEqual => s_check_int_float(&transform_expr(value,env)?, value.pos),
             }
         }
 
@@ -57,21 +60,34 @@ fn transform_expr(expr: &WithPos<Expression>) -> Result<ExpressionType, TypeErro
             ref right_expr,
             ..
         } => {
-            let left = transform_expr(left_expr)?;
-            let right = transform_expr(right_expr)?;
+            let left = transform_expr(left_expr,env)?;
+            let right = transform_expr(right_expr,env)?;
 
             check_int_float(&left, &right, left_expr.pos)
         }
 
-        Expression::Grouping { ref expr } => transform_expr(expr),
+        Expression::Call {ref callee,ref arguments} => {
+            let callee = match callee.node {
+                Expression::Var(sym,_) => sym,
+                _ => unreachable!()
+            };
+
+            if let Some(entry) = env.look(callee) {
+
+            }
+
+            Err(TypeError::Undefinded)
+        }
+
+        Expression::Var(ref symbol,_) => trans_var(symbol,env),
+        Expression::Grouping { ref expr } => transform_expr(expr,env),
 
         Expression::Unary { ref expr, .. } => {
-            let unary_expr = transform_expr(&expr)?;
-            check_int(&unary_expr, expr.pos)?;
-
+            let unary_expr = transform_expr(&expr,env)?;
+            check_bool(unary_expr, expr.pos)?;
             Ok(ExpressionType {
                 exp: (),
-                ty: Type::Int,
+                ty: Type::Bool,
             })
         }
 
@@ -139,8 +155,11 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
     })
 }
 
-fn check_unary(right: ExpressionType) -> Result<ExpressionType, TypeError> {
-    unimplemented!()
+fn check_bool(right: ExpressionType,pos:Postition) -> Result<(), TypeError> {
+    if right.ty != Type::Bool {
+        return Err(TypeError::Expected(Type::Bool, pos));
+    }
+    Ok(())
 }
 
 fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {

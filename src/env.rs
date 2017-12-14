@@ -1,8 +1,8 @@
 use types::Type;
-use symbol::Symbols;
+use symbol::{Symbol,Symbols};
 
 #[derive(Debug, Clone)]
-enum Entry {
+pub enum Entry {
     VarEntry(Type),
     FunEntry { parms: Vec<Type>, returns: Type },
 }
@@ -10,5 +10,11 @@ enum Entry {
 #[derive(Debug, Clone)]
 pub struct Env<'a> {
     pub types: Symbols<'a, Type>,
-    varialbes: Symbols<'a, Entry>,
+    pub vars: Symbols<'a, Entry>,
+}
+
+impl <'a> Env<'a> {
+    pub fn look(&mut self,symbol:Symbol) -> Option<&Type> {
+        self.types.look(symbol)
+    } 
 }

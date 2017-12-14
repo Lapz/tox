@@ -17,20 +17,23 @@ mod env;
 use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
-use symbol::Symbols;
+use symbol::{Symbols,SymbolFactory};
+use env::Env;
 
+use std::rc::Rc;
 // use interpreter::Interpreter;
 use inference::analyse;
 
 fn main() {
-    let input = "123+456;";
+    let input = "var a =10;";
 
     println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
 
     println!("{:#?}", tokens);
-    let mut symbols = Symbols::new();
+    let mut symbol_factory = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(symbol_factory);
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 
@@ -38,7 +41,12 @@ fn main() {
 
     Resolver::new().resolve(&ast).unwrap();
 
-    println!("{:#?}", analyse(&ast[0]));
+    let mut env =  Env {
+        types: Symbols::new(symbol_factory),
+        vars : Symbols::new(symbol_factory),
+    };
+
+    println!("{:#?}", analyse(&ast[0],&mut env));
 
     // let result = Interpreter::new().interpret(&ast).unwrap();
 
