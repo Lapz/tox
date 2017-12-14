@@ -20,31 +20,31 @@ use resolver::Resolver;
 use symbol::{Symbols,SymbolFactory};
 use env::Env;
 
-use std::rc::Rc;
+
 // use interpreter::Interpreter;
 use inference::analyse;
+use std::rc::Rc;
+
+
 
 fn main() {
-    let input = "var a =10;";
+    let input = "var a = 10;";
 
     println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
 
     println!("{:#?}", tokens);
-    let mut symbol_factory = Rc::new(SymbolFactory::new());
-    let mut symbols = Symbols::new(symbol_factory);
+    let mut strings = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
+    let ast = Parser::new(tokens.unwrap(),&mut symbols).parse().unwrap();
 
     println!("{:#?}", ast);
 
     Resolver::new().resolve(&ast).unwrap();
 
-    let mut env =  Env {
-        types: Symbols::new(symbol_factory),
-        vars : Symbols::new(symbol_factory),
-    };
+    let mut env =  Env::new(&strings);
 
     println!("{:#?}", analyse(&ast[0],&mut env));
 

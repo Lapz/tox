@@ -2,7 +2,7 @@ mod test;
 use ast::expr::*;
 use ast::statement::Statement;
 use types::{Type, TypeError};
-use env::Env;
+use env::{Env,Entry};
 use pos::{Postition, WithPos};
 use symbol::Symbol;
 
@@ -28,8 +28,32 @@ fn trans_var(symbol: &Symbol,env: &mut Env) ->  Result<ExpressionType, TypeError
 fn trans_statement(statement: &WithPos<Statement>,env: &mut Env) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr,env),
+        Statement::Var(symbol,ref expr, ref ty) => {
+            let exp_ty = transform_expr(expr, env);
+
+            if let Some(ref ident) = *ty {
+                let ty = get_type(ident)?;
+
+                check_types(&ty)?;
+
+                return Ok(ExpressionType{exp:(),ty})
+                
+            }
+
+            env.add_var(symbol, Entry::VarEntry(ty));
+
+            unimplemented!()
+        }
         _ => unimplemented!(),
     }
+}
+
+fn get_type(ident:&Symbol,env:&mut Env) -> Result<Type,TypeError> {
+    if let Some(ty) = env.look_type(symbol) {
+        return Ok(ty.clone())
+    }
+
+    Err(TypeError::Undefinded)
 }
 
 fn transform_expr(expr: &WithPos<Expression>,env: &mut Env) -> Result<ExpressionType, TypeError> {

@@ -12,7 +12,7 @@ use types::Type;
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    pub symbols: &'a mut Symbols<'a, ()>,
+    pub symbols: &'a mut Symbols<()>,
     variable_use_maker: VariableUseMaker,
 }
 
@@ -39,7 +39,7 @@ impl Display for ParserError {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<'a, ()>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<()>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,
