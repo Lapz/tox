@@ -55,7 +55,7 @@ impl<T> Symbols<T> {
 
     /// Looks in the table for the symbol and if found returns the top element in
     /// the stack of Vec<T>
-    pub fn look(&mut self, symbol: Symbol) -> Option<&T> {
+    pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 

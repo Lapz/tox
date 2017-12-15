@@ -25,7 +25,7 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "var a = [];";
+    let input = "var add = fun(a,b) { a+b;};";
 
     println!("{}", input);
 
@@ -44,8 +44,4 @@ fn main() {
     let mut env = Env::new(&strings);
 
     println!("{:#?}", analyse(&ast[0], &mut env));
-
-    // let result = Interpreter::new().interpret(&ast).unwrap();
-
-    // println!("{:#?}", result);
 }

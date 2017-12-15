@@ -36,6 +36,7 @@ fn trans_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError
     }
 }
 
+
 fn trans_statement(
     statement: &WithPos<Statement>,
     env: &mut Env,
@@ -51,8 +52,6 @@ fn trans_statement(
 
             if let Some(ref ident) = *ty {
                 let ty = get_type(symbol,env)?;
-
-                 println!("{:?}",ty );
 
                 check_types(&ty,&exp_ty.ty)?;
 
@@ -95,6 +94,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
             Ok(ExpressionType{exp:(),ty:Type::Array(Box::new(first_ty.ty))})
         }
+
         Expression::Assign {
             ref value,
             ref kind,
@@ -130,11 +130,28 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 _ => unreachable!(),
             };
 
-            // if let Some(entry) = env.look(callee) {
+            if let Some(entry) = env.look_var(callee).cloned() {
+                match entry {
+                    Entry::FunEntry {ref params,ref returns} => {
+                        for (arg,param) in arguments.iter().zip(params) {
+                            
+                        let exp = transform_expr(arg,&mut env.clone())?;
 
-            // }
+                        check_types(&param,&exp.ty)?;
 
-            Err(TypeError::Undefinded)
+                        return Ok(ExpressionType{exp:(),ty:returns.clone()})
+                    }
+
+                },
+                
+                _ => unimplemented!()
+
+            }
+          
+        }
+
+         Err(TypeError::Undefinded)
+
         }
 
         Expression::Dict{ref items} => {
@@ -160,32 +177,24 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Ok(ExpressionType{exp:(),ty:Type::Dict(Box::new(first_key_ty.ty),Box::new(first_value_ty.ty))})
         }
 
+         Expression::Func{ref body,ref returns,..} => {
+            let body_ty = trans_statement(&body, env)?;
+
+            if let Some(ref return_ty) = *returns {
+                check_types(return_ty, &body_ty.ty)?;
+
+                return Ok(ExpressionType{exp:(),ty:return_ty.clone()})
+            }
+
+            Ok(body_ty)
+
+        }
+
        
         Expression::Grouping { ref expr } => transform_expr(expr, env),
 
         Expression::IndexExpr{ref target, ref index} => {
             unimplemented!()
-        }
-
-        Expression::Func{ref  parameters,ref body,ref returns} => {
-            unimplemented!()
-        }
-
-        Expression::Unary { ref expr, .. } => {
-            let unary_expr = transform_expr(&expr, env)?;
-            check_bool(unary_expr, expr.pos)?;
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Bool,
-            })
-        }
-
-        Expression::Ternary {ref condition, ref then_branch, ref else_branch} => {
-            let condition_ty = transform_expr(&expr,env)?;
-            check_bool(condition_ty,expr.pos)?;
-
-            unimplemented!()
-
         }
 
         Expression::Literal(ref literal) => {
@@ -213,9 +222,37 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             }
         },
 
+
+        Expression::Logical {ref left,ref right,..} => {
+
+            let left_ty = transform_expr(left,env)?;
+            check_bool(left_ty,expr.pos)?;
+            let right_ty = transform_expr(left,env)?;
+            check_bool(right_ty,expr.pos)?;
+
+             Ok(ExpressionType {
+                exp: (),
+                ty: Type::Bool,
+            })
+        }
+
+        Expression::Ternary {ref condition, ref then_branch, ref else_branch} => {
+            let condition_ty = transform_expr(condition,env)?;
+            check_bool(condition_ty,expr.pos)?;
+
+            let then_ty = transform_expr(then_branch, env)?;
+            let else_ty = transform_expr(else_branch, env)?;
+            check_types(&then_ty.ty, &else_ty.ty)?;
+
+            Ok(ExpressionType{exp:(),ty:then_ty.ty})
+
+        }
+
+    
+
          Expression::Var(ref symbol, _) => trans_var(symbol, env),
 
-        _ => unimplemented!(),
+        _ => unimplemented!(), // Implement classes or leave them out 
     }
 }
 
