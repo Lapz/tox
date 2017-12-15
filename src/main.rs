@@ -25,7 +25,7 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "var a = true;";
+    let input = "var a:int = nil ;";
 
     println!("{}", input);
 

@@ -19,8 +19,11 @@ pub fn analyse(expr: &WithPos<Statement>, env: &mut Env) -> Result<ExpressionTyp
 }
 
 /// Checks if two types are eqvilant
-fn check_types(ty: &Type, expected: &Type) -> Result<(), ExpressionType> {
-    unimplemented!()
+fn check_types(expected: &Type,unknown:&Type) -> Result<(),TypeError> {
+    if expected != unknown  {
+        return Err(TypeError::NotSame)
+    }
+    Ok(())
 }
 
 fn trans_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
@@ -40,20 +43,20 @@ fn trans_statement(
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
         Statement::Var(ref symbol, ref expr, ref ty) => {
-            let exp_ty = transform_expr(expr, env);
+            let exp_ty = transform_expr(expr, env)?;
 
-            // if let Some(ref ident) = *ty {
-            //     let ty = get_type(symbol,env)?;
+            if let Some(ref ident) = *ty {
+                let ty = get_type(symbol,env)?;
 
-            //     check_types(&ty,exp_ty)?;
+                check_types(&ty,&exp_ty.ty)?;
 
-            //     return Ok(ExpressionType{exp:(),ty})
+                return Ok(ExpressionType{exp:(),ty})
 
-            // }
+            }
 
             env.add_var(*symbol, Entry::VarEntry(Type::Nil));
 
-            exp_ty
+            Ok(exp_ty)
         }
         _ => unimplemented!(),
     }
@@ -69,12 +72,18 @@ fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
 
 fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
     match expr.node {
-        // Expression::Array{ref items} => {
-        //     for item in items {
-        //         transform_expr(item)
-        //     }
+        Expression::Array{ref items} => {
+            let first_ty = transform_expr(&items[0],env)?;
 
-        // }
+            for item in items {
+                match check_types(&first_ty.ty,&transform_expr(item,env)?.ty) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e)
+                }
+            }
+
+            Ok(first_ty)
+        }
         Expression::Assign {
             ref value,
             ref kind,
@@ -127,6 +136,15 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 exp: (),
                 ty: Type::Bool,
             })
+        }
+
+        Expression::Ternary {ref condition, ref then_branch, ref else_branch} => {
+            let condition_ty = transform_expr(&expr,env)?;
+            check_bool(condition_ty,expr.pos)?;
+
+            unimplemented!()
+
+
         }
 
         Expression::Literal(ref literal) => {
