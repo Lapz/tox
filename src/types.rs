@@ -36,4 +36,6 @@ pub enum Type {
     Bool,
     Nil,
     Float,
+    Dict(Box<Type>,Box<Type>), // Key, Value
+    Array(Box<Type>)
 }

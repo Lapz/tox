@@ -45,8 +45,14 @@ fn trans_statement(
         Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env)?;
 
+            println!("{:?}",exp_ty );
+
+            println!("{:?}",symbol );
+
             if let Some(ref ident) = *ty {
                 let ty = get_type(symbol,env)?;
+
+                 println!("{:?}",ty );
 
                 check_types(&ty,&exp_ty.ty)?;
 
@@ -73,6 +79,11 @@ fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
 fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
     match expr.node {
         Expression::Array{ref items} => {
+
+            if items.is_empty() {
+                return Ok(ExpressionType{exp:(),ty:Type::Array(Box::new(Type::Nil))})
+            }
+
             let first_ty = transform_expr(&items[0],env)?;
 
             for item in items {
@@ -82,7 +93,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 }
             }
 
-            Ok(first_ty)
+            Ok(ExpressionType{exp:(),ty:Type::Array(Box::new(first_ty.ty))})
         }
         Expression::Assign {
             ref value,
@@ -126,8 +137,39 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Err(TypeError::Undefinded)
         }
 
-        Expression::Var(ref symbol, _) => trans_var(symbol, env),
+        Expression::Dict{ref items} => {
+
+            if items.is_empty() {
+                return Ok(ExpressionType{exp:(),ty:Type::Dict(Box::new(Type::Nil),Box::new(Type::Nil))})
+            }
+
+            let first_key_ty = transform_expr(&items[0].0,env)?;
+            let first_value_ty = transform_expr(&items[0].0,env)?;
+            for item in items {
+                match check_types(&first_key_ty.ty,&transform_expr(&item.0,env)?.ty) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e)
+                };
+
+                match check_types(&first_value_ty.ty,&transform_expr(&item.1,env)?.ty) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e)
+                }
+            }
+
+            Ok(ExpressionType{exp:(),ty:Type::Dict(Box::new(first_key_ty.ty),Box::new(first_value_ty.ty))})
+        }
+
+       
         Expression::Grouping { ref expr } => transform_expr(expr, env),
+
+        Expression::IndexExpr{ref target, ref index} => {
+            unimplemented!()
+        }
+
+        Expression::Func{ref  parameters,ref body,ref returns} => {
+            unimplemented!()
+        }
 
         Expression::Unary { ref expr, .. } => {
             let unary_expr = transform_expr(&expr, env)?;
@@ -144,38 +186,41 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
             unimplemented!()
 
-
         }
 
         Expression::Literal(ref literal) => {
-            use ast::expr::Literal::*;
             match *literal {
-                Float(_) => Ok(ExpressionType {
+                Literal::Float(_) => Ok(ExpressionType {
                     exp: (),
                     ty: Type::Float,
                 }),
-                Int(_) => Ok(ExpressionType {
+                Literal::Int(_) => Ok(ExpressionType {
                     exp: (),
                     ty: Type::Int,
                 }),
-                Str(_) => Ok(ExpressionType {
+                Literal::Str(_) => Ok(ExpressionType {
                     exp: (),
                     ty: Type::Str,
                 }),
-                True(_) | False(_) => Ok(ExpressionType {
+                Literal::True(_) | Literal::False(_) => Ok(ExpressionType {
                     exp: (),
                     ty: Type::Bool,
                 }),
-                Nil => Ok(ExpressionType {
+                Literal::Nil => Ok(ExpressionType {
                     exp: (),
                     ty: Type::Nil,
                 }),
             }
-        }
+        },
+
+         Expression::Var(ref symbol, _) => trans_var(symbol, env),
 
         _ => unimplemented!(),
     }
 }
+
+/// Given two expression types check if they are {int,int} or they are
+/// {float,float}
 
 fn check_int_float(
     left: &ExpressionType,
@@ -197,6 +242,8 @@ fn check_int_float(
     })
 }
 
+
+/// Given an ExpressionType check if it an {int} or {float}
 fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<ExpressionType, TypeError> {
     if check_int(expr, pos).is_err() {
         check_float(expr, pos)?;
@@ -211,6 +258,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
     })
 }
 
+/// Checks if ExpressionType is {bool}
 fn check_bool(right: ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
         return Err(TypeError::Expected(Type::Bool, pos));
@@ -218,6 +266,7 @@ fn check_bool(right: ExpressionType, pos: Postition) -> Result<(), TypeError> {
     Ok(())
 }
 
+/// Checks if ExpressionType is {int}
 fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
         return Err(TypeError::Expected(Type::Int, pos));
@@ -225,6 +274,7 @@ fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     Ok(())
 }
 
+/// Checks if ExpressionType is {float}
 fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {
         return Err(TypeError::Expected(Type::Int, pos));
