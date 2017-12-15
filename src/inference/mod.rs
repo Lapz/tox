@@ -63,6 +63,45 @@ fn trans_statement(
 
             Ok(exp_ty)
         }
+
+        Statement::Break | Statement::Continue => Ok(ExpressionType{exp:(),ty:Type::Nil}),
+        
+        // Statement::Block(ref expressions) => {
+        //     for expr in expressions {
+        //         transform_expr(expr,env)?;
+        //     }
+        // }
+
+        Statement::IfStmt{ref condition,ref then_branch, ref else_branch} => {
+            let condition_ty = transform_expr(condition,env)?;
+
+            check_bool(condition_ty, statement.pos)?;
+
+            let then_ty = trans_statement(then_branch,env)?;
+
+            if let &Some(ref else_statement) = else_branch {
+                let else_ty = trans_statement(else_statement,env)?;
+
+                check_types(&then_ty.ty,&else_ty.ty)?;
+
+                return Ok(ExpressionType{exp:(),ty:then_ty.ty})
+            }
+
+            check_types(&Type::Nil,&then_ty.ty)?;
+
+            Ok(ExpressionType{exp:(),ty:then_ty.ty})
+        }
+
+
+        Statement::WhileStmt{ref condition,ref body} => {
+            let condition_ty = transform_expr(condition,env)?;
+
+            check_bool(condition_ty, statement.pos)?;
+
+
+        }
+
+
         _ => unimplemented!(),
     }
 }
