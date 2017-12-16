@@ -112,7 +112,14 @@ fn trans_statement(
             Ok(ExpressionType{exp:(),ty:Type::Nil})
         },
 
-        // Statement::Function{ref name,ref}
+        Statement::Function{ref name,ref body} => {
+            let body = match body.node{
+               ref body@Expression::Func{..} => body,
+                _ => unreachable!()
+            };
+
+            unimplemented!()
+        }
         _ => unimplemented!(),
     }
 }
@@ -227,14 +234,16 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Ok(ExpressionType{exp:(),ty:Type::Dict(Box::new(first_key_ty.ty),Box::new(first_value_ty.ty))})
         }
 
-         Expression::Func{ref body,ref returns,..} => {
+         Expression::Func{ref body,ref returns,ref params} => {
             let body_ty = trans_statement(&body, env)?;
 
-            if let Some(ref return_ty) = *returns {
-                check_types(return_ty, &body_ty.ty)?;
+            let return_type = if let Some(ref return_ty) = *returns {
+                return_ty
+            }else {
+                Type::Nil
+            };
 
-                return Ok(ExpressionType{exp:(),ty:return_ty.clone()})
-            }
+            
 
             Ok(body_ty)
 
