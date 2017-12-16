@@ -87,19 +87,30 @@ fn trans_statement(
                 return Ok(ExpressionType{exp:(),ty:then_ty.ty})
             }
 
-            check_types(&Type::Nil,&then_ty.ty)?;
-
-            Ok(ExpressionType{exp:(),ty:then_ty.ty})
+            Ok(then_ty)
         }
 
 
-        Statement::WhileStmt{ref condition,ref body} => {
+        Statement::WhileStmt{ref condition,ref body} |
+        Statement::DoStmt{ref condition, ref body}   => {
             let condition_ty = transform_expr(condition,env)?;
 
             check_bool(condition_ty, statement.pos)?;
 
+            let body_ty = trans_statement(body,env)?;
 
+            Ok(body_ty)
         }
+
+        Statement::Return(ref returns) => {
+            if let &Some(ref expr) = returns {
+                let exp_ty = transform_expr(expr,env)?;
+                return Ok(exp_ty)
+            }
+            Ok(ExpressionType{exp:(),ty:Type::Nil})
+        }
+
+      
 
 
         _ => unimplemented!(),
