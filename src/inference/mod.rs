@@ -46,10 +46,6 @@ fn trans_statement(
         Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env)?;
 
-            println!("{:?}",exp_ty );
-
-            println!("{:?}",symbol );
-
             if let Some(ref ident) = *ty {
                 let ty = get_type(symbol,env)?;
 
@@ -66,11 +62,17 @@ fn trans_statement(
 
         Statement::Break | Statement::Continue => Ok(ExpressionType{exp:(),ty:Type::Nil}),
         
-        // Statement::Block(ref expressions) => {
-        //     for expr in expressions {
-        //         transform_expr(expr,env)?;
-        //     }
-        // }
+        Statement::Block(ref expressions) => {
+            if expressions.is_empty() {
+                return Ok(ExpressionType{exp:(),ty:Type::Nil})
+            }
+
+            for expr in expressions.iter().rev().skip(1) {
+                trans_statement(expr,env)?;
+            }
+
+            trans_statement(expressions.last().unwrap(),env)
+        }
 
         Statement::IfStmt{ref condition,ref then_branch, ref else_branch} => {
             let condition_ty = transform_expr(condition,env)?;
@@ -108,11 +110,9 @@ fn trans_statement(
                 return Ok(exp_ty)
             }
             Ok(ExpressionType{exp:(),ty:Type::Nil})
-        }
+        },
 
-      
-
-
+        // Statement::Function{ref name,ref}
         _ => unimplemented!(),
     }
 }
