@@ -234,16 +234,16 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Ok(ExpressionType{exp:(),ty:Type::Dict(Box::new(first_key_ty.ty),Box::new(first_value_ty.ty))})
         }
 
-         Expression::Func{ref body,ref returns,ref params} => {
+         Expression::Func{ref body,ref returns,ref parameters} => {
             let body_ty = trans_statement(&body, env)?;
 
             let return_type = if let Some(ref return_ty) = *returns {
                 return_ty
             }else {
-                Type::Nil
+                &Type::Nil
             };
 
-            let 
+            
 
             Ok(body_ty)
 
