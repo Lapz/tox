@@ -24,7 +24,7 @@ pub struct Symbols<T> {
 }
 
 impl<T> Symbols<T> {
-    pub fn new(strings:Rc<SymbolFactory>) -> Self {
+    pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Symbols {
             strings,
             table: HashMap::new(),
@@ -70,7 +70,10 @@ impl<T> Symbols<T> {
             }
         }
         let symbol = Symbol(*self.strings.next.borrow());
-        self.strings.mappings.borrow_mut().insert(symbol, name.to_owned());
+        self.strings
+            .mappings
+            .borrow_mut()
+            .insert(symbol, name.to_owned());
         *self.strings.next.borrow_mut() += 1;
         symbol
     }
@@ -91,13 +94,13 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, Symbols,SymbolFactory};
+    use symbol::{Symbol, SymbolFactory, Symbols};
     use std::rc::Rc;
 
     #[test]
     fn test() {
         let strings = Rc::new(SymbolFactory::new());
-        let mut map:Symbols<String> = Symbols::new(strings);
+        let mut map: Symbols<String> = Symbols::new(strings);
         map.enter(Symbol(0), "a".into());
         map.enter(Symbol(1), "b".into());
         map.begin_scope();

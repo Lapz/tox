@@ -199,11 +199,14 @@ impl<'a> Parser<'a> {
             let possilbe_type = self.advance().unwrap();
 
             match possilbe_type.token {
-                TokenType::IDENTIFIER(ref ty) => return  Ok(Some(self.symbols.symbol(ty))),
-                _ => return Err(ParserError::Expected(self.error(
-                    "Expected a proper type",
-                    possilbe_type.pos,
-                )))
+                TokenType::IDENTIFIER(ref ty) => return Ok(Some(self.symbols.symbol(ty))),
+                TokenType::NIL => return Ok(Some(self.symbols.symbol("nil"))),
+                _ => {
+                    return Err(ParserError::Expected(self.error(
+                        "Expected a proper type",
+                        possilbe_type.pos,
+                    )))
+                }
             }
         }
 
@@ -946,13 +949,15 @@ impl<'a> Parser<'a> {
 
             match possilbe_type.token {
                 TokenType::IDENTIFIER(ref ty) => returns = Some(self.symbols.symbol(ty)),
-                _ => return Err(ParserError::Expected(self.error(
-                    "Expected a proper type",
-                    possilbe_type.pos,
-                )))
+                TokenType::NIL => returns = Some(self.symbols.symbol("nil")),
+                _ => {
+                    return Err(ParserError::Expected(self.error(
+                        "Expected a proper type",
+                        possilbe_type.pos,
+                    )))
+                }
             }
         }
-        
 
         let func_pos = self.consume_get_pos(
             TokenType::LBRACE,

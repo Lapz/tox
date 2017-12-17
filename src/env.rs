@@ -16,19 +16,18 @@ pub struct Env {
 
 impl Env {
     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
-
         let mut types = Symbols::new(Rc::clone(strings));
-        let string_symbol =  types.symbol("str");
+        let string_symbol = types.symbol("str");
         let int_symbol = types.symbol("int");
         let float_symbol = types.symbol("float");
         let nil_symbol = types.symbol("nil");
-        let bool_symbol  = types.symbol("bool");
-        
-        types.enter(int_symbol,Type::Int);
-        types.enter(float_symbol,Type::Float);
-        types.enter(bool_symbol,Type::Bool);
-        types.enter(nil_symbol,Type::Nil);
-        types.enter(string_symbol,Type::Str);
+        let bool_symbol = types.symbol("bool");
+
+        types.enter(int_symbol, Type::Int);
+        types.enter(float_symbol, Type::Float);
+        types.enter(bool_symbol, Type::Bool);
+        types.enter(nil_symbol, Type::Nil);
+        types.enter(string_symbol, Type::Str);
 
         Env {
             types,
@@ -56,7 +55,6 @@ impl Env {
     pub fn add_type(&mut self, symbol: Symbol, data: Entry) {
         self.vars.enter(symbol, data)
     }
-    
 
     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
         self.vars.enter(symbol, data)

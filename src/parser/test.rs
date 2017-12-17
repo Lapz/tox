@@ -29,7 +29,7 @@ mod test {
                             absolute: 12,
                         },
                     ),
-                    Some(Type::Int),
+                    Some(Symbol(3)),
                 ),
                 Postition {
                     line: 1,

@@ -176,7 +176,6 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
     }
 }
 
-
 #[inline]
 pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {
     match token {

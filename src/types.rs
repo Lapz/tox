@@ -6,7 +6,7 @@ pub enum TypeError {
     Expected(Type, Postition),
     Undefinded,
     NotSame,
-    Duplicate
+    Duplicate,
 }
 
 pub struct Unique {
@@ -37,6 +37,6 @@ pub enum Type {
     Bool,
     Nil,
     Float,
-    Dict(Box<Type>,Box<Type>), // Key, Value
-    Array(Box<Type>)
+    Dict(Box<Type>, Box<Type>), // Key, Value
+    Array(Box<Type>),
 }
