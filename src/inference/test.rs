@@ -79,10 +79,10 @@ mod test {
         analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
-    
     #[test]
     fn assign_types() {
-        let input = "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";
+        let input =
+            "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(

@@ -171,7 +171,6 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
     match token {
         TokenType::BANG => UnaryOperator::Bang,
         TokenType::MINUS => UnaryOperator::Minus,
-        TokenType::PLUS => UnaryOperator::Plus,
         _ => unreachable!(),
     }
 }

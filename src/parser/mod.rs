@@ -753,7 +753,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
+        if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
             let next = self.advance().unwrap();
 
             let operator = get_unary_operator(next.token);

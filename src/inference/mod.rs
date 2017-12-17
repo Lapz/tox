@@ -161,12 +161,15 @@ fn trans_statement(
                     } else {
                         Type::Nil
                     };
+
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
                     let mut param_set = HashSet::new();
 
                     for &(param, ref ty) in parameters {
-                        param_ty.push(get_type(&param, env)?);
+                        if let &Some(ref p_ty) = ty {
+                            param_ty.push(get_type(p_ty, env)?);
+                        }
                         param_names.push(param);
 
                         if !param_set.insert(param) {
