@@ -66,6 +66,13 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
+        Statement::Class{ref name, ref methods} => {
+            for method in methods {
+                println!("{:?}",transform_statement(method, env)?)
+            }
+
+            unimplemented!()
+        }
         Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env)?;
 
@@ -194,7 +201,7 @@ fn transform_statement(
 
             Ok(body_ty)
         }
-        _ => unimplemented!(),
+    
     }
 }
 
@@ -282,7 +289,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         });
                     },
 
-                    _ => unimplemented!(),
+                    _ => unreachable!(), // TODO Add classes
                 }
             }
 

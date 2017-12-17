@@ -25,7 +25,11 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "var a = {10:10}; a[10];";
+    let input = "class Math {
+        add(a,b) -> int {
+            a+b;
+        }
+    }";
 
     println!("{}", input);
 

@@ -141,6 +141,7 @@ pub(crate) fn get_assign_operator(token: TokenType) -> AssignOperator {
         TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
         TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
         TokenType::ASSIGN => AssignOperator::Equal,
+        TokenType::SLASHASSIGN => AssignOperator::SlashEqual,
         _ => unreachable!(),
     }
 }

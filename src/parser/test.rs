@@ -308,7 +308,7 @@ mod test {
         assert_eq!(ast, vec![expected]);
     }
 
-    // #[test]
+    #[test]
     fn class_statement() {
         let input = "class Foo {}";
         let tokens = Lexer::new(input).lex().unwrap();
