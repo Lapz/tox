@@ -7,6 +7,7 @@ pub enum TypeError {
     Undefinded,
     NotSame,
     Duplicate,
+    Function,
 }
 
 pub struct Unique {

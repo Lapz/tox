@@ -7,7 +7,6 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
-use types::Type;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -185,10 +184,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn get_pos(&mut self) -> Postition {
+    fn get_pos(&mut self) -> Result<Postition, ParserError> {
         match self.advance() {
-            Some(Token { ref pos, .. }) => return *pos,
-            _ => unreachable!(),
+            Some(Token { ref pos, .. }) => Ok(*pos),
+            None => Err(ParserError::EOF),
         }
     }
 
@@ -259,7 +258,7 @@ impl<'a> Parser<'a> {
     }
 
     fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
-        let func_pos = self.get_pos();
+        let func_pos = self.get_pos()?;
         let name = self.consume_name(&format!("Expected a {} name", kind))?;
         Ok(WithPos::new(
             Statement::Function {
@@ -273,7 +272,7 @@ impl<'a> Parser<'a> {
     // Keyword statements
 
     fn break_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let break_pos = self.get_pos();
+        let break_pos = self.get_pos()?;
 
         if !(self.loop_depth >= 0) {
             let error = "Must be inside a loop to use break".to_owned();
@@ -286,7 +285,7 @@ impl<'a> Parser<'a> {
     }
 
     fn continue_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let cont_pos = self.get_pos();
+        let cont_pos = self.get_pos()?;
 
         if !(self.loop_depth >= 0) {
             let error = "Must be inside a loop to use 'continue'".to_owned();
@@ -302,7 +301,7 @@ impl<'a> Parser<'a> {
     // Control Flow Statements
 
     fn for_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let for_pos = self.get_pos();
+        let for_pos = self.get_pos()?;
         self.consume(TokenType::LPAREN, "Expected '(' after 'for'")?;
 
         let mut initi = None;
@@ -375,7 +374,7 @@ impl<'a> Parser<'a> {
     }
 
     fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let do_pos = self.get_pos();
+        let do_pos = self.get_pos()?;
 
         let body = self.statement()?;
 
@@ -396,7 +395,7 @@ impl<'a> Parser<'a> {
     }
 
     fn while_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let while_pos = self.get_pos(); // Eats the while;
+        let while_pos = self.get_pos()?; // Eats the while;
 
         self.consume(TokenType::LPAREN, "Expected '(' after while'")?;
 
@@ -419,7 +418,7 @@ impl<'a> Parser<'a> {
     }
 
     fn if_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let if_pos = self.get_pos(); // Eats the if ;
+        let if_pos = self.get_pos()?; // Eats the if ;
 
         self.consume(TokenType::LPAREN, "Expected a \'(\' after \'if\'")?;
 
@@ -454,7 +453,7 @@ impl<'a> Parser<'a> {
     }
 
     fn return_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos();
+        let pos = self.get_pos()?;
 
         let mut value = None;
 
@@ -468,7 +467,7 @@ impl<'a> Parser<'a> {
     }
 
     fn block(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos();
+        let pos = self.get_pos()?;
 
         let mut statement = vec![];
 
@@ -482,7 +481,7 @@ impl<'a> Parser<'a> {
     }
 
     fn class_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let class_pos = self.get_pos();
+        let class_pos = self.get_pos()?;
         let name = self.consume_name("Expected a class name")?;
 
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
@@ -499,7 +498,7 @@ impl<'a> Parser<'a> {
     }
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let var_pos = self.get_pos();
+        let var_pos = self.get_pos()?;
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
 
         if self.recognise(TokenType::SEMICOLON) {
@@ -919,7 +918,7 @@ impl<'a> Parser<'a> {
 // Helper parsing functions
 impl<'a> Parser<'a> {
     fn fun_body(&mut self, kind: &str) -> Result<WithPos<Expression>, ParserError> {
-        self.consume(TokenType::LPAREN, "Expected '(' ")?;
+        let func_pos = self.consume_get_pos(TokenType::LPAREN, "Expected '(' ")?;
 
         let mut parameters = vec![];
         let mut returns = None;
@@ -958,11 +957,6 @@ impl<'a> Parser<'a> {
                 }
             }
         }
-
-        let func_pos = self.consume_get_pos(
-            TokenType::LBRACE,
-            &format!("Expected '{{' before {} body.", kind),
-        )?;
 
         let body = Box::new(self.block()?);
 

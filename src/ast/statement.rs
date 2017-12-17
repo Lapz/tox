@@ -1,5 +1,4 @@
 use ast::expr::Expression;
-use types::Type;
 use pos::WithPos;
 use symbol::Symbol;
 

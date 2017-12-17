@@ -6,11 +6,13 @@
     "configurations": [
 
         {
-            "name": "Debug",
-            "type": "gdb",
+            "type": "lldb",
             "request": "launch",
-            "target": "target/debug/lexer",
-            "cwd": "${workspaceRoot}"
+            "name": "Debug",
+            "program": "${workspaceRoot}/target/debug/lexer",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "cargo build"
         }
     ]
 }

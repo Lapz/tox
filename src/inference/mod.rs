@@ -5,7 +5,7 @@ use types::{Type, TypeError};
 use env::{Entry, Env};
 use pos::{Postition, WithPos};
 use symbol::Symbol;
-use std::collections::HashSet;
+
 type Exp = ();
 
 #[derive(Debug, PartialEq)]
@@ -22,7 +22,7 @@ pub fn analyse(
     let mut errors = vec![];
 
     for statement in statements {
-        match trans_statement(statement, env) {
+        match transform_statement(statement, env) {
             Ok(ty) => tys.push(ty),
             Err(e) => errors.push(e),
         }
@@ -43,17 +43,24 @@ fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
     Ok(())
 }
 
-fn trans_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
-    match env.look_type(*symbol) {
+fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
+    match *entry {
+        Entry::VarEntry(ref ty) => Ok(ty.clone()),
+        _ => Err(TypeError::Function),
+    }
+}
+
+fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
+    match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
-            ty: ty.clone(),
+            ty: get_actual_ty(ty)?,
         }),
         None => Err(TypeError::Undefinded),
     }
 }
 
-fn trans_statement(
+fn transform_statement(
     statement: &WithPos<Statement>,
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
@@ -90,10 +97,10 @@ fn trans_statement(
             }
 
             for expr in expressions.iter().rev().skip(1) {
-                trans_statement(expr, env)?;
+                transform_statement(expr, env)?;
             }
 
-            trans_statement(expressions.last().unwrap(), env)
+            transform_statement(expressions.last().unwrap(), env)
         }
 
         Statement::IfStmt {
@@ -105,10 +112,10 @@ fn trans_statement(
 
             check_bool(condition_ty, statement.pos)?;
 
-            let then_ty = trans_statement(then_branch, env)?;
+            let then_ty = transform_statement(then_branch, env)?;
 
             if let &Some(ref else_statement) = else_branch {
-                let else_ty = trans_statement(else_statement, env)?;
+                let else_ty = transform_statement(else_statement, env)?;
 
                 check_types(&then_ty.ty, &else_ty.ty)?;
 
@@ -133,7 +140,7 @@ fn trans_statement(
 
             check_bool(condition_ty, statement.pos)?;
 
-            let body_ty = trans_statement(body, env)?;
+            let body_ty = transform_statement(body, env)?;
 
             Ok(body_ty)
         }
@@ -152,9 +159,9 @@ fn trans_statement(
         Statement::Function { ref name, ref body } => {
             match body.node {
                 Expression::Func {
-                    ref body,
                     ref returns,
                     ref parameters,
+                    ..
                 } => {
                     let return_type = if let Some(ref return_ty) = *returns {
                         get_type(return_ty, env)?
@@ -164,17 +171,12 @@ fn trans_statement(
 
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
-                    let mut param_set = HashSet::new();
 
                     for &(param, ref ty) in parameters {
                         if let &Some(ref p_ty) = ty {
                             param_ty.push(get_type(p_ty, env)?);
                         }
                         param_names.push(param);
-
-                        if !param_set.insert(param) {
-                            return Err(TypeError::Duplicate);
-                        }
                     }
 
                     env.add_var(
@@ -197,7 +199,6 @@ fn trans_statement(
 }
 
 fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
-    println!("{:?}", ident);
     if let Some(ty) = env.look_type(*ident) {
         return Ok(ty.clone());
     }
@@ -321,7 +322,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref returns,
             ref parameters,
         } => {
-            let body_ty = trans_statement(&body, env)?;
+            let body_ty = transform_statement(&body, env)?;
 
             let return_type = if let Some(ref return_ty) = *returns {
                 get_type(return_ty, env)?
@@ -332,8 +333,11 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let mut params_ty = vec![];
             let mut param_names = vec![];
 
-            for &(symbol, _) in parameters {
-                params_ty.push(get_type(&symbol, env)?);
+            for &(symbol, ref ty) in parameters {
+                if let &Some(ref p_ty) = ty {
+                    params_ty.push(get_type(p_ty, env)?);
+                }
+                // params_ty.push(get_type(ty, env)?);
                 param_names.push(symbol);
             }
 
@@ -354,7 +358,16 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         Expression::IndexExpr {
             ref target,
             ref index,
-        } => unimplemented!(),
+        } => {
+            let target_ty = transform_expr(target, env)?;
+            println!("{:?}", target_ty);
+
+            let index_ty = transform_expr(index, env)?;
+
+            check_types(&target_ty.ty, &index_ty.ty);
+
+            unimplemented!()
+        }
 
         Expression::Literal(ref literal) => match *literal {
             Literal::Float(_) => Ok(ExpressionType {
@@ -386,7 +399,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let left_ty = transform_expr(left, env)?;
             check_bool(left_ty, expr.pos)?;
-            let right_ty = transform_expr(left, env)?;
+            let right_ty = transform_expr(right, env)?;
             check_bool(right_ty, expr.pos)?;
 
             Ok(ExpressionType {
@@ -413,7 +426,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             })
         }
 
-        Expression::Var(ref symbol, _) => trans_var(symbol, env),
+        Expression::Var(ref symbol, _) => transform_var(symbol, env),
 
         _ => unimplemented!(), // Implement classes or leave them out
     }
@@ -482,18 +495,4 @@ fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
         return Err(TypeError::Expected(Type::Int, pos));
     }
     Ok(())
-}
-
-// fn trans_statement(env: &mut Env, statement: WithPos<Statement>) -> ExpressionType {
-//     unimplemented!()
-// }
-
-fn trans_ty(env: &mut Env, symbol: Symbol) -> Result<ExpressionType, TypeError> {
-    match env.types.look(symbol) {
-        Some(ty) => Ok(ExpressionType {
-            exp: (),
-            ty: ty.clone(),
-        }),
-        None => Err(TypeError::Undefinded),
-    }
 }

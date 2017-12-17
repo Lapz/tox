@@ -25,13 +25,11 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "fun add(a:int,b:int) -> int {a+b;}";
+    let input = "var a = {10:10}; a[10];";
 
     println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
-
-    println!("{:#?}", tokens);
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 

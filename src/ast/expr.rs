@@ -2,7 +2,6 @@ use ast::statement::Statement;
 use pos::WithPos;
 use symbol::Symbol;
 
-use types;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
