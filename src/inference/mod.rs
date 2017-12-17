@@ -5,7 +5,7 @@ use types::{Type, TypeError};
 use env::{Entry, Env};
 use pos::{Postition, WithPos};
 use symbol::Symbol;
-
+use std::collections::HashSet;
 type Exp = ();
 
 #[derive(Debug, PartialEq)]
@@ -113,12 +113,38 @@ fn trans_statement(
         },
 
         Statement::Function{ref name,ref body} => {
-            let body = match body.node{
-               ref body@Expression::Func{..} => body,
+            match body.node {
+                Expression::Func{ref body,ref returns,ref parameters} =>{
+                    let return_type = if let Some(ref return_ty) = *returns {
+                    get_type(return_ty, env)?
+                }else {
+                    Type::Nil
+                };
+                    let mut param_names = vec![];
+                    let mut param_ty = vec![];
+                    let mut param_set = HashSet::new();
+
+                    for &(param,ref ty) in parameters {
+                        param_ty.push(get_type(&param, env)?);
+                        param_names.push(param);
+
+                        if !param_set.insert(param) {
+                            return Err(TypeError::Duplicate)
+                        }
+                    }
+
+                    env.add_var(*name, Entry::FunEntry{params:param_ty,returns:return_type.clone()});
+
+                    
+
+                },
                 _ => unreachable!()
             };
 
-            unimplemented!()
+            let body_ty = transform_expr(body, env)?;
+
+            Ok(body_ty)
+
         }
         _ => unimplemented!(),
     }
@@ -238,15 +264,29 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let body_ty = trans_statement(&body, env)?;
 
             let return_type = if let Some(ref return_ty) = *returns {
-                return_ty
-            }else {
-                &Type::Nil
-            };
+                    get_type(return_ty, env)?
+                }else {
+                    Type::Nil
+                };
 
+            let mut params_ty = vec![];
+            let mut param_names = vec![];
             
+            for &(symbol,_) in parameters {
+                params_ty.push(get_type(&symbol, env)?);
+                param_names.push(symbol);
+            }
 
+            env.begin_scope();
+
+            for (name,ty) in param_names.iter().zip(params_ty) {
+                env.add_var(*name,Entry::VarEntry(ty));
+            }
+
+            check_types(&return_type,&body_ty.ty)?;
+
+            env.end_scope();
             Ok(body_ty)
-
         }
 
        

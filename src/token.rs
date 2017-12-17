@@ -23,10 +23,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::IDENTIFIER(ref s) => write!(f, "id {}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
             TokenType::FLOAT(ref float) => write!(f, "{}", float),
-            TokenType::TINT => write!(f, "int"),
-            TokenType::TFLOAT => write!(f, "float"),
-            TokenType::TBOOL => write!(f, "bool"),
-            TokenType::TSTR => write!(f, "str"),
             TokenType::ASSIGN => write!(f, "="),
             TokenType::STARASSIGN => write!(f, "*="),
             TokenType::PLUSASSIGN => write!(f, "+="),
@@ -89,10 +85,6 @@ pub enum TokenType<'a> {
     INT(i64),
     FLOAT(f64),
     STRING(String),
-    TINT,   // int
-    TFLOAT, // float
-    TBOOL,  // bool
-    TSTR,   // str
 
     // Assignment
     ASSIGN,      // =

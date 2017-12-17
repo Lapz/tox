@@ -29,9 +29,9 @@ pub enum Expression {
         items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
-        parameters: Vec<(Symbol, Option<types::Type>)>,
+        parameters: Vec<(Symbol, Option<Symbol>)>,
         body: Box<WithPos<Statement>>,
-        returns: Option<types::Type>,
+        returns: Option<Symbol>,
     },
     Get {
         object: Box<WithPos<Expression>>,
@@ -176,19 +176,6 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
     }
 }
 
-#[inline]
-pub(crate) fn get_type(token: TokenType) -> Option<types::Type> {
-    use types::Type;
-
-    match token {
-        TokenType::TINT => Some(Type::Int),
-        TokenType::TFLOAT => Some(Type::Float),
-        TokenType::TSTR => Some(Type::Str),
-        TokenType::NIL => Some(Type::Nil),
-        TokenType::TBOOL => Some(Type::Bool),
-        _ => None,
-    }
-}
 
 #[inline]
 pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {

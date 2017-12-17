@@ -43,6 +43,16 @@ impl Env {
         self.vars.look(symbol)
     }
 
+    pub fn begin_scope(&mut self) {
+        self.types.begin_scope();
+        self.vars.begin_scope();
+    }
+
+    pub fn end_scope(&mut self) {
+        self.types.end_scope();
+        self.vars.end_scope();
+    }
+
     pub fn add_type(&mut self, symbol: Symbol, data: Entry) {
         self.vars.enter(symbol, data)
     }

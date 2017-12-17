@@ -192,22 +192,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn get_type(&mut self) -> Result<Option<Type>, ParserError> {
+    fn get_type(&mut self) -> Result<Option<Symbol>, ParserError> {
         if self.recognise(TokenType::COLON) {
             self.advance();
 
             let possilbe_type = self.advance().unwrap();
 
-            let var_type = get_type(possilbe_type.token);
-
-            if var_type.is_none() {
-                return Err(ParserError::Expected(self.error(
+            match possilbe_type.token {
+                TokenType::IDENTIFIER(ref ty) => return  Ok(Some(self.symbols.symbol(ty))),
+                _ => return Err(ParserError::Expected(self.error(
                     "Expected a proper type",
                     possilbe_type.pos,
-                )));
+                )))
             }
-
-            return Ok(var_type);
         }
 
         Ok(None)
@@ -945,13 +942,17 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-            returns = get_type(self.token_type());
+            let possilbe_type = self.advance().unwrap();
 
-            if returns.is_none() {
-                let msg = format!("Expected a proper return type");
-                return Err(ParserError::Expected(msg));
+            match possilbe_type.token {
+                TokenType::IDENTIFIER(ref ty) => returns = Some(self.symbols.symbol(ty)),
+                _ => return Err(ParserError::Expected(self.error(
+                    "Expected a proper type",
+                    possilbe_type.pos,
+                )))
             }
         }
+        
 
         let func_pos = self.consume_get_pos(
             TokenType::LBRACE,

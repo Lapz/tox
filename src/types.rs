@@ -5,7 +5,8 @@ pub enum TypeError {
     Recursive,
     Expected(Type, Postition),
     Undefinded,
-    NotSame
+    NotSame,
+    Duplicate
 }
 
 pub struct Unique {
