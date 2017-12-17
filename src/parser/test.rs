@@ -6,7 +6,6 @@ mod test {
     use ast::statement::*;
     use pos::{Postition, WithPos};
     use symbol::{Symbol, SymbolFactory, Symbols};
-    use types::Type;
     use std::rc::Rc;
 
     #[test]

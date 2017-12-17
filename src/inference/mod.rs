@@ -359,12 +359,20 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref target,
             ref index,
         } => {
-            let target_ty = transform_expr(target, env)?;
-            println!("{:?}", target_ty);
+            println!("{:?}",target);
+            match target.node {
+                Expression::Var(ref symbol,_) => {
+                println!("{:#?}",env.types);
+                 let target_ty = transform_var(symbol, env)?;
+                 println!("{:?}",target_ty );
+                },
+
+                _ => return Err(TypeError::InvalidIndex)
+            };
 
             let index_ty = transform_expr(index, env)?;
 
-            check_types(&target_ty.ty, &index_ty.ty);
+            // check_types(&target_ty.ty, &index_ty.ty)?;
 
             unimplemented!()
         }

@@ -503,19 +503,19 @@ mod test {
 
     #[test]
     fn global() {
-        let input = "var a = 0;{fun f() {print a;}}";
+        let input = "var a = 0;{fun f() {print(a);}}";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn captured() {
-        let input = "{var a = 0;fun f() {print a;}}";
+        let input = "{var a = 0;fun f() {print(a);}}";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn lexical_capture() {
-        let input = "var a = 0;{fun f() {print a;} var a = 1;}";
+        let input = "var a = 0;{fun f() {print(a);} var a = 1;}";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 

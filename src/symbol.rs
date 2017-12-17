@@ -82,8 +82,8 @@ impl<T> Symbols<T> {
 impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = HashMap::new();
-        // map.insert(Symbol(0), "this".into());
-        // map.insert(Symbol(1), "init".into());
+        map.insert(Symbol(0), "this".into());
+        map.insert(Symbol(1), "init".into());
 
         SymbolFactory {
             next: RefCell::new(2),
