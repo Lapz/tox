@@ -25,7 +25,7 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "fun add(a,b) -> int {a+b;}";
+    let input = "fun add(a:int,b:int) -> int {a+b;}";
 
     println!("{}", input);
 
