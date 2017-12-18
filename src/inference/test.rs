@@ -90,7 +90,7 @@ mod test {
 
     #[test]
     fn func_expr() {
-        let input = "var add = fun(a,b) -> int {a+b;};";
+        let input = "var add = fun(a:int,b:int) -> int {a+b;};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
@@ -136,6 +136,43 @@ mod test {
                 ExpressionType {
                     exp: (),
                     ty: Type::Bool,
+                },
+            ]
+        );
+    }
+
+     #[test]
+    fn array_types() {
+        let input =
+            "var a = [10]; var b = [10.0]; var c = [nil]; var d = [\"h\"]; var e = [true]; var f = [false]; ";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Int)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Float)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Nil)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Str)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Bool)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Bool)),
                 },
             ]
         );
