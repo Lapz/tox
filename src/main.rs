@@ -25,13 +25,15 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "fun add(a,b) -> int {a+b;}";
+    let input = "fun add(a:int,b:int) -> int {a+b;}";
 
     println!("{}", input);
 
     let tokens = Lexer::new(input).lex();
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
+
+    println!("{:#?}", tokens);
 
     let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
 

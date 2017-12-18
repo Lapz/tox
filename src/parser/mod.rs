@@ -258,14 +258,15 @@ impl<'a> Parser<'a> {
     }
 
     fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
-        let (name,method_pos) = self.consume_name_symbol(&format!("Expected a {} name", kind))?;
-        // let name = self.consume_name(&format!("Expected a {} name", kind))?;
+        let func_pos = self.get_pos()?;
+
+        let name = self.consume_name(&format!("Expected a {} name", kind))?;
         Ok(WithPos::new(
             Statement::Function {
                 name,
                 body: self.fun_body(kind)?,
             },
-            method_pos,
+            func_pos,
         ))
     }
 

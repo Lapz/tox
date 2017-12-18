@@ -51,12 +51,13 @@ fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
 }
 
 fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
+    println!("{:?}", symbol);
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
             ty: get_actual_ty(ty)?,
         }),
-        None => Err(TypeError::Undefinded),
+        None => Err(TypeError::UndefindedVar),
     }
 }
 
@@ -66,9 +67,12 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
-        Statement::Class{ref name, ref methods} => {
+        Statement::Class {
+            ref name,
+            ref methods,
+        } => {
             for method in methods {
-                println!("{:?}",transform_statement(method, env)?)
+                println!("{:?}", transform_statement(method, env)?)
             }
 
             unimplemented!()
@@ -85,7 +89,7 @@ fn transform_statement(
                 return Ok(ExpressionType { exp: (), ty });
             }
 
-            env.add_var(*symbol, Entry::VarEntry(Type::Nil));
+            env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
 
             Ok(exp_ty)
         }
@@ -201,7 +205,6 @@ fn transform_statement(
 
             Ok(body_ty)
         }
-    
     }
 }
 
@@ -260,7 +263,6 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let left = transform_expr(left_expr, env)?;
             let right = transform_expr(right_expr, env)?;
-
             check_int_float(&left, &right, left_expr.pos)
         }
 
@@ -329,8 +331,6 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref returns,
             ref parameters,
         } => {
-            let body_ty = transform_statement(&body, env)?;
-
             let return_type = if let Some(ref return_ty) = *returns {
                 get_type(return_ty, env)?
             } else {
@@ -344,7 +344,6 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 if let &Some(ref p_ty) = ty {
                     params_ty.push(get_type(p_ty, env)?);
                 }
-                // params_ty.push(get_type(ty, env)?);
                 param_names.push(symbol);
             }
 
@@ -353,6 +352,8 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             for (name, ty) in param_names.iter().zip(params_ty) {
                 env.add_var(*name, Entry::VarEntry(ty));
             }
+
+            let body_ty = transform_statement(&body, env)?;
 
             check_types(&return_type, &body_ty.ty)?;
 
@@ -366,15 +367,15 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref target,
             ref index,
         } => {
-            println!("{:?}",target);
+            println!("{:?}", target);
             match target.node {
-                Expression::Var(ref symbol,_) => {
-                println!("{:#?}",env.types);
-                 let target_ty = transform_var(symbol, env)?;
-                 println!("{:?}",target_ty );
-                },
+                Expression::Var(ref symbol, _) => {
+                    println!("{:#?}", env.types);
+                    let target_ty = transform_var(symbol, env)?;
+                    println!("{:?}", target_ty);
+                }
 
-                _ => return Err(TypeError::InvalidIndex)
+                _ => return Err(TypeError::InvalidIndex),
             };
 
             let index_ty = transform_expr(index, env)?;

@@ -5,7 +5,7 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub enum Entry {
     VarEntry(Type),
-    ClassEntry{methods:Vec<(Vec<Type>,Type)>}, // Vec of (Vec<MethodParam types>,Return Type)
+    ClassEntry { methods: Vec<(Vec<Type>, Type)> }, // Vec of (Vec<MethodParam types>,Return Type)
     FunEntry { params: Vec<Type>, returns: Type },
 }
 

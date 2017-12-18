@@ -80,6 +80,31 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn wrong_body_type() {
+        let input = "fun add(a,b) {a+b;}";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    fn func_expr() {
+        let input = "var add = fun(a,b) -> int {a+b;};";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+            ]
+        );
+    }
+
+    #[test]
     fn assign_types() {
         let input =
             "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";

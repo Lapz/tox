@@ -43,7 +43,7 @@ mod test {
 
     #[test]
     fn function_types() {
-        let input = "fun add(a:int,b:int){ return a+b;}";
+        let input = "fun add(a:int,b:int) { return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);
