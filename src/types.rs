@@ -8,6 +8,7 @@ pub enum TypeError {
     NotSame,
     Function,
     InvalidIndex,
+    NotArray,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]

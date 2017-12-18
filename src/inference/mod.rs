@@ -121,7 +121,7 @@ fn transform_statement(
         } => {
             let condition_ty = transform_expr(condition, env)?;
 
-            check_bool(condition_ty, statement.pos)?;
+            check_bool(&condition_ty, statement.pos)?;
 
             let then_ty = transform_statement(then_branch, env)?;
 
@@ -149,7 +149,7 @@ fn transform_statement(
         } => {
             let condition_ty = transform_expr(condition, env)?;
 
-            check_bool(condition_ty, statement.pos)?;
+            check_bool(&condition_ty, statement.pos)?;
 
             let body_ty = transform_statement(body, env)?;
 
@@ -367,22 +367,35 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref target,
             ref index,
         } => {
-            println!("{:?}", target);
             match target.node {
                 Expression::Var(ref symbol, _) => {
-                    println!("{:#?}", env.types);
-                    let target_ty = transform_var(symbol, env)?;
-                    println!("{:?}", target_ty);
+                     let target_ty = transform_var(symbol, env)?;
+                     let index_ty = transform_expr(index, env)?;
+
+                     check_int(&index_ty, index.pos)?;
+
+                     match target_ty.ty {
+                         Type::Array(ref exp_ty) => {
+                             Ok(ExpressionType{
+                                 exp:(),
+                                 ty:*exp_ty.clone(),
+                             })
+                         }
+
+                         Type::Str => {
+                             Ok(ExpressionType{
+                                 exp:(),
+                                 ty:Type::Str
+                             })
+                         }
+                         _ => Err(TypeError::NotArray),
+                     }
+
                 }
 
-                _ => return Err(TypeError::InvalidIndex),
-            };
+                _ => Err(TypeError::InvalidIndex),
+            }
 
-            let index_ty = transform_expr(index, env)?;
-
-            // check_types(&target_ty.ty, &index_ty.ty)?;
-
-            unimplemented!()
         }
 
         Expression::Literal(ref literal) => match *literal {
@@ -408,15 +421,23 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             }),
         },
 
+        Expression::Unary {ref expr,..} => {
+            let expr_ty = transform_expr(expr, env)?;
+
+            check_bool(&expr_ty, expr.pos)?;
+
+            Ok(expr_ty)
+        }
+
         Expression::Logical {
             ref left,
             ref right,
             ..
         } => {
             let left_ty = transform_expr(left, env)?;
-            check_bool(left_ty, expr.pos)?;
+            check_bool(&left_ty, expr.pos)?;
             let right_ty = transform_expr(right, env)?;
-            check_bool(right_ty, expr.pos)?;
+            check_bool(&right_ty, expr.pos)?;
 
             Ok(ExpressionType {
                 exp: (),
@@ -430,7 +451,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref else_branch,
         } => {
             let condition_ty = transform_expr(condition, env)?;
-            check_bool(condition_ty, expr.pos)?;
+            check_bool(&condition_ty, expr.pos)?;
 
             let then_ty = transform_expr(then_branch, env)?;
             let else_ty = transform_expr(else_branch, env)?;
@@ -490,7 +511,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
 }
 
 /// Checks if ExpressionType is {bool}
-fn check_bool(right: ExpressionType, pos: Postition) -> Result<(), TypeError> {
+fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
         return Err(TypeError::Expected(Type::Bool, pos));
     }

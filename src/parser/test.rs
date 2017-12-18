@@ -43,7 +43,17 @@ mod test {
 
     #[test]
     fn function_types() {
-        let input = "fun add(a:int,b:int) { return a+b;}";
+        let input = "fun add(a:int,b:int) {return a+b;}";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn function_expr() {
+        let input = "var add = fun (a:int,b:int) -> int {a+b;};";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);
@@ -54,6 +64,20 @@ mod test {
     #[test]
     fn function_return() {
         let input = "fun add(a:int,b:int) -> int { return a+b;}";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn class_methods() {
+        let input = "class Foo {
+            fun bar(a:int,b:int) -> int {
+                a+b;
+            }
+        }";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);

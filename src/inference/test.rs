@@ -82,7 +82,113 @@ mod test {
     #[test]
     #[should_panic]
     fn wrong_body_type() {
-        let input = "fun add(a,b) {a+b;}";
+        let input = "fun add(a:int,b:int) {a+b;}";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn unary() {
+        let input = "!true;!false!";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Bool,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Bool,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn wrong_unary_str() {
+        let input = "!\"h\";";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    fn array_index() {
+        let input = "var a = [10]; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(Type::Int)),
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn str_index() {
+        let input = "var a = \"h\"; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Str,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Str,
+                }
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_index_expr_int() {
+        let input = "var a = 10; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_index_expr_float() {
+        let input = "var a = 10.0; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_index_expr_true() {
+        let input = "var a = true; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_index_expr_false() {
+        let input = "var a = false; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         analyse(&get_ast(input, strings), &mut env).unwrap();
