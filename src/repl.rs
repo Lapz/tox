@@ -7,9 +7,13 @@ use std::io;
 use symbol::{SymbolFactory, Symbols};
 use env::Env;
 use std::rc::Rc;
+use std::io::Write;
 
-fn repl(ptokens: bool, pprint: bool) {
+pub fn repl(ptokens: bool, pprint: bool) {
+    println!("Welcome to the lexer programming language");
     loop {
+        let _ = io::stdout().write(b"lexer>> ");
+        let _ = io::stdout().flush();
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
@@ -39,7 +43,7 @@ fn repl(ptokens: bool, pprint: bool) {
             Ok(statements) => {
                 if pprint {
                     for statement in &statements {
-                        println!("{}", statement.pprint());
+                        println!("{}", statement.node.pprint(&mut symbols));
                     }
                 }
                 statements

@@ -128,10 +128,6 @@ impl<'a> Parser<'a> {
         self.tokens.next()
     }
 
-    fn token_type(&mut self) -> TokenType<'a> {
-        self.advance().map(|t| t.token).unwrap()
-    }
-
     fn consume(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<(), ParserError> {
         match self.advance() {
             Some(Token { ref token, ref pos }) => {
@@ -930,10 +926,26 @@ impl<'a> Parser<'a> {
                     println!("Cannot have more than 32 arguments")
                 };
 
-                let identifier = self.consume_name("Expected a parameter name")?;
-                let id_type = self.get_type()?;
+                let identifier = self.consume_name(&format!("Expected a {} name", kind))?;
 
-                parameters.push((identifier, id_type));
+                self.consume(TokenType::COLON, "Expected a colon")?;
+
+                let id_type = self.advance().unwrap();
+
+                let mut _ty = Symbol(0);
+
+                match id_type.token {
+                    TokenType::IDENTIFIER(ref ty) => _ty = self.symbols.symbol(ty),
+                    TokenType::NIL => _ty = self.symbols.symbol("nil"),
+                    _ => {
+                        return Err(ParserError::Expected(self.error(
+                            "Expected a proper type",
+                            id_type.pos,
+                        )))
+                    }
+                }
+
+                parameters.push((identifier, _ty));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)

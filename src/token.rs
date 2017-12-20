@@ -12,7 +12,7 @@ pub struct Token<'a> {
 
 impl<'a> Display for Token<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{} found on {}", self.token, self.pos)
+        write!(f, "\'{}\' found on {}", self.token, self.pos)
     }
 }
 

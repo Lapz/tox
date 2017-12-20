@@ -183,10 +183,8 @@ fn transform_statement(
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
 
-                    for &(param, ref ty) in parameters {
-                        if let &Some(ref p_ty) = ty {
-                            param_ty.push(get_type(p_ty, env)?);
-                        }
+                    for &(param, p_ty) in parameters {
+                        param_ty.push(get_type(&p_ty, env)?);
                         param_names.push(param);
                     }
 
@@ -340,10 +338,8 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let mut params_ty = vec![];
             let mut param_names = vec![];
 
-            for &(symbol, ref ty) in parameters {
-                if let &Some(ref p_ty) = ty {
-                    params_ty.push(get_type(p_ty, env)?);
-                }
+            for &(symbol, p_ty) in parameters {
+                params_ty.push(get_type(&p_ty, env)?);
                 param_names.push(symbol);
             }
 
