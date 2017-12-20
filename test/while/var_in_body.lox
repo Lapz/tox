@@ -1,0 +1,3 @@
+// error: Error at 'var': Expect expression on line 12 column 8
+while (true) 
+    var foo;

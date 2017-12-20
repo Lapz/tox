@@ -122,6 +122,8 @@ impl Statement {
             } => {
                 pprint_string.push_str("(if ");
 
+                condition.node.pprint_into(pprint_string,symbols);
+
                 then_branch.node.pprint_into(pprint_string, symbols);
 
                 if let &Some(ref else_) = else_branch {
@@ -183,8 +185,7 @@ impl Statement {
                 }
 
                 pprint_string.push_str(" )");
-            }
-            _ => unimplemented!(),
+            },
         }
     }
 }
@@ -358,6 +359,32 @@ impl Expression {
                 pprint_string.push_str(" ");
                 pprint_string.push_str(&symbols.name(*v));
             }
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod test  {
+    use ast::statement::Statement;
+    use lexer::Lexer;
+    use symbol::{SymbolFactory, Symbols};
+    use parser::Parser;
+    use resolver::Resolver;
+    use pos::WithPos;
+
+    
+    #[test]
+    fn it_works() {
+        let input = "var a =0;";
+        use std::rc::Rc;
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+        
+        for statement in ast {
+            statement.node.pprint(&mut symbols);
         }
     }
 }

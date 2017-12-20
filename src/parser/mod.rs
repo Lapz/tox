@@ -563,7 +563,14 @@ impl<'a> Parser<'a> {
                         },
                         next.pos,
                     ))
-                }
+                },
+
+                Expression::Get(ref get) => return Ok(Expression::Set{
+                        object: get.object.clone(),
+                        name: get.name.clone(),
+                        value,
+                        handle: self.variable_use_maker.next(),
+                }),
                 _ => {
                     return Err(ParserError::IllegalExpression(
                         "Error at '=': Invalid assignment target.".to_owned(),

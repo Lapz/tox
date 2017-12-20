@@ -1,0 +1,48 @@
+class Box {}
+
+class Foo {
+  init() {
+    print(this);
+  }
+}
+
+var foo = Foo();
+print (foo.init());
+fun notMethod(argument) {
+  print ("called function with " + argument);
+}
+
+var box = Box();
+box.function = notMethod;
+box.function("argument");
+
+class Cake {
+  taste() {
+    var adjective = "delicious";
+    print ("The " + this.flavor + " cake is " + adjective + "!");
+  }
+
+  hello() {
+    print("hello");
+  }
+}
+
+var cake = Cake();
+cake.hello();
+
+cake.flavor = "German chocolate";
+cake.taste(); // Prints "The German chocolate cake is delicious!".
+
+
+class Thing {
+  getCallback() {
+    fun localFunction() {
+      print (this);
+    }
+
+    return localFunction;
+  }
+}
+
+var callback = Thing().getCallback();
+callback();
