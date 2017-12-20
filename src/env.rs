@@ -53,8 +53,8 @@ impl Env {
         self.vars.end_scope();
     }
 
-    pub fn add_type(&mut self, symbol: Symbol, data: Entry) {
-        self.vars.enter(symbol, data)
+    pub fn add_type(&mut self, symbol: Symbol, data: Type) {
+        self.types.enter(symbol, data)
     }
 
     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {

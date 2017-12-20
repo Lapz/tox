@@ -57,6 +57,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::FRETURN => write!(f, "->"),
             // Keywords,
             TokenType::FUNCTION => write!(f, "fun"),
+            TokenType::TYPE => write!(f, "type"),
             TokenType::BREAK => write!(f, "break"),
             TokenType::CONTINUE => write!(f, "continue"),
             TokenType::VAR => write!(f, "var"),
@@ -142,6 +143,7 @@ pub enum TokenType<'a> {
     AND,
     OR,
     NIL,
+    TYPE,
 
     // Other
     EOF,

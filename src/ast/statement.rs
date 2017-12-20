@@ -33,5 +33,9 @@ pub enum Statement {
 
     Break,
     Continue,
+    TypeAlias {
+        alias:Symbol,
+        ty:Symbol,
+    },
     Return(Option<WithPos<Expression>>),
 }

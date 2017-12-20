@@ -99,6 +99,16 @@ fn transform_statement(
             ty: Type::Nil,
         }),
 
+        Statement::TypeAlias{ref alias, ref ty} => {
+            let alias_ty = get_type(ty, env)?;
+            env.add_type(*alias, Type::Name(alias.clone(),Box::new(alias_ty.clone())));
+
+            Ok(ExpressionType{
+                exp:(),
+                ty:alias_ty
+            })
+        }
+
         Statement::Block(ref expressions) => {
             if expressions.is_empty() {
                 return Ok(ExpressionType {

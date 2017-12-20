@@ -1,5 +1,6 @@
 // use std::collections::{HashMap, HashSet};
 use pos::Postition;
+use symbol::Symbol;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Expected(Type, Postition),
@@ -20,4 +21,5 @@ pub enum Type {
     Float,
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
+    Name(Symbol,Box<Type>),
 }

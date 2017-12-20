@@ -201,6 +201,14 @@ impl Resolver {
                 Ok(())
             }
 
+            Statement::TypeAlias{ref alias,ref ty} => {
+                self.declare(alias.clone(), statement.pos)?;
+                self.declare(ty.clone(), statement.pos)?;
+                self.define(*alias);
+                self.define(*ty);
+                Ok(())
+            }
+
             Statement::ExpressionStmt(ref expr) => {
                 self.resolve_expr(&expr.node, statement.pos)?;
                 Ok(())

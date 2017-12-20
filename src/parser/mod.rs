@@ -218,7 +218,9 @@ impl<'a> Parser<'a> {
             self.function("function")
         } else if self.recognise(TokenType::CLASS) {
             self.class_declaration()
-        } else {
+        } else if self.recognise(TokenType::TYPE) {
+            self.type_declaration()
+        }else {
             self.statement()
         }
     }
@@ -293,6 +295,22 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::SEMICOLON, "Expected ';' after 'continue'")?;
 
         Ok(WithPos::new(Statement::Continue, cont_pos))
+    }
+
+    fn type_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
+        let type_pos = self.get_pos()?;
+
+        let alias = self.consume_name("Expected a type alias name")?;
+
+        self.consume(TokenType::ASSIGN, "Expecte a \'=\'")?;
+
+        let ty = self.consume_name_symbol("Expected a type")?;
+
+       self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
+        
+        Ok(WithPos::new(Statement::TypeAlias {
+            alias,ty:ty.0
+        }, type_pos))
     }
 
     // Control Flow Statements
@@ -565,12 +583,12 @@ impl<'a> Parser<'a> {
                     ))
                 },
 
-                Expression::Get(ref get) => return Ok(Expression::Set{
-                        object: get.object.clone(),
-                        name: get.name.clone(),
-                        value,
+                Expression::Get{object, name,..} => return Ok(WithPos::new(Expression::Set{
+                        object:object,
+                        name:name,
+                        value:Box::new(value),
                         handle: self.variable_use_maker.next(),
-                }),
+                },next.pos)),
                 _ => {
                     return Err(ParserError::IllegalExpression(
                         "Error at '=': Invalid assignment target.".to_owned(),

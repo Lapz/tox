@@ -79,6 +79,14 @@ impl Statement {
             Statement::ExpressionStmt(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
             }
+            Statement::TypeAlias{ref alias,ref ty} => {
+                pprint_string.push_str("(type ");
+                pprint_string.push_str(&symbols.name(*alias));
+                pprint_string.push_str("=");
+                pprint_string.push_str(&symbols.name(*ty));
+
+                pprint_string.push_str(" )");
+            }
             Statement::Var(ref name, ref expr, ref ty) => {
                 pprint_string.push_str("(var ");
                 pprint_string.push_str(&symbols.name(*name));
@@ -366,12 +374,9 @@ impl Expression {
 
 #[cfg(test)]
 mod test  {
-    use ast::statement::Statement;
     use lexer::Lexer;
     use symbol::{SymbolFactory, Symbols};
     use parser::Parser;
-    use resolver::Resolver;
-    use pos::WithPos;
 
     
     #[test]
