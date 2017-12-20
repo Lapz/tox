@@ -28,7 +28,7 @@ pub enum Expression {
         items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
-        parameters: Vec<(Symbol, Option<Symbol>)>,
+        parameters: Vec<(Symbol, Symbol)>,
         body: Box<WithPos<Statement>>,
         returns: Option<Symbol>,
     },
@@ -189,7 +189,6 @@ pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {
 pub enum UnaryOperator {
     Bang,
     Minus,
-    Plus,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]

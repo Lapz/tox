@@ -366,37 +366,29 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         Expression::IndexExpr {
             ref target,
             ref index,
-        } => {
-            match target.node {
-                Expression::Var(ref symbol, _) => {
-                     let target_ty = transform_var(symbol, env)?;
-                     let index_ty = transform_expr(index, env)?;
+        } => match target.node {
+            Expression::Var(ref symbol, _) => {
+                let target_ty = transform_var(symbol, env)?;
+                let index_ty = transform_expr(index, env)?;
 
-                     check_int(&index_ty, index.pos)?;
+                check_int(&index_ty, index.pos)?;
 
-                     match target_ty.ty {
-                         Type::Array(ref exp_ty) => {
-                             Ok(ExpressionType{
-                                 exp:(),
-                                 ty:*exp_ty.clone(),
-                             })
-                         }
+                match target_ty.ty {
+                    Type::Array(ref exp_ty) => Ok(ExpressionType {
+                        exp: (),
+                        ty: *exp_ty.clone(),
+                    }),
 
-                         Type::Str => {
-                             Ok(ExpressionType{
-                                 exp:(),
-                                 ty:Type::Str
-                             })
-                         }
-                         _ => Err(TypeError::NotArray),
-                     }
-
+                    Type::Str => Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Str,
+                    }),
+                    _ => Err(TypeError::NotArray),
                 }
-
-                _ => Err(TypeError::InvalidIndex),
             }
 
-        }
+            _ => Err(TypeError::InvalidIndex),
+        },
 
         Expression::Literal(ref literal) => match *literal {
             Literal::Float(_) => Ok(ExpressionType {
@@ -421,7 +413,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             }),
         },
 
-        Expression::Unary {ref expr,..} => {
+        Expression::Unary { ref expr, .. } => {
             let expr_ty = transform_expr(expr, env)?;
 
             check_bool(&expr_ty, expr.pos)?;

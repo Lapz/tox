@@ -6,6 +6,7 @@ mod lexer;
 mod pos;
 mod ast;
 mod parser;
+mod repl;
 // mod object;
 //  mod interpreter;
 mod inference;
@@ -13,6 +14,7 @@ mod types;
 mod resolver;
 mod symbol;
 mod env;
+mod pprint;
 
 use lexer::Lexer;
 use parser::Parser;
@@ -25,7 +27,7 @@ use inference::analyse;
 use std::rc::Rc;
 
 fn main() {
-    let input = "var a = [10]; a[0];";;
+    let input = "var a = [10]; a[0];";
 
     println!("{}", input);
 

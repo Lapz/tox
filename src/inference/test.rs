@@ -133,7 +133,7 @@ mod test {
                 ExpressionType {
                     exp: (),
                     ty: Type::Int,
-                }
+                },
             ]
         );
     }
@@ -153,7 +153,7 @@ mod test {
                 ExpressionType {
                     exp: (),
                     ty: Type::Str,
-                }
+                },
             ]
         );
     }
@@ -247,7 +247,7 @@ mod test {
         );
     }
 
-     #[test]
+    #[test]
     fn array_types() {
         let input =
             "var a = [10]; var b = [10.0]; var c = [nil]; var d = [\"h\"]; var e = [true]; var f = [false]; ";
