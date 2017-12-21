@@ -91,6 +91,32 @@ mod test {
 
     #[test]
     #[should_panic]
+    fn wrong_set_instance_type() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var lenard = Person{name:\"Lenard\"};lenard.name = 10";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+
+    fn set_instance_type() {
+        let input = "class Person {name:str;}
+        var lenard = Person{name:\"Lenard\"};lenard.name = \"h\";";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap()[2],
+            ExpressionType {
+                exp: (),
+                ty: Type::Str,
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic]
     fn too_many_instance() {
         let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
         var lenard = Person{name:\"Lenard\",name:\"Lenard\",name:\"Lenard\",name:\"Lenard\"};";

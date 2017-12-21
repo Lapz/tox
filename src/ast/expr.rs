@@ -40,7 +40,7 @@ pub enum Expression {
     },
     Get {
         object: Box<WithPos<Expression>>,
-        name: Symbol,
+        property: Symbol,
         handle: VariableUseHandle,
     },
     Grouping {

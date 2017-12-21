@@ -312,11 +312,11 @@ impl Expression {
 
             Expression::Get {
                 ref object,
-                ref name,
+                ref property,
                 ..
             } => {
                 pprint_string.push_str("( get (");
-                pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(&symbols.name(*property));
                 object.node.pprint_into(pprint_string, symbols);
                 pprint_string.push_str("))");
             }

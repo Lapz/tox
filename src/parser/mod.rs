@@ -620,16 +620,19 @@ impl<'a> Parser<'a> {
                     ))
                 }
 
-                Expression::Get { object, name, .. } => {
+                Expression::Get {
+                    object, property, ..
+                } => {
+                    // println!("{:?}",self.symbols.name(name) );
                     return Ok(WithPos::new(
                         Expression::Set {
-                            object: object,
-                            name: name,
+                            object,
+                            name: property,
                             value: Box::new(value),
                             handle: self.variable_use_maker.next(),
                         },
                         next.pos,
-                    ))
+                    ));
                 }
                 _ => {
                     return Err(ParserError::IllegalExpression(
@@ -859,11 +862,13 @@ impl<'a> Parser<'a> {
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::DOT) {
                 self.advance();
-                let (name, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
+
+                println!("{:?}", self.tokens.peek());
+                let (property, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
                 expr = WithPos::new(
                     Expression::Get {
                         object: Box::new(expr),
-                        name,
+                        property,
                         handle: self.variable_use_maker.next(),
                     },
                     pos,
