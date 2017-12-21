@@ -386,6 +386,7 @@ mod test {
             Statement::Class {
                 name,
                 methods: vec![],
+                properties:vec![],
             },
             Postition {
                 line: 1,
