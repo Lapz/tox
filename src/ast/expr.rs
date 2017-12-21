@@ -8,6 +8,7 @@ pub enum Expression {
     Array {
         items: Vec<WithPos<Expression>>,
     },
+
     Assign {
         handle: VariableUseHandle,
         name: Symbol,
@@ -23,6 +24,11 @@ pub enum Expression {
     Call {
         callee: Box<WithPos<Expression>>,
         arguments: Vec<WithPos<Expression>>,
+    },
+
+    ClassInstance {
+        name: Symbol,
+        properties: Vec<(Symbol, WithPos<Expression>)>,
     },
     Dict {
         items: Vec<(WithPos<Expression>, WithPos<Expression>)>,

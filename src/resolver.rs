@@ -383,6 +383,17 @@ impl Resolver {
 
                 Ok(())
             }
+            Expression::ClassInstance { ref properties, .. } => {
+                self.begin_scope();
+                for &(ref property_name, ref property_value) in properties {
+                    self.declare(*property_name, pos)?;
+                    self.define(*property_name);
+                    self.resolve_expr(&property_value.node, pos)?;
+                }
+
+                self.end_scope();
+                Ok(())
+            }
 
             Expression::Dict { ref items } => {
                 for &(ref key, ref value) in items {

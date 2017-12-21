@@ -62,7 +62,6 @@ fn actual_type(ty: &Type) -> &Type {
 }
 
 fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
-    println!("{:?}, {:?} ", env.look_var(*symbol), env.name(symbol));
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
@@ -129,18 +128,15 @@ fn transform_statement(
                 }
             }
 
-            env.add_var(
-                *name,
-                Entry::ClassEntry {
-                    methods: class_methods,
-                    properties: properties_ty,
-                },
-            );
+            let ty = Type::Class {
+                name: *name,
+                methods: class_methods,
+                property: properties_ty,
+            };
 
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Class(*name),
-            })
+            env.add_var(*name, Entry::VarEntry(ty.clone()));
+
+            Ok(ExpressionType { exp: (), ty })
         }
         Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env)?;
@@ -468,6 +464,43 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
             _ => Err(TypeError::InvalidIndex),
         },
+
+        Expression::ClassInstance {
+            ref properties,
+            ref name,
+        } => {
+            let class = transform_var(name, env)?;
+
+            match class.ty {
+                Type::Class { ref property, .. } => {
+                    let mut found = true;
+                    for &(ref key, ref value) in property {
+                        for &(ref instance_name, ref instance_val) in properties {
+                            if instance_name == key {
+                                found = true;
+
+                                let instance_val_ty = transform_expr(instance_val, env)?;
+
+                                check_types(value, &instance_val_ty.ty)?;
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotProperty);
+                        }
+                    }
+
+                    if property.len() < properties.len() {
+                        return Err(TypeError::TooManyProperty);
+                    } else if property.len() > properties.len() {
+                        return Err(TypeError::TooLittleProperty);
+                    }
+                }
+                _ => unimplemented!(), //TODO CHANGE INTO HARD ERROR
+            };
+
+            Ok(class)
+        }
 
         Expression::Literal(ref literal) => match *literal {
             Literal::Float(_) => Ok(ExpressionType {
