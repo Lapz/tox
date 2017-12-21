@@ -12,7 +12,7 @@ pub struct Token<'a> {
 
 impl<'a> Display for Token<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{} found on {}", self.token, self.pos)
+        write!(f, "\'{}\' found on {}", self.token, self.pos)
     }
 }
 
@@ -23,10 +23,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::IDENTIFIER(ref s) => write!(f, "id {}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
             TokenType::FLOAT(ref float) => write!(f, "{}", float),
-            TokenType::TINT => write!(f, "int"),
-            TokenType::TFLOAT => write!(f, "float"),
-            TokenType::TBOOL => write!(f, "bool"),
-            TokenType::TSTR => write!(f, "str"),
             TokenType::ASSIGN => write!(f, "="),
             TokenType::STARASSIGN => write!(f, "*="),
             TokenType::PLUSASSIGN => write!(f, "+="),
@@ -61,6 +57,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::FRETURN => write!(f, "->"),
             // Keywords,
             TokenType::FUNCTION => write!(f, "fun"),
+            TokenType::TYPE => write!(f, "type"),
             TokenType::BREAK => write!(f, "break"),
             TokenType::CONTINUE => write!(f, "continue"),
             TokenType::VAR => write!(f, "var"),
@@ -89,10 +86,6 @@ pub enum TokenType<'a> {
     INT(i64),
     FLOAT(f64),
     STRING(String),
-    TINT,   // int
-    TFLOAT, // float
-    TBOOL,  // bool
-    TSTR,   // str
 
     // Assignment
     ASSIGN,      // =
@@ -150,6 +143,7 @@ pub enum TokenType<'a> {
     AND,
     OR,
     NIL,
+    TYPE,
 
     // Other
     EOF,

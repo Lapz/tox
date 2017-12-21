@@ -1,11 +1,17 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
+
+extern crate structopt;
+#[macro_use]
+extern crate structopt_derive;
+
 mod token;
 mod lexer;
 mod pos;
 mod ast;
 mod parser;
+mod cli;
 // mod object;
 //  mod interpreter;
 mod inference;
@@ -13,34 +19,19 @@ mod types;
 mod resolver;
 mod symbol;
 mod env;
+mod pprint;
 
-use lexer::Lexer;
-use parser::Parser;
-use resolver::Resolver;
-use symbol::Symbols;
+use cli::{repl, run, Cli};
+use structopt::StructOpt;
 
 // use interpreter::Interpreter;
-use inference::analyse;
 
 fn main() {
-    let input = "123+456;";
+    let opts = Cli::from_args();
 
-    println!("{}", input);
-
-    let tokens = Lexer::new(input).lex();
-
-    println!("{:#?}", tokens);
-    let mut symbols = Symbols::new();
-
-    let ast = Parser::new(tokens.unwrap(), &mut symbols).parse().unwrap();
-
-    println!("{:#?}", ast);
-
-    Resolver::new().resolve(&ast).unwrap();
-
-    println!("{:#?}",analyse(&ast[0]));
-
-    // let result = Interpreter::new().interpret(&ast).unwrap();
-
-    // println!("{:#?}", result);
+    if let Some(file) = opts.source {
+        run(file, opts.ptokens, opts.pprint, opts.env);
+    } else {
+        repl(opts.ptokens, opts.pprint)
+    }
 }

@@ -7,12 +7,11 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
-use types::Type;
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    pub symbols: &'a mut Symbols<'a, ()>,
+    pub symbols: &'a mut Symbols<()>,
     variable_use_maker: VariableUseMaker,
 }
 
@@ -39,7 +38,7 @@ impl Display for ParserError {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<'a, ()>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<()>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,
@@ -129,10 +128,6 @@ impl<'a> Parser<'a> {
         self.tokens.next()
     }
 
-    fn token_type(&mut self) -> TokenType<'a> {
-        self.advance().map(|t| t.token).unwrap()
-    }
-
     fn consume(&mut self, token_to_check: TokenType<'a>, msg: &str) -> Result<(), ParserError> {
         match self.advance() {
             Some(Token { ref token, ref pos }) => {
@@ -185,29 +180,29 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn get_pos(&mut self) -> Postition {
+    fn get_pos(&mut self) -> Result<Postition, ParserError> {
         match self.advance() {
-            Some(Token { ref pos, .. }) => return *pos,
-            _ => unreachable!(),
+            Some(Token { ref pos, .. }) => Ok(*pos),
+            None => Err(ParserError::EOF),
         }
     }
 
-    fn get_type(&mut self) -> Result<Option<Type>, ParserError> {
+    fn get_type(&mut self) -> Result<Option<Symbol>, ParserError> {
         if self.recognise(TokenType::COLON) {
             self.advance();
 
             let possilbe_type = self.advance().unwrap();
 
-            let var_type = get_type(possilbe_type.token);
-
-            if var_type.is_none() {
-                return Err(ParserError::Expected(self.error(
-                    "Expected a proper type",
-                    possilbe_type.pos,
-                )));
+            match possilbe_type.token {
+                TokenType::IDENTIFIER(ref ty) => return Ok(Some(self.symbols.symbol(ty))),
+                TokenType::NIL => return Ok(Some(self.symbols.symbol("nil"))),
+                _ => {
+                    return Err(ParserError::Expected(self.error(
+                        "Expected a proper type",
+                        possilbe_type.pos,
+                    )))
+                }
             }
-
-            return Ok(var_type);
         }
 
         Ok(None)
@@ -223,6 +218,8 @@ impl<'a> Parser<'a> {
             self.function("function")
         } else if self.recognise(TokenType::CLASS) {
             self.class_declaration()
+        } else if self.recognise(TokenType::TYPE) {
+            self.type_declaration()
         } else {
             self.statement()
         }
@@ -259,7 +256,8 @@ impl<'a> Parser<'a> {
     }
 
     fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
-        let func_pos = self.get_pos();
+        let func_pos = self.get_pos()?;
+
         let name = self.consume_name(&format!("Expected a {} name", kind))?;
         Ok(WithPos::new(
             Statement::Function {
@@ -273,7 +271,7 @@ impl<'a> Parser<'a> {
     // Keyword statements
 
     fn break_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let break_pos = self.get_pos();
+        let break_pos = self.get_pos()?;
 
         if !(self.loop_depth >= 0) {
             let error = "Must be inside a loop to use break".to_owned();
@@ -286,7 +284,7 @@ impl<'a> Parser<'a> {
     }
 
     fn continue_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let cont_pos = self.get_pos();
+        let cont_pos = self.get_pos()?;
 
         if !(self.loop_depth >= 0) {
             let error = "Must be inside a loop to use 'continue'".to_owned();
@@ -299,10 +297,27 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(Statement::Continue, cont_pos))
     }
 
+    fn type_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
+        let type_pos = self.get_pos()?;
+
+        let alias = self.consume_name("Expected a type alias name")?;
+
+        self.consume(TokenType::ASSIGN, "Expecte a \'=\'")?;
+
+        let ty = self.consume_name_symbol("Expected a type")?;
+
+        self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
+
+        Ok(WithPos::new(
+            Statement::TypeAlias { alias, ty: ty.0 },
+            type_pos,
+        ))
+    }
+
     // Control Flow Statements
 
     fn for_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let for_pos = self.get_pos();
+        let for_pos = self.get_pos()?;
         self.consume(TokenType::LPAREN, "Expected '(' after 'for'")?;
 
         let mut initi = None;
@@ -375,7 +390,7 @@ impl<'a> Parser<'a> {
     }
 
     fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let do_pos = self.get_pos();
+        let do_pos = self.get_pos()?;
 
         let body = self.statement()?;
 
@@ -396,7 +411,7 @@ impl<'a> Parser<'a> {
     }
 
     fn while_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let while_pos = self.get_pos(); // Eats the while;
+        let while_pos = self.get_pos()?; // Eats the while;
 
         self.consume(TokenType::LPAREN, "Expected '(' after while'")?;
 
@@ -419,7 +434,7 @@ impl<'a> Parser<'a> {
     }
 
     fn if_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let if_pos = self.get_pos(); // Eats the if ;
+        let if_pos = self.get_pos()?; // Eats the if ;
 
         self.consume(TokenType::LPAREN, "Expected a \'(\' after \'if\'")?;
 
@@ -454,7 +469,7 @@ impl<'a> Parser<'a> {
     }
 
     fn return_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos();
+        let pos = self.get_pos()?;
 
         let mut value = None;
 
@@ -468,7 +483,7 @@ impl<'a> Parser<'a> {
     }
 
     fn block(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos();
+        let pos = self.get_pos()?;
 
         let mut statement = vec![];
 
@@ -482,24 +497,56 @@ impl<'a> Parser<'a> {
     }
 
     fn class_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let class_pos = self.get_pos();
+        let class_pos = self.get_pos()?;
+
         let name = self.consume_name("Expected a class name")?;
 
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
+        let mut properties = vec![];
 
         while !self.recognise(TokenType::RBRACE) {
+            if !self.recognise(TokenType::FUNCTION) {
+                while {
+                    let name = self.consume_name("Expected an Property name ")?;
+
+                    self.consume(
+                        TokenType::COLON,
+                        "Expected a colon after a class property name",
+                    )?;
+
+                    let ty = self.consume_name("Expected a Property type")?;
+
+                    properties.push((name, ty));
+
+                    self.recognise(TokenType::COMMA)
+                        && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+                } {}
+
+                self.consume(
+                    TokenType::SEMICOLON,
+                    "Expected a semicolon after declaring properties",
+                )?;
+            }
+
             methods.push(self.function("method")?);
         }
 
         self.consume(TokenType::RBRACE, "Expect \'}\'' after class body")?;
 
-        Ok(WithPos::new(Statement::Class { methods, name }, class_pos))
+        Ok(WithPos::new(
+            Statement::Class {
+                methods,
+                name,
+                properties,
+            },
+            class_pos,
+        ))
     }
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let var_pos = self.get_pos();
+        let var_pos = self.get_pos()?;
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
 
         if self.recognise(TokenType::SEMICOLON) {
@@ -564,6 +611,18 @@ impl<'a> Parser<'a> {
                             name,
                             value: Box::new(value),
                             kind,
+                        },
+                        next.pos,
+                    ))
+                }
+
+                Expression::Get { object, name, .. } => {
+                    return Ok(WithPos::new(
+                        Expression::Set {
+                            object: object,
+                            name: name,
+                            value: Box::new(value),
+                            handle: self.variable_use_maker.next(),
                         },
                         next.pos,
                     ))
@@ -753,7 +812,7 @@ impl<'a> Parser<'a> {
     }
 
     fn unary(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        if self.matched(vec![TokenType::BANG, TokenType::MINUS, TokenType::PLUS]) {
+        if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
             let next = self.advance().unwrap();
 
             let operator = get_unary_operator(next.token);
@@ -919,7 +978,7 @@ impl<'a> Parser<'a> {
 // Helper parsing functions
 impl<'a> Parser<'a> {
     fn fun_body(&mut self, kind: &str) -> Result<WithPos<Expression>, ParserError> {
-        self.consume(TokenType::LPAREN, "Expected '(' ")?;
+        let func_pos = self.consume_get_pos(TokenType::LPAREN, "Expected '(' ")?;
 
         let mut parameters = vec![];
         let mut returns = None;
@@ -930,10 +989,26 @@ impl<'a> Parser<'a> {
                     println!("Cannot have more than 32 arguments")
                 };
 
-                let identifier = self.consume_name("Expected a parameter name")?;
-                let id_type = self.get_type()?;
+                let identifier = self.consume_name(&format!("Expected a {} name", kind))?;
 
-                parameters.push((identifier, id_type));
+                self.consume(TokenType::COLON, "Expected a colon")?;
+
+                let id_type = self.advance().unwrap();
+
+                let mut _ty = Symbol(0);
+
+                match id_type.token {
+                    TokenType::IDENTIFIER(ref ty) => _ty = self.symbols.symbol(ty),
+                    TokenType::NIL => _ty = self.symbols.symbol("nil"),
+                    _ => {
+                        return Err(ParserError::Expected(self.error(
+                            "Expected a proper type",
+                            id_type.pos,
+                        )))
+                    }
+                }
+
+                parameters.push((identifier, _ty));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
@@ -945,18 +1020,19 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-            returns = get_type(self.token_type());
+            let possilbe_type = self.advance().unwrap();
 
-            if returns.is_none() {
-                let msg = format!("Expected a proper return type");
-                return Err(ParserError::Expected(msg));
+            match possilbe_type.token {
+                TokenType::IDENTIFIER(ref ty) => returns = Some(self.symbols.symbol(ty)),
+                TokenType::NIL => returns = Some(self.symbols.symbol("nil")),
+                _ => {
+                    return Err(ParserError::Expected(self.error(
+                        "Expected a proper type",
+                        possilbe_type.pos,
+                    )))
+                }
             }
         }
-
-        let func_pos = self.consume_get_pos(
-            TokenType::LBRACE,
-            &format!("Expected '{{' before {} body.", kind),
-        )?;
 
         let body = Box::new(self.block()?);
 

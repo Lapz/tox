@@ -1,37 +1,26 @@
 // use std::collections::{HashMap, HashSet};
 use pos::Postition;
+use symbol::Symbol;
 #[derive(Debug, Clone)]
 pub enum TypeError {
-    Recursive,
-    Expected(Type,Postition),
-}
-
-pub struct Unique {
-    id: i64,
-}
-
-// pub struct TypeEnv<'a>(HashMap<Variable<'a>, Type>);
-
-pub struct TypeVar(i64);
-
-impl Unique {
-    fn new() -> Self {
-        Unique { id: 0 }
-    }
-
-    fn next(&mut self) -> TypeVar {
-        let v = self.id;
-
-        self.id += 1;
-        TypeVar(v)
-    }
+    Expected(Type, Postition),
+    Undefinded,
+    UndefindedVar,
+    NotSame(String),
+    Function,
+    InvalidIndex,
+    NotArray,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Type {
+    Class(Symbol),
     Int,
     Str,
     Bool,
     Nil,
     Float,
+    Dict(Box<Type>, Box<Type>), // Key, Value
+    Array(Box<Type>),
+    Name(Symbol, Box<Type>),
 }

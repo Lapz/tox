@@ -1,16 +1,16 @@
 use ast::expr::Expression;
-use types::Type;
 use pos::WithPos;
 use symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
     ExpressionStmt(WithPos<Expression>),
-    Var(Symbol, WithPos<Expression>, Option<Type>),
+    Var(Symbol, WithPos<Expression>, Option<Symbol>),
     Block(Vec<WithPos<Statement>>),
     Class {
         name: Symbol,
         methods: Vec<WithPos<Statement>>,
+        properties: Vec<(Symbol, Symbol)>,
     },
     IfStmt {
         condition: WithPos<Expression>,
@@ -34,5 +34,9 @@ pub enum Statement {
 
     Break,
     Continue,
+    TypeAlias {
+        alias: Symbol,
+        ty: Symbol,
+    },
     Return(Option<WithPos<Expression>>),
 }

@@ -65,10 +65,7 @@ impl Resolver {
         Self::default()
     }
 
-    pub fn resolve(
-        &mut self,
-        statements: &[WithPos<Statement>],
-    ) -> Result<(), Vec<ResolverError>> {
+    pub fn resolve(&mut self, statements: &[WithPos<Statement>]) -> Result<(), Vec<ResolverError>> {
         let mut errors = vec![];
 
         for statement in statements {
@@ -204,6 +201,14 @@ impl Resolver {
                 Ok(())
             }
 
+            Statement::TypeAlias { ref alias, ref ty } => {
+                self.declare(alias.clone(), statement.pos)?;
+                self.declare(ty.clone(), statement.pos)?;
+                self.define(*alias);
+                self.define(*ty);
+                Ok(())
+            }
+
             Statement::ExpressionStmt(ref expr) => {
                 self.resolve_expr(&expr.node, statement.pos)?;
                 Ok(())
@@ -291,9 +296,10 @@ impl Resolver {
             Statement::Class {
                 ref name,
                 ref methods,
+                ref properties,
             } => {
-                self.declare(name.clone(), statement.pos)?;
-                self.define(name.clone());
+                self.declare(*name, statement.pos)?;
+                self.define(*name);
 
                 let enclosing_class = self.current_class;
 
@@ -302,6 +308,11 @@ impl Resolver {
                 self.begin_scope();
 
                 self.insert(Symbol(0), true);
+
+                for property in properties {
+                    self.declare(property.0, statement.pos)?;
+                    self.define(property.0);
+                }
 
                 for method in methods {
                     let mut declaration = FunctionType::Method;
@@ -490,32 +501,35 @@ impl Resolver {
 mod test {
     use ast::statement::Statement;
     use lexer::Lexer;
-    use symbol::Symbols;
+    use symbol::{SymbolFactory, Symbols};
     use parser::Parser;
     use resolver::Resolver;
     use pos::WithPos;
 
     fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
+        use std::rc::Rc;
+
         let tokens = Lexer::new(input).lex().unwrap();
-        let mut symbols = Symbols::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
         Parser::new(tokens, &mut symbols).parse().unwrap()
     }
 
     #[test]
     fn global() {
-        let input = "var a = 0;{fun f() {print a;}}";
+        let input = "var a = 0; { fun f() { print(a);} }";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn captured() {
-        let input = "{var a = 0;fun f() {print a;}}";
+        let input = "{var a = 0;fun f() {print(a);}}";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 
     #[test]
     fn lexical_capture() {
-        let input = "var a = 0;{fun f() {print a;} var a = 1;}";
+        let input = "var a = 0;{fun f() {print(a);} var a = 1;}";
         assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
     }
 

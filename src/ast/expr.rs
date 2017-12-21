@@ -2,14 +2,9 @@ use ast::statement::Statement;
 use pos::WithPos;
 use symbol::Symbol;
 
-use types;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
-    IndexExpr {
-        target: Box<WithPos<Expression>>,
-        index: Box<WithPos<Expression>>,
-    },
     Array {
         items: Vec<WithPos<Expression>>,
     },
@@ -33,9 +28,9 @@ pub enum Expression {
         items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
-        parameters: Vec<(Symbol, Option<types::Type>)>,
+        parameters: Vec<(Symbol, Symbol)>,
         body: Box<WithPos<Statement>>,
-        returns: Option<types::Type>,
+        returns: Option<Symbol>,
     },
     Get {
         object: Box<WithPos<Expression>>,
@@ -45,6 +40,12 @@ pub enum Expression {
     Grouping {
         expr: Box<WithPos<Expression>>,
     },
+
+    IndexExpr {
+        target: Box<WithPos<Expression>>,
+        index: Box<WithPos<Expression>>,
+    },
+
     Literal(Literal),
     Logical {
         left: Box<WithPos<Expression>>,
@@ -129,6 +130,7 @@ pub enum AssignOperator {
     MinusEqual,
     PlusEqual,
     StarEqual,
+    SlashEqual,
 }
 
 use token::TokenType;
@@ -139,6 +141,7 @@ pub(crate) fn get_assign_operator(token: TokenType) -> AssignOperator {
         TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
         TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
         TokenType::ASSIGN => AssignOperator::Equal,
+        TokenType::SLASHASSIGN => AssignOperator::SlashEqual,
         _ => unreachable!(),
     }
 }
@@ -168,22 +171,7 @@ pub(crate) fn get_unary_operator(token: TokenType) -> UnaryOperator {
     match token {
         TokenType::BANG => UnaryOperator::Bang,
         TokenType::MINUS => UnaryOperator::Minus,
-        TokenType::PLUS => UnaryOperator::Plus,
         _ => unreachable!(),
-    }
-}
-
-#[inline]
-pub(crate) fn get_type(token: TokenType) -> Option<types::Type> {
-    use types::Type;
-
-    match token {
-        TokenType::TINT => Some(Type::Int),
-        TokenType::TFLOAT => Some(Type::Float),
-        TokenType::TSTR => Some(Type::Str),
-        TokenType::NIL => Some(Type::Nil),
-        TokenType::TBOOL => Some(Type::Bool),
-        _ => None,
     }
 }
 
@@ -201,7 +189,6 @@ pub(crate) fn get_logic_operator(token: TokenType) -> LogicOperator {
 pub enum UnaryOperator {
     Bang,
     Minus,
-    Plus,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]

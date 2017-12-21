@@ -1,0 +1,6 @@
+class Person {
+  name:int,surname:int,age:str;
+  fun hello(a:int,b:int){
+    nil;
+  }
+}

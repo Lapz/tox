@@ -1,5 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
 pub struct Symbol(pub u64);
@@ -9,22 +11,22 @@ impl Display for Symbol {
     }
 }
 #[derive(Debug, Clone)]
-struct SymbolFactory<'a> {
-    next: u64,
-    mappings: HashMap<Symbol, &'a str>,
+pub struct SymbolFactory {
+    next: RefCell<u64>,
+    mappings: RefCell<HashMap<Symbol, String>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Symbols<'a, T> {
-    strings: SymbolFactory<'a>,
+pub struct Symbols<T> {
+    strings: Rc<SymbolFactory>,
     table: HashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }
 
-impl<'a, T> Symbols<'a, T> {
-    pub fn new() -> Self {
+impl<T> Symbols<T> {
+    pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Symbols {
-            strings: SymbolFactory::new(),
+            strings,
             table: HashMap::new(),
             scopes: vec![],
         }
@@ -53,59 +55,64 @@ impl<'a, T> Symbols<'a, T> {
 
     /// Looks in the table for the symbol and if found returns the top element in
     /// the stack of Vec<T>
-    pub fn look(&mut self, symbol: Symbol) -> Option<&T> {
+    pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 
-    pub fn name(&self, symbol: Symbol) -> Option<&&'a str> {
-        self.strings.mappings.get(&symbol)
+    pub fn name(&self, symbol: Symbol) -> String {
+        self.strings.mappings.borrow()[&symbol].to_owned()
     }
 
-    pub fn symbol(&mut self, name: &'a str) -> Symbol {
-        for (key, value) in self.strings.mappings.iter() {
+    pub fn symbol(&mut self, name: &str) -> Symbol {
+        for (key, value) in self.strings.mappings.borrow().iter() {
             if value == &name {
                 return *key;
             }
         }
-        let symbol = Symbol(self.strings.next);
-        self.strings.mappings.insert(symbol, name);
-        self.strings.next += 1;
+        let symbol = Symbol(*self.strings.next.borrow());
+        self.strings
+            .mappings
+            .borrow_mut()
+            .insert(symbol, name.to_owned());
+        *self.strings.next.borrow_mut() += 1;
         symbol
     }
 }
 
-impl<'a> SymbolFactory<'a> {
+impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = HashMap::new();
-        map.insert(Symbol(0), "this");
-        map.insert(Symbol(1), "init");
+        map.insert(Symbol(0), "this".into());
+        map.insert(Symbol(1), "init".into());
 
         SymbolFactory {
-            next: 2,
-            mappings: map,
+            next: RefCell::new(2),
+            mappings: RefCell::new(map),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, Symbols};
+    use symbol::{Symbol, SymbolFactory, Symbols};
+    use std::rc::Rc;
 
     #[test]
     fn test() {
-        let mut map = Symbols::new();
-        map.enter(Symbol(0), "a");
-        map.enter(Symbol(1), "b");
+        let strings = Rc::new(SymbolFactory::new());
+        let mut map: Symbols<String> = Symbols::new(strings);
+        map.enter(Symbol(0), "a".into());
+        map.enter(Symbol(1), "b".into());
         map.begin_scope();
-        assert_eq!(Some(&"a"), map.look(Symbol(0)));
-        assert_eq!(Some(&"b"), map.look(Symbol(1)));
+        assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
+        assert_eq!(Some(&"b".into()), map.look(Symbol(1)));
         assert_eq!(None, map.look(Symbol(2)));
-        map.enter(Symbol(1), "a");
-        map.enter(Symbol(2), "c");
-        assert_eq!(Some(&"a"), map.look(Symbol(1)));
-        assert_eq!(Some(&"c"), map.look(Symbol(2)));
+        map.enter(Symbol(1), "a".into());
+        map.enter(Symbol(2), "c".into());
+        assert_eq!(Some(&"a".into()), map.look(Symbol(1)));
+        assert_eq!(Some(&"c".into()), map.look(Symbol(2)));
         map.end_scope();
-        assert_eq!(Some(&"a"), map.look(Symbol(0)));
-        assert_eq!(map.symbol("c"), Symbol(2));
+        assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
+        assert_eq!(map.symbol("c".into()), Symbol(2));
     }
 }
