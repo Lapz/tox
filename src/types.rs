@@ -14,6 +14,7 @@ pub enum TypeError {
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Type {
+    Class(Symbol),
     Int,
     Str,
     Bool,

@@ -1,7 +1,6 @@
-type Age = int;
 class Person {
   name:int,surname:int,age:str;
-  fun hello(){
+  fun hello(a:int,b:int){
     nil;
   }
 }

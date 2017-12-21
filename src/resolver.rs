@@ -313,7 +313,6 @@ impl Resolver {
                     self.declare(property.0, statement.pos)?;
                     self.define(property.0);
                 }
-                
 
                 for method in methods {
                     let mut declaration = FunctionType::Method;

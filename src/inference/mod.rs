@@ -83,11 +83,64 @@ fn transform_statement(
             ref methods,
             ref properties,
         } => {
-            for method in methods {
-                println!("{:?}", transform_statement(method, env)?)
+            let mut properties_ty = vec![];
+            let mut class_methods: Vec<(Symbol, Entry)> = vec![];
+
+            for &(property, ref ty) in properties {
+                let ty = get_type(ty, env)?;
+                properties_ty.push((property, ty))
             }
 
-            unimplemented!()
+            for &WithPos { ref node, .. } in methods {
+                match *node {
+                    Statement::Function { ref name, ref body } => {
+                        match body.node {
+                            Expression::Func {
+                                ref returns,
+                                ref parameters,
+                                ..
+                            } => {
+                                let return_type = if let Some(ref return_ty) = *returns {
+                                    get_type(return_ty, env)?
+                                } else {
+                                    Type::Nil
+                                };
+
+                                let mut param_names = vec![];
+                                let mut param_ty = vec![];
+
+                                for &(param, p_ty) in parameters {
+                                    param_ty.push(get_type(&p_ty, env)?);
+                                    param_names.push(param);
+                                }
+
+                                class_methods.push((
+                                    *name,
+                                    Entry::FunEntry {
+                                        params: param_ty,
+                                        returns: return_type.clone(),
+                                    },
+                                ));
+                            }
+                            _ => unreachable!(),
+                        };
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            env.add_var(
+                *name,
+                Entry::ClassEntry {
+                    methods: class_methods,
+                    properties: properties_ty,
+                },
+            );
+
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Class(*name),
+            })
         }
         Statement::Var(ref symbol, ref expr, ref ty) => {
             let exp_ty = transform_expr(expr, env)?;

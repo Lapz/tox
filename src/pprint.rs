@@ -124,16 +124,14 @@ impl Statement {
                 pprint_string.push_str("(properties:");
 
                 for property in properties {
-                   pprint_string.push_str(" ");
-                   pprint_string.push_str(&symbols.name(property.0));
-                   pprint_string.push_str(": ");
-                   pprint_string.push_str(&symbols.name(property.1));
-                   pprint_string.push_str(",");
+                    pprint_string.push_str(" ");
+                    pprint_string.push_str(&symbols.name(property.0));
+                    pprint_string.push_str(": ");
+                    pprint_string.push_str(&symbols.name(property.1));
+                    pprint_string.push_str(",");
                 }
 
                 pprint_string.push_str(")");
-
-
 
                 pprint_string.push_str(" )");
             }

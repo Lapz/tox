@@ -30,7 +30,7 @@ fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        run(file, opts.ptokens, opts.pprint);
+        run(file, opts.ptokens, opts.pprint, opts.env);
     } else {
         repl(opts.ptokens, opts.pprint)
     }

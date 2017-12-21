@@ -63,7 +63,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
     }
 }
 
-pub fn run(path: String, ptokens: bool, pprint: bool) {
+pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool) {
     use std::fs::File;
     use std::io::Read;
 
@@ -122,6 +122,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool) {
     let mut env = Env::new(&strings);
 
     println!("{:#?}", analyse(&ast, &mut env));
+
+    if penv {
+        println!("{:#?}", env);
+    }
 }
 
 #[derive(StructOpt, Debug)]
@@ -132,6 +136,9 @@ pub struct Cli {
     /// Pretty Print Source Code
     #[structopt(long = "pretty_print", short = "p")]
     pub pprint: bool,
+    /// Print out the mappings in the environment
+    #[structopt(long = "env", short = "e")]
+    pub env: bool,
     /// Print out tokens
     #[structopt(long = "tokens", short = "t", default_value = "false")]
     pub ptokens: bool,

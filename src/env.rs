@@ -5,8 +5,14 @@ use std::rc::Rc;
 #[derive(Debug, Clone)]
 pub enum Entry {
     VarEntry(Type),
-    ClassEntry { methods: Vec<(Vec<Type>, Type)> }, // Vec of (Vec<MethodParam types>,Return Type)
-    FunEntry { params: Vec<Type>, returns: Type },
+    ClassEntry {
+        methods: Vec<(Symbol, Entry)>,
+        properties: Vec<(Symbol, Type)>,
+    }, // Vec of (Vec<MethodParam types>,Return Type)
+    FunEntry {
+        params: Vec<Type>,
+        returns: Type,
+    },
 }
 
 #[derive(Debug, Clone)]

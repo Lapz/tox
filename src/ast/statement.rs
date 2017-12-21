@@ -10,7 +10,7 @@ pub enum Statement {
     Class {
         name: Symbol,
         methods: Vec<WithPos<Statement>>,
-        properties:Vec<(Symbol,Symbol)>,
+        properties: Vec<(Symbol, Symbol)>,
     },
     IfStmt {
         condition: WithPos<Expression>,

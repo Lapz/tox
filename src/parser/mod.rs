@@ -535,7 +535,14 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::RBRACE, "Expect \'}\'' after class body")?;
 
-        Ok(WithPos::new(Statement::Class { methods, name,properties}, class_pos))
+        Ok(WithPos::new(
+            Statement::Class {
+                methods,
+                name,
+                properties,
+            },
+            class_pos,
+        ))
     }
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
