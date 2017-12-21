@@ -64,7 +64,29 @@ mod test {
     #[test]
     fn class_instance() {
         let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
-        var lenard = Person{name:\"Lenard\",surname:\"Pratt\",age:10};";
+        var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10};";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn class_acess() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10}; Louis.name;";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn class_assign() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10}; Louis.name = 10;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);
@@ -75,7 +97,7 @@ mod test {
     #[test]
     fn empty_class_instance() {
         let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
-        var lenard = Person{};";
+        var Louis = Person{};";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);

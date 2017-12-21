@@ -63,7 +63,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
     }
 }
 
-pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool) {
+pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
 
@@ -117,6 +117,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool) {
         }
     };
 
+    if past {
+        println!("{:#?}", ast);
+    }
+
     Resolver::new().resolve(&ast).unwrap();
 
     let mut env = Env::new(&strings);
@@ -142,4 +146,7 @@ pub struct Cli {
     /// Print out tokens
     #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,
+    /// Print out ast debug mode
+    #[structopt(long = "rawast", short = "ra")]
+    pub past: bool,
 }

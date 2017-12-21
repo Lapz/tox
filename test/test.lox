@@ -3,15 +3,13 @@ class Person {
   fun hello(a:int,b:int){
     nil;
   }
-  number:int;
 }
 
 
 var lenard = Person{
   name:"Lenard",
   surname:"Pratt",
-  age:16,
-  number:10
+  age:16
 };
 
-
+lenard.name = "A";

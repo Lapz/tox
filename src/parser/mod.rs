@@ -858,6 +858,7 @@ impl<'a> Parser<'a> {
                 expr.pos = call_pos;
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::DOT) {
+                self.advance();
                 let (name, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
                 expr = WithPos::new(
                     Expression::Get {
