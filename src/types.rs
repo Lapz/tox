@@ -6,7 +6,7 @@ pub enum TypeError {
     Expected(Type, Postition),
     Undefinded,
     UndefindedVar,
-    NotSame,
+    NotSame(String),
     Function,
     InvalidIndex,
     NotArray,
@@ -21,5 +21,5 @@ pub enum Type {
     Float,
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
-    Name(Symbol,Box<Type>),
+    Name(Symbol, Box<Type>),
 }

@@ -22,7 +22,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
             Ok(tokens) => {
                 if ptokens {
                     for token in &tokens {
-                        println!("{}", token);
+                        println!("{:#?}", token);
                     }
                 }
                 tokens
@@ -63,16 +63,16 @@ pub fn repl(ptokens: bool, pprint: bool) {
     }
 }
 
-pub fn run(path:String,ptokens: bool, pprint: bool) {
+pub fn run(path: String, ptokens: bool, pprint: bool) {
     use std::fs::File;
     use std::io::Read;
-    
+
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
 
     file.read_to_string(&mut contents)
-    .expect("something went wrong reading the file");
+        .expect("something went wrong reading the file");
 
     let input = contents.trim();
 
@@ -81,59 +81,58 @@ pub fn run(path:String,ptokens: bool, pprint: bool) {
     }
 
     let tokens = match Lexer::new(&input).lex() {
-            Ok(tokens) => {
-                if ptokens {
-                    for token in &tokens {
-                        println!("{}", token);
-                    }
+        Ok(tokens) => {
+            if ptokens {
+                for token in &tokens {
+                    println!("{:#?}", token);
                 }
-                tokens
             }
-            Err(errors) => {
-                for err in errors {
-                    println!("{}", err);
+            tokens
+        }
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
+            }
+            ::std::process::exit(65)
+        }
+    };
+
+    let strings = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(Rc::clone(&strings));
+
+    let ast = match Parser::new(tokens, &mut symbols).parse() {
+        Ok(statements) => {
+            if pprint {
+                for statement in &statements {
+                    println!("{}", statement.node.pprint(&mut symbols));
                 }
-               ::std::process::exit(65)
             }
-        };
-
-        let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(Rc::clone(&strings));
-
-        let ast = match Parser::new(tokens, &mut symbols).parse() {
-            Ok(statements) => {
-                if pprint {
-                    for statement in &statements {
-                        println!("{}", statement.node.pprint(&mut symbols));
-                    }
-                }
-                statements
+            statements
+        }
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
             }
-            Err(errors) => {
-                for err in errors {
-                    println!("{}", err);
-                }
-                ::std::process::exit(65)
-            }
-        };
+            ::std::process::exit(65)
+        }
+    };
 
-        Resolver::new().resolve(&ast).unwrap();
+    Resolver::new().resolve(&ast).unwrap();
 
-        let mut env = Env::new(&strings);
+    let mut env = Env::new(&strings);
 
-        println!("{:#?}", analyse(&ast, &mut env));
+    println!("{:#?}", analyse(&ast, &mut env));
 }
 
-
-#[derive(StructOpt,Debug)]
+#[derive(StructOpt, Debug)]
 #[structopt(name = "lexer")]
 pub struct Cli {
     /// The source code file
-    pub source:Option<String>,
+    pub source: Option<String>,
     /// Pretty Print Source Code
-    #[structopt(long = "pretty_print", short = "p")] 
-    pub pprint:bool,
+    #[structopt(long = "pretty_print", short = "p")]
+    pub pprint: bool,
     /// Print out tokens
-    #[structopt(long = "tokens", short = "t")]
-    pub ptokens:bool,
+    #[structopt(long = "tokens", short = "t", default_value = "false")]
+    pub ptokens: bool,
 }

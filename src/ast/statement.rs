@@ -10,6 +10,7 @@ pub enum Statement {
     Class {
         name: Symbol,
         methods: Vec<WithPos<Statement>>,
+        properties:Vec<(Symbol,Symbol)>,
     },
     IfStmt {
         condition: WithPos<Expression>,
@@ -34,8 +35,8 @@ pub enum Statement {
     Break,
     Continue,
     TypeAlias {
-        alias:Symbol,
-        ty:Symbol,
+        alias: Symbol,
+        ty: Symbol,
     },
     Return(Option<WithPos<Expression>>),
 }

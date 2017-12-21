@@ -220,7 +220,7 @@ impl<'a> Parser<'a> {
             self.class_declaration()
         } else if self.recognise(TokenType::TYPE) {
             self.type_declaration()
-        }else {
+        } else {
             self.statement()
         }
     }
@@ -306,11 +306,12 @@ impl<'a> Parser<'a> {
 
         let ty = self.consume_name_symbol("Expected a type")?;
 
-       self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
-        
-        Ok(WithPos::new(Statement::TypeAlias {
-            alias,ty:ty.0
-        }, type_pos))
+        self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
+
+        Ok(WithPos::new(
+            Statement::TypeAlias { alias, ty: ty.0 },
+            type_pos,
+        ))
     }
 
     // Control Flow Statements
@@ -497,19 +498,44 @@ impl<'a> Parser<'a> {
 
     fn class_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let class_pos = self.get_pos()?;
+
         let name = self.consume_name("Expected a class name")?;
 
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
+        let mut properties = vec![];
 
         while !self.recognise(TokenType::RBRACE) {
+            if !self.recognise(TokenType::FUNCTION) {
+                while {
+                    let name = self.consume_name("Expected an Property name ")?;
+
+                    self.consume(
+                        TokenType::COLON,
+                        "Expected a colon after a class property name",
+                    )?;
+
+                    let ty = self.consume_name("Expected a Property type")?;
+
+                    properties.push((name, ty));
+
+                    self.recognise(TokenType::COMMA)
+                        && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+                } {}
+
+                self.consume(
+                    TokenType::SEMICOLON,
+                    "Expected a semicolon after declaring properties",
+                )?;
+            }
+
             methods.push(self.function("method")?);
         }
 
         self.consume(TokenType::RBRACE, "Expect \'}\'' after class body")?;
 
-        Ok(WithPos::new(Statement::Class { methods, name }, class_pos))
+        Ok(WithPos::new(Statement::Class { methods, name,properties}, class_pos))
     }
 
     fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
@@ -581,14 +607,19 @@ impl<'a> Parser<'a> {
                         },
                         next.pos,
                     ))
-                },
+                }
 
-                Expression::Get{object, name,..} => return Ok(WithPos::new(Expression::Set{
-                        object:object,
-                        name:name,
-                        value:Box::new(value),
-                        handle: self.variable_use_maker.next(),
-                },next.pos)),
+                Expression::Get { object, name, .. } => {
+                    return Ok(WithPos::new(
+                        Expression::Set {
+                            object: object,
+                            name: name,
+                            value: Box::new(value),
+                            handle: self.variable_use_maker.next(),
+                        },
+                        next.pos,
+                    ))
+                }
                 _ => {
                     return Err(ParserError::IllegalExpression(
                         "Error at '=': Invalid assignment target.".to_owned(),

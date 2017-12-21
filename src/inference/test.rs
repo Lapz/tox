@@ -211,6 +211,84 @@ mod test {
     }
 
     #[test]
+    fn func_type_alias() {
+        let input = "
+        type Int = int;
+        fun add(a:Int,b:Int) -> Int {
+            a+b;
+        }
+        add(10,10);";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn func_type_alias_actual() {
+        let input = "
+        type Int = int;
+        fun add(a:Int,b:Int) -> int {
+            a+b;
+        }
+        add(10,10);";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn func_call() {
+        let input = "fun add(a:int,b:int) -> int {a+b;} add(10,10);";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        assert_eq!(
+            analyse(&get_ast(input, strings), &mut env).unwrap(),
+            vec![
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+                ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                },
+            ]
+        );
+    }
+
+    #[test]
     fn assign_types() {
         let input =
             "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";

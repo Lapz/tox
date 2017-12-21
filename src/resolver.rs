@@ -201,7 +201,7 @@ impl Resolver {
                 Ok(())
             }
 
-            Statement::TypeAlias{ref alias,ref ty} => {
+            Statement::TypeAlias { ref alias, ref ty } => {
                 self.declare(alias.clone(), statement.pos)?;
                 self.declare(ty.clone(), statement.pos)?;
                 self.define(*alias);
@@ -296,9 +296,10 @@ impl Resolver {
             Statement::Class {
                 ref name,
                 ref methods,
+                ref properties,
             } => {
-                self.declare(name.clone(), statement.pos)?;
-                self.define(name.clone());
+                self.declare(*name, statement.pos)?;
+                self.define(*name);
 
                 let enclosing_class = self.current_class;
 
@@ -307,6 +308,12 @@ impl Resolver {
                 self.begin_scope();
 
                 self.insert(Symbol(0), true);
+
+                for property in properties {
+                    self.declare(property.0, statement.pos)?;
+                    self.define(property.0);
+                }
+                
 
                 for method in methods {
                     let mut declaration = FunctionType::Method;

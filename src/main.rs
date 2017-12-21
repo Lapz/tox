@@ -3,7 +3,8 @@
 extern crate pretty_assertions;
 
 extern crate structopt;
-#[macro_use] extern crate structopt_derive;
+#[macro_use]
+extern crate structopt_derive;
 
 mod token;
 mod lexer;
@@ -20,7 +21,7 @@ mod symbol;
 mod env;
 mod pprint;
 
-use cli::{run,repl,Cli};
+use cli::{repl, run, Cli};
 use structopt::StructOpt;
 
 // use interpreter::Interpreter;
@@ -29,8 +30,8 @@ fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        run(file,opts.ptokens,opts.pprint);
+        run(file, opts.ptokens, opts.pprint);
+    } else {
+        repl(opts.ptokens, opts.pprint)
     }
-
-    repl(opts.ptokens,opts.pprint)
 }

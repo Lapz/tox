@@ -96,6 +96,36 @@ mod test {
     }
 
     #[test]
+    fn class_properties() {
+        let input = "class Person {
+            name:str;
+            fun hello(){
+                nil;
+                }
+            }";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn class_properties_multiple() {
+        let input = "class Person {
+            name:str,surname:str,age:int;
+            fun hello(){
+                nil;
+                }
+        }";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
     fn do_while_statement() {
         let input = "do {print(10);} while (true)";
         let tokens = Lexer::new(input).lex().unwrap();

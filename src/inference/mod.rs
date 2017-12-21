@@ -37,8 +37,12 @@ pub fn analyse(
 
 /// Checks if two types are eqvilant
 fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
+    let expected = actual_type(expected);
+    let unknown = actual_type(unknown);
+
     if expected != unknown {
-        return Err(TypeError::NotSame);
+        let msg = format!("Epexected {:?} but found {:?}", expected, unknown);
+        return Err(TypeError::NotSame(msg));
     }
     Ok(())
 }
@@ -50,12 +54,19 @@ fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
     }
 }
 
+fn actual_type(ty: &Type) -> &Type {
+    match *ty {
+        Type::Name(_, ref name) => name,
+        ref others => others,
+    }
+}
+
 fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
-    println!("{:?}", symbol);
+    println!("{:?}, {:?} ", env.look_var(*symbol), env.name(symbol));
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
-            ty: get_actual_ty(ty)?,
+            ty: actual_type(&get_actual_ty(ty)?).clone(),
         }),
         None => Err(TypeError::UndefindedVar),
     }
@@ -70,6 +81,7 @@ fn transform_statement(
         Statement::Class {
             ref name,
             ref methods,
+            ref properties,
         } => {
             for method in methods {
                 println!("{:?}", transform_statement(method, env)?)
@@ -99,13 +111,16 @@ fn transform_statement(
             ty: Type::Nil,
         }),
 
-        Statement::TypeAlias{ref alias, ref ty} => {
+        Statement::TypeAlias { ref alias, ref ty } => {
             let alias_ty = get_type(ty, env)?;
-            env.add_type(*alias, Type::Name(alias.clone(),Box::new(alias_ty.clone())));
+            env.add_type(
+                *alias,
+                Type::Name(alias.clone(), Box::new(alias_ty.clone())),
+            );
 
-            Ok(ExpressionType{
-                exp:(),
-                ty:alias_ty
+            Ok(ExpressionType {
+                exp: (),
+                ty: alias_ty,
             })
         }
 
@@ -117,9 +132,13 @@ fn transform_statement(
                 });
             }
 
+            env.begin_scope();
+
             for expr in expressions.iter().rev().skip(1) {
                 transform_statement(expr, env)?;
             }
+
+            env.end_scope();
 
             transform_statement(expressions.last().unwrap(), env)
         }
@@ -288,16 +307,17 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                     Entry::FunEntry {
                         ref params,
                         ref returns,
-                    } => for (arg, param) in arguments.iter().zip(params) {
-                        let exp = transform_expr(arg, &mut env.clone())?;
+                    } => {
+                        for (arg, param) in arguments.iter().zip(params) {
+                            let exp = transform_expr(arg, &mut env.clone())?;
 
-                        check_types(&param, &exp.ty)?;
-
+                            check_types(&param, &exp.ty)?;
+                        }
                         return Ok(ExpressionType {
                             exp: (),
-                            ty: returns.clone(),
+                            ty: actual_type(returns).clone(),
                         });
-                    },
+                    }
 
                     _ => unreachable!(), // TODO Add classes
                 }

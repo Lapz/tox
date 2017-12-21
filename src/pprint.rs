@@ -79,7 +79,7 @@ impl Statement {
             Statement::ExpressionStmt(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
             }
-            Statement::TypeAlias{ref alias,ref ty} => {
+            Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(*alias));
                 pprint_string.push_str("=");
@@ -112,6 +112,7 @@ impl Statement {
             Statement::Class {
                 ref name,
                 ref methods,
+                ref properties,
             } => {
                 pprint_string.push_str("(class ");
                 pprint_string.push_str(&symbols.name(*name));
@@ -120,8 +121,22 @@ impl Statement {
                     method.node.pprint_into(pprint_string, symbols);
                 }
 
+                pprint_string.push_str("(properties:");
+
+                for property in properties {
+                   pprint_string.push_str(" ");
+                   pprint_string.push_str(&symbols.name(property.0));
+                   pprint_string.push_str(": ");
+                   pprint_string.push_str(&symbols.name(property.1));
+                   pprint_string.push_str(",");
+                }
+
+                pprint_string.push_str(")");
+
+
+
                 pprint_string.push_str(" )");
-            } 
+            }
 
             Statement::IfStmt {
                 ref condition,
@@ -130,7 +145,7 @@ impl Statement {
             } => {
                 pprint_string.push_str("(if ");
 
-                condition.node.pprint_into(pprint_string,symbols);
+                condition.node.pprint_into(pprint_string, symbols);
 
                 then_branch.node.pprint_into(pprint_string, symbols);
 
@@ -193,7 +208,7 @@ impl Statement {
                 }
 
                 pprint_string.push_str(" )");
-            },
+            }
         }
     }
 }
@@ -266,7 +281,7 @@ impl Expression {
                 ref body,
                 ..
             } => {
-                pprint_string.push_str("( fn (");
+                pprint_string.push_str("(");
 
                 for item in parameters {
                     pprint_string.push_str(&symbols.name(item.0));
@@ -277,7 +292,7 @@ impl Expression {
 
                 body.node.pprint_into(pprint_string, symbols);
 
-                pprint_string.push_str(" ) )");
+                pprint_string.push_str(")");
             }
 
             Expression::Get {
@@ -371,14 +386,12 @@ impl Expression {
     }
 }
 
-
 #[cfg(test)]
-mod test  {
+mod test {
     use lexer::Lexer;
     use symbol::{SymbolFactory, Symbols};
     use parser::Parser;
 
-    
     #[test]
     fn it_works() {
         let input = "var a =0;";
@@ -387,7 +400,7 @@ mod test  {
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
-        
+
         for statement in ast {
             statement.node.pprint(&mut symbols);
         }
