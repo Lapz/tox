@@ -81,6 +81,26 @@ mod test {
 
     #[test]
     #[should_panic]
+    fn too_little_instance() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var lenard = Person{name:\"Lenard\"};";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn too_many_instance() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var lenard = Person{name:\"Lenard\",name:\"Lenard\",name:\"Lenard\",name:\"Lenard\"};";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
     fn wrong_body_type() {
         let input = "fun add(a:int,b:int) {a+b;}";
         let strings = Rc::new(SymbolFactory::new());

@@ -140,6 +140,6 @@ pub struct Cli {
     #[structopt(long = "env", short = "e")]
     pub env: bool,
     /// Print out tokens
-    #[structopt(long = "tokens", short = "t", default_value = "false")]
+    #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,
 }

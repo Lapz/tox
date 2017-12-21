@@ -528,6 +528,10 @@ impl<'a> Parser<'a> {
                     TokenType::SEMICOLON,
                     "Expected a semicolon after declaring properties",
                 )?;
+
+                if self.recognise(TokenType::RBRACE) {
+                    break;
+                }
             }
 
             methods.push(self.function("method")?);
@@ -892,10 +896,57 @@ impl<'a> Parser<'a> {
                     Expression::Literal(Literal::Str(s.clone())),
                     *pos,
                 )),
-                TokenType::IDENTIFIER(ref ident) => Ok(WithPos::new(
-                    Expression::Var(self.symbols.symbol(ident), self.variable_use_maker.next()),
-                    *pos,
-                )),
+                TokenType::IDENTIFIER(ref ident) => {
+                    if self.recognise(TokenType::LBRACE) {
+                        self.advance();
+                        let mut properties = vec![];
+
+                        if self.recognise(TokenType::RBRACE) {
+                            self.advance();
+                            return Ok(WithPos::new(
+                                Expression::ClassInstance {
+                                    properties,
+                                    name: self.symbols.symbol(ident),
+                                },
+                                *pos,
+                            ));
+                        }
+
+                        while {
+                            let property_name = self.consume_name("Expected an Property name ")?;
+
+                            self.consume(
+                                TokenType::COLON,
+                                "Expected a colon after a class property name",
+                            )?;
+
+                            let property_value = self.expression()?;
+
+                            properties.push((property_name, property_value));
+
+                            self.recognise(TokenType::COMMA)
+                                && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+                        } {}
+
+                        self.consume(
+                            TokenType::RBRACE,
+                            "Expected a \'}\' to close a Class Instance",
+                        )?;
+
+                        return Ok(WithPos::new(
+                            Expression::ClassInstance {
+                                properties,
+                                name: self.symbols.symbol(ident),
+                            },
+                            *pos,
+                        ));
+                    }
+
+                    Ok(WithPos::new(
+                        Expression::Var(self.symbols.symbol(ident), self.variable_use_maker.next()),
+                        *pos,
+                    ))
+                }
                 TokenType::THIS => Ok(WithPos::new(
                     Expression::This(self.variable_use_maker.next()),
                     *pos,

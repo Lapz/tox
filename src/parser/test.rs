@@ -62,6 +62,28 @@ mod test {
     }
 
     #[test]
+    fn class_instance() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var lenard = Person{name:\"Lenard\",surname:\"Pratt\",age:10};";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn empty_class_instance() {
+        let input = "class Person {name:str,surname:str,age:int;fun hello(a:int,b:int){nil;}}
+        var lenard = Person{};";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
     fn function_expr() {
         let input = "var add = fun (a:int,b:int) -> int {a+b;};";
         let tokens = Lexer::new(input).lex().unwrap();

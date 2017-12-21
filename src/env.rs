@@ -2,17 +2,10 @@ use types::Type;
 use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Entry {
-    VarEntry(Type),
-    ClassEntry {
-        methods: Vec<(Symbol, Entry)>,
-        properties: Vec<(Symbol, Type)>,
-    }, // Vec of (Vec<MethodParam types>,Return Type)
-    FunEntry {
-        params: Vec<Type>,
-        returns: Type,
-    },
+    VarEntry(Type), // Vec of (Vec<MethodParam types>,Return Type)
+    FunEntry { params: Vec<Type>, returns: Type },
 }
 
 #[derive(Debug, Clone)]

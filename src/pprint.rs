@@ -260,6 +260,23 @@ impl Expression {
                 pprint_string.push_str(" )");
             }
 
+            Expression::ClassInstance {
+                ref properties,
+                ref name,
+            } => {
+                pprint_string.push_str("(instance ");
+                pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(" ");
+
+                for &(ref key, ref value) in properties {
+                    pprint_string.push_str(&symbols.name(*key));
+                    pprint_string.push_str(".");
+                    value.node.pprint_into(pprint_string, symbols);
+                }
+
+                pprint_string.push_str(" )");
+            }
+
             Expression::Dict { ref items } => {
                 pprint_string.push_str("(dict ");
 

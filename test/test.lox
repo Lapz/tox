@@ -1,6 +1,17 @@
 class Person {
-  name:int,surname:int,age:str;
+  name:str,surname:str,age:int;
   fun hello(a:int,b:int){
     nil;
   }
+  number:int;
 }
+
+
+var lenard = Person{
+  name:"Lenard",
+  surname:"Pratt",
+  age:16,
+  number:10
+};
+
+
