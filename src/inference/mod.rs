@@ -41,7 +41,7 @@ fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
     let unknown = actual_type(unknown);
 
     if expected != unknown {
-        let msg = format!("Epexected {:?} but found {:?}", expected, unknown);
+        let msg = format!("Expected {:?} but found {:?}", expected, unknown);
         return Err(TypeError::NotSame(msg));
     }
     Ok(())
@@ -131,7 +131,7 @@ fn transform_statement(
             let ty = Type::Class {
                 name: *name,
                 methods: class_methods,
-                property: properties_ty,
+                fields: properties_ty,
             };
 
             env.add_var(*name, Entry::VarEntry(ty.clone()));
@@ -436,6 +436,36 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Ok(body_ty)
         }
 
+        Expression::Get {
+            ref object,
+            ref property,
+            ..
+        } => {
+            let instance = transform_expr(object, env)?;
+
+            let mut ty = Type::Nil;
+
+            match instance.ty {
+                Type::Class { ref fields, .. } => {
+                    let mut found = false;
+
+                    for prop in fields {
+                        if prop.0 == *property {
+                            found = true;
+                            ty = prop.1.clone();
+                        }
+                    }
+                    if !found {
+                        return Err(TypeError::NotProperty);
+                    }
+                }
+
+                _ => unreachable!(),
+            }
+
+            Ok(ExpressionType { exp: (), ty })
+        }
+
         Expression::Grouping { ref expr } => transform_expr(expr, env),
 
         Expression::IndexExpr {
@@ -472,9 +502,9 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let class = transform_var(name, env)?;
 
             match class.ty {
-                Type::Class { ref property, .. } => {
+                Type::Class { ref fields, .. } => {
                     let mut found = true;
-                    for &(ref key, ref value) in property {
+                    for &(ref key, ref value) in fields {
                         for &(ref instance_name, ref instance_val) in properties {
                             if instance_name == key {
                                 found = true;
@@ -490,9 +520,9 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
 
-                    if property.len() < properties.len() {
+                    if fields.len() < properties.len() {
                         return Err(TypeError::TooManyProperty);
-                    } else if property.len() > properties.len() {
+                    } else if fields.len() > properties.len() {
                         return Err(TypeError::TooLittleProperty);
                     }
                 }
@@ -533,6 +563,11 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             Ok(expr_ty)
         }
 
+        Expression::This(_) => Ok(ExpressionType {
+            exp: (),
+            ty: Type::Nil,
+        }),
+
         Expression::Logical {
             ref left,
             ref right,
@@ -547,6 +582,38 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 exp: (),
                 ty: Type::Bool,
             })
+        }
+
+        Expression::Set {
+            ref object,
+            ref name,
+            ref value,
+            ..
+        } => {
+            let instance = transform_expr(object, env)?;
+            let mut ty = Type::Nil;
+
+            match instance.ty {
+                Type::Class { ref fields, .. } => {
+                    let mut found = false;
+
+                    for prop in fields {
+                        if prop.0 == *name {
+                            found = true;
+                            let value_ty = transform_expr(value, env)?;
+                            check_types(&prop.1, &value_ty.ty)?;
+                            ty = prop.1.clone();
+                        }
+                    }
+                    if !found {
+                        return Err(TypeError::NotProperty);
+                    }
+                }
+
+                _ => unreachable!(),
+            }
+
+            Ok(ExpressionType { exp: (), ty })
         }
 
         Expression::Ternary {
@@ -568,8 +635,6 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         }
 
         Expression::Var(ref symbol, _) => transform_var(symbol, env),
-
-        _ => unimplemented!(), // Implement classes or leave them out
     }
 }
 

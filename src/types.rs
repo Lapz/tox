@@ -21,7 +21,7 @@ pub enum Type {
     Class {
         name: Symbol,
         methods: Vec<(Symbol, Entry)>,
-        property: Vec<(Symbol, Type)>,
+        fields: Vec<(Symbol, Type)>,
     },
     Int,
     Str,
