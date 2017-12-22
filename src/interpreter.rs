@@ -2,6 +2,7 @@ use object::Object;
 use ast::expr::*;
 use ast::statement::Statement;
 use pos::WithPos;
+use env::Env;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -11,31 +12,101 @@ pub enum RuntimeError {
 
 
 
-    pub fn interpret(statement: &WithPos<Statement>) -> Result<Object, RuntimeError> {
-            evaluate_statement(statement)
+    pub fn interpret(statement: &WithPos<Statement>,env:&mut Env) -> Result<Object, RuntimeError> {
+            evaluate_statement(statement,env)
     }
 
-    fn evaluate_statement(statement:&WithPos<Statement>) -> Result<Object,RuntimeError> {
+    fn evaluate_statement(statement:&WithPos<Statement>,env:&mut Env) -> Result<Object,RuntimeError> {
         match statement.node {
-            Statement::ExpressionStmt(ref expr) => evalute_expression(expr),
+            Statement::ExpressionStmt(ref expr) => evaluate_expression(expr,env),
+            Statement::Var(ref symbol,ref expression,..) => {
+                let value = evaluate_expression(expression,env)?;
+
+                env.add_object(*symbol,value);
+                Ok(Object::None)
+            }
             _ => unimplemented!(),
         }
     }
    
 
 
-    fn evalute_expression(expression: &WithPos<Expression>) -> Result<Object, RuntimeError> {
+    fn evaluate_expression(expression: &WithPos<Expression>,env:&mut Env) -> Result<Object, RuntimeError> {
         match expression.node {
-            Expression::Grouping { ref expr } => evalute_expression(expr),
+            Expression::Array {ref items}  => {
+                let mut values = vec![];
+                 for item in items {
+            values.push(evaluate_expression(item, env)?)
+            }
+            Ok(Object::Array(values))
+            }
+
+            Expression::Assign{ref name,ref kind,ref value,..} => {
+                let mut value = evaluate_expression(value,env)?;
+
+                match *kind {
+                    AssignOperator::Equal => (),
+
+                    AssignOperator::PlusEqual => {
+                    let current = env.look_object(*name).unwrap();
+
+                    match (current,value) {
+                        (&Object::Int(x),Object::Int(y)) => value = Object::Int(x+y),
+                        (&Object::Float(x),Object::Float(y)) => value = Object::Float(x+y),
+                        _ => unreachable!(),
+                    }
+            },
+
+            AssignOperator::MinusEqual => {
+                let current = env.look_object(*name).unwrap();
+
+                match (current,value) {
+                        (&Object::Int(x),Object::Int(y)) => value = Object::Int(x-y),
+                        (&Object::Float(x),Object::Float(y)) => value = Object::Float(x-y),
+                        _ => unreachable!(),
+                    }
+            },
+
+            AssignOperator::SlashEqual => {
+                let current = env.look_object(*name).unwrap();
+
+                match (current,value) {
+                        (&Object::Int(x),Object::Int(y)) => value = Object::Int(x/y),
+                        (&Object::Float(x),Object::Float(y)) => value = Object::Float(x/y),
+                        _ => unreachable!(),
+                }
+            },
+
+            AssignOperator::StarEqual => {
+                let current = env.look_object(*name).unwrap();
+
+                match (current,value) {
+                        (&Object::Int(x),Object::Int(y)) => value = Object::Int(x*y),
+                        (&Object::Float(x),Object::Float(y)) => value = Object::Float(x*y),
+                        _ => unreachable!(),
+                    }
+                }
+            }
+
+            env.assign_object(*name,value.clone());
+
+            Ok(value)
+
+            }
+            Expression::Grouping { ref expr } => evaluate_expression(expr,env),
             Expression::Literal(ref lit) => evaluate_literal(lit),
+            Expression::Var(ref symbol,ref value) => {
+                let value = env.look_object(*symbol).unwrap().clone();
+                Ok(value)
+            }
 
             Expression::Binary {
                 ref left_expr,
                 ref operator,
                 ref right_expr,
             } => {
-                let left = evalute_expression(left_expr)?;
-                let right = evalute_expression(right_expr)?;
+                let left = evaluate_expression(left_expr,env)?;
+                let right = evaluate_expression(right_expr,env)?;
 
                 match *operator {
                     Operator::BangEqual => Ok(Object::Bool(!left == right)),
@@ -57,7 +128,7 @@ pub enum RuntimeError {
                 ref operator,
                 ref expr,
             } => {
-                let right = evalute_expression(expr)?;
+                let right = evaluate_expression(expr,env)?;
 
                 match *operator {
                     UnaryOperator::Minus => {

@@ -45,21 +45,35 @@ impl Env {
         self.vars.look(symbol)
     }
 
+    pub fn look_object(&self, symbol: Symbol) -> Option<&Object> {
+        self.objects.look(symbol)
+    }
+
     pub fn begin_scope(&mut self) {
         self.types.begin_scope();
         self.vars.begin_scope();
+        self.objects.begin_scope();
     }
 
     pub fn end_scope(&mut self) {
         self.types.end_scope();
         self.vars.end_scope();
+        self.objects.begin_scope();
     }
 
     pub fn add_type(&mut self, symbol: Symbol, data: Type) {
         self.types.enter(symbol, data)
     }
 
+    pub fn add_object(&mut self,symbol:Symbol,data:Object) {
+        self.objects.enter(symbol,data)
+    }
+
     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
         self.vars.enter(symbol, data)
+    }
+
+    pub fn assign_object(&mut self, symbol: Symbol, data: Object) {
+        self.objects.replace(symbol,data);
     }
 }

@@ -77,6 +77,12 @@ impl<T> Symbols<T> {
         *self.strings.next.borrow_mut() += 1;
         symbol
     }
+
+    pub fn replace(&mut self, symbol: Symbol, data: T) {
+        let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
+        bindings.pop().expect("Call enter() before replace()");
+        bindings.push(data);
+    }
 }
 
 impl SymbolFactory {

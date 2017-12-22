@@ -1,13 +1,3 @@
-class Person {
-  name:str,surname:str,age:int;
-}
-
-
-var lenard = Person{
-  name:"Lenard",
-  surname:"Pratt",
-  age:16
-};
-
-lenard.name;
-lenard.surname = "a";
+var a = 10;
+a = 1;
+a;
