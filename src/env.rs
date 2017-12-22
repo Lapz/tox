@@ -1,4 +1,5 @@
 use types::Type;
+use object::Object;
 use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
 
@@ -12,6 +13,7 @@ pub enum Entry {
 pub struct Env {
     pub types: Symbols<Type>,
     pub vars: Symbols<Entry>,
+    pub objects: Symbols<Object>,
 }
 
 impl Env {
@@ -32,6 +34,7 @@ impl Env {
         Env {
             types,
             vars: Symbols::new(Rc::clone(strings)),
+            objects:Symbols::new(Rc::clone(strings)),
         }
     }
     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {

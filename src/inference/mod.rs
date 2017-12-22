@@ -555,10 +555,13 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             }),
         },
 
-        Expression::Unary { ref expr, .. } => {
+        Expression::Unary { ref expr, ref operator } => {
             let expr_ty = transform_expr(expr, env)?;
 
-            check_bool(&expr_ty, expr.pos)?;
+            match *operator {
+                UnaryOperator::Bang =>  check_bool(&expr_ty, expr.pos)?,
+                UnaryOperator::Minus => {s_check_int_float(&expr_ty,expr.pos)?;}
+            };
 
             Ok(expr_ty)
         }

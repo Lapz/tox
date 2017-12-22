@@ -1,7 +1,8 @@
 use object::Object;
 use ast::expr::*;
+use ast::statement::Statement;
+use pos::WithPos;
 
-pub struct Interpreter;
 #[derive(Debug)]
 pub enum RuntimeError {
     Unary(&'static str),
@@ -9,36 +10,32 @@ pub enum RuntimeError {
 }
 
 
-impl Interpreter {
-    pub fn new() -> Self {
-        Interpreter
+
+    pub fn interpret(statement: &WithPos<Statement>) -> Result<Object, RuntimeError> {
+            evaluate_statement(statement)
     }
-    pub fn interpret(&self, expr: &Expression) -> Result<Object, RuntimeError> {
-        self.evalute_expression(expr)
-    }
-    fn evaluate_literal(&self, expression: &Literal) -> Result<Object, RuntimeError> {
-        match *expression {
-            Literal::Float(i) => Ok(Object::Float(i)),
-            Literal::Int(i) => Ok(Object::Int(i)),
-            Literal::Str(ref s) => Ok(Object::Str(s.to_owned())),
-            Literal::Nil => Ok(Object::Nil),
-            Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
+
+    fn evaluate_statement(statement:&WithPos<Statement>) -> Result<Object,RuntimeError> {
+        match statement.node {
+            Statement::ExpressionStmt(ref expr) => evalute_expression(expr),
+            _ => unimplemented!(),
         }
     }
+   
 
 
-    fn evalute_expression(&self, expression: &Expression) -> Result<Object, RuntimeError> {
-        match *expression {
-            Expression::Grouping { ref expr } => self.evalute_expression(expr),
-            Expression::Literal(ref lit) => self.evaluate_literal(lit),
+    fn evalute_expression(expression: &WithPos<Expression>) -> Result<Object, RuntimeError> {
+        match expression.node {
+            Expression::Grouping { ref expr } => evalute_expression(expr),
+            Expression::Literal(ref lit) => evaluate_literal(lit),
 
             Expression::Binary {
                 ref left_expr,
                 ref operator,
                 ref right_expr,
             } => {
-                let left = self.evalute_expression(left_expr)?;
-                let right = self.evalute_expression(right_expr)?;
+                let left = evalute_expression(left_expr)?;
+                let right = evalute_expression(right_expr)?;
 
                 match *operator {
                     Operator::BangEqual => Ok(Object::Bool(!left == right)),
@@ -60,36 +57,23 @@ impl Interpreter {
                 ref operator,
                 ref expr,
             } => {
-                let right = self.evalute_expression(expr)?;
+                let right = evalute_expression(expr)?;
 
                 match *operator {
                     UnaryOperator::Minus => {
                         match right {
                             Object::Float(f) => Ok(Object::Float(-f)),
                             Object::Int(i) => Ok(Object::Int(-i)),
-                            _ => Err(RuntimeError::Unary(
-                                "Cant use the unary operator \'-\' on values other than floats or ints",
-                            )),
-
+                            _ => unreachable!(),
                         }
                     }
                     UnaryOperator::Bang => Ok(!right),
-                    UnaryOperator::Plus => {
-                        match right {
-                            Object::Float(f) => Ok(Object::Float(1.0 * f)),
-                            Object::Int(i) => Ok(Object::Int(1 * i)),
-                            _ => Err(RuntimeError::Unary(
-                                "Cant use the unary operator \'+ \' on values other than floats or ints",
-                            )),
-
-                        }
-                    }
                 }
             }
             _ => unimplemented!(),
         }
     }
-}
+
 
 
 fn add(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
@@ -101,10 +85,7 @@ fn add(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
 
             Ok(Object::Str(l.to_owned()))
         }
-
-        _ => Err(RuntimeError::Binary(
-            "Addition is not implemented for these types",
-        )), // Format message wiuth the offending types
+         _ => unreachable!() 
     }
 }
 
@@ -112,29 +93,26 @@ fn times(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l * r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l * r)),
-        _ => Err(RuntimeError::Binary(
-            "Multiplication is not implemented for these types",
-        )), // Format message wiuth the offending types
+         _ => unreachable!() 
     }
 }
 
+
+#[inline]
 fn modulo(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l % r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l % r)),
-        _ => Err(RuntimeError::Binary(
-            "Modulo is not implemented for these types",
-        )), // Format message wiuth the offending types
+         _ => unreachable!()
     }
 }
 
+#[inline]
 fn expon(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l.powf(r))),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l.pow(r as u32))),
-        _ => Err(RuntimeError::Binary(
-            "Exponential is not implemented for these types",
-        )), // Format message wiuth the offending types
+        _ => unreachable!()
     }
 }
 
@@ -143,9 +121,7 @@ fn minus(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l - r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l - r)),
-        _ => Err(RuntimeError::Binary(
-            "Subtraction is not implemented for these types",
-        )), // Format message wiuth the offending types
+        _ => unreachable!() 
     }
 }
 
@@ -153,8 +129,16 @@ fn divide(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l / r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l / r)),
-        _ => Err(RuntimeError::Binary(
-            "Division is not implemented for these types",
-        )), // Format message wiuth the offending types
+        _ => unreachable!() 
     }
 }
+
+ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
+        match *expression {
+            Literal::Float(i) => Ok(Object::Float(i)),
+            Literal::Int(i) => Ok(Object::Int(i)),
+            Literal::Str(ref s) => Ok(Object::Str(s.to_owned())),
+            Literal::Nil => Ok(Object::Nil),
+            Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
+        }
+    }

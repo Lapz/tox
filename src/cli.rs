@@ -2,6 +2,7 @@ use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
 use inference::analyse;
+use interpreter::interpret;
 use std::io;
 use symbol::{SymbolFactory, Symbols};
 use env::Env;
@@ -60,6 +61,9 @@ pub fn repl(ptokens: bool, pprint: bool) {
         let mut env = Env::new(&strings);
 
         println!("{:#?}", analyse(&ast, &mut env));
+         println!("{:#?}", interpret(&ast[0]));
+
+
     }
 }
 
