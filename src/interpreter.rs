@@ -12,8 +12,12 @@ pub enum RuntimeError {
 
 
 
-    pub fn interpret(statement: &WithPos<Statement>,env:&mut Env) -> Result<Object, RuntimeError> {
-            evaluate_statement(statement,env)
+    pub fn interpret(statements: &[WithPos<Statement>],env:&mut Env) -> Result<Object, RuntimeError> {
+        let mut result = Object::None;
+                    for statement in statements {
+                        result = evaluate_statement(statement,env)?
+                    }
+        Ok(result)       
     }
 
     fn evaluate_statement(statement:&WithPos<Statement>,env:&mut Env) -> Result<Object,RuntimeError> {
@@ -24,6 +28,14 @@ pub enum RuntimeError {
 
                 env.add_object(*symbol,value);
                 Ok(Object::None)
+            }
+            Statement::Block(ref statements) => {
+                env.begin_scope();
+                for statement in statements {
+                     evaluate_statement(statement,env)?;
+                    }
+                env.end_scope();
+                    Ok(Object::None)
             }
             _ => unimplemented!(),
         }
@@ -95,7 +107,7 @@ pub enum RuntimeError {
             }
             Expression::Grouping { ref expr } => evaluate_expression(expr,env),
             Expression::Literal(ref lit) => evaluate_literal(lit),
-            Expression::Var(ref symbol,ref value) => {
+            Expression::Var(ref symbol,..) => {
                 let value = env.look_object(*symbol).unwrap().clone();
                 Ok(value)
             }
