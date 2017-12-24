@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 
-#[derive(Debug, PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Float(f64),
     Int(i64),
@@ -11,11 +11,20 @@ pub enum Object {
     Bool(bool),
     Return(Box<Object>),
     Array(Vec<Object>),
-    Dict(HashMap<Object,Object>),
+    Dict(HashMap<Object, Object>),
     Nil,
     None,
 }
 
+impl Object {
+    pub fn is_truthy(&self) -> bool {
+        match *self {
+            Object::Nil => false,
+            Object::Bool(b) => b,
+            _ => true,
+        }
+    }
+}
 
 impl Eq for Object {}
 
@@ -46,7 +55,6 @@ impl Not for Object {
     }
 }
 
-
 impl PartialOrd for Object {
     fn partial_cmp(&self, other: &Object) -> Option<Ordering> {
         match (self, other) {
@@ -58,8 +66,8 @@ impl PartialOrd for Object {
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
             (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
             (&Object::Nil, &Object::Nil) => Some(Ordering::Equal),
-            (&Object::None,&Object::None) => Some(Ordering::Equal),
-            (s,o) =>(s.partial_cmp(o)),
+            (&Object::None, &Object::None) => Some(Ordering::Equal),
+            (s, o) => (s.partial_cmp(o)),
         }
     }
 }

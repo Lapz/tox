@@ -34,7 +34,7 @@ impl Env {
         Env {
             types,
             vars: Symbols::new(Rc::clone(strings)),
-            objects:Symbols::new(Rc::clone(strings)),
+            objects: Symbols::new(Rc::clone(strings)),
         }
     }
     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
@@ -65,8 +65,8 @@ impl Env {
         self.types.enter(symbol, data)
     }
 
-    pub fn add_object(&mut self,symbol:Symbol,data:Object) {
-        self.objects.enter(symbol,data)
+    pub fn add_object(&mut self, symbol: Symbol, data: Object) {
+        self.objects.enter(symbol, data)
     }
 
     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
@@ -74,6 +74,6 @@ impl Env {
     }
 
     pub fn assign_object(&mut self, symbol: Symbol, data: Object) {
-        self.objects.replace(symbol,data);
+        self.objects.replace(symbol, data);
     }
 }

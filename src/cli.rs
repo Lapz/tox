@@ -61,9 +61,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         let mut env = Env::new(&strings);
 
         println!("{:#?}", analyse(&ast, &mut env));
-         println!("{:#?}", interpret(&ast,&mut env));
-
-
+        println!("{:#?}", interpret(&ast, &mut env));
     }
 }
 
@@ -135,7 +133,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", env);
     }
 
-    println!("{:#?}", interpret(&ast,&mut env));
+    println!("{:#?}", interpret(&ast, &mut env));
 
     if penv {
         println!("{:#?}", env);

@@ -775,7 +775,7 @@ impl<'a> Parser<'a> {
     fn addition(&mut self) -> Result<WithPos<Expression>, ParserError> {
         let mut expr = self.multiplication()?;
 
-        while self.matched(vec![TokenType::MINUS,TokenType::MODULO, TokenType::PLUS]) {
+        while self.matched(vec![TokenType::MINUS, TokenType::MODULO, TokenType::PLUS]) {
             let next = self.advance().unwrap();
 
             let operator = get_operator(next.token);
