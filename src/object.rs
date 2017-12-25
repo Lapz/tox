@@ -4,16 +4,26 @@ use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{Display, Formatter};
 use std::fmt;
+use symbol::Symbol;
+use ast::statement::Statement;
+use interpreter::RuntimeError;
+use env::Env;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Float(f64),
+    Class(Symbol, HashMap<Symbol, Object>),
     Int(i64),
     Str(String),
     Bool(bool),
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
+    Function(Symbol, Vec<Symbol>, Statement),
+    Instance {
+        methods: HashMap<Symbol, Object>,
+        fields: HashMap<Symbol, Object>
+    },
     Nil,
     None,
 }
@@ -27,8 +37,50 @@ impl Object {
         }
     }
 
+    pub fn call(&self, arguments: &[Object], env: &mut Env) -> Result<Object, RuntimeError> {
+        match *self {
+            Object::Function(_, ref params, ref body) => {
+                env.begin_scope();
+
+                let zipped = params.iter().zip(arguments.iter());
+
+                for (_, (symbol, value)) in zipped.enumerate() {
+                    env.add_object(*symbol, value.clone());
+                }
+
+                use interpreter::evaluate_statement;
+
+                match body {
+                    &Statement::Block(ref statements) => for statement in statements {
+                        match evaluate_statement(statement, env) {
+                            Ok(val) => match val {
+                                Object::Return(r) => {
+                                    env.end_scope();
+                                    return Ok(*r);
+                                }
+
+                                _ => (),
+                            },
+                            Err(e) => return Err(e),
+                        }
+                    },
+                    _ => unreachable!(),
+                }
+
+                env.end_scope();
+
+                Ok(Object::Nil)
+            }
+
+            _ => panic!("Should not be calling this method"),
+        }
+    }
+
     pub fn as_string(&self) -> String {
         match *self {
+            Object::Instance{..} => "instance".into(),
+            Object::Function(ref s, _, _) => format!("fn <{}> ", s),
+            Object::Class(ref name, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
             Object::Return(ref val) => val.as_string(),
@@ -115,6 +167,9 @@ impl PartialOrd for Object {
 impl Display for Object {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
+            Object::Instance{..} => write!(f,"instance"),
+            Object::Class(ref name, _) => write!(f, "class <{}>", name),
+            Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
             Object::None => write!(f, "none"),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::Float(ref n) => write!(f, "{}", n.to_string()),

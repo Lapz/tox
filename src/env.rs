@@ -9,11 +9,25 @@ pub enum Entry {
     FunEntry { params: Vec<Type>, returns: Type },
 }
 
+static mut UNIQUE_COUNT: u64 = 0;
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Unique(u64);
+
+impl Unique {
+    pub fn new() -> Self {
+        let value = unsafe { UNIQUE_COUNT };
+        unsafe { UNIQUE_COUNT += 1 };
+        Unique(value)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Env {
     pub types: Symbols<Type>,
     pub vars: Symbols<Entry>,
     pub objects: Symbols<Object>,
+    pub unique: Unique,
 }
 
 impl Env {
@@ -35,6 +49,7 @@ impl Env {
             types,
             vars: Symbols::new(Rc::clone(strings)),
             objects: Symbols::new(Rc::clone(strings)),
+            unique: Unique::new(),
         }
     }
     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
@@ -43,6 +58,11 @@ impl Env {
 
     pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
         self.vars.look(symbol)
+    }
+
+    pub fn unique_id(&mut self) -> Symbol {
+        let next = Unique::new().0;
+        self.vars.symbol(&next.to_string())
     }
 
     pub fn look_object(&self, symbol: Symbol) -> Option<&Object> {

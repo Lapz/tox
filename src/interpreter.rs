@@ -10,6 +10,8 @@ pub enum RuntimeError {
     Binary(&'static str),
     Break,
     Continue,
+    IndexOutOfBound,
+    InvalidIndexType,
 }
 
 pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Object, RuntimeError> {
@@ -20,7 +22,7 @@ pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Obj
     Ok(result)
 }
 
-fn evaluate_statement(
+pub(crate) fn evaluate_statement(
     statement: &WithPos<Statement>,
     env: &mut Env,
 ) -> Result<Object, RuntimeError> {
@@ -39,14 +41,38 @@ fn evaluate_statement(
         Statement::Class {
             ref name,
             ref methods,
-            ref properties,
+            ..
         } => {
             env.add_object(*name, Object::Nil);
+
+            use symbol::Symbol;
+
+            let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
+
             for method in methods {
-                let func = evaluate_statement(method, env)?;
-                println!("{:?}", func)
+                match method.node {
+                    Statement::Function { ref name, ref body } => match body.node {
+                        Expression::Func {
+                            ref parameters,
+                            ref body,
+                            ..
+                        } => {
+                            use symbol::Symbol;
+
+                            let mut params: Vec<Symbol> =
+                                parameters.iter().map(|params| params.0).collect();
+                            sym_methods
+                                .insert(*name, Object::Function(*name, params, body.node.clone()));
+                        }
+                        _ => unreachable!(),
+                    },
+
+                    _ => unimplemented!(),
+                }
             }
-            unimplemented!()
+
+            env.assign_object(*name, Object::Class(*name, sym_methods));
+            Ok(Object::None)
         }
 
         Statement::DoStmt {
@@ -69,7 +95,21 @@ fn evaluate_statement(
 
         Statement::ExpressionStmt(ref expr) => evaluate_expression(expr, env),
 
-        Statement::Function { ref name, ref body } => unimplemented!(),
+        Statement::Function { ref name, ref body } => match body.node {
+            Expression::Func {
+                ref parameters,
+                ref body,
+                ..
+            } => {
+                use symbol::Symbol;
+
+                let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
+
+                env.add_object(*name, Object::Function(*name, params, body.node.clone()));
+                return Ok(Object::None);
+            }
+            _ => unreachable!(),
+        },
 
         Statement::IfStmt {
             ref condition,
@@ -204,6 +244,73 @@ fn evaluate_expression(
             Ok(value)
         }
 
+        Expression::Binary {
+            ref left_expr,
+            ref operator,
+            ref right_expr,
+        } => {
+            let left = evaluate_expression(left_expr, env)?;
+            let right = evaluate_expression(right_expr, env)?;
+
+            match *operator {
+                Operator::BangEqual => Ok(Object::Bool(!left == right)),
+                Operator::EqualEqual => Ok(Object::Bool(left == right)),
+                Operator::LessThan => Ok(Object::Bool(left < right)),
+                Operator::LessThanEqual => Ok(Object::Bool(left <= right)),
+                Operator::GreaterThan => Ok(Object::Bool(left > right)),
+                Operator::GreaterThanEqual => Ok(Object::Bool(left >= right)),
+                Operator::Plus => add(left, right),
+                Operator::Minus => minus(left, right),
+                Operator::Star => times(left, right),
+                Operator::Slash => divide(left, right),
+                Operator::Modulo => modulo(left, right),
+                Operator::Exponential => expon(left, right),
+            }
+        }
+
+        Expression::Call {
+            ref callee,
+            ref arguments,
+        } => {
+            let callee = evaluate_expression(callee, env)?;
+
+            let mut obj_arguments = vec![];
+
+            for expr in arguments {
+                obj_arguments.push(evaluate_expression(expr, env)?);
+            }
+
+            callee.call(&obj_arguments, env)
+        }
+
+        Expression::ClassInstance {
+            ref name,
+            ref properties,
+        } => {
+            use symbol::Symbol;
+
+            match env.look_object(*name).unwrap().clone() {
+                Object::Class(_, ref methods) => {
+                    let mut props: HashMap<Symbol, Object> = HashMap::new();
+
+                    for &(ref name, ref expr) in properties {
+                        let value = evaluate_expression(expr, env)?;
+                        props.insert(*name, value);
+                    }
+
+                    env.add_object(*name, Object::Instance{
+                        methods:methods.clone(),
+                        fields:props,
+                    });
+
+                    return Ok(Object::None)
+                }
+
+                _ => unreachable!(),
+            };
+
+        }
+
         Expression::Dict { ref items } => {
             let mut dict: HashMap<Object, Object> = HashMap::new();
 
@@ -216,7 +323,44 @@ fn evaluate_expression(
 
             Ok(Object::Dict(dict))
         }
+
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),
+
+        Expression::IndexExpr {
+            ref target,
+            ref index,
+        } => {
+            let target = evaluate_expression(target, env)?;
+            let index = evaluate_expression(index, env)?;
+
+            match target {
+                Object::Array(r) => {
+                    let index = match index {
+                        Object::Int(i) => i,
+                        _ => unreachable!(),
+                    };
+
+                    if index > (r.len() as i64) || index < 0 {
+                        return Err(RuntimeError::IndexOutOfBound);
+                    }
+
+                    Ok(r[index as usize].to_owned())
+                }
+                Object::Dict(r) => {
+                    let index = match index {
+                        Object::Int(i) => Object::Int(i),
+                        Object::Str(r) => Object::Str(r),
+                        Object::Bool(b) => Object::Bool(b),
+                        _ => return Err(RuntimeError::InvalidIndexType),
+                    };
+
+                    let nil = Object::Nil;
+
+                    Ok(r.get(&index).unwrap_or(&nil).clone())
+                }
+                _ => unimplemented!(),
+            }
+        }
         Expression::Literal(ref lit) => evaluate_literal(lit),
 
         Expression::Logical {
@@ -239,32 +383,35 @@ fn evaluate_expression(
 
             Ok(right)
         }
+
+        Expression::Func {
+            ref parameters,
+            ref body,
+            ..
+        } => {
+            use symbol::Symbol;
+
+            let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
+            Ok(Object::Function(env.unique_id(), params, body.node.clone()))
+        }
         Expression::Var(ref symbol, ..) => {
+            println!("{:?}", env.objects);
             let value = env.look_object(*symbol).unwrap().clone();
             Ok(value)
         }
 
-        Expression::Binary {
-            ref left_expr,
-            ref operator,
-            ref right_expr,
+        // Expression::
+        Expression::Ternary {
+            ref condition,
+            ref then_branch,
+            ref else_branch,
         } => {
-            let left = evaluate_expression(left_expr, env)?;
-            let right = evaluate_expression(right_expr, env)?;
+            let condition = evaluate_expression(condition, env)?;
 
-            match *operator {
-                Operator::BangEqual => Ok(Object::Bool(!left == right)),
-                Operator::EqualEqual => Ok(Object::Bool(left == right)),
-                Operator::LessThan => Ok(Object::Bool(left < right)),
-                Operator::LessThanEqual => Ok(Object::Bool(left <= right)),
-                Operator::GreaterThan => Ok(Object::Bool(left > right)),
-                Operator::GreaterThanEqual => Ok(Object::Bool(left >= right)),
-                Operator::Plus => add(left, right),
-                Operator::Minus => minus(left, right),
-                Operator::Star => times(left, right),
-                Operator::Slash => divide(left, right),
-                Operator::Modulo => modulo(left, right),
-                Operator::Exponential => expon(left, right),
+            if condition.is_truthy() {
+                evaluate_expression(then_branch, env)
+            } else {
+                evaluate_expression(else_branch, env)
             }
         }
 

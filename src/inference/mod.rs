@@ -349,7 +349,11 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let callee = match callee.node {
                 Expression::Var(sym, _) => sym,
-                _ => unreachable!(),
+                ref e => {
+                println!("{:?}",e);
+
+                unreachable!()
+                },
             };
 
             if let Some(entry) = env.look_var(callee).cloned() {
