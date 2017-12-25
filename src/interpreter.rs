@@ -3,7 +3,7 @@ use ast::expr::*;
 use ast::statement::Statement;
 use pos::WithPos;
 use env::Env;
-
+use std::collections::HashMap;
 #[derive(Debug)]
 pub enum RuntimeError {
     Unary(&'static str),
@@ -203,8 +203,42 @@ fn evaluate_expression(
 
             Ok(value)
         }
+
+        Expression::Dict { ref items } => {
+            let mut dict: HashMap<Object, Object> = HashMap::new();
+
+            for &(ref key, ref value) in items {
+                let eval_key = evaluate_expression(key, env)?;
+                let eval_value = evaluate_expression(value, env)?;
+
+                dict.insert(eval_key, eval_value);
+            }
+
+            Ok(Object::Dict(dict))
+        }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),
         Expression::Literal(ref lit) => evaluate_literal(lit),
+
+        Expression::Logical {
+            ref left,
+            ref operator,
+            ref right,
+        } => {
+            let left = evaluate_expression(left, env)?;
+
+            match *operator {
+                LogicOperator::Or => if left.is_truthy() {
+                    return Ok(left);
+                },
+                LogicOperator::And => if !left.is_truthy() {
+                    return Ok(left);
+                },
+            }
+
+            let right = evaluate_expression(right, env)?;
+
+            Ok(right)
+        }
         Expression::Var(ref symbol, ..) => {
             let value = env.look_object(*symbol).unwrap().clone();
             Ok(value)

@@ -238,16 +238,13 @@ impl<'a> Parser<'a> {
             self.if_statement()
         } else if self.recognise(TokenType::DO) {
             self.do_statement()
-            
         } else if self.recognise(TokenType::WHILE) {
             self.while_statement()
         } else if self.recognise(TokenType::FOR) {
             self.for_statement()
         } else if self.recognise(TokenType::PRINT) {
             self.print_statement()
-        }
-        
-        else {
+        } else {
             self.expression_statement()
         }
     }
@@ -260,14 +257,17 @@ impl<'a> Parser<'a> {
         Ok(WithPos::new(Statement::ExpressionStmt(expr), pos))
     }
 
-    fn print_statement(&mut self) -> Result<WithPos<Statement>, ParserError>  {
+    fn print_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let print_pos = self.get_pos()?;
 
         let expr = self.expression()?;
 
-        self.consume(TokenType::SEMICOLON, "Expected a \';\' after a print statement")?;
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expected a \';\' after a print statement",
+        )?;
 
-        Ok(WithPos::new(Statement::Print(expr),print_pos))
+        Ok(WithPos::new(Statement::Print(expr), print_pos))
     }
 
     fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
