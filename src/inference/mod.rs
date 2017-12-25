@@ -77,6 +77,7 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
+        Statement::Print(ref expr) => transform_expr(expr, env),
         Statement::Class {
             ref name,
             ref methods,

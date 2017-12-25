@@ -33,23 +33,34 @@ fn evaluate_statement(
             env.end_scope();
             Ok(Object::None)
         }
+
         Statement::Break => Err(RuntimeError::Break),
         Statement::Continue => Err(RuntimeError::Continue),
-        Statement::Class{ref name,ref methods,ref properties} => {
+        Statement::Class {
+            ref name,
+            ref methods,
+            ref properties,
+        } => {
             env.add_object(*name, Object::Nil);
-
+            for method in methods {
+                let func = evaluate_statement(method, env)?;
+                println!("{:?}", func)
+            }
             unimplemented!()
         }
 
-        Statement::DoStmt{ref condition,ref body } => {
+        Statement::DoStmt {
+            ref condition,
+            ref body,
+        } => {
             while evaluate_expression(condition, env)?.is_truthy() {
                 match evaluate_statement(body, env) {
                     Ok(value) => value,
                     Err(e) => match e {
-                        RuntimeError::Break =>break,
+                        RuntimeError::Break => break,
                         RuntimeError::Continue => continue,
-                        _ => return Err(e)
-                    }
+                        _ => return Err(e),
+                    },
                 };
             }
 
@@ -58,14 +69,32 @@ fn evaluate_statement(
 
         Statement::ExpressionStmt(ref expr) => evaluate_expression(expr, env),
 
-        Statement::IfStmt{ref condition,ref else_branch,ref then_branch } => {
+        Statement::Function { ref name, ref body } => unimplemented!(),
+
+        Statement::IfStmt {
+            ref condition,
+            ref else_branch,
+            ref then_branch,
+        } => {
             if evaluate_expression(condition, env)?.is_truthy() {
                 evaluate_statement(then_branch, env)
-            }else if let Some(ref else_statement) = *else_branch {
+            } else if let Some(ref else_statement) = *else_branch {
                 evaluate_statement(else_statement, env)
-            }else {
+            } else {
                 Ok(Object::None)
             }
+        }
+
+        Statement::Print(ref expr) => {
+            use std::io;
+            use std::io::prelude::*;
+
+            let value = evaluate_expression(expr, env)?;
+
+            println!("{}", value.as_string());
+            let _ = io::stdout().flush();
+
+            Ok(Object::None)
         }
 
         Statement::Return(ref r) => {
@@ -75,16 +104,21 @@ fn evaluate_statement(
 
             Ok(Object::Nil)
         }
-        
-        Statement::WhileStmt{ref body, ref condition} => {
+
+        Statement::TypeAlias { .. } => Ok(Object::None),
+
+        Statement::WhileStmt {
+            ref body,
+            ref condition,
+        } => {
             while evaluate_expression(condition, env)?.is_truthy() {
                 match evaluate_statement(body, env) {
                     Ok(value) => value,
                     Err(e) => match e {
-                        RuntimeError::Break =>break,
+                        RuntimeError::Break => break,
                         RuntimeError::Continue => continue,
-                        _ => return Err(e)
-                    }
+                        _ => return Err(e),
+                    },
                 };
             }
 
@@ -97,8 +131,6 @@ fn evaluate_statement(
             env.add_object(*symbol, value);
             Ok(Object::None)
         }
-
-        _ => unimplemented!(),
     }
 }
 

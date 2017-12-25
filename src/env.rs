@@ -58,7 +58,7 @@ impl Env {
     pub fn end_scope(&mut self) {
         self.types.end_scope();
         self.vars.end_scope();
-        self.objects.begin_scope();
+        self.objects.end_scope();
     }
 
     pub fn add_type(&mut self, symbol: Symbol, data: Type) {

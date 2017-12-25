@@ -189,6 +189,10 @@ impl Resolver {
 impl Resolver {
     fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
         match statement.node {
+            Statement::Print(ref expr) =>  {
+                self.resolve_expr(&expr.node, statement.pos)?;
+                Ok(())
+            }
             Statement::Block(ref statements) => {
                 self.begin_scope();
 

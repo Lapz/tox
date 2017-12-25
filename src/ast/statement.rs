@@ -12,11 +12,14 @@ pub enum Statement {
         methods: Vec<WithPos<Statement>>,
         properties: Vec<(Symbol, Symbol)>,
     },
+
     IfStmt {
         condition: WithPos<Expression>,
         then_branch: Box<WithPos<Statement>>,
         else_branch: Option<Box<WithPos<Statement>>>,
     },
+
+    Print(WithPos<Expression>),
     WhileStmt {
         condition: WithPos<Expression>,
         body: Box<WithPos<Statement>>,
