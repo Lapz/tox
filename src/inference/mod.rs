@@ -349,11 +349,76 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let callee = match callee.node {
                 Expression::Var(sym, _) => sym,
-                Expression::Get{ref object,..} => {
-                    match object.node {
+                Expression::Get{ref object,ref property,..} => {
+                   
+                   let sym = match object.node {
                         Expression::Var(sym,_) => sym,
                         _ => unimplemented!()
+                    };
+
+                    if let Some(entry) = env.look_var(sym).cloned() {
+                        match entry {
+                    Entry::VarEntry(ref class) => {
+                        match class {
+                            &Type::Class {
+                                ref methods,
+                                ..
+                             } => {
+                                 println!("{:#?}",env);
+                                 println!("{:?}",methods);
+
+                                 let mut found = true;
+                    for &(ref key,ref value) in methods {
+
+                        if key == property{
+                            found = true;
+
+                            match value {
+                                &Entry::VarEntry(ref ty) => return Ok(ExpressionType{
+                                    exp:(),
+                                    ty:ty.clone(),
+                                }),
+
+                                &Entry::FunEntry{ref params,ref returns}=> {
+                                    for (arg, param) in arguments.iter().zip(params) {
+                            let exp = transform_expr(arg, &mut env.clone())?;
+
+                            check_types(&param, &exp.ty)?;
+                        }
+                        return Ok(ExpressionType {
+                            exp: (),
+                            ty: actual_type(returns).clone(),
+                        });
+                                }
+                            }
+
+
+                        }
                     }
+
+                    if !found {
+                            return Err(TypeError::NotProperty);
+                    }
+
+
+                                 
+                             }
+
+                            _=> unimplemented!("TODO ADD AN ERROR"),
+                        }
+                    }
+
+                    ref e => {
+                println!("{:#?}",e);
+
+                unreachable!()
+                },
+                }
+                    }
+
+
+
+
                 },
                 ref e => {
                 println!("{:#?}",e);
@@ -362,6 +427,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 },
             };
 
+            
             if let Some(entry) = env.look_var(callee).cloned() {
                 match entry {
                     Entry::FunEntry {
@@ -380,9 +446,47 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                     },
                     Entry::VarEntry(ref class) => {
                         match class {
-                            Type::Class {
-                                ref methods
+                            &Type::Class {
+                                ref methods,
+                                ..
                              } => {
+                                 println!("{:#?}",env);
+                                 println!("{:?}",methods);
+
+                                 let mut found = true;
+                    for &(ref key,ref value) in methods {
+
+                        if key == &callee {
+                            found = true;
+
+                            match value {
+                                &Entry::VarEntry(ref ty) => return Ok(ExpressionType{
+                                    exp:(),
+                                    ty:ty.clone(),
+                                }),
+
+                                &Entry::FunEntry{ref params,ref returns}=> {
+                                    for (arg, param) in arguments.iter().zip(params) {
+                            let exp = transform_expr(arg, &mut env.clone())?;
+
+                            check_types(&param, &exp.ty)?;
+                        }
+                        return Ok(ExpressionType {
+                            exp: (),
+                            ty: actual_type(returns).clone(),
+                        });
+                                }
+                            }
+
+
+                        }
+                    }
+
+                    if !found {
+                            return Err(TypeError::NotProperty);
+                    }
+
+
                                  
                              }
 
