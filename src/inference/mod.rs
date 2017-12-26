@@ -349,8 +349,14 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let callee = match callee.node {
                 Expression::Var(sym, _) => sym,
+                Expression::Get{ref object,..} => {
+                    match object.node {
+                        Expression::Var(sym,_) => sym,
+                        _ => unimplemented!()
+                    }
+                },
                 ref e => {
-                println!("{:?}",e);
+                println!("{:#?}",e);
 
                 unreachable!()
                 },
@@ -371,9 +377,24 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                             exp: (),
                             ty: actual_type(returns).clone(),
                         });
+                    },
+                    Entry::VarEntry(ref class) => {
+                        match class {
+                            Type::Class {
+                                ref methods
+                             } => {
+                                 
+                             }
+
+                            _=> unimplemented!("TODO ADD AN ERROR"),
+                        }
                     }
 
-                    _ => unreachable!(), // TODO Add classes
+                    ref e => {
+                println!("{:#?}",e);
+
+                unreachable!()
+                },
                 }
             }
 
