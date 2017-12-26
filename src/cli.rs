@@ -60,8 +60,24 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         let mut env = Env::new(&strings);
 
-        println!("{:#?}", analyse(&ast, &mut env));
-        println!("{:#?}", interpret(&ast, &mut env));
+        match analyse(&ast, &mut env) {
+            Ok(_) => (),
+            Err(errors) => {
+                for err in errors {
+                    println!("{:?}", err);
+                }
+                continue;
+            }
+        };
+
+        match interpret(&ast, &mut env) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("{:?}", err);
+
+                continue;
+            }
+        };
     }
 }
 
@@ -127,13 +143,28 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut env = Env::new(&strings);
 
-    println!("{:#?}", analyse(&ast, &mut env));
+    // match analyse(&ast, &mut env) {
+    //     Ok(_) => (),
+    //     Err(errors) => {
+    //         for err in errors {
+    //             println!("{:?}", err);
+    //         }
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
     if penv {
         println!("{:#?}", env);
     }
 
-    println!("{:#?}", interpret(&ast, &mut env));
+    match interpret(&ast, &mut env) {
+        Ok(_) => (),
+        Err(err) => {
+            println!("{:?}", err);
+
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", env);

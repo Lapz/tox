@@ -4,14 +4,17 @@ use ast::statement::Statement;
 use pos::WithPos;
 use env::Env;
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
+
 #[derive(Debug)]
 pub enum RuntimeError {
-    Unary(&'static str),
-    Binary(&'static str),
     Break,
     Continue,
     IndexOutOfBound,
     InvalidIndexType,
+    NotAnIn,
+    UndefinedProperty,
 }
 
 pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Object, RuntimeError> {
@@ -187,6 +190,12 @@ fn evaluate_expression(
             Ok(Object::Array(values))
         }
 
+        Expression::This(_) => {
+            use symbol::Symbol;
+            let value = env.look_object(Symbol(0)).unwrap().clone();
+            Ok(value)
+        }
+
         Expression::Assign {
             ref name,
             ref kind,
@@ -298,17 +307,22 @@ fn evaluate_expression(
                         props.insert(*name, value);
                     }
 
-                    env.add_object(*name, Object::Instance{
-                        methods:methods.clone(),
-                        fields:props,
-                    });
+                    env.add_object(
+                        *name,
+                        Object::Instance {
+                            methods: methods.clone(),
+                            fields: Rc::new(RefCell::new(props.clone())),
+                        },
+                    );
 
-                    return Ok(Object::None)
+                    return Ok(Object::Instance {
+                        methods: methods.clone(),
+                        fields: Rc::new(RefCell::new(props)),
+                    });
                 }
 
                 _ => unreachable!(),
             };
-
         }
 
         Expression::Dict { ref items } => {
@@ -395,12 +409,45 @@ fn evaluate_expression(
             Ok(Object::Function(env.unique_id(), params, body.node.clone()))
         }
         Expression::Var(ref symbol, ..) => {
-            println!("{:?}", env.objects);
             let value = env.look_object(*symbol).unwrap().clone();
             Ok(value)
         }
 
-        // Expression::
+        Expression::Set {
+            ref object,
+            ref name,
+            ref value,
+            ..
+        } => {
+            let object = evaluate_expression(object, env)?;
+            let value = evaluate_expression(value, env)?;
+
+            match object {
+                mut instance @ Object::Instance { .. } => {
+                    instance.set(*name, &value);
+                }
+                _ => return Err(RuntimeError::NotAnIn),
+            }
+
+            Ok(value)
+        }
+
+        Expression::Get {
+            ref object,
+            ref property,
+            ..
+        } => {
+            let object = evaluate_expression(object, env)?;
+
+            match object {
+                instance @ Object::Instance { .. } => instance.get_property(property, env),
+                class @ Object::Class(_, _) => class.get_property(property, env),
+                e => {
+                    println!("{:?}", e);
+                    return Err(RuntimeError::NotAnIn);
+                }
+            }
+        }
         Expression::Ternary {
             ref condition,
             ref then_branch,
@@ -430,7 +477,6 @@ fn evaluate_expression(
                 UnaryOperator::Bang => Ok(!right),
             }
         }
-        _ => unimplemented!(),
     }
 }
 

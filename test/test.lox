@@ -1,14 +1,33 @@
 
 
-class Math {
-    fun add(a:int,b:int) -> int {
-    return a+b;
+// class Math {
+//     fun add(a:int,b:int) -> int {
+//     return a+b;
+//     }
+// }
+
+
+// var math = Math{};
+
+// print math.add(10,1);
+
+
+
+class Cake {
+    flavour:str;
+
+    fn taste() {
+        var adjective = "delicious";
+        print "The " + this.flavour + " cake is " + adjective + "!";
     }
 }
 
+var cake = Cake{flavour:"Choclate"};
 
-var math = Math{};
+print cake.flavour;
 
-print Math.add(10,1);
+cake.flavour = "strawberry";
 
+print cake.flavour;
 
+cake.taste();

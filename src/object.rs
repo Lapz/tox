@@ -8,6 +8,8 @@ use symbol::Symbol;
 use ast::statement::Statement;
 use interpreter::RuntimeError;
 use env::Env;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
@@ -22,7 +24,7 @@ pub enum Object {
     Function(Symbol, Vec<Symbol>, Statement),
     Instance {
         methods: HashMap<Symbol, Object>,
-        fields: HashMap<Symbol, Object>
+        fields: Rc<RefCell<HashMap<Symbol, Object>>>,
     },
     Nil,
     None,
@@ -34,6 +36,54 @@ impl Object {
             Object::Nil => false,
             Object::Bool(b) => b,
             _ => true,
+        }
+    }
+
+    pub fn set(&mut self, name: Symbol, value: &Object) {
+        match *self {
+            Object::Instance { ref mut fields, .. } => {
+                fields.borrow_mut().insert(name, value.clone());
+            }
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn bind(&self, instance: &Object, env: &mut Env) -> Object {
+        match *self {
+            ref method @ Object::Function(_, _, _) => {
+                env.begin_scope();
+
+                env.add_object(Symbol(0), instance.clone());
+                method.clone()
+            }
+
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn get_property(&self, name: &Symbol, env: &mut Env) -> Result<Object, RuntimeError> {
+        match *self {
+            Object::Instance {
+                ref fields,
+                ref methods,
+            } => {
+                if fields.borrow().contains_key(name) {
+                    return Ok(fields.borrow().get(name).unwrap().clone());
+                }
+
+                if methods.contains_key(name) {
+                    return Ok(methods.get(name).unwrap().bind(self, env));
+                }
+                Err(RuntimeError::UndefinedProperty)
+            }
+
+            Object::Class(_, ref methods) => {
+                if methods.contains_key(name) {
+                    return Ok(methods.get(name).unwrap().bind(self, env));
+                }
+                Err(RuntimeError::UndefinedProperty)
+            }
+            _ => unimplemented!(),
         }
     }
 
@@ -78,7 +128,7 @@ impl Object {
 
     pub fn as_string(&self) -> String {
         match *self {
-            Object::Instance{..} => "instance".into(),
+            Object::Instance { .. } => "instance".into(),
             Object::Function(ref s, _, _) => format!("fn <{}> ", s),
             Object::Class(ref name, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
@@ -167,7 +217,7 @@ impl PartialOrd for Object {
 impl Display for Object {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Object::Instance{..} => write!(f,"instance"),
+            Object::Instance { .. } => write!(f, "instance"),
             Object::Class(ref name, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
             Object::None => write!(f, "none"),

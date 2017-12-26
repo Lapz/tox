@@ -638,7 +638,6 @@ impl<'a> Parser<'a> {
                 Expression::Get {
                     object, property, ..
                 } => {
-                    // println!("{:?}",self.symbols.name(name) );
                     return Ok(WithPos::new(
                         Expression::Set {
                             object,
@@ -752,8 +751,6 @@ impl<'a> Parser<'a> {
                 },
                 next.pos,
             );
-
-            println!("token {:#?}", self.tokens);
         }
 
         Ok(expr)
@@ -878,7 +875,6 @@ impl<'a> Parser<'a> {
             } else if self.recognise(TokenType::DOT) {
                 self.advance();
 
-                println!("{:?}", self.tokens.peek());
                 let (property, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
                 expr = WithPos::new(
                     Expression::Get {
@@ -988,8 +984,6 @@ impl<'a> Parser<'a> {
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
-                    println!("{:#?}", self);
-
                     self.consume(
                         TokenType::RBRACKET,
                         "Expected a ']' to close the brackets .",
@@ -1034,13 +1028,10 @@ impl<'a> Parser<'a> {
                     return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
-                _ => {
-                    println!("{:#?}", token);
-                    Err(ParserError::IllegalExpression(self.error(
-                        "Cannot parse the expression",
-                        *pos,
-                    )))
-                }
+                _ => Err(ParserError::IllegalExpression(self.error(
+                    "Cannot parse the expression",
+                    *pos,
+                ))),
             },
             None => Err(ParserError::EOF),
         }
