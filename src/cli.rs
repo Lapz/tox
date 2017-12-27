@@ -143,14 +143,14 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut env = Env::new(&strings);
 
-    // match analyse(&ast, &mut env) {
-    //     Ok(_) => (),
-    //     Err(errors) => {
-    //         for err in errors {
-    //             println!("{:?}", err);
-    //         }
-    //         ::std::process::exit(65)
-    //     }
+    // // match analyse(&ast, &mut env) {
+    // //     Ok(_) => (),
+    // //     Err(errors) => {
+    // //         for err in errors {
+    // //             println!("{:?}", err);
+    // //         }
+    // //         ::std::process::exit(65)
+    // //     }
     // };
 
     if penv {

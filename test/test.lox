@@ -31,3 +31,5 @@ cake.flavour = "strawberry";
 print cake.flavour;
 
 cake.taste();
+
+print Cake.taste();

@@ -14,8 +14,7 @@ Statements:
     varDecl      → "var" IDENTIFIER ( ":" type) ? ( ("="| "+=" | "*=" | "-="), expression )? ";" ;
     funDecl      → "fun" function;
     typeDecl     → "type" IDENTIFIER "=" type;
-    classDecl    → "class" IDENTIFIER 
-                 "{" (IDENTFIER:type";")* function* "}"
+    classDecl    → "class" IDENTIFIER "{" (IDENTFIER:type ";" )* function* "}"
     statement    → exprStmt
                  | forStmt
                  | ifStmt
