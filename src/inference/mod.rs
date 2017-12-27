@@ -342,22 +342,39 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let right = transform_expr(right_expr, env)?;
 
             use ast::expr::Operator;
-            match operator {
-                &Operator::LessThan => {
-                    check_int_float(&left, &right, left_expr.pos);
+            match *operator {
 
-                    return Ok(ExpressionType {
+                Operator::BangEqual | Operator::EqualEqual => {
+                    Ok(ExpressionType {
                         exp: (),
                         ty: Type::Bool,
-                    });
+                    })
                 }
-                &Operator::Plus | &Operator::Minus => {
-                    return check_int_float(&left, &right, left_expr.pos)
+                Operator::LessThan
+                | Operator::LessThanEqual
+                | Operator::GreaterThan
+                | Operator::GreaterThanEqual => {
+                    check_int_float_str(&left, &right, left_expr.pos)?;
+                    Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Bool,
+                    })
                 }
 
-                _ => unimplemented!(),
+                Operator::Plus => {
+                    check_int_float_str(&left, &right, left_expr.pos)
+                }
+
+                Operator::Slash
+                | Operator::Star
+                | Operator::Modulo
+                | Operator::Minus
+                | Operator::Exponential => {
+                     check_int_float_str(&left, &right, left_expr.pos)
+                }
+
+                // _ => unimplemented!(),
             }
-            check_int_float(&left, &right, left_expr.pos)
         }
 
         Expression::Call {
@@ -728,20 +745,27 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 /// Given two expression types check if they are {int,int} or they are
 /// {float,float}
 
-fn check_int_float(
+fn check_int_float_str(
     left: &ExpressionType,
     right: &ExpressionType,
     pos: Postition,
 ) -> Result<ExpressionType, TypeError> {
     if check_int(left, pos).is_err() || check_int(right, pos).is_err() {
-        check_float(left, pos)?;
-        check_float(right, pos)?;
-
-        Ok(ExpressionType {
-            exp: (),
-            ty: Type::Float,
-        })
-    } else if check_int(left, pos).is_ok() && check_int(left, pos).is_ok() {
+        if check_float(left, pos).is_ok() {
+            check_float(right, pos)?;
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Float,
+            })
+        } else {
+            check_str(left, pos)?;
+            check_str(right, pos)?;
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Str,
+            })
+        }
+    } else if check_int(left, pos).is_ok() && check_int(right, pos).is_ok() {
         Ok(ExpressionType {
             exp: (),
             ty: Type::Int,
@@ -782,6 +806,12 @@ fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     Ok(())
 }
 
+fn check_str(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
+    if expr.ty != Type::Str {
+        return Err(TypeError::Expected(Type::Int, pos));
+    }
+    Ok(())
+}
 /// Checks if ExpressionType is {float}
 fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {

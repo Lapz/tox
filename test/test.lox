@@ -1,18 +1,3 @@
-
-
-// class Math {
-//     fun add(a:int,b:int) -> int {
-//     return a+b;
-//     }
-// }
-
-
-// var math = Math{};
-
-// print math.add(10,1);
-
-
-
 class Cake {
     flavour:str;
 
