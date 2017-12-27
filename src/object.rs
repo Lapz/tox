@@ -10,10 +10,12 @@ use interpreter::RuntimeError;
 use env::Env;
 use std::rc::Rc;
 use std::cell::RefCell;
+use builtins::BuiltInFunction;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Clone)]
 pub enum Object {
     Float(f64),
+    BuiltIn(Symbol, BuiltInFunction),
     Class(Symbol, HashMap<Symbol, Object>),
     Int(i64),
     Str(String),
@@ -89,6 +91,8 @@ impl Object {
 
     pub fn call(&self, arguments: &[Object], env: &mut Env) -> Result<Object, RuntimeError> {
         match *self {
+
+            Object::BuiltIn(_,builtin_fn) => builtin_fn(arguments),
             Object::Function(_, ref params, ref body) => {
                 env.begin_scope();
 
@@ -129,6 +133,7 @@ impl Object {
     pub fn as_string(&self) -> String {
         match *self {
             Object::Instance { .. } => "instance".into(),
+            Object::BuiltIn(ref s,_,) => format!("fn <builtin<{}>",s),
             Object::Function(ref s, _, _) => format!("fn <{}> ", s),
             Object::Class(ref name, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
@@ -197,6 +202,76 @@ impl Not for Object {
     }
 }
 
+impl PartialEq for Object {
+    fn eq(&self, other: &Object) -> bool {
+        match (self, other) {
+            (s, o) => s == o,
+        }
+    }
+}
+
+impl fmt::Debug for Object {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Object::Float(ref n) => write!(f, "{}", n.to_string()),
+            Object::Int(ref n) => write!(f, "{}", n.to_string()),
+            Object::Class(ref name, _) => write!(f, "class <{}>", name),
+            Object::Return(ref r) => write!(f, "return {}", r),
+            Object::None => write!(f, "none"),
+            Object::Instance{ref fields,.. } => {
+                write!(f, "instance")?;
+
+                let mut fmt_string = String::new();
+                fmt_string.push_str("fields ");
+                fmt_string.push_str("{");
+                for (i, (k, v)) in fields.borrow().iter().enumerate() {
+                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
+                    if i < fields.borrow().len() - 1 {
+                        fmt_string.push_str(", ");
+                    }
+                }
+
+                fmt_string.push_str("}");
+                write!(f, "{}", fmt_string)
+            },
+
+            Object::Bool(ref b) => write!(f, "{}", b.to_string()),
+            Object::Function(ref s, _, _,) => write!(f, "fn <{}> ", s),
+            Object::BuiltIn(ref v,_) => write!(f, "fn <builtin {}>", v),
+            Object::Array(ref v) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str("[");
+                for (i, o) in v.iter().enumerate() {
+                    fmt_string.push_str(format!("{}", o).as_str());
+                    if i < v.len() - 1 {
+                        fmt_string.push_str(", ");
+                    }
+                }
+                fmt_string.push_str("]");
+                write!(f, "{}", fmt_string)
+            },
+
+            Object::Dict(ref hashmap) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str("{");
+                for (i, (k, v)) in hashmap.iter().enumerate() {
+                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
+                    if i < hashmap.len() - 1 {
+                        fmt_string.push_str(", ");
+                    }
+                }
+                fmt_string.push_str("}");
+                write!(f, "{}", fmt_string)
+            },
+
+            Object::Nil => write!(f, "nil"),
+
+            Object::Str(ref s) => write!(f, "{}", s),
+        }
+    }
+}
+
+
 impl PartialOrd for Object {
     fn partial_cmp(&self, other: &Object) -> Option<Ordering> {
         match (self, other) {
@@ -220,6 +295,7 @@ impl Display for Object {
             Object::Instance { .. } => write!(f, "instance"),
             Object::Class(ref name, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
+            Object::BuiltIn(ref s,_,) => write!(f,"fn <builtin{}>",s),
             Object::None => write!(f, "none"),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::Float(ref n) => write!(f, "{}", n.to_string()),

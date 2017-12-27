@@ -20,7 +20,7 @@ mod resolver;
 mod symbol;
 mod env;
 mod pprint;
-
+mod builtins;
 use cli::{repl, run, Cli};
 use structopt::StructOpt;
 

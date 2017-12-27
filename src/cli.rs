@@ -142,6 +142,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     Resolver::new().resolve(&ast).unwrap();
 
     let mut env = Env::new(&strings);
+    env.get_builtins();
 
     match analyse(&ast, &mut env) {
         Ok(_) => (),

@@ -226,7 +226,7 @@ mod test {
 
         let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
-         assert!(ast.is_ok())
+        assert!(ast.is_ok())
     }
 
     #[test]

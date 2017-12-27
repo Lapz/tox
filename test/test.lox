@@ -1,20 +1,7 @@
-class Cake {
-    flavour:str;
-
-    fn taste() {
-        var adjective = "delicious";
-        print "The " + this.flavour + " cake is " + adjective + "!";
-    }
+fun fib(n:int) -> int {
+  if (n < 2) 
+    return n;
+  return fib(n - 2) + fib(n - 1);
 }
+print(fib(6) == 832040);
 
-var cake = Cake{flavour:"Choclate"};
-
-print cake.flavour;
-
-cake.flavour = "strawberry";
-
-print cake.flavour;
-
-cake.taste();
-
-print Cake.taste();
