@@ -171,7 +171,7 @@ mod test {
 
     #[test]
     fn do_while_statement() {
-        let input = "do {print(10);} while (true)";
+        let input = "do {print 10 ;} while (true)";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(strings);
@@ -249,7 +249,7 @@ mod test {
 
     #[test]
     fn for_statement() {
-        let input = "for (var i = 0; i < 2; i = i + 1)print(i);";
+        let input = "for (var i = 0; i < 2; i = i + 1) print i;";
         let tokens = Lexer::new(input).lex().unwrap();
 
         let strings = Rc::new(SymbolFactory::new());
@@ -445,7 +445,7 @@ mod test {
     #[test]
     fn while_statement() {
         let input = "while (!true) {
-            print(\"true\");
+            print \"true\";
             break;continue;
             }";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -736,7 +736,7 @@ mod test {
 
     #[test]
     fn print() {
-        let input = "print(9+9);";
+        let input = "print 9+9 ;";
 
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
@@ -744,54 +744,39 @@ mod test {
         let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let call = WithPos::new(
-            Expression::Call {
-                callee: Box::new(WithPos::new(
-                    Expression::Var(Symbol(2), VariableUseHandle(0)),
+        let expr = WithPos::new(
+            Expression::Binary {
+                left_expr: Box::new(WithPos::new(
+                    Expression::Literal(Literal::Int(9)),
                     Postition {
                         line: 1,
-                        column: 6,
-                        absolute: 5,
+                        column: 7,
+                        absolute: 6,
                     },
                 )),
-                arguments: vec![
-                    WithPos::new(
-                        Expression::Binary {
-                            left_expr: Box::new(WithPos::new(
-                                Expression::Literal(Literal::Int(9)),
-                                Postition {
-                                    line: 1,
-                                    column: 7,
-                                    absolute: 6,
-                                },
-                            )),
-                            operator: Operator::Plus,
-                            right_expr: Box::new(WithPos::new(
-                                Expression::Literal(Literal::Int(9)),
-                                Postition {
-                                    line: 1,
-                                    column: 9,
-                                    absolute: 8,
-                                },
-                            )),
-                        },
-                        Postition {
-                            line: 1,
-                            column: 8,
-                            absolute: 7,
-                        },
-                    ),
-                ],
+                operator: Operator::Plus,
+                right_expr: Box::new(WithPos::new(
+                    Expression::Literal(Literal::Int(9)),
+                    Postition {
+                        line: 1,
+                        column: 9,
+                        absolute: 8,
+                    },
+                )),
             },
             Postition {
                 line: 1,
-                column: 10,
-                absolute: 9,
+                column: 8,
+                absolute: 7,
             },
         );
 
         let expected = WithPos::new(
-            Statement::ExpressionStmt(call),
+            Statement::Print(WithPos::new(Statement::ExpressionStmt(expr),Postition {
+                line:1,
+                column:10,
+                absolute:1
+            })),
             Postition {
                 line: 1,
                 column: 11,

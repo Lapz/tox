@@ -21,7 +21,6 @@ mod symbol;
 mod env;
 mod pprint;
 
-
 use cli::{repl, run, Cli};
 use structopt::StructOpt;
 
