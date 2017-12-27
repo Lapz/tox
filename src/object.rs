@@ -56,7 +56,9 @@ impl Object {
                 env.begin_scope();
 
                 env.add_object(Symbol(0), instance.clone());
+                env.end_scope();
                 method.clone()
+                
             }
 
             _ => unreachable!(),
@@ -205,7 +207,20 @@ impl Not for Object {
 impl PartialEq for Object {
     fn eq(&self, other: &Object) -> bool {
         match (self, other) {
-            (s, o) => s == o,
+            (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
+            (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
+            (&Object::BuiltIn(ref x, _,), &Object::BuiltIn(ref y, _,)) => x == y,
+            (&Object::Class(ref x, _), &Object::Class(ref y, _)) => x == y,
+            (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
+            (&Object::Function(ref x, _, _,), &Object::Function(ref y, _, _,)) => x == y,
+            // (&Object::Instance(ref x, _), &Object::Instance(ref y, _)) => x == y,
+            (&Object::Nil, &Object::Nil) => true,
+            (&Object::None, &Object::None) => true,
+            (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
+            (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
+            (&Object::Return(ref x), &Object::Return(ref y)) => x == y,
+            (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
+            _ => false,
         }
     }
 }

@@ -1,7 +1,22 @@
 fun fib(n:int) -> int {
-  if (n < 2) 
-    return n;
-  return fib(n - 2) + fib(n - 1);
-}
-print(fib(6) == 832040);
+    if (n < 2) 
+      return n;
+    return fib(n - 2) + fib(n - 1);
+  }
+  
+  var start = clock();
+  print(fib(30) == 832040);
+  print(clock() - start);
+  
 
+// var cake = Cake{flavour:"Choclate"};
+
+// print cake.flavour;
+
+// cake.flavour = "strawberry";
+
+// print cake.flavour;
+
+// cake.taste();
+
+// Cake.taste();

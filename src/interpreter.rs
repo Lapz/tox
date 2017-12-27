@@ -15,6 +15,7 @@ pub enum RuntimeError {
     InvalidIndexType,
     NotAnIn,
     UndefinedProperty,
+    Return(Object),
 }
 
 pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Object, RuntimeError> {
@@ -145,7 +146,7 @@ pub(crate) fn evaluate_statement(
                 return Ok(Object::Return(Box::new(evaluate_expression(expr, env)?)));
             }
 
-            Ok(Object::Nil)
+            Ok(Object::Return(Box::new(Object::Nil)))
         }
 
         Statement::TypeAlias { .. } => Ok(Object::None),
