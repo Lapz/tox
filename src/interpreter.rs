@@ -15,7 +15,6 @@ pub enum RuntimeError {
     InvalidIndexType,
     NotAnIn,
     UndefinedProperty,
-    Return(Object),
 }
 
 pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Object, RuntimeError> {

@@ -148,7 +148,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         Ok(_) => (),
         Err(errors) => {
             for err in errors {
-                println!("{:?}", err);
+                println!("{}", err);
             }
             ::std::process::exit(65)
         }

@@ -41,7 +41,7 @@ fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
     let unknown = actual_type(unknown);
 
     if expected != unknown {
-        let msg = format!("Expected {:?} but found {:?}", expected, unknown);
+        let msg = format!("Expected {} but found {}", expected, unknown);
         return Err(TypeError::NotSame(msg));
     }
     Ok(())
@@ -61,13 +61,17 @@ fn actual_type(ty: &Type) -> &Type {
     }
 }
 
-fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
+fn transform_var(
+    symbol: &Symbol,
+    pos: Postition,
+    env: &mut Env,
+) -> Result<ExpressionType, TypeError> {
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
             ty: actual_type(&get_actual_ty(ty)?).clone(),
         }),
-        None => Err(TypeError::UndefindedVar),
+        None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
     }
 }
 
@@ -431,7 +435,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                                     }
 
                                     if !found {
-                                        return Err(TypeError::NotProperty);
+                                        return Err(TypeError::NotProperty(env.name(sym), expr.pos));
                                     }
                                 }
 
@@ -552,7 +556,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
                     if !found {
-                        return Err(TypeError::NotProperty);
+                        return Err(TypeError::NotProperty(env.name(*property), expr.pos));
                     }
                 }
 
@@ -569,7 +573,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref index,
         } => match target.node {
             Expression::Var(ref symbol, _) => {
-                let target_ty = transform_var(symbol, env)?;
+                let target_ty = transform_var(symbol, expr.pos, env)?;
                 let index_ty = transform_expr(index, env)?;
 
                 check_int(&index_ty, index.pos)?;
@@ -595,7 +599,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref properties,
             ref name,
         } => {
-            let class = transform_var(name, env)?;
+            let class = transform_var(name, expr.pos, env)?;
 
             match class.ty {
                 Type::Class { ref fields, .. } => {
@@ -612,7 +616,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
 
                         if !found {
-                            return Err(TypeError::NotProperty);
+                            return Err(TypeError::NotProperty(env.name(*key), expr.pos));
                         }
                     }
 
@@ -710,7 +714,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
                     if !found {
-                        return Err(TypeError::NotProperty);
+                        return Err(TypeError::NotProperty(env.name(*name), expr.pos));
                     }
                 }
 
@@ -738,7 +742,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             })
         }
 
-        Expression::Var(ref symbol, _) => transform_var(symbol, env),
+        Expression::Var(ref symbol, _) => transform_var(symbol, expr.pos, env),
     }
 }
 
@@ -771,7 +775,7 @@ fn check_int_float_str(
             ty: Type::Int,
         })
     } else {
-        Err(TypeError::Expected(Type::Int, pos))
+        Err(TypeError::Expected(Type::Int, right.ty.clone(), pos))
     }
 }
 
@@ -793,7 +797,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
 /// Checks if ExpressionType is {bool}
 fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
-        return Err(TypeError::Expected(Type::Bool, pos));
+        return Err(TypeError::Expected(Type::Bool, right.ty.clone(), pos));
     }
     Ok(())
 }
@@ -801,21 +805,22 @@ fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
 /// Checks if ExpressionType is {int}
 fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
-        return Err(TypeError::Expected(Type::Int, pos));
+        return Err(TypeError::Expected(Type::Int, expr.ty.clone(), pos));
     }
     Ok(())
 }
 
+/// Checks if ExpressionType is {str}
 fn check_str(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Str {
-        return Err(TypeError::Expected(Type::Int, pos));
+        return Err(TypeError::Expected(Type::Str, expr.ty.clone(), pos));
     }
     Ok(())
 }
 /// Checks if ExpressionType is {float}
 fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {
-        return Err(TypeError::Expected(Type::Int, pos));
+        return Err(TypeError::Expected(Type::Float, expr.ty.clone(), pos));
     }
     Ok(())
 }

@@ -58,7 +58,6 @@ impl Object {
                 env.add_object(Symbol(0), instance.clone());
                 env.end_scope();
                 method.clone()
-                
             }
 
             _ => unreachable!(),
@@ -93,8 +92,7 @@ impl Object {
 
     pub fn call(&self, arguments: &[Object], env: &mut Env) -> Result<Object, RuntimeError> {
         match *self {
-
-            Object::BuiltIn(_,builtin_fn) => builtin_fn(arguments),
+            Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
             Object::Function(_, ref params, ref body) => {
                 env.begin_scope();
 
@@ -135,7 +133,7 @@ impl Object {
     pub fn as_string(&self) -> String {
         match *self {
             Object::Instance { .. } => "instance".into(),
-            Object::BuiltIn(ref s,_,) => format!("fn <builtin<{}>",s),
+            Object::BuiltIn(ref s, _) => format!("fn <builtin<{}>", s),
             Object::Function(ref s, _, _) => format!("fn <{}> ", s),
             Object::Class(ref name, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
@@ -209,10 +207,10 @@ impl PartialEq for Object {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
-            (&Object::BuiltIn(ref x, _,), &Object::BuiltIn(ref y, _,)) => x == y,
+            (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
             (&Object::Class(ref x, _), &Object::Class(ref y, _)) => x == y,
             (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
-            (&Object::Function(ref x, _, _,), &Object::Function(ref y, _, _,)) => x == y,
+            (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _)) => x == y,
             // (&Object::Instance(ref x, _), &Object::Instance(ref y, _)) => x == y,
             (&Object::Nil, &Object::Nil) => true,
             (&Object::None, &Object::None) => true,
@@ -233,7 +231,7 @@ impl fmt::Debug for Object {
             Object::Class(ref name, _) => write!(f, "class <{}>", name),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::None => write!(f, "none"),
-            Object::Instance{ref fields,.. } => {
+            Object::Instance { ref fields, .. } => {
                 write!(f, "instance")?;
 
                 let mut fmt_string = String::new();
@@ -248,11 +246,11 @@ impl fmt::Debug for Object {
 
                 fmt_string.push_str("}");
                 write!(f, "{}", fmt_string)
-            },
+            }
 
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),
-            Object::Function(ref s, _, _,) => write!(f, "fn <{}> ", s),
-            Object::BuiltIn(ref v,_) => write!(f, "fn <builtin {}>", v),
+            Object::Function(ref s, _, _) => write!(f, "fn <{}> ", s),
+            Object::BuiltIn(ref v, _) => write!(f, "fn <builtin {}>", v),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -264,7 +262,7 @@ impl fmt::Debug for Object {
                 }
                 fmt_string.push_str("]");
                 write!(f, "{}", fmt_string)
-            },
+            }
 
             Object::Dict(ref hashmap) => {
                 let mut fmt_string = String::new();
@@ -277,7 +275,7 @@ impl fmt::Debug for Object {
                 }
                 fmt_string.push_str("}");
                 write!(f, "{}", fmt_string)
-            },
+            }
 
             Object::Nil => write!(f, "nil"),
 
@@ -285,7 +283,6 @@ impl fmt::Debug for Object {
         }
     }
 }
-
 
 impl PartialOrd for Object {
     fn partial_cmp(&self, other: &Object) -> Option<Ordering> {
@@ -310,7 +307,7 @@ impl Display for Object {
             Object::Instance { .. } => write!(f, "instance"),
             Object::Class(ref name, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
-            Object::BuiltIn(ref s,_,) => write!(f,"fn <builtin{}>",s),
+            Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
             Object::None => write!(f, "none"),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
