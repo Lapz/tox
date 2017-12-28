@@ -36,13 +36,12 @@ pub fn analyse(
 }
 
 /// Checks if two types are eqvilant
-fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
+fn check_types(expected: &Type, unknown: &Type,pos:Postition) -> Result<(), TypeError> {
     let expected = actual_type(expected);
     let unknown = actual_type(unknown);
 
     if expected != unknown {
-        let msg = format!("Expected {} but found {}", expected, unknown);
-        return Err(TypeError::NotSame(msg));
+        return Err(TypeError::Expected(expected.clone(),unknown.clone(),pos));
     }
     Ok(())
 }
@@ -80,7 +79,10 @@ fn transform_statement(
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
-        Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
+        Statement::ExpressionStmt(ref expr) => {
+            transform_expr(expr, env)?;
+            Ok(ExpressionType{exp:(),ty:Type::Nil})
+        },
         Statement::Print(_) => Ok(ExpressionType {
             exp: (),
             ty: Type::Nil,
@@ -151,7 +153,7 @@ fn transform_statement(
 
             if let Some(ref ident) = *ty {
                 let ty = get_type(ident, statement.pos, env)?;
-                check_types(&ty, &exp_ty.ty)?;
+                check_types(&ty, &exp_ty.ty, statement.pos)?;
 
                 env.add_var(*symbol, Entry::VarEntry(ty.clone()));
 
@@ -215,7 +217,7 @@ fn transform_statement(
             if let &Some(ref else_statement) = else_branch {
                 let else_ty = transform_statement(else_statement, env)?;
 
-                check_types(&then_ty.ty, &else_ty.ty)?;
+                check_types(&then_ty.ty, &else_ty.ty, statement.pos)?;
 
                 return Ok(ExpressionType {
                     exp: (),
@@ -337,7 +339,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let first_ty = transform_expr(&items[0], env)?;
 
             for item in items {
-                match check_types(&first_ty.ty, &transform_expr(item, env)?.ty) {
+                match check_types(&first_ty.ty, &transform_expr(item, env)?.ty,expr.pos) {
                     Ok(_) => (),
                     Err(e) => return Err(e),
                 }
@@ -450,7 +452,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                                                         let exp =
                                                             transform_expr(arg, &mut env.clone())?;
 
-                                                        check_types(&param, &exp.ty)?;
+                                                        check_types(&param, &exp.ty,expr.pos)?;
                                                     }
                                                     return Ok(ExpressionType {
                                                         exp: (),
@@ -487,7 +489,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         for (arg, param) in arguments.iter().zip(params) {
                             let exp = transform_expr(arg, &mut env.clone())?;
 
-                            check_types(&param, &exp.ty)?;
+                            check_types(&param, &exp.ty,expr.pos)?;
                         }
                         return Ok(ExpressionType {
                             exp: (),
@@ -518,12 +520,12 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let first_key_ty = transform_expr(&items[0].0, env)?;
             let first_value_ty = transform_expr(&items[0].0, env)?;
             for item in items {
-                match check_types(&first_key_ty.ty, &transform_expr(&item.0, env)?.ty) {
+                match check_types(&first_key_ty.ty, &transform_expr(&item.0, env)?.ty,expr.pos) {
                     Ok(_) => (),
                     Err(e) => return Err(e),
                 };
 
-                match check_types(&first_value_ty.ty, &transform_expr(&item.1, env)?.ty) {
+                match check_types(&first_value_ty.ty, &transform_expr(&item.1, env)?.ty,expr.pos) {
                     Ok(_) => (),
                     Err(e) => return Err(e),
                 }
@@ -562,7 +564,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
             let body_ty = transform_statement(&body, env)?;
 
-            check_types(&return_type, &body_ty.ty)?;
+            check_types(&return_type, &body_ty.ty,expr.pos)?;
 
             env.end_scope();
             Ok(body_ty)
@@ -643,7 +645,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
                                 let instance_val_ty = transform_expr(instance_val, env)?;
 
-                                check_types(value, &instance_val_ty.ty)?;
+                                check_types(value, &instance_val_ty.ty,expr.pos)?;
                             }
                         }
 
@@ -741,7 +743,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         if prop.0 == *name {
                             found = true;
                             let value_ty = transform_expr(value, env)?;
-                            check_types(&prop.1, &value_ty.ty)?;
+                            check_types(&prop.1, &value_ty.ty,expr.pos)?;
                             ty = prop.1.clone();
                         }
                     }
@@ -766,7 +768,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
             let then_ty = transform_expr(then_branch, env)?;
             let else_ty = transform_expr(else_branch, env)?;
-            check_types(&then_ty.ty, &else_ty.ty)?;
+            check_types(&then_ty.ty, &else_ty.ty,expr.pos)?;
 
             Ok(ExpressionType {
                 exp: (),
@@ -793,13 +795,15 @@ fn check_int_float_str(
                 exp: (),
                 ty: Type::Float,
             })
-        } else {
-            check_str(left, pos)?;
+        } else if check_str(left,pos).is_ok(){
+            // check_str(left, pos)?;
             check_str(right, pos)?;
             Ok(ExpressionType {
                 exp: (),
                 ty: Type::Str,
             })
+        }else {
+            Err(TypeError::ExpectedOneOf("Exepected on of 'Int', 'Float', or 'Str'".into()))
         }
     } else if check_int(left, pos).is_ok() && check_int(right, pos).is_ok() {
         Ok(ExpressionType {

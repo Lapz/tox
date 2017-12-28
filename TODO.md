@@ -10,7 +10,7 @@
         name:str,surname:str;
     }
     ```
-- [ ] Improve type inference messages
-- [ ] Implement the interpreter
-- [ ] Add Exponential to the parser
-- [ ] Improve the inference of comparison operators
+- [x] Improve type inference messages
+- [x] Implement the interpreter
+- [x] Add Exponential to the parser
+- [x] Improve the inference of comparison operators

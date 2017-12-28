@@ -1,17 +1,11 @@
-fun makeCounter() {
-  var i = 0;
-  fun count() {
-    i = i + 1;
-    print i;
+fun fib(n:int) {
+  if (n < 2) {
+    return 1;
+  } else {
+    return 2;
   }
-  return count;
 }
 
- var i = 0;
-  fun count() {
-    i = i + 1;
-    print i;
-  }
-var counter = makeCounter();
-counter(); // "1".
-counter(); // "2".
+var start = clock();
+print(fib(30) == 832040);
+print(clock() - start);
