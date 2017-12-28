@@ -8,15 +8,15 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Expected(Type, Type, Postition),
-    UndefindedType(String,Postition),
+    UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
     NotSame(String),
-    Function,
-    InvalidIndex,
-    NotArray,
+    Function(Postition),
+    InvalidIndex(Postition),
+    IndexAble(String, Postition),
     NotProperty(String, Postition),
-    TooManyProperty,
-    TooLittleProperty,
+    TooManyProperty(Postition),
+    TooLittleProperty(Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -40,11 +40,7 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Type::Class {
-                ref name,
-                ref methods,
-                ref fields,
-            } => unimplemented!(),
+            Type::Class { ref name, .. } => write!(f, "Class {}", name),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
@@ -65,20 +61,31 @@ impl Display for TypeError {
                 "Expected type \'{}\' but instead got \'{}\' on {}",
                 &expected, got, pos
             ),
+            TypeError::IndexAble(ref name, ref pos) => {
+                write!(f, "\'{}\' is not an indexable on {}", name, pos)
+            }
+
+            TypeError::InvalidIndex(ref pos) => write!(f, "Cannot index on line '{}'", pos),
 
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
             }
 
+            TypeError::NotSame(ref msg) => write!(f, "{}", msg),
+
             TypeError::NotProperty(ref name, ref pos) => {
                 write!(f, "Undefined property \'{}\' on {}", name, pos)
             }
 
-            TypeError::UndefindedType(ref name,ref pos) => {
-                 write!(f, "Undefined type \'{}\' on {}", name, pos)
+            TypeError::UndefindedType(ref name, ref pos) => {
+                write!(f, "Undefined type \'{}\' on {}", name, pos)
+            }
+            TypeError::Function(ref pos) => {
+                write!(f, "Type should be a variable not a function on {}", pos)
             }
 
-            _ => unimplemented!(),
+            TypeError::TooLittleProperty(ref pos) => write!(f, "Expected more fields on {}", pos),
+            TypeError::TooManyProperty(ref pos) => write!(f, "Expected less fields on {}", pos),
         }
     }
 }

@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
-
+extern crate rand;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;

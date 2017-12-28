@@ -8,6 +8,7 @@ default = []
 [dependencies]
 clippy = {version = "*", optional = true}
 structopt = "0.1.6"
+rand = "0.3.16"
 structopt-derive = "*"
 [dev-dependencies]
 pretty_assertions = "0.4.0"
