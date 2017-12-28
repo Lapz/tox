@@ -158,6 +158,31 @@ impl Statement {
                 pprint_string.push_str(" )");
             }
 
+            Statement::ForStmt {
+                ref initializer,
+                ref condition,
+                ref increment,
+                ref body,
+            } => {
+                pprint_string.push_str("(for ");
+
+                if let &Some(ref init) = initializer {
+                    init.node.pprint_into(pprint_string, symbols);
+                }
+
+                if let &Some(ref cond) = condition {
+                    cond.node.pprint_into(pprint_string, symbols);
+                }
+
+                if let &Some(ref inc) = increment {
+                    inc.node.pprint_into(pprint_string, symbols);
+                }
+
+                body.node.pprint_into(pprint_string, symbols);
+
+                pprint_string.push_str(" )");
+            }
+
             Statement::Function { ref name, ref body } => {
                 pprint_string.push_str("(fun ");
                 pprint_string.push_str(&symbols.name(*name));

@@ -27,7 +27,7 @@ impl Env {
         self.add_builtin("clock", vec![], Type::Float, built_in_clock);
         self.add_builtin("hex", vec![Type::Int], Type::Str, built_in_hex);
         self.add_builtin("oct", vec![Type::Int], Type::Str, built_in_oct);
-        self.add_builtin("rand", vec![Type::Int,Type::Int], Type::Int, built_in_rand);
+        self.add_builtin("rand", vec![Type::Int, Type::Int], Type::Int, built_in_rand);
     }
 
     fn add_builtin(&mut self, name: &str, params: Vec<Type>, returns: Type, func: BuiltInFunction) {

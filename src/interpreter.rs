@@ -98,6 +98,51 @@ pub(crate) fn evaluate_statement(
 
         Statement::ExpressionStmt(ref expr) => evaluate_expression(expr, env),
 
+        Statement::ForStmt {
+            ref initializer,
+            ref condition,
+            ref increment,
+            ref body,
+        } => {
+            if initializer.is_none() && condition.is_none() && increment.is_none() {
+                loop {
+                    match evaluate_statement(body, env) {
+                        Ok(value) => value,
+                        Err(e) => match e {
+                            RuntimeError::Break => break,
+                            RuntimeError::Continue => continue,
+                            _ => return Err(e),
+                        },
+                    };
+                }
+                return Ok(Object::None);
+            }
+
+            if let &Some(ref init) = initializer {
+                evaluate_statement(init, env)?;
+            }
+
+
+            if let &Some(ref cond) = condition {
+                while evaluate_expression(cond, env)?.is_truthy() {
+                    match evaluate_statement(body, env) {
+                        Ok(value) => value,
+                        Err(e) => match e {
+                            RuntimeError::Break => break,
+                            RuntimeError::Continue => continue,
+                            _ => return Err(e),
+                        },
+                    };
+
+                    if let &Some(ref inc) = increment {
+                        evaluate_expression(inc, env)?;
+                    }
+                }
+            }
+
+            Ok(Object::None)
+        }
+
         Statement::Function { ref name, ref body } => match body.node {
             Expression::Func {
                 ref parameters,
