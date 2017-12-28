@@ -190,7 +190,7 @@ impl Resolver {
     fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
         match statement.node {
             Statement::Print(ref expr) => {
-                self.resolve_expr(&expr.node, statement.pos)?;
+                self.resolve_expression(&expr.node, statement.pos)?;
                 Ok(())
             }
             Statement::Block(ref statements) => {
@@ -214,7 +214,7 @@ impl Resolver {
             }
 
             Statement::ExpressionStmt(ref expr) => {
-                self.resolve_expr(&expr.node, statement.pos)?;
+                self.resolve_expression(&expr.node, statement.pos)?;
                 Ok(())
             }
 
@@ -223,7 +223,7 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expr(&condition.node, statement.pos)?;
+                self.resolve_expression(&condition.node, statement.pos)?;
                 self.resolve_statement(then_branch)?;
 
                 match *else_branch {
@@ -234,11 +234,34 @@ impl Resolver {
                 Ok(())
             }
 
+            Statement::ForStmt {
+                ref initializer,
+                ref condition,
+                ref increment,
+                ref body,
+            } => {
+                if let &Some(ref init) = initializer {
+                    self.resolve_statement(init)?;
+                }
+
+                if let &Some(ref cond) = condition {
+                    self.resolve_expression(&cond.node, statement.pos)?;
+                }
+
+                if let &Some(ref inc) = increment {
+                    self.resolve_expression(&inc.node, statement.pos)?;
+                }
+
+                self.resolve_statement(body)?;
+
+                Ok(())
+            }
+
             Statement::WhileStmt {
                 ref condition,
                 ref body,
             } => {
-                self.resolve_expr(&condition.node, statement.pos)?;
+                self.resolve_expression(&condition.node, statement.pos)?;
                 self.resolve_statement(body)?;
                 Ok(())
             }
@@ -247,7 +270,7 @@ impl Resolver {
                 ref condition,
                 ref body,
             } => {
-                self.resolve_expr(&condition.node, statement.pos)?;
+                self.resolve_expression(&condition.node, statement.pos)?;
                 self.resolve_statement(body)?;
                 Ok(())
             }
@@ -272,7 +295,7 @@ impl Resolver {
                             )));
                         }
 
-                        self.resolve_expr(&value.node, statement.pos)
+                        self.resolve_expression(&value.node, statement.pos)
                     }
                 }
             }
@@ -282,7 +305,7 @@ impl Resolver {
 
                 match expression.node {
                     Expression::Literal(Literal::Nil) => (),
-                    _ => self.resolve_expr(&expression.node, statement.pos)?,
+                    _ => self.resolve_expression(&expression.node, statement.pos)?,
                 }
 
                 self.define(variable.to_owned());
@@ -345,11 +368,15 @@ impl Resolver {
     }
 }
 impl Resolver {
-    fn resolve_expr(&mut self, expr: &Expression, pos: Postition) -> Result<(), ResolverError> {
+    fn resolve_expression(
+        &mut self,
+        expr: &Expression,
+        pos: Postition,
+    ) -> Result<(), ResolverError> {
         match *expr {
             Expression::Array { ref items } => {
                 for ref item in items {
-                    self.resolve_expr(&item.node, pos)?;
+                    self.resolve_expression(&item.node, pos)?;
                 }
                 Ok(())
             }
@@ -360,7 +387,7 @@ impl Resolver {
                 ref value,
                 ..
             } => {
-                self.resolve_expr(&value.node, pos)?;
+                self.resolve_expression(&value.node, pos)?;
                 self.resolve_local(name, *handle);
                 Ok(())
             }
@@ -370,8 +397,8 @@ impl Resolver {
                 ref right_expr,
                 ..
             } => {
-                self.resolve_expr(&left_expr.node, pos)?;
-                self.resolve_expr(&right_expr.node, pos)?;
+                self.resolve_expression(&left_expr.node, pos)?;
+                self.resolve_expression(&right_expr.node, pos)?;
                 Ok(())
             }
 
@@ -379,10 +406,10 @@ impl Resolver {
                 ref callee,
                 ref arguments,
             } => {
-                self.resolve_expr(&callee.node, pos)?;
+                self.resolve_expression(&callee.node, pos)?;
 
                 for ref argument in arguments {
-                    self.resolve_expr(&argument.node, pos)?;
+                    self.resolve_expression(&argument.node, pos)?;
                 }
 
                 Ok(())
@@ -392,7 +419,7 @@ impl Resolver {
                 for &(ref property_name, ref property_value) in properties {
                     self.declare(*property_name, pos)?;
                     self.define(*property_name);
-                    self.resolve_expr(&property_value.node, pos)?;
+                    self.resolve_expression(&property_value.node, pos)?;
                 }
 
                 self.end_scope();
@@ -401,8 +428,8 @@ impl Resolver {
 
             Expression::Dict { ref items } => {
                 for &(ref key, ref value) in items {
-                    self.resolve_expr(&key.node, pos)?;
-                    self.resolve_expr(&value.node, pos)?;
+                    self.resolve_expression(&key.node, pos)?;
+                    self.resolve_expression(&value.node, pos)?;
                 }
 
                 Ok(())
@@ -433,18 +460,18 @@ impl Resolver {
             }
 
             Expression::Get { ref object, .. } => {
-                self.resolve_expr(&object.node, pos)?;
+                self.resolve_expression(&object.node, pos)?;
                 Ok(())
             }
 
-            Expression::Grouping { ref expr } => self.resolve_expr(&expr.node, pos),
+            Expression::Grouping { ref expr } => self.resolve_expression(&expr.node, pos),
 
             Expression::IndexExpr {
                 ref index,
                 ref target,
             } => {
-                self.resolve_expr(&index.node, pos)?;
-                self.resolve_expr(&target.node, pos)?;
+                self.resolve_expression(&index.node, pos)?;
+                self.resolve_expression(&target.node, pos)?;
                 Ok(())
             }
 
@@ -455,8 +482,8 @@ impl Resolver {
                 ref right,
                 ..
             } => {
-                self.resolve_expr(&left.node, pos)?;
-                self.resolve_expr(&right.node, pos)?;
+                self.resolve_expression(&left.node, pos)?;
+                self.resolve_expression(&right.node, pos)?;
                 Ok(())
             }
 
@@ -465,8 +492,8 @@ impl Resolver {
                 ref object,
                 ..
             } => {
-                self.resolve_expr(&value.node, pos)?;
-                self.resolve_expr(&object.node, pos)?;
+                self.resolve_expression(&value.node, pos)?;
+                self.resolve_expression(&object.node, pos)?;
                 Ok(())
             }
 
@@ -475,14 +502,14 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expr(&condition.node, pos)?;
-                self.resolve_expr(&else_branch.node, pos)?;
-                self.resolve_expr(&then_branch.node, pos)?;
+                self.resolve_expression(&condition.node, pos)?;
+                self.resolve_expression(&else_branch.node, pos)?;
+                self.resolve_expression(&then_branch.node, pos)?;
                 Ok(())
             }
 
             Expression::Unary { ref expr, .. } => {
-                self.resolve_expr(&expr.node, pos)?;
+                self.resolve_expression(&expr.node, pos)?;
                 Ok(())
             }
 

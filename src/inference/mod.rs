@@ -81,9 +81,9 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
-        Statement::Print(_) =>Ok(ExpressionType{
-            exp:(),
-            ty:Type::Nil
+        Statement::Print(_) => Ok(ExpressionType {
+            exp: (),
+            ty: Type::Nil,
         }),
         Statement::Class {
             ref name,
@@ -199,7 +199,6 @@ fn transform_statement(
             env.end_scope();
 
             result
-            
         }
 
         Statement::IfStmt {
@@ -244,6 +243,29 @@ fn transform_statement(
             Ok(body_ty)
         }
 
+        Statement::ForStmt {
+            ref initializer,
+            ref condition,
+            ref increment,
+            ref body,
+        } => {
+            if let &Some(ref init) = initializer {
+                transform_statement(init, env)?;
+            }
+
+            if let &Some(ref incr) = increment {
+               s_check_int_float(&transform_expr(incr, env)?, statement.pos)?;
+            }
+
+            if let &Some(ref cond) = condition {
+                check_bool(&transform_expr(cond, env)?, statement.pos)?;
+            }
+
+            let body_ty = transform_statement(body, env)?;
+
+            Ok(body_ty)
+        }
+
         Statement::Return(ref returns) => {
             if let &Some(ref expr) = returns {
                 let exp_ty = transform_expr(expr, env)?;
@@ -256,7 +278,6 @@ fn transform_statement(
         }
 
         Statement::Function { ref name, ref body } => {
-
             match body.node {
                 Expression::Func {
                     ref returns,
@@ -276,8 +297,6 @@ fn transform_statement(
                         param_ty.push(get_type(&p_ty, statement.pos, env)?);
                         param_names.push(param);
                     }
-
-                
 
                     env.add_var(
                         *name,
@@ -474,15 +493,14 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                             exp: (),
                             ty: actual_type(returns).clone(),
                         });
-                    },
+                    }
 
                     Entry::VarEntry(ref ty) => {
-                        return Ok(ExpressionType{
-                            exp:(),
-                            ty:ty.clone(),
+                        return Ok(ExpressionType {
+                            exp: (),
+                            ty: ty.clone(),
                         })
                     }
-                    
                 }
             }
 

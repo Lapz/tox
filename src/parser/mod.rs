@@ -335,14 +335,14 @@ impl<'a> Parser<'a> {
         let for_pos = self.get_pos()?;
         self.consume(TokenType::LPAREN, "Expected '(' after 'for'")?;
 
-        let mut initi = None;
+        let mut initializer = None;
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
         } else if self.recognise(TokenType::VAR) {
-            initi = Some(self.var_declaration()?);
+            initializer = Some(Box::new(self.var_declaration()?));
         } else {
-            initi = Some(self.expression_statement()?);
+            initializer = Some(Box::new(self.expression_statement()?));
         }
 
         let mut condition = None;
@@ -359,49 +359,24 @@ impl<'a> Parser<'a> {
             increment = Some(self.expression()?);
         }
 
-        let increment_pos =
-            self.consume_get_pos(TokenType::RPAREN, "Expected ')' after for clauses.")?;
+        
+        self.consume(TokenType::RPAREN, "Expected ')' after for clauses.")?;
 
         self.loop_depth += 1;
 
-        let mut body = self.statement()?;
-        let body_pos = body.pos.clone();
-
-        if increment != None {
-            body = WithPos::new(
-                Statement::Block(vec![
-                    body,
-                    WithPos::new(Statement::ExpressionStmt(increment.unwrap()), increment_pos),
-                ]),
-                body_pos,
-            );
-        } else if condition == None {
-            condition = Some(WithPos::new(
-                Expression::Literal(Literal::True(true)),
-                body_pos,
-            ));
-        }
-
-        body = WithPos::new(
-            Statement::WhileStmt {
-                condition: condition.unwrap(),
-                body: Box::new(body),
-            },
-            body_pos,
-        );
-
-        if initi != None {
-            let mut statements = vec![];
-
-            statements.push(initi.unwrap());
-            statements.push(body);
-
-            body = WithPos::new(Statement::Block(statements), for_pos)
-        }
+        let body = Box::new(self.statement()?);
 
         self.loop_depth -= 1;
-
-        Ok(body)
+        Ok(WithPos::new(
+            Statement::ForStmt {
+                initializer,
+                condition,
+                increment,
+                body,
+            },
+            for_pos,
+        ))
+        // Ok(body)
     }
 
     fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {

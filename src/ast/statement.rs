@@ -24,7 +24,12 @@ pub enum Statement {
         condition: WithPos<Expression>,
         body: Box<WithPos<Statement>>,
     },
-
+    ForStmt {
+        initializer: Option<Box<WithPos<Statement>>>,
+        condition: Option<WithPos<Expression>>,
+        increment: Option<WithPos<Expression>>,
+        body: Box<WithPos<Statement>>,
+    },
     Function {
         name: Symbol,
         body: WithPos<Expression>,
