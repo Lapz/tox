@@ -42,7 +42,7 @@ class Interpreter:
 
 def rust_interpreter(name, tests):
   if name == 'rox':
-    dir = 'target/debug/rox'
+    dir = 'target/debug/lexer'
   else:
     dir = 'build/gen/' + name
 

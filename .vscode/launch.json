@@ -10,9 +10,12 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceRoot}/target/debug/lexer",
-            "args": [],
+            "args": ["test/test.lox"],
             "cwd": "${workspaceRoot}",
-            "preLaunchTask": "cargo build"
+        
+            
+            
+            
         }
     ]
 }

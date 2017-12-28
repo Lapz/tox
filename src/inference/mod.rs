@@ -41,16 +41,16 @@ fn check_types(expected: &Type, unknown: &Type) -> Result<(), TypeError> {
     let unknown = actual_type(unknown);
 
     if expected != unknown {
-        let msg = format!("Expected {:?} but found {:?}", expected, unknown);
+        let msg = format!("Expected {} but found {}", expected, unknown);
         return Err(TypeError::NotSame(msg));
     }
     Ok(())
 }
 
-fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
+fn get_actual_ty(entry: &Entry, pos: Postition) -> Result<Type, TypeError> {
     match *entry {
         Entry::VarEntry(ref ty) => Ok(ty.clone()),
-        _ => Err(TypeError::Function),
+        _ => Err(TypeError::Function(pos)),
     }
 }
 
@@ -61,13 +61,17 @@ fn actual_type(ty: &Type) -> &Type {
     }
 }
 
-fn transform_var(symbol: &Symbol, env: &mut Env) -> Result<ExpressionType, TypeError> {
+fn transform_var(
+    symbol: &Symbol,
+    pos: Postition,
+    env: &mut Env,
+) -> Result<ExpressionType, TypeError> {
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
-            ty: actual_type(&get_actual_ty(ty)?).clone(),
+            ty: actual_type(&get_actual_ty(ty, pos)?).clone(),
         }),
-        None => Err(TypeError::UndefindedVar),
+        None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
     }
 }
 
@@ -77,6 +81,10 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
+        Statement::Print(_) =>Ok(ExpressionType{
+            exp:(),
+            ty:Type::Nil
+        }),
         Statement::Class {
             ref name,
             ref methods,
@@ -86,7 +94,7 @@ fn transform_statement(
             let mut class_methods: Vec<(Symbol, Entry)> = vec![];
 
             for &(property, ref ty) in properties {
-                let ty = get_type(ty, env)?;
+                let ty = get_type(ty, statement.pos, env)?;
                 properties_ty.push((property, ty))
             }
 
@@ -100,7 +108,7 @@ fn transform_statement(
                                 ..
                             } => {
                                 let return_type = if let Some(ref return_ty) = *returns {
-                                    get_type(return_ty, env)?
+                                    get_type(return_ty, statement.pos, env)?
                                 } else {
                                     Type::Nil
                                 };
@@ -109,7 +117,7 @@ fn transform_statement(
                                 let mut param_ty = vec![];
 
                                 for &(param, p_ty) in parameters {
-                                    param_ty.push(get_type(&p_ty, env)?);
+                                    param_ty.push(get_type(&p_ty, statement.pos, env)?);
                                     param_names.push(param);
                                 }
 
@@ -142,7 +150,7 @@ fn transform_statement(
             let exp_ty = transform_expr(expr, env)?;
 
             if let Some(ref ident) = *ty {
-                let ty = get_type(ident, env)?;
+                let ty = get_type(ident, statement.pos, env)?;
                 check_types(&ty, &exp_ty.ty)?;
 
                 env.add_var(*symbol, Entry::VarEntry(ty.clone()));
@@ -161,7 +169,7 @@ fn transform_statement(
         }),
 
         Statement::TypeAlias { ref alias, ref ty } => {
-            let alias_ty = get_type(ty, env)?;
+            let alias_ty = get_type(ty, statement.pos, env)?;
             env.add_type(
                 *alias,
                 Type::Name(alias.clone(), Box::new(alias_ty.clone())),
@@ -182,14 +190,16 @@ fn transform_statement(
             }
 
             env.begin_scope();
-
             for expr in expressions.iter().rev().skip(1) {
                 transform_statement(expr, env)?;
             }
 
+            let result = transform_statement(expressions.last().unwrap(), env);
+
             env.end_scope();
 
-            transform_statement(expressions.last().unwrap(), env)
+            result
+            
         }
 
         Statement::IfStmt {
@@ -246,6 +256,7 @@ fn transform_statement(
         }
 
         Statement::Function { ref name, ref body } => {
+
             match body.node {
                 Expression::Func {
                     ref returns,
@@ -253,7 +264,7 @@ fn transform_statement(
                     ..
                 } => {
                     let return_type = if let Some(ref return_ty) = *returns {
-                        get_type(return_ty, env)?
+                        get_type(return_ty, statement.pos, env)?
                     } else {
                         Type::Nil
                     };
@@ -262,9 +273,11 @@ fn transform_statement(
                     let mut param_ty = vec![];
 
                     for &(param, p_ty) in parameters {
-                        param_ty.push(get_type(&p_ty, env)?);
+                        param_ty.push(get_type(&p_ty, statement.pos, env)?);
                         param_names.push(param);
                     }
+
+                
 
                     env.add_var(
                         *name,
@@ -284,12 +297,12 @@ fn transform_statement(
     }
 }
 
-fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
+fn get_type(ident: &Symbol, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
     if let Some(ty) = env.look_type(*ident) {
         return Ok(ty.clone());
     }
 
-    Err(TypeError::Undefinded)
+    Err(TypeError::UndefindedType(env.name(*ident), pos))
 }
 
 fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
@@ -335,11 +348,45 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         Expression::Binary {
             ref left_expr,
             ref right_expr,
-            ..
+            ref operator,
         } => {
             let left = transform_expr(left_expr, env)?;
             let right = transform_expr(right_expr, env)?;
-            check_int_float(&left, &right, left_expr.pos)
+
+            use ast::expr::Operator;
+            match *operator {
+
+                Operator::BangEqual | Operator::EqualEqual => {
+                    Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Bool,
+                    })
+                }
+                Operator::LessThan
+                | Operator::LessThanEqual
+                | Operator::GreaterThan
+                | Operator::GreaterThanEqual => {
+                    check_int_float_str(&left, &right, left_expr.pos)?;
+                    Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Bool,
+                    })
+                }
+
+                Operator::Plus => {
+                    check_int_float_str(&left, &right, left_expr.pos)
+                }
+
+                Operator::Slash
+                | Operator::Star
+                | Operator::Modulo
+                | Operator::Minus
+                | Operator::Exponential => {
+                     check_int_float_str(&left, &right, left_expr.pos)
+                }
+
+                // _ => unimplemented!(),
+            }
         }
 
         Expression::Call {
@@ -348,6 +395,67 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
         } => {
             let callee = match callee.node {
                 Expression::Var(sym, _) => sym,
+                Expression::Get {
+                    ref object,
+                    ref property,
+                    ..
+                } => {
+                    let sym = match object.node {
+                        Expression::Var(sym, _) => sym,
+                        _ => unimplemented!(),
+                    };
+
+                    if let Some(entry) = env.look_var(sym).cloned() {
+                        match entry {
+                            Entry::VarEntry(ref class) => match class {
+                                &Type::Class { ref methods, .. } => {
+                                    let mut _found = false;
+                                    for &(ref key, ref value) in methods {
+                                        if key == property {
+                                            _found = true;
+
+                                            match value {
+                                                &Entry::VarEntry(ref ty) => {
+                                                    return Ok(ExpressionType {
+                                                        exp: (),
+                                                        ty: ty.clone(),
+                                                    })
+                                                }
+
+                                                &Entry::FunEntry {
+                                                    ref params,
+                                                    ref returns,
+                                                } => {
+                                                    for (arg, param) in arguments.iter().zip(params)
+                                                    {
+                                                        let exp =
+                                                            transform_expr(arg, &mut env.clone())?;
+
+                                                        check_types(&param, &exp.ty)?;
+                                                    }
+                                                    return Ok(ExpressionType {
+                                                        exp: (),
+                                                        ty: actual_type(returns).clone(),
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if !_found {
+                                        return Err(TypeError::NotProperty(env.name(sym), expr.pos));
+                                    }
+                                }
+
+                                _ => unimplemented!("TODO ADD AN ERROR"),
+                            },
+
+                            _ => unreachable!(),
+                        }
+                    }
+
+                    return Err(TypeError::UndefindedVar(env.name(sym), expr.pos));
+                }
                 _ => unreachable!(),
             };
 
@@ -366,13 +474,19 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                             exp: (),
                             ty: actual_type(returns).clone(),
                         });
-                    }
+                    },
 
-                    _ => unreachable!(), // TODO Add classes
+                    Entry::VarEntry(ref ty) => {
+                        return Ok(ExpressionType{
+                            exp:(),
+                            ty:ty.clone(),
+                        })
+                    }
+                    
                 }
             }
 
-            Err(TypeError::Undefinded)
+            Err(TypeError::UndefindedVar(env.name(callee), expr.pos))
         }
 
         Expression::Dict { ref items } => {
@@ -409,7 +523,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref parameters,
         } => {
             let return_type = if let Some(ref return_ty) = *returns {
-                get_type(return_ty, env)?
+                get_type(return_ty, expr.pos, env)?
             } else {
                 Type::Nil
             };
@@ -418,7 +532,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let mut param_names = vec![];
 
             for &(symbol, p_ty) in parameters {
-                params_ty.push(get_type(&p_ty, env)?);
+                params_ty.push(get_type(&p_ty, expr.pos, env)?);
                 param_names.push(symbol);
             }
 
@@ -456,7 +570,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
                     if !found {
-                        return Err(TypeError::NotProperty);
+                        return Err(TypeError::NotProperty(env.name(*property), expr.pos));
                     }
                 }
 
@@ -473,7 +587,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref index,
         } => match target.node {
             Expression::Var(ref symbol, _) => {
-                let target_ty = transform_var(symbol, env)?;
+                let target_ty = transform_var(symbol, expr.pos, env)?;
                 let index_ty = transform_expr(index, env)?;
 
                 check_int(&index_ty, index.pos)?;
@@ -488,18 +602,18 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         exp: (),
                         ty: Type::Str,
                     }),
-                    _ => Err(TypeError::NotArray),
+                    _ => Err(TypeError::IndexAble(env.name(*symbol), index.pos)),
                 }
             }
 
-            _ => Err(TypeError::InvalidIndex),
+            _ => Err(TypeError::InvalidIndex(expr.pos)),
         },
 
         Expression::ClassInstance {
             ref properties,
             ref name,
         } => {
-            let class = transform_var(name, env)?;
+            let class = transform_var(name, expr.pos, env)?;
 
             match class.ty {
                 Type::Class { ref fields, .. } => {
@@ -516,14 +630,14 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
 
                         if !found {
-                            return Err(TypeError::NotProperty);
+                            return Err(TypeError::NotProperty(env.name(*key), expr.pos));
                         }
                     }
 
                     if fields.len() < properties.len() {
-                        return Err(TypeError::TooManyProperty);
+                        return Err(TypeError::TooManyProperty(expr.pos));
                     } else if fields.len() > properties.len() {
-                        return Err(TypeError::TooLittleProperty);
+                        return Err(TypeError::TooLittleProperty(expr.pos));
                     }
                 }
                 _ => unimplemented!(), //TODO CHANGE INTO HARD ERROR
@@ -555,10 +669,18 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             }),
         },
 
-        Expression::Unary { ref expr, .. } => {
+        Expression::Unary {
+            ref expr,
+            ref operator,
+        } => {
             let expr_ty = transform_expr(expr, env)?;
 
-            check_bool(&expr_ty, expr.pos)?;
+            match *operator {
+                UnaryOperator::Bang => check_bool(&expr_ty, expr.pos)?,
+                UnaryOperator::Minus => {
+                    s_check_int_float(&expr_ty, expr.pos)?;
+                }
+            };
 
             Ok(expr_ty)
         }
@@ -606,7 +728,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
                     if !found {
-                        return Err(TypeError::NotProperty);
+                        return Err(TypeError::NotProperty(env.name(*name), expr.pos));
                     }
                 }
 
@@ -634,33 +756,40 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             })
         }
 
-        Expression::Var(ref symbol, _) => transform_var(symbol, env),
+        Expression::Var(ref symbol, _) => transform_var(symbol, expr.pos, env),
     }
 }
 
 /// Given two expression types check if they are {int,int} or they are
 /// {float,float}
 
-fn check_int_float(
+fn check_int_float_str(
     left: &ExpressionType,
     right: &ExpressionType,
     pos: Postition,
 ) -> Result<ExpressionType, TypeError> {
     if check_int(left, pos).is_err() || check_int(right, pos).is_err() {
-        check_float(left, pos)?;
-        check_float(right, pos)?;
-
-        Ok(ExpressionType {
-            exp: (),
-            ty: Type::Float,
-        })
-    } else if check_int(left, pos).is_ok() && check_int(left, pos).is_ok() {
+        if check_float(left, pos).is_ok() {
+            check_float(right, pos)?;
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Float,
+            })
+        } else {
+            check_str(left, pos)?;
+            check_str(right, pos)?;
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Str,
+            })
+        }
+    } else if check_int(left, pos).is_ok() && check_int(right, pos).is_ok() {
         Ok(ExpressionType {
             exp: (),
             ty: Type::Int,
         })
     } else {
-        Err(TypeError::Expected(Type::Int, pos))
+        Err(TypeError::Expected(Type::Int, right.ty.clone(), pos))
     }
 }
 
@@ -682,7 +811,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
 /// Checks if ExpressionType is {bool}
 fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
-        return Err(TypeError::Expected(Type::Bool, pos));
+        return Err(TypeError::Expected(Type::Bool, right.ty.clone(), pos));
     }
     Ok(())
 }
@@ -690,15 +819,22 @@ fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
 /// Checks if ExpressionType is {int}
 fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
-        return Err(TypeError::Expected(Type::Int, pos));
+        return Err(TypeError::Expected(Type::Int, expr.ty.clone(), pos));
     }
     Ok(())
 }
 
+/// Checks if ExpressionType is {str}
+fn check_str(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
+    if expr.ty != Type::Str {
+        return Err(TypeError::Expected(Type::Str, expr.ty.clone(), pos));
+    }
+    Ok(())
+}
 /// Checks if ExpressionType is {float}
 fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {
-        return Err(TypeError::Expected(Type::Int, pos));
+        return Err(TypeError::Expected(Type::Float, expr.ty.clone(), pos));
     }
     Ok(())
 }

@@ -77,13 +77,18 @@ impl<T> Symbols<T> {
         *self.strings.next.borrow_mut() += 1;
         symbol
     }
+
+    pub fn replace(&mut self, symbol: Symbol, data: T) {
+        let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
+        bindings.pop().expect("Call enter() before replace()");
+        bindings.push(data);
+    }
 }
 
 impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = HashMap::new();
         map.insert(Symbol(0), "this".into());
-        map.insert(Symbol(1), "init".into());
 
         SymbolFactory {
             next: RefCell::new(2),

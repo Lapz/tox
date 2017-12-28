@@ -52,7 +52,7 @@ impl<'a> Iterator for CharPosition<'a> {
 
 impl Display for Postition {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "line {}, column {}", self.line, self.column)
+        write!(f, "line {},column {}", self.line, self.column)
     }
 }
 

@@ -7,16 +7,22 @@ Statements:
   
     program      → declaration* EOF ;
     declaration  → varDecl
-                | statement ;
-    varDecl      → "var" IDENTIFIER ( ":" type) ? ( "=", "+=" , "*=" , "-=", expression )? ";" ;
+                 |funDecl
+                 | classDecl
+                 | typeDecl;
+                 | statement ;
+    varDecl      → "var" IDENTIFIER ( ":" type) ? ( ("="| "+=" | "*=" | "-="), expression )? ";" ;
+    funDecl      → "fun" function;
+    typeDecl     → "type" IDENTIFIER "=" type;
+    classDecl    → "class" IDENTIFIER "{" (IDENTFIER:type ";" )* function* "}"
     statement    → exprStmt
-                | forStmt
-                | ifStmt
-                | printStmt
-                | whileStmt
-                | block
-                | list
-                | dict ;
+                 | forStmt
+                 | ifStmt
+                 | printStmt
+                 | whileStmt
+                 | block
+                 | list
+                 | dict ;
     exprStmt     → expression ";" ;
     forStmt      → "for" "(" ( varDecl | exprStmt | ";" )
                             expression? ";"

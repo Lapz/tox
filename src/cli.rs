@@ -2,6 +2,7 @@ use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
 use inference::analyse;
+use interpreter::interpret;
 use std::io;
 use symbol::{SymbolFactory, Symbols};
 use env::Env;
@@ -59,7 +60,24 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         let mut env = Env::new(&strings);
 
-        println!("{:#?}", analyse(&ast, &mut env));
+        match analyse(&ast, &mut env) {
+            Ok(_) => (),
+            Err(errors) => {
+                for err in errors {
+                    println!("{:?}", err);
+                }
+                continue;
+            }
+        };
+
+        match interpret(&ast, &mut env) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("{:?}", err);
+
+                continue;
+            }
+        };
     }
 }
 
@@ -124,8 +142,30 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     Resolver::new().resolve(&ast).unwrap();
 
     let mut env = Env::new(&strings);
+    env.get_builtins();
 
-    println!("{:#?}", analyse(&ast, &mut env));
+    match analyse(&ast, &mut env) {
+        Ok(_) => (),
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
+            }
+            ::std::process::exit(65)
+        }
+    };
+
+    if penv {
+        println!("{:#?}", env);
+    }
+
+    match interpret(&ast, &mut env) {
+        Ok(_) => (),
+        Err(err) => {
+            println!("{:?}", err);
+
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", env);

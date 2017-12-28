@@ -1,2 +1,2 @@
-// [line 2] Error at 'this': Expect variable name.
+// Expected an IDENTIFIER after a 'var'  on line 2, column 5.
 var this = "value";

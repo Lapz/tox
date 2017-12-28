@@ -79,6 +79,10 @@ impl Statement {
             Statement::ExpressionStmt(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
             }
+
+            Statement::Print(ref expr) => {
+                expr.node.pprint_into(pprint_string, symbols);
+            }
             Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(*alias));

@@ -12,3 +12,5 @@
     ```
 - [ ] Improve type inference messages
 - [ ] Implement the interpreter
+- [ ] Add Exponential to the parser
+- [ ] Improve the inference of comparison operators

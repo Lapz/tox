@@ -242,6 +242,8 @@ impl<'a> Parser<'a> {
             self.while_statement()
         } else if self.recognise(TokenType::FOR) {
             self.for_statement()
+        } else if self.recognise(TokenType::PRINT) {
+            self.print_statement()
         } else {
             self.expression_statement()
         }
@@ -253,6 +255,19 @@ impl<'a> Parser<'a> {
         let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected \';\' after value.")?;
 
         Ok(WithPos::new(Statement::ExpressionStmt(expr), pos))
+    }
+
+    fn print_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
+        let print_pos = self.get_pos()?;
+
+        let expr = self.expression()?;
+
+        self.consume(
+            TokenType::SEMICOLON,
+            "Expected a \';\' after a print statement",
+        )?;
+
+        Ok(WithPos::new(Statement::Print(expr), print_pos))
     }
 
     fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
@@ -623,7 +638,6 @@ impl<'a> Parser<'a> {
                 Expression::Get {
                     object, property, ..
                 } => {
-                    // println!("{:?}",self.symbols.name(name) );
                     return Ok(WithPos::new(
                         Expression::Set {
                             object,
@@ -737,8 +751,6 @@ impl<'a> Parser<'a> {
                 },
                 next.pos,
             );
-
-            println!("token {:#?}", self.tokens);
         }
 
         Ok(expr)
@@ -775,7 +787,7 @@ impl<'a> Parser<'a> {
     fn addition(&mut self) -> Result<WithPos<Expression>, ParserError> {
         let mut expr = self.multiplication()?;
 
-        while self.matched(vec![TokenType::MINUS, TokenType::PLUS]) {
+        while self.matched(vec![TokenType::MINUS, TokenType::MODULO, TokenType::PLUS]) {
             let next = self.advance().unwrap();
 
             let operator = get_operator(next.token);
@@ -863,7 +875,6 @@ impl<'a> Parser<'a> {
             } else if self.recognise(TokenType::DOT) {
                 self.advance();
 
-                println!("{:?}", self.tokens.peek());
                 let (property, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
                 expr = WithPos::new(
                     Expression::Get {
@@ -973,8 +984,6 @@ impl<'a> Parser<'a> {
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
-                    println!("{:#?}", self);
-
                     self.consume(
                         TokenType::RBRACKET,
                         "Expected a ']' to close the brackets .",
@@ -1019,13 +1028,10 @@ impl<'a> Parser<'a> {
                     return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
-                _ => {
-                    println!("{:#?}", token);
-                    Err(ParserError::IllegalExpression(self.error(
-                        "Cannot parse the expression",
-                        *pos,
-                    )))
-                }
+                _ => Err(ParserError::IllegalExpression(self.error(
+                    "Cannot parse the expression",
+                    *pos,
+                ))),
             },
             None => Err(ParserError::EOF),
         }
