@@ -66,8 +66,6 @@ fn transform_var(
     pos: Postition,
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
-
-    println!("{:#?}",env);
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
@@ -184,7 +182,6 @@ fn transform_statement(
         }
 
         Statement::Block(ref expressions) => {
-            
             if expressions.is_empty() {
                 return Ok(ExpressionType {
                     exp: (),
