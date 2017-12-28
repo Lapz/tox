@@ -91,7 +91,7 @@ fn transform_statement(
             let mut class_methods: Vec<(Symbol, Entry)> = vec![];
 
             for &(property, ref ty) in properties {
-                let ty = get_type(ty, env)?;
+                let ty = get_type(ty,statement.pos, env)?;
                 properties_ty.push((property, ty))
             }
 
@@ -105,7 +105,7 @@ fn transform_statement(
                                 ..
                             } => {
                                 let return_type = if let Some(ref return_ty) = *returns {
-                                    get_type(return_ty, env)?
+                                    get_type(return_ty,statement.pos,env)?
                                 } else {
                                     Type::Nil
                                 };
@@ -114,7 +114,7 @@ fn transform_statement(
                                 let mut param_ty = vec![];
 
                                 for &(param, p_ty) in parameters {
-                                    param_ty.push(get_type(&p_ty, env)?);
+                                    param_ty.push(get_type(&p_ty,statement.pos, env)?);
                                     param_names.push(param);
                                 }
 
@@ -147,7 +147,7 @@ fn transform_statement(
             let exp_ty = transform_expr(expr, env)?;
 
             if let Some(ref ident) = *ty {
-                let ty = get_type(ident, env)?;
+                let ty = get_type(ident,statement.pos,env)?;
                 check_types(&ty, &exp_ty.ty)?;
 
                 env.add_var(*symbol, Entry::VarEntry(ty.clone()));
@@ -166,7 +166,7 @@ fn transform_statement(
         }),
 
         Statement::TypeAlias { ref alias, ref ty } => {
-            let alias_ty = get_type(ty, env)?;
+            let alias_ty = get_type(ty,statement.pos, env)?;
             env.add_type(
                 *alias,
                 Type::Name(alias.clone(), Box::new(alias_ty.clone())),
@@ -258,7 +258,7 @@ fn transform_statement(
                     ..
                 } => {
                     let return_type = if let Some(ref return_ty) = *returns {
-                        get_type(return_ty, env)?
+                        get_type(return_ty,statement.pos,env)?
                     } else {
                         Type::Nil
                     };
@@ -267,7 +267,7 @@ fn transform_statement(
                     let mut param_ty = vec![];
 
                     for &(param, p_ty) in parameters {
-                        param_ty.push(get_type(&p_ty, env)?);
+                        param_ty.push(get_type(&p_ty,statement.pos, env)?);
                         param_names.push(param);
                     }
 
@@ -289,12 +289,12 @@ fn transform_statement(
     }
 }
 
-fn get_type(ident: &Symbol, env: &mut Env) -> Result<Type, TypeError> {
+fn get_type(ident: &Symbol,pos:Postition,env: &mut Env) -> Result<Type, TypeError> {
     if let Some(ty) = env.look_type(*ident) {
         return Ok(ty.clone());
     }
 
-    Err(TypeError::Undefinded)
+    Err(TypeError::UndefindedType(env.name(*ident),pos))
 }
 
 fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
@@ -446,7 +446,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                         }
                     }
 
-                    return Err(TypeError::Undefinded);
+                    return  Err(TypeError::UndefindedVar(env.name(sym),expr.pos))
                 }
                 _ => unreachable!(),
             };
@@ -472,7 +472,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                 }
             }
 
-            Err(TypeError::Undefinded)
+            Err(TypeError::UndefindedVar(env.name(callee),expr.pos))
         }
 
         Expression::Dict { ref items } => {
@@ -509,7 +509,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             ref parameters,
         } => {
             let return_type = if let Some(ref return_ty) = *returns {
-                get_type(return_ty, env)?
+                get_type(return_ty,expr.pos,env)?
             } else {
                 Type::Nil
             };
@@ -518,7 +518,7 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let mut param_names = vec![];
 
             for &(symbol, p_ty) in parameters {
-                params_ty.push(get_type(&p_ty, env)?);
+                params_ty.push(get_type(&p_ty,expr.pos,env)?);
                 param_names.push(symbol);
             }
 

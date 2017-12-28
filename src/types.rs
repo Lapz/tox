@@ -8,7 +8,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Expected(Type, Type, Postition),
-    Undefinded,
+    UndefindedType(String,Postition),
     UndefindedVar(String, Postition),
     NotSame(String),
     Function,
@@ -72,6 +72,10 @@ impl Display for TypeError {
 
             TypeError::NotProperty(ref name, ref pos) => {
                 write!(f, "Undefined property \'{}\' on {}", name, pos)
+            }
+
+            TypeError::UndefindedType(ref name,ref pos) => {
+                 write!(f, "Undefined type \'{}\' on {}", name, pos)
             }
 
             _ => unimplemented!(),
