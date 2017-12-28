@@ -66,6 +66,8 @@ fn transform_var(
     pos: Postition,
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
+
+    println!("{:#?}",env);
     match env.look_var(*symbol) {
         Some(ty) => Ok(ExpressionType {
             exp: (),
@@ -81,7 +83,10 @@ fn transform_statement(
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => transform_expr(expr, env),
-        Statement::Print(ref expr) => transform_expr(expr, env),
+        Statement::Print(_) =>Ok(ExpressionType{
+            exp:(),
+            ty:Type::Nil
+        }),
         Statement::Class {
             ref name,
             ref methods,
@@ -179,6 +184,7 @@ fn transform_statement(
         }
 
         Statement::Block(ref expressions) => {
+            
             if expressions.is_empty() {
                 return Ok(ExpressionType {
                     exp: (),
@@ -187,14 +193,16 @@ fn transform_statement(
             }
 
             env.begin_scope();
-
             for expr in expressions.iter().rev().skip(1) {
                 transform_statement(expr, env)?;
             }
 
+            let result = transform_statement(expressions.last().unwrap(), env);
+
             env.end_scope();
 
-            transform_statement(expressions.last().unwrap(), env)
+            result
+            
         }
 
         Statement::IfStmt {
@@ -251,6 +259,7 @@ fn transform_statement(
         }
 
         Statement::Function { ref name, ref body } => {
+
             match body.node {
                 Expression::Func {
                     ref returns,
@@ -270,6 +279,8 @@ fn transform_statement(
                         param_ty.push(get_type(&p_ty, statement.pos, env)?);
                         param_names.push(param);
                     }
+
+                
 
                     env.add_var(
                         *name,
@@ -466,9 +477,15 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                             exp: (),
                             ty: actual_type(returns).clone(),
                         });
-                    }
+                    },
 
-                    _ => unreachable!(),
+                    Entry::VarEntry(ref ty) => {
+                        return Ok(ExpressionType{
+                            exp:(),
+                            ty:ty.clone(),
+                        })
+                    }
+                    
                 }
             }
 

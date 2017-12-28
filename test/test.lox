@@ -1,22 +1,17 @@
-fun fib(n:int) -> int {
-    if (n < 2) 
-      return n;
-    return fib(n - 2) + fib(n - 1);
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
   }
-  
-  var start = clock();
-  print(fib(30) == 832040);
-  print(clock() - start);
-  
+  return count;
+}
 
-// var cake = Cake{flavour:"Choclate"};
-
-// print cake.flavour;
-
-// cake.flavour = "strawberry";
-
-// print cake.flavour;
-
-// cake.taste();
-
-// Cake.taste();
+ var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "2".
