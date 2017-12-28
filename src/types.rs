@@ -10,13 +10,13 @@ pub enum TypeError {
     Expected(Type, Type, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
-    NotSame(String),
     Function(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
     NotProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
+    ExpectedOneOf(String),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -71,7 +71,7 @@ impl Display for TypeError {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
             }
 
-            TypeError::NotSame(ref msg) => write!(f, "{}", msg),
+            TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),
 
             TypeError::NotProperty(ref name, ref pos) => {
                 write!(f, "Undefined property \'{}\' on {}", name, pos)

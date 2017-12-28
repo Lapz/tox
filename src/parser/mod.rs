@@ -436,6 +436,7 @@ impl<'a> Parser<'a> {
         let mut else_branch = None;
 
         if self.recognise(TokenType::ELSE) {
+            self.advance();
             else_branch = Some(Box::new(self.statement()?));
 
             return Ok(WithPos::new(
