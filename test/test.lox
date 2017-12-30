@@ -9,3 +9,5 @@ fun fib(n:int) {
 var start = clock();
 print(fib(30) == 832040);
 print(clock() - start);
+
+var phonebook:[int;] = 

@@ -80,6 +80,12 @@ pub enum Expression {
     Var(Symbol, VariableUseHandle),
 }
 
+
+pub enum ExpressionTy {
+    Simple(Symbol),
+    Dict(Symbol,Symbol),
+    Arr(Symbol)
+}
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Literal {
     // The raw values available

@@ -376,7 +376,6 @@ impl<'a> Parser<'a> {
             },
             for_pos,
         ))
-        // Ok(body)
     }
 
     fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
