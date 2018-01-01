@@ -15,6 +15,14 @@ impl AssignOperator {
     }
 }
 
+impl ExpressionTy {
+    fn pprint(&self, symbols: &mut Symbols<()>) -> String {
+        match *self {
+            ExpressionTy::Simple(s) => symbols.name(s),
+            _ => unimplemented!(),
+        }
+    }
+}
 impl LogicOperator {
     fn pprint(&self) -> &'static str {
         match *self {
@@ -95,9 +103,9 @@ impl Statement {
                 pprint_string.push_str("(var ");
                 pprint_string.push_str(&symbols.name(*name));
 
-                if let &Some(var_ty) = ty {
+                if let &Some(ref var_ty) = ty {
                     pprint_string.push_str(":");
-                    pprint_string.push_str(&symbols.name(var_ty));
+                    pprint_string.push_str(&var_ty.pprint(symbols));
                 }
 
                 expr.node.pprint_into(pprint_string, symbols);
@@ -330,7 +338,7 @@ impl Expression {
                 for item in parameters {
                     pprint_string.push_str(&symbols.name(item.0));
                     pprint_string.push_str(":");
-                    pprint_string.push_str(&symbols.name(item.1));
+                    pprint_string.push_str(&item.1.pprint(symbols));
                     pprint_string.push_str(" ");
                 }
 

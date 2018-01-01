@@ -14,14 +14,15 @@ mod parser;
 mod cli;
 mod object;
 mod interpreter;
-mod inference;
+// mod inference;
 mod types;
 mod resolver;
 mod symbol;
 mod env;
 mod pprint;
 mod builtins;
-use cli::{repl, run, Cli};
+use cli::{run, Cli};
+// use cli::{repl, run, Cli};
 use structopt::StructOpt;
 
 // use interpreter::Interpreter;
@@ -31,7 +32,7 @@ fn main() {
 
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
-    } else {
-        repl(opts.ptokens, opts.pprint)
-    }
+    } //else {
+    //     repl(opts.ptokens, opts.pprint)
+    // }
 }

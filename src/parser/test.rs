@@ -28,7 +28,7 @@ mod test {
                             absolute: 12,
                         },
                     ),
-                    Some(Symbol(3)),
+                    Some(ExpressionTy::Simple(Symbol(3))),
                 ),
                 Postition {
                     line: 1,
@@ -50,6 +50,47 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
+
+    #[test]
+    fn arr_types() {
+        let input = "var a:[int] = [10];";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+    #[test]
+    fn fun_arr_types() {
+        let input = "var a:[fun(int,int)] = [10];";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+     #[test]
+    fn fun_arr_return_types() {
+        let input = "var a:[fun(int,int)->int] = [10];";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
+     #[test]
+    fn nested_arr_types() {
+        let input = "var a:[[fun(int,int)->int]] = [10];";
+        let tokens = Lexer::new(input).lex().unwrap();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(strings);
+        let ast = Parser::new(tokens, &mut symbols).parse();
+        assert!(ast.is_ok())
+    }
+
 
     #[test]
     fn type_alias() {

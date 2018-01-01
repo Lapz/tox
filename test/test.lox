@@ -1,13 +1,1 @@
-fun fib(n:int) {
-  if (n < 2) {
-    return 1;
-  } else {
-    return 2;
-  }
-}
-
-var start = clock();
-print(fib(30) == 832040);
-print(clock() - start);
-
-var phonebook:[int;] = 
+var a:[[number]] = 10;
