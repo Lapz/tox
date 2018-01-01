@@ -122,7 +122,6 @@ pub(crate) fn evaluate_statement(
                 evaluate_statement(init, env)?;
             }
 
-
             if let &Some(ref cond) = condition {
                 while evaluate_expression(cond, env)?.is_truthy() {
                     match evaluate_statement(body, env) {

@@ -194,11 +194,9 @@ impl<'a> Parser<'a> {
             let ty = self.parse_type()?;
 
             Ok(Some(ty))
-        }else {
+        } else {
             Ok(None)
         }
-
-        
     }
 }
 
@@ -312,12 +310,12 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::ASSIGN, "Expecte a \'=\'")?;
 
-        let ty = self.consume_name_symbol("Expected a type")?;
+        let ty = self.parse_type()?;
 
         self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
 
         Ok(WithPos::new(
-            Statement::TypeAlias { alias, ty: ty.0 },
+            Statement::TypeAlias { alias, ty },
             type_pos,
         ))
     }
@@ -352,7 +350,6 @@ impl<'a> Parser<'a> {
             increment = Some(self.expression()?);
         }
 
-        
         self.consume(TokenType::RPAREN, "Expected ')' after for clauses.")?;
 
         self.loop_depth += 1;
@@ -499,7 +496,7 @@ impl<'a> Parser<'a> {
                         "Expected a colon after a class property name",
                     )?;
 
-                    let ty = self.consume_name("Expected a Property type")?;
+                    let ty = self.parse_type()?;
 
                     properties.push((name, ty));
 
@@ -1024,7 +1021,7 @@ impl<'a> Parser<'a> {
 
                 self.consume(TokenType::COLON, "Expected a colon")?;
 
-               let ty = self.parse_type()?;
+                let ty = self.parse_type()?;
 
                 parameters.push((identifier, ty));
 
@@ -1038,18 +1035,7 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-            let possilbe_type = self.advance().unwrap();
-
-            match possilbe_type.token {
-                TokenType::IDENTIFIER(ref ty) => returns = Some(self.symbols.symbol(ty)),
-                TokenType::NIL => returns = Some(self.symbols.symbol("nil")),
-                _ => {
-                    return Err(ParserError::Expected(self.error(
-                        "Expected a proper type",
-                        possilbe_type.pos,
-                    )))
-                }
-            }
+           returns = Some(self.parse_type()?);
         }
 
         let body = Box::new(self.block()?);
@@ -1064,12 +1050,15 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    fn parse_type(&mut self) -> Result<ExpressionTy,ParserError> {
+    fn parse_type(&mut self) -> Result<ExpressionTy, ParserError> {
         if self.recognise(TokenType::LBRACKET) {
             self.advance();
             let ty = self.parse_type()?;
-            
-            self.consume(TokenType::RBRACKET, "Expected a \']\' to close an array type")?;
+
+            self.consume(
+                TokenType::RBRACKET,
+                "Expected a \']\' to close an array type",
+            )?;
 
             Ok(ExpressionTy::Arr(Box::new(ty)))
         } else if self.recognise(TokenType::FUNCTION) {
@@ -1078,24 +1067,23 @@ impl<'a> Parser<'a> {
             let mut param_ty = vec![];
 
             while {
-                    let ty = self.consume_name("Expected an closure type ")?;
+                let ty = self.consume_name("Expected an closure type ")?;
 
-                    param_ty.push(ty);
+                param_ty.push(ty);
 
-                    self.recognise(TokenType::COMMA)
-                        && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                } {}
+                self.recognise(TokenType::COMMA)
+                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+            } {}
 
             self.consume(TokenType::RPAREN, "Expected  \')\'")?;
 
             if self.recognise(TokenType::FRETURN) {
                 self.advance();
                 let ty = self.parse_type()?;
-                 Ok(ExpressionTy::Func(param_ty,Some(Box::new(ty))))
-            }else {
-                Ok(ExpressionTy::Func(param_ty,None))
+                Ok(ExpressionTy::Func(param_ty, Some(Box::new(ty))))
+            } else {
+                Ok(ExpressionTy::Func(param_ty, None))
             }
-
         } else {
             let ty = self.consume_name("Expected a type param")?;
             Ok(ExpressionTy::Simple(ty))

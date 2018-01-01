@@ -31,7 +31,7 @@ pub enum Type {
     Bool,
     Nil,
     Float,
-
+    Func(Vec<Type>, Option<Box<Type>>),
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
     Name(Symbol, Box<Type>),

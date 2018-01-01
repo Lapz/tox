@@ -1,4 +1,4 @@
-use ast::expr::{Expression,ExpressionTy};
+use ast::expr::{Expression, ExpressionTy};
 use pos::WithPos;
 use symbol::Symbol;
 
@@ -10,7 +10,7 @@ pub enum Statement {
     Class {
         name: Symbol,
         methods: Vec<WithPos<Statement>>,
-        properties: Vec<(Symbol, Symbol)>,
+        properties: Vec<(Symbol, ExpressionTy)>,
     },
 
     IfStmt {
@@ -44,7 +44,7 @@ pub enum Statement {
     Continue,
     TypeAlias {
         alias: Symbol,
-        ty: Symbol,
+        ty: ExpressionTy,
     },
     Return(Option<WithPos<Expression>>),
 }

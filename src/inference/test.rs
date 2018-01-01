@@ -137,7 +137,7 @@ mod test {
         let input = "var a = [10]; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-         analyse(&get_ast(input, strings), &mut env).unwrap();      
+        analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]

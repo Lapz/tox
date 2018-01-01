@@ -14,7 +14,7 @@ mod parser;
 mod cli;
 mod object;
 mod interpreter;
-// mod inference;
+mod inference;
 mod types;
 mod resolver;
 mod symbol;
@@ -33,6 +33,6 @@ fn main() {
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
     } //else {
-    //     repl(opts.ptokens, opts.pprint)
-    // }
+      //     repl(opts.ptokens, opts.pprint)
+      // }
 }

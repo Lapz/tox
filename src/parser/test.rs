@@ -71,7 +71,7 @@ mod test {
         assert!(ast.is_ok())
     }
 
-     #[test]
+    #[test]
     fn fun_arr_return_types() {
         let input = "var a:[fun(int,int)->int] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -81,7 +81,7 @@ mod test {
         assert!(ast.is_ok())
     }
 
-     #[test]
+    #[test]
     fn nested_arr_types() {
         let input = "var a:[[fun(int,int)->int]] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
@@ -90,7 +90,6 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
-
 
     #[test]
     fn type_alias() {
