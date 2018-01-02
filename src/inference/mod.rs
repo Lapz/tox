@@ -320,7 +320,6 @@ fn transform_statement(
 }
 
 fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
-    println!("{:?}",env.types);
     match ident {
         &ExpressionTy::Simple(s) => {
             if let Some(ty) = env.look_type(s) {
