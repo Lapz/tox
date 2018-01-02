@@ -79,17 +79,13 @@ fn transform_statement(
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
-        Statement::ExpressionStmt(ref expr) => {
+        Statement::ExpressionStmt(ref expr) |  Statement::Print(ref expr) => {
             transform_expr(expr, env)?;
             Ok(ExpressionType {
                 exp: (),
                 ty: Type::Nil,
             })
-        }
-        Statement::Print(_) => Ok(ExpressionType {
-            exp: (),
-            ty: Type::Nil,
-        }),
+        },
         Statement::Class {
             ref name,
             ref methods,
@@ -283,6 +279,7 @@ fn transform_statement(
         }
 
         Statement::Function { ref name, ref body } => {
+            
             match body.node {
                 Expression::Func {
                     ref returns,
@@ -297,7 +294,7 @@ fn transform_statement(
 
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
-
+                    
                     for &(param, ref p_ty) in parameters {
                         param_ty.push(get_type(p_ty, statement.pos, env)?);
                         param_names.push(param);
