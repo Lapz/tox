@@ -25,13 +25,12 @@ mod builtins;
 use cli::{repl, run, Cli};
 use structopt::StructOpt;
 
-
 fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
     } else {
-          repl(opts.ptokens, opts.pprint)
-      }
+        repl(opts.ptokens, opts.pprint)
+    }
 }

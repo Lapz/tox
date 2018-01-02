@@ -79,13 +79,13 @@ fn transform_statement(
     env: &mut Env,
 ) -> Result<ExpressionType, TypeError> {
     match statement.node {
-        Statement::ExpressionStmt(ref expr) |  Statement::Print(ref expr) => {
+        Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
             transform_expr(expr, env)?;
             Ok(ExpressionType {
                 exp: (),
                 ty: Type::Nil,
             })
-        },
+        }
         Statement::Class {
             ref name,
             ref methods,
@@ -279,7 +279,6 @@ fn transform_statement(
         }
 
         Statement::Function { ref name, ref body } => {
-            
             match body.node {
                 Expression::Func {
                     ref returns,
@@ -294,7 +293,7 @@ fn transform_statement(
 
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
-                    
+
                     for &(param, ref p_ty) in parameters {
                         param_ty.push(get_type(p_ty, statement.pos, env)?);
                         param_names.push(param);
@@ -320,30 +319,28 @@ fn transform_statement(
 
 fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
     match ident {
-        &ExpressionTy::Simple(s)  => {
+        &ExpressionTy::Simple(s) => {
             if let Some(ty) = env.look_type(s) {
                 return Ok(ty.clone());
             }
 
-            return Err(TypeError::UndefindedType(env.name(s), pos))
-        },
+            return Err(TypeError::UndefindedType(env.name(s), pos));
+        }
         &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
-        &ExpressionTy::Func(ref params,ref returns) => {
+        &ExpressionTy::Func(ref params, ref returns) => {
+            let mut param_tys = vec![];
 
-            let mut param_tys =vec![];
+            for e_ty in params {
+                param_tys.push(get_type(e_ty, pos, env)?)
+            }
 
-           for  e_ty in params {
-               param_tys.push(get_type(e_ty, pos, env)?)
-           }
-
-           if let &Some(ref ret )= returns {
-               Ok(Type::Func(param_tys,Box::new(get_type(ret, pos, env)?)))
-           }else {
-               Ok(Type::Func(param_tys,Box::new(Type::Nil)))
-           }
+            if let &Some(ref ret) = returns {
+                Ok(Type::Func(param_tys, Box::new(get_type(ret, pos, env)?)))
+            } else {
+                Ok(Type::Func(param_tys, Box::new(Type::Nil)))
+            }
         }
     }
-   
 }
 
 fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
@@ -595,9 +592,9 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             check_types(&return_type, &body_ty.ty, expr.pos)?;
 
             env.end_scope();
-            Ok(ExpressionType{
-                exp:(),
-                ty:Type::Func(params_ty,Box::new(return_type))
+            Ok(ExpressionType {
+                exp: (),
+                ty: Type::Func(params_ty, Box::new(return_type)),
             })
         }
 

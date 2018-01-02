@@ -314,10 +314,7 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
 
-        Ok(WithPos::new(
-            Statement::TypeAlias { alias, ty },
-            type_pos,
-        ))
+        Ok(WithPos::new(Statement::TypeAlias { alias, ty }, type_pos))
     }
 
     // Control Flow Statements
@@ -993,12 +990,13 @@ impl<'a> Parser<'a> {
                     return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
-               ref e => {
-                    println!("{:?}",e );
+                ref e => {
+                    println!("{:?}", e);
                     Err(ParserError::IllegalExpression(self.error(
-                    "Cannot parse the expression",
-                    *pos,
-                )))},
+                        "Cannot parse the expression",
+                        *pos,
+                    )))
+                }
             },
             None => Err(ParserError::EOF),
         }
@@ -1037,7 +1035,7 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-           returns = Some(self.parse_type()?);
+            returns = Some(self.parse_type()?);
         }
 
         let body = Box::new(self.block()?);

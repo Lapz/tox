@@ -6,9 +6,8 @@ mod test {
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
-    use symbol::{Symbol,SymbolFactory};
+    use symbol::{Symbol, SymbolFactory};
     use env::Env;
-    
 
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
         use lexer::Lexer;
@@ -214,7 +213,6 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
 
-        
         assert_eq!(
             analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
@@ -224,7 +222,13 @@ mod test {
                 },
                 ExpressionType {
                     exp: (),
-                    ty: Type::Func(vec![Type::Name(Symbol(7),Box::new(Type::Int)),Type::Name(Symbol(7),Box::new(Type::Int))],Box::new(Type::Name(Symbol(7),Box::new(Type::Int)))),
+                    ty: Type::Func(
+                        vec![
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                        ],
+                        Box::new(Type::Name(Symbol(7), Box::new(Type::Int))),
+                    ),
                 },
                 ExpressionType {
                     exp: (),
@@ -253,7 +257,13 @@ mod test {
                 },
                 ExpressionType {
                     exp: (),
-                    ty: Type::Func(vec![Type::Name(Symbol(7),Box::new(Type::Int)),Type::Name(Symbol(7),Box::new(Type::Int))],Box::new(Type::Int)),
+                    ty: Type::Func(
+                        vec![
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                        ],
+                        Box::new(Type::Int),
+                    ),
                 },
                 ExpressionType {
                     exp: (),
@@ -273,7 +283,7 @@ mod test {
             vec![
                 ExpressionType {
                     exp: (),
-                    ty: Type::Func(vec![Type::Int,Type::Int],Box::new(Type::Int)),
+                    ty: Type::Func(vec![Type::Int, Type::Int], Box::new(Type::Int)),
                 },
                 ExpressionType {
                     exp: (),
