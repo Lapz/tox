@@ -106,7 +106,7 @@ fn transform_statement(
                             Expression::Func {
                                 ref returns,
                                 ref parameters,
-                                ..
+                                ref body,
                             } => {
                                 let return_type = if let Some(ref return_ty) = *returns {
                                     get_type(return_ty, statement.pos, env)?
@@ -121,6 +121,8 @@ fn transform_statement(
                                     param_ty.push(get_type(p_ty, statement.pos, env)?);
                                     param_names.push(param);
                                 }
+
+                                transform_statement(body, env)?;
 
                                 class_methods.push((
                                     *name,
@@ -624,7 +626,12 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
                     }
                 }
 
-                _ => unreachable!(),
+                ref e => {
+                    println!("{:?}", e);
+                     unreachable!();
+                }
+                
+               
             }
 
             Ok(ExpressionType { exp: (), ty })

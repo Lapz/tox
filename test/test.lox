@@ -1,14 +1,17 @@
 class Person {
     name:str,surname:str;
+    fun hello() {
+        print "hello" + this.name + " " + this.surname;
+    }
 }
 
-fun hello(p:Person) {
-    print "hello " + p.name + " " + p.surname;
-}
-
-var me = Person {
+var me:Person = Person {
     name:"Lenard",
     surname:"Pratt"
 };
+
+fun hello(p:Person) {
+   p.hello();
+}
 
 hello(me);
