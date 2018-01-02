@@ -993,10 +993,12 @@ impl<'a> Parser<'a> {
                     return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
-                _ => Err(ParserError::IllegalExpression(self.error(
+               ref e => {
+                    println!("{:?}",e );
+                    Err(ParserError::IllegalExpression(self.error(
                     "Cannot parse the expression",
                     *pos,
-                ))),
+                )))},
             },
             None => Err(ParserError::EOF),
         }
@@ -1067,7 +1069,7 @@ impl<'a> Parser<'a> {
             let mut param_ty = vec![];
 
             while {
-                let ty = self.consume_name("Expected an closure type ")?;
+                let ty = self.parse_type()?;
 
                 param_ty.push(ty);
 

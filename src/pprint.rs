@@ -95,7 +95,7 @@ impl Statement {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(*alias));
                 pprint_string.push_str("=");
-                pprint_string.push_str(&symbols.name(*ty));
+                pprint_string.push_str(&ty.pprint(symbols));
 
                 pprint_string.push_str(" )");
             }
@@ -139,7 +139,7 @@ impl Statement {
                     pprint_string.push_str(" ");
                     pprint_string.push_str(&symbols.name(property.0));
                     pprint_string.push_str(": ");
-                    pprint_string.push_str(&symbols.name(property.1));
+                    pprint_string.push_str(&property.1.pprint(symbols));
                     pprint_string.push_str(",");
                 }
 

@@ -194,6 +194,15 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn invalid_assingment() {
+        let input = "var a:[[int]] = [10];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
     fn func_type_alias() {
         let input = "
         type Int = int;

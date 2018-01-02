@@ -121,8 +121,8 @@ fn transform_statement(
                                 let mut param_names = vec![];
                                 let mut param_ty = vec![];
 
-                                for &(param, p_ty) in parameters {
-                                    param_ty.push(get_type(&p_ty, statement.pos, env)?);
+                                for &(param, ref p_ty) in parameters {
+                                    param_ty.push(get_type(p_ty, statement.pos, env)?);
                                     param_names.push(param);
                                 }
 
@@ -298,8 +298,8 @@ fn transform_statement(
                     let mut param_names = vec![];
                     let mut param_ty = vec![];
 
-                    for &(param, p_ty) in parameters {
-                        param_ty.push(get_type(&p_ty, statement.pos, env)?);
+                    for &(param, ref p_ty) in parameters {
+                        param_ty.push(get_type(p_ty, statement.pos, env)?);
                         param_names.push(param);
                     }
 
@@ -330,10 +330,21 @@ fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type,
 
             return Err(TypeError::UndefindedType(env.name(s), pos))
         },
-        &ExpressionTy::Arr(s) => get_type(ident, pos, env),
-        
+        &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
+        &ExpressionTy::Func(ref params,ref returns) => {
 
-        _ => unimplemented!()
+            let mut param_tys =vec![];
+
+           for  e_ty in params {
+               param_tys.push(get_type(e_ty, pos, env)?)
+           }
+
+           if let &Some(ref ret )= returns {
+               Ok(Type::Func(param_tys,Box::new(get_type(ret, pos, env)?)))
+           }else {
+               Ok(Type::Func(param_tys,Box::new(Type::Nil)))
+           }
+        }
     }
    
 }
@@ -571,14 +582,14 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             let mut params_ty = vec![];
             let mut param_names = vec![];
 
-            for &(symbol, p_ty) in parameters {
-                params_ty.push(get_type(&p_ty, expr.pos, env)?);
+            for &(symbol, ref p_ty) in parameters {
+                params_ty.push(get_type(p_ty, expr.pos, env)?);
                 param_names.push(symbol);
             }
 
             env.begin_scope();
 
-            for (name, ty) in param_names.iter().zip(params_ty) {
+            for (name, ty) in param_names.iter().zip(params_ty.clone()) {
                 env.add_var(*name, Entry::VarEntry(ty));
             }
 
@@ -587,7 +598,10 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
             check_types(&return_type, &body_ty.ty, expr.pos)?;
 
             env.end_scope();
-            Ok(body_ty)
+            Ok(ExpressionType{
+                exp:(),
+                ty:Type::Func(params_ty,Box::new(return_type))
+            })
         }
 
         Expression::Get {

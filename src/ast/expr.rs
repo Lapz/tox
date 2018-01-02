@@ -84,7 +84,7 @@ pub enum Expression {
 pub enum ExpressionTy {
     Simple(Symbol),
     Arr(Box<ExpressionTy>),
-    Func(Vec<Symbol>, Option<Box<ExpressionTy>>),
+    Func(Vec<ExpressionTy>, Option<Box<ExpressionTy>>),
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]

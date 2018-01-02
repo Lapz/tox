@@ -31,7 +31,7 @@ pub enum Type {
     Bool,
     Nil,
     Float,
-    Func(Vec<Type>, Option<Box<Type>>),
+    Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
     Name(Symbol, Box<Type>),
@@ -46,6 +46,7 @@ impl Display for Type {
             Type::Bool => write!(f, "Boolean"),
             Type::Nil => write!(f, "Nil"),
             Type::Float => write!(f, "Float"),
+            Type::Func(ref params,ref returns) => write!(f,"Func with param types {:?} returns {:?}",params,returns),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
             Type::Array(ref a) => write!(f, "Array of {}", a),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
