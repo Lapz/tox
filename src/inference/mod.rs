@@ -14,389 +14,368 @@ pub struct ExpressionType {
     pub ty: Type,
 }
 
-pub fn analyse(
-    statements: &[WithPos<Statement>],
-    env: &mut Env,
-) -> Result<Vec<ExpressionType>, Vec<TypeError>> {
-    let mut tys = vec![];
-    let mut errors = vec![];
+#[derive(Debug, PartialEq)]
+pub struct TyChecker {
+    pub this: Type,
+}
 
-    for statement in statements {
-        match transform_statement(statement, env) {
-            Ok(ty) => tys.push(ty),
-            Err(e) => errors.push(e),
+impl TyChecker {
+    pub fn new() -> Self {
+        TyChecker { this: Type::Nil }
+    }
+    pub fn analyse(
+        &mut self,
+        statements: &[WithPos<Statement>],
+        env: &mut Env,
+    ) -> Result<Vec<ExpressionType>, Vec<TypeError>> {
+        let mut tys = vec![];
+        let mut errors = vec![];
+
+        for statement in statements {
+            match self.transform_statement(statement, env) {
+                Ok(ty) => tys.push(ty),
+                Err(e) => errors.push(e),
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(tys)
+        } else {
+            Err(errors)
         }
     }
 
-    if errors.is_empty() {
-        Ok(tys)
-    } else {
-        Err(errors)
-    }
-}
-
-/// Checks if two types are eqvilant
-fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), TypeError> {
-    let expected = actual_type(expected);
-    let unknown = actual_type(unknown);
-
-    if expected != unknown {
-        return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
-    }
-    Ok(())
-}
-
-fn get_actual_ty(entry: &Entry, pos: Postition) -> Result<Type, TypeError> {
-    match *entry {
-        Entry::VarEntry(ref ty) => Ok(ty.clone()),
-        _ => Err(TypeError::Function(pos)),
-    }
-}
-
-fn actual_type(ty: &Type) -> &Type {
-    match *ty {
-        Type::Name(_, ref name) => name,
-        ref others => others,
-    }
-}
-
-fn transform_var(
-    symbol: &Symbol,
-    pos: Postition,
-    env: &mut Env,
-) -> Result<ExpressionType, TypeError> {
-    match env.look_var(*symbol) {
-        Some(ty) => Ok(ExpressionType {
-            exp: (),
-            ty: actual_type(&get_actual_ty(ty, pos)?).clone(),
-        }),
-        None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
-    }
-}
-
-fn transform_statement(
-    statement: &WithPos<Statement>,
-    env: &mut Env,
-) -> Result<ExpressionType, TypeError> {
-    match statement.node {
-        Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
-            transform_expr(expr, env)?;
-            Ok(ExpressionType {
+    fn transform_var(
+        &self,
+        symbol: &Symbol,
+        pos: Postition,
+        env: &mut Env,
+    ) -> Result<ExpressionType, TypeError> {
+        match env.look_var(*symbol) {
+            Some(ty) => Ok(ExpressionType {
                 exp: (),
-                ty: Type::Nil,
-            })
+                ty: actual_type(&get_actual_ty(ty, pos)?).clone(),
+            }),
+            None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
         }
-        Statement::Class {
-            ref name,
-            ref methods,
-            ref properties,
-        } => {
-            let mut properties_ty = vec![];
-            let mut class_methods: Vec<(Symbol, Entry)> = vec![];
+    }
 
-            for &(property, ref ty) in properties {
-                let ty = get_type(ty, statement.pos, env)?;
-                properties_ty.push((property, ty))
-            }
-
-            for &WithPos { ref node, .. } in methods {
-                match *node {
-                    Statement::Function { ref name, ref body } => {
-                        match body.node {
-                            Expression::Func {
-                                ref returns,
-                                ref parameters,
-                                ref body,
-                            } => {
-                                let return_type = if let Some(ref return_ty) = *returns {
-                                    get_type(return_ty, statement.pos, env)?
-                                } else {
-                                    Type::Nil
-                                };
-
-                                let mut param_names = vec![];
-                                let mut param_ty = vec![];
-
-                                for &(param, ref p_ty) in parameters {
-                                    param_ty.push(get_type(p_ty, statement.pos, env)?);
-                                    param_names.push(param);
-                                }
-
-                                transform_statement(body, env)?;
-
-                                class_methods.push((
-                                    *name,
-                                    Entry::FunEntry {
-                                        params: param_ty,
-                                        returns: return_type.clone(),
-                                    },
-                                ));
-                            }
-                            _ => unreachable!(),
-                        };
-                    }
-                    _ => unreachable!(),
-                }
-            }
-
-            let ty = Type::Class {
-                name: *name,
-                methods: class_methods,
-                fields: properties_ty,
-            };
-
-            env.add_type(*name, ty.clone());
-
-            env.add_var(*name, Entry::VarEntry(ty.clone()));
-
-            Ok(ExpressionType { exp: (), ty })
-        }
-        Statement::Var(ref symbol, ref expr, ref ty) => {
-            let exp_ty = transform_expr(expr, env)?;
-
-            if let Some(ref ident) = *ty {
-                let ty = get_type(ident, statement.pos, env)?;
-                check_types(&ty, &exp_ty.ty, statement.pos)?;
-
-                env.add_var(*symbol, Entry::VarEntry(ty.clone()));
-
-                return Ok(ExpressionType { exp: (), ty });
-            }
-
-            env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
-
-            Ok(exp_ty)
-        }
-
-        Statement::Break | Statement::Continue => Ok(ExpressionType {
-            exp: (),
-            ty: Type::Nil,
-        }),
-
-        Statement::TypeAlias { ref alias, ref ty } => {
-            let alias_ty = get_type(ty, statement.pos, env)?;
-            env.add_type(
-                *alias,
-                Type::Name(alias.clone(), Box::new(alias_ty.clone())),
-            );
-
-            Ok(ExpressionType {
-                exp: (),
-                ty: alias_ty,
-            })
-        }
-
-        Statement::Block(ref expressions) => {
-            if expressions.is_empty() {
-                return Ok(ExpressionType {
+    fn transform_statement(
+        &mut self,
+        statement: &WithPos<Statement>,
+        env: &mut Env,
+    ) -> Result<ExpressionType, TypeError> {
+        match statement.node {
+            Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
+                self.transform_expression(expr, env)?;
+                Ok(ExpressionType {
                     exp: (),
                     ty: Type::Nil,
-                });
+                })
+            }
+            Statement::Class {
+                ref name,
+                ref methods,
+                ref properties,
+            } => {
+                let mut properties_ty = vec![];
+                let mut class_methods: Vec<(Symbol, Entry)> = vec![];
+
+                for &(property, ref ty) in properties {
+                    let ty = get_type(ty, statement.pos, env)?;
+                    properties_ty.push((property, ty))
+                }
+
+                for &WithPos { ref node, .. } in methods {
+                    match *node {
+                        Statement::Function { ref name, ref body } => {
+                            match body.node {
+                                Expression::Func {
+                                    ref returns,
+                                    ref parameters,
+                                    ref body,
+                                } => {
+                                    let return_type = if let Some(ref return_ty) = *returns {
+                                        get_type(return_ty, statement.pos, env)?
+                                    } else {
+                                        Type::Nil
+                                    };
+
+                                    let mut param_names = vec![];
+                                    let mut param_ty = vec![];
+
+                                    for &(param, ref p_ty) in parameters {
+                                        param_ty.push(get_type(p_ty, statement.pos, env)?);
+                                        param_names.push(param);
+                                    }
+
+                                    self.transform_statement(body, env)?;
+
+                                    class_methods.push((
+                                        *name,
+                                        Entry::FunEntry {
+                                            params: param_ty,
+                                            returns: return_type.clone(),
+                                        },
+                                    ));
+                                }
+                                _ => unreachable!(),
+                            };
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+
+                let ty = Type::Class {
+                    name: *name,
+                    methods: class_methods,
+                    fields: properties_ty,
+                };
+
+                env.add_type(*name, ty.clone());
+
+                self.this = ty.clone();
+
+                env.add_var(*name, Entry::VarEntry(ty.clone()));
+
+                Ok(ExpressionType { exp: (), ty })
+            }
+            Statement::Var(ref symbol, ref expr, ref ty) => {
+                let exp_ty = self.transform_expression(expr, env)?;
+
+                if let Some(ref ident) = *ty {
+                    let ty = get_type(ident, statement.pos, env)?;
+                    check_types(&ty, &exp_ty.ty, statement.pos)?;
+
+                    env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                    return Ok(ExpressionType { exp: (), ty });
+                }
+
+                env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
+
+                Ok(exp_ty)
             }
 
-            env.begin_scope();
-            for expr in expressions.iter().rev().skip(1) {
-                transform_statement(expr, env)?;
-            }
-
-            let result = transform_statement(expressions.last().unwrap(), env);
-
-            env.end_scope();
-
-            result
-        }
-
-        Statement::IfStmt {
-            ref condition,
-            ref then_branch,
-            ref else_branch,
-        } => {
-            let condition_ty = transform_expr(condition, env)?;
-
-            check_bool(&condition_ty, statement.pos)?;
-
-            let then_ty = transform_statement(then_branch, env)?;
-
-            if let &Some(ref else_statement) = else_branch {
-                let else_ty = transform_statement(else_statement, env)?;
-
-                check_types(&then_ty.ty, &else_ty.ty, statement.pos)?;
-
-                return Ok(ExpressionType {
-                    exp: (),
-                    ty: then_ty.ty,
-                });
-            }
-
-            Ok(then_ty)
-        }
-
-        Statement::WhileStmt {
-            ref condition,
-            ref body,
-        }
-        | Statement::DoStmt {
-            ref condition,
-            ref body,
-        } => {
-            let condition_ty = transform_expr(condition, env)?;
-
-            check_bool(&condition_ty, statement.pos)?;
-
-            let body_ty = transform_statement(body, env)?;
-
-            Ok(body_ty)
-        }
-
-        Statement::ForStmt {
-            ref initializer,
-            ref condition,
-            ref increment,
-            ref body,
-        } => {
-            if let &Some(ref init) = initializer {
-                transform_statement(init, env)?;
-            }
-
-            if let &Some(ref incr) = increment {
-                s_check_int_float(&transform_expr(incr, env)?, statement.pos)?;
-            }
-
-            if let &Some(ref cond) = condition {
-                check_bool(&transform_expr(cond, env)?, statement.pos)?;
-            }
-
-            let body_ty = transform_statement(body, env)?;
-
-            Ok(body_ty)
-        }
-
-        Statement::Return(ref returns) => {
-            if let &Some(ref expr) = returns {
-                let exp_ty = transform_expr(expr, env)?;
-                return Ok(exp_ty);
-            }
-            Ok(ExpressionType {
+            Statement::Break | Statement::Continue => Ok(ExpressionType {
                 exp: (),
                 ty: Type::Nil,
-            })
-        }
+            }),
 
-        Statement::Function { ref name, ref body } => {
-            match body.node {
-                Expression::Func {
-                    ref returns,
-                    ref parameters,
-                    ..
-                } => {
-                    let return_type = if let Some(ref return_ty) = *returns {
-                        get_type(return_ty, statement.pos, env)?
-                    } else {
-                        Type::Nil
-                    };
+            Statement::TypeAlias { ref alias, ref ty } => {
+                let alias_ty = get_type(ty, statement.pos, env)?;
+                env.add_type(
+                    *alias,
+                    Type::Name(alias.clone(), Box::new(alias_ty.clone())),
+                );
 
-                    let mut param_names = vec![];
-                    let mut param_ty = vec![];
-
-                    for &(param, ref p_ty) in parameters {
-                        param_ty.push(get_type(p_ty, statement.pos, env)?);
-                        param_names.push(param);
-                    }
-
-                    env.add_var(
-                        *name,
-                        Entry::FunEntry {
-                            params: param_ty,
-                            returns: return_type.clone(),
-                        },
-                    );
-                }
-                _ => unreachable!(),
-            };
-
-            let body_ty = transform_expr(body, env)?;
-
-            Ok(body_ty)
-        }
-    }
-}
-
-fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
-    match ident {
-        &ExpressionTy::Simple(s) => {
-            if let Some(ty) = env.look_type(s) {
-                return Ok(ty.clone());
-            }
-
-            return Err(TypeError::UndefindedType(env.name(s), pos));
-        }
-        &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
-        &ExpressionTy::Func(ref params, ref returns) => {
-            let mut param_tys = vec![];
-
-            for e_ty in params {
-                param_tys.push(get_type(e_ty, pos, env)?)
-            }
-
-            if let &Some(ref ret) = returns {
-                Ok(Type::Func(param_tys, Box::new(get_type(ret, pos, env)?)))
-            } else {
-                Ok(Type::Func(param_tys, Box::new(Type::Nil)))
-            }
-        }
-    }
-}
-
-fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<ExpressionType, TypeError> {
-    match expr.node {
-        Expression::Array { ref items } => {
-            if items.is_empty() {
-                return Ok(ExpressionType {
+                Ok(ExpressionType {
                     exp: (),
-                    ty: Type::Array(Box::new(Type::Nil)),
-                });
+                    ty: alias_ty,
+                })
             }
 
-            let first_ty = transform_expr(&items[0], env)?;
+            Statement::Block(ref expressions) => {
+                if expressions.is_empty() {
+                    return Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Nil,
+                    });
+                }
 
-            for item in items {
-                match check_types(&first_ty.ty, &transform_expr(item, env)?.ty, expr.pos) {
-                    Ok(_) => (),
-                    Err(e) => return Err(e),
+                env.begin_scope();
+                for expr in expressions.iter().rev().skip(1) {
+                    self.transform_statement(expr, env)?;
+                }
+
+                let result = self.transform_statement(expressions.last().unwrap(), env);
+
+                env.end_scope();
+
+                result
+            }
+
+            Statement::IfStmt {
+                ref condition,
+                ref then_branch,
+                ref else_branch,
+            } => {
+                let condition_ty = self.transform_expression(condition, env)?;
+
+                check_bool(&condition_ty, statement.pos)?;
+
+                let then_ty = self.transform_statement(then_branch, env)?;
+
+                if let &Some(ref else_statement) = else_branch {
+                    let else_ty = self.transform_statement(else_statement, env)?;
+
+                    check_types(&then_ty.ty, &else_ty.ty, statement.pos)?;
+
+                    return Ok(ExpressionType {
+                        exp: (),
+                        ty: then_ty.ty,
+                    });
+                }
+
+                Ok(then_ty)
+            }
+
+            Statement::WhileStmt {
+                ref condition,
+                ref body,
+            }
+            | Statement::DoStmt {
+                ref condition,
+                ref body,
+            } => {
+                let condition_ty = self.transform_expression(condition, env)?;
+
+                check_bool(&condition_ty, statement.pos)?;
+
+                let body_ty = self.transform_statement(body, env)?;
+
+                Ok(body_ty)
+            }
+
+            Statement::ForStmt {
+                ref initializer,
+                ref condition,
+                ref increment,
+                ref body,
+            } => {
+                if let &Some(ref init) = initializer {
+                    self.transform_statement(init, env)?;
+                }
+
+                if let &Some(ref incr) = increment {
+                    s_check_int_float(&self.transform_expression(incr, env)?, statement.pos)?;
+                }
+
+                if let &Some(ref cond) = condition {
+                    check_bool(&self.transform_expression(cond, env)?, statement.pos)?;
+                }
+
+                let body_ty = self.transform_statement(body, env)?;
+
+                Ok(body_ty)
+            }
+
+            Statement::Return(ref returns) => {
+                if let &Some(ref expr) = returns {
+                    let exp_ty = self.transform_expression(expr, env)?;
+                    return Ok(exp_ty);
+                }
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Nil,
+                })
+            }
+
+            Statement::Function { ref name, ref body } => {
+                match body.node {
+                    Expression::Func {
+                        ref returns,
+                        ref parameters,
+                        ..
+                    } => {
+                        let return_type = if let Some(ref return_ty) = *returns {
+                            get_type(return_ty, statement.pos, env)?
+                        } else {
+                            Type::Nil
+                        };
+
+                        let mut param_names = vec![];
+                        let mut param_ty = vec![];
+
+                        for &(param, ref p_ty) in parameters {
+                            param_ty.push(get_type(p_ty, statement.pos, env)?);
+                            param_names.push(param);
+                        }
+
+                        env.add_var(
+                            *name,
+                            Entry::FunEntry {
+                                params: param_ty,
+                                returns: return_type.clone(),
+                            },
+                        );
+                    }
+                    _ => unreachable!(),
+                };
+
+                let body_ty = self.transform_expression(body, env)?;
+
+                Ok(body_ty)
+            }
+        }
+    }
+
+    fn transform_expression(
+        &mut self,
+        expr: &WithPos<Expression>,
+        env: &mut Env,
+    ) -> Result<ExpressionType, TypeError> {
+        match expr.node {
+            Expression::Array { ref items } => {
+                if items.is_empty() {
+                    return Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Array(Box::new(Type::Nil)),
+                    });
+                }
+
+                let first_ty = self.transform_expression(&items[0], env)?;
+
+                for item in items {
+                    match check_types(
+                        &first_ty.ty,
+                        &self.transform_expression(item, env)?.ty,
+                        expr.pos,
+                    ) {
+                        Ok(_) => (),
+                        Err(e) => return Err(e),
+                    }
+                }
+
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Array(Box::new(first_ty.ty)),
+                })
+            }
+
+            Expression::Assign {
+                ref value,
+                ref kind,
+                ..
+            } => {
+                use ast::expr::AssignOperator::*;
+                match *kind {
+                    Equal => self.transform_expression(value, env),
+                    MinusEqual => {
+                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
+                    }
+                    PlusEqual => {
+                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
+                    }
+                    StarEqual => {
+                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
+                    }
+                    SlashEqual => {
+                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
+                    }
                 }
             }
 
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Array(Box::new(first_ty.ty)),
-            })
-        }
+            Expression::Binary {
+                ref left_expr,
+                ref right_expr,
+                ref operator,
+            } => {
+                let left = self.transform_expression(left_expr, env)?;
+                let right = self.transform_expression(right_expr, env)?;
 
-        Expression::Assign {
-            ref value,
-            ref kind,
-            ..
-        } => {
-            use ast::expr::AssignOperator::*;
-            match *kind {
-                Equal => transform_expr(value, env),
-                MinusEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
-                PlusEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
-                StarEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
-                SlashEqual => s_check_int_float(&transform_expr(value, env)?, value.pos),
-            }
-        }
-
-        Expression::Binary {
-            ref left_expr,
-            ref right_expr,
-            ref operator,
-        } => {
-            let left = transform_expr(left_expr, env)?;
-            let right = transform_expr(right_expr, env)?;
-
-            use ast::expr::Operator;
-            match *operator {
+                use ast::expr::Operator;
+                match *operator {
 
                 Operator::BangEqual | Operator::EqualEqual => {
                     Ok(ExpressionType {
@@ -429,391 +408,449 @@ fn transform_expr(expr: &WithPos<Expression>, env: &mut Env) -> Result<Expressio
 
                 // _ => unimplemented!(),
             }
-        }
+            }
 
-        Expression::Call {
-            ref callee,
-            ref arguments,
-        } => {
-            let callee = match callee.node {
-                Expression::Var(sym, _) => sym,
-                Expression::Get {
-                    ref object,
-                    ref property,
-                    ..
-                } => {
-                    let sym = match object.node {
-                        Expression::Var(sym, _) => sym,
-                        _ => unimplemented!(),
-                    };
+            Expression::Call {
+                ref callee,
+                ref arguments,
+            } => {
+                let callee = match callee.node {
+                    Expression::Var(sym, _) => sym,
+                    Expression::Get {
+                        ref object,
+                        ref property,
+                        ..
+                    } => {
+                        let sym = match object.node {
+                            Expression::Var(sym, _) => sym,
+                            _ => unimplemented!(),
+                        };
 
-                    if let Some(entry) = env.look_var(sym).cloned() {
-                        match entry {
-                            Entry::VarEntry(ref class) => match class {
-                                &Type::Class { ref methods, .. } => {
-                                    let mut _found = false;
-                                    for &(ref key, ref value) in methods {
-                                        if key == property {
-                                            _found = true;
+                        if let Some(entry) = env.look_var(sym).cloned() {
+                            match entry {
+                                Entry::VarEntry(ref class) => match class {
+                                    &Type::Class { ref methods, .. } => {
+                                        let mut _found = false;
+                                        for &(ref key, ref value) in methods {
+                                            if key == property {
+                                                _found = true;
 
-                                            match value {
-                                                &Entry::VarEntry(ref ty) => {
-                                                    return Ok(ExpressionType {
-                                                        exp: (),
-                                                        ty: ty.clone(),
-                                                    })
-                                                }
-
-                                                &Entry::FunEntry {
-                                                    ref params,
-                                                    ref returns,
-                                                } => {
-                                                    for (arg, param) in arguments.iter().zip(params)
-                                                    {
-                                                        let exp =
-                                                            transform_expr(arg, &mut env.clone())?;
-
-                                                        check_types(&param, &exp.ty, expr.pos)?;
+                                                match value {
+                                                    &Entry::VarEntry(ref ty) => {
+                                                        return Ok(ExpressionType {
+                                                            exp: (),
+                                                            ty: ty.clone(),
+                                                        })
                                                     }
-                                                    return Ok(ExpressionType {
-                                                        exp: (),
-                                                        ty: actual_type(returns).clone(),
-                                                    });
+
+                                                    &Entry::FunEntry {
+                                                        ref params,
+                                                        ref returns,
+                                                    } => {
+                                                        for (arg, param) in
+                                                            arguments.iter().zip(params)
+                                                        {
+                                                            let exp = self.transform_expression(
+                                                                arg,
+                                                                &mut env.clone(),
+                                                            )?;
+
+                                                            check_types(&param, &exp.ty, expr.pos)?;
+                                                        }
+                                                        return Ok(ExpressionType {
+                                                            exp: (),
+                                                            ty: actual_type(returns).clone(),
+                                                        });
+                                                    }
                                                 }
                                             }
                                         }
+
+                                        if !_found {
+                                            return Err(TypeError::NotProperty(
+                                                env.name(sym),
+                                                expr.pos,
+                                            ));
+                                        }
                                     }
 
-                                    if !_found {
-                                        return Err(TypeError::NotProperty(env.name(sym), expr.pos));
-                                    }
-                                }
+                                    _ => unimplemented!("TODO ADD AN ERROR"),
+                                },
 
-                                _ => unimplemented!("TODO ADD AN ERROR"),
-                            },
-
-                            _ => unreachable!(),
-                        }
-                    }
-
-                    return Err(TypeError::UndefindedVar(env.name(sym), expr.pos));
-                }
-                _ => unreachable!(),
-            };
-
-            if let Some(entry) = env.look_var(callee).cloned() {
-                match entry {
-                    Entry::FunEntry {
-                        ref params,
-                        ref returns,
-                    } => {
-                        for (arg, param) in arguments.iter().zip(params) {
-                            let exp = transform_expr(arg, &mut env.clone())?;
-
-                            check_types(&param, &exp.ty, expr.pos)?;
-                        }
-                        return Ok(ExpressionType {
-                            exp: (),
-                            ty: actual_type(returns).clone(),
-                        });
-                    }
-
-                    Entry::VarEntry(ref ty) => {
-                        return Ok(ExpressionType {
-                            exp: (),
-                            ty: ty.clone(),
-                        })
-                    }
-                }
-            }
-
-            Err(TypeError::UndefindedVar(env.name(callee), expr.pos))
-        }
-
-        Expression::Dict { ref items } => {
-            if items.is_empty() {
-                return Ok(ExpressionType {
-                    exp: (),
-                    ty: Type::Dict(Box::new(Type::Nil), Box::new(Type::Nil)),
-                });
-            }
-
-            let first_key_ty = transform_expr(&items[0].0, env)?;
-            let first_value_ty = transform_expr(&items[0].0, env)?;
-            for item in items {
-                match check_types(
-                    &first_key_ty.ty,
-                    &transform_expr(&item.0, env)?.ty,
-                    expr.pos,
-                ) {
-                    Ok(_) => (),
-                    Err(e) => return Err(e),
-                };
-
-                match check_types(
-                    &first_value_ty.ty,
-                    &transform_expr(&item.1, env)?.ty,
-                    expr.pos,
-                ) {
-                    Ok(_) => (),
-                    Err(e) => return Err(e),
-                }
-            }
-
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Dict(Box::new(first_key_ty.ty), Box::new(first_value_ty.ty)),
-            })
-        }
-
-        Expression::Func {
-            ref body,
-            ref returns,
-            ref parameters,
-        } => {
-            let return_type = if let Some(ref return_ty) = *returns {
-                get_type(return_ty, expr.pos, env)?
-            } else {
-                Type::Nil
-            };
-
-            let mut params_ty = vec![];
-            let mut param_names = vec![];
-
-            for &(symbol, ref p_ty) in parameters {
-                params_ty.push(get_type(p_ty, expr.pos, env)?);
-                param_names.push(symbol);
-            }
-
-            env.begin_scope();
-
-            for (name, ty) in param_names.iter().zip(params_ty.clone()) {
-                env.add_var(*name, Entry::VarEntry(ty));
-            }
-
-            let body_ty = transform_statement(&body, env)?;
-
-            check_types(&return_type, &body_ty.ty, expr.pos)?;
-
-            env.end_scope();
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Func(params_ty, Box::new(return_type)),
-            })
-        }
-
-        Expression::Get {
-            ref object,
-            ref property,
-            ..
-        } => {
-            let instance = transform_expr(object, env)?;
-
-            let mut ty = Type::Nil;
-
-            match instance.ty {
-                Type::Class { ref fields, .. } => {
-                    let mut found = false;
-
-                    for prop in fields {
-                        if prop.0 == *property {
-                            found = true;
-                            ty = prop.1.clone();
-                        }
-                    }
-                    if !found {
-                        return Err(TypeError::NotProperty(env.name(*property), expr.pos));
-                    }
-                }
-
-                ref e => {
-                    println!("{:?}", e);
-                     unreachable!();
-                }
-                
-               
-            }
-
-            Ok(ExpressionType { exp: (), ty })
-        }
-
-        Expression::Grouping { ref expr } => transform_expr(expr, env),
-
-        Expression::IndexExpr {
-            ref target,
-            ref index,
-        } => match target.node {
-            Expression::Var(ref symbol, _) => {
-                let target_ty = transform_var(symbol, expr.pos, env)?;
-                let index_ty = transform_expr(index, env)?;
-
-                check_int(&index_ty, index.pos)?;
-
-                match target_ty.ty {
-                    Type::Array(ref exp_ty) => Ok(ExpressionType {
-                        exp: (),
-                        ty: *exp_ty.clone(),
-                    }),
-
-                    Type::Str => Ok(ExpressionType {
-                        exp: (),
-                        ty: Type::Str,
-                    }),
-                    _ => Err(TypeError::IndexAble(env.name(*symbol), index.pos)),
-                }
-            }
-
-            _ => Err(TypeError::InvalidIndex(expr.pos)),
-        },
-
-        Expression::ClassInstance {
-            ref properties,
-            ref name,
-        } => {
-            let class = transform_var(name, expr.pos, env)?;
-
-            match class.ty {
-                Type::Class { ref fields, .. } => {
-                    let mut found = true;
-                    for &(ref key, ref value) in fields {
-                        for &(ref instance_name, ref instance_val) in properties {
-                            if instance_name == key {
-                                found = true;
-
-                                let instance_val_ty = transform_expr(instance_val, env)?;
-
-                                check_types(value, &instance_val_ty.ty, expr.pos)?;
+                                _ => unreachable!(),
                             }
                         }
 
-                        if !found {
-                            return Err(TypeError::NotProperty(env.name(*key), expr.pos));
+                        return Err(TypeError::UndefindedVar(env.name(sym), expr.pos));
+                    }
+                    _ => unreachable!(),
+                };
+
+                if let Some(entry) = env.look_var(callee).cloned() {
+                    match entry {
+                        Entry::FunEntry {
+                            ref params,
+                            ref returns,
+                        } => {
+                            for (arg, param) in arguments.iter().zip(params) {
+                                let exp = self.transform_expression(arg, &mut env.clone())?;
+
+                                check_types(&param, &exp.ty, expr.pos)?;
+                            }
+                            return Ok(ExpressionType {
+                                exp: (),
+                                ty: actual_type(returns).clone(),
+                            });
+                        }
+
+                        Entry::VarEntry(ref ty) => {
+                            return Ok(ExpressionType {
+                                exp: (),
+                                ty: ty.clone(),
+                            })
                         }
                     }
-
-                    if fields.len() < properties.len() {
-                        return Err(TypeError::TooManyProperty(expr.pos));
-                    } else if fields.len() > properties.len() {
-                        return Err(TypeError::TooLittleProperty(expr.pos));
-                    }
-                }
-                _ => unimplemented!(), //TODO CHANGE INTO HARD ERROR
-            };
-
-            Ok(class)
-        }
-
-        Expression::Literal(ref literal) => match *literal {
-            Literal::Float(_) => Ok(ExpressionType {
-                exp: (),
-                ty: Type::Float,
-            }),
-            Literal::Int(_) => Ok(ExpressionType {
-                exp: (),
-                ty: Type::Int,
-            }),
-            Literal::Str(_) => Ok(ExpressionType {
-                exp: (),
-                ty: Type::Str,
-            }),
-            Literal::True(_) | Literal::False(_) => Ok(ExpressionType {
-                exp: (),
-                ty: Type::Bool,
-            }),
-            Literal::Nil => Ok(ExpressionType {
-                exp: (),
-                ty: Type::Nil,
-            }),
-        },
-
-        Expression::Unary {
-            ref expr,
-            ref operator,
-        } => {
-            let expr_ty = transform_expr(expr, env)?;
-
-            match *operator {
-                UnaryOperator::Bang => check_bool(&expr_ty, expr.pos)?,
-                UnaryOperator::Minus => {
-                    s_check_int_float(&expr_ty, expr.pos)?;
-                }
-            };
-
-            Ok(expr_ty)
-        }
-
-        Expression::This(_) => Ok(ExpressionType {
-            exp: (),
-            ty: Type::Nil,
-        }),
-
-        Expression::Logical {
-            ref left,
-            ref right,
-            ..
-        } => {
-            let left_ty = transform_expr(left, env)?;
-            check_bool(&left_ty, expr.pos)?;
-            let right_ty = transform_expr(right, env)?;
-            check_bool(&right_ty, expr.pos)?;
-
-            Ok(ExpressionType {
-                exp: (),
-                ty: Type::Bool,
-            })
-        }
-
-        Expression::Set {
-            ref object,
-            ref name,
-            ref value,
-            ..
-        } => {
-            let instance = transform_expr(object, env)?;
-            let mut ty = Type::Nil;
-
-            match instance.ty {
-                Type::Class { ref fields, .. } => {
-                    let mut found = false;
-
-                    for prop in fields {
-                        if prop.0 == *name {
-                            found = true;
-                            let value_ty = transform_expr(value, env)?;
-                            check_types(&prop.1, &value_ty.ty, expr.pos)?;
-                            ty = prop.1.clone();
-                        }
-                    }
-                    if !found {
-                        return Err(TypeError::NotProperty(env.name(*name), expr.pos));
-                    }
                 }
 
-                _ => unreachable!(),
+                Err(TypeError::UndefindedVar(env.name(callee), expr.pos))
             }
 
-            Ok(ExpressionType { exp: (), ty })
-        }
+            Expression::Dict { ref items } => {
+                if items.is_empty() {
+                    return Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Dict(Box::new(Type::Nil), Box::new(Type::Nil)),
+                    });
+                }
 
-        Expression::Ternary {
-            ref condition,
-            ref then_branch,
-            ref else_branch,
-        } => {
-            let condition_ty = transform_expr(condition, env)?;
-            check_bool(&condition_ty, expr.pos)?;
+                let first_key_ty = self.transform_expression(&items[0].0, env)?;
+                let first_value_ty = self.transform_expression(&items[0].0, env)?;
+                for item in items {
+                    match check_types(
+                        &first_key_ty.ty,
+                        &self.transform_expression(&item.0, env)?.ty,
+                        expr.pos,
+                    ) {
+                        Ok(_) => (),
+                        Err(e) => return Err(e),
+                    };
 
-            let then_ty = transform_expr(then_branch, env)?;
-            let else_ty = transform_expr(else_branch, env)?;
-            check_types(&then_ty.ty, &else_ty.ty, expr.pos)?;
+                    match check_types(
+                        &first_value_ty.ty,
+                        &self.transform_expression(&item.1, env)?.ty,
+                        expr.pos,
+                    ) {
+                        Ok(_) => (),
+                        Err(e) => return Err(e),
+                    }
+                }
 
-            Ok(ExpressionType {
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Dict(Box::new(first_key_ty.ty), Box::new(first_value_ty.ty)),
+                })
+            }
+
+            Expression::Func {
+                ref body,
+                ref returns,
+                ref parameters,
+            } => {
+                let return_type = if let Some(ref return_ty) = *returns {
+                    get_type(return_ty, expr.pos, env)?
+                } else {
+                    Type::Nil
+                };
+
+                let mut params_ty = vec![];
+                let mut param_names = vec![];
+
+                for &(symbol, ref p_ty) in parameters {
+                    params_ty.push(get_type(p_ty, expr.pos, env)?);
+                    param_names.push(symbol);
+                }
+
+                env.begin_scope();
+
+                for (name, ty) in param_names.iter().zip(params_ty.clone()) {
+                    env.add_var(*name, Entry::VarEntry(ty));
+                }
+
+                let body_ty = self.transform_statement(&body, env)?;
+
+                check_types(&return_type, &body_ty.ty, expr.pos)?;
+
+                env.end_scope();
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Func(params_ty, Box::new(return_type)),
+                })
+            }
+
+            Expression::Get {
+                ref object,
+                ref property,
+                ..
+            } => {
+
+                println!("{:?}",object);
+                let instance = self.transform_expression(object, env)?;
+
+                let mut ty = Type::Nil;
+
+                match instance.ty {
+                    Type::Class { ref fields, .. } => {
+                        let mut found = false;
+
+                        for prop in fields {
+                            if prop.0 == *property {
+                                found = true;
+                                ty = prop.1.clone();
+                            }
+                        }
+                        if !found {
+                            return Err(TypeError::NotProperty(env.name(*property), expr.pos));
+                        }
+                    }
+
+                    ref e => {
+                        println!("{:?}", e);
+                        unreachable!();
+                    }
+                }
+
+                Ok(ExpressionType { exp: (), ty })
+            }
+
+            Expression::Grouping { ref expr } => self.transform_expression(expr, env),
+
+            Expression::IndexExpr {
+                ref target,
+                ref index,
+            } => match target.node {
+                Expression::Var(ref symbol, _) => {
+                    let target_ty = self.transform_var(symbol, expr.pos, env)?;
+                    let index_ty = self.transform_expression(index, env)?;
+
+                    check_int(&index_ty, index.pos)?;
+
+                    match target_ty.ty {
+                        Type::Array(ref exp_ty) => Ok(ExpressionType {
+                            exp: (),
+                            ty: *exp_ty.clone(),
+                        }),
+
+                        Type::Str => Ok(ExpressionType {
+                            exp: (),
+                            ty: Type::Str,
+                        }),
+                        _ => Err(TypeError::IndexAble(env.name(*symbol), index.pos)),
+                    }
+                }
+
+                _ => Err(TypeError::InvalidIndex(expr.pos)),
+            },
+
+            Expression::ClassInstance {
+                ref properties,
+                ref name,
+            } => {
+                let class = self.transform_var(name, expr.pos, env)?;
+                match class.ty {
+                    Type::Class { ref fields, .. } => {
+                        let mut found = true;
+                        for &(ref key, ref value) in fields {
+                            for &(ref instance_name, ref instance_val) in properties {
+                                if instance_name == key {
+                                    found = true;
+
+                                    let instance_val_ty =
+                                        self.transform_expression(instance_val, env)?;
+
+                                    check_types(value, &instance_val_ty.ty, expr.pos)?;
+                                }
+                            }
+
+                            if !found {
+                                return Err(TypeError::NotProperty(env.name(*key), expr.pos));
+                            }
+                        }
+
+                        if fields.len() < properties.len() {
+                            return Err(TypeError::TooManyProperty(expr.pos));
+                        } else if fields.len() > properties.len() {
+                            return Err(TypeError::TooLittleProperty(expr.pos));
+                        }
+                    }
+                    _ => unimplemented!(), //TODO CHANGE INTO HARD ERROR
+                };
+
+                Ok(class)
+            }
+
+            Expression::Literal(ref literal) => match *literal {
+                Literal::Float(_) => Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Float,
+                }),
+                Literal::Int(_) => Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Int,
+                }),
+                Literal::Str(_) => Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Str,
+                }),
+                Literal::True(_) | Literal::False(_) => Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Bool,
+                }),
+                Literal::Nil => Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Nil,
+                }),
+            },
+
+            Expression::Unary {
+                ref expr,
+                ref operator,
+            } => {
+                let expr_ty = self.transform_expression(expr, env)?;
+
+                match *operator {
+                    UnaryOperator::Bang => check_bool(&expr_ty, expr.pos)?,
+                    UnaryOperator::Minus => {
+                        s_check_int_float(&expr_ty, expr.pos)?;
+                    }
+                };
+
+                Ok(expr_ty)
+            }
+
+            Expression::This(_) => Ok(ExpressionType {
                 exp: (),
-                ty: then_ty.ty,
-            })
-        }
+                ty: self.this.clone(),
+            }),
 
-        Expression::Var(ref symbol, _) => transform_var(symbol, expr.pos, env),
+            Expression::Logical {
+                ref left,
+                ref right,
+                ..
+            } => {
+                let left_ty = self.transform_expression(left, env)?;
+                check_bool(&left_ty, expr.pos)?;
+                let right_ty = self.transform_expression(right, env)?;
+                check_bool(&right_ty, expr.pos)?;
+
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: Type::Bool,
+                })
+            }
+
+            Expression::Set {
+                ref object,
+                ref name,
+                ref value,
+                ..
+            } => {
+                let instance = self.transform_expression(object, env)?;
+                let mut ty = Type::Nil;
+
+                match instance.ty {
+                    Type::Class { ref fields, .. } => {
+                        let mut found = false;
+
+                        for prop in fields {
+                            if prop.0 == *name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+                                check_types(&prop.1, &value_ty.ty, expr.pos)?;
+                                ty = prop.1.clone();
+                            }
+                        }
+                        if !found {
+                            return Err(TypeError::NotProperty(env.name(*name), expr.pos));
+                        }
+                    }
+
+                    _ => unreachable!(),
+                }
+
+                Ok(ExpressionType { exp: (), ty })
+            }
+
+            Expression::Ternary {
+                ref condition,
+                ref then_branch,
+                ref else_branch,
+            } => {
+                let condition_ty = self.transform_expression(condition, env)?;
+                check_bool(&condition_ty, expr.pos)?;
+
+                let then_ty = self.transform_expression(then_branch, env)?;
+                let else_ty = self.transform_expression(else_branch, env)?;
+                check_types(&then_ty.ty, &else_ty.ty, expr.pos)?;
+
+                Ok(ExpressionType {
+                    exp: (),
+                    ty: then_ty.ty,
+                })
+            }
+
+            Expression::Var(ref symbol, _) => self.transform_var(symbol, expr.pos, env),
+        }
+    }
+}
+
+/// Checks if two types are eqvilant
+fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), TypeError> {
+    let expected = actual_type(expected);
+    let unknown = actual_type(unknown);
+
+    if expected != unknown {
+        return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+    }
+    Ok(())
+}
+
+fn get_actual_ty(entry: &Entry, pos: Postition) -> Result<Type, TypeError> {
+    match *entry {
+        Entry::VarEntry(ref ty) => Ok(ty.clone()),
+        _ => Err(TypeError::Function(pos)),
+    }
+}
+
+fn actual_type(ty: &Type) -> &Type {
+    match *ty {
+        Type::Name(_, ref name) => name,
+        ref others => others,
+    }
+}
+
+fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
+    match ident {
+        &ExpressionTy::Simple(s) => {
+            if let Some(ty) = env.look_type(s) {
+                return Ok(ty.clone());
+            }
+
+            return Err(TypeError::UndefindedType(env.name(s), pos));
+        }
+        &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
+        &ExpressionTy::Func(ref params, ref returns) => {
+            let mut param_tys = vec![];
+
+            for e_ty in params {
+                param_tys.push(get_type(e_ty, pos, env)?)
+            }
+
+            if let &Some(ref ret) = returns {
+                Ok(Type::Func(param_tys, Box::new(get_type(ret, pos, env)?)))
+            } else {
+                Ok(Type::Func(param_tys, Box::new(Type::Nil)))
+            }
+        }
     }
 }
 

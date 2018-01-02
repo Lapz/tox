@@ -5,7 +5,7 @@ class Person {
     }
 }
 
-var me:Person = Person {
+var me = Person {
     name:"Lenard",
     surname:"Pratt"
 };

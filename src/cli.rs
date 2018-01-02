@@ -1,7 +1,7 @@
 use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
-use inference::analyse;
+use inference::TyChecker;
 use interpreter::interpret;
 use std::io;
 use symbol::{SymbolFactory, Symbols};
@@ -60,7 +60,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         let mut env = Env::new(&strings);
 
-        match analyse(&ast, &mut env) {
+        match TyChecker::new().analyse(&ast, &mut env) {
             Ok(_) => (),
             Err(errors) => {
                 for err in errors {
@@ -144,7 +144,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     let mut env = Env::new(&strings);
     env.get_builtins();
 
-    match analyse(&ast, &mut env) {
+    match TyChecker::new().analyse(&ast, &mut env) {
         Ok(_) => (),
         Err(errors) => {
             for err in errors {
