@@ -1,3 +1,14 @@
-var add:fun(int,int) -> int = fun(a:int,b:int) -> int {return a+b;} ;
+class Person {
+    name:str,surname:str;
+}
 
-print a;
+fun hello(p:Person) {
+    print "hello " + p.name + " " + p.surname;
+}
+
+var me = Person {
+    name:"Lenard",
+    surname:"Pratt"
+};
+
+hello(me);
