@@ -187,25 +187,16 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn get_type(&mut self) -> Result<Option<Symbol>, ParserError> {
+    fn get_type(&mut self) -> Result<Option<ExpressionTy>, ParserError> {
         if self.recognise(TokenType::COLON) {
             self.advance();
 
-            let possilbe_type = self.advance().unwrap();
+            let ty = self.parse_type()?;
 
-            match possilbe_type.token {
-                TokenType::IDENTIFIER(ref ty) => return Ok(Some(self.symbols.symbol(ty))),
-                TokenType::NIL => return Ok(Some(self.symbols.symbol("nil"))),
-                _ => {
-                    return Err(ParserError::Expected(self.error(
-                        "Expected a proper type",
-                        possilbe_type.pos,
-                    )))
-                }
-            }
+            Ok(Some(ty))
+        } else {
+            Ok(None)
         }
-
-        Ok(None)
     }
 }
 
@@ -319,14 +310,11 @@ impl<'a> Parser<'a> {
 
         self.consume(TokenType::ASSIGN, "Expecte a \'=\'")?;
 
-        let ty = self.consume_name_symbol("Expected a type")?;
+        let ty = self.parse_type()?;
 
         self.consume(TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
 
-        Ok(WithPos::new(
-            Statement::TypeAlias { alias, ty: ty.0 },
-            type_pos,
-        ))
+        Ok(WithPos::new(Statement::TypeAlias { alias, ty }, type_pos))
     }
 
     // Control Flow Statements
@@ -359,7 +347,6 @@ impl<'a> Parser<'a> {
             increment = Some(self.expression()?);
         }
 
-        
         self.consume(TokenType::RPAREN, "Expected ')' after for clauses.")?;
 
         self.loop_depth += 1;
@@ -376,7 +363,6 @@ impl<'a> Parser<'a> {
             },
             for_pos,
         ))
-        // Ok(body)
     }
 
     fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
@@ -507,7 +493,7 @@ impl<'a> Parser<'a> {
                         "Expected a colon after a class property name",
                     )?;
 
-                    let ty = self.consume_name("Expected a Property type")?;
+                    let ty = self.parse_type()?;
 
                     properties.push((name, ty));
 
@@ -1004,10 +990,13 @@ impl<'a> Parser<'a> {
                     return Ok(WithPos::new(Expression::Grouping { expr }, pos));
                 }
 
-                _ => Err(ParserError::IllegalExpression(self.error(
-                    "Cannot parse the expression",
-                    *pos,
-                ))),
+                ref e => {
+                    println!("{:?}", e);
+                    Err(ParserError::IllegalExpression(self.error(
+                        "Cannot parse the expression",
+                        *pos,
+                    )))
+                }
             },
             None => Err(ParserError::EOF),
         }
@@ -1032,22 +1021,9 @@ impl<'a> Parser<'a> {
 
                 self.consume(TokenType::COLON, "Expected a colon")?;
 
-                let id_type = self.advance().unwrap();
+                let ty = self.parse_type()?;
 
-                let mut _ty = Symbol(0);
-
-                match id_type.token {
-                    TokenType::IDENTIFIER(ref ty) => _ty = self.symbols.symbol(ty),
-                    TokenType::NIL => _ty = self.symbols.symbol("nil"),
-                    _ => {
-                        return Err(ParserError::Expected(self.error(
-                            "Expected a proper type",
-                            id_type.pos,
-                        )))
-                    }
-                }
-
-                parameters.push((identifier, _ty));
+                parameters.push((identifier, ty));
 
                 self.recognise(TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
@@ -1059,18 +1035,7 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::FRETURN) {
             self.advance();
 
-            let possilbe_type = self.advance().unwrap();
-
-            match possilbe_type.token {
-                TokenType::IDENTIFIER(ref ty) => returns = Some(self.symbols.symbol(ty)),
-                TokenType::NIL => returns = Some(self.symbols.symbol("nil")),
-                _ => {
-                    return Err(ParserError::Expected(self.error(
-                        "Expected a proper type",
-                        possilbe_type.pos,
-                    )))
-                }
-            }
+            returns = Some(self.parse_type()?);
         }
 
         let body = Box::new(self.block()?);
@@ -1083,6 +1048,46 @@ impl<'a> Parser<'a> {
             },
             func_pos,
         ))
+    }
+
+    fn parse_type(&mut self) -> Result<ExpressionTy, ParserError> {
+        if self.recognise(TokenType::LBRACKET) {
+            self.advance();
+            let ty = self.parse_type()?;
+
+            self.consume(
+                TokenType::RBRACKET,
+                "Expected a \']\' to close an array type",
+            )?;
+
+            Ok(ExpressionTy::Arr(Box::new(ty)))
+        } else if self.recognise(TokenType::FUNCTION) {
+            self.advance();
+            self.consume(TokenType::LPAREN, "Expected a \'(\'")?;
+            let mut param_ty = vec![];
+
+            while {
+                let ty = self.parse_type()?;
+
+                param_ty.push(ty);
+
+                self.recognise(TokenType::COMMA)
+                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+            } {}
+
+            self.consume(TokenType::RPAREN, "Expected  \')\'")?;
+
+            if self.recognise(TokenType::FRETURN) {
+                self.advance();
+                let ty = self.parse_type()?;
+                Ok(ExpressionTy::Func(param_ty, Some(Box::new(ty))))
+            } else {
+                Ok(ExpressionTy::Func(param_ty, None))
+            }
+        } else {
+            let ty = self.consume_name("Expected a type param")?;
+            Ok(ExpressionTy::Simple(ty))
+        }
     }
 
     fn finish_call(

@@ -6,7 +6,7 @@ mod test {
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
-    use symbol::SymbolFactory;
+    use symbol::{Symbol, SymbolFactory};
     use env::Env;
 
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
@@ -137,7 +137,7 @@ mod test {
         let input = "var a = [10]; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-         analyse(&get_ast(input, strings), &mut env).unwrap();      
+        analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -194,6 +194,15 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn invalid_assingment() {
+        let input = "var a:[[int]] = [10];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        analyse(&get_ast(input, strings), &mut env).unwrap();
+    }
+
+    #[test]
     fn func_type_alias() {
         let input = "
         type Int = int;
@@ -203,6 +212,7 @@ mod test {
         add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
+
         assert_eq!(
             analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
@@ -212,7 +222,13 @@ mod test {
                 },
                 ExpressionType {
                     exp: (),
-                    ty: Type::Int,
+                    ty: Type::Func(
+                        vec![
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                        ],
+                        Box::new(Type::Name(Symbol(7), Box::new(Type::Int))),
+                    ),
                 },
                 ExpressionType {
                     exp: (),
@@ -241,7 +257,13 @@ mod test {
                 },
                 ExpressionType {
                     exp: (),
-                    ty: Type::Int,
+                    ty: Type::Func(
+                        vec![
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                            Type::Name(Symbol(7), Box::new(Type::Int)),
+                        ],
+                        Box::new(Type::Int),
+                    ),
                 },
                 ExpressionType {
                     exp: (),
@@ -261,7 +283,7 @@ mod test {
             vec![
                 ExpressionType {
                     exp: (),
-                    ty: Type::Int,
+                    ty: Type::Func(vec![Type::Int, Type::Int], Box::new(Type::Int)),
                 },
                 ExpressionType {
                     exp: (),

@@ -34,9 +34,9 @@ pub enum Expression {
         items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
     },
     Func {
-        parameters: Vec<(Symbol, Symbol)>,
+        parameters: Vec<(Symbol, ExpressionTy)>,
         body: Box<WithPos<Statement>>,
-        returns: Option<Symbol>,
+        returns: Option<ExpressionTy>,
     },
     Get {
         object: Box<WithPos<Expression>>,
@@ -78,6 +78,13 @@ pub enum Expression {
 
     This(VariableUseHandle),
     Var(Symbol, VariableUseHandle),
+}
+
+#[derive(Debug, PartialOrd, Clone, PartialEq)]
+pub enum ExpressionTy {
+    Simple(Symbol),
+    Arr(Box<ExpressionTy>),
+    Func(Vec<ExpressionTy>, Option<Box<ExpressionTy>>),
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]

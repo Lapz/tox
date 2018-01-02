@@ -1,11 +1,17 @@
-fun fib(n:int) {
-  if (n < 2) {
-    return 1;
-  } else {
-    return 2;
-  }
+class Person {
+    name:str,surname:str;
+    fun hello() {
+        print "hello" + this.name + " " + this.surname;
+    }
 }
 
-var start = clock();
-print(fib(30) == 832040);
-print(clock() - start);
+var me:Person = Person {
+    name:"Lenard",
+    surname:"Pratt"
+};
+
+fun hello(p:Person) {
+   p.hello();
+}
+
+hello(me);

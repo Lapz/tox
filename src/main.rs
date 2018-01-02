@@ -21,10 +21,9 @@ mod symbol;
 mod env;
 mod pprint;
 mod builtins;
+
 use cli::{repl, run, Cli};
 use structopt::StructOpt;
-
-// use interpreter::Interpreter;
 
 fn main() {
     let opts = Cli::from_args();

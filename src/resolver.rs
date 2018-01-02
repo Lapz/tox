@@ -205,11 +205,10 @@ impl Resolver {
                 Ok(())
             }
 
-            Statement::TypeAlias { ref alias, ref ty } => {
+            Statement::TypeAlias { ref alias, .. } => {
                 self.declare(alias.clone(), statement.pos)?;
-                self.declare(ty.clone(), statement.pos)?;
                 self.define(*alias);
-                self.define(*ty);
+
                 Ok(())
             }
 
