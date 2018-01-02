@@ -79,12 +79,16 @@ impl TyChecker {
                 ref properties,
             } => {
                 let mut properties_ty = vec![];
+                let mut fields = vec![];
                 let mut class_methods: Vec<(Symbol, Entry)> = vec![];
 
                 for &(property, ref ty) in properties {
                     let ty = get_type(ty, statement.pos, env)?;
+                    fields.push((property, ty.clone()));
                     properties_ty.push((property, ty))
                 }
+
+                self.this = Type::This(fields, vec![]);
 
                 for &WithPos { ref node, .. } in methods {
                     match *node {
@@ -100,6 +104,13 @@ impl TyChecker {
                                     } else {
                                         Type::Nil
                                     };
+
+                                    match self.this {
+                                        Type::This(_, ref mut methods) => {
+                                            methods.push((*name, return_type.clone()))
+                                        }
+                                        _ => unreachable!(),
+                                    }
 
                                     let mut param_names = vec![];
                                     let mut param_ty = vec![];
@@ -592,14 +603,26 @@ impl TyChecker {
                 ref property,
                 ..
             } => {
-
-                println!("{:?}",object);
                 let instance = self.transform_expression(object, env)?;
 
                 let mut ty = Type::Nil;
 
                 match instance.ty {
                     Type::Class { ref fields, .. } => {
+                        let mut found = false;
+
+                        for prop in fields {
+                            if prop.0 == *property {
+                                found = true;
+                                ty = prop.1.clone();
+                            }
+                        }
+                        if !found {
+                            return Err(TypeError::NotProperty(env.name(*property), expr.pos));
+                        }
+                    },
+
+                    Type::This(ref fields,_) => {
                         let mut found = false;
 
                         for prop in fields {

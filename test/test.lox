@@ -10,8 +10,4 @@ var me = Person {
     surname:"Pratt"
 };
 
-fun hello(p:Person) {
-   p.hello();
-}
-
-hello(me);
+me.hello();
