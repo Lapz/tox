@@ -608,7 +608,7 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, .. } => {
+                    Type::Class { ref fields, .. } | Type::This(ref fields,_) => {
                         let mut found = false;
 
                         for prop in fields {
@@ -621,20 +621,6 @@ impl TyChecker {
                             return Err(TypeError::NotProperty(env.name(*property), expr.pos));
                         }
                     },
-
-                    Type::This(ref fields,_) => {
-                        let mut found = false;
-
-                        for prop in fields {
-                            if prop.0 == *property {
-                                found = true;
-                                ty = prop.1.clone();
-                            }
-                        }
-                        if !found {
-                            return Err(TypeError::NotProperty(env.name(*property), expr.pos));
-                        }
-                    }
 
                     ref e => {
                         println!("{:?}", e);
@@ -781,7 +767,7 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, .. } => {
+                    Type::Class { ref fields, .. } | Type::This(ref fields,_)  => {
                         let mut found = false;
 
                         for prop in fields {

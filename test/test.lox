@@ -1,7 +1,7 @@
 class Person {
     name:str,surname:str;
     fun hello() {
-        print "hello" + this.name + " " + this.surname;
+        print "hello" + " " + this.name + " " + this.surname;
     }
 }
 

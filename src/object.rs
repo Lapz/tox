@@ -56,7 +56,7 @@ impl Object {
                 env.begin_scope();
 
                 env.add_object(Symbol(0), instance.clone());
-                env.end_scope();
+                // env.end_scope();
                 method.clone()
             }
 
