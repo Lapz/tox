@@ -13,7 +13,7 @@ pub enum TypeError {
     Function(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
-    NotProperty(String, Postition),
+    NotMethodOrProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
@@ -41,7 +41,7 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Type::Class { ref name, .. } => write!(f, "Class {}", name),
+            Type::Class { ref name,ref methods,ref fields } => write!(f, "Class {} with Fields {:#?} and Methods {:#?}", name,fields,methods),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
@@ -84,8 +84,8 @@ impl Display for TypeError {
 
             TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),
 
-            TypeError::NotProperty(ref name, ref pos) => {
-                write!(f, "Undefined property \'{}\' on {}", name, pos)
+            TypeError::NotMethodOrProperty(ref name, ref pos) => {
+                write!(f, "Undefined method/property \'{}\' on {}", name, pos)
             }
 
             TypeError::UndefindedType(ref name, ref pos) => {

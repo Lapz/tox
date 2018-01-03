@@ -3,12 +3,13 @@ class Person {
     fun hello() {
         print "hello" + " " + this.name + " " + this.surname;
     }
-
     fun new(name:str,surname:str) -> Person {
         return Person{name:name,surname:surname};
     }
 }
 
-var me = Person.new("John","Appleseed");
+
+
+var me:Person = Person.new("John","Appleseed");
 
 me.hello();

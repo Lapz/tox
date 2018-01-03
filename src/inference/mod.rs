@@ -90,6 +90,24 @@ impl TyChecker {
 
                 self.this = Type::This(fields, vec![]);
 
+                env.add_type(
+                    *name,
+                    Type::Class {
+                        name: *name,
+                        fields: properties_ty.clone(),
+                        methods: vec![],
+                    },
+                );
+
+                env.add_var(
+                    *name,
+                    Entry::VarEntry(Type::Class {
+                        name: *name,
+                        fields: properties_ty.clone(),
+                        methods: vec![],
+                    }),
+                );
+
                 for &WithPos { ref node, .. } in methods {
                     match *node {
                         Statement::Function { ref name, ref body } => {
@@ -113,11 +131,15 @@ impl TyChecker {
                                     }
 
                                     let mut param_names = vec![];
-                                    let mut param_ty = vec![];
+                                    let mut param_tys = vec![];
 
                                     for &(param, ref p_ty) in parameters {
-                                        param_ty.push(get_type(p_ty, statement.pos, env)?);
+                                        param_tys.push(get_type(p_ty, statement.pos, env)?);
                                         param_names.push(param);
+                                    }
+
+                                    for (name, ty) in param_names.iter().zip(param_tys.clone()) {
+                                        env.add_var(*name, Entry::VarEntry(ty));
                                     }
 
                                     self.transform_statement(body, env)?;
@@ -125,7 +147,7 @@ impl TyChecker {
                                     class_methods.push((
                                         *name,
                                         Entry::FunEntry {
-                                            params: param_ty,
+                                            params: param_tys,
                                             returns: return_type.clone(),
                                         },
                                     ));
@@ -478,7 +500,7 @@ impl TyChecker {
                                         }
 
                                         if !_found {
-                                            return Err(TypeError::NotProperty(
+                                            return Err(TypeError::NotMethodOrProperty(
                                                 env.name(sym),
                                                 expr.pos,
                                             ));
@@ -608,7 +630,11 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, .. } | Type::This(ref fields,_) => {
+                    Type::Class {
+                        ref fields,
+                        ref methods,
+                        ..
+                    } => {
                         let mut found = false;
 
                         for prop in fields {
@@ -617,10 +643,49 @@ impl TyChecker {
                                 ty = prop.1.clone();
                             }
                         }
-                        if !found {
-                            return Err(TypeError::NotProperty(env.name(*property), expr.pos));
+
+                        for prop in methods {
+                            if prop.0 == *property {
+                                found = true;
+                                ty = match prop.1 {
+                                    Entry::VarEntry(ref t) => t.clone(),
+                                    Entry::FunEntry { ref returns, .. } => returns.clone(),
+                                }
+                            }
                         }
-                    },
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(
+                                env.name(*property),
+                                expr.pos,
+                            ));
+                        }
+                    }
+
+                    Type::This(ref fields, ref methods) => {
+                        let mut found = false;
+
+                        for prop in fields {
+                            if prop.0 == *property {
+                                found = true;
+                                ty = prop.1.clone();
+                            }
+                        }
+
+                        for prop in methods {
+                            if prop.0 == *property {
+                                found = true;
+                                ty = prop.1.clone();
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(
+                                env.name(*property),
+                                expr.pos,
+                            ));
+                        }
+                    }
 
                     ref e => {
                         println!("{:?}", e);
@@ -681,7 +746,10 @@ impl TyChecker {
                             }
 
                             if !found {
-                                return Err(TypeError::NotProperty(env.name(*key), expr.pos));
+                                return Err(TypeError::NotMethodOrProperty(
+                                    env.name(*key),
+                                    expr.pos,
+                                ));
                             }
                         }
 
@@ -767,7 +835,7 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, .. } | Type::This(ref fields,_)  => {
+                    Type::Class { ref fields, .. } | Type::This(ref fields, _) => {
                         let mut found = false;
 
                         for prop in fields {
@@ -779,7 +847,7 @@ impl TyChecker {
                             }
                         }
                         if !found {
-                            return Err(TypeError::NotProperty(env.name(*name), expr.pos));
+                            return Err(TypeError::NotMethodOrProperty(env.name(*name), expr.pos));
                         }
                     }
 
