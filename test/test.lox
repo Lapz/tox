@@ -1,15 +1,7 @@
-class Person {
-    name:str,surname:str;
-    fun hello() {
-        print "hello" + " " + this.name + " " + this.surname;
-    }
-    fun new(name:str,surname:str) -> Person {
-        return Person{name:name,surname:surname};
-    }
+class Foo {
+  fun Foo() {
+    this = "value"; // Error at '=': Invalid assignment target.\nCannot parse the expression on line 4,column 3
+  }
 }
 
-
-
-var me:Person = Person.new("John","Appleseed");
-
-me.hello();
+Foo{};

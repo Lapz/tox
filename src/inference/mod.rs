@@ -165,6 +165,9 @@ impl TyChecker {
                     fields: properties_ty,
                 };
 
+
+                println!("{:#?}",ty );
+
                 env.add_type(*name, ty.clone());
 
                 self.this = ty.clone();
@@ -685,12 +688,11 @@ impl TyChecker {
                                 expr.pos,
                             ));
                         }
-                    }
+                    },
 
-                    ref e => {
-                        println!("{:?}", e);
-                        unreachable!();
-                    }
+                    
+
+                    ref e => return Err(TypeError::NotInstanceOrClass(e.clone(),*property,expr.pos))
                 }
 
                 Ok(ExpressionType { exp: (), ty })
@@ -835,7 +837,7 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, .. } | Type::This(ref fields, _) => {
+                    Type::Class { ref fields, ref methods,.. }  => {
                         let mut found = false;
 
                         for prop in fields {
@@ -846,9 +848,31 @@ impl TyChecker {
                                 ty = prop.1.clone();
                             }
                         }
+
+                        for prop in methods {
+                            if prop.0 == *name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+
+                                match prop.1 {
+                                    Entry::VarEntry(ref t) => check_types(t, &value_ty.ty, expr.pos)?,
+                                    Entry::FunEntry { ref returns, ref params } => check_types(&Type::Func(params.clone(),Box::new(returns.clone())), &value_ty.ty, expr.pos)?
+                                };
+
+                                ty = match prop.1 {
+                                    Entry::VarEntry(ref t) => t.clone(),
+                                    Entry::FunEntry { ref returns, .. } => returns.clone(),
+                                };
+                            }
+                        }
+
                         if !found {
                             return Err(TypeError::NotMethodOrProperty(env.name(*name), expr.pos));
                         }
+                    }
+
+                    Type::This(ref fields, ref methods) => {
+                        
                     }
 
                     _ => unreachable!(),
@@ -894,7 +918,7 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
 fn get_actual_ty(entry: &Entry, pos: Postition) -> Result<Type, TypeError> {
     match *entry {
         Entry::VarEntry(ref ty) => Ok(ty.clone()),
-        _ => Err(TypeError::Function(pos)),
+        Entry::FunEntry{ref params,ref returns} => Ok(Type::Func(params.clone(),Box::new(returns.clone()))),
     }
 }
 

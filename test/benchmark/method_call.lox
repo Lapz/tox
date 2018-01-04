@@ -1,13 +1,11 @@
 class Toggle {
-  init(startState) {
-    this.state = startState;
-  }
+  state:bool;
 
-  value() {
+  fun value() {
     return this.state;
   }
 
-  activate() {
+  fun activate() {
     this.state = !this.state;
     return this;
   }

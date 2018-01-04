@@ -17,6 +17,7 @@ pub enum TypeError {
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
+    NotInstanceOrClass(Type,Symbol,Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -80,6 +81,10 @@ impl Display for TypeError {
 
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
+            }
+
+            TypeError::NotInstanceOrClass(ref ty,ref property,ref pos) => {
+                write!(f,"Type {} dosen't have the method/field {} on {}",ty,property, pos)
             }
 
             TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),

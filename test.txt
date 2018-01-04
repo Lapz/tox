@@ -1,0 +1,174 @@
+[2KPassed: [32m0[0m Failed: [31m0[0m Skipped: [33m0[0m[1;30m (test/assignment/associativity.lox)[0m{} ['target/debug/lexer', 'test/assignment/associativity.lox']
+[2KPassed: [32m1[0m Failed: [31m0[0m Skipped: [33m0[0m[1;30m (test/assignment/global.lox)[0m{} ['target/debug/lexer', 'test/assignment/global.lox']
+[2KPassed: [32m2[0m Failed: [31m0[0m Skipped: [33m0[0m[1;30m (test/assignment/grouping.lox)[0m{} ['target/debug/lexer', 'test/assignment/grouping.lox']
+[2K[31mFAIL[0m: test/assignment/grouping.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m2[0m Failed: [31m1[0m Skipped: [33m0[0m[1;30m (test/assignment/infix_operator.lox)[0m{} ['target/debug/lexer', 'test/assignment/infix_operator.lox']
+[2K[31mFAIL[0m: test/assignment/infix_operator.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m2[0m Failed: [31m2[0m Skipped: [33m0[0m[1;30m (test/assignment/local.lox)[0m{} ['target/debug/lexer', 'test/assignment/local.lox']
+[2K[31mFAIL[0m: test/assignment/local.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m2[0m Failed: [31m3[0m Skipped: [33m0[0m[1;30m (test/assignment/prefix_operator.lox)[0m{} ['target/debug/lexer', 'test/assignment/prefix_operator.lox']
+[2K[31mFAIL[0m: test/assignment/prefix_operator.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m2[0m Failed: [31m4[0m Skipped: [33m0[0m[1;30m (test/assignment/syntax.lox)[0m{} ['target/debug/lexer', 'test/assignment/syntax.lox']
+[2KPassed: [32m3[0m Failed: [31m4[0m Skipped: [33m0[0m[1;30m (test/assignment/to_this.lox)[0m{} ['target/debug/lexer', 'test/assignment/to_this.lox']
+[2K[31mFAIL[0m: test/assignment/to_this.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m3[0m Failed: [31m5[0m Skipped: [33m0[0m[1;30m (test/assignment/undefined.lox)[0m{} ['target/debug/lexer', 'test/assignment/undefined.lox']
+[2K[31mFAIL[0m: test/assignment/undefined.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'Call enter() before replace()', src/libcore/option.rs:891:4[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'Call enter() before replace()', src/libcore/option.rs:891:4[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m3[0m Failed: [31m6[0m Skipped: [33m0[0m[1;30m (test/block/empty.lox)[0m{} ['target/debug/lexer', 'test/block/empty.lox']
+[2KPassed: [32m4[0m Failed: [31m6[0m Skipped: [33m0[0m[1;30m (test/block/scope.lox)[0m{} ['target/debug/lexer', 'test/block/scope.lox']
+[2KPassed: [32m5[0m Failed: [31m6[0m Skipped: [33m0[0m[1;30m (test/bool/equality.lox)[0m{} ['target/debug/lexer', 'test/bool/equality.lox']
+[2KPassed: [32m6[0m Failed: [31m6[0m Skipped: [33m0[0m[1;30m (test/bool/not.lox)[0m{} ['target/debug/lexer', 'test/bool/not.lox']
+[2KPassed: [32m7[0m Failed: [31m6[0m Skipped: [33m0[0m[1;30m (test/call/bool.lox)[0m{} ['target/debug/lexer', 'test/call/bool.lox']
+[2K[31mFAIL[0m: test/call/bool.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m7[0m Failed: [31m7[0m Skipped: [33m0[0m[1;30m (test/call/nil.lox)[0m{} ['target/debug/lexer', 'test/call/nil.lox']
+[2K[31mFAIL[0m: test/call/nil.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m7[0m Failed: [31m8[0m Skipped: [33m0[0m[1;30m (test/call/num.lox)[0m{} ['target/debug/lexer', 'test/call/num.lox']
+[2K[31mFAIL[0m: test/call/num.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m7[0m Failed: [31m9[0m Skipped: [33m0[0m[1;30m (test/call/object.lox)[0m{} ['target/debug/lexer', 'test/call/object.lox']
+[2K[31mFAIL[0m: test/call/object.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'Should not be calling this method', src/object.rs:129:17[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'Should not be calling this method', src/object.rs:129:17[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m7[0m Failed: [31m10[0m Skipped: [33m0[0m[1;30m (test/call/string.lox)[0m{} ['target/debug/lexer', 'test/call/string.lox']
+[2K[31mFAIL[0m: test/call/string.lox
+      [91mUnexpected output on stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mUnexpected output on stderr:[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91mExpected return code 0 and got 101. Stderr:[0m
+      [91mthread 'main' panicked at 'internal error: entered unreachable code', src/inference/mod.rs:522:25[0m
+      [91mnote: Run with `RUST_BACKTRACE=1` for a backtrace.[0m
+      [91m[0m
+
+[2KPassed: [32m7[0m Failed: [31m11[0m Skipped: [33m0[0m[1;30m (test/class/empty.lox)[0m{} ['target/debug/lexer', 'test/class/empty.lox']
+[2KPassed: [32m8[0m Failed: [31m11[0m Skipped: [33m0[0m[1;30m (test/class/inherited_method.lox)[0m{} ['target/debug/lexer', 'test/class/inherited_method.lox']
+[2K[31mFAIL[0m: test/class/inherited_method.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m12[0m Skipped: [33m0[0m[1;30m (test/class/local_reference_self.lox)[0m{} ['target/debug/lexer', 'test/class/local_reference_self.lox']
+[2K[31mFAIL[0m: test/class/local_reference_self.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m13[0m Skipped: [33m0[0m[1;30m (test/class/reference_self.lox)[0m{} ['target/debug/lexer', 'test/class/reference_self.lox']
+[2K[31mFAIL[0m: test/class/reference_self.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m14[0m Skipped: [33m0[0m[1;30m (test/closure/assign_to_closure.lox)[0m{} ['target/debug/lexer', 'test/closure/assign_to_closure.lox']
+[2K[31mFAIL[0m: test/closure/assign_to_closure.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m15[0m Skipped: [33m0[0m[1;30m (test/closure/assign_to_shadowed_later.lox)[0m{} ['target/debug/lexer', 'test/closure/assign_to_shadowed_later.lox']
+[2K[31mFAIL[0m: test/closure/assign_to_shadowed_later.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m16[0m Skipped: [33m0[0m[1;30m (test/closure/close_over_function_parameter.lox)[0m{} ['target/debug/lexer', 'test/closure/close_over_function_parameter.lox']
+[2K[31mFAIL[0m: test/closure/close_over_function_parameter.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m17[0m Skipped: [33m0[0m[1;30m (test/closure/close_over_later_variable.lox)[0m{} ['target/debug/lexer', 'test/closure/close_over_later_variable.lox']
+[2K[31mFAIL[0m: test/closure/close_over_later_variable.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m18[0m Skipped: [33m0[0m[1;30m (test/closure/close_over_method_parameter.lox)[0m{} ['target/debug/lexer', 'test/closure/close_over_method_parameter.lox']
+[2K[31mFAIL[0m: test/closure/close_over_method_parameter.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m19[0m Skipped: [33m0[0m[1;30m (test/closure/closed_closure_in_function.lox)[0m{} ['target/debug/lexer', 'test/closure/closed_closure_in_function.lox']
+[2K[31mFAIL[0m: test/closure/closed_closure_in_function.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m20[0m Skipped: [33m0[0m[1;30m (test/closure/nested_closure.lox)[0m{} ['target/debug/lexer', 'test/closure/nested_closure.lox']
+[2K[31mFAIL[0m: test/closure/nested_closure.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m21[0m Skipped: [33m0[0m[1;30m (test/closure/open_closure_in_function.lox)[0m{} ['target/debug/lexer', 'test/closure/open_closure_in_function.lox']
+[2K[31mFAIL[0m: test/closure/open_closure_in_function.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m22[0m Skipped: [33m0[0m[1;30m (test/closure/reference_closure_multiple_times.lox)[0m{} ['target/debug/lexer', 'test/closure/reference_closure_multiple_times.lox']
+[2K[31mFAIL[0m: test/closure/reference_closure_multiple_times.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m23[0m Skipped: [33m0[0m[1;30m (test/closure/reuse_closure_slot.lox)[0m{} ['target/debug/lexer', 'test/closure/reuse_closure_slot.lox']
+[2K[31mFAIL[0m: test/closure/reuse_closure_slot.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m24[0m Skipped: [33m0[0m[1;30m (test/closure/shadow_closure_with_local.lox)[0m{} ['target/debug/lexer', 'test/closure/shadow_closure_with_local.lox']
+[2K[31mFAIL[0m: test/closure/shadow_closure_with_local.lox
+      [91mExpected return code 0 and got 65. Stderr:[0m
+      [91m[0m
+
+[2KPassed: [32m8[0m Failed: [31m25[0m Skipped: [33m0[0m[1;30m (test/closure/unused_closure.lox)[0m{} ['target/debug/lexer', 'test/closure/unused_closure.lox']
+[2KPassed: [32m9[0m Failed: [31m25[0m Skipped: [33m0[0m[1;30m (test/comments/line_at_eof.lox)[0m{} ['target/debug/lexer', 'test/comments/line_at_eof.lox']
+[2KPassed: [32m10[0m Failed: [31m25[0m Skipped: [33m0[0m[1;30m (test/comments/only_line_comment.lox)[0m{} ['target/debug/lexer', 'test/comments/only_line_comment.lox']
+[2KPassed: [32m11[0m Failed: [31m25[0m Skipped: [33m0[0m[1;30m (test/comments/only_line_comment_and_line.lox)[0m{} ['target/debug/lexer', 'test/comments/only_line_comment_and_line.lox']
+[2KPassed: [32m12[0m Failed: [31m25[0m Skipped: [33m0[0m[1;30m (test/comments/unicode.lox)[0m{} ['target/debug/lexer', 'test/comments/unicode.lox']
