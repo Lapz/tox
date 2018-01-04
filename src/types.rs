@@ -10,6 +10,7 @@ pub enum TypeError {
     Expected(Type, Type, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
+    NotCallable(Postition),
     Function(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
@@ -82,6 +83,10 @@ impl Display for TypeError {
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
             }
+
+            TypeError::NotCallable(ref pos) => {
+                write!(f, "Can only call functions and classes on {}", pos)
+            }  
 
             TypeError::NotInstanceOrClass(ref ty,ref property,ref pos) => {
                 write!(f,"Type {} dosen't have the method/field {} on {}",ty,property, pos)

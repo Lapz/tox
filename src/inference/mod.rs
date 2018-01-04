@@ -386,7 +386,6 @@ impl TyChecker {
                 ..
             } => {
                 let ty = self.transform_var(name, expr.pos, env)?;
-
                 use ast::expr::AssignOperator::*;
                 match *kind {
                     Equal => {
@@ -519,7 +518,7 @@ impl TyChecker {
 
                         return Err(TypeError::UndefindedVar(env.name(sym), expr.pos));
                     }
-                    _ => unreachable!(),
+                    _ => return Err(TypeError::NotCallable(expr.pos)),
                 };
 
                 if let Some(entry) = env.look_var(callee).cloned() {

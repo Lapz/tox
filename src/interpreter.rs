@@ -306,7 +306,7 @@ fn evaluate_expression(
             let right = evaluate_expression(right_expr, env)?;
 
             match *operator {
-                Operator::BangEqual => Ok(Object::Bool(!left == right)),
+                Operator::BangEqual => Ok(Object::Bool(left != right)),
                 Operator::EqualEqual => Ok(Object::Bool(left == right)),
                 Operator::LessThan => Ok(Object::Bool(left < right)),
                 Operator::LessThanEqual => Ok(Object::Bool(left <= right)),
