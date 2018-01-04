@@ -382,22 +382,22 @@ impl TyChecker {
             Expression::Assign {
                 ref value,
                 ref kind,
+                ref name,
                 ..
             } => {
+                let ty = self.transform_var(name, expr.pos, env)?;
+
                 use ast::expr::AssignOperator::*;
                 match *kind {
-                    Equal => self.transform_expression(value, env),
-                    MinusEqual => {
-                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
-                    }
-                    PlusEqual => {
-                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
-                    }
-                    StarEqual => {
-                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
-                    }
-                    SlashEqual => {
-                        s_check_int_float(&self.transform_expression(value, env)?, value.pos)
+                    Equal => {
+                        let value_ty = self.transform_expression(value, env)?;
+                        check_types(&ty.ty, &value_ty.ty, expr.pos)?;
+                        return Ok(ty)
+                    },
+                    MinusEqual | PlusEqual | StarEqual | SlashEqual  => {
+                        let value_ty = s_check_int_float(&self.transform_expression(value, env)?, value.pos)?;
+                        check_types(&ty.ty, &value_ty.ty, expr.pos)?;
+                        return Ok(ty)
                     }
                 }
             }

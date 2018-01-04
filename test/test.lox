@@ -1,7 +1,2 @@
-class Foo {
-  fun Foo() {
-    this = "value"; // Error at '=': Invalid assignment target.\nCannot parse the expression on line 4,column 3
-  }
-}
-
-Foo{};
+var a = 10;
+a = "a";
