@@ -486,8 +486,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _) => class.get_property(property, env),
-                e => {
-                    println!("{:?}", e);
+                _ => {
                     return Err(RuntimeError::NotAnIn);
                 }
             }

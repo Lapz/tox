@@ -10,6 +10,7 @@ pub enum TypeError {
     Expected(Type, Type, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
+    UndefindedClass(String, Postition),
     NotCallable(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
@@ -89,6 +90,9 @@ impl Display for TypeError {
 
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
+            }
+            TypeError::UndefindedClass(ref name, ref pos) => {
+                write!(f, "Undefinded Class\'{}\' on {}", name, pos)
             }
 
             TypeError::NotCallable(ref pos) => {

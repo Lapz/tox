@@ -1,21 +1,11 @@
-class Person {
-  name:str,surname:str;
-
-  fun new(n:str,s:str) -> Person {
-    return Person {name:n,
-      surname:s
-    };
-  }
-
-  fun hello() {
-    print "Hello" +" "+ this.name;
+class Foo {
+  a:int,b:int;
+  fun init(a:int, b:int) -> Foo {
+    print("init"); // expect:init
+    return Foo {a:a,b:b};
   }
 }
 
-
-
-var a = Person.new("l","p");
-var b =  Person.new("l","p");
-
-print a == b;
-
+var foo = Foo.init(1,2);
+print(foo.a); // expect:1
+print(foo.b); // expect:2

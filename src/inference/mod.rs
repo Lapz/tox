@@ -13,7 +13,7 @@ pub struct ExpressionType {
     pub exp: Exp,
     pub ty: Type,
 }
-
+/// The struct that is in control of type checking
 #[derive(Debug, PartialEq)]
 pub struct TyChecker {
     pub this: Type,
@@ -89,8 +89,6 @@ impl TyChecker {
                 }
 
                 self.this = Type::This(fields, vec![]);
-
-            
 
                 env.add_type(
                     *name,
@@ -419,38 +417,29 @@ impl TyChecker {
 
                 use ast::expr::Operator;
                 match *operator {
-
-                Operator::BangEqual | Operator::EqualEqual => {
-                    Ok(ExpressionType {
+                    Operator::BangEqual | Operator::EqualEqual => Ok(ExpressionType {
                         exp: (),
                         ty: Type::Bool,
-                    })
-                }
-                Operator::LessThan
-                | Operator::LessThanEqual
-                | Operator::GreaterThan
-                | Operator::GreaterThanEqual => {
-                    check_int_float_str(&left, &right, left_expr.pos)?;
-                    Ok(ExpressionType {
-                        exp: (),
-                        ty: Type::Bool,
-                    })
-                }
+                    }),
+                    Operator::LessThan
+                    | Operator::LessThanEqual
+                    | Operator::GreaterThan
+                    | Operator::GreaterThanEqual => {
+                        check_int_float_str(&left, &right, left_expr.pos)?;
+                        Ok(ExpressionType {
+                            exp: (),
+                            ty: Type::Bool,
+                        })
+                    }
 
-                Operator::Plus => {
-                    check_int_float_str(&left, &right, left_expr.pos)
-                }
+                    Operator::Plus => check_int_float_str(&left, &right, left_expr.pos),
 
-                Operator::Slash
-                | Operator::Star
-                | Operator::Modulo
-                | Operator::Minus
-                | Operator::Exponential => {
-                     check_int_float_str(&left, &right, left_expr.pos)
+                    Operator::Slash
+                    | Operator::Star
+                    | Operator::Modulo
+                    | Operator::Minus
+                    | Operator::Exponential => check_int_float_str(&left, &right, left_expr.pos),
                 }
-
-                // _ => unimplemented!(),
-            }
             }
 
             Expression::Call {
@@ -464,13 +453,20 @@ impl TyChecker {
                         ref property,
                         ..
                     } => {
-                        let mut _symbol = Symbol(0); // Just a stand in
+                        let mut _symbol = Symbol(0); // For the undefined error message
                         let ty = match object.node {
                             Expression::Var(ref sym, _) => {
                                 _symbol = *sym;
                                 self.transform_var(sym, expr.pos, env)?
                             }
-                            _ => unimplemented!(),
+                            Expression::ClassInstance{ref name,..} => {
+                                if let Some(ty) = env.look_type(*name) {
+                                    return Ok(ExpressionType{exp:(),ty:ty.clone()})
+                                }
+
+                                return Err(TypeError::UndefindedClass(env.name(*name),expr.pos))
+                            },
+                            ref e => unimplemented!("{:?}",e),
                         };
 
                         match ty.ty {
@@ -514,10 +510,10 @@ impl TyChecker {
                                 }
 
                                 if !_found {
-                                    if let Some(class) = env.look_type(*name).cloned() { 
+                                    if let Some(class) = env.look_type(*name).cloned() {
                                         // When the Class type is added to the environment the methods fields is empty
                                         // After the first pass the class type with all the methods and fields is added to the  env
-                                        // so I check to see if the method being called occus their if not error          
+                                        // so I check to see if the method being called occus their if not error
 
                                         match class {
                                             Type::Class { ref methods, .. } => {
@@ -1001,7 +997,8 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
                 ..
             },
         ) => {
-            // D
+            // Due to how class are inferred if a method on the class returns its self.
+            // Its class type will have an empty methods; So we compare the name and the fields instead
             if n != sym && methods != m {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
