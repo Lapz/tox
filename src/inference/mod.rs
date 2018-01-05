@@ -514,7 +514,11 @@ impl TyChecker {
                                 }
 
                                 if !_found {
-                                    if let Some(class) = env.look_type(*name).cloned() {
+                                    if let Some(class) = env.look_type(*name).cloned() { 
+                                        // When the Class type is added to the environment the methods fields is empty
+                                        // After the first pass the class type with all the methods and fields is added to the  env
+                                        // so I check to see if the method being called occus their if not error          
+
                                         match class {
                                             Type::Class { ref methods, .. } => {
                                                 _found = false;
