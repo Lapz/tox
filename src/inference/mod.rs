@@ -90,6 +90,8 @@ impl TyChecker {
 
                 self.this = Type::This(fields, vec![]);
 
+                env.add_type(*name, Type::Self_(Some(*name)));
+
                 env.add_type(
                     *name,
                     Type::Class {
@@ -167,7 +169,7 @@ impl TyChecker {
 
                 env.add_type(*name, ty.clone());
 
-                self.this = ty.clone();
+                self.this = Type::Nil;
 
                 env.add_var(*name, Entry::VarEntry(ty.clone()));
 
@@ -507,7 +509,7 @@ impl TyChecker {
                                         }
                                     }
 
-                                    e => unimplemented!("TODO ADD AN ERROR, {:?}", e),
+                                    e => unimplemented!("TODO ADD AN ERROR, {:?} on {}", e,expr.pos),
                                 },
 
                                 _ => unreachable!(),
@@ -632,6 +634,7 @@ impl TyChecker {
 
                 let mut ty = Type::Nil;
 
+                println!("{:?}",instance );
                 match instance.ty {
                     Type::Class {
                         ref fields,
@@ -925,19 +928,17 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
     let unknown = actual_type(unknown);
 
     match (expected, unknown) {
-        (
-            &Type::Class {
-                ref name,
-                ref fields,
-                ..
-            },
-            &Type::Class {
-                ref name,
-                ref fields,
-                ..
-            },
-        ) => {
+        (&Type::Class{ref name,..}, &Type::Self_(ref self_)) | (&Type::Self_(ref self_),&Type::Class{ref name,..}) => {
+            if let &Some(n) = self_ {
             if n != *name {
+                return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+                }
+            }
+            
+        }
+
+        (&Type::Class{name:ref n,ref methods,..},&Type::Class{name:ref sym,methods:ref m,..}) => {
+            if n != sym && methods != m {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
         }

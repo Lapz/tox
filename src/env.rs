@@ -38,12 +38,14 @@ impl Env {
         let float_symbol = types.symbol("float");
         let nil_symbol = types.symbol("nil");
         let bool_symbol = types.symbol("bool");
+        let self_symbol = types.symbol("Self");
 
         types.enter(int_symbol, Type::Int);
         types.enter(float_symbol, Type::Float);
         types.enter(bool_symbol, Type::Bool);
         types.enter(nil_symbol, Type::Nil);
         types.enter(string_symbol, Type::Str);
+        types.enter(self_symbol,Type::Self_(None));
 
         Env {
             types,

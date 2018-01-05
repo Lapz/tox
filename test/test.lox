@@ -8,10 +8,13 @@ class Person {
   }
 
   fun hello() {
-    print "Hello"+" "+ this.name;
+    print "Hello" +" "+ this.name;
   }
 }
 
-var n:Person = Person.new("l","p");
 
-n.hello();
+
+var n = Person.new("l","p");
+
+
+print n.hello();

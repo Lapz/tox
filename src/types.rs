@@ -28,6 +28,7 @@ pub enum Type {
         fields: Vec<(Symbol, Type)>,
     },
     This(Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
+    Self_(Option<Symbol>),
     Int,
     Str,
     Bool,
@@ -51,6 +52,7 @@ impl Display for Type {
                 "Class {} with Fields {:#?} and Methods {:#?}",
                 name, fields, methods
             ),
+            Type::Self_(ref sym) => write!(f,"Self {:?}",sym),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
