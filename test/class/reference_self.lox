@@ -1,9 +1,9 @@
 {
   class Foo {
-    returnSelf() {
-      return Foo;
-    }
+  fun returnSelf() -> Foo {
+    return Foo;
   }
+}
 
-  print(Foo().returnSelf()); // expect: Foo
+print(Foo{}.returnSelf()); // expect:instance
 }

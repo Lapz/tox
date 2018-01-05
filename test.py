@@ -98,7 +98,7 @@ rust_interpreter('chap08_statements', {
   'test/expressions': 'skip',
 
   # No hardcoded limits in rox.
-  'test/limit/loop_too_large.lox': 'skip',
+  'test/limit/loop_too_large.lox': 'pass',
   'test/limit/reuse_constants.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',

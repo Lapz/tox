@@ -1,3 +1,2 @@
-// [line 3] Error: Unexpected character.
-// [java line 3] Error at 'b': Expect ')' after arguments.
+// Error:Unexpected char | on line 3,column 7
 foo(a | b);
