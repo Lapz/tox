@@ -145,7 +145,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     env.get_builtins();
 
     match TyChecker::new().analyse(&ast, &mut env) {
-        Ok(_) => (),
+        Ok(v) => println!("{:#?}", v),
         Err(errors) => {
             for err in errors {
                 println!("{}", err);

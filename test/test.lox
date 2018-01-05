@@ -1,1 +1,17 @@
-true();
+class Person {
+  name:str,surname:str;
+
+  fun new(n:str,s:str) -> Person {
+    return Person {name:n,
+      surname:s
+    };
+  }
+
+  fun hello() {
+    print "Hello"+" "+ this.name;
+  }
+}
+
+var n:Person = Person.new("l","p");
+
+n.hello();

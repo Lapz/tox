@@ -59,7 +59,7 @@ impl Env {
     pub fn name(&self, symbol: Symbol) -> String {
         self.vars.name(symbol)
     }
-        pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
+    pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
         self.vars.look(symbol)
     }
 
@@ -87,7 +87,7 @@ impl Env {
     pub fn add_type(&mut self, symbol: Symbol, data: Type) {
         self.types.enter(symbol, data)
     }
-    
+
     pub fn add_object(&mut self, symbol: Symbol, data: Object) {
         self.objects.enter(symbol, data)
     }

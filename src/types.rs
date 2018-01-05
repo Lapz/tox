@@ -11,14 +11,13 @@ pub enum TypeError {
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
     NotCallable(Postition),
-    Function(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
     NotMethodOrProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
-    NotInstanceOrClass(Type,Symbol,Postition),
+    NotInstanceOrClass(Type, Symbol, Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -43,7 +42,15 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Type::Class { ref name,ref methods,ref fields } => write!(f, "Class {} with Fields {:#?} and Methods {:#?}", name,fields,methods),
+            Type::Class {
+                ref name,
+                ref methods,
+                ref fields,
+            } => write!(
+                f,
+                "Class {} with Fields {:#?} and Methods {:#?}",
+                name, fields, methods
+            ),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
@@ -86,11 +93,13 @@ impl Display for TypeError {
 
             TypeError::NotCallable(ref pos) => {
                 write!(f, "Can only call functions and classes on {}", pos)
-            }  
-
-            TypeError::NotInstanceOrClass(ref ty,ref property,ref pos) => {
-                write!(f,"Type {} dosen't have the method/field {} on {}",ty,property, pos)
             }
+
+            TypeError::NotInstanceOrClass(ref ty, ref property, ref pos) => write!(
+                f,
+                "Type {} dosen't have the method/field {} on {}",
+                ty, property, pos
+            ),
 
             TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),
 
@@ -100,9 +109,6 @@ impl Display for TypeError {
 
             TypeError::UndefindedType(ref name, ref pos) => {
                 write!(f, "Undefined type \'{}\' on {}", name, pos)
-            }
-            TypeError::Function(ref pos) => {
-                write!(f, "Type should be a variable not a function on {}", pos)
             }
 
             TypeError::TooLittleProperty(ref pos) => write!(f, "Expected more fields on {}", pos),

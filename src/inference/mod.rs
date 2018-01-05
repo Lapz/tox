@@ -54,7 +54,7 @@ impl TyChecker {
         match env.look_var(*symbol) {
             Some(ty) => Ok(ExpressionType {
                 exp: (),
-                ty: actual_type(&get_actual_ty(ty, pos)?).clone(),
+                ty: actual_type(&get_actual_ty(ty)?).clone(),
             }),
             None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
         }
@@ -164,9 +164,6 @@ impl TyChecker {
                     methods: class_methods,
                     fields: properties_ty,
                 };
-
-
-                println!("{:#?}",ty );
 
                 env.add_type(*name, ty.clone());
 
@@ -391,12 +388,13 @@ impl TyChecker {
                     Equal => {
                         let value_ty = self.transform_expression(value, env)?;
                         check_types(&ty.ty, &value_ty.ty, expr.pos)?;
-                        return Ok(ty)
-                    },
-                    MinusEqual | PlusEqual | StarEqual | SlashEqual  => {
-                        let value_ty = s_check_int_float(&self.transform_expression(value, env)?, value.pos)?;
+                        return Ok(ty);
+                    }
+                    MinusEqual | PlusEqual | StarEqual | SlashEqual => {
+                        let value_ty =
+                            s_check_int_float(&self.transform_expression(value, env)?, value.pos)?;
                         check_types(&ty.ty, &value_ty.ty, expr.pos)?;
-                        return Ok(ty)
+                        return Ok(ty);
                     }
                 }
             }
@@ -509,7 +507,7 @@ impl TyChecker {
                                         }
                                     }
 
-                                    _ => unimplemented!("TODO ADD AN ERROR"),
+                                    e => unimplemented!("TODO ADD AN ERROR, {:?}", e),
                                 },
 
                                 _ => unreachable!(),
@@ -538,12 +536,15 @@ impl TyChecker {
                             });
                         }
 
-                        Entry::VarEntry(ref ty) => {
-                            return Ok(ExpressionType {
-                                exp: (),
-                                ty: ty.clone(),
-                            })
-                        }
+                        Entry::VarEntry(ref ty) => match ty {
+                            &Type::Class { .. } => return Err(TypeError::NotCallable(expr.pos)),
+                            e => {
+                                return Ok(ExpressionType {
+                                    exp: (),
+                                    ty: e.clone(),
+                                })
+                            }
+                        },
                     }
                 }
 
@@ -687,11 +688,15 @@ impl TyChecker {
                                 expr.pos,
                             ));
                         }
-                    },
+                    }
 
-                    
-
-                    ref e => return Err(TypeError::NotInstanceOrClass(e.clone(),*property,expr.pos))
+                    ref e => {
+                        return Err(TypeError::NotInstanceOrClass(
+                            e.clone(),
+                            *property,
+                            expr.pos,
+                        ))
+                    }
                 }
 
                 Ok(ExpressionType { exp: (), ty })
@@ -836,7 +841,11 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class { ref fields, ref methods,.. }  => {
+                    Type::Class {
+                        ref fields,
+                        ref methods,
+                        ..
+                    } => {
                         let mut found = false;
 
                         for prop in fields {
@@ -854,8 +863,17 @@ impl TyChecker {
                                 let value_ty = self.transform_expression(value, env)?;
 
                                 match prop.1 {
-                                    Entry::VarEntry(ref t) => check_types(t, &value_ty.ty, expr.pos)?,
-                                    Entry::FunEntry { ref returns, ref params } => check_types(&Type::Func(params.clone(),Box::new(returns.clone())), &value_ty.ty, expr.pos)?
+                                    Entry::VarEntry(ref t) => {
+                                        check_types(t, &value_ty.ty, expr.pos)?
+                                    }
+                                    Entry::FunEntry {
+                                        ref returns,
+                                        ref params,
+                                    } => check_types(
+                                        &Type::Func(params.clone(), Box::new(returns.clone())),
+                                        &value_ty.ty,
+                                        expr.pos,
+                                    )?,
                                 };
 
                                 ty = match prop.1 {
@@ -870,9 +888,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(ref fields, ref methods) => {
-                        
-                    }
+                    Type::This(ref fields, ref methods) => {}
 
                     _ => unreachable!(),
                 }
@@ -908,16 +924,41 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
     let expected = actual_type(expected);
     let unknown = actual_type(unknown);
 
-    if expected != unknown {
-        return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+    match (expected, unknown) {
+        (
+            &Type::Class {
+                ref name,
+                ref fields,
+                ..
+            },
+            &Type::Class {
+                ref name,
+                ref fields,
+                ..
+            },
+        ) => {
+            if n != *name {
+                return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+            }
+        }
+
+        (e, u) => {
+            if expected != unknown {
+                return Err(TypeError::Expected(e.clone(), u.clone(), pos));
+            }
+        }
     }
+
     Ok(())
 }
 
-fn get_actual_ty(entry: &Entry, pos: Postition) -> Result<Type, TypeError> {
+fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
     match *entry {
         Entry::VarEntry(ref ty) => Ok(ty.clone()),
-        Entry::FunEntry{ref params,ref returns} => Ok(Type::Func(params.clone(),Box::new(returns.clone()))),
+        Entry::FunEntry {
+            ref params,
+            ref returns,
+        } => Ok(Type::Func(params.clone(), Box::new(returns.clone()))),
     }
 }
 
