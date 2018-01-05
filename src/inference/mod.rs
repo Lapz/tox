@@ -141,13 +141,19 @@ impl TyChecker {
                                     }
 
                                     env.begin_scope();
+
                                     for (name, ty) in param_names.iter().zip(param_tys.clone()) {
                                         env.add_var(*name, Entry::VarEntry(ty));
                                     }
 
-                                    self.transform_statement(body, env)?;
+                                    check_types(
+                                        &return_type,
+                                        &self.transform_statement(body, env)?.ty,
+                                        statement.pos,
+                                    )?;
+
                                     env.end_scope();
-                                    
+
                                     class_methods.push((
                                         *name,
                                         Entry::FunEntry {
@@ -190,8 +196,6 @@ impl TyChecker {
                 }
 
                 env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
-
-            
 
                 Ok(exp_ty)
             }
@@ -460,69 +464,117 @@ impl TyChecker {
                         ref property,
                         ..
                     } => {
-                        let sym = match object.node {
-                            Expression::Var(sym, _) => sym,
+                        let mut _symbol = Symbol(0); // Just a stand in
+                        let ty = match object.node {
+                            Expression::Var(ref sym, _) => {
+                                _symbol = *sym;
+                                self.transform_var(sym, expr.pos, env)?
+                            }
                             _ => unimplemented!(),
                         };
 
-                        println!("{:#?}",env.vars);
+                        match ty.ty {
+                            Type::Class {
+                                ref methods,
+                                ref name,
+                                ..
+                            } => {
+                                let mut _found = false;
+                                for &(ref key, ref value) in methods {
+                                    if key == property {
+                                        _found = true;
 
-                        if let Some(entry) = env.look_var(sym).cloned() {
-                            match entry {
-                                Entry::VarEntry(ref class) => match class {
-                                    &Type::Class { ref methods, .. } => {
-                                        let mut _found = false;
-                                        for &(ref key, ref value) in methods {
-                                            if key == property {
-                                                _found = true;
+                                        match value {
+                                            &Entry::VarEntry(ref ty) => {
+                                                return Ok(ExpressionType {
+                                                    exp: (),
+                                                    ty: ty.clone(),
+                                                })
+                                            }
 
-                                                match value {
-                                                    &Entry::VarEntry(ref ty) => {
-                                                        return Ok(ExpressionType {
-                                                            exp: (),
-                                                            ty: ty.clone(),
-                                                        })
-                                                    }
+                                            &Entry::FunEntry {
+                                                ref params,
+                                                ref returns,
+                                            } => {
+                                                for (arg, param) in arguments.iter().zip(params) {
+                                                    let exp = self.transform_expression(
+                                                        arg,
+                                                        &mut env.clone(),
+                                                    )?;
 
-                                                    &Entry::FunEntry {
-                                                        ref params,
-                                                        ref returns,
-                                                    } => {
-                                                        for (arg, param) in
-                                                            arguments.iter().zip(params)
-                                                        {
-                                                            let exp = self.transform_expression(
-                                                                arg,
-                                                                &mut env.clone(),
-                                                            )?;
+                                                    check_types(&param, &exp.ty, expr.pos)?;
+                                                }
+                                                return Ok(ExpressionType {
+                                                    exp: (),
+                                                    ty: actual_type(returns).clone(),
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
 
-                                                            check_types(&param, &exp.ty, expr.pos)?;
+                                if !_found {
+                                    if let Some(class) = env.look_type(*name).cloned() {
+                                        match class {
+                                            Type::Class { ref methods, .. } => {
+                                                _found = false;
+
+                                                for &(ref key, ref value) in methods {
+                                                    if key == property {
+                                                        _found = true;
+
+                                                        match value {
+                                                            &Entry::VarEntry(ref ty) => {
+                                                                return Ok(ExpressionType {
+                                                                    exp: (),
+                                                                    ty: ty.clone(),
+                                                                })
+                                                            }
+
+                                                            &Entry::FunEntry {
+                                                                ref params,
+                                                                ref returns,
+                                                            } => {
+                                                                for (arg, param) in
+                                                                    arguments.iter().zip(params)
+                                                                {
+                                                                    let exp = self.transform_expression(
+                                                        arg,
+                                                        &mut env.clone(),
+                                                    )?;
+
+                                                                    check_types(
+                                                                        &param,
+                                                                        &exp.ty,
+                                                                        expr.pos,
+                                                                    )?;
+                                                                }
+                                                                return Ok(ExpressionType {
+                                                                    exp: (),
+                                                                    ty: actual_type(returns)
+                                                                        .clone(),
+                                                                });
+                                                            }
                                                         }
-                                                        return Ok(ExpressionType {
-                                                            exp: (),
-                                                            ty: actual_type(returns).clone(),
-                                                        });
                                                     }
                                                 }
                                             }
-                                        }
 
-                                        if !_found {
-                                            return Err(TypeError::NotMethodOrProperty(
-                                                env.name(sym),
-                                                expr.pos,
-                                            ));
+                                            _ => unimplemented!(),
                                         }
                                     }
 
-                                    e => unimplemented!("TODO ADD AN ERROR, {:?} on {}", e,expr.pos),
-                                },
-
-                                _ => unreachable!(),
+                                    return Err(TypeError::NotMethodOrProperty(
+                                        env.name(*property),
+                                        expr.pos,
+                                    ));
+                                }
                             }
+
+                            e => unimplemented!("TODO ADD AN ERROR, {:?} on {}", e, expr.pos),
                         }
 
-                        return Err(TypeError::UndefindedVar(env.name(sym), expr.pos));
+                        return Err(TypeError::UndefindedVar(env.name(_symbol), expr.pos));
                     }
                     _ => return Err(TypeError::NotCallable(expr.pos)),
                 };
@@ -640,7 +692,6 @@ impl TyChecker {
 
                 let mut ty = Type::Nil;
 
-                println!("{:?}",instance );
                 match instance.ty {
                     Type::Class {
                         ref fields,
@@ -934,16 +985,27 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
     let unknown = actual_type(unknown);
 
     match (expected, unknown) {
-        (&Type::Class{ref name,..}, &Type::Self_(ref self_)) | (&Type::Self_(ref self_),&Type::Class{ref name,..}) => {
+        (&Type::Class { ref name, .. }, &Type::Self_(ref self_))
+        | (&Type::Self_(ref self_), &Type::Class { ref name, .. }) => {
             if let &Some(n) = self_ {
-            if n != *name {
-                return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+                if n != *name {
+                    return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
                 }
             }
-            
         }
 
-        (&Type::Class{name:ref n,ref methods,..},&Type::Class{name:ref sym,methods:ref m,..}) => {
+        (
+            &Type::Class {
+                name: ref n,
+                ref methods,
+                ..
+            },
+            &Type::Class {
+                name: ref sym,
+                methods: ref m,
+                ..
+            },
+        ) => {
             if n != sym && methods != m {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }

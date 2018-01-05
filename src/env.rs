@@ -45,7 +45,7 @@ impl Env {
         types.enter(bool_symbol, Type::Bool);
         types.enter(nil_symbol, Type::Nil);
         types.enter(string_symbol, Type::Str);
-        types.enter(self_symbol,Type::Self_(None));
+        types.enter(self_symbol, Type::Self_(None));
 
         Env {
             types,

@@ -52,7 +52,7 @@ impl Display for Type {
                 "Class {} with Fields {:#?} and Methods {:#?}",
                 name, fields, methods
             ),
-            Type::Self_(ref sym) => write!(f,"Self {:?}",sym),
+            Type::Self_(ref sym) => write!(f, "Self {:?}", sym),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
