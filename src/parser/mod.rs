@@ -538,15 +538,16 @@ impl<'a> Parser<'a> {
         let var_pos = self.get_pos()?;
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
 
+        let var_type = self.get_type()?;
+
+
         if self.recognise(TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 
             let value = WithPos::new(Expression::Literal(Literal::Nil), pos);
 
-            return Ok(WithPos::new(Statement::Var(name, value, None), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value, var_type), var_pos));
         }
-
-        let var_type = self.get_type()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,

@@ -187,7 +187,7 @@ impl TyChecker {
 
                 if let Some(ref id) = *ty {
                     let ty = get_type(id, statement.pos, env)?;
-                    check_types(&ty, &exp_ty.ty, statement.pos)?;
+                    
 
                     env.add_var(*symbol, Entry::VarEntry(ty.clone()));
 
