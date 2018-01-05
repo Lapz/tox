@@ -77,6 +77,7 @@ impl TyChecker {
                 ref name,
                 ref methods,
                 ref properties,
+                ref superclass,
             } => {
                 let mut properties_ty = vec![];
                 let mut fields = vec![];
@@ -459,14 +460,17 @@ impl TyChecker {
                                 _symbol = *sym;
                                 self.transform_var(sym, expr.pos, env)?
                             }
-                            Expression::ClassInstance{ref name,..} => {
+                            Expression::ClassInstance { ref name, .. } => {
                                 if let Some(ty) = env.look_type(*name) {
-                                    return Ok(ExpressionType{exp:(),ty:ty.clone()})
+                                    return Ok(ExpressionType {
+                                        exp: (),
+                                        ty: ty.clone(),
+                                    });
                                 }
 
-                                return Err(TypeError::UndefindedClass(env.name(*name),expr.pos))
-                            },
-                            ref e => unimplemented!("{:?}",e),
+                                return Err(TypeError::UndefindedClass(env.name(*name), expr.pos));
+                            }
+                            ref e => unimplemented!("{:?}", e),
                         };
 
                         match ty.ty {

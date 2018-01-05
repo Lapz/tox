@@ -125,9 +125,15 @@ impl Statement {
                 ref name,
                 ref methods,
                 ref properties,
+                ref superclass,
             } => {
                 pprint_string.push_str("(class ");
                 pprint_string.push_str(&symbols.name(*name));
+
+                if let Some(sclass) = *superclass {
+                    pprint_string.push_str("<");
+                    pprint_string.push_str(&symbols.name(sclass))
+                }
 
                 for method in methods {
                     method.node.pprint_into(pprint_string, symbols);

@@ -478,6 +478,13 @@ impl<'a> Parser<'a> {
 
         let name = self.consume_name("Expected a class name")?;
 
+        let mut superclass = None;
+
+        if self.recognise(TokenType::LESSTHAN) {
+            self.advance();
+            superclass = Some(self.consume_name("Expected a superclass name")?);
+        }
+
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
@@ -521,6 +528,7 @@ impl<'a> Parser<'a> {
                 methods,
                 name,
                 properties,
+                superclass,
             },
             class_pos,
         ))

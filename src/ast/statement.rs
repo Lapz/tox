@@ -9,6 +9,7 @@ pub enum Statement {
     Block(Vec<WithPos<Statement>>),
     Class {
         name: Symbol,
+        superclass: Option<Symbol>,
         methods: Vec<WithPos<Statement>>,
         properties: Vec<(Symbol, ExpressionTy)>,
     },

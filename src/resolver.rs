@@ -323,6 +323,7 @@ impl Resolver {
                 ref name,
                 ref methods,
                 ref properties,
+                ref superclass,
             } => {
                 self.declare(*name, statement.pos)?;
                 self.define(*name);
@@ -330,6 +331,10 @@ impl Resolver {
                 let enclosing_class = self.current_class;
 
                 self.current_class = ClassType::Class;
+
+                if let Some(sclass) = *superclass {
+                    self.define(sclass);
+                }
 
                 self.begin_scope();
 
