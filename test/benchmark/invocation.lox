@@ -1,39 +1,39 @@
 // This benchmark stresses just method invocation.
 
 class Foo {
-  method0() {}
-  method1() {}
-  method2() {}
-  method3() {}
-  method4() {}
-  method5() {}
-  method6() {}
-  method7() {}
-  method8() {}
-  method9() {}
-  method10() {}
-  method11() {}
-  method12() {}
-  method13() {}
-  method14() {}
-  method15() {}
-  method16() {}
-  method17() {}
-  method18() {}
-  method19() {}
-  method20() {}
-  method21() {}
-  method22() {}
-  method23() {}
-  method24() {}
-  method25() {}
-  method26() {}
-  method27() {}
-  method28() {}
-  method29() {}
+  fun method0() {}
+  fun method1() {}
+  fun method2() {}
+  fun method3() {}
+  fun method4() {}
+  fun method5() {}
+  fun method6() {}
+  fun method7() {}
+  fun method8() {}
+  fun method9() {}
+  fun method10() {}
+  fun method11() {}
+  fun method12() {}
+  fun method13() {}
+  fun method14() {}
+  fun method15() {}
+  fun method16() {}
+  fun method17() {}
+  fun method18() {}
+  fun method19() {}
+  fun method20() {}
+  fun method21() {}
+  fun method22() {}
+  fun method23() {}
+  fun method24() {}
+  fun method25() {}
+  fun method26() {}
+  fun method27() {}
+  fun method28() {}
+  fun method29() {}
 }
 
-var foo = Foo();
+var foo = Foo{};
 var start = clock();
 var i = 0;
 while (i < 500000) {

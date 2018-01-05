@@ -59,7 +59,6 @@ impl Env {
     pub fn name(&self, symbol: Symbol) -> String {
         self.vars.name(symbol)
     }
-
     pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
         self.vars.look(symbol)
     }
