@@ -14,7 +14,8 @@ class Person {
 
 
 
-var n = Person.new("l","p");
+var a = Person.new("l","p");
+var b =  Person.new("l","p");
 
+print a == b;
 
-n.hello();

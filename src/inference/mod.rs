@@ -90,7 +90,7 @@ impl TyChecker {
 
                 self.this = Type::This(fields, vec![]);
 
-                env.add_type(*name, Type::Self_(Some(*name)));
+            
 
                 env.add_type(
                     *name,
@@ -989,15 +989,6 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
     let unknown = actual_type(unknown);
 
     match (expected, unknown) {
-        (&Type::Class { ref name, .. }, &Type::Self_(ref self_))
-        | (&Type::Self_(ref self_), &Type::Class { ref name, .. }) => {
-            if let &Some(n) = self_ {
-                if n != *name {
-                    return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
-                }
-            }
-        }
-
         (
             &Type::Class {
                 name: ref n,
@@ -1010,6 +1001,7 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
                 ..
             },
         ) => {
+            // D
             if n != sym && methods != m {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
