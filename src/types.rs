@@ -10,15 +10,13 @@ pub enum TypeError {
     Expected(Type, Type, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
-    UndefindedClass(String, Postition),
-    NotCallable(Postition),
+    Function(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
-    NotMethodOrProperty(String, Postition),
+    NotProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
-    NotInstanceOrClass(Type, Symbol, Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -28,7 +26,6 @@ pub enum Type {
         methods: Vec<(Symbol, Entry)>,
         fields: Vec<(Symbol, Type)>,
     },
-    This(Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
     Int,
     Str,
     Bool,
@@ -43,25 +40,12 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Type::Class {
-                ref name,
-                ref methods,
-                ref fields,
-            } => write!(
-                f,
-                "Class {} with Fields {:#?} and Methods {:#?}",
-                name, fields, methods
-            ),
+            Type::Class { ref name, .. } => write!(f, "Class {}", name),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
             Type::Nil => write!(f, "Nil"),
             Type::Float => write!(f, "Float"),
-            Type::This(ref methods, ref fields) => write!(
-                f,
-                "'This' has the fields {:?} and methods {:?}",
-                methods, fields
-            ),
             Type::Func(ref params, ref returns) => write!(
                 f,
                 "Func with param types {:?} returns {:?}",
@@ -91,28 +75,18 @@ impl Display for TypeError {
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
             }
-            TypeError::UndefindedClass(ref name, ref pos) => {
-                write!(f, "Undefinded Class\'{}\' on {}", name, pos)
-            }
-
-            TypeError::NotCallable(ref pos) => {
-                write!(f, "Can only call functions and classes on {}", pos)
-            }
-
-            TypeError::NotInstanceOrClass(ref ty, ref property, ref pos) => write!(
-                f,
-                "Type {} dosen't have the method/field {} on {}",
-                ty, property, pos
-            ),
 
             TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),
 
-            TypeError::NotMethodOrProperty(ref name, ref pos) => {
-                write!(f, "Undefined method/property \'{}\' on {}", name, pos)
+            TypeError::NotProperty(ref name, ref pos) => {
+                write!(f, "Undefined property \'{}\' on {}", name, pos)
             }
 
             TypeError::UndefindedType(ref name, ref pos) => {
                 write!(f, "Undefined type \'{}\' on {}", name, pos)
+            }
+            TypeError::Function(ref pos) => {
+                write!(f, "Type should be a variable not a function on {}", pos)
             }
 
             TypeError::TooLittleProperty(ref pos) => write!(f, "Expected more fields on {}", pos),

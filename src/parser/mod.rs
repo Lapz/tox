@@ -991,7 +991,7 @@ impl<'a> Parser<'a> {
                 }
 
                 ref e => {
-                    println!("{:?} on {}", e, *pos);
+                    println!("{:?}", e);
                     Err(ParserError::IllegalExpression(self.error(
                         "Cannot parse the expression",
                         *pos,

@@ -2,7 +2,7 @@
 
 mod test {
     use types::Type;
-    use inference::{ExpressionType, TyChecker};
+    use inference::{TyChecker, ExpressionType};
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
@@ -26,9 +26,7 @@ mod test {
         let input = "123.0+456;";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -37,9 +35,7 @@ mod test {
         let input = "10+\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -48,9 +44,7 @@ mod test {
         let input = "10.0+\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -60,9 +54,7 @@ mod test {
         var lenard = Person{name:\"Lenard\"};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -72,9 +64,7 @@ mod test {
         var lenard = Person{name:\"Lenard\"};lenard.name = 10";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -85,9 +75,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap()[2],
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap()[2],
             ExpressionType {
                 exp: (),
                 ty: Type::Nil,
@@ -102,9 +90,7 @@ mod test {
         var lenard = Person{name:\"Lenard\",name:\"Lenard\",name:\"Lenard\",name:\"Lenard\"};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -113,9 +99,7 @@ mod test {
         let input = "fun add(a:int,b:int) {return a+b;}";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -125,9 +109,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
@@ -147,9 +129,7 @@ mod test {
         let input = "!\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -157,9 +137,7 @@ mod test {
         let input = "var a = [10]; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -167,9 +145,7 @@ mod test {
         let input = "var a = \"h\"; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -178,9 +154,7 @@ mod test {
         let input = "var a = 10; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -189,9 +163,7 @@ mod test {
         let input = "var a = 10.0; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -200,9 +172,7 @@ mod test {
         let input = "var a = true; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -211,9 +181,7 @@ mod test {
         let input = "var a = false; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -222,9 +190,7 @@ mod test {
         let input = "var add = fun(a:int,b:int) -> int {a+b;};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -233,9 +199,7 @@ mod test {
         let input = "var a:[[int]] = [10];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -250,9 +214,7 @@ mod test {
         let mut env = Env::new(&strings);
 
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
@@ -287,9 +249,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
@@ -319,9 +279,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
@@ -342,9 +300,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
@@ -381,9 +337,7 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
+            TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap(),
             vec![
                 ExpressionType {
                     exp: (),
