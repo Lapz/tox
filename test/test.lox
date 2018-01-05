@@ -17,4 +17,4 @@ class Person {
 var n = Person.new("l","p");
 
 
-print n.hello();
+n.hello();

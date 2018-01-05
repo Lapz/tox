@@ -140,12 +140,14 @@ impl TyChecker {
                                         param_names.push(param);
                                     }
 
+                                    env.begin_scope();
                                     for (name, ty) in param_names.iter().zip(param_tys.clone()) {
                                         env.add_var(*name, Entry::VarEntry(ty));
                                     }
 
                                     self.transform_statement(body, env)?;
-
+                                    env.end_scope();
+                                    
                                     class_methods.push((
                                         *name,
                                         Entry::FunEntry {
@@ -178,8 +180,8 @@ impl TyChecker {
             Statement::Var(ref symbol, ref expr, ref ty) => {
                 let exp_ty = self.transform_expression(expr, env)?;
 
-                if let Some(ref ident) = *ty {
-                    let ty = get_type(ident, statement.pos, env)?;
+                if let Some(ref id) = *ty {
+                    let ty = get_type(id, statement.pos, env)?;
                     check_types(&ty, &exp_ty.ty, statement.pos)?;
 
                     env.add_var(*symbol, Entry::VarEntry(ty.clone()));
@@ -188,6 +190,8 @@ impl TyChecker {
                 }
 
                 env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
+
+            
 
                 Ok(exp_ty)
             }
@@ -460,6 +464,8 @@ impl TyChecker {
                             Expression::Var(sym, _) => sym,
                             _ => unimplemented!(),
                         };
+
+                        println!("{:#?}",env.vars);
 
                         if let Some(entry) = env.look_var(sym).cloned() {
                             match entry {
