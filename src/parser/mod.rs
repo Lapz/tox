@@ -543,7 +543,7 @@ impl<'a> Parser<'a> {
         if self.recognise(TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 
-            let value = WithPos::new(Expression::Literal(Literal::Nil), pos);
+            let value = None;
 
             return Ok(WithPos::new(Statement::Var(name, value, var_type), var_pos));
         }
@@ -561,7 +561,10 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr, var_type), var_pos));
+            return Ok(WithPos::new(
+                Statement::Var(name, Some(expr), var_type),
+                var_pos,
+            ));
         }
 
         Err(ParserError::Expected(self.error(
@@ -939,13 +942,13 @@ impl<'a> Parser<'a> {
                     *pos,
                 )),
 
-                TokenType::SUPER =>  {
+                TokenType::SUPER => {
                     // self.advance();
                     // println!("{:?}",self.tokens.peek());
                     // self.consume(TokenType::DOT, "Expect \'.\' after \'super\'.")?;
 
                     Ok(WithPos::new(
-                         Expression::Super(self.variable_use_maker.next()),
+                        Expression::Super(self.variable_use_maker.next()),
                         *pos,
                     ))
                 }

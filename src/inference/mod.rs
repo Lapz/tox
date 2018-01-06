@@ -203,20 +203,35 @@ impl TyChecker {
 
                 Ok(ExpressionType { exp: (), ty })
             }
-            Statement::Var(ref symbol, ref expr, ref ty) => {
-                let exp_ty = self.transform_expression(expr, env)?;
 
-                if let Some(ref id) = *ty {
-                    let ty = get_type(id, statement.pos, env)?;
+            Statement::Var(ref symbol, ref expression, ref ty) => {
+                if let &Some(ref expr) = expression {
+                    let expr_ty = self.transform_expression(expr, env)?;
 
-                    env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+                    if let Some(ref id) = *ty {
+                        let ty = get_type(id, statement.pos, env)?;
 
-                    return Ok(ExpressionType { exp: (), ty });
+                        check_types(&ty,&expr_ty.ty,statement.pos)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                        return Ok(ExpressionType { exp: (), ty });
+                    }
+
+                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
+
+                    Ok(expr_ty)
+                } else {
+                    if let Some(ref id) = *ty {
+                        let ty = get_type(id, statement.pos, env)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                        return Ok(ExpressionType { exp: (), ty });
+                    }
+
+                    Ok(ExpressionType{exp:(),ty:Type::Nil})
                 }
-
-                env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
-
-                Ok(exp_ty)
             }
 
             Statement::Break | Statement::Continue => Ok(ExpressionType {
@@ -901,7 +916,7 @@ impl TyChecker {
                 ty: self.this.clone(),
             }),
 
-            Expression::Super{..} => unimplemented!(),
+            Expression::Super { .. } => unimplemented!(),
 
             Expression::Logical {
                 ref left,

@@ -59,9 +59,9 @@ pub(crate) fn evaluate_statement(
             if let Some(sclass) = *superclass {
                 env.begin_scope();
 
-                let sk = env.look_object(sclass).unwrap().clone() ;
+                let sk = env.look_object(sclass).unwrap().clone();
 
-                env.add_object(Symbol(1),sk);
+                env.add_object(Symbol(1), sk);
                 sklass = Some(Box::new(env.look_object(sclass).unwrap().clone()));
                 s = true;
             }
@@ -231,9 +231,11 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::Var(ref symbol, ref expression, ..) => {
-            let value = evaluate_expression(expression, env)?;
+            if let &Some(ref expr) = expression {
+                let value = evaluate_expression(expr, env)?;
+                env.add_object(*symbol, value);
+            }
 
-            env.add_object(*symbol, value);
             Ok(Object::None)
         }
     }
@@ -363,11 +365,11 @@ fn evaluate_expression(
             match env.look_object(*name).unwrap().clone() {
                 Object::Class(_, ref superclass, ref methods) => {
                     let mut props: HashMap<Symbol, Object> = HashMap::new();
-                    let mut m = methods.clone();
+                    let mut s_class_methods = None;
                     if let &Some(ref sklass) = superclass {
                         match **sklass {
                             Object::Class(_, _, ref methods_) => {
-                                m.extend(methods_.clone());
+                                s_class_methods = Some(methods_.clone());
                             }
                             _ => unimplemented!(),
                         }
@@ -381,14 +383,16 @@ fn evaluate_expression(
                     env.add_object(
                         *name,
                         Object::Instance {
-                            methods: m.clone(),
+                            methods: methods.clone(),
                             fields: Rc::new(RefCell::new(props.clone())),
+                            sclassmethods: s_class_methods.clone(),
                         },
                     );
 
                     return Ok(Object::Instance {
-                        methods: m,
+                        methods: methods.clone(),
                         fields: Rc::new(RefCell::new(props)),
+                        sclassmethods: s_class_methods,
                     });
                 }
 
@@ -502,7 +506,7 @@ fn evaluate_expression(
 
             Ok(value)
         }
-        Expression::Super(_)=> {
+        Expression::Super(_) => {
             use symbol::Symbol;
             let value = env.look_object(Symbol(1)).unwrap().clone();
             Ok(value)

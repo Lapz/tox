@@ -27,6 +27,7 @@ pub enum Object {
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,
+        sclassmethods: Option<HashMap<Symbol, Object>>,
     },
     Nil,
     None,
@@ -69,6 +70,7 @@ impl Object {
             Object::Instance {
                 ref fields,
                 ref methods,
+                ref sclassmethods,
             } => {
                 if fields.borrow().contains_key(name) {
                     return Ok(fields.borrow().get(name).unwrap().clone());
@@ -77,6 +79,13 @@ impl Object {
                 if methods.contains_key(name) {
                     return Ok(methods.get(name).unwrap().bind(self, env));
                 }
+
+                if let &Some(ref smethods) = sclassmethods {
+                    if smethods.contains_key(name) {
+                        return Ok(smethods.get(name).unwrap().bind(self, env));
+                    }
+                }
+
                 Err(RuntimeError::UndefinedProperty)
             }
 
