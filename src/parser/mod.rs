@@ -540,7 +540,6 @@ impl<'a> Parser<'a> {
 
         let var_type = self.get_type()?;
 
-
         if self.recognise(TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 

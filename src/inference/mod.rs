@@ -83,17 +83,20 @@ impl TyChecker {
                 let mut fields = vec![];
                 let mut class_methods: Vec<(Symbol, Entry)> = vec![];
 
-
                 if let Some(sclass) = *superclass {
-                    if let Some(sty) = env.look_type(sclass) {
+                    if let Some(mut sty) = env.look_type(sclass) {
                         match sty {
-                            Type::Class{ref fields,ref methods,..} => {
-                            unimplemented!()
-                        },
+                            &Type::Class {
+                                fields: ref sfields,
+                                ref methods,
+                                ..
+                            } => {
+                                properties_ty.extend(sfields.iter().cloned());
+                                class_methods.extend(methods.iter().cloned())
+                            }
 
-                        _ => return Err(TypeError::SuperClass(sclass,statement.pos)),
+                            _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
                         }
-                    
                     }
                 }
 
@@ -201,7 +204,6 @@ impl TyChecker {
 
                 if let Some(ref id) = *ty {
                     let ty = get_type(id, statement.pos, env)?;
-                    
 
                     env.add_var(*symbol, Entry::VarEntry(ty.clone()));
 
