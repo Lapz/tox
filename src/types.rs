@@ -19,6 +19,7 @@ pub enum TypeError {
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
     NotInstanceOrClass(Type, Symbol, Postition),
+    SuperClass(Symbol,Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -90,6 +91,9 @@ impl Display for TypeError {
 
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
+            }
+            TypeError::SuperClass(ref name,ref pos) => {
+                write!(f,"{} is not a class on {}",name,pos)
             }
             TypeError::UndefindedClass(ref name, ref pos) => {
                 write!(f, "Undefinded Class\'{}\' on {}", name, pos)
