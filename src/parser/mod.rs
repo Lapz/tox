@@ -938,6 +938,17 @@ impl<'a> Parser<'a> {
                     Expression::This(self.variable_use_maker.next()),
                     *pos,
                 )),
+
+                TokenType::SUPER =>  {
+                    // self.advance();
+                    // println!("{:?}",self.tokens.peek());
+                    // self.consume(TokenType::DOT, "Expect \'.\' after \'super\'.")?;
+
+                    Ok(WithPos::new(
+                         Expression::Super(self.variable_use_maker.next()),
+                        *pos,
+                    ))
+                }
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {
                     let mut items = vec![];

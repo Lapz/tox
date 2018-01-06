@@ -16,3 +16,4 @@
 - [x] Improve the inference of comparison operators
 - [x] Move the functions in inference onto a struct called ```TyChecker```
 - [x] Have a field on the type check that contains the types that this points too. When this is acessed check if that field exist and the return the type of that field.
+- [] Change how method inheritance is done

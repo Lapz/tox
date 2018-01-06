@@ -407,7 +407,12 @@ impl Expression {
                 pprint_string.push_str(&symbols.name(*name));
                 object.node.pprint_into(pprint_string, symbols);
                 value.node.pprint_into(pprint_string, symbols);
-                pprint_string.push_str(") )");
+                pprint_string.push_str(")");
+            }
+
+            Expression::Super(_) => {
+                pprint_string.push_str("super");
+        
             }
 
             Expression::Ternary {

@@ -54,9 +54,16 @@ pub(crate) fn evaluate_statement(
             let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
 
             let mut sklass = None;
+            let mut s = false;
 
             if let Some(sclass) = *superclass {
+                env.begin_scope();
+
+                let sk = env.look_object(sclass).unwrap().clone() ;
+
+                env.add_object(Symbol(1),sk);
                 sklass = Some(Box::new(env.look_object(sclass).unwrap().clone()));
+                s = true;
             }
 
             for method in methods {
@@ -81,7 +88,11 @@ pub(crate) fn evaluate_statement(
                 }
             }
 
-            env.assign_object(*name, Object::Class(*name,sklass, sym_methods));
+            if s {
+                env.end_scope();
+            }
+
+            env.assign_object(*name, Object::Class(*name, sklass, sym_methods));
             Ok(Object::None)
         }
 
@@ -350,14 +361,14 @@ fn evaluate_expression(
             use symbol::Symbol;
 
             match env.look_object(*name).unwrap().clone() {
-                Object::Class(_, ref superclass,ref methods) => {
+                Object::Class(_, ref superclass, ref methods) => {
                     let mut props: HashMap<Symbol, Object> = HashMap::new();
                     let mut m = methods.clone();
                     if let &Some(ref sklass) = superclass {
                         match **sklass {
-                            Object::Class(_,_,ref methods_) => {
+                            Object::Class(_, _, ref methods_) => {
                                 m.extend(methods_.clone());
-                            },
+                            }
                             _ => unimplemented!(),
                         }
                     }
@@ -366,8 +377,6 @@ fn evaluate_expression(
                         let value = evaluate_expression(expr, env)?;
                         props.insert(*name, value);
                     }
-
-                    
 
                     env.add_object(
                         *name,
@@ -493,6 +502,11 @@ fn evaluate_expression(
 
             Ok(value)
         }
+        Expression::Super(_)=> {
+            use symbol::Symbol;
+            let value = env.look_object(Symbol(1)).unwrap().clone();
+            Ok(value)
+        }
 
         Expression::Get {
             ref object,
@@ -503,7 +517,7 @@ fn evaluate_expression(
 
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
-                class @ Object::Class(_, _,_) => class.get_property(property, env),
+                class @ Object::Class(_, _, _) => class.get_property(property, env),
                 _ => {
                     return Err(RuntimeError::NotAnIn);
                 }

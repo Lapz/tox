@@ -1,14 +1,19 @@
-class Doughnut {
-  fun cook() {
-    print "Fry until golden brown.";
+class A {
+  fun method() {
+    print "A method";
   }
 }
 
-class BostonCream < Doughnut {
-  fun cook() {
-//
-    print "Pipe full of custard and coat with chocolate.";
+class B < A {
+  fun method() {
+    print "B method";
+  }
+
+  fun test() {
+    super.method();
   }
 }
 
-BostonCream{}.cook();
+class C < B {}
+
+C{}.test();

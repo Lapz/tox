@@ -328,17 +328,23 @@ impl Resolver {
                 self.declare(*name, statement.pos)?;
                 self.define(*name);
 
+
                 let enclosing_class = self.current_class;
+                let mut sklass = false;
 
                 self.current_class = ClassType::Class;
 
                 if let Some(sclass) = *superclass {
                     self.define(sclass);
+                    self.begin_scope();
+                    self.insert(Symbol(1),true);// super
+                    sklass = true;
                 }
 
                 self.begin_scope();
 
-                self.insert(Symbol(0), true);
+                self.insert(Symbol(0), true); // this
+               
 
                 for property in properties {
                     self.declare(property.0, statement.pos)?;
@@ -362,9 +368,16 @@ impl Resolver {
                     };
                 }
 
+
+                if sklass {
+                    self.end_scope();
+                }
+                
+                self.end_scope();
+                
                 self.current_class = enclosing_class;
 
-                self.end_scope();
+                
 
                 Ok(())
             }
@@ -498,6 +511,19 @@ impl Resolver {
             } => {
                 self.resolve_expression(&value.node, pos)?;
                 self.resolve_expression(&object.node, pos)?;
+                Ok(())
+            },
+
+            Expression::Super(ref handle) => {
+                 if self.current_class == ClassType::None {
+                    return Err(ResolverError::This(self.error(
+                        "Cannot use 'super' outside of a class.",
+                        pos,
+                    )));
+                }
+
+                self.resolve_local(&Symbol(1), *handle);
+
                 Ok(())
             }
 

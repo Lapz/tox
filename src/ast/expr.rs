@@ -66,6 +66,8 @@ pub enum Expression {
         value: Box<WithPos<Expression>>,
     },
 
+    Super(VariableUseHandle),
+
     Ternary {
         condition: Box<WithPos<Expression>>,
         then_branch: Box<WithPos<Expression>>,
