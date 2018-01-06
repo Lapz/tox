@@ -1,27 +1,14 @@
-var NotAClass = "I am totally not a class";
-
-class Subclass < NotAClass {
-
-} 
-
-NotAClass{};
-
-class Bar {
-    name:str;
-}
-
-
-class Foo < Bar {
-
-}
-
-class GF < Bar {
-    
-}
-
-var foo = GF {
-    name:"a"
-};
-
-print foo.name;
-
+class Doughnut {
+    fun cook() {
+      print "Fry until golden brown.";
+    }
+  }
+  
+class BostonCream < Doughnut {
+      fun new() -> BostonCream {
+          return BostonCream{};
+      }
+  }
+  
+BostonCream{}.cook();
+  

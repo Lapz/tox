@@ -44,6 +44,7 @@ pub(crate) fn evaluate_statement(
         Statement::Class {
             ref name,
             ref methods,
+            ref superclass,
             ..
         } => {
             env.add_object(*name, Object::Nil);
@@ -51,6 +52,12 @@ pub(crate) fn evaluate_statement(
             use symbol::Symbol;
 
             let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
+
+            let mut superclass = None;
+
+            if let Some(sclass) = superclass {
+                superclass = env.look_object(sclass).clone();
+            }
 
             for method in methods {
                 match method.node {
@@ -74,7 +81,7 @@ pub(crate) fn evaluate_statement(
                 }
             }
 
-            env.assign_object(*name, Object::Class(*name, sym_methods));
+            env.assign_object(*name, Object::Class(*name,Rc::new(superclass), sym_methods));
             Ok(Object::None)
         }
 
