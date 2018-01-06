@@ -53,10 +53,10 @@ pub(crate) fn evaluate_statement(
 
             let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
 
-            let mut superclass = None;
+            let mut sklass = None;
 
-            if let Some(sclass) = superclass {
-                superclass = env.look_object(sclass).clone();
+            if let Some(sclass) = *superclass {
+                sklass = Some(Box::new(env.look_object(sclass).unwrap().clone()));
             }
 
             for method in methods {
@@ -81,7 +81,7 @@ pub(crate) fn evaluate_statement(
                 }
             }
 
-            env.assign_object(*name, Object::Class(*name,Rc::new(superclass), sym_methods));
+            env.assign_object(*name, Object::Class(*name,sklass, sym_methods));
             Ok(Object::None)
         }
 
@@ -350,24 +350,35 @@ fn evaluate_expression(
             use symbol::Symbol;
 
             match env.look_object(*name).unwrap().clone() {
-                Object::Class(_, ref methods) => {
+                Object::Class(_, ref superclass,ref methods) => {
                     let mut props: HashMap<Symbol, Object> = HashMap::new();
+                    let mut m = methods.clone();
+                    if let &Some(ref sklass) = superclass {
+                        match **sklass {
+                            Object::Class(_,_,ref methods_) => {
+                                m.extend(methods_.clone());
+                            },
+                            _ => unimplemented!(),
+                        }
+                    }
 
                     for &(ref name, ref expr) in properties {
                         let value = evaluate_expression(expr, env)?;
                         props.insert(*name, value);
                     }
 
+                    
+
                     env.add_object(
                         *name,
                         Object::Instance {
-                            methods: methods.clone(),
+                            methods: m.clone(),
                             fields: Rc::new(RefCell::new(props.clone())),
                         },
                     );
 
                     return Ok(Object::Instance {
-                        methods: methods.clone(),
+                        methods: m,
                         fields: Rc::new(RefCell::new(props)),
                     });
                 }
@@ -492,7 +503,7 @@ fn evaluate_expression(
 
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
-                class @ Object::Class(_, _) => class.get_property(property, env),
+                class @ Object::Class(_, _,_) => class.get_property(property, env),
                 _ => {
                     return Err(RuntimeError::NotAnIn);
                 }

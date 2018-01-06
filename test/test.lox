@@ -1,14 +1,14 @@
 class Doughnut {
-    fun cook() {
-      print "Fry until golden brown.";
-    }
+  fun cook() {
+    print "Fry until golden brown.";
   }
-  
+}
+
 class BostonCream < Doughnut {
-      fun new() -> BostonCream {
-          return BostonCream{};
-      }
+  fun cook() {
+//
+    print "Pipe full of custard and coat with chocolate.";
   }
-  
+}
+
 BostonCream{}.cook();
-  

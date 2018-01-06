@@ -489,8 +489,10 @@ impl TyChecker {
                                 }
 
                                 return Err(TypeError::UndefindedClass(env.name(*name), expr.pos));
-                            }
-                            ref e => unimplemented!("{:?}", e),
+                            },
+
+                            Expression::Call{..} => self.transform_expression(object, env)?,
+                            ref e => unimplemented!("{:#?}", e),
                         };
 
                         match ty.ty {

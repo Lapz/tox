@@ -16,7 +16,7 @@ use builtins::BuiltInFunction;
 pub enum Object {
     Float(f64),
     BuiltIn(Symbol, BuiltInFunction),
-    Class(Symbol,Option<Rc<Object>>,HashMap<Symbol, Object>),
+    Class(Symbol,Option<Box<Object>>,HashMap<Symbol, Object>),
     Int(i64),
     Str(String),
     Bool(bool),
@@ -84,7 +84,7 @@ impl Object {
                 if methods.contains_key(name) {
                     return Ok(methods.get(name).unwrap().bind(self, env));
                 }else if superclass.is_some() {
-                    return superclass.unwrap().get_property(name,env)
+                    return superclass.clone().unwrap().get_property(name,env)
                 }
                 Err(RuntimeError::UndefinedProperty)
             }
