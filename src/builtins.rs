@@ -85,4 +85,7 @@ fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
 
 use symbol::Symbol;
 use std::collections::HashMap;
-static mut IO:Object = Object::Class(Symbol(2),None,HashMap::new());
+
+lazy_static!{
+    static ref IO:Object = Object::Class(Symbol(2),None,HashMap::new());
+}

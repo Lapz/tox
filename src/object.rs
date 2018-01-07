@@ -33,6 +33,9 @@ pub enum Object {
     None,
 }
 
+unsafe impl Sync for Object{}
+unsafe impl Send for Object{}
+
 impl Object {
     pub fn is_truthy(&self) -> bool {
         match *self {
