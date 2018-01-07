@@ -104,13 +104,22 @@ impl TyChecker {
                     }
                 }
 
+                env.add_type(
+                    *name,
+                    Type::Class {
+                        name: *name,
+                        fields: vec![],
+                        methods: vec![],
+                    },
+                );
+
                 for &(property, ref ty) in properties {
                     let ty = get_type(ty, statement.pos, env)?;
                     fields.push((property, ty.clone()));
                     properties_ty.push((property, ty))
                 }
 
-                self.this = Type::This(fields, vec![]);
+                self.this = Type::This(*name,fields, vec![]);
 
                 env.add_type(
                     *name,
@@ -146,7 +155,7 @@ impl TyChecker {
                                     };
 
                                     match self.this {
-                                        Type::This(_, ref mut methods) => {
+                                        Type::This(_,_, ref mut methods) => {
                                             methods.push((*name, return_type.clone()))
                                         }
                                         _ => unreachable!(),
@@ -766,7 +775,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(ref fields, ref methods) => {
+                    Type::This(_,ref fields, ref methods) => {
                         let mut found = false;
 
                         for prop in fields {
@@ -991,7 +1000,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(ref fields, ref methods) => {}
+                    Type::This(_,ref fields, ref methods) => {}
 
                     _ => unreachable!(),
                 }
@@ -1043,6 +1052,12 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
             // Due to how class are inferred if a method on the class returns its self.
             // Its class type will have an empty methods; So we compare the name and the fields instead
             if n != sym && methods != m {
+                return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+            }
+        }
+
+        (&Type::This(ref this,_,_),&Type::Class{ref name,..}) | (&Type::Class{ref name,..},&Type::This(ref this,_,_))  => {
+            if this != name {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
         }

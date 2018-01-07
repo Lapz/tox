@@ -82,3 +82,7 @@ fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
 
     Ok(Object::Int(rng.gen_range(min, max)))
 }
+
+use symbol::Symbol;
+use std::collections::HashMap;
+static mut IO:Object = Object::Class(Symbol(2),None,HashMap::new());

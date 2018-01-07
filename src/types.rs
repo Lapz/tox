@@ -29,7 +29,7 @@ pub enum Type {
         methods: Vec<(Symbol, Entry)>,
         fields: Vec<(Symbol, Type)>,
     },
-    This(Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
+    This(Symbol,Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
     Int,
     Str,
     Bool,
@@ -58,10 +58,10 @@ impl Display for Type {
             Type::Bool => write!(f, "Boolean"),
             Type::Nil => write!(f, "Nil"),
             Type::Float => write!(f, "Float"),
-            Type::This(ref methods, ref fields) => write!(
+            Type::This(ref name,ref methods, ref fields) => write!(
                 f,
-                "'This' has the fields {:?} and methods {:?}",
-                methods, fields
+                "'This {}' has the fields {:?} and methods {:?}",
+                name,methods, fields
             ),
             Type::Func(ref params, ref returns) => write!(
                 f,
