@@ -10,7 +10,7 @@ use interpreter::RuntimeError;
 use env::Env;
 use std::rc::Rc;
 use std::cell::RefCell;
-use builtins::{IO,BuiltInFunction};
+use builtins::BuiltInFunction;
 
 #[derive(Clone)]
 pub enum Object {
@@ -18,9 +18,9 @@ pub enum Object {
     BuiltIn(Symbol, BuiltInFunction),
     Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
     Int(i64),
-    Str(String),
+    Str(String), 
     Bool(bool),
-    IO(IO), // CHANGE
+
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
@@ -57,13 +57,13 @@ impl Object {
 
     pub fn bind(&self, instance: &Object, env: &mut Env) -> Object {
         match *self {
-            ref method @ Object::Function(_, _, _) => {
+            ref method @ Object::Function(_, _, _) | ref method @ Object::BuiltIn(_,_) => {
                 env.begin_scope();
 
                 env.add_object(Symbol(0), instance.clone());
-                // env.end_scope();
+              
                 method.clone()
-            }
+            },
 
             _ => unreachable!(),
         }

@@ -12,6 +12,8 @@ fun fib(n:int) -> int {
 }
 ```
 
+A simple example that makes of uses of the classes
+
 ```ts
 class Toggle {
     state:bool;
@@ -31,4 +33,32 @@ var toggle  = Toggle{state:true};
 print toggle.activate().value();
 
 print toggle.activate().value();
+```
+
+A guessing game example 
+
+```ts
+
+print "Guess the number!";
+
+
+var secret_number = rand(1,101);
+print "Please input your guess.";
+
+var guess = io.readline();
+
+print "You guessed: " + guess;
+
+if (int(guess) > secret_number) {
+  print "Too small!";
+}
+
+if (int(guess) < secret_number) {
+  print "Too big!";
+}
+
+if (int(guess) == secret_number) {
+  print "You win!";
+}
+
 ```

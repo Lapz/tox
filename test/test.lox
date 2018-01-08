@@ -1,25 +1,23 @@
-fun fib(n:int) -> int {
-    if (n < 2) 
-      return n;
-    return fib(n - 2) + fib(n - 1);
-}
-  
-class Toggle {
-    state:bool;
-  
-    fun value() -> bool {
-      return this.state;
-    }
-  
-    fun activate() -> Toggle {
-      this.state = !this.state;
-      return this;
-    }
-}
-  
-var toggle  = Toggle{state:true};
+print "Guess the number!";
 
-print toggle.activate().value();
 
-print toggle.activate().value();
-  
+var secret_number = rand(1,101);
+print "Please input your guess.";
+
+var guess = io.readline();
+
+print "You guessed: " + guess;
+
+if (int(guess) > secret_number) {
+  print "Too small!";
+}
+
+if (int(guess) < secret_number) {
+  print "Too big!";
+}
+
+if (int(guess) == secret_number) {
+  print "You win!";
+}
+
+

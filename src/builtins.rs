@@ -28,7 +28,40 @@ impl Env {
         self.add_builtin("hex", vec![Type::Int], Type::Str, built_in_hex);
         self.add_builtin("oct", vec![Type::Int], Type::Str, built_in_oct);
         self.add_builtin("rand", vec![Type::Int, Type::Int], Type::Int, built_in_rand);
-      
+        self.add_builtin("int", vec![Type::Str],Type::Int,built_in_int);
+        self.add_builtin_class("io",vec![("readline",built_in_readline,Entry::FunEntry{params:vec![],returns:Type::Str})])
+    }
+
+    fn add_builtin_class(&mut self,name:&str,methods:Vec<(&str,BuiltInFunction,Entry)>) {
+        let symbol = self.vars.symbol(name);
+
+        use std::collections::HashMap;
+
+        let mut methods_ty = vec![];
+        let mut map = HashMap::new();
+
+        for method in methods {
+            let name = self.vars.symbol(method.0);
+            methods_ty.push((name,method.2));
+            map.insert(name, Object::BuiltIn(name,method.1));
+        }
+
+        let entry = Entry::VarEntry(Type::Class {
+            name:symbol,
+            methods:methods_ty,
+            fields:vec![],
+        });
+
+
+
+        let object = Object::Class(symbol,None,map);
+
+        self.vars.enter(symbol,entry);
+        self.objects.enter(symbol,object);
+
+
+
+    
     }
 
     fn add_builtin(&mut self, name: &str, params: Vec<Type>, returns: Type, func: BuiltInFunction) {
@@ -84,6 +117,18 @@ fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
     Ok(Object::Int(rng.gen_range(min, max)))
 }
 
+fn built_in_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let string = match arguments.iter().next() {
+        Some(&Object::Str(ref s)) => s,
+        _ => unreachable!()
+    };
+
+    match string.trim().parse::<i64>() {
+        Ok(n) => Ok(Object::Int(n)),
+        Err(_) => Err(RuntimeError::CantParseAsInt),
+    }
+}
+
 fn built_in_readline(_: &[Object]) -> Result<Object,RuntimeError> {
     let mut input = String::new();
     
@@ -93,12 +138,4 @@ fn built_in_readline(_: &[Object]) -> Result<Object,RuntimeError> {
      
     Ok(Object::Str(input))
     
-}
-
-use symbol::Symbol;
-
-lazy_static!{
-    pub static ref IO:Object = Object::Class(Symbol(2),None,hashmap!{
-        Symbol(3) => Object::BuiltIn(Symbol(3),built_in_readline)
-    });
 }
