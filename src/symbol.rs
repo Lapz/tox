@@ -90,8 +90,7 @@ impl SymbolFactory {
         let mut map = HashMap::new();
         map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
-        map.insert(Symbol(2), "io".into());
-        map.insert(Symbol(3), "readline".into());
+      
      
 
         SymbolFactory {
