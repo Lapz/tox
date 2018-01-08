@@ -10,7 +10,7 @@ use interpreter::RuntimeError;
 use env::Env;
 use std::rc::Rc;
 use std::cell::RefCell;
-use builtins::BuiltInFunction;
+use builtins::{IO,BuiltInFunction};
 
 #[derive(Clone)]
 pub enum Object {
@@ -20,6 +20,7 @@ pub enum Object {
     Int(i64),
     Str(String),
     Bool(bool),
+    IO(IO), // CHANGE
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),

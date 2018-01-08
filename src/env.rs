@@ -2,6 +2,7 @@ use types::Type;
 use object::Object;
 use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
+use builtins::IO;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Entry {
@@ -45,10 +46,23 @@ impl Env {
         types.enter(nil_symbol, Type::Nil);
         types.enter(string_symbol, Type::Str);
 
+        let mut vars =  Symbols::new(Rc::clone(strings));
+        vars.enter(Symbol(2),Entry::VarEntry(Type::Class{
+            name:Symbol(2),
+            methods:vec![],
+            fields:vec![],
+        }));
+
+        let mut objects = Symbols::new(Rc::clone(strings));
+
+        objects.enter(Symbol(2),IO);
+        
+    
+
         Env {
             types,
-            vars: Symbols::new(Rc::clone(strings)),
-            objects: Symbols::new(Rc::clone(strings)),
+            vars:vars,
+            objects:objects,
             unique: Unique::new(),
         }
     }
