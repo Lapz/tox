@@ -28,6 +28,7 @@ impl Env {
         self.add_builtin("hex", vec![Type::Int], Type::Str, built_in_hex);
         self.add_builtin("oct", vec![Type::Int], Type::Str, built_in_oct);
         self.add_builtin("rand", vec![Type::Int, Type::Int], Type::Int, built_in_rand);
+        self.add_builtin("io",vec![],Type::Class)
     }
 
     fn add_builtin(&mut self, name: &str, params: Vec<Type>, returns: Type, func: BuiltInFunction) {
@@ -83,9 +84,22 @@ fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
     Ok(Object::Int(rng.gen_range(min, max)))
 }
 
+fn built_in_readline() -> Result<Object,RuntimeError> {
+    let mut input = String::new();
+    
+    use std::io;
+    
+     io::stdin().read_line(&mut input).expect("Unable to read input from stdin");
+     
+    Ok(Object::Str(input))
+    
+}
+
 use symbol::Symbol;
 use std::collections::HashMap;
 
 lazy_static!{
-    static ref IO:Object = Object::Class(Symbol(2),None,HashMap::new());
+    static ref IO:Object = Object::Class(Symbol(2),None,hashmap!{
+        Symbol(3) => Object::BuiltIn(built_in_readline)
+    });
 }
