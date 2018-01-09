@@ -6,11 +6,6 @@ extern crate structopt;
 
 #[macro_use]
 extern crate structopt_derive;
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate maplit;
 
 mod token;
 mod lexer;
