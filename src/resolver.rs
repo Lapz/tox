@@ -69,7 +69,7 @@ impl Resolver {
         let mut errors = vec![];
 
         for statement in statements {
-            match self.resolve_statement(&statement) {
+            match self.resolve_statement(statement) {
                 Ok(_) => (),
                 Err(e) => errors.push(e),
             }
@@ -155,8 +155,8 @@ impl Resolver {
 
         self.current_function = kind;
 
-        match body {
-            &Expression::Func {
+        match *body {
+            Expression::Func {
                 ref body,
                 ref parameters,
                 ..
@@ -164,8 +164,8 @@ impl Resolver {
                 self.begin_scope();
 
                 for param in parameters {
-                    self.declare(param.0.clone(), pos)?;
-                    self.define(param.0.clone());
+                    self.declare(param.0, pos)?;
+                    self.define(param.0);
                 }
 
                 self.resolve_statement(body)?;
@@ -189,7 +189,7 @@ impl Resolver {
 impl Resolver {
     fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
         match statement.node {
-            Statement::Print(ref expr) => {
+            Statement::Print(ref expr) | Statement::ExpressionStmt(ref expr)  => {
                 self.resolve_expression(&expr.node, statement.pos)?;
                 Ok(())
             }
@@ -212,10 +212,7 @@ impl Resolver {
                 Ok(())
             }
 
-            Statement::ExpressionStmt(ref expr) => {
-                self.resolve_expression(&expr.node, statement.pos)?;
-                Ok(())
-            }
+         
 
             Statement::IfStmt {
                 ref condition,
@@ -259,13 +256,7 @@ impl Resolver {
             Statement::WhileStmt {
                 ref condition,
                 ref body,
-            } => {
-                self.resolve_expression(&condition.node, statement.pos)?;
-                self.resolve_statement(body)?;
-                Ok(())
-            }
-
-            Statement::DoStmt {
+            } | Statement::DoStmt {
                 ref condition,
                 ref body,
             } => {
@@ -273,6 +264,8 @@ impl Resolver {
                 self.resolve_statement(body)?;
                 Ok(())
             }
+
+           
 
             Statement::Break | Statement::Continue => Ok(()),
 
@@ -351,9 +344,9 @@ impl Resolver {
                 for method in methods {
                     let mut declaration = FunctionType::Method;
 
-                    match method {
+                    match *method {
                         WithPos { ref node, ref pos } => match *node {
-                            &Statement::Function { ref name, ref body } => {
+                            Statement::Function { ref name, ref body } => {
                                 if name == &Symbol(1) {
                                     declaration = FunctionType::Init;
                                 }

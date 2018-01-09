@@ -214,7 +214,7 @@ impl TyChecker {
             }
 
             Statement::Var(ref symbol, ref expression, ref ty) => {
-                if let &Some(ref expr) = expression {
+                if let Some(ref expr) = *expression {
                     let expr_ty = self.transform_expression(expr, env)?;
 
                     if let Some(ref id) = *ty {
@@ -255,7 +255,7 @@ impl TyChecker {
                 let alias_ty = get_type(ty, statement.pos, env)?;
                 env.add_type(
                     *alias,
-                    Type::Name(alias.clone(), Box::new(alias_ty.clone())),
+                    Type::Name(*alias, Box::new(alias_ty.clone())),
                 );
 
                 Ok(ExpressionType {
@@ -295,7 +295,7 @@ impl TyChecker {
 
                 let then_ty = self.transform_statement(then_branch, env)?;
 
-                if let &Some(ref else_statement) = else_branch {
+                if let Some(ref else_statement) = *else_branch {
                     let else_ty = self.transform_statement(else_statement, env)?;
 
                     check_types(&then_ty.ty, &else_ty.ty, statement.pos)?;
@@ -332,15 +332,15 @@ impl TyChecker {
                 ref increment,
                 ref body,
             } => {
-                if let &Some(ref init) = initializer {
+                if let Some(ref init) = *initializer {
                     self.transform_statement(init, env)?;
                 }
 
-                if let &Some(ref incr) = increment {
+                if let Some(ref incr) = *increment {
                     s_check_int_float(&self.transform_expression(incr, env)?, statement.pos)?;
                 }
 
-                if let &Some(ref cond) = condition {
+                if let Some(ref cond) = *condition {
                     check_bool(&self.transform_expression(cond, env)?, statement.pos)?;
                 }
 
@@ -350,7 +350,7 @@ impl TyChecker {
             }
 
             Statement::Return(ref returns) => {
-                if let &Some(ref expr) = returns {
+                if let Some(ref expr) = *returns {
                     let exp_ty = self.transform_expression(expr, env)?;
                     return Ok(exp_ty);
                 }
@@ -480,8 +480,7 @@ impl TyChecker {
                         })
                     }
 
-                    Operator::Plus => check_int_float_str(&left, &right, left_expr.pos),
-
+                    Operator::Plus |
                     Operator::Slash
                     | Operator::Star
                     | Operator::Modulo
@@ -533,15 +532,15 @@ impl TyChecker {
                                     if key == property {
                                         _found = true;
 
-                                        match value {
-                                            &Entry::VarEntry(ref ty) => {
+                                        match *value {
+                                            Entry::VarEntry(ref ty) => {
                                                 return Ok(ExpressionType {
                                                     exp: (),
                                                     ty: ty.clone(),
                                                 })
                                             }
 
-                                            &Entry::FunEntry {
+                                            Entry::FunEntry {
                                                 ref params,
                                                 ref returns,
                                             } => {
@@ -551,7 +550,7 @@ impl TyChecker {
                                                         &mut env.clone(),
                                                     )?;
 
-                                                    check_types(&param, &exp.ty, expr.pos)?;
+                                                    check_types(param, &exp.ty, expr.pos)?;
                                                 }
                                                 return Ok(ExpressionType {
                                                     exp: (),
@@ -597,7 +596,7 @@ impl TyChecker {
                                                     )?;
 
                                                                     check_types(
-                                                                        &param,
+                                                                        param,
                                                                         &exp.ty,
                                                                         expr.pos,
                                                                     )?;
@@ -641,7 +640,7 @@ impl TyChecker {
                             for (arg, param) in arguments.iter().zip(params) {
                                 let exp = self.transform_expression(arg, &mut env.clone())?;
 
-                                check_types(&param, &exp.ty, expr.pos)?;
+                                check_types(param, &exp.ty, expr.pos)?;
                             }
                             return Ok(ExpressionType {
                                 exp: (),
@@ -725,7 +724,7 @@ impl TyChecker {
                     env.add_var(*name, Entry::VarEntry(ty));
                 }
 
-                let body_ty = self.transform_statement(&body, env)?;
+                let body_ty = self.transform_statement(body, env)?;
 
                 check_types(&return_type, &body_ty.ty, expr.pos)?;
 
@@ -1094,23 +1093,23 @@ fn actual_type(ty: &Type) -> &Type {
 }
 
 fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type, TypeError> {
-    match ident {
-        &ExpressionTy::Simple(s) => {
+    match *ident {
+        ExpressionTy::Simple(s) => {
             if let Some(ty) = env.look_type(s) {
                 return Ok(ty.clone());
             }
 
             Err(TypeError::UndefindedType(env.name(s), pos))
         }
-        &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
-        &ExpressionTy::Func(ref params, ref returns) => {
+        ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
+        ExpressionTy::Func(ref params, ref returns) => {
             let mut param_tys = Vec::with_capacity(params.len());
 
             for e_ty in params {
                 param_tys.push(get_type(e_ty, pos, env)?)
             }
 
-            if let &Some(ref ret) = returns {
+            if let Some(ref ret) = *returns {
                 Ok(Type::Func(param_tys, Box::new(get_type(ret, pos, env)?)))
             } else {
                 Ok(Type::Func(param_tys, Box::new(Type::Nil)))
