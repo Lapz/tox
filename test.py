@@ -41,7 +41,7 @@ class Interpreter:
 
 
 def rust_interpreter(name, tests):
-  if name == 'rox':
+  if name == 'tox':
     dir = 'target/debug/lexer'
   else:
     dir = 'build/gen/' + name
@@ -50,14 +50,14 @@ def rust_interpreter(name, tests):
   rust_SUITES.append(name)
 
 
-rust_interpreter('rox', {
+rust_interpreter('tox', {
   'test': 'pass',
 
   # These are just for earlier chapters.
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',
@@ -97,7 +97,7 @@ rust_interpreter('chap08_statements', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'pass',
   'test/limit/reuse_constants.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
@@ -162,7 +162,7 @@ rust_interpreter('chap09_control', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/reuse_constants.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
@@ -226,7 +226,7 @@ rust_interpreter('chap10_functions', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',
@@ -273,7 +273,7 @@ rust_interpreter('chap11_resolving', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',
@@ -308,7 +308,7 @@ rust_interpreter('chap12_classes', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',
@@ -330,7 +330,7 @@ rust_interpreter('chap13_inheritance', {
   'test/scanning': 'skip',
   'test/expressions': 'skip',
 
-  # No hardcoded limits in rox.
+  # No hardcoded limits in tox.
   'test/limit/loop_too_large.lox': 'skip',
   'test/limit/too_many_constants.lox': 'skip',
   'test/limit/too_many_locals.lox': 'skip',
