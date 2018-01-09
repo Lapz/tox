@@ -19,6 +19,7 @@ pub enum TypeError {
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
     NotInstanceOrClass(Type, Symbol, Postition),
+    SuperClass(Symbol, Postition),
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -28,7 +29,7 @@ pub enum Type {
         methods: Vec<(Symbol, Entry)>,
         fields: Vec<(Symbol, Type)>,
     },
-    This(Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
+    This(Symbol,Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
     Int,
     Str,
     Bool,
@@ -57,10 +58,10 @@ impl Display for Type {
             Type::Bool => write!(f, "Boolean"),
             Type::Nil => write!(f, "Nil"),
             Type::Float => write!(f, "Float"),
-            Type::This(ref methods, ref fields) => write!(
+            Type::This(ref name,ref methods, ref fields) => write!(
                 f,
-                "'This' has the fields {:?} and methods {:?}",
-                methods, fields
+                "'This {}' has the fields {:?} and methods {:?}",
+                name,methods, fields
             ),
             Type::Func(ref params, ref returns) => write!(
                 f,
@@ -90,6 +91,9 @@ impl Display for TypeError {
 
             TypeError::UndefindedVar(ref name, ref pos) => {
                 write!(f, "Undefinded variable \'{}\' on {}", name, pos)
+            }
+            TypeError::SuperClass(ref name, ref pos) => {
+                write!(f, "{} is not a class on {}", name, pos)
             }
             TypeError::UndefindedClass(ref name, ref pos) => {
                 write!(f, "Undefinded Class\'{}\' on {}", name, pos)

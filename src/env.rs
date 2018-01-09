@@ -3,6 +3,7 @@ use object::Object;
 use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
 
+
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Entry {
     VarEntry(Type), // Vec of (Vec<MethodParam types>,Return Type)

@@ -20,14 +20,14 @@ mod test {
             WithPos::new(
                 Statement::Var(
                     Symbol(2),
-                    WithPos::new(
+                    Some(WithPos::new(
                         Expression::Literal(Literal::Int(10)),
                         Postition {
                             line: 1,
                             column: 13,
                             absolute: 12,
                         },
-                    ),
+                    )),
                     Some(ExpressionTy::Simple(Symbol(3))),
                 ),
                 Postition {
@@ -244,6 +244,7 @@ mod test {
                 name,
                 methods: vec![],
                 properties: vec![],
+                superclass: None,
             },
             Postition {
                 line: 1,

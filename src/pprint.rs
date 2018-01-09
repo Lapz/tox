@@ -99,7 +99,7 @@ impl Statement {
 
                 pprint_string.push_str(" )");
             }
-            Statement::Var(ref name, ref expr, ref ty) => {
+            Statement::Var(ref name, ref expression, ref ty) => {
                 pprint_string.push_str("(var ");
                 pprint_string.push_str(&symbols.name(*name));
 
@@ -108,7 +108,9 @@ impl Statement {
                     pprint_string.push_str(&var_ty.pprint(symbols));
                 }
 
-                expr.node.pprint_into(pprint_string, symbols);
+                if let &Some(ref expr) = expression {
+                    expr.node.pprint_into(pprint_string, symbols);
+                }
 
                 pprint_string.push_str(" )");
             }
@@ -125,9 +127,15 @@ impl Statement {
                 ref name,
                 ref methods,
                 ref properties,
+                ref superclass,
             } => {
                 pprint_string.push_str("(class ");
                 pprint_string.push_str(&symbols.name(*name));
+
+                if let Some(sclass) = *superclass {
+                    pprint_string.push_str("<");
+                    pprint_string.push_str(&symbols.name(sclass))
+                }
 
                 for method in methods {
                     method.node.pprint_into(pprint_string, symbols);
@@ -401,7 +409,11 @@ impl Expression {
                 pprint_string.push_str(&symbols.name(*name));
                 object.node.pprint_into(pprint_string, symbols);
                 value.node.pprint_into(pprint_string, symbols);
-                pprint_string.push_str(") )");
+                pprint_string.push_str(")");
+            }
+
+            Expression::Super(_) => {
+                pprint_string.push_str("super");
             }
 
             Expression::Ternary {

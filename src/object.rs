@@ -16,10 +16,11 @@ use builtins::BuiltInFunction;
 pub enum Object {
     Float(f64),
     BuiltIn(Symbol, BuiltInFunction),
-    Class(Symbol, HashMap<Symbol, Object>),
+    Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
     Int(i64),
-    Str(String),
+    Str(String), 
     Bool(bool),
+
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
@@ -27,10 +28,14 @@ pub enum Object {
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,
+        sclassmethods: Option<HashMap<Symbol, Object>>,
     },
     Nil,
     None,
 }
+
+unsafe impl Sync for Object{}
+unsafe impl Send for Object{}
 
 impl Object {
     pub fn is_truthy(&self) -> bool {
@@ -52,13 +57,13 @@ impl Object {
 
     pub fn bind(&self, instance: &Object, env: &mut Env) -> Object {
         match *self {
-            ref method @ Object::Function(_, _, _) => {
+            ref method @ Object::Function(_, _, _) | ref method @ Object::BuiltIn(_,_) => {
                 env.begin_scope();
 
                 env.add_object(Symbol(0), instance.clone());
-                // env.end_scope();
+              
                 method.clone()
-            }
+            },
 
             _ => unreachable!(),
         }
@@ -69,6 +74,7 @@ impl Object {
             Object::Instance {
                 ref fields,
                 ref methods,
+                ref sclassmethods,
             } => {
                 if fields.borrow().contains_key(name) {
                     return Ok(fields.borrow().get(name).unwrap().clone());
@@ -77,12 +83,21 @@ impl Object {
                 if methods.contains_key(name) {
                     return Ok(methods.get(name).unwrap().bind(self, env));
                 }
+
+                if let &Some(ref smethods) = sclassmethods {
+                    if smethods.contains_key(name) {
+                        return Ok(smethods.get(name).unwrap().bind(self, env));
+                    }
+                }
+
                 Err(RuntimeError::UndefinedProperty)
             }
 
-            Object::Class(_, ref methods) => {
+            Object::Class(_, ref superclass, ref methods) => {
                 if methods.contains_key(name) {
                     return Ok(methods.get(name).unwrap().bind(self, env));
+                } else if superclass.is_some() {
+                    return superclass.clone().unwrap().get_property(name, env);
                 }
                 Err(RuntimeError::UndefinedProperty)
             }
@@ -135,7 +150,7 @@ impl Object {
             Object::Instance { .. } => "instance".into(),
             Object::BuiltIn(ref s, _) => format!("fn <builtin<{}>", s),
             Object::Function(ref s, _, _) => format!("fn <{}> ", s),
-            Object::Class(ref name, _) => format!("class <{}>", name),
+            Object::Class(ref name, _, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
             Object::Return(ref val) => val.as_string(),
@@ -208,7 +223,7 @@ impl PartialEq for Object {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
             (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
-            (&Object::Class(ref x, _), &Object::Class(ref y, _)) => x == y,
+            (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _)) => x == y,
             (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
             (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _)) => x == y,
             // (&Object::Instance(ref x, _), &Object::Instance(ref y, _)) => x == y,
@@ -228,7 +243,7 @@ impl fmt::Debug for Object {
         match *self {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
-            Object::Class(ref name, _) => write!(f, "class <{}>", name),
+            Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::None => write!(f, "none"),
             Object::Instance { ref fields, .. } => {
@@ -305,7 +320,7 @@ impl Display for Object {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Object::Instance { .. } => write!(f, "instance"),
-            Object::Class(ref name, _) => write!(f, "class <{}>", name),
+            Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
             Object::None => write!(f, "none"),

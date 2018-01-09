@@ -15,6 +15,7 @@ pub enum RuntimeError {
     InvalidIndexType,
     NotAnIn,
     UndefinedProperty,
+    CantParseAsInt,
 }
 
 pub fn interpret(statements: &[WithPos<Statement>], env: &mut Env) -> Result<Object, RuntimeError> {
@@ -44,6 +45,7 @@ pub(crate) fn evaluate_statement(
         Statement::Class {
             ref name,
             ref methods,
+            ref superclass,
             ..
         } => {
             env.add_object(*name, Object::Nil);
@@ -51,6 +53,19 @@ pub(crate) fn evaluate_statement(
             use symbol::Symbol;
 
             let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
+
+            let mut sklass = None;
+            let mut s = false;
+
+            if let Some(sclass) = *superclass {
+                env.begin_scope();
+
+                let sk = env.look_object(sclass).unwrap().clone();
+
+                env.add_object(Symbol(1), sk);
+                sklass = Some(Box::new(env.look_object(sclass).unwrap().clone()));
+                s = true;
+            }
 
             for method in methods {
                 match method.node {
@@ -74,7 +89,11 @@ pub(crate) fn evaluate_statement(
                 }
             }
 
-            env.assign_object(*name, Object::Class(*name, sym_methods));
+            if s {
+                env.end_scope();
+            }
+
+            env.assign_object(*name, Object::Class(*name, sklass, sym_methods));
             Ok(Object::None)
         }
 
@@ -213,9 +232,11 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::Var(ref symbol, ref expression, ..) => {
-            let value = evaluate_expression(expression, env)?;
+            if let &Some(ref expr) = expression {
+                let value = evaluate_expression(expr, env)?;
+                env.add_object(*symbol, value);
+            }
 
-            env.add_object(*symbol, value);
             Ok(Object::None)
         }
     }
@@ -343,8 +364,17 @@ fn evaluate_expression(
             use symbol::Symbol;
 
             match env.look_object(*name).unwrap().clone() {
-                Object::Class(_, ref methods) => {
+                Object::Class(_, ref superclass, ref methods) => {
                     let mut props: HashMap<Symbol, Object> = HashMap::new();
+                    let mut s_class_methods = None;
+                    if let &Some(ref sklass) = superclass {
+                        match **sklass {
+                            Object::Class(_, _, ref methods_) => {
+                                s_class_methods = Some(methods_.clone());
+                            }
+                            _ => unimplemented!(),
+                        }
+                    }
 
                     for &(ref name, ref expr) in properties {
                         let value = evaluate_expression(expr, env)?;
@@ -356,12 +386,14 @@ fn evaluate_expression(
                         Object::Instance {
                             methods: methods.clone(),
                             fields: Rc::new(RefCell::new(props.clone())),
+                            sclassmethods: s_class_methods.clone(),
                         },
                     );
 
                     return Ok(Object::Instance {
                         methods: methods.clone(),
                         fields: Rc::new(RefCell::new(props)),
+                        sclassmethods: s_class_methods,
                     });
                 }
 
@@ -475,6 +507,11 @@ fn evaluate_expression(
 
             Ok(value)
         }
+        Expression::Super(_) => {
+            use symbol::Symbol;
+            let value = env.look_object(Symbol(1)).unwrap().clone();
+            Ok(value)
+        }
 
         Expression::Get {
             ref object,
@@ -485,7 +522,7 @@ fn evaluate_expression(
 
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
-                class @ Object::Class(_, _) => class.get_property(property, env),
+                class @ Object::Class(_, _, _) => class.get_property(property, env),
                 _ => {
                     return Err(RuntimeError::NotAnIn);
                 }

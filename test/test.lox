@@ -1,11 +1,23 @@
-class Foo {
-  a:int,b:int;
-  fun init(a:int, b:int) -> Foo {
-    print("init"); // expect:init
-    return Foo {a:a,b:b};
-  }
+print "Guess the number!";
+
+
+var secret_number = rand(1,101);
+print "Please input your guess.";
+
+var guess = io.readline();
+
+print "You guessed: " + guess;
+
+if (int(guess) > secret_number) {
+  print "Too small!";
 }
 
-var foo = Foo.init(1,2);
-print(foo.a); // expect:1
-print(foo.b); // expect:2
+if (int(guess) < secret_number) {
+  print "Too big!";
+}
+
+if (int(guess) == secret_number) {
+  print "You win!";
+}
+
+

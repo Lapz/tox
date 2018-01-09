@@ -478,6 +478,13 @@ impl<'a> Parser<'a> {
 
         let name = self.consume_name("Expected a class name")?;
 
+        let mut superclass = None;
+
+        if self.recognise(TokenType::LESSTHAN) {
+            self.advance();
+            superclass = Some(self.consume_name("Expected a superclass name")?);
+        }
+
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
@@ -521,6 +528,7 @@ impl<'a> Parser<'a> {
                 methods,
                 name,
                 properties,
+                superclass,
             },
             class_pos,
         ))
@@ -530,15 +538,15 @@ impl<'a> Parser<'a> {
         let var_pos = self.get_pos()?;
         let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
 
+        let var_type = self.get_type()?;
+
         if self.recognise(TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 
-            let value = WithPos::new(Expression::Literal(Literal::Nil), pos);
+            let value = None;
 
-            return Ok(WithPos::new(Statement::Var(name, value, None), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value, var_type), pos));
         }
-
-        let var_type = self.get_type()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -553,7 +561,10 @@ impl<'a> Parser<'a> {
                 TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
-            return Ok(WithPos::new(Statement::Var(name, expr, var_type), var_pos));
+            return Ok(WithPos::new(
+                Statement::Var(name, Some(expr), var_type),
+                var_pos,
+            ));
         }
 
         Err(ParserError::Expected(self.error(
@@ -930,6 +941,17 @@ impl<'a> Parser<'a> {
                     Expression::This(self.variable_use_maker.next()),
                     *pos,
                 )),
+
+                TokenType::SUPER => {
+                    // self.advance();
+                    // println!("{:?}",self.tokens.peek());
+                    // self.consume(TokenType::DOT, "Expect \'.\' after \'super\'.")?;
+
+                    Ok(WithPos::new(
+                        Expression::Super(self.variable_use_maker.next()),
+                        *pos,
+                    ))
+                }
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {
                     let mut items = vec![];

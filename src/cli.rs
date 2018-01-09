@@ -150,6 +150,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
             for err in errors {
                 println!("{}", err);
             }
+
+            if penv {
+                println!("{:#?}", env);
+            }
             ::std::process::exit(65)
         }
     };

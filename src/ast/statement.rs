@@ -5,10 +5,11 @@ use symbol::Symbol;
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
     ExpressionStmt(WithPos<Expression>),
-    Var(Symbol, WithPos<Expression>, Option<ExpressionTy>),
+    Var(Symbol, Option<WithPos<Expression>>, Option<ExpressionTy>),
     Block(Vec<WithPos<Statement>>),
     Class {
         name: Symbol,
+        superclass: Option<Symbol>,
         methods: Vec<WithPos<Statement>>,
         properties: Vec<(Symbol, ExpressionTy)>,
     },

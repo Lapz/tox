@@ -89,6 +89,9 @@ impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = HashMap::new();
         map.insert(Symbol(0), "this".into());
+        map.insert(Symbol(1), "super".into());
+      
+     
 
         SymbolFactory {
             next: RefCell::new(2),

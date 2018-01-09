@@ -77,10 +77,41 @@ impl TyChecker {
                 ref name,
                 ref methods,
                 ref properties,
+                ref superclass,
             } => {
                 let mut properties_ty = vec![];
                 let mut fields = vec![];
                 let mut class_methods: Vec<(Symbol, Entry)> = vec![];
+
+                if let Some(sclass) = *superclass {
+                    if let Some(mut entry) = env.look_var(sclass) {
+                        match entry {
+                            &Entry::VarEntry(ref sty) => match sty {
+                                &Type::Class {
+                                    fields: ref sfields,
+                                    ref methods,
+                                    ..
+                                } => {
+                                    properties_ty.extend(sfields.iter().cloned());
+                                    class_methods.extend(methods.iter().cloned())
+                                }
+
+                                _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                            },
+
+                            _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                        }
+                    }
+                }
+
+                env.add_type(
+                    *name,
+                    Type::Class {
+                        name: *name,
+                        fields: vec![],
+                        methods: vec![],
+                    },
+                );
 
                 for &(property, ref ty) in properties {
                     let ty = get_type(ty, statement.pos, env)?;
@@ -88,7 +119,7 @@ impl TyChecker {
                     properties_ty.push((property, ty))
                 }
 
-                self.this = Type::This(fields, vec![]);
+                self.this = Type::This(*name,fields, vec![]);
 
                 env.add_type(
                     *name,
@@ -124,7 +155,7 @@ impl TyChecker {
                                     };
 
                                     match self.this {
-                                        Type::This(_, ref mut methods) => {
+                                        Type::This(_,_, ref mut methods) => {
                                             methods.push((*name, return_type.clone()))
                                         }
                                         _ => unreachable!(),
@@ -181,21 +212,35 @@ impl TyChecker {
 
                 Ok(ExpressionType { exp: (), ty })
             }
-            Statement::Var(ref symbol, ref expr, ref ty) => {
-                let exp_ty = self.transform_expression(expr, env)?;
 
-                if let Some(ref id) = *ty {
-                    let ty = get_type(id, statement.pos, env)?;
-                    check_types(&ty, &exp_ty.ty, statement.pos)?;
+            Statement::Var(ref symbol, ref expression, ref ty) => {
+                if let &Some(ref expr) = expression {
+                    let expr_ty = self.transform_expression(expr, env)?;
 
-                    env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+                    if let Some(ref id) = *ty {
+                        let ty = get_type(id, statement.pos, env)?;
 
-                    return Ok(ExpressionType { exp: (), ty });
+                        check_types(&ty,&expr_ty.ty,statement.pos)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                        return Ok(ExpressionType { exp: (), ty });
+                    }
+
+                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
+
+                    Ok(expr_ty)
+                } else {
+                    if let Some(ref id) = *ty {
+                        let ty = get_type(id, statement.pos, env)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                        return Ok(ExpressionType { exp: (), ty });
+                    }
+
+                    Ok(ExpressionType{exp:(),ty:Type::Nil})
                 }
-
-                env.add_var(*symbol, Entry::VarEntry(exp_ty.ty.clone()));
-
-                Ok(exp_ty)
             }
 
             Statement::Break | Statement::Continue => Ok(ExpressionType {
@@ -459,14 +504,19 @@ impl TyChecker {
                                 _symbol = *sym;
                                 self.transform_var(sym, expr.pos, env)?
                             }
-                            Expression::ClassInstance{ref name,..} => {
+                            Expression::ClassInstance { ref name, .. } => {
                                 if let Some(ty) = env.look_type(*name) {
-                                    return Ok(ExpressionType{exp:(),ty:ty.clone()})
+                                    return Ok(ExpressionType {
+                                        exp: (),
+                                        ty: ty.clone(),
+                                    });
                                 }
 
-                                return Err(TypeError::UndefindedClass(env.name(*name),expr.pos))
-                            },
-                            ref e => unimplemented!("{:?}",e),
+                                return Err(TypeError::UndefindedClass(env.name(*name), expr.pos));
+                            }
+
+                            Expression::Call { .. } => self.transform_expression(object, env)?,
+                            ref e => unimplemented!("{:#?}", e),
                         };
 
                         match ty.ty {
@@ -725,7 +775,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(ref fields, ref methods) => {
+                    Type::This(_,ref fields, ref methods) => {
                         let mut found = false;
 
                         for prop in fields {
@@ -875,6 +925,8 @@ impl TyChecker {
                 ty: self.this.clone(),
             }),
 
+            Expression::Super { .. } => unimplemented!(),
+
             Expression::Logical {
                 ref left,
                 ref right,
@@ -948,7 +1000,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(ref fields, ref methods) => {}
+                    Type::This(_,ref fields, ref methods) => {}
 
                     _ => unreachable!(),
                 }
@@ -1000,6 +1052,12 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
             // Due to how class are inferred if a method on the class returns its self.
             // Its class type will have an empty methods; So we compare the name and the fields instead
             if n != sym && methods != m {
+                return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+            }
+        }
+
+        (&Type::This(ref this,_,_),&Type::Class{ref name,..}) | (&Type::Class{ref name,..},&Type::This(ref this,_,_))  => {
+            if this != name {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
         }
