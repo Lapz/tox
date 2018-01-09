@@ -119,7 +119,7 @@ impl TyChecker {
                     properties_ty.push((property, ty))
                 }
 
-                self.this = Type::This(*name,fields, vec![]);
+                self.this = Type::This(*name, fields, vec![]);
 
                 env.add_type(
                     *name,
@@ -155,14 +155,14 @@ impl TyChecker {
                                     };
 
                                     match self.this {
-                                        Type::This(_,_, ref mut methods) => {
+                                        Type::This(_, _, ref mut methods) => {
                                             methods.push((*name, return_type.clone()))
                                         }
                                         _ => unreachable!(),
                                     }
 
-                                    let mut param_names = vec![];
-                                    let mut param_tys = vec![];
+                                    let mut param_names = Vec::with_capacity(parameters.len());
+                                    let mut param_tys = Vec::with_capacity(parameters.len());
 
                                     for &(param, ref p_ty) in parameters {
                                         param_tys.push(get_type(p_ty, statement.pos, env)?);
@@ -220,7 +220,7 @@ impl TyChecker {
                     if let Some(ref id) = *ty {
                         let ty = get_type(id, statement.pos, env)?;
 
-                        check_types(&ty,&expr_ty.ty,statement.pos)?;
+                        check_types(&ty, &expr_ty.ty, statement.pos)?;
 
                         env.add_var(*symbol, Entry::VarEntry(ty.clone()));
 
@@ -239,7 +239,10 @@ impl TyChecker {
                         return Ok(ExpressionType { exp: (), ty });
                     }
 
-                    Ok(ExpressionType{exp:(),ty:Type::Nil})
+                    Ok(ExpressionType {
+                        exp: (),
+                        ty: Type::Nil,
+                    })
                 }
             }
 
@@ -370,8 +373,8 @@ impl TyChecker {
                             Type::Nil
                         };
 
-                        let mut param_names = vec![];
-                        let mut param_ty = vec![];
+                        let mut param_names = Vec::with_capacity(parameters.len());
+                        let mut param_ty = Vec::with_capacity(parameters.len());
 
                         for &(param, ref p_ty) in parameters {
                             param_ty.push(get_type(p_ty, statement.pos, env)?);
@@ -441,13 +444,13 @@ impl TyChecker {
                     Equal => {
                         let value_ty = self.transform_expression(value, env)?;
                         check_types(&ty.ty, &value_ty.ty, expr.pos)?;
-                        return Ok(ty);
+                         Ok(ty)
                     }
                     MinusEqual | PlusEqual | StarEqual | SlashEqual => {
                         let value_ty =
                             s_check_int_float(&self.transform_expression(value, env)?, value.pos)?;
                         check_types(&ty.ty, &value_ty.ty, expr.pos)?;
-                        return Ok(ty);
+                        Ok(ty)
                     }
                 }
             }
@@ -708,8 +711,8 @@ impl TyChecker {
                     Type::Nil
                 };
 
-                let mut params_ty = vec![];
-                let mut param_names = vec![];
+                let mut params_ty = Vec::with_capacity(parameters.len());
+                let mut param_names = Vec::with_capacity(parameters.len());
 
                 for &(symbol, ref p_ty) in parameters {
                     params_ty.push(get_type(p_ty, expr.pos, env)?);
@@ -775,7 +778,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(_,ref fields, ref methods) => {
+                    Type::This(_, ref fields, ref methods) => {
                         let mut found = false;
 
                         for prop in fields {
@@ -1000,7 +1003,7 @@ impl TyChecker {
                         }
                     }
 
-                    Type::This(_,ref fields, ref methods) => {}
+                    Type::This(_, ref fields, ref methods) => {}
 
                     _ => unreachable!(),
                 }
@@ -1056,7 +1059,8 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
             }
         }
 
-        (&Type::This(ref this,_,_),&Type::Class{ref name,..}) | (&Type::Class{ref name,..},&Type::This(ref this,_,_))  => {
+        (&Type::This(ref this, _, _), &Type::Class { ref name, .. })
+        | (&Type::Class { ref name, .. }, &Type::This(ref this, _, _)) => {
             if this != name {
                 return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
             }
@@ -1096,11 +1100,11 @@ fn get_type(ident: &ExpressionTy, pos: Postition, env: &mut Env) -> Result<Type,
                 return Ok(ty.clone());
             }
 
-            return Err(TypeError::UndefindedType(env.name(s), pos));
+            Err(TypeError::UndefindedType(env.name(s), pos))
         }
         &ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(get_type(s, pos, env)?))),
         &ExpressionTy::Func(ref params, ref returns) => {
-            let mut param_tys = vec![];
+            let mut param_tys = Vec::with_capacity(params.len());
 
             for e_ty in params {
                 param_tys.push(get_type(e_ty, pos, env)?)
@@ -1152,7 +1156,7 @@ fn check_int_float_str(
     }
 }
 
-/// Given an ExpressionType check if it an {int} or {float}
+/// Given an `ExpressionType` check if it an {int} or {float}
 fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<ExpressionType, TypeError> {
     if check_int(expr, pos).is_err() {
         check_float(expr, pos)?;
@@ -1167,7 +1171,7 @@ fn s_check_int_float(expr: &ExpressionType, pos: Postition) -> Result<Expression
     })
 }
 
-/// Checks if ExpressionType is {bool}
+/// Checks if `ExpressionType` is {bool}
 fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if right.ty != Type::Bool {
         return Err(TypeError::Expected(Type::Bool, right.ty.clone(), pos));
@@ -1175,7 +1179,7 @@ fn check_bool(right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     Ok(())
 }
 
-/// Checks if ExpressionType is {int}
+/// Checks if `ExpressionType` is {int}
 fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Int {
         return Err(TypeError::Expected(Type::Int, expr.ty.clone(), pos));
@@ -1183,14 +1187,14 @@ fn check_int(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     Ok(())
 }
 
-/// Checks if ExpressionType is {str}
+/// Checks if `ExpressionType` is {str}
 fn check_str(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Str {
         return Err(TypeError::Expected(Type::Str, expr.ty.clone(), pos));
     }
     Ok(())
 }
-/// Checks if ExpressionType is {float}
+/// Checks if `ExpressionType` is {float}
 fn check_float(expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
     if expr.ty != Type::Float {
         return Err(TypeError::Expected(Type::Float, expr.ty.clone(), pos));

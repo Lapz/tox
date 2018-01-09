@@ -239,15 +239,15 @@ impl Resolver {
                 ref increment,
                 ref body,
             } => {
-                if let &Some(ref init) = initializer {
+                if let Some(ref init) = *initializer {
                     self.resolve_statement(init)?;
                 }
 
-                if let &Some(ref cond) = condition {
+                if let Some(ref cond) = *condition {
                     self.resolve_expression(&cond.node, statement.pos)?;
                 }
 
-                if let &Some(ref inc) = increment {
+                if let Some(ref inc) = *increment {
                     self.resolve_expression(&inc.node, statement.pos)?;
                 }
 
@@ -302,7 +302,7 @@ impl Resolver {
             Statement::Var(ref variable, ref expression, _) => {
                 self.declare(*variable, statement.pos)?;
 
-                if let &Some(ref expr) = expression {
+                if let Some(ref expr) = *expression {
                     self.resolve_expression(&expr.node, statement.pos)?
                 }
 
@@ -352,7 +352,7 @@ impl Resolver {
                     let mut declaration = FunctionType::Method;
 
                     match method {
-                        &WithPos { ref node, ref pos } => match node {
+                        WithPos { ref node, ref pos } => match *node {
                             &Statement::Function { ref name, ref body } => {
                                 if name == &Symbol(1) {
                                     declaration = FunctionType::Init;
@@ -386,7 +386,7 @@ impl Resolver {
     ) -> Result<(), ResolverError> {
         match *expr {
             Expression::Array { ref items } => {
-                for ref item in items {
+                for item in items {
                     self.resolve_expression(&item.node, pos)?;
                 }
                 Ok(())
@@ -419,7 +419,7 @@ impl Resolver {
             } => {
                 self.resolve_expression(&callee.node, pos)?;
 
-                for ref argument in arguments {
+                for argument in arguments {
                     self.resolve_expression(&argument.node, pos)?;
                 }
 
@@ -458,8 +458,8 @@ impl Resolver {
                 self.begin_scope();
 
                 for parameter in parameters {
-                    self.declare(parameter.0.clone(), pos)?;
-                    self.define(parameter.0.clone());
+                    self.declare(parameter.0, pos)?;
+                    self.define(parameter.0);
                 }
 
                 self.resolve_statement(body)?;

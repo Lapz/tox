@@ -137,11 +137,11 @@ pub(crate) fn evaluate_statement(
                 return Ok(Object::None);
             }
 
-            if let &Some(ref init) = initializer {
+            if let Some(ref init) = *initializer {
                 evaluate_statement(init, env)?;
             }
 
-            if let &Some(ref cond) = condition {
+            if let Some(ref cond) = *condition {
                 while evaluate_expression(cond, env)?.is_truthy() {
                     match evaluate_statement(body, env) {
                         Ok(value) => value,
@@ -152,7 +152,7 @@ pub(crate) fn evaluate_statement(
                         },
                     };
 
-                    if let &Some(ref inc) = increment {
+                    if let Some(ref inc) = *increment {
                         evaluate_expression(inc, env)?;
                     }
                 }
@@ -172,7 +172,7 @@ pub(crate) fn evaluate_statement(
                 let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
 
                 env.add_object(*name, Object::Function(*name, params, body.node.clone()));
-                return Ok(Object::None);
+                Ok(Object::None)
             }
             _ => unreachable!(),
         },
@@ -232,7 +232,7 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::Var(ref symbol, ref expression, ..) => {
-            if let &Some(ref expr) = expression {
+            if let Some(ref expr) = *expression {
                 let value = evaluate_expression(expr, env)?;
                 env.add_object(*symbol, value);
             }
@@ -248,7 +248,7 @@ fn evaluate_expression(
 ) -> Result<Object, RuntimeError> {
     match expression.node {
         Expression::Array { ref items } => {
-            let mut values = vec![];
+            let mut values = Vec::with_capacity(items.len());
             for item in items {
                 values.push(evaluate_expression(item, env)?)
             }
@@ -348,7 +348,7 @@ fn evaluate_expression(
         } => {
             let callee = evaluate_expression(callee, env)?;
 
-            let mut obj_arguments = vec![];
+            let mut obj_arguments = Vec::with_capacity(arguments.len());
 
             for expr in arguments {
                 obj_arguments.push(evaluate_expression(expr, env)?);
@@ -367,7 +367,7 @@ fn evaluate_expression(
                 Object::Class(_, ref superclass, ref methods) => {
                     let mut props: HashMap<Symbol, Object> = HashMap::new();
                     let mut s_class_methods = None;
-                    if let &Some(ref sklass) = superclass {
+                    if let Some(ref sklass) = *superclass {
                         match **sklass {
                             Object::Class(_, _, ref methods_) => {
                                 s_class_methods = Some(methods_.clone());
@@ -390,15 +390,15 @@ fn evaluate_expression(
                         },
                     );
 
-                    return Ok(Object::Instance {
+                    Ok(Object::Instance {
                         methods: methods.clone(),
                         fields: Rc::new(RefCell::new(props)),
                         sclassmethods: s_class_methods,
-                    });
+                    })
                 }
 
                 _ => unreachable!(),
-            };
+            }
         }
 
         Expression::Dict { ref items } => {
@@ -524,7 +524,7 @@ fn evaluate_expression(
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
                 _ => {
-                    return Err(RuntimeError::NotAnIn);
+                    Err(RuntimeError::NotAnIn)
                 }
             }
         }

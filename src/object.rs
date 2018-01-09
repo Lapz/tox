@@ -18,7 +18,7 @@ pub enum Object {
     BuiltIn(Symbol, BuiltInFunction),
     Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
     Int(i64),
-    Str(String), 
+    Str(String),
     Bool(bool),
 
     Return(Box<Object>),
@@ -34,8 +34,8 @@ pub enum Object {
     None,
 }
 
-unsafe impl Sync for Object{}
-unsafe impl Send for Object{}
+unsafe impl Sync for Object {}
+unsafe impl Send for Object {}
 
 impl Object {
     pub fn is_truthy(&self) -> bool {
@@ -57,13 +57,13 @@ impl Object {
 
     pub fn bind(&self, instance: &Object, env: &mut Env) -> Object {
         match *self {
-            ref method @ Object::Function(_, _, _) | ref method @ Object::BuiltIn(_,_) => {
+            ref method @ Object::Function(_, _, _) | ref method @ Object::BuiltIn(_, _) => {
                 env.begin_scope();
 
                 env.add_object(Symbol(0), instance.clone());
-              
+
                 method.clone()
-            },
+            }
 
             _ => unreachable!(),
         }
@@ -84,7 +84,7 @@ impl Object {
                     return Ok(methods.get(name).unwrap().bind(self, env));
                 }
 
-                if let &Some(ref smethods) = sclassmethods {
+                if let Some(ref smethods) = *sclassmethods {
                     if smethods.contains_key(name) {
                         return Ok(smethods.get(name).unwrap().bind(self, env));
                     }
@@ -119,17 +119,14 @@ impl Object {
 
                 use interpreter::evaluate_statement;
 
-                match body {
-                    &Statement::Block(ref statements) => for statement in statements {
+                match *body {
+                    Statement::Block(ref statements) => for statement in statements {
                         match evaluate_statement(statement, env) {
-                            Ok(val) => match val {
-                                Object::Return(r) => {
-                                    env.end_scope();
-                                    return Ok(*r);
-                                }
-
-                                _ => (),
+                            Ok(val) => if let Object::Return(r) = val {
+                                env.end_scope();
+                                return Ok(*r);
                             },
+
                             Err(e) => return Err(e),
                         }
                     },
@@ -223,12 +220,10 @@ impl PartialEq for Object {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
             (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
-            (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _)) => x == y,
             (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
-            (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _)) => x == y,
-            // (&Object::Instance(ref x, _), &Object::Instance(ref y, _)) => x == y,
-            (&Object::Nil, &Object::Nil) => true,
-            (&Object::None, &Object::None) => true,
+            (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _))
+            | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _)) => x == y,
+            (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
             (&Object::Return(ref x), &Object::Return(ref y)) => x == y,
@@ -309,8 +304,7 @@ impl PartialOrd for Object {
             (&Object::Return(ref s), &Object::Return(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
             (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
-            (&Object::Nil, &Object::Nil) => Some(Ordering::Equal),
-            (&Object::None, &Object::None) => Some(Ordering::Equal),
+            (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
             (s, o) => (s.partial_cmp(o)),
         }
     }

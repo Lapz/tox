@@ -98,7 +98,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         ::std::process::exit(0)
     }
 
-    let tokens = match Lexer::new(&input).lex() {
+    let tokens = match Lexer::new(input).lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {

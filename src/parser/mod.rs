@@ -7,6 +7,7 @@ use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
 use symbol::{Symbol, Symbols};
+
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
@@ -24,6 +25,7 @@ pub enum ParserError {
     EOF,
     Expected(String),
     Break(String),
+    TooManyParams(Postition),
 }
 
 impl Display for ParserError {
@@ -33,6 +35,7 @@ impl Display for ParserError {
             | ParserError::IllegalExpression(ref e)
             | ParserError::Break(ref e) => write!(f, "{}", e),
             ParserError::EOF => write!(f, "Unexpected end of file"),
+            ParserError::TooManyParams(ref pos) => write!(f, "Too many params on  {}", pos),
         }
     }
 }
@@ -100,8 +103,8 @@ impl<'a> Parser<'a> {
             .map_or(false, |token| check(&token.token))
     }
 
-    fn recognise(&mut self, token: TokenType<'a>) -> bool {
-        if self.peek(|peeked| peeked == &token) {
+    fn recognise(&mut self, token: &TokenType<'a>) -> bool {
+        if self.peek(|peeked| peeked == token) {
             return true;
         }
 
@@ -188,7 +191,7 @@ impl<'a> Parser<'a> {
     }
 
     fn get_type(&mut self) -> Result<Option<ExpressionTy>, ParserError> {
-        if self.recognise(TokenType::COLON) {
+        if self.recognise(&TokenType::COLON) {
             self.advance();
 
             let ty = self.parse_type()?;
@@ -203,13 +206,13 @@ impl<'a> Parser<'a> {
 // Statements
 impl<'a> Parser<'a> {
     fn declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        if self.recognise(TokenType::VAR) {
+        if self.recognise(&TokenType::VAR) {
             self.var_declaration()
-        } else if self.recognise(TokenType::FUNCTION) {
+        } else if self.recognise(&TokenType::FUNCTION) {
             self.function("function")
-        } else if self.recognise(TokenType::CLASS) {
+        } else if self.recognise(&TokenType::CLASS) {
             self.class_declaration()
-        } else if self.recognise(TokenType::TYPE) {
+        } else if self.recognise(&TokenType::TYPE) {
             self.type_declaration()
         } else {
             self.statement()
@@ -217,23 +220,23 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        if self.recognise(TokenType::LBRACE) {
+        if self.recognise(&TokenType::LBRACE) {
             self.block()
-        } else if self.recognise(TokenType::BREAK) {
+        } else if self.recognise(&TokenType::BREAK) {
             self.break_statement()
-        } else if self.recognise(TokenType::CONTINUE) {
+        } else if self.recognise(&TokenType::CONTINUE) {
             self.continue_statement()
-        } else if self.recognise(TokenType::RETURN) {
+        } else if self.recognise(&TokenType::RETURN) {
             self.return_statement()
-        } else if self.recognise(TokenType::IF) {
+        } else if self.recognise(&TokenType::IF) {
             self.if_statement()
-        } else if self.recognise(TokenType::DO) {
+        } else if self.recognise(&TokenType::DO) {
             self.do_statement()
-        } else if self.recognise(TokenType::WHILE) {
+        } else if self.recognise(&TokenType::WHILE) {
             self.while_statement()
-        } else if self.recognise(TokenType::FOR) {
+        } else if self.recognise(&TokenType::FOR) {
             self.for_statement()
-        } else if self.recognise(TokenType::PRINT) {
+        } else if self.recognise(&TokenType::PRINT) {
             self.print_statement()
         } else {
             self.expression_statement()
@@ -325,9 +328,9 @@ impl<'a> Parser<'a> {
 
         let mut initializer = None;
 
-        if self.recognise(TokenType::SEMICOLON) {
+        if self.recognise(&TokenType::SEMICOLON) {
             self.advance();
-        } else if self.recognise(TokenType::VAR) {
+        } else if self.recognise(&TokenType::VAR) {
             initializer = Some(Box::new(self.var_declaration()?));
         } else {
             initializer = Some(Box::new(self.expression_statement()?));
@@ -335,7 +338,7 @@ impl<'a> Parser<'a> {
 
         let mut condition = None;
 
-        if !self.recognise(TokenType::SEMICOLON) {
+        if !self.recognise(&TokenType::SEMICOLON) {
             condition = Some(self.expression()?);
         }
 
@@ -343,7 +346,7 @@ impl<'a> Parser<'a> {
 
         let mut increment = None;
 
-        if !self.recognise(TokenType::RPAREN) {
+        if !self.recognise(&TokenType::RPAREN) {
             increment = Some(self.expression()?);
         }
 
@@ -421,7 +424,7 @@ impl<'a> Parser<'a> {
         let then_branch = Box::new(self.statement()?);
         let mut else_branch = None;
 
-        if self.recognise(TokenType::ELSE) {
+        if self.recognise(&TokenType::ELSE) {
             self.advance();
             else_branch = Some(Box::new(self.statement()?));
 
@@ -448,11 +451,11 @@ impl<'a> Parser<'a> {
     fn return_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
         let pos = self.get_pos()?;
 
-        let mut value = None;
-
-        if !self.recognise(TokenType::COLON) {
-            value = Some(self.expression()?);
-        }
+        let value = if !self.recognise(&TokenType::COLON) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
 
         self.consume(TokenType::SEMICOLON, "Expected a ")?;
 
@@ -464,7 +467,7 @@ impl<'a> Parser<'a> {
 
         let mut statement = vec![];
 
-        while !self.recognise(TokenType::RBRACE) {
+        while !self.recognise(&TokenType::RBRACE) {
             statement.push(self.declaration()?);
         }
 
@@ -478,20 +481,19 @@ impl<'a> Parser<'a> {
 
         let name = self.consume_name("Expected a class name")?;
 
-        let mut superclass = None;
-
-        if self.recognise(TokenType::LESSTHAN) {
-            self.advance();
-            superclass = Some(self.consume_name("Expected a superclass name")?);
-        }
+        let superclass = if self.recognise(&TokenType::LESSTHAN) {
+            Some(self.consume_name("Expected a superclass name")?)
+        } else {
+            None
+        };
 
         self.consume(TokenType::LBRACE, "Expect \'{ \' before class body")?;
 
         let mut methods = vec![];
         let mut properties = vec![];
 
-        while !self.recognise(TokenType::RBRACE) {
-            if !self.recognise(TokenType::FUNCTION) {
+        while !self.recognise(&TokenType::RBRACE) {
+            if !self.recognise(&TokenType::FUNCTION) {
                 while {
                     let name = self.consume_name("Expected an Property name ")?;
 
@@ -504,7 +506,7 @@ impl<'a> Parser<'a> {
 
                     properties.push((name, ty));
 
-                    self.recognise(TokenType::COMMA)
+                    self.recognise(&TokenType::COMMA)
                         && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                 } {}
 
@@ -513,7 +515,7 @@ impl<'a> Parser<'a> {
                     "Expected a semicolon after declaring properties",
                 )?;
 
-                if self.recognise(TokenType::RBRACE) {
+                if self.recognise(&TokenType::RBRACE) {
                     break;
                 }
             }
@@ -540,7 +542,7 @@ impl<'a> Parser<'a> {
 
         let var_type = self.get_type()?;
 
-        if self.recognise(TokenType::SEMICOLON) {
+        if self.recognise(&TokenType::SEMICOLON) {
             let pos = self.consume_get_pos(TokenType::SEMICOLON, "Expected a ';'")?;
 
             let value = None;
@@ -591,7 +593,7 @@ impl<'a> Parser<'a> {
             TokenType::SLASHASSIGN,
         ]) {
             let next = self.advance().unwrap();
-            let kind = get_assign_operator(next.token);
+            let kind = get_assign_operator(&next.token);
 
             let value = self.assignment()?;
 
@@ -663,7 +665,7 @@ impl<'a> Parser<'a> {
     fn or(&mut self) -> Result<WithPos<Expression>, ParserError> {
         let mut expr = self.and()?;
 
-        while self.recognise(TokenType::OR) {
+        while self.recognise(&TokenType::OR) {
             let next = self.advance().unwrap();
 
             let operator = get_logic_operator(next.token);
@@ -686,7 +688,7 @@ impl<'a> Parser<'a> {
     fn and(&mut self) -> Result<WithPos<Expression>, ParserError> {
         let mut expr = self.equality()?;
 
-        while self.recognise(TokenType::AND) {
+        while self.recognise(&TokenType::AND) {
             let next = self.advance().unwrap();
 
             let operator = get_logic_operator(next.token);
@@ -712,7 +714,7 @@ impl<'a> Parser<'a> {
         while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
             let next = self.advance().unwrap();
 
-            let operator = get_operator(next.token);
+            let operator = get_operator(&next.token);
 
             let right_expr = Box::new(self.comparison()?);
 
@@ -740,7 +742,7 @@ impl<'a> Parser<'a> {
         ]) {
             let next = self.advance().unwrap();
 
-            let operator = get_operator(next.token);
+            let operator = get_operator(&next.token);
 
             let right_expr = Box::new(self.addition()?);
 
@@ -763,7 +765,7 @@ impl<'a> Parser<'a> {
         while self.matched(vec![TokenType::MINUS, TokenType::MODULO, TokenType::PLUS]) {
             let next = self.advance().unwrap();
 
-            let operator = get_operator(next.token);
+            let operator = get_operator(&next.token);
 
             let right_expr = Box::new(self.multiplication()?);
 
@@ -786,7 +788,7 @@ impl<'a> Parser<'a> {
         while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
             let next = self.advance().unwrap();
 
-            let operator = get_operator(next.token);
+            let operator = get_operator(&next.token);
 
             let right_expr = Box::new(self.unary()?);
 
@@ -807,7 +809,7 @@ impl<'a> Parser<'a> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
             let next = self.advance().unwrap();
 
-            let operator = get_unary_operator(next.token);
+            let operator = get_unary_operator(&next.token);
 
             let right = Box::new(self.unary()?);
 
@@ -827,7 +829,7 @@ impl<'a> Parser<'a> {
         let mut expr = self.primary()?;
 
         loop {
-            if self.recognise(TokenType::LBRACKET) {
+            if self.recognise(&TokenType::LBRACKET) {
                 self.advance();
                 let index = Box::new(self.expression()?);
                 let index_pos = self.consume_get_pos(
@@ -841,11 +843,11 @@ impl<'a> Parser<'a> {
                     },
                     index_pos,
                 ));
-            } else if self.recognise(TokenType::LPAREN) {
+            } else if self.recognise(&TokenType::LPAREN) {
                 let call_pos = self.advance().unwrap().pos;
                 expr.pos = call_pos;
                 expr = self.finish_call(expr)?;
-            } else if self.recognise(TokenType::DOT) {
+            } else if self.recognise(&TokenType::DOT) {
                 self.advance();
 
                 let (property, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
@@ -886,12 +888,12 @@ impl<'a> Parser<'a> {
                     Expression::Literal(Literal::Str(s.clone())),
                     *pos,
                 )),
-                TokenType::IDENTIFIER(ref ident) => {
-                    if self.recognise(TokenType::LBRACE) {
+                TokenType::IDENTIFIER(ident) => {
+                    if self.recognise(&TokenType::LBRACE) {
                         self.advance();
                         let mut properties = vec![];
 
-                        if self.recognise(TokenType::RBRACE) {
+                        if self.recognise(&TokenType::RBRACE) {
                             self.advance();
                             return Ok(WithPos::new(
                                 Expression::ClassInstance {
@@ -914,7 +916,7 @@ impl<'a> Parser<'a> {
 
                             properties.push((property_name, property_value));
 
-                            self.recognise(TokenType::COMMA)
+                            self.recognise(&TokenType::COMMA)
                                 && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                         } {}
 
@@ -942,21 +944,15 @@ impl<'a> Parser<'a> {
                     *pos,
                 )),
 
-                TokenType::SUPER => {
-                    // self.advance();
-                    // println!("{:?}",self.tokens.peek());
-                    // self.consume(TokenType::DOT, "Expect \'.\' after \'super\'.")?;
-
-                    Ok(WithPos::new(
-                        Expression::Super(self.variable_use_maker.next()),
-                        *pos,
-                    ))
-                }
+                TokenType::SUPER => Ok(WithPos::new(
+                    Expression::Super(self.variable_use_maker.next()),
+                    *pos,
+                )),
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {
                     let mut items = vec![];
 
-                    if self.recognise(TokenType::RBRACKET) {
+                    if self.recognise(&TokenType::RBRACKET) {
                         self.advance();
                         return Ok(WithPos::new(Expression::Array { items }, *pos));
                     }
@@ -964,7 +960,7 @@ impl<'a> Parser<'a> {
                     while {
                         items.push(self.expression()?);
 
-                        self.recognise(TokenType::COMMA)
+                        self.recognise(&TokenType::COMMA)
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
@@ -981,7 +977,7 @@ impl<'a> Parser<'a> {
                         (WithPos<Expression>, WithPos<Expression>),
                     > = vec![];
 
-                    if self.recognise(TokenType::RBRACE) {
+                    if self.recognise(&TokenType::RBRACE) {
                         self.advance();
                         return Ok(WithPos::new(Expression::Dict { items }, *pos));
                     }
@@ -992,7 +988,7 @@ impl<'a> Parser<'a> {
                         let right = self.expression()?;
 
                         items.push((left, right));
-                        self.recognise(TokenType::COMMA)
+                        self.recognise(&TokenType::COMMA)
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
@@ -1009,7 +1005,7 @@ impl<'a> Parser<'a> {
                     let pos =
                         self.consume_get_pos(TokenType::RPAREN, "Expect \')\' after expression")?;
 
-                    return Ok(WithPos::new(Expression::Grouping { expr }, pos));
+                    Ok(WithPos::new(Expression::Grouping { expr }, pos))
                 }
 
                 ref e => {
@@ -1030,13 +1026,13 @@ impl<'a> Parser<'a> {
     fn fun_body(&mut self, kind: &str) -> Result<WithPos<Expression>, ParserError> {
         let func_pos = self.consume_get_pos(TokenType::LPAREN, "Expected '(' ")?;
 
-        let mut parameters = vec![];
+        let mut parameters = Vec::with_capacity(32);
         let mut returns = None;
 
-        if !self.recognise(TokenType::RPAREN) {
+        if !self.recognise(&TokenType::RPAREN) {
             while {
                 if parameters.len() >= 32 {
-                    println!("Cannot have more than 32 arguments")
+                    return Err(ParserError::TooManyParams(func_pos));
                 };
 
                 let identifier = self.consume_name(&format!("Expected a {} name", kind))?;
@@ -1047,14 +1043,14 @@ impl<'a> Parser<'a> {
 
                 parameters.push((identifier, ty));
 
-                self.recognise(TokenType::COMMA)
+                self.recognise(&TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
             } {}
         }
 
         self.consume(TokenType::RPAREN, "Expected ')' after parameters.")?;
 
-        if self.recognise(TokenType::FRETURN) {
+        if self.recognise(&TokenType::FRETURN) {
             self.advance();
 
             returns = Some(self.parse_type()?);
@@ -1073,7 +1069,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type(&mut self) -> Result<ExpressionTy, ParserError> {
-        if self.recognise(TokenType::LBRACKET) {
+        if self.recognise(&TokenType::LBRACKET) {
             self.advance();
             let ty = self.parse_type()?;
 
@@ -1083,23 +1079,23 @@ impl<'a> Parser<'a> {
             )?;
 
             Ok(ExpressionTy::Arr(Box::new(ty)))
-        } else if self.recognise(TokenType::FUNCTION) {
+        } else if self.recognise(&TokenType::FUNCTION) {
             self.advance();
             self.consume(TokenType::LPAREN, "Expected a \'(\'")?;
-            let mut param_ty = vec![];
+            let mut param_ty = Vec::with_capacity(32);
 
             while {
                 let ty = self.parse_type()?;
 
                 param_ty.push(ty);
 
-                self.recognise(TokenType::COMMA)
+                self.recognise(&TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
             } {}
 
             self.consume(TokenType::RPAREN, "Expected  \')\'")?;
 
-            if self.recognise(TokenType::FRETURN) {
+            if self.recognise(&TokenType::FRETURN) {
                 self.advance();
                 let ty = self.parse_type()?;
                 Ok(ExpressionTy::Func(param_ty, Some(Box::new(ty))))
@@ -1116,16 +1112,16 @@ impl<'a> Parser<'a> {
         &mut self,
         callee: WithPos<Expression>,
     ) -> Result<WithPos<Expression>, ParserError> {
-        let mut arguments = vec![];
+        let mut arguments = Vec::with_capacity(32);
 
-        if !self.recognise(TokenType::RPAREN) {
+        if !self.recognise(&TokenType::RPAREN) {
             while {
                 if arguments.len() >= 32 {
-                    println!("Cannot have more than 32 arguments.");
+                    return Err(ParserError::TooManyParams(callee.pos));
                 }
 
                 arguments.push(self.expression()?);
-                self.recognise(TokenType::COMMA)
+                self.recognise(&&TokenType::COMMA)
                     && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
             } {}
         }

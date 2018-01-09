@@ -84,13 +84,10 @@ impl Statement {
 
     fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Symbols<()>) {
         match *self {
-            Statement::ExpressionStmt(ref expr) => {
+            Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
             }
 
-            Statement::Print(ref expr) => {
-                expr.node.pprint_into(pprint_string, symbols);
-            }
             Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(*alias));
@@ -103,12 +100,12 @@ impl Statement {
                 pprint_string.push_str("(var ");
                 pprint_string.push_str(&symbols.name(*name));
 
-                if let &Some(ref var_ty) = ty {
+                if let Some(ref var_ty) = *ty {
                     pprint_string.push_str(":");
                     pprint_string.push_str(&var_ty.pprint(symbols));
                 }
 
-                if let &Some(ref expr) = expression {
+                if let Some(ref expr) = *expression {
                     expr.node.pprint_into(pprint_string, symbols);
                 }
 
@@ -167,7 +164,7 @@ impl Statement {
 
                 then_branch.node.pprint_into(pprint_string, symbols);
 
-                if let &Some(ref else_) = else_branch {
+                if let Some(ref else_) = *else_branch {
                     else_.node.pprint_into(pprint_string, symbols);
                 }
 
@@ -182,15 +179,15 @@ impl Statement {
             } => {
                 pprint_string.push_str("(for ");
 
-                if let &Some(ref init) = initializer {
+                if let Some(ref init) = *initializer {
                     init.node.pprint_into(pprint_string, symbols);
                 }
 
-                if let &Some(ref cond) = condition {
+                if let Some(ref cond) = *condition {
                     cond.node.pprint_into(pprint_string, symbols);
                 }
 
-                if let &Some(ref inc) = increment {
+                if let Some(ref inc) = *increment {
                     inc.node.pprint_into(pprint_string, symbols);
                 }
 
@@ -246,7 +243,7 @@ impl Statement {
             Statement::Return(ref returns) => {
                 pprint_string.push_str("(return ");
 
-                if let &Some(ref value) = returns {
+                if let Some(ref value) = *returns {
                     value.node.pprint_into(pprint_string, symbols);
                 }
 
@@ -261,7 +258,7 @@ impl Expression {
         match *self {
             Expression::Array { ref items } => {
                 pprint_string.push_str("(array");
-                for ref item in items {
+                for item in items {
                     item.node.pprint_into(pprint_string, symbols);
                 }
                 pprint_string.push_str(" )");

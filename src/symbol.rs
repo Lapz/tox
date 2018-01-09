@@ -17,13 +17,13 @@ pub struct SymbolFactory {
 }
 
 #[derive(Debug, Clone)]
-pub struct Symbols<T> {
+pub struct Symbols<T: Clone> {
     strings: Rc<SymbolFactory>,
     table: HashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }
 
-impl<T> Symbols<T> {
+impl<T: Clone> Symbols<T> {
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Symbols {
             strings,
@@ -37,7 +37,6 @@ impl<T> Symbols<T> {
     pub fn begin_scope(&mut self) {
         self.scopes.push(None);
     }
-
     /// Recursivly destorys the scopes
     pub fn end_scope(&mut self) {
         while let Some(Some(symbol)) = self.scopes.pop() {
@@ -65,7 +64,7 @@ impl<T> Symbols<T> {
 
     pub fn symbol(&mut self, name: &str) -> Symbol {
         for (key, value) in self.strings.mappings.borrow().iter() {
-            if value == &name {
+            if value == name {
                 return *key;
             }
         }
@@ -90,8 +89,6 @@ impl SymbolFactory {
         let mut map = HashMap::new();
         map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
-      
-     
 
         SymbolFactory {
             next: RefCell::new(2),
