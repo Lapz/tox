@@ -545,7 +545,7 @@ impl<'a> Parser<'a> {
 
             let value = None;
 
-            return Ok(WithPos::new(Statement::Var(name, value, var_type), var_pos));
+            return Ok(WithPos::new(Statement::Var(name, value, var_type), pos));
         }
 
         if self.matched(vec![
