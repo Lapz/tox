@@ -189,7 +189,7 @@ impl Resolver {
 impl Resolver {
     fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
         match statement.node {
-            Statement::Print(ref expr) | Statement::ExpressionStmt(ref expr)  => {
+            Statement::Print(ref expr) | Statement::ExpressionStmt(ref expr) => {
                 self.resolve_expression(&expr.node, statement.pos)?;
                 Ok(())
             }
@@ -211,8 +211,6 @@ impl Resolver {
 
                 Ok(())
             }
-
-         
 
             Statement::IfStmt {
                 ref condition,
@@ -256,7 +254,8 @@ impl Resolver {
             Statement::WhileStmt {
                 ref condition,
                 ref body,
-            } | Statement::DoStmt {
+            }
+            | Statement::DoStmt {
                 ref condition,
                 ref body,
             } => {
@@ -264,8 +263,6 @@ impl Resolver {
                 self.resolve_statement(body)?;
                 Ok(())
             }
-
-           
 
             Statement::Break | Statement::Continue => Ok(()),
 

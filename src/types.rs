@@ -4,10 +4,11 @@ use symbol::Symbol;
 use env::Entry;
 use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-pub enum TypeError {
-    Expected(Type, Type, Postition),
+pub enum TypeError <'a> {
+    Expected(Type<'a>, Type<'a>, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
     UndefindedClass(String, Postition),
@@ -18,30 +19,30 @@ pub enum TypeError {
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
-    NotInstanceOrClass(Type, Symbol, Postition),
+    NotInstanceOrClass(Type<'a>, Symbol, Postition),
     SuperClass(Symbol, Postition),
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub enum Type {
+#[derive(Debug, PartialEq, PartialOrd, Clone,Hash)]
+pub enum Type<'a> {
     Class {
         name: Symbol,
-        methods: Vec<(Symbol, Entry)>,
-        fields: Vec<(Symbol, Type)>,
+        methods: HashMap<Symbol, &'a Entry<'a>>,
+        fields: HashMap<Symbol, &'a Type<'a>>,
     },
-    This(Symbol, Vec<(Symbol, Type)>, Vec<(Symbol, Type)>),
+    This(Symbol, HashMap<Symbol, &'a Type<'a>>, HashMap<Symbol, &'a Type<'a>>),
     Int,
     Str,
     Bool,
     Nil,
     Float,
-    Func(Vec<Type>, Box<Type>),
-    Dict(Box<Type>, Box<Type>), // Key, Value
-    Array(Box<Type>),
-    Name(Symbol, Box<Type>),
+    Func(Vec<&'a Type<'a>>, Box<Type<'a>>),
+    Dict(Box<Type<'a>>, Box<Type<'a>>), // Key, Value
+    Array(Box<Type<'a>>),
+    Name(Symbol, Box<Type<'a>>),
 }
 
-impl Display for Type {
+impl <'a> Display for Type<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Type::Class {
@@ -65,22 +66,22 @@ impl Display for Type {
             ),
             Type::Func(ref params, ref returns) => write!(
                 f,
-                "Func with param types {:?} returns {:?}",
+                "Func with param Type<'a>s {:?} returns {:?}",
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
             Type::Array(ref a) => write!(f, "Array of {}", a),
-            Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
+            Type::Name(ref name, ref ty) => write!(f, "Type<'a> alias {} = {}", name, ty),
         }
     }
 }
 
-impl Display for TypeError {
+impl <'a> Display for TypeError<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             TypeError::Expected(ref expected, ref got, ref pos) => write!(
                 f,
-                "Expected type \'{}\' but instead got \'{}\' on {}",
+                "Expected Type \'{}\' but instead got \'{}\' on {}",
                 &expected, got, pos
             ),
             TypeError::IndexAble(ref name, ref pos) => {
@@ -116,7 +117,7 @@ impl Display for TypeError {
             }
 
             TypeError::UndefindedType(ref name, ref pos) => {
-                write!(f, "Undefined type \'{}\' on {}", name, pos)
+                write!(f, "Undefined Type<'a> \'{}\' on {}", name, pos)
             }
 
             TypeError::TooLittleProperty(ref pos) => write!(f, "Expected more fields on {}", pos),

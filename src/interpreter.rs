@@ -100,6 +100,10 @@ pub(crate) fn evaluate_statement(
         Statement::DoStmt {
             ref condition,
             ref body,
+        }
+        | Statement::WhileStmt {
+            ref body,
+            ref condition,
         } => {
             while evaluate_expression(condition, env)?.is_truthy() {
                 match evaluate_statement(body, env) {
@@ -212,24 +216,6 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::TypeAlias { .. } => Ok(Object::None),
-
-        Statement::WhileStmt {
-            ref body,
-            ref condition,
-        } => {
-            while evaluate_expression(condition, env)?.is_truthy() {
-                match evaluate_statement(body, env) {
-                    Ok(value) => value,
-                    Err(e) => match e {
-                        RuntimeError::Break => break,
-                        RuntimeError::Continue => continue,
-                        _ => return Err(e),
-                    },
-                };
-            }
-
-            Ok(Object::None)
-        }
 
         Statement::Var(ref symbol, ref expression, ..) => {
             if let Some(ref expr) = *expression {
@@ -523,9 +509,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                _ => {
-                    Err(RuntimeError::NotAnIn)
-                }
+                _ => Err(RuntimeError::NotAnIn),
             }
         }
         Expression::Ternary {

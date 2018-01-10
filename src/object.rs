@@ -219,10 +219,11 @@ impl PartialEq for Object {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
-            (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
+
             (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
             (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _))
-            | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _)) => x == y,
+            | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _))
+            | (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,

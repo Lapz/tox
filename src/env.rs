@@ -3,10 +3,10 @@ use object::Object;
 use symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub enum Entry {
-    VarEntry(Type), // Vec of (Vec<MethodParam types>,Return Type)
-    FunEntry { params: Vec<Type>, returns: Type },
+#[derive(Debug, Clone, PartialEq, PartialOrd,Hash)]
+pub enum Entry<'a> {
+    VarEntry(Type<'a>), // Vec of (Vec<MethodParam types>,Return Type)
+    FunEntry { params: Vec<Type<'a>>, returns: Type<'a> },
 }
 
 static mut UNIQUE_COUNT: u64 = 0;
@@ -23,14 +23,14 @@ impl Unique {
 }
 
 #[derive(Debug, Clone)]
-pub struct Env {
-    pub types: Symbols<Type>,
-    pub vars: Symbols<Entry>,
+pub struct Env<'a> {
+    pub types: Symbols<Type<'a>>,
+    pub vars: Symbols<Entry<'a>>,
     pub objects: Symbols<Object>,
     pub unique: Unique,
 }
 
-impl Env {
+impl <'a> Env <'a> {
     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
         let mut types = Symbols::new(Rc::clone(strings));
         let string_symbol = types.symbol("str");

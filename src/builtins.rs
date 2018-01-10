@@ -22,7 +22,7 @@ impl BuiltIn {
     }
 }
 
-impl Env {
+impl <'a> Env<'a> {
     pub fn get_builtins(&mut self) {
         self.add_builtin("clock", vec![], Type::Float, built_in_clock);
         self.add_builtin("hex", vec![Type::Int], Type::Str, built_in_hex);

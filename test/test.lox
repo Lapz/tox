@@ -1,3 +1,1 @@
-fun a(a:int,b:int,c:int,d:int,e:int,f:int,g:int,h:int,i:int,j:int,k:int,l:int,m:int,n:int,o:int,p:int,q:int,r:int,s:int,t:int,u:int,v:int,w:int,x:int,y:int,z:int,a1:int,a2:int,a3:int,a4:int,a5:int,a6:int,a7:int,a9:int,a10:int) {
-  print a;
-}
+print 10+10;

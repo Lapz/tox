@@ -85,9 +85,9 @@ impl TyChecker {
 
                 if let Some(sclass) = *superclass {
                     if let Some(mut entry) = env.look_var(sclass) {
-                        match entry {
-                            &Entry::VarEntry(ref sty) => match sty {
-                                &Type::Class {
+                        match *entry {
+                            Entry::VarEntry(ref sty) => match *sty {
+                                Type::Class {
                                     fields: ref sfields,
                                     ref methods,
                                     ..
@@ -253,10 +253,7 @@ impl TyChecker {
 
             Statement::TypeAlias { ref alias, ref ty } => {
                 let alias_ty = get_type(ty, statement.pos, env)?;
-                env.add_type(
-                    *alias,
-                    Type::Name(*alias, Box::new(alias_ty.clone())),
-                );
+                env.add_type(*alias, Type::Name(*alias, Box::new(alias_ty.clone())));
 
                 Ok(ExpressionType {
                     exp: (),
@@ -444,7 +441,7 @@ impl TyChecker {
                     Equal => {
                         let value_ty = self.transform_expression(value, env)?;
                         check_types(&ty.ty, &value_ty.ty, expr.pos)?;
-                         Ok(ty)
+                        Ok(ty)
                     }
                     MinusEqual | PlusEqual | StarEqual | SlashEqual => {
                         let value_ty =
@@ -480,8 +477,8 @@ impl TyChecker {
                         })
                     }
 
-                    Operator::Plus |
-                    Operator::Slash
+                    Operator::Plus
+                    | Operator::Slash
                     | Operator::Star
                     | Operator::Modulo
                     | Operator::Minus
@@ -1034,7 +1031,7 @@ impl TyChecker {
 }
 
 /// Checks if two types are eqvilant
-fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), TypeError> {
+fn check_types<'a>(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), TypeError<'a>> {
     let expected = actual_type(expected);
     let unknown = actual_type(unknown);
 
@@ -1075,7 +1072,7 @@ fn check_types(expected: &Type, unknown: &Type, pos: Postition) -> Result<(), Ty
     Ok(())
 }
 
-fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
+fn get_actual_ty<'a>(entry: &Entry) -> Result<Type<'a>, TypeError<'a>> {
     match *entry {
         Entry::VarEntry(ref ty) => Ok(ty.clone()),
         Entry::FunEntry {
@@ -1085,7 +1082,7 @@ fn get_actual_ty(entry: &Entry) -> Result<Type, TypeError> {
     }
 }
 
-fn actual_type(ty: &Type) -> &Type {
+fn actual_type(ty: &Type<'a>) -> &Type<'a>{
     match *ty {
         Type::Name(_, ref name) => name,
         ref others => others,
