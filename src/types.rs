@@ -30,11 +30,11 @@ pub enum Type {
     Class {
         name: Symbol,
         methods: HashMap<Symbol, Entry>,
-        fields: HashMap<Symbol, Type>,
+        fields: HashMap<Symbol, BaseType>,
     },
-    This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
+    This(Symbol, HashMap<Symbol, BaseType>, HashMap<Symbol, BaseType>),
     Func(Vec<Type>, Box<Type>),
-    Dict(Box<Type>, Box<Type>), // Key, Value
+    Dict(BaseType, BaseType), // Key, Value
     Array(Box<Type>),
     Name(Symbol, Box<Type>),
     Simple(BaseType),
@@ -188,8 +188,8 @@ impl<'a> PartialOrd for Type {
                 &Type::Class {
                     name: ref oname, ..
                 },
-            ) => name.partial_cmp(oname),
-            (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
+            )
+            | (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
             | (s @ &Type::Func(_, _), o @ &Type::Func(_, _)) => s.partial_cmp(o),

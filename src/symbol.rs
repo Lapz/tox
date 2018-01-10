@@ -46,7 +46,7 @@ impl<T: Clone> Symbols<T> {
     }
 
     pub fn enter(&mut self, symbol: Symbol, data: T) {
-        let mapping = self.table.entry(symbol).or_insert(vec![]);
+        let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
 
         mapping.push(data);
         self.scopes.push(Some(symbol));
