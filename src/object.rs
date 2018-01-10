@@ -306,7 +306,7 @@ impl PartialOrd for Object {
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
             (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
-            (s, o) => (s.partial_cmp(o)),
+            _ => None,
         }
     }
 }

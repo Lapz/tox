@@ -2,7 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use rand::{thread_rng, Rng};
 
 use env::{Entry, Env};
-use types::Type;
+use types::{BaseType, Type};
 use object::Object;
 use interpreter::RuntimeError;
 
@@ -22,13 +22,38 @@ impl BuiltIn {
     }
 }
 
-impl <'a> Env<'a> {
+impl Env {
     pub fn get_builtins(&mut self) {
-        self.add_builtin("clock", vec![], Type::Float, built_in_clock);
-        self.add_builtin("hex", vec![Type::Int], Type::Str, built_in_hex);
-        self.add_builtin("oct", vec![Type::Int], Type::Str, built_in_oct);
-        self.add_builtin("rand", vec![Type::Int, Type::Int], Type::Int, built_in_rand);
-        self.add_builtin("int", vec![Type::Str], Type::Int, built_in_int);
+        self.add_builtin(
+            "clock",
+            vec![],
+            Type::Simple(BaseType::Float),
+            built_in_clock,
+        );
+        self.add_builtin(
+            "hex",
+            vec![Type::Simple(BaseType::Int)],
+            Type::Simple(BaseType::Str),
+            built_in_hex,
+        );
+        self.add_builtin(
+            "oct",
+            vec![Type::Simple(BaseType::Int)],
+            Type::Simple(BaseType::Str),
+            built_in_oct,
+        );
+        self.add_builtin(
+            "rand",
+            vec![Type::Simple(BaseType::Int), Type::Simple(BaseType::Int)],
+            Type::Simple(BaseType::Int),
+            built_in_rand,
+        );
+        self.add_builtin(
+            "int",
+            vec![Type::Simple(BaseType::Str)],
+            Type::Simple(BaseType::Int),
+            built_in_int,
+        );
         self.add_builtin_class(
             "io",
             vec![
@@ -37,7 +62,7 @@ impl <'a> Env<'a> {
                     built_in_readline,
                     Entry::FunEntry {
                         params: vec![],
-                        returns: Type::Str,
+                        returns: Type::Simple(BaseType::Str),
                     },
                 ),
             ],
@@ -49,19 +74,19 @@ impl <'a> Env<'a> {
 
         use std::collections::HashMap;
 
-        let mut methods_ty = vec![];
+        let mut methods_ty = HashMap::new();
         let mut map = HashMap::new();
 
         for method in methods {
             let name = self.vars.symbol(method.0);
-            methods_ty.push((name, method.2));
+            methods_ty.insert(name, method.2);
             map.insert(name, Object::BuiltIn(name, method.1));
         }
 
         let entry = Entry::VarEntry(Type::Class {
             name: symbol,
             methods: methods_ty,
-            fields: vec![],
+            fields: HashMap::new(),
         });
 
         let object = Object::Class(symbol, None, map);
@@ -70,10 +95,15 @@ impl <'a> Env<'a> {
         self.objects.enter(symbol, object);
     }
 
-    fn add_builtin(&mut self, name: &str, params: Vec<Type>, returns: Type, func: BuiltInFunction) {
+    fn add_builtin(
+        &mut self,
+        name: &str,
+        params: Vec<::types::Type>,
+        returns: Type,
+        func: BuiltInFunction,
+    ) {
         let symbol = self.vars.symbol(name);
-        let entry = Entry::FunEntry { params, returns };
-        self.vars.enter(symbol, entry);
+        self.vars.enter(symbol, Entry::FunEntry { params, returns });
         self.add_object(symbol, Object::BuiltIn(symbol, func));
     }
 }

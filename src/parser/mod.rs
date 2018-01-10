@@ -252,8 +252,8 @@ impl<'a> Parser<'a> {
 
         let expr = self.expression()?;
 
-        self.consume(&
-            TokenType::SEMICOLON,
+        self.consume(
+            &TokenType::SEMICOLON,
             "Expected a \';\' after a print statement",
         )?;
 
@@ -332,15 +332,19 @@ impl<'a> Parser<'a> {
             initializer = Some(Box::new(self.expression_statement()?));
         }
 
-        let condition =if !self.recognise(&TokenType::SEMICOLON) {
-             Some(self.expression()?)
-        }else {None};
+        let condition = if !self.recognise(&TokenType::SEMICOLON) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
 
         self.consume(&TokenType::SEMICOLON, "Expected ';' after loop condition .")?;
 
         let increment = if !self.recognise(&TokenType::RPAREN) {
             Some(self.expression()?)
-        } else { None};
+        } else {
+            None
+        };
 
         self.consume(&TokenType::RPAREN, "Expected ')' after for clauses.")?;
 
@@ -489,8 +493,8 @@ impl<'a> Parser<'a> {
                 while {
                     let name = self.consume_name("Expected an Property name ")?;
 
-                    self.consume(&
-                        TokenType::COLON,
+                    self.consume(
+                        &TokenType::COLON,
                         "Expected a colon after a class property name",
                     )?;
 
@@ -502,8 +506,8 @@ impl<'a> Parser<'a> {
                         && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                 } {}
 
-                self.consume(&
-                    TokenType::SEMICOLON,
+                self.consume(
+                    &TokenType::SEMICOLON,
                     "Expected a semicolon after declaring properties",
                 )?;
 
@@ -551,8 +555,8 @@ impl<'a> Parser<'a> {
         ]) {
             self.advance();
             let expr = self.expression()?;
-            self.consume(&
-                TokenType::SEMICOLON,
+            self.consume(
+                &TokenType::SEMICOLON,
                 "Expect \';\' after variable decleration.",
             )?;
             return Ok(WithPos::new(
@@ -634,8 +638,8 @@ impl<'a> Parser<'a> {
 
             let then_branch = Box::new(self.expression()?);
 
-            self.consume(&
-                TokenType::COLON,
+            self.consume(
+                &TokenType::COLON,
                 "Expected ':' after lhs ternary condition.",
             )?;
 
@@ -824,8 +828,8 @@ impl<'a> Parser<'a> {
             if self.recognise(&TokenType::LBRACKET) {
                 self.advance();
                 let index = Box::new(self.expression()?);
-                let index_pos = self.consume_get_pos(&
-                    TokenType::RBRACKET,
+                let index_pos = self.consume_get_pos(
+                    &TokenType::RBRACKET,
                     "Expected ']' to close an index expression",
                 )?;
                 return Ok(WithPos::new(
@@ -899,8 +903,8 @@ impl<'a> Parser<'a> {
                         while {
                             let property_name = self.consume_name("Expected an Property name ")?;
 
-                            self.consume(&
-                                TokenType::COLON,
+                            self.consume(
+                                &TokenType::COLON,
                                 "Expected a colon after a class property name",
                             )?;
 
@@ -912,8 +916,8 @@ impl<'a> Parser<'a> {
                                 && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                         } {}
 
-                        self.consume(&
-                            TokenType::RBRACE,
+                        self.consume(
+                            &TokenType::RBRACE,
                             "Expected a \'}\' to close a Class Instance",
                         )?;
 
@@ -956,8 +960,8 @@ impl<'a> Parser<'a> {
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
-                    self.consume(&
-                        TokenType::RBRACKET,
+                    self.consume(
+                        &TokenType::RBRACKET,
                         "Expected a ']' to close the brackets .",
                     )?;
 
@@ -984,8 +988,8 @@ impl<'a> Parser<'a> {
                             && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
                     } {}
 
-                    let pos = self.consume_get_pos(&
-                        TokenType::RBRACE,
+                    let pos = self.consume_get_pos(
+                        &TokenType::RBRACE,
                         "Expected a '}' to close a dictionary.",
                     )?;
 
@@ -1065,8 +1069,8 @@ impl<'a> Parser<'a> {
             self.advance();
             let ty = self.parse_type()?;
 
-            self.consume(&
-                TokenType::RBRACKET,
+            self.consume(
+                &TokenType::RBRACKET,
                 "Expected a \']\' to close an array type",
             )?;
 

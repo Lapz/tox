@@ -5,10 +5,12 @@ use env::Entry;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::cmp::{Ordering, PartialOrd};
 
 #[derive(Debug, Clone)]
-pub enum TypeError <'a> {
-    Expected(Type<'a>, Type<'a>, Postition),
+pub enum TypeError {
+    Expected(Type, Type, Postition),
     UndefindedType(String, Postition),
     UndefindedVar(String, Postition),
     UndefindedClass(String, Postition),
@@ -19,30 +21,47 @@ pub enum TypeError <'a> {
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
     ExpectedOneOf(String),
-    NotInstanceOrClass(Type<'a>, Symbol, Postition),
+    NotInstanceOrClass(Type, Symbol, Postition),
     SuperClass(Symbol, Postition),
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Clone,Hash)]
-pub enum Type<'a> {
+#[derive(Debug, Clone)]
+pub enum Type {
     Class {
         name: Symbol,
-        methods: HashMap<Symbol, &'a Entry<'a>>,
-        fields: HashMap<Symbol, &'a Type<'a>>,
+        methods: HashMap<Symbol, Entry>,
+        fields: HashMap<Symbol, Type>,
     },
-    This(Symbol, HashMap<Symbol, &'a Type<'a>>, HashMap<Symbol, &'a Type<'a>>),
+    This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
+    Func(Vec<Type>, Box<Type>),
+    Dict(Box<Type>, Box<Type>), // Key, Value
+    Array(Box<Type>),
+    Name(Symbol, Box<Type>),
+    Simple(BaseType),
+}
+
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Hash)]
+pub enum BaseType {
     Int,
     Str,
     Bool,
     Nil,
     Float,
-    Func(Vec<&'a Type<'a>>, Box<Type<'a>>),
-    Dict(Box<Type<'a>>, Box<Type<'a>>), // Key, Value
-    Array(Box<Type<'a>>),
-    Name(Symbol, Box<Type<'a>>),
 }
 
-impl <'a> Display for Type<'a> {
+impl Display for BaseType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            BaseType::Int => write!(f, "Int"),
+            BaseType::Str => write!(f, "Str"),
+            BaseType::Bool => write!(f, "Boolean"),
+            BaseType::Nil => write!(f, "Nil"),
+            BaseType::Float => write!(f, "Float"),
+        }
+    }
+}
+
+impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Type::Class {
@@ -54,11 +73,9 @@ impl <'a> Display for Type<'a> {
                 "Class {} with Fields {:#?} and Methods {:#?}",
                 name, fields, methods
             ),
-            Type::Int => write!(f, "Int"),
-            Type::Str => write!(f, "Str"),
-            Type::Bool => write!(f, "Boolean"),
-            Type::Nil => write!(f, "Nil"),
-            Type::Float => write!(f, "Float"),
+
+            Type::Simple(ref ty) => write!(f, "{}", ty),
+
             Type::This(ref name, ref methods, ref fields) => write!(
                 f,
                 "'This {}' has the fields {:?} and methods {:?}",
@@ -66,17 +83,17 @@ impl <'a> Display for Type<'a> {
             ),
             Type::Func(ref params, ref returns) => write!(
                 f,
-                "Func with param Type<'a>s {:?} returns {:?}",
+                "Func with param Types {:?} returns {:?}",
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
             Type::Array(ref a) => write!(f, "Array of {}", a),
-            Type::Name(ref name, ref ty) => write!(f, "Type<'a> alias {} = {}", name, ty),
+            Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
         }
     }
 }
 
-impl <'a> Display for TypeError<'a> {
+impl Display for TypeError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             TypeError::Expected(ref expected, ref got, ref pos) => write!(
@@ -117,11 +134,90 @@ impl <'a> Display for TypeError<'a> {
             }
 
             TypeError::UndefindedType(ref name, ref pos) => {
-                write!(f, "Undefined Type<'a> \'{}\' on {}", name, pos)
+                write!(f, "Undefined Type \'{}\' on {}", name, pos)
             }
 
             TypeError::TooLittleProperty(ref pos) => write!(f, "Expected more fields on {}", pos),
             TypeError::TooManyProperty(ref pos) => write!(f, "Expected less fields on {}", pos),
+        }
+    }
+}
+
+impl<'a> Eq for Type {}
+
+impl<'a> PartialEq for Type {
+    fn eq(&self, other: &Type) -> bool {
+        match (self, other) {
+            // (&Type::Float, &Type::Float)
+            // | (&Type::Str, &Type::Str)
+            // | (&Type::Int, &Type::Int)
+            // | (&Type::Bool, &Type::Bool)
+            // | (&Type::Nil, &Type::Nil) => true,
+            (&Type::Dict(ref k, ref v), &Type::Dict(ref okey, ref ov)) => k == okey && v == ov,
+            (
+                &Type::Class {
+                    ref name,
+                    ref methods,
+                    ref fields,
+                },
+                &Type::Class {
+                    name: ref oname,
+                    fields: ref ofields,
+                    methods: ref omethods,
+                },
+            ) => name == oname && methods == omethods && fields == ofields,
+            (&Type::This(ref n, _, _), &Type::This(ref oname, _, _)) => n == oname,
+            (&Type::Func(ref params, ref returns), &Type::Func(ref oparams, ref oreturns)) => {
+                params == oparams && returns == oreturns
+            }
+
+            (&Type::Name(ref name, ref ty), &Type::Name(ref oname, ref oty)) => {
+                name == oname && ty == oty
+            }
+
+            _ => false,
+        }
+    }
+}
+
+impl<'a> PartialOrd for Type {
+    fn partial_cmp(&self, other: &Type) -> Option<Ordering> {
+        match (self, other) {
+            (
+                &Type::Class { ref name, .. },
+                &Type::Class {
+                    name: ref oname, ..
+                },
+            ) => name.partial_cmp(oname),
+            (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
+            | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
+            (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
+            | (s @ &Type::Func(_, _), o @ &Type::Func(_, _)) => s.partial_cmp(o),
+            (&Type::Array(ref s), &Type::Array(ref o)) => s.partial_cmp(o),
+            (&Type::Simple(ref s), &Type::Simple(ref o)) => s.partial_cmp(o),
+            _ => None,
+        }
+    }
+}
+
+impl Hash for Type {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match *self {
+            Type::Class { ref name, .. } | Type::This(ref name, _, _) => name.hash(state),
+            Type::Func(ref params, ref returns) => {
+                params.hash(state);
+                returns.hash(state)
+            }
+            Type::Name(ref name, ref returns) => {
+                name.hash(state);
+                returns.hash(state)
+            }
+            Type::Dict(ref key, ref value) => {
+                key.hash(state);
+                value.hash(state)
+            }
+            Type::Array(ref ty) => ty.hash(state),
+            Type::Simple(ref ty) => ty.hash(state),
         }
     }
 }
