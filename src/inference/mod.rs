@@ -25,7 +25,8 @@ impl TyChecker {
         }
     }
 
-    /// Checks if two types are eqvilant
+    /// Checks if two types are eqivilant. If the types are two classes it checks the name and says
+    /// they are equivilant
     fn check_types(
         &self,
         expected: &Type,
@@ -89,6 +90,7 @@ impl TyChecker {
         }
     }
 
+    /// Iterativiy walks the the `ExpressionTy` and returns a `Type`
     fn get_type(
         &self,
         ident: &ExpressionTy,
@@ -125,7 +127,6 @@ impl TyChecker {
 
     /// Given two expression types check if they are {int,int} or they are
     /// {float,float}
-
     fn check_int_float_str(
         &self,
         left: &ExpressionType,

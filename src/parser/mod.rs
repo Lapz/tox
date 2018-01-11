@@ -6,13 +6,13 @@ use pos::Postition;
 use ast::expr::*;
 use ast::statement::*;
 use pos::WithPos;
-use symbol::{Symbol, Symbols};
+use symbol::{Symbol, Table};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    pub symbols: &'a mut Symbols<()>,
+    pub symbols: &'a mut Table<(),()>,
     variable_use_maker: VariableUseMaker,
 }
 
@@ -41,7 +41,7 @@ impl Display for ParserError {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Symbols<()>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Table<(),()>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,

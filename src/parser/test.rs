@@ -5,7 +5,7 @@ mod test {
     use ast::expr::*;
     use ast::statement::*;
     use pos::{Postition, WithPos};
-    use symbol::{Symbol, SymbolFactory, Symbols};
+    use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
 
     #[test]
@@ -13,7 +13,7 @@ mod test {
         let input = "var a:int = 10;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -46,7 +46,7 @@ mod test {
         let input = "fun add(a:int,b:int) {return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -56,7 +56,7 @@ mod test {
         let input = "var a:[int] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -66,7 +66,7 @@ mod test {
         let input = "var a:[fun(int,int)] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -76,7 +76,7 @@ mod test {
         let input = "var a:[fun(int,int)->int] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -86,7 +86,7 @@ mod test {
         let input = "var a:[[fun(int,int)->int]] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -96,7 +96,7 @@ mod test {
         let input = "type Int = str; type Array = int;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -107,7 +107,7 @@ mod test {
         var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10};";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -118,7 +118,7 @@ mod test {
         var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10}; Louis.name;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -129,7 +129,7 @@ mod test {
         var Louis = Person{name:\"Louis\",surname:\"Pratt\",age:10}; Louis.name = 10;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -140,7 +140,7 @@ mod test {
         var Louis = Person{};";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -150,7 +150,7 @@ mod test {
         let input = "var add = fun (a:int,b:int) -> int {a+b;};";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -160,7 +160,7 @@ mod test {
         let input = "fun add(a:int,b:int) -> int { return a+b;}";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -174,7 +174,7 @@ mod test {
         }";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -189,7 +189,7 @@ mod test {
             }";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -204,7 +204,7 @@ mod test {
         }";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -214,7 +214,7 @@ mod test {
         let input = "do {print 10 ;} while (true)";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -224,7 +224,7 @@ mod test {
         let input = "for (var i = 0; i < 2; i = i + 1) print i;";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -234,7 +234,7 @@ mod test {
         let input = "class Foo {}";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let name = Symbol(2);
@@ -265,7 +265,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_ok())
     }
@@ -277,7 +277,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = WithPos::new(
@@ -317,7 +317,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = WithPos::new(
@@ -339,7 +339,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let array = WithPos::new(
@@ -397,7 +397,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let index = WithPos::new(
@@ -463,7 +463,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expr = WithPos::new(
@@ -511,7 +511,7 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -541,7 +541,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
         assert!(ast.is_err());
     }
@@ -553,7 +553,7 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse();
 
         assert!(ast.is_err());
@@ -566,7 +566,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -634,7 +634,7 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -701,7 +701,7 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -795,7 +795,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -862,7 +862,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
@@ -928,7 +928,7 @@ mod test {
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![

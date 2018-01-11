@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter, Result};
 use std::collections::HashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::hash::Hash;
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
 pub struct Symbol(pub u64);
@@ -17,15 +18,15 @@ pub struct SymbolFactory {
 }
 
 #[derive(Debug, Clone)]
-pub struct Symbols<T: Clone> {
+pub struct Table<K:Clone+Hash+Eq+Copy,T: Clone> {
     strings: Rc<SymbolFactory>,
-    table: HashMap<Symbol, Vec<T>>,
-    scopes: Vec<Option<Symbol>>,
+    table: HashMap<K, Vec<T>>,
+    scopes: Vec<Option<K>>,
 }
 
-impl<T: Clone> Symbols<T> {
+impl<K:Clone+Hash+Eq+Copy,T: Clone> Table<K,T> {
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
-        Symbols {
+        Table {
             strings,
             table: HashMap::new(),
             scopes: vec![],
@@ -45,7 +46,7 @@ impl<T: Clone> Symbols<T> {
         }
     }
 
-    pub fn enter(&mut self, symbol: Symbol, data: T) {
+    pub fn enter(&mut self, symbol: K, data: T) {
         let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
 
         mapping.push(data);
@@ -54,7 +55,7 @@ impl<T: Clone> Symbols<T> {
 
     /// Looks in the table for the symbol and if found returns the top element in
     /// the stack of Vec<T>
-    pub fn look(&self, symbol: Symbol) -> Option<&T> {
+    pub fn look(&self, symbol: K) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 
@@ -77,7 +78,7 @@ impl<T: Clone> Symbols<T> {
         symbol
     }
 
-    pub fn replace(&mut self, symbol: Symbol, data: T) {
+    pub fn replace(&mut self, symbol: K, data: T) {
         let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
         bindings.pop().expect("Call enter() before replace()");
         bindings.push(data);
@@ -99,13 +100,13 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, SymbolFactory, Symbols};
+    use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
 
     #[test]
     fn test() {
         let strings = Rc::new(SymbolFactory::new());
-        let mut map: Symbols<String> = Symbols::new(strings);
+        let mut map: Table<String> = Table::new(strings);
         map.enter(Symbol(0), "a".into());
         map.enter(Symbol(1), "b".into());
         map.begin_scope();

@@ -557,7 +557,7 @@ impl Resolver {
 mod test {
     use ast::statement::Statement;
     use lexer::Lexer;
-    use symbol::{SymbolFactory, Symbols};
+    use symbol::{SymbolFactory, Table};
     use parser::Parser;
     use resolver::Resolver;
     use pos::WithPos;
@@ -567,7 +567,7 @@ mod test {
 
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         Parser::new(tokens, &mut symbols).parse().unwrap()
     }
 

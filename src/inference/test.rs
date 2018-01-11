@@ -12,11 +12,11 @@ mod test {
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
         use lexer::Lexer;
         use parser::Parser;
-        use symbol::Symbols;
+        use symbol::Table;
 
         let tokens = Lexer::new(input).lex().unwrap();
 
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         Parser::new(tokens, &mut symbols).parse().unwrap()
     }
 

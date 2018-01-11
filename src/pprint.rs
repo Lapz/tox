@@ -1,7 +1,7 @@
 use ast::expr::*;
 use ast::statement::Statement;
 
-use symbol::Symbols;
+use symbol::Table;
 
 impl AssignOperator {
     fn pprint(&self) -> &'static str {
@@ -16,7 +16,7 @@ impl AssignOperator {
 }
 
 impl ExpressionTy {
-    fn pprint(&self, symbols: &mut Symbols<()>) -> String {
+    fn pprint(&self, symbols: &mut Table<(),()>) -> String {
         match *self {
             ExpressionTy::Simple(s) => symbols.name(s),
             _ => unimplemented!(),
@@ -74,7 +74,7 @@ impl Operator {
 }
 
 impl Statement {
-    pub fn pprint(&self, symbols: &mut Symbols<()>) -> String {
+    pub fn pprint(&self, symbols: &mut Table<(),()>) -> String {
         let mut pprinted = String::new();
 
         self.pprint_into(&mut pprinted, symbols);
@@ -82,7 +82,7 @@ impl Statement {
         pprinted
     }
 
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Symbols<()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<(),()>) {
         match *self {
             Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
@@ -254,7 +254,7 @@ impl Statement {
 }
 
 impl Expression {
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Symbols<()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<(),()>) {
         match *self {
             Expression::Array { ref items } => {
                 pprint_string.push_str("(array");
@@ -450,7 +450,7 @@ impl Expression {
 #[cfg(test)]
 mod test {
     use lexer::Lexer;
-    use symbol::{SymbolFactory, Symbols};
+    use symbol::{SymbolFactory, Table};
     use parser::Parser;
 
     #[test]
@@ -459,7 +459,7 @@ mod test {
         use std::rc::Rc;
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(strings);
+        let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         for statement in ast {

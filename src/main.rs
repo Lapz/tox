@@ -15,7 +15,7 @@ mod parser;
 mod cli;
 mod object;
 mod interpreter;
-mod inference;
+pub mod inference;
 mod types;
 mod resolver;
 mod symbol;
