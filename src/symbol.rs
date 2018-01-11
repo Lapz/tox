@@ -2,7 +2,6 @@ use std::fmt::{Display, Formatter, Result};
 use std::collections::HashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::hash::Hash;
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
 pub struct Symbol(pub u64);
@@ -18,13 +17,13 @@ pub struct SymbolFactory {
 }
 
 #[derive(Debug, Clone)]
-pub struct Table<K:Clone+Hash+Eq+Copy,T: Clone> {
+pub struct Table<T: Clone> {
     strings: Rc<SymbolFactory>,
-    table: HashMap<K, Vec<T>>,
-    scopes: Vec<Option<K>>,
+    table: HashMap<Symbol, Vec<T>>,
+    scopes: Vec<Option<Symbol>>,
 }
 
-impl<K:Clone+Hash+Eq+Copy,T: Clone> Table<K,T> {
+impl<T: Clone> Table<T> {
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Table {
             strings,
@@ -46,7 +45,7 @@ impl<K:Clone+Hash+Eq+Copy,T: Clone> Table<K,T> {
         }
     }
 
-    pub fn enter(&mut self, symbol: K, data: T) {
+    pub fn enter(&mut self, symbol: Symbol, data: T) {
         let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
 
         mapping.push(data);
@@ -55,7 +54,7 @@ impl<K:Clone+Hash+Eq+Copy,T: Clone> Table<K,T> {
 
     /// Looks in the table for the symbol and if found returns the top element in
     /// the stack of Vec<T>
-    pub fn look(&self, symbol: K) -> Option<&T> {
+    pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 
@@ -78,7 +77,7 @@ impl<K:Clone+Hash+Eq+Copy,T: Clone> Table<K,T> {
         symbol
     }
 
-    pub fn replace(&mut self, symbol: K, data: T) {
+    pub fn replace(&mut self, symbol: Symbol, data: T) {
         let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
         bindings.pop().expect("Call enter() before replace()");
         bindings.push(data);

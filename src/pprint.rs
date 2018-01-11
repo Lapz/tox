@@ -16,7 +16,7 @@ impl AssignOperator {
 }
 
 impl ExpressionTy {
-    fn pprint(&self, symbols: &mut Table<(),()>) -> String {
+    fn pprint(&self, symbols: &mut Table<()>) -> String {
         match *self {
             ExpressionTy::Simple(s) => symbols.name(s),
             _ => unimplemented!(),
@@ -74,7 +74,7 @@ impl Operator {
 }
 
 impl Statement {
-    pub fn pprint(&self, symbols: &mut Table<(),()>) -> String {
+    pub fn pprint(&self, symbols: &mut Table<()>) -> String {
         let mut pprinted = String::new();
 
         self.pprint_into(&mut pprinted, symbols);
@@ -82,7 +82,7 @@ impl Statement {
         pprinted
     }
 
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<(),()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
         match *self {
             Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
                 expr.node.pprint_into(pprint_string, symbols);
@@ -254,7 +254,7 @@ impl Statement {
 }
 
 impl Expression {
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<(),()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
         match *self {
             Expression::Array { ref items } => {
                 pprint_string.push_str("(array");

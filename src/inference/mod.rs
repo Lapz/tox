@@ -4,9 +4,7 @@ use ast::statement::Statement;
 use types::{BaseType, Type, TypeError};
 use env::{Entry, Env};
 use pos::{Postition, WithPos};
-use symbol::Symbol;
-
-type Exp = ();
+use symbol::{Symbol,Table};
 
 #[derive(Debug, PartialEq)]
 pub struct ExpressionType {

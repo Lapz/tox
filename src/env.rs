@@ -24,9 +24,9 @@ impl Unique {
 
 #[derive(Debug, Clone)]
 pub struct Env {
-    pub types: Table<Symbol,Type>,
-    pub vars: Table<Symbol,Entry>,
-    pub objects: Table<Symbol,Object>,
+    pub types: Table<Type>,
+    pub vars: Table<Entry>,
+    pub objects: Table<Object>,
     pub unique: Unique,
 }
 

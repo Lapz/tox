@@ -12,7 +12,7 @@ use symbol::{Symbol, Table};
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Token<'a>>>,
     loop_depth: i32,
-    pub symbols: &'a mut Table<(),()>,
+    pub symbols: &'a mut Table<()>,
     variable_use_maker: VariableUseMaker,
 }
 
@@ -41,7 +41,7 @@ impl Display for ParserError {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Table<(),()>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Table<()>) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,
