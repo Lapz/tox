@@ -1,5 +1,5 @@
 ## Grammar
-[![](https://tokei.rs/b1/github/lapz/lexer)](https://github.com/lapz/lexer)
+[![](https://tokei.rs/b1/github/lapz/lexer)](https://github.com/lapz/tox)
 
 [![Build Status](https://travis-ci.org/Lapz/lexer.svg?branch=master)](https://travis-ci.org/Lapz/lexer)
 # LLROX
