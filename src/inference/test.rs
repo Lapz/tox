@@ -2,7 +2,7 @@
 
 mod test {
     use types::Type;
-    use inference::{ExpressionType, TyChecker};
+    use inference::{InferedType, TyChecker};
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
@@ -84,15 +84,8 @@ mod test {
         var lenard = Person{name:\"Lenard\"};lenard.name = \"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap()[2],
-            ExpressionType {
-                exp: (),
-                ty: Type::Nil,
-            }
-        );
+
+        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
     }
 
     #[test]
@@ -124,21 +117,10 @@ mod test {
         let input = "!true;!false!";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Bool,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Bool,
-                },
-            ]
-        );
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap()
     }
 
     #[test]
@@ -249,31 +231,9 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
 
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Int,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Func(
-                        vec![
-                            Type::Name(Symbol(7), Box::new(Type::Int)),
-                            Type::Name(Symbol(7), Box::new(Type::Int)),
-                        ],
-                        Box::new(Type::Name(Symbol(7), Box::new(Type::Int))),
-                    ),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Nil,
-                },
-            ]
-        );
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
     #[test]
@@ -286,31 +246,10 @@ mod test {
         add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Int,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Func(
-                        vec![
-                            Type::Name(Symbol(7), Box::new(Type::Int)),
-                            Type::Name(Symbol(7), Box::new(Type::Int)),
-                        ],
-                        Box::new(Type::Int),
-                    ),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Nil,
-                },
-            ]
-        );
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
     #[test]
@@ -318,21 +257,10 @@ mod test {
         let input = "fun add(a:int,b:int) -> int {return a+b;} add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Func(vec![Type::Int, Type::Int], Box::new(Type::Int)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Nil,
-                },
-            ]
-        );
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
     #[test]
@@ -341,37 +269,10 @@ mod test {
             "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Int,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Float,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Nil,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Str,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Bool,
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Bool,
-                },
-            ]
-        );
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
     #[test]
@@ -380,37 +281,10 @@ mod test {
             "var a = [10]; var b = [10.0]; var c = [nil]; var d = [\"h\"]; var e = [true]; var f = [false]; ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
-        assert_eq!(
-            TyChecker::new()
-                .analyse(&get_ast(input, strings), &mut env)
-                .unwrap(),
-            vec![
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Int)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Float)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Nil)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Str)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Bool)),
-                },
-                ExpressionType {
-                    exp: (),
-                    ty: Type::Array(Box::new(Type::Bool)),
-                },
-            ]
-        );
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
 }

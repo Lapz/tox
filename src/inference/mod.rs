@@ -121,6 +121,35 @@ impl TyChecker {
         }
     }
 
+    fn infer_params(
+        &mut self,
+        entry: &Entry,
+        arguments: &[WithPos<Expression>],
+        env: &mut Env,
+        pos: Postition,
+    ) -> Result<InferedType, TypeError> {
+        match *entry {
+            Entry::FunEntry {
+                ref params,
+                ref returns,
+            } => {
+                for (arg, param) in arguments.iter().zip(params) {
+                    let exp_ty = self.transform_expression(arg, env)?;
+
+                    self.check_types(param, &exp_ty.ty, pos)?;
+                }
+                return Ok(InferedType {
+                    ty: self.actual_type(returns).clone(),
+                });
+            }
+
+            Entry::VarEntry(ref ty) => match ty {
+                &Type::Class { .. } => Err(TypeError::NotCallable(pos)),
+                rest => Ok(InferedType { ty: rest.clone() }),
+            },
+        }
+    }
+
     /// Iterativiy walks the the `ExpressionTy` and returns a `Type`
     fn get_type(
         &self,

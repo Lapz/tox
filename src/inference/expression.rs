@@ -85,6 +85,86 @@ impl TyChecker {
                 }
             }
 
+            Expression::Call {
+                ref callee,
+                ref arguments,
+            } => match callee.node {
+                Expression::Var(sym, _) => {
+                    if let Some(entry) = env.look_var(sym).cloned() {
+                        self.infer_params(&entry, arguments, env, callee.pos)
+                    } else {
+                        Err(TypeError::UndefindedVar(env.name(sym), callee.pos))
+                    }
+                }
+
+                Expression::Get {
+                    ref object,
+                    ref property,
+                    ..
+                } => {
+                    let ty = match object.node {
+                        Expression::Var(sym, _) => self.transform_var(&sym, object.pos, env)?,
+                        Expression::ClassInstance { ref name, .. } => {
+                            if let Some(ty) = env.look_type(*name) {
+                                return Ok(InferedType { ty: ty.clone() });
+                            }
+
+                            return Err(TypeError::UndefindedClass(env.name(*name), expr.pos));
+                        }
+
+                        Expression::Call { .. } => self.transform_expression(object, env)?,
+                        _ => unimplemented!(),
+                    };
+
+                    match ty.ty {
+                        Type::Class {
+                            ref name,
+                            ref methods,
+                            ..
+                        } => {
+                            let mut found = false;
+
+                            for (name, method) in methods {
+                                if name == property {
+                                    found = true;
+                                    self.infer_params(method, arguments, env, object.pos)?;
+                                }
+                            }
+
+                            if !found {
+                                if let Some(class) = env.look_type(*name).cloned() {
+                                    match class {
+                                        Type::Class { ref methods, .. } => {
+                                            found = false;
+                                            for (name, method) in methods {
+                                                if name == property {
+                                                    found = true;
+                                                    self.infer_params(
+                                                        method,
+                                                        arguments,
+                                                        env,
+                                                        object.pos,
+                                                    )?;
+                                                }
+                                            }
+                                        }
+
+                                        _ => unreachable!(),
+                                    }
+                                }
+                            }
+
+                            return Err(TypeError::NotMethodOrProperty(
+                                env.name(*property),
+                                expr.pos,
+                            ));
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+                _ => Err(TypeError::NotCallable(callee.pos)),
+            },
+
             Expression::ClassInstance {
                 ref properties,
                 ref name,
@@ -149,7 +229,86 @@ impl TyChecker {
                 })
             }
 
-            Expression::Func {..} => self.infer_func(expr,env),
+            Expression::Func { .. } => self.infer_func(expr, env),
+
+            Expression::Get {
+                ref object,
+                ref property,
+                ..
+            } => {
+                let instance = self.transform_expression(object, env)?;
+
+                let mut ty = Type::Simple(BaseType::Nil);
+
+                match instance.ty {
+                    Type::Class {
+                        ref fields,
+                        ref methods,
+                        ..
+                    } => {
+                        let mut found = false;
+
+                        for (field, field_ty) in fields {
+                            if field == property {
+                                found = true;
+                                ty = field_ty.clone();
+                            }
+                        }
+
+                        for (method, methods_ty) in methods {
+                            if method == property {
+                                found = true;
+                                ty = match *methods_ty {
+                                    Entry::VarEntry(ref t) => t.clone(),
+                                    Entry::FunEntry { ref returns, .. } => returns.clone(),
+                                }
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(
+                                env.name(*property),
+                                expr.pos,
+                            ));
+                        }
+                    }
+
+                    Type::This(_, ref fields, ref methods) => {
+                        let mut found = false;
+
+                        for (field, field_ty) in fields {
+                            if field == property {
+                                found = true;
+                                ty = field_ty.clone();
+                            }
+                        }
+
+                        for (method, methods_ty) in methods {
+                            if method == property {
+                                found = true;
+                                ty = methods_ty.clone();
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(
+                                env.name(*property),
+                                expr.pos,
+                            ));
+                        }
+                    }
+
+                    ref e => {
+                        return Err(TypeError::NotInstanceOrClass(
+                            e.clone(),
+                            *property,
+                            expr.pos,
+                        ))
+                    }
+                }
+
+                Ok(InferedType { ty })
+            }
 
             Expression::Grouping { ref expr } => self.transform_expression(expr, env),
 
@@ -192,6 +351,97 @@ impl TyChecker {
                 Ok(bool_type!())
             }
 
+            Expression::Set {
+                ref object,
+                ref name,
+                ref value,
+                ..
+            } => {
+                let instance = self.transform_expression(object, env)?;
+                let mut ty = Type::Simple(BaseType::Nil);
+
+                match instance.ty {
+                    Type::Class {
+                        ref fields,
+                        ref methods,
+                        ..
+                    } => {
+                        let mut found = false;
+
+                        for (field, field_ty) in fields {
+                            if field == name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+                                self.check_types(field_ty, &value_ty.ty, expr.pos)?;
+                                ty = field_ty.clone();
+                            }
+                        }
+
+                        for (method, methods_ty) in methods {
+                            if method == name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+
+                                match *methods_ty {
+                                    Entry::VarEntry(ref t) => {
+                                        self.check_types(t, &value_ty.ty, expr.pos)?
+                                    }
+                                    Entry::FunEntry {
+                                        ref returns,
+                                        ref params,
+                                    } => self.check_types(
+                                        &Type::Func(params.clone(), Box::new(returns.clone())),
+                                        &value_ty.ty,
+                                        expr.pos,
+                                    )?,
+                                };
+
+                                ty = match *methods_ty {
+                                    Entry::VarEntry(ref t) => t.clone(),
+                                    Entry::FunEntry { ref returns, .. } => returns.clone(),
+                                };
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(env.name(*name), expr.pos));
+                        }
+                    }
+
+                    Type::This(_, ref fields, ref methods) => {
+                        let mut found = false;
+
+                        for (field, field_ty) in fields {
+                            if field == name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+                                self.check_types(field_ty, &value_ty.ty, expr.pos)?;
+                                ty = field_ty.clone();
+                            }
+                        }
+
+                        for (method, methods_ty) in methods {
+                            if method == name {
+                                found = true;
+                                let value_ty = self.transform_expression(value, env)?;
+
+                                self.check_types(methods_ty, &value_ty.ty, expr.pos)?;
+
+                                ty = methods_ty.clone();
+                            }
+                        }
+
+                        if !found {
+                            return Err(TypeError::NotMethodOrProperty(env.name(*name), expr.pos));
+                        }
+                    }
+
+                    ref e => return Err(TypeError::NotInstanceOrClass(e.clone(), *name, expr.pos)),
+                }
+
+                Ok(InferedType { ty })
+            }
+
             Expression::Super { .. } => unimplemented!(),
 
             Expression::This(_) => Ok(InferedType {
@@ -228,12 +478,14 @@ impl TyChecker {
             }
 
             Expression::Var(ref symbol, _) => self.transform_var(symbol, expr.pos, env),
-
-            _ => unimplemented!(),
         }
     }
 
-    pub fn infer_func(&mut self,expr: &WithPos<Expression>,env:&mut Env) -> Result<InferedType,TypeError> {
+    pub fn infer_func(
+        &mut self,
+        expr: &WithPos<Expression>,
+        env: &mut Env,
+    ) -> Result<InferedType, TypeError> {
         match expr.node {
             Expression::Func {
                 ref body,

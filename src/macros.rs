@@ -1,4 +1,3 @@
-use types::{BaseType, Type};
 
 macro_rules! nil_type {
     () => {

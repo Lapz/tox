@@ -32,7 +32,7 @@ pub enum Type {
         methods: HashMap<Symbol, Entry>,
         fields: HashMap<Symbol, Type>,
     },
-    This(Symbol, HashMap<Symbol, BaseType>, HashMap<Symbol, BaseType>),
+    This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
     Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
@@ -153,11 +153,6 @@ impl<'a> Eq for Type {}
 impl<'a> PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
         match (self, other) {
-            // (&Type::Float, &Type::Float)
-            // | (&Type::Str, &Type::Str)
-            // | (&Type::Int, &Type::Int)
-            // | (&Type::Bool, &Type::Bool)
-            // | (&Type::Nil, &Type::Nil) => true,
             (&Type::Dict(ref k, ref v), &Type::Dict(ref okey, ref ov)) => k == okey && v == ov,
             (
                 &Type::Class {
@@ -179,6 +174,8 @@ impl<'a> PartialEq for Type {
             (&Type::Name(ref name, ref ty), &Type::Name(ref oname, ref oty)) => {
                 name == oname && ty == oty
             }
+
+            (&Type::Simple(ref s),&Type::Simple(ref o)) => s ==o,
 
             _ => false,
         }
