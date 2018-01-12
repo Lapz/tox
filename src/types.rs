@@ -30,11 +30,11 @@ pub enum Type {
     Class {
         name: Symbol,
         methods: HashMap<Symbol, Entry>,
-        fields: HashMap<Symbol, BaseType>,
+        fields: HashMap<Symbol, Type>,
     },
     This(Symbol, HashMap<Symbol, BaseType>, HashMap<Symbol, BaseType>),
     Func(Vec<Type>, Box<Type>),
-    Dict(BaseType, BaseType), // Key, Value
+    Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
     Name(Symbol, Box<Type>),
     Simple(BaseType),
@@ -47,6 +47,11 @@ pub enum BaseType {
     Bool,
     Nil,
     Float,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct InferedType {
+    pub ty: Type,
 }
 
 impl Display for BaseType {

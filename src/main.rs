@@ -1,4 +1,3 @@
-#![feature(nll)]
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
@@ -8,6 +7,10 @@ extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
+mod types;
+#[macro_use]
+mod macros;
+pub mod inference;
 mod token;
 mod lexer;
 mod pos;
@@ -16,8 +19,6 @@ mod parser;
 mod cli;
 mod object;
 mod interpreter;
-pub mod inference;
-mod types;
 mod resolver;
 mod symbol;
 mod env;
