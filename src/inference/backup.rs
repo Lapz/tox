@@ -298,28 +298,28 @@
     //             Ok(body_ty)
     //         }
 
-    //         Statement::ForStmt {
-    //             ref initializer,
-    //             ref condition,
-    //             ref increment,
-    //             ref body,
-    //         } => {
-    //             if let Some(ref init) = *initializer {
-    //                 self.transform_statement(init, env)?;
-    //             }
+            // Statement::ForStmt {
+            //     ref initializer,
+            //     ref condition,
+            //     ref increment,
+            //     ref body,
+            // } => {
+            //     if let Some(ref init) = *initializer {
+            //         self.transform_statement(init, env)?;
+            //     }
 
-    //             if let Some(ref incr) = *increment {
-    //                 s_check_int_float(&self.transform_expression(incr, env)?, statement.pos)?;
-    //             }
+            //     if let Some(ref incr) = *increment {
+            //         s_check_int_float(&self.transform_expression(incr, env)?, statement.pos)?;
+            //     }
 
-    //             if let Some(ref cond) = *condition {
-    //                 check_bool(&self.transform_expression(cond, env)?, statement.pos)?;
-    //             }
+            //     if let Some(ref cond) = *condition {
+            //         check_bool(&self.transform_expression(cond, env)?, statement.pos)?;
+            //     }
 
-    //             let body_ty = self.transform_statement(body, env)?;
+            //     let body_ty = self.transform_statement(body, env)?;
 
-    //             Ok(body_ty)
-    //         }
+            //     Ok(body_ty)
+            // }
 
     //         Statement::Return(ref returns) => {
     //             if let Some(ref expr) = *returns {

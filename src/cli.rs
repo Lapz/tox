@@ -1,7 +1,7 @@
 use lexer::Lexer;
 use parser::Parser;
 use resolver::Resolver;
-// use inference::TyChecker;
+use inference::TyChecker;
 use interpreter::interpret;
 use std::io;
 use symbol::{SymbolFactory, Table};
@@ -144,19 +144,19 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     let mut env = Env::new(&strings);
     env.get_builtins();
 
-    // match TyChecker::new().analyse(&ast, &mut env) {
-    //     Ok(_) => (),
-    //     Err(errors) => {
-    //         for err in errors {
-    //             println!("{}", err);
-    //         }
+    match TyChecker::new().analyse(&ast, &mut env) {
+        Ok(_) => (),
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
+            }
 
-    //         if penv {
-    //             println!("{:#?}", env);
-    //         }
-    //         ::std::process::exit(65)
-    //     }
-    // };
+            if penv {
+                println!("{:#?}", env);
+            }
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", env);

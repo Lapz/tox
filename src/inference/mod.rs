@@ -4,11 +4,111 @@ use ast::statement::Statement;
 use types::{BaseType, Type, TypeError};
 use env::{Entry, Env};
 use pos::{Postition, WithPos};
-use symbol::{Symbol,Table};
+use symbol::{Symbol, Table};
 
 #[derive(Debug, PartialEq)]
 pub struct ExpressionType {
     pub ty: Type,
+}
+
+
+impl ExpressionType {
+     /// Given an `ExpressionType` check if it an {int} or {float}
+    fn check_int_float(&self,pos:Postition) -> Result<(),TypeError> {
+        if self.check_int(pos).is_err() {
+            if self.check_float(pos).is_err() {
+                return Err(TypeError::ExpectedOneOf("Int or Float".into()))
+            } 
+        }
+        Ok(())
+    }
+
+    /// Checks if `ExpressionType` is {bool}
+    fn check_bool(&self,pos: Postition) -> Result<(), TypeError> {
+        if self.ty != Type::Simple(BaseType::Bool) {
+            return Err(TypeError::Expected(
+                Type::Simple(BaseType::Bool),
+                self.ty.clone(),
+                pos,
+            ));
+        }
+        Ok(())
+    }
+
+    /// Checks if `ExpressionType` is {int}
+    fn check_int(&self,pos: Postition) -> Result<(), TypeError> {
+        if self.ty != Type::Simple(BaseType::Int) {
+            return Err(TypeError::Expected(
+                Type::Simple(BaseType::Int),
+                self.ty.clone(),
+                pos,
+            ));
+        }
+        Ok(())
+    }
+
+    /// Checks if `ExpressionType` is {str}
+    fn check_str(&self,pos: Postition) -> Result<(), TypeError> {
+        if self.ty != Type::Simple(BaseType::Str) {
+            return Err(TypeError::Expected(
+                Type::Simple(BaseType::Str),
+                self.ty.clone(),
+                pos,
+            ));
+        }
+        Ok(())
+    }
+    /// Checks if `ExpressionType` is {float}
+    fn check_float(&self,pos: Postition) -> Result<(), TypeError> {
+        if self.ty != Type::Simple(BaseType::Float) {
+            return Err(TypeError::Expected(
+                Type::Simple(BaseType::Float),
+                self.ty.clone(),
+                pos,
+            ));
+        }
+        Ok(())
+    }
+
+
+    /// Given two expression types check if they are {int,int} or they are
+    /// {float,float}
+    fn check_int_float_str(
+        &self,
+        left: &ExpressionType,
+        right: &ExpressionType,
+        pos: Postition,
+    ) -> Result<ExpressionType, TypeError> {
+        if self.check_int(pos).is_err() || self.check_int( pos).is_err() {
+            if self.check_float(pos).is_ok() {
+                self.check_float( pos)?;
+                Ok(ExpressionType {
+                    ty: Type::Simple(BaseType::Float),
+                })
+            } else if self.check_str(pos).is_ok() {
+                // self.check_str pos)?;
+                self.check_str( pos)?;
+                Ok(ExpressionType {
+                    ty: Type::Simple(BaseType::Str),
+                })
+            } else {
+                Err(TypeError::ExpectedOneOf(
+                    "Exepected on of 'Int', 'Float', or 'Str'".into(),
+                ))
+            }
+        } else if self.check_int(pos).is_ok() && self.check_int( pos).is_ok() {
+            Ok(ExpressionType {
+                ty: Type::Simple(BaseType::Int),
+            })
+        } else {
+            Err(TypeError::Expected(
+                Type::Simple(BaseType::Int),
+                right.ty.clone(),
+                pos,
+            ))
+        }
+    }
+
 }
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq)]
@@ -17,9 +117,113 @@ pub struct TyChecker {
 }
 
 impl TyChecker {
+    pub fn transform_statement(
+        &mut self,
+        statement: &WithPos<Statement>,
+        env: &mut Env,
+    ) -> Result<(), TypeError> {
+        match statement.node {
+            Statement::Block(ref expressions) => {
+                if expressions.is_empty() {
+                    return Ok(());
+                }
+
+                env.begin_scope();
+
+                for expr in expressions.iter().rev().skip(1) {
+                    self.transform_statement(expr, env)?;
+                }
+
+                let result = self.transform_statement(expressions.last().unwrap(), env);
+
+                env.end_scope();
+
+                result
+            }
+
+
+            Statement::Break | Statement::Continue => Ok(()),
+            Statement::DoStmt {
+                ref condition,
+                ref body,
+            }
+            | Statement::WhileStmt {
+                ref condition,
+                ref body,
+            } => {
+                self.transform_expression(condition, env)?.check_bool(condition.pos)?;
+
+            
+                let body_ty = self.transform_statement(body, env)?;
+
+                Ok(body_ty)
+            }
+
+            Statement::ForStmt {
+                ref initializer,
+                ref condition,
+                ref increment,
+                ref body,
+            } => {
+                if let Some(ref init) = *initializer {
+                    self.transform_statement(init, env)?;
+                }
+
+                if let Some(ref incr) = *increment {
+                    
+                    self.transform_expression(incr, env)?.check_int_float(incr.pos)?;
+                }
+
+                if let Some(ref cond) = *condition {
+                    self.transform_expression(cond, env)?.check_bool(cond.pos);
+                }
+
+                let body_ty = self.transform_statement(body, env)?;
+
+                Ok(body_ty)
+            }
+
+            Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
+                self.transform_expression(expr, env)?;
+                Ok(())
+            }
+
+            _ => unimplemented!(),
+        }
+    }
+    fn transform_expression(
+        &mut self,
+        expr: &WithPos<Expression>,
+        env: &mut Env,
+    ) -> Result<ExpressionType, TypeError> {
+        unimplemented!()
+    }
+}
+
+impl TyChecker {
     pub fn new() -> Self {
         TyChecker {
             this: Type::Simple(BaseType::Nil),
+        }
+    }
+
+    pub fn analyse(
+        &mut self,
+        statements: &[WithPos<Statement>],
+        env: &mut Env,
+    ) -> Result<(), Vec<TypeError>> {
+        let mut errors = vec![];
+
+        for statement in statements {
+            if let Err(e) = self.transform_statement(statement, env) {
+                errors.push(e);
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
         }
     }
 
@@ -121,107 +325,5 @@ impl TyChecker {
                 }
             }
         }
-    }
-
-    /// Given two expression types check if they are {int,int} or they are
-    /// {float,float}
-    fn check_int_float_str(
-        &self,
-        left: &ExpressionType,
-        right: &ExpressionType,
-        pos: Postition,
-    ) -> Result<ExpressionType, TypeError> {
-        if self.check_int(left, pos).is_err() || self.check_int(right, pos).is_err() {
-            if self.check_float(left, pos).is_ok() {
-                self.check_float(right, pos)?;
-                Ok(ExpressionType {
-                    ty: Type::Simple(BaseType::Float),
-                })
-            } else if self.check_str(left, pos).is_ok() {
-                // self.check_str(left, pos)?;
-                self.check_str(right, pos)?;
-                Ok(ExpressionType {
-                    ty: Type::Simple(BaseType::Str),
-                })
-            } else {
-                Err(TypeError::ExpectedOneOf(
-                    "Exepected on of 'Int', 'Float', or 'Str'".into(),
-                ))
-            }
-        } else if self.check_int(left, pos).is_ok() && self.check_int(right, pos).is_ok() {
-            Ok(ExpressionType {
-                ty: Type::Simple(BaseType::Int),
-            })
-        } else {
-            Err(TypeError::Expected(
-                Type::Simple(BaseType::Int),
-                right.ty.clone(),
-                pos,
-            ))
-        }
-    }
-
-    /// Given an `ExpressionType` check if it an {int} or {float}
-    fn s_check_int_float(
-        &self,
-        expr: &ExpressionType,
-        pos: Postition,
-    ) -> Result<ExpressionType, TypeError> {
-        if self.check_int(expr, pos).is_err() {
-            self.check_float(expr, pos)?;
-            return Ok(ExpressionType {
-                ty: Type::Simple(BaseType::Float),
-            });
-        }
-        Ok(ExpressionType {
-            ty: Type::Simple(BaseType::Int),
-        })
-    }
-
-    /// Checks if `ExpressionType` is {bool}
-    fn check_bool(&self, right: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
-        if right.ty != Type::Simple(BaseType::Bool) {
-            return Err(TypeError::Expected(
-                Type::Simple(BaseType::Bool),
-                right.ty.clone(),
-                pos,
-            ));
-        }
-        Ok(())
-    }
-
-    /// Checks if `ExpressionType` is {int}
-    fn check_int(&self, expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
-        if expr.ty != Type::Simple(BaseType::Int) {
-            return Err(TypeError::Expected(
-                Type::Simple(BaseType::Int),
-                expr.ty.clone(),
-                pos,
-            ));
-        }
-        Ok(())
-    }
-
-    /// Checks if `ExpressionType` is {str}
-    fn check_str(&self, expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
-        if expr.ty != Type::Simple(BaseType::Str) {
-            return Err(TypeError::Expected(
-                Type::Simple(BaseType::Str),
-                expr.ty.clone(),
-                pos,
-            ));
-        }
-        Ok(())
-    }
-    /// Checks if `ExpressionType` is {float}
-    fn check_float(&self, expr: &ExpressionType, pos: Postition) -> Result<(), TypeError> {
-        if expr.ty != Type::Simple(BaseType::Float) {
-            return Err(TypeError::Expected(
-                Type::Simple(BaseType::Float),
-                expr.ty.clone(),
-                pos,
-            ));
-        }
-        Ok(())
-    }
+    }    
 }
