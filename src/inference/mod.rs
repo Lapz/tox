@@ -10,14 +10,14 @@ use pos::{Postition, WithPos};
 use symbol::Symbol;
 
 /// The struct that is in control of type checking
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct TyChecker {
     pub this: Option<Type>,
 }
 
 impl TyChecker {
     pub fn new() -> Self {
-        TyChecker { this: None }
+        Self::default()
     }
 
     pub fn analyse(
@@ -136,9 +136,9 @@ impl TyChecker {
 
                     self.check_types(param, &exp_ty.ty, pos)?;
                 }
-                return Ok(InferedType {
+                Ok(InferedType {
                     ty: self.actual_type(returns).clone(),
-                });
+                })
             }
 
             Entry::VarEntry(ref ty) => match ty {
@@ -187,12 +187,11 @@ impl TyChecker {
 impl InferedType {
     /// Given an `InferedType` check if it an {int} or {float}
     fn check_int_float(&self, pos: Postition) -> Result<(), TypeError> {
-        if self.check_int(pos).is_err() {
-            if self.check_float(pos).is_err() {
-                return Err(TypeError::ExpectedOneOf("Int or Float".into()));
-            }
+        if self.check_int(pos).is_err() && self.check_float(pos).is_err() {
+            Err(TypeError::ExpectedOneOf("Int or Float".into()))
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     /// Checks if `InferedType` is {bool}
@@ -242,14 +241,8 @@ impl InferedType {
         Ok(())
     }
 
-    /// Given two expression types check if they are {int,int} or they are
-    /// {float,float}
-    fn check_int_float_str(
-        &self,
-        left: &InferedType,
-        right: &InferedType,
-        pos: Postition,
-    ) -> Result<InferedType, TypeError> {
+    /// Checks if they {Int,Float,Str}
+    fn check_int_float_str(&self, pos: Postition) -> Result<InferedType, TypeError> {
         if self.check_int(pos).is_err() || self.check_int(pos).is_err() {
             if self.check_float(pos).is_ok() {
                 self.check_float(pos)?;
@@ -274,7 +267,7 @@ impl InferedType {
         } else {
             Err(TypeError::Expected(
                 Type::Simple(BaseType::Int),
-                right.ty.clone(),
+                self.ty.clone(),
                 pos,
             ))
         }

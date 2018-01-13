@@ -45,9 +45,9 @@ impl TyChecker {
 
                 if let Some(sclass) = *superclass {
                     if let Some(mut entry) = env.look_var(sclass) {
-                        match entry {
-                            &Entry::VarEntry(ref sty) => match sty {
-                                &Type::Class {
+                        match *entry {
+                            Entry::VarEntry(ref sty) => match *sty {
+                                Type::Class {
                                     fields: ref sfields,
                                     ref methods,
                                     ..
@@ -74,7 +74,7 @@ impl TyChecker {
                 );
 
                 for &(property, ref ty) in properties {
-                    let ty = self.get_type(&ty, statement.pos, env)?;
+                    let ty = self.get_type(ty, statement.pos, env)?;
                     fields.insert(property, ty.clone());
                     infered_fields.insert(property, ty);
                 }
@@ -134,7 +134,6 @@ impl TyChecker {
                 env.add_var(*name, Entry::VarEntry(ty.clone()));
 
                 Ok(InferedType { ty })
-               
             }
 
             Statement::DoStmt {
@@ -158,23 +157,43 @@ impl TyChecker {
                 Ok(nil_type!())
             }
 
-            Statement::Function{ref name,ref body} => {
-                let ty = self.transform_expression(body,env)?;
+            Statement::Function { ref name, ref body } => {
 
-                match ty.ty.clone() {
-                    Type::Func(params, returns) => env.add_var(
-                                    *name,
-                                    Entry::FunEntry {
-                                        params,
-                                        returns: *returns,
-                                    },
-                                ),
+                use ast::expr::Expression;
+                match body.node {
+                    Expression::Func {
+                        ref returns,
+                        ref parameters,
+                        ..
+                    } => {
+                        let return_type = if let Some(ref return_ty) = *returns {
+                            self.get_type(return_ty, statement.pos, env)?
+                        } else {
+                            Type::Simple(BaseType::Nil)
+                        };
+
+                        let mut param_names = vec![];
+                        let mut param_ty = vec![];
+
+                        for &(param, ref p_ty) in parameters {
+                            param_ty.push(self.get_type(p_ty, statement.pos, env)?);
+                            param_names.push(param);
+                        }
+
+                        env.add_var(
+                            *name,
+                            Entry::FunEntry {
+                                params: param_ty,
+                                returns: return_type.clone(),
+                            },
+                        );
+                    }
                     _ => unreachable!(),
-                }
+                };
 
-                Ok(ty)
+                let body_ty = self.transform_expression(body, env)?;
 
-
+                Ok(body_ty)
             }
 
             Statement::ForStmt {
@@ -237,7 +256,7 @@ impl TyChecker {
                 Ok(InferedType { ty: alias_ty })
             }
 
-              Statement::Var(ref symbol, ref expression, ref ty) => {
+            Statement::Var(ref symbol, ref expression, ref ty) => {
                 if let Some(ref expr) = *expression {
                     let expr_ty = self.transform_expression(expr, env)?;
 

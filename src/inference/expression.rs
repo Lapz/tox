@@ -69,7 +69,7 @@ impl TyChecker {
                     | Operator::LessThanEqual
                     | Operator::GreaterThan
                     | Operator::GreaterThanEqual => {
-                        left.check_int_float_str(&left, &right, left_expr.pos)?;
+                        left.check_int_float_str(left_expr.pos)?;
 
                         Ok(bool_type!())
                     }
@@ -80,7 +80,12 @@ impl TyChecker {
                     | Operator::Modulo
                     | Operator::Minus
                     | Operator::Exponential => {
-                        left.check_int_float_str(&left, &right, left_expr.pos)
+                        let left_ty = left.check_int_float_str(left_expr.pos)?;
+                        let right_ty = right.check_int_float_str(right_expr.pos)?;
+
+                        self.check_types(&left_ty.ty, &right_ty.ty, expr.pos)?;
+
+                        Ok(left_ty)
                     }
                 }
             }
@@ -154,10 +159,10 @@ impl TyChecker {
                                 }
                             }
 
-                            return Err(TypeError::NotMethodOrProperty(
+                            Err(TypeError::NotMethodOrProperty(
                                 env.name(*property),
                                 expr.pos,
-                            ));
+                            ))
                         }
                         _ => unreachable!(),
                     }
