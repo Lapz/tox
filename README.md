@@ -73,7 +73,7 @@ if (int(guess) == secret_number) {
 - [x] Add with position to the ~~variables~~ and expressions themselves
 - [x] Add the parsing of types
 - [x] Add the resolution of function
-- [ ] Add a reporter which reportes errors
+- ~~[ ] Add a reporter which reportes errors~~
 - [x] Add the infernece of function method calling
 - [x] Add an expression that allows for the construction of a class. e.g
     ```rust
