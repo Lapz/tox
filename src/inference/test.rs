@@ -1,12 +1,11 @@
 #[cfg(test)]
 
 mod test {
-    use types::Type;
-    use inference::{InferedType, TyChecker};
+    use inference::{TyChecker};
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
-    use symbol::{Symbol, SymbolFactory};
+    use symbol::{SymbolFactory};
     use env::Env;
 
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
@@ -129,6 +128,16 @@ mod test {
     #[should_panic]
     fn wrong_unary_str() {
         let input = "!\"h\";";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
+    }
+
+    #[test]
+    fn recusive_fib() {
+        let input = "fun fib(n:int) -> int {if (n < 2) return n;return fib(n - 2) + fib(n - 1);}";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
         TyChecker::new()
