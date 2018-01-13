@@ -2,7 +2,7 @@
 [![](https://tokei.rs/b1/github/lapz/lexer)](https://github.com/lapz/tox)
 
 [![Build Status](https://travis-ci.org/Lapz/lexer.svg?branch=master)](https://travis-ci.org/Lapz/tox)
-# LLROX
+# TOX
 
 LLROX is a statically typed version of [lox](http://www.craftinginterpreters.com) that is written in rust.
 
