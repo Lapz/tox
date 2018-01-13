@@ -4,7 +4,7 @@ use resolver::Resolver;
 use inference::TyChecker;
 use interpreter::interpret;
 use std::io;
-use symbol::{SymbolFactory, Symbols};
+use symbol::{SymbolFactory, Table};
 use env::Env;
 use std::rc::Rc;
 use std::io::Write;
@@ -37,7 +37,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         };
 
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(Rc::clone(&strings));
+        let mut symbols = Table::new(Rc::clone(&strings));
 
         let ast = match Parser::new(tokens, &mut symbols).parse() {
             Ok(statements) => {
@@ -60,15 +60,15 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         let mut env = Env::new(&strings);
 
-        match TyChecker::new().analyse(&ast, &mut env) {
-            Ok(_) => (),
-            Err(errors) => {
-                for err in errors {
-                    println!("{:?}", err);
-                }
-                continue;
-            }
-        };
+        // match TyChecker::new().analyse(&ast, &mut env) {
+        //     Ok(_) => (),
+        //     Err(errors) => {
+        //         for err in errors {
+        //             println!("{:?}", err);
+        //         }
+        //         continue;
+        //     }
+        // };
 
         match interpret(&ast, &mut env) {
             Ok(_) => (),
@@ -98,7 +98,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         ::std::process::exit(0)
     }
 
-    let tokens = match Lexer::new(&input).lex() {
+    let tokens = match Lexer::new(input).lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -116,7 +116,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     };
 
     let strings = Rc::new(SymbolFactory::new());
-    let mut symbols = Symbols::new(Rc::clone(&strings));
+    let mut symbols = Table::new(Rc::clone(&strings));
 
     let ast = match Parser::new(tokens, &mut symbols).parse() {
         Ok(statements) => {

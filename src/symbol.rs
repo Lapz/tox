@@ -17,15 +17,15 @@ pub struct SymbolFactory {
 }
 
 #[derive(Debug, Clone)]
-pub struct Symbols<T> {
+pub struct Table<T: Clone> {
     strings: Rc<SymbolFactory>,
     table: HashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }
 
-impl<T> Symbols<T> {
+impl<T: Clone> Table<T> {
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
-        Symbols {
+        Table {
             strings,
             table: HashMap::new(),
             scopes: vec![],
@@ -37,7 +37,6 @@ impl<T> Symbols<T> {
     pub fn begin_scope(&mut self) {
         self.scopes.push(None);
     }
-
     /// Recursivly destorys the scopes
     pub fn end_scope(&mut self) {
         while let Some(Some(symbol)) = self.scopes.pop() {
@@ -47,7 +46,7 @@ impl<T> Symbols<T> {
     }
 
     pub fn enter(&mut self, symbol: Symbol, data: T) {
-        let mapping = self.table.entry(symbol).or_insert(vec![]);
+        let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
 
         mapping.push(data);
         self.scopes.push(Some(symbol));
@@ -65,7 +64,7 @@ impl<T> Symbols<T> {
 
     pub fn symbol(&mut self, name: &str) -> Symbol {
         for (key, value) in self.strings.mappings.borrow().iter() {
-            if value == &name {
+            if value == name {
                 return *key;
             }
         }
@@ -90,8 +89,6 @@ impl SymbolFactory {
         let mut map = HashMap::new();
         map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
-      
-     
 
         SymbolFactory {
             next: RefCell::new(2),
@@ -102,13 +99,13 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, SymbolFactory, Symbols};
+    use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
 
     #[test]
     fn test() {
         let strings = Rc::new(SymbolFactory::new());
-        let mut map: Symbols<String> = Symbols::new(strings);
+        let mut map: Table<String> = Table::new(strings);
         map.enter(Symbol(0), "a".into());
         map.enter(Symbol(1), "b".into());
         map.begin_scope();

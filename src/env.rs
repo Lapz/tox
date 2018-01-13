@@ -1,10 +1,9 @@
-use types::Type;
+use types::{BaseType, Type};
 use object::Object;
-use symbol::{Symbol, SymbolFactory, Symbols};
+use symbol::{Symbol, SymbolFactory, Table};
 use std::rc::Rc;
 
-
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub enum Entry {
     VarEntry(Type), // Vec of (Vec<MethodParam types>,Return Type)
     FunEntry { params: Vec<Type>, returns: Type },
@@ -25,31 +24,31 @@ impl Unique {
 
 #[derive(Debug, Clone)]
 pub struct Env {
-    pub types: Symbols<Type>,
-    pub vars: Symbols<Entry>,
-    pub objects: Symbols<Object>,
+    pub types: Table<Type>,
+    pub vars: Table<Entry>,
+    pub objects: Table<Object>,
     pub unique: Unique,
 }
 
 impl Env {
     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
-        let mut types = Symbols::new(Rc::clone(strings));
+        let mut types = Table::new(Rc::clone(strings));
         let string_symbol = types.symbol("str");
         let int_symbol = types.symbol("int");
         let float_symbol = types.symbol("float");
         let nil_symbol = types.symbol("nil");
         let bool_symbol = types.symbol("bool");
 
-        types.enter(int_symbol, Type::Int);
-        types.enter(float_symbol, Type::Float);
-        types.enter(bool_symbol, Type::Bool);
-        types.enter(nil_symbol, Type::Nil);
-        types.enter(string_symbol, Type::Str);
+        types.enter(int_symbol, Type::Simple(BaseType::Int));
+        types.enter(float_symbol, Type::Simple(BaseType::Float));
+        types.enter(bool_symbol, Type::Simple(BaseType::Bool));
+        types.enter(nil_symbol, Type::Simple(BaseType::Nil));
+        types.enter(string_symbol, Type::Simple(BaseType::Str));
 
         Env {
             types,
-            vars: Symbols::new(Rc::clone(strings)),
-            objects: Symbols::new(Rc::clone(strings)),
+            vars: Table::new(Rc::clone(strings)),
+            objects: Table::new(Rc::clone(strings)),
             unique: Unique::new(),
         }
     }
