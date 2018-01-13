@@ -1,10 +1,13 @@
 use llvm::prelude::*;
 use llvm::core::*;
 use llvm::{LLVMBuilder, LLVMLinkage, LLVMRealPredicate, LLVMValue};
+use llvm::bit_writer::LLVMWriteBitcodeToFile;
+use llvm;
 use ast::expr::*;
 use ast::statement::Statement;
 use pos::WithPos;
 use libc;
+use std::ptr;
 
 const LLVM_FALSE: LLVMBool = 0;
 const LLVM_TRUE: LLVMBool = 1;
@@ -14,12 +17,24 @@ pub unsafe fn compile(statements: &[WithPos<Statement>]) {
     let module = LLVMModuleCreateWithName(b"tox\0".as_ptr() as *const _);
     let builder = LLVMCreateBuilderInContext(context);
 
+    let void = llvm::core::LLVMVoidTypeInContext(context);
+    let function_type = llvm::core::LLVMFunctionType(void, ptr::null_mut(), 0, 0);
+    let function =
+        llvm::core::LLVMAddFunction(module, b"main\0".as_ptr() as *const _, function_type);
+    let bb = llvm::core::LLVMAppendBasicBlockInContext(
+        context,
+        function,
+        b"entry\0".as_ptr() as *const _,
+    );
+
     for statement in statements {
         compile_statment(statement, module, builder);
     }
 
+    llvm::core::LLVMPositionBuilderAtEnd(builder, bb);
+
     LLVMBuildRet(builder, int64(1));
-    LLVMDisposeBuilder(builder);
+
     LLVMDumpModule(module);
 
     LLVMPrintModuleToFile(
@@ -27,6 +42,10 @@ pub unsafe fn compile(statements: &[WithPos<Statement>]) {
         "temp.txt".as_ptr() as *const i8,
         "Couldn't write to file".as_ptr() as *mut *mut i8,
     );
+
+    LLVMDisposeBuilder(builder);
+
+    LLVMWriteBitcodeToFile(module, "tox.txt".as_ptr() as *const i8);
     LLVMContextDispose(context);
 }
 
@@ -61,8 +80,20 @@ pub unsafe fn compile_statment(
 ) -> LLVMValueRef {
     match expr.node {
         Statement::ExpressionStmt(ref expr) => compile_expr(expr, module, builder),
-        Statement::Function{ref name,ref body} => {
-            
+        Statement::Function { ref name, ref body } => {
+            match body.node {
+                Expression::Func {
+                    ref parameters,
+                    ref body,
+                    ..
+                } => {
+                    let dobule_ty = LLVMDoubleType();
+                }
+
+                _ => unimplemented!(),
+            }
+
+            unimplemented!()
         }
         _ => unimplemented!(),
     }

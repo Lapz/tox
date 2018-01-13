@@ -1,2 +1,7 @@
 ; ModuleID = 'tox'
 source_filename = "tox"
+
+define void @main() {
+entry:
+  ret i64 1
+}
