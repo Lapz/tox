@@ -158,7 +158,6 @@ impl TyChecker {
             }
 
             Statement::Function { ref name, ref body } => {
-
                 use ast::expr::Expression;
                 match body.node {
                     Expression::Func {

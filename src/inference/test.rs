@@ -1,11 +1,11 @@
 #[cfg(test)]
 
 mod test {
-    use inference::{TyChecker};
+    use inference::TyChecker;
     use pos::WithPos;
     use ast::statement::Statement;
     use std::rc::Rc;
-    use symbol::{SymbolFactory};
+    use symbol::SymbolFactory;
     use env::Env;
 
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
@@ -101,6 +101,40 @@ mod test {
             .unwrap();
     }
 
+    #[test]
+    #[should_panic]
+    fn typed_lambda() {
+        let input = " var add:fun(int,int) -> int = fun (a:int,b:int) -> int {return a+b;};
+        print add(10,2);";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
+    }
+
+    #[test]
+    fn func_closure_returning() {
+        let input = "
+        fun makePoint(x:int, y:int) -> fun(str) -> int {
+            fun closure(method:str) -> int {
+                if (method == \"x\") return x;
+                if (method == \"y\") return y;
+                print \"unknown method \" + method;
+                return 0;
+                }
+            return closure;
+        }
+    var point = makePoint(2, 3);
+    print point(\"x\"); 
+    print point(\"y\"); ";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = Env::new(&strings);
+
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
+    }
     #[test]
     #[should_panic]
     fn wrong_body_type() {
