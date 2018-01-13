@@ -8,6 +8,7 @@ use symbol::{SymbolFactory, Table};
 use env::Env;
 use std::rc::Rc;
 use std::io::Write;
+use compiler::compile;
 
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
@@ -162,14 +163,18 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", env);
     }
 
-    match interpret(&ast, &mut env) {
-        Ok(_) => (),
-        Err(err) => {
-            println!("{:?}", err);
+    unsafe {
+        compile(&ast);
+    }
 
-            ::std::process::exit(65)
-        }
-    };
+    // match interpret(&ast, &mut env) {
+    //     Ok(_) => (),
+    //     Err(err) => {
+    //         println!("{:?}", err);
+
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
     if penv {
         println!("{:#?}", env);

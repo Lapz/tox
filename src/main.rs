@@ -1,3 +1,4 @@
+extern crate libc;
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
@@ -6,6 +7,8 @@ extern crate structopt;
 
 #[macro_use]
 extern crate structopt_derive;
+
+extern crate llvm_sys as llvm;
 
 mod types;
 #[macro_use]
@@ -24,6 +27,7 @@ mod symbol;
 mod env;
 mod pprint;
 mod builtins;
+mod compiler;
 
 use cli::{repl, run, Cli};
 use structopt::StructOpt;
