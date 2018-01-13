@@ -444,9 +444,15 @@ impl TyChecker {
 
             Expression::Super { .. } => unimplemented!(),
 
-            Expression::This(_) => Ok(InferedType {
-                ty: self.this.clone(),
-            }),
+            Expression::This(_) => {
+                if let Some(ref this) = self.this {
+                    Ok(InferedType { ty: this.clone() })
+                } else {
+                    Ok(InferedType {
+                        ty: Type::Simple(BaseType::Nil),
+                    })
+                }
+            }
 
             Expression::Unary {
                 ref expr,

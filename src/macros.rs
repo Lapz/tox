@@ -1,4 +1,3 @@
-
 macro_rules! nil_type {
     () => {
         InferedType {
@@ -38,4 +37,3 @@ macro_rules! int_type {
         }
     };
 }
-

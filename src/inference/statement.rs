@@ -3,6 +3,8 @@ use ast::statement::Statement;
 use pos::WithPos;
 use env::{Entry, Env};
 use types::{BaseType, InferedType, Type, TypeError};
+use std::collections::HashMap;
+use symbol::Symbol;
 
 impl TyChecker {
     pub fn transform_statement(
@@ -30,6 +32,111 @@ impl TyChecker {
             }
 
             Statement::Break | Statement::Continue => Ok(nil_type!()),
+
+            Statement::Class {
+                ref name,
+                ref methods,
+                ref properties,
+                ref superclass,
+            } => {
+                let mut infered_fields = HashMap::new();
+                let mut fields: HashMap<Symbol, Type> = HashMap::new();
+                let mut class_methods = HashMap::new();
+
+                if let Some(sclass) = *superclass {
+                    if let Some(mut entry) = env.look_var(sclass) {
+                        match entry {
+                            &Entry::VarEntry(ref sty) => match sty {
+                                &Type::Class {
+                                    fields: ref sfields,
+                                    ref methods,
+                                    ..
+                                } => {
+                                    infered_fields.extend(sfields.clone());
+                                    class_methods.extend(methods.clone());
+                                }
+
+                                _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                            },
+
+                            _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                        }
+                    }
+                }
+
+                env.add_type(
+                    *name,
+                    Type::Class {
+                        name: *name,
+                        fields: HashMap::new(),
+                        methods: HashMap::new(),
+                    },
+                );
+
+                for &(property, ref ty) in properties {
+                    let ty = self.get_type(&ty, statement.pos, env)?;
+                    fields.insert(property, ty.clone());
+                    infered_fields.insert(property, ty);
+                }
+
+                self.this = Some(Type::This(*name, fields, HashMap::new()));
+
+                env.add_type(
+                    *name,
+                    Type::Class {
+                        name: *name,
+                        fields: infered_fields.clone(),
+                        methods: HashMap::new(),
+                    },
+                ); // Add the class as a type so you can return the class
+                   //e.g fn new() -> Class
+
+                env.add_var(
+                    *name,
+                    Entry::VarEntry(Type::Class {
+                        name: *name,
+                        fields: infered_fields.clone(),
+                        methods: HashMap::new(),
+                    }),
+                ); // Add the class as a variable so you can return the class
+                   //e.g fn new() -> Class
+
+                for method in methods {
+                    match method.node {
+                        Statement::Function { ref name, ref body } => {
+                            let method_ty = self.transform_expression(body, env)?;
+                            match method_ty.ty {
+                                Type::Func(params, returns) => class_methods.insert(
+                                    *name,
+                                    Entry::FunEntry {
+                                        params,
+                                        returns: *returns,
+                                    },
+                                ),
+                                _ => unreachable!(),
+                            };
+                        }
+
+                        _ => unreachable!(),
+                    }
+                }
+
+                let ty = Type::Class {
+                    name: *name,
+                    methods: class_methods,
+                    fields: infered_fields,
+                };
+
+                env.add_type(*name, ty.clone());
+
+                self.this = None;
+
+                env.add_var(*name, Entry::VarEntry(ty.clone()));
+
+                Ok(InferedType { ty })
+               
+            }
+
             Statement::DoStmt {
                 ref condition,
                 ref body,
@@ -51,33 +158,23 @@ impl TyChecker {
                 Ok(nil_type!())
             }
 
-            Statement::Var(ref symbol, ref expression, ref ty) => {
-                if let Some(ref expr) = *expression {
-                    let expr_ty = self.transform_expression(expr, env)?;
+            Statement::Function{ref name,ref body} => {
+                let ty = self.transform_expression(body,env)?;
 
-                    if let Some(ref id) = *ty {
-                        let ty = self.get_type(id, statement.pos, env)?;
-
-                        self.check_types(&ty, &expr_ty.ty, statement.pos)?;
-
-                        env.add_var(*symbol, Entry::VarEntry(ty));
-                        return Ok(InferedType { ty: expr_ty.ty });
-                    }
-
-                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
-
-                    Ok(expr_ty)
-                } else {
-                    if let Some(ref id) = *ty {
-                        let ty = self.get_type(id, statement.pos, env)?;
-
-                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
-
-                        return Ok(InferedType { ty });
-                    }
-
-                    Ok(nil_type!())
+                match ty.ty.clone() {
+                    Type::Func(params, returns) => env.add_var(
+                                    *name,
+                                    Entry::FunEntry {
+                                        params,
+                                        returns: *returns,
+                                    },
+                                ),
+                    _ => unreachable!(),
                 }
+
+                Ok(ty)
+
+
             }
 
             Statement::ForStmt {
@@ -140,7 +237,34 @@ impl TyChecker {
                 Ok(InferedType { ty: alias_ty })
             }
 
-            _ => unimplemented!(),
+              Statement::Var(ref symbol, ref expression, ref ty) => {
+                if let Some(ref expr) = *expression {
+                    let expr_ty = self.transform_expression(expr, env)?;
+
+                    if let Some(ref id) = *ty {
+                        let ty = self.get_type(id, statement.pos, env)?;
+
+                        self.check_types(&ty, &expr_ty.ty, statement.pos)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty));
+                        return Ok(InferedType { ty: expr_ty.ty });
+                    }
+
+                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
+
+                    Ok(expr_ty)
+                } else {
+                    if let Some(ref id) = *ty {
+                        let ty = self.get_type(id, statement.pos, env)?;
+
+                        env.add_var(*symbol, Entry::VarEntry(ty.clone()));
+
+                        return Ok(InferedType { ty });
+                    }
+
+                    Ok(nil_type!())
+                }
+            }
         }
     }
 }

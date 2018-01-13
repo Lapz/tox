@@ -175,7 +175,7 @@ impl<'a> PartialEq for Type {
                 name == oname && ty == oty
             }
 
-            (&Type::Simple(ref s),&Type::Simple(ref o)) => s ==o,
+            (&Type::Simple(ref s), &Type::Simple(ref o)) => s == o,
 
             _ => false,
         }

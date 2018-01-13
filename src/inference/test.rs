@@ -85,7 +85,9 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let mut env = Env::new(&strings);
 
-        TyChecker::new().analyse(&get_ast(input, strings), &mut env).unwrap();
+        TyChecker::new()
+            .analyse(&get_ast(input, strings), &mut env)
+            .unwrap();
     }
 
     #[test]

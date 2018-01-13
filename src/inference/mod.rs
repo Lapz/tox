@@ -12,14 +12,12 @@ use symbol::Symbol;
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq)]
 pub struct TyChecker {
-    pub this: Type,
+    pub this: Option<Type>,
 }
 
 impl TyChecker {
     pub fn new() -> Self {
-        TyChecker {
-            this: Type::Simple(BaseType::Nil),
-        }
+        TyChecker { this: None }
     }
 
     pub fn analyse(
