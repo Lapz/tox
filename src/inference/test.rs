@@ -102,7 +102,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
     fn typed_lambda() {
         let input = " var add:fun(int,int) -> int = fun (a:int,b:int) -> int {return a+b;};
         print add(10,2);";
