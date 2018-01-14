@@ -168,8 +168,6 @@ fn compile_statement<'a, 'b>(
             compile_expr(expr, builder, module, context, values, env)
         }
         Statement::Block(ref statements) => {
-
-
             let mut ret = Ok(().compile(&context));
 
             for statement in statements {
@@ -191,7 +189,7 @@ fn compile_statement<'a, 'b>(
             Ok(val)
         }
         Statement::Function { ref name, ref body } => {
-            match *env.look_var(*name).unwrap() {
+            let func = match *env.look_var(*name).unwrap() {
                 Entry::FunEntry {
                     ref params,
                     ref returns,
@@ -213,14 +211,12 @@ fn compile_statement<'a, 'b>(
                         _ => unreachable!(),
                     }
 
-                    // builder.build_ret_void();
+                    func
                 }
 
                 _ => unreachable!(),
-            }
-
-            let func = module.get_function(&env.name(*name)).unwrap();
-            let block = func.append("body");
+            };
+            let block = func.append("entry");
             builder.position_at_end(block);
 
             let mut values = HashMap::new();
