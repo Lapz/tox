@@ -22,13 +22,13 @@ impl Unique {
 }
 
 #[derive(Debug, Clone)]
-pub struct Env {
+pub struct TypeEnv {
     pub types: Table<Type>,
     pub vars: Table<Entry>,
     pub unique: Unique,
 }
 
-impl Env {
+impl TypeEnv {
     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
         let mut types = Table::new(Rc::clone(strings));
         let string_symbol = types.symbol("str");
@@ -43,7 +43,7 @@ impl Env {
         types.enter(nil_symbol, Type::Simple(BaseType::Nil));
         types.enter(string_symbol, Type::Simple(BaseType::Str));
 
-        Env {
+        TypeEnv {
             types,
             vars: Table::new(Rc::clone(strings)),
             unique: Unique::new(),

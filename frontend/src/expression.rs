@@ -1,7 +1,7 @@
 use super::TyChecker;
 use syntax::ast::expr::{Expression, Literal, UnaryOperator};
 use util::pos::WithPos;
-use util::env::{Entry, Env};
+use util::env::{Entry, TypeEnv};
 use types::{BaseType, InferedType, Type, TypeError};
 use CheckType;
 
@@ -9,7 +9,7 @@ impl TyChecker {
     pub fn transform_expression(
         &mut self,
         expr: &WithPos<Expression>,
-        env: &mut Env,
+        env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match expr.node {
             Expression::Array { ref items } => {
@@ -496,7 +496,7 @@ impl TyChecker {
     pub fn infer_func(
         &mut self,
         expr: &WithPos<Expression>,
-        env: &mut Env,
+        env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match expr.node {
             Expression::Func {

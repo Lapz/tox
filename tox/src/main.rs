@@ -1,6 +1,4 @@
 #![feature(use_nested_groups)]
-
-extern crate libc;
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
@@ -9,8 +7,7 @@ extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
-extern crate llvm;
-
+extern crate compiler;
 extern crate frontend;
 extern crate syntax;
 extern crate util;
@@ -19,9 +16,9 @@ use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use frontend::resolver::Resolver;
 use frontend::TyChecker;
-use frontend::interpreter::{interpret,env::Environment};
+use frontend::interpreter::{interpret, env::Environment};
 use std::io;
-use util::symbol::{SymbolFactory, Table};
+use util::{env::TypeEnv, symbol::{SymbolFactory, Table}};
 use std::rc::Rc;
 use std::io::Write;
 use structopt::StructOpt;
@@ -101,7 +98,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         //     }
         // };
 
-        match interpret(&ast, &mut resolver.locals,&mut env) {
+        match interpret(&ast, &mut resolver.locals, &mut env) {
             Ok(_) => (),
             Err(err) => {
                 println!("{:?}", err);
@@ -176,29 +173,29 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     resolver.resolve(&ast).unwrap();
 
-    let mut env = Environment::new();
+    let env = Environment::new();
+    let mut tyenv = TypeEnv::new(&strings);
 
+    match TyChecker::new().analyse(&ast, &mut tyenv) {
+        Ok(_) => (),
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
+            }
 
-    // match TyChecker::new().analyse(&ast, &mut env) {
-    //     Ok(_) => (),
-    //     Err(errors) => {
-    //         for err in errors {
-    //             println!("{}", err);
-    //         }
-
-    //         if penv {
-    //             println!("{:#?}", env);
-    //         }
-    //         ::std::process::exit(65)
-    //     }
-    // };
+            if penv {
+                println!("{:#?}", env);
+            }
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", env);
     }
 
     // unsafe {
-    //     compile(&ast,&mut env);
+    compiler::compile(&ast, &strings, &tyenv);
     // }
 
     // match interpret(&ast, &mut env) {

@@ -16,7 +16,7 @@ use syntax::ast::expr::{Expression, ExpressionTy};
 use syntax::ast::statement::Statement;
 use util::symbol::Symbol;
 use types::{BaseType, InferedType, Type, TypeError};
-use util::env::{Entry, Env};
+use util::env::{Entry, TypeEnv};
 use util::pos::{Postition, WithPos};
 use util::types;
 
@@ -34,7 +34,7 @@ impl TyChecker {
     pub fn analyse(
         &mut self,
         statements: &[WithPos<Statement>],
-        env: &mut Env,
+        env: &mut TypeEnv,
     ) -> Result<(), Vec<TypeError>> {
         let mut errors = vec![];
 
@@ -55,7 +55,7 @@ impl TyChecker {
         &self,
         symbol: &Symbol,
         pos: Postition,
-        env: &mut Env,
+        env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match env.look_var(*symbol) {
             Some(ty) => Ok(InferedType {
@@ -134,7 +134,7 @@ impl TyChecker {
         &mut self,
         entry: &Entry,
         arguments: &[WithPos<Expression>],
-        env: &mut Env,
+        env: &mut TypeEnv,
         pos: Postition,
     ) -> Result<InferedType, TypeError> {
         match *entry {
@@ -164,7 +164,7 @@ impl TyChecker {
         &self,
         ident: &ExpressionTy,
         pos: Postition,
-        env: &mut Env,
+        env: &mut TypeEnv,
     ) -> Result<Type, TypeError> {
         match *ident {
             ExpressionTy::Simple(s) => {
