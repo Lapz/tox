@@ -1,6 +1,6 @@
 // use std::collections::{HashMap, HashSet};
-use pos::Postition;
-use symbol::Symbol;
+use super::pos::Postition;
+use super::symbol::Symbol;
 use env::Entry;
 use std::fmt::{Display, Formatter};
 use std::fmt;

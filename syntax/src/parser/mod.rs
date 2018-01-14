@@ -2,10 +2,9 @@ mod test;
 use token::{Token, TokenType};
 use std::iter::Peekable;
 use std::vec::IntoIter;
-use pos::Postition;
-use ast::expr::*;
-use ast::statement::*;
-use pos::WithPos;
+use super::ast::expr::*;
+use super::ast::statement::*;
+use util::pos::{Postition, WithPos};
 use symbol::{Symbol, Table};
 
 #[derive(Debug)]

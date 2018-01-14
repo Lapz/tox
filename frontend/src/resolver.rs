@@ -1,17 +1,17 @@
 use std::collections::HashMap;
-use ast::statement::*;
-use ast::expr::*;
+use syntax::ast::statement::Statement;
+use syntax::ast::expr::{Expression, VariableUseHandle};
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use pos::{Postition, WithPos};
-use symbol::Symbol;
+use util::pos::{Postition, WithPos};
+use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Resolver {
     scopes: Vec<HashMap<Symbol, bool>>,
     current_function: FunctionType,
     current_class: ClassType,
-    locals: HashMap<VariableUseHandle, usize>,
+    pub locals: HashMap<VariableUseHandle, usize>,
 }
 
 #[derive(Debug)]
@@ -560,7 +560,7 @@ mod test {
     use symbol::{SymbolFactory, Table};
     use parser::Parser;
     use resolver::Resolver;
-    use pos::WithPos;
+    use util::pos::WithPos;
 
     fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
         use std::rc::Rc;

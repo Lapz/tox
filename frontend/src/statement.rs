@@ -1,10 +1,11 @@
-use inference::TyChecker;
-use ast::statement::Statement;
-use pos::WithPos;
-use env::{Entry, Env};
+use super::TyChecker;
+use syntax::ast::statement::Statement;
+use util::pos::WithPos;
+use util::env::{Entry, Env};
 use types::{BaseType, InferedType, Type, TypeError};
 use std::collections::HashMap;
-use symbol::Symbol;
+use util::symbol::Symbol;
+use CheckType;
 
 impl TyChecker {
     pub fn transform_statement(
@@ -158,7 +159,7 @@ impl TyChecker {
             }
 
             Statement::Function { ref name, ref body } => {
-                use ast::expr::Expression;
+                use syntax::ast::expr::Expression;
                 match body.node {
                     Expression::Func {
                         ref returns,

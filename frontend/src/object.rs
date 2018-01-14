@@ -4,10 +4,11 @@ use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use symbol::Symbol;
-use ast::statement::Statement;
+use util::symbol::Symbol;
+use syntax::ast::statement::Statement;
+use syntax::ast::expr::VariableUseHandle;
 use interpreter::RuntimeError;
-use env::Env;
+use interpreter::env::Environment;
 use std::rc::Rc;
 use std::cell::RefCell;
 use builtins::BuiltInFunction;
@@ -24,7 +25,7 @@ pub enum Object {
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
-    Function(Symbol, Vec<Symbol>, Statement),
+    Function(Symbol, Vec<Symbol>, Statement, Environment),
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,
@@ -55,21 +56,29 @@ impl Object {
         }
     }
 
-    pub fn bind(&self, instance: &Object, env: &mut Env) -> Object {
+    pub fn bind(&self, instance: &Object) -> Object {
         match *self {
-            ref method @ Object::Function(_, _, _) | ref method @ Object::BuiltIn(_, _) => {
-                env.begin_scope();
+            Object::Function(ref name, ref param, ref body, ref fn_env) => {
+                let environment = Environment::new_with_outer(fn_env);
 
-                env.add_object(Symbol(0), instance.clone());
+                environment.define(Symbol(0), instance.clone());
 
-                method.clone()
+                Object::Function(name.clone(), param.clone(), body.clone(), environment)
+            }
+
+            Object::BuiltIn(_, _) => {
+                let environment = Environment::new_with_outer(&Environment::new());
+
+                environment.define(Symbol(0), instance.clone());
+
+                instance.clone()
             }
 
             _ => unreachable!(),
         }
     }
 
-    pub fn get_property(&self, name: &Symbol, env: &mut Env) -> Result<Object, RuntimeError> {
+    pub fn get_property(&self, name: &Symbol, env: &Environment) -> Result<Object, RuntimeError> {
         match *self {
             Object::Instance {
                 ref fields,
@@ -81,12 +90,12 @@ impl Object {
                 }
 
                 if methods.contains_key(name) {
-                    return Ok(methods.get(name).unwrap().bind(self, env));
+                    return Ok(methods.get(name).unwrap().bind(self));
                 }
 
                 if let Some(ref smethods) = *sclassmethods {
                     if smethods.contains_key(name) {
-                        return Ok(smethods.get(name).unwrap().bind(self, env));
+                        return Ok(smethods.get(name).unwrap().bind(self));
                     }
                 }
 
@@ -95,7 +104,7 @@ impl Object {
 
             Object::Class(_, ref superclass, ref methods) => {
                 if methods.contains_key(name) {
-                    return Ok(methods.get(name).unwrap().bind(self, env));
+                    return Ok(methods.get(name).unwrap().bind(self));
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
@@ -105,25 +114,29 @@ impl Object {
         }
     }
 
-    pub fn call(&self, arguments: &[Object], env: &mut Env) -> Result<Object, RuntimeError> {
+    pub fn call(
+        &self,
+        arguments: &[Object],
+        locals: &HashMap<VariableUseHandle, usize>,
+        env: &mut Environment,
+    ) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
-            Object::Function(_, ref params, ref body) => {
-                env.begin_scope();
+            Object::Function(_, ref params, ref body, ref fn_env) => {
+                let mut local_environment = Environment::new_with_outer(fn_env);
 
                 let zipped = params.iter().zip(arguments.iter());
 
                 for (_, (symbol, value)) in zipped.enumerate() {
-                    env.add_object(*symbol, value.clone());
+                    env.define(*symbol, value.clone());
                 }
 
                 use interpreter::evaluate_statement;
 
                 match *body {
                     Statement::Block(ref statements) => for statement in statements {
-                        match evaluate_statement(statement, env) {
+                        match evaluate_statement(statement, locals, &mut local_environment) {
                             Ok(val) => if let Object::Return(r) = val {
-                                env.end_scope();
                                 return Ok(*r);
                             },
 
@@ -132,8 +145,6 @@ impl Object {
                     },
                     _ => unreachable!(),
                 }
-
-                env.end_scope();
 
                 Ok(Object::Nil)
             }
@@ -146,7 +157,7 @@ impl Object {
         match *self {
             Object::Instance { .. } => "instance".into(),
             Object::BuiltIn(ref s, _) => format!("fn <builtin<{}>", s),
-            Object::Function(ref s, _, _) => format!("fn <{}> ", s),
+            Object::Function(ref s, _, _, _) => format!("fn <{}> ", s),
             Object::Class(ref name, _, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
@@ -221,7 +232,7 @@ impl PartialEq for Object {
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
 
             (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
-            (&Object::Function(ref x, _, _), &Object::Function(ref y, _, _))
+            (&Object::Function(ref x, _, _, _), &Object::Function(ref y, _, _, _))
             | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _))
             | (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
@@ -260,7 +271,7 @@ impl fmt::Debug for Object {
             }
 
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),
-            Object::Function(ref s, _, _) => write!(f, "fn <{}> ", s),
+            Object::Function(ref s, _, _, _) => write!(f, "fn <{}> ", s),
             Object::BuiltIn(ref v, _) => write!(f, "fn <builtin {}>", v),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
@@ -316,7 +327,7 @@ impl Display for Object {
         match *self {
             Object::Instance { .. } => write!(f, "instance"),
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
-            Object::Function(ref s, _, _) => write!(f, "fn <{}>", s),
+            Object::Function(ref s, _, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
             Object::None => write!(f, "none"),
             Object::Return(ref r) => write!(f, "return {}", r),

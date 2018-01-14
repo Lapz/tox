@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! nil_type {
     () => {
         InferedType {
@@ -6,6 +7,7 @@ macro_rules! nil_type {
     };
 }
 
+#[macro_export]
 macro_rules! bool_type {
     () => {
         InferedType {
@@ -14,6 +16,7 @@ macro_rules! bool_type {
     };
 }
 
+#[macro_export]
 macro_rules! str_type {
     () => {
         InferedType {
@@ -22,6 +25,7 @@ macro_rules! str_type {
     };
 }
 
+#[macro_export]
 macro_rules! float_type {
     () => {
         InferedType {
@@ -30,6 +34,7 @@ macro_rules! float_type {
     };
 }
 
+#[macro_export]
 macro_rules! int_type {
     () => {
         InferedType {

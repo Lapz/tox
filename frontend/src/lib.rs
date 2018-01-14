@@ -1,13 +1,24 @@
-mod test;
+extern crate rand;
+extern crate syntax;
+#[macro_use]
+extern crate util;
+
 #[macro_use]
 mod statement;
 mod expression;
-use ast::expr::*;
-use ast::statement::Statement;
+pub mod resolver;
+mod test;
+pub mod interpreter;
+mod object;
+mod builtins;
+
+use syntax::ast::expr::{Expression, ExpressionTy};
+use syntax::ast::statement::Statement;
+use util::symbol::Symbol;
 use types::{BaseType, InferedType, Type, TypeError};
-use env::{Entry, Env};
-use pos::{Postition, WithPos};
-use symbol::Symbol;
+use util::env::{Entry, Env};
+use util::pos::{Postition, WithPos};
+use util::types;
 
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq, Default)]
@@ -184,7 +195,16 @@ impl TyChecker {
     }
 }
 
-impl InferedType {
+trait CheckType {
+    fn check_int_float(&self, pos: Postition) -> Result<(), TypeError>;
+    fn check_bool(&self, pos: Postition) -> Result<(), TypeError>;
+    fn check_int(&self, pos: Postition) -> Result<(), TypeError>;
+    fn check_str(&self, pos: Postition) -> Result<(), TypeError>;
+    fn check_float(&self, pos: Postition) -> Result<(), TypeError>;
+    fn check_int_float_str(&self, pos: Postition) -> Result<InferedType, TypeError>;
+}
+
+impl CheckType for InferedType {
     /// Given an `InferedType` check if it an {int} or {float}
     fn check_int_float(&self, pos: Postition) -> Result<(), TypeError> {
         if self.check_int(pos).is_err() && self.check_float(pos).is_err() {

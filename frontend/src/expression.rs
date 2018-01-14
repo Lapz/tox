@@ -1,8 +1,9 @@
-use inference::TyChecker;
-use ast::expr::*;
-use pos::WithPos;
-use env::{Entry, Env};
+use super::TyChecker;
+use syntax::ast::expr::{Expression, Literal, UnaryOperator};
+use util::pos::WithPos;
+use util::env::{Entry, Env};
 use types::{BaseType, InferedType, Type, TypeError};
+use CheckType;
 
 impl TyChecker {
     pub fn transform_expression(
@@ -37,7 +38,7 @@ impl TyChecker {
                 ..
             } => {
                 let ty = self.transform_var(name, expr.pos, env)?;
-                use ast::expr::AssignOperator::*;
+                use syntax::ast::expr::AssignOperator::*;
                 match *kind {
                     Equal => {
                         let value_ty = self.transform_expression(value, env)?;
@@ -62,7 +63,7 @@ impl TyChecker {
                 let left = self.transform_expression(left_expr, env)?;
                 let right = self.transform_expression(right_expr, env)?;
 
-                use ast::expr::Operator;
+                use syntax::ast::expr::Operator;
                 match *operator {
                     Operator::BangEqual | Operator::EqualEqual => Ok(bool_type!()),
                     Operator::LessThan

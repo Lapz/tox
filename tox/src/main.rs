@@ -1,14 +1,42 @@
-use lexer::Lexer;
-use parser::Parser;
-use resolver::Resolver;
-use inference::TyChecker;
-use interpreter::interpret;
+#![feature(use_nested_groups)]
+
+extern crate libc;
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
+extern crate rand;
+extern crate structopt;
+#[macro_use]
+extern crate structopt_derive;
+
+extern crate llvm;
+
+extern crate frontend;
+extern crate syntax;
+extern crate util;
+
+use syntax::lexer::Lexer;
+use syntax::parser::Parser;
+use frontend::resolver::Resolver;
+use frontend::TyChecker;
+use frontend::interpreter::{interpret,env::Environment};
 use std::io;
-use symbol::{SymbolFactory, Table};
-use env::Env;
+use util::symbol::{SymbolFactory, Table};
 use std::rc::Rc;
 use std::io::Write;
-use compiler::compile;
+use structopt::StructOpt;
+
+fn main() {
+    let opts = Cli::from_args();
+
+    if let Some(file) = opts.source {
+        run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
+    } else {
+        repl(opts.ptokens, opts.pprint)
+    }
+}
+
+// use compiler::compile;
 
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
@@ -57,9 +85,11 @@ pub fn repl(ptokens: bool, pprint: bool) {
             }
         };
 
-        Resolver::new().resolve(&ast).unwrap();
+        let mut resolver = Resolver::new();
 
-        let mut env = Env::new(&strings);
+        resolver.resolve(&ast).unwrap();
+
+        let mut env = Environment::new();
 
         // match TyChecker::new().analyse(&ast, &mut env) {
         //     Ok(_) => (),
@@ -71,7 +101,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         //     }
         // };
 
-        match interpret(&ast, &mut env) {
+        match interpret(&ast, &mut resolver.locals,&mut env) {
             Ok(_) => (),
             Err(err) => {
                 println!("{:?}", err);
@@ -142,30 +172,34 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     Resolver::new().resolve(&ast).unwrap();
 
-    let mut env = Env::new(&strings);
-    env.get_builtins();
+    let mut resolver = Resolver::new();
 
-    match TyChecker::new().analyse(&ast, &mut env) {
-        Ok(_) => (),
-        Err(errors) => {
-            for err in errors {
-                println!("{}", err);
-            }
+    resolver.resolve(&ast).unwrap();
 
-            if penv {
-                println!("{:#?}", env);
-            }
-            ::std::process::exit(65)
-        }
-    };
+    let mut env = Environment::new();
+
+
+    // match TyChecker::new().analyse(&ast, &mut env) {
+    //     Ok(_) => (),
+    //     Err(errors) => {
+    //         for err in errors {
+    //             println!("{}", err);
+    //         }
+
+    //         if penv {
+    //             println!("{:#?}", env);
+    //         }
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
     if penv {
         println!("{:#?}", env);
     }
 
-    unsafe {
-        compile(&ast);
-    }
+    // unsafe {
+    //     compile(&ast,&mut env);
+    // }
 
     // match interpret(&ast, &mut env) {
     //     Ok(_) => (),

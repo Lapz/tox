@@ -1,6 +1,6 @@
 use ast::expr::{Expression, ExpressionTy};
-use pos::WithPos;
-use symbol::Symbol;
+use util::pos::WithPos;
+use util::symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {

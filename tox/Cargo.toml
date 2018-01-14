@@ -1,0 +1,24 @@
+[package]
+name = "tox"
+version = "0.1.0"
+authors = ["Lenard Pratt <striderman34@gmail.com>"]
+[features]
+default = []
+
+[dependencies]
+util = {path = "../util"}
+syntax = {path = "../syntax"}
+compiler = {path = "../compiler"}
+frontend = {path = "../frontend"}
+structopt = "0.1.6"
+structopt-derive = "0.1.6"
+
+clippy = {version = "*", optional = true}
+
+rand = "0.3.16"
+
+llvm-alt = { git="https://github.com/Lapz/llvm-rs.git" }
+libc = "0.2"
+
+[dev-dependencies]
+pretty_assertions = "0.4.0"
