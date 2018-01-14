@@ -1,7 +1,14 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+extern crate llvm;
+extern crate syntax;
+
+use llvm::{Module,Context,Builder};
+
+
+fn compile(ast:&[WithPos<Statement>]) {
+
+    let ctx = Context::new();
+    let module = Module::new("main",&ctx);
+
+    
+
 }

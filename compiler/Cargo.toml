@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["rowlandsonpratt <striderman34@gmail.com>"]
 
 [dependencies]
+llvm-alt = { git="https://github.com/Lapz/llvm-rs.git" }
+libc = "0.2"
+syntax = {path= "../syntax"}

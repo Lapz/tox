@@ -17,8 +17,6 @@ clippy = {version = "*", optional = true}
 
 rand = "0.3.16"
 
-llvm-alt = { git="https://github.com/Lapz/llvm-rs.git" }
-libc = "0.2"
 
 [dev-dependencies]
 pretty_assertions = "0.4.0"
