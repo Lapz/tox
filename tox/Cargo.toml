@@ -9,7 +9,7 @@ default = []
 util = {path = "../util"}
 syntax = {path = "../syntax"}
 compiler = {path = "../compiler"}
-frontend = {path = "../frontend"}
+sem = {path = "../sem"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 

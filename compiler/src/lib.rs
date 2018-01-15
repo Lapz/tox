@@ -8,7 +8,7 @@ extern crate util;
 use std::rc::Rc;
 use std::collections::HashMap;
 use llvm::{Arg, Builder, CBox, CSemiBox, Compile, Context, DoubleType, FunctionType, IntegerType,
-           Module, Type, Value, VoidType};
+           Module, Type, Value,VoidType};
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, Literal, Operator};
 use util::{env::{Entry, TypeEnv}, pos::WithPos, types::{BaseType, Type as Ty}};
@@ -20,22 +20,16 @@ use llvm_sys::prelude::*;
 pub fn compile<'a>(ast: &[WithPos<Statement>], strings: &Rc<SymbolFactory>, env: &TypeEnv) -> Result<(), CompilerError> {
     let ctx = Context::new();
     let module = Module::new("tox", &ctx);
-    let func = module.add_function("main", Type::get::<fn(f64, f64) -> f64>(&ctx));
-    // let entry = func.append("entry");
     let builder = Builder::new(&ctx);
-    // builder.position_at_end(entry);
     let values = HashMap::new();
-    // let a = &func[0];
-    // let b = &func[1];
-    let mut value = 1.compile(&ctx);
-
+   
     for statement in ast {
-        value = compile_statement(statement, &builder, &module, &ctx, &values, env)?;
+        compile_statement(statement, &builder, &module, &ctx, &values, env)?;
     }
 
-    builder.build_ret(value);
+    // builder.build_ret(value);
 
-    module.write_bitcode("out.ll");
+    module.write_bitcode("out.ll").expect("Couldn't write to file");
 
     module.verify().unwrap();
 
@@ -174,20 +168,21 @@ fn compile_statement<'a, 'b>(
                 ret = compile_statement(statement, builder, module, context, values, env);
             }
 
-            // block.get_terminator();
             ret
         }
+
         Statement::Return(ref ret) => {
             let val = if let Some(ref r) = *ret {
                 compile_expr(r, builder, module, context, values, env)?
             } else {
-                ().compile(&context)
+                builder.build_ret(Value::new_null(
+                   VoidType::new(context)
+                ))
             };
-
-            builder.build_ret(val);
 
             Ok(val)
         }
+
         Statement::Function { ref name, ref body } => {
             let func = match *env.look_var(*name).unwrap() {
                 Entry::FunEntry {
@@ -216,6 +211,7 @@ fn compile_statement<'a, 'b>(
 
                 _ => unreachable!(),
             };
+
             let block = func.append("entry");
             builder.position_at_end(block);
 
@@ -248,7 +244,7 @@ fn get_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
             BaseType::Int => IntegerType::new(context, 64),
             BaseType::Float => DoubleType::new(context),
             BaseType::Str => <[u8; 0]>::get_type(context),
-            BaseType::Nil => VoidType::new(context),
+            BaseType::Nil => <()>::get_type(context),
             BaseType::Bool => bool::get_type(context),
         },
         _ => unimplemented!(),

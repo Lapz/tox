@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "syntax",
-    "frontend",
+    "sem",
     "util",
     "compiler",
     "tox",

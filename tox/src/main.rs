@@ -8,15 +8,15 @@ extern crate structopt;
 extern crate structopt_derive;
 
 extern crate compiler;
-extern crate frontend;
+extern crate sem;
 extern crate syntax;
 extern crate util;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
-use frontend::resolver::Resolver;
-use frontend::TyChecker;
-use frontend::interpreter::{interpret, env::Environment};
+use sem::resolver::Resolver;
+use sem::TyChecker;
+use sem::interpreter::{interpret, env::Environment};
 use std::io;
 use util::{env::TypeEnv, symbol::{SymbolFactory, Table}};
 use std::rc::Rc;

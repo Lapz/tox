@@ -78,17 +78,17 @@ dependencies = [
 
 [[package]]
 name = "clippy"
-version = "0.0.179"
+version = "0.0.180"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cargo_metadata 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "clippy_lints 0.0.179 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clippy_lints 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "clippy_lints"
-version = "0.0.179"
+version = "0.0.180"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "if_chain 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -131,15 +131,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "either"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "frontend"
-version = "0.1.0"
-dependencies = [
- "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "syntax 0.1.0",
- "util 0.1.0",
-]
 
 [[package]]
 name = "fuchsia-zircon"
@@ -220,7 +211,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "llvm-alt"
 version = "0.5.0"
-source = "git+https://github.com/Lapz/llvm-rs.git#57c9101418c9a53263cd1dae12d9be793a015c32"
+source = "git+https://github.com/Lapz/llvm-rs.git#f3a522f6d29e17a6bc1bf771cca8e4ab93d39aa3"
 dependencies = [
  "cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -366,6 +357,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "regex-syntax"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "sem"
+version = "0.1.0"
+dependencies = [
+ "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syntax 0.1.0",
+ "util 0.1.0",
+]
 
 [[package]]
 name = "semver"
@@ -535,11 +535,11 @@ dependencies = [
 name = "tox"
 version = "0.1.0"
 dependencies = [
- "clippy 0.0.179 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clippy 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)",
  "compiler 0.1.0",
- "frontend 0.1.0",
  "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sem 0.1.0",
  "structopt 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt-derive 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntax 0.1.0",
@@ -651,8 +651,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cargo_metadata 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "be1057b8462184f634c3a208ee35b0f935cfd94b694b26deadccd98732088d7b"
 "checksum cbox 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e4198143b96d30e1758ebe0abab558e0845f09b36d83872d88db34911349321f"
 "checksum clap 2.29.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8f4a2b3bb7ef3c672d7c13d15613211d5a6976b6892c598b0fcb5d40765f19c2"
-"checksum clippy 0.0.179 (registry+https://github.com/rust-lang/crates.io-index)" = "f3865be451fd0a4f53376171c2e86e52ef6dfa2d51e8d137229851b332f5ab12"
-"checksum clippy_lints 0.0.179 (registry+https://github.com/rust-lang/crates.io-index)" = "78002b9b809798e082008d1a90d63b1053243b0b03ded66bb4d661a6248be896"
+"checksum clippy 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)" = "2f4d28dcaffa26ee7e1e11edb658195dc34ddc9f855ade3583ba30fc0f7aaf69"
+"checksum clippy_lints 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)" = "d02941404b53642eeb6ba5ea025a110e799ec7a28cb8752fee6bc3c355682e28"
 "checksum difference 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b3304d19798a8e067e48d8e69b2c37f0b5e9b4e462504ad9e27e9f3fce02bba8"
 "checksum dtoa 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "09c3753c3db574d215cba4ea76018483895d7bff25a31b49ba45db21c48e50ab"
 "checksum either 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "740178ddf48b1a9e878e6d6509a1442a2d42fd2928aae8e7a6f8a36fb01981b3"
