@@ -167,7 +167,8 @@ impl TyChecker {
                         }
                         _ => unreachable!(),
                     }
-                }
+                },
+                Expression::Call{..}=> self.transform_expression(callee,env),
                 _ => Err(TypeError::NotCallable(callee.pos)),
             },
 

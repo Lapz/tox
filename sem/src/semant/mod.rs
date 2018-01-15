@@ -139,7 +139,7 @@ impl TyChecker {
                 for (arg, param) in arguments.iter().zip(params) {
                     let exp_ty = self.transform_expression(arg, env)?;
 
-                    self.check_types(param, &exp_ty.ty, pos)?;
+                    self.check_types(&exp_ty.ty,param, pos)?;
                 }
                 Ok(InferedType {
                     ty: self.actual_type(returns).clone(),

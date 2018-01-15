@@ -30,7 +30,7 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), Comp
         .write_bitcode("out.bc")
         .expect("Couldn't write to file");
 
-    module.verify().unwrap();
+    // module.verify().unwrap();
 
     println!("{:?}", module);
 
@@ -231,11 +231,11 @@ fn compile_statement<'a, 'b>(
             builder.build_ret(ret);
             // block.get_terminator();
 
-            module.verify().unwrap();
+            // module.verify().unwrap();
             Ok(func)
             // unimplemented!()
         }
-        _ => unimplemented!(),
+        ref e => unimplemented!("{:?}",e),
     }
 }
 fn get_llvm_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
