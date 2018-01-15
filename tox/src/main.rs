@@ -8,6 +8,7 @@ extern crate structopt;
 extern crate structopt_derive;
 
 extern crate compiler;
+extern crate interpreter;
 extern crate sem;
 extern crate syntax;
 extern crate util;
@@ -15,8 +16,8 @@ extern crate util;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use sem::resolver::Resolver;
-use sem::TyChecker;
-use sem::interpreter::{interpret, env::Environment};
+use sem::semant::TyChecker;
+use interpreter::{interpret, interpreter::env::Environment};
 use std::io;
 use util::{env::TypeEnv, symbol::{SymbolFactory, Table}};
 use std::rc::Rc;
@@ -195,7 +196,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     }
 
     // unsafe {
-    compiler::compile(&ast, &strings, &tyenv);
+    compiler::compile(&ast, &tyenv).expect("Couldn't compile the modle");
     // }
 
     // match interpret(&ast, &mut env) {

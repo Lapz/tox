@@ -2,8 +2,8 @@ use super::TyChecker;
 use syntax::ast::expr::{Expression, Literal, UnaryOperator};
 use util::pos::WithPos;
 use util::env::{Entry, TypeEnv};
-use types::{BaseType, InferedType, Type, TypeError};
-use CheckType;
+use util::types::{Type, TypeError};
+use super::InferedType;
 
 impl TyChecker {
     pub fn transform_expression(
@@ -12,10 +12,10 @@ impl TyChecker {
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match expr.node {
-            Expression::Array { ref items } => {
+            Expression::Array { ref items,ref len} => {
                 if items.is_empty() {
                     return Ok(InferedType {
-                        ty: Type::Array(Box::new(Type::Simple(BaseType::Nil))),
+                        ty: Type::Array(Box::new(Type::Nil),0),
                     });
                 }
 
@@ -27,7 +27,7 @@ impl TyChecker {
                 }
 
                 Ok(InferedType {
-                    ty: Type::Array(Box::new(first_ty.ty)),
+                    ty: Type::Array(Box::new(first_ty.ty),*len),
                 })
             }
 
@@ -213,10 +213,7 @@ impl TyChecker {
             Expression::Dict { ref items } => {
                 if items.is_empty() {
                     return Ok(InferedType {
-                        ty: Type::Dict(
-                            Box::new(Type::Simple(BaseType::Nil)),
-                            Box::new(Type::Simple(BaseType::Nil)),
-                        ),
+                        ty: Type::Dict(Box::new(Type::Nil), Box::new(Type::Nil)),
                     });
                 }
 
@@ -244,7 +241,7 @@ impl TyChecker {
             } => {
                 let instance = self.transform_expression(object, env)?;
 
-                let mut ty = Type::Simple(BaseType::Nil);
+                let mut ty = Type::Nil;
 
                 match instance.ty {
                     Type::Class {
@@ -329,10 +326,10 @@ impl TyChecker {
                     index_ty.check_int(index.pos)?;
 
                     match target_ty.ty {
-                        Type::Array(ref exp_ty) => Ok(InferedType {
+                        Type::Array(ref exp_ty,_) => Ok(InferedType {
                             ty: *exp_ty.clone(),
                         }),
-                        Type::Simple(BaseType::Str) => Ok(str_type!()),
+                        Type::Str => Ok(str_type!()),
                         _ => Err(TypeError::IndexAble(env.name(*symbol), index.pos)),
                     }
                 }
@@ -364,7 +361,7 @@ impl TyChecker {
                 ..
             } => {
                 let instance = self.transform_expression(object, env)?;
-                let mut ty = Type::Simple(BaseType::Nil);
+                let mut ty = Type::Nil;
 
                 match instance.ty {
                     Type::Class {
@@ -454,9 +451,7 @@ impl TyChecker {
                 if let Some(ref this) = self.this {
                     Ok(InferedType { ty: this.clone() })
                 } else {
-                    Ok(InferedType {
-                        ty: Type::Simple(BaseType::Nil),
-                    })
+                    Ok(InferedType { ty: Type::Nil })
                 }
             }
 
@@ -507,7 +502,7 @@ impl TyChecker {
                 let return_type = if let Some(ref return_ty) = *returns {
                     self.get_type(return_ty, expr.pos, env)?
                 } else {
-                    Type::Simple(BaseType::Nil)
+                    Type::Nil
                 };
 
                 let mut params_ty = Vec::with_capacity(parameters.len());

@@ -172,6 +172,14 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "interpreter"
+version = "0.1.0"
+dependencies = [
+ "syntax 0.1.0",
+ "util 0.1.0",
+]
+
+[[package]]
 name = "itertools"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -537,6 +545,7 @@ version = "0.1.0"
 dependencies = [
  "clippy 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)",
  "compiler 0.1.0",
+ "interpreter 0.1.0",
  "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "sem 0.1.0",

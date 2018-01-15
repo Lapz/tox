@@ -1,3 +1,4 @@
+//! This module provides struct that are used to keep tracks of the location of items within the source code
 use std::str::Chars;
 use std::fmt::{Display, Formatter};
 use std::fmt;
@@ -20,6 +21,7 @@ pub struct Postition {
     pub column: i64,
     pub absolute: usize,
 }
+
 impl<T> WithPos<T> {
     pub fn new(node: T, pos: Postition) -> Self {
         WithPos { node, pos }
@@ -38,6 +40,7 @@ impl<'a> CharPosition<'a> {
         }
     }
 }
+
 impl<'a> Iterator for CharPosition<'a> {
     type Item = (Postition, char);
 

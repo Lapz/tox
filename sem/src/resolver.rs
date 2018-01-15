@@ -375,7 +375,7 @@ impl Resolver {
         pos: Postition,
     ) -> Result<(), ResolverError> {
         match *expr {
-            Expression::Array { ref items } => {
+            Expression::Array { ref items,..} => {
                 for item in items {
                     self.resolve_expression(&item.node, pos)?;
                 }

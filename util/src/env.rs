@@ -1,24 +1,15 @@
-use types::{BaseType, Type};
+//! This module provides an Environment which keeps a track of the mappings between a
+//! `Symbol` and a `Type` or an `Entry`
+
+use types::Type;
 use super::symbol::{Symbol, SymbolFactory, Table};
 use std::rc::Rc;
+use super::Unique;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub enum Entry {
     VarEntry(Type), // Vec of (Vec<MethodParam types>,Return Type)
     FunEntry { params: Vec<Type>, returns: Type },
-}
-
-static mut UNIQUE_COUNT: u64 = 0;
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Unique(pub u64);
-
-impl Unique {
-    pub fn new() -> Self {
-        let value = unsafe { UNIQUE_COUNT };
-        unsafe { UNIQUE_COUNT += 1 };
-        Unique(value)
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -37,11 +28,11 @@ impl TypeEnv {
         let nil_symbol = types.symbol("nil");
         let bool_symbol = types.symbol("bool");
 
-        types.enter(int_symbol, Type::Simple(BaseType::Int));
-        types.enter(float_symbol, Type::Simple(BaseType::Float));
-        types.enter(bool_symbol, Type::Simple(BaseType::Bool));
-        types.enter(nil_symbol, Type::Simple(BaseType::Nil));
-        types.enter(string_symbol, Type::Simple(BaseType::Str));
+        types.enter(int_symbol, Type::Int);
+        types.enter(float_symbol, Type::Float);
+        types.enter(bool_symbol, Type::Bool);
+        types.enter(nil_symbol, Type::Nil);
+        types.enter(string_symbol, Type::Str);
 
         TypeEnv {
             types,

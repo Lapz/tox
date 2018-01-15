@@ -256,7 +256,7 @@ impl Statement {
 impl Expression {
     fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
         match *self {
-            Expression::Array { ref items } => {
+            Expression::Array { ref items ,..} => {
                 pprint_string.push_str("(array");
                 for item in items {
                     item.node.pprint_into(pprint_string, symbols);

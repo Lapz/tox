@@ -89,3 +89,9 @@ if (int(guess) == secret_number) {
 - [x] Have a field on the type check that contains the types that this points too. When this is acessed check if that field exist and the return the type of that field.
 - [ ] Change how method inheritance is done
 - [ ] Implement closures properly
+
+
+## Run the Compiler
+llc -filetype=obj out.bc
+clang out.o
+./a.out

@@ -7,7 +7,7 @@ use std::fmt;
 use util::symbol::Symbol;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::VariableUseHandle;
-use interpreter::RuntimeError;
+use super::interpreter::RuntimeError;
 use interpreter::env::Environment;
 use std::rc::Rc;
 use std::cell::RefCell;

@@ -1,4 +1,5 @@
-// use std::collections::{HashMap, HashSet};
+//! This module provides the types that are used throughout tox for the typeChecking
+
 use super::pos::Postition;
 use super::symbol::Symbol;
 use env::Entry;
@@ -20,7 +21,7 @@ pub enum TypeError {
     NotMethodOrProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
-    ExpectedOneOf(String),
+    ExpectedOneOf(String,Postition),
     NotInstanceOrClass(Type, Symbol, Postition),
     SuperClass(Symbol, Postition),
 }
@@ -35,35 +36,13 @@ pub enum Type {
     This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
     Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
-    Array(Box<Type>),
+    Array(Box<Type>,usize),
     Name(Symbol, Box<Type>),
-    Simple(BaseType),
-}
-
-#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Hash)]
-pub enum BaseType {
     Int,
     Str,
     Bool,
     Nil,
     Float,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct InferedType {
-    pub ty: Type,
-}
-
-impl Display for BaseType {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match *self {
-            BaseType::Int => write!(f, "Int"),
-            BaseType::Str => write!(f, "Str"),
-            BaseType::Bool => write!(f, "Boolean"),
-            BaseType::Nil => write!(f, "Nil"),
-            BaseType::Float => write!(f, "Float"),
-        }
-    }
 }
 
 impl Display for Type {
@@ -79,8 +58,6 @@ impl Display for Type {
                 name, fields, methods
             ),
 
-            Type::Simple(ref ty) => write!(f, "{}", ty),
-
             Type::This(ref name, ref methods, ref fields) => write!(
                 f,
                 "'This {}' has the fields {:?} and methods {:?}",
@@ -92,8 +69,13 @@ impl Display for Type {
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
-            Type::Array(ref a) => write!(f, "Array of {}", a),
+            Type::Array(ref a,ref len) => write!(f, "Array of {} with len {}", a,len),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
+            Type::Int => write!(f, "Int"),
+            Type::Str => write!(f, "Str"),
+            Type::Bool => write!(f, "Boolean"),
+            Type::Nil => write!(f, "Nil"),
+            Type::Float => write!(f, "Float"),
         }
     }
 }
@@ -132,7 +114,7 @@ impl Display for TypeError {
                 ty, property, pos
             ),
 
-            TypeError::ExpectedOneOf(ref msg) => write!(f, "{}", msg),
+            TypeError::ExpectedOneOf(ref msg,ref pos) => write!(f, "{} on {}", msg,pos),
 
             TypeError::NotMethodOrProperty(ref name, ref pos) => {
                 write!(f, "Undefined method/property \'{}\' on {}", name, pos)
@@ -175,7 +157,15 @@ impl<'a> PartialEq for Type {
                 name == oname && ty == oty
             }
 
-            (&Type::Simple(ref s), &Type::Simple(ref o)) => s == o,
+            (&Type::Array(ref s,ref len),&Type::Array(ref o,ref olen)) => {
+                s == o && len == olen
+            }
+
+            (&Type::Nil, &Type::Nil)
+            | (&Type::Float, &Type::Float)
+            | (&Type::Int, &Type::Int)
+            | (&Type::Str, &Type::Str)
+            | (&Type::Bool, &Type::Bool) => true,
 
             _ => false,
         }
@@ -195,8 +185,12 @@ impl<'a> PartialOrd for Type {
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
             | (s @ &Type::Func(_, _), o @ &Type::Func(_, _)) => s.partial_cmp(o),
-            (&Type::Array(ref s), &Type::Array(ref o)) => s.partial_cmp(o),
-            (&Type::Simple(ref s), &Type::Simple(ref o)) => s.partial_cmp(o),
+            (&Type::Array(ref s,_), &Type::Array(ref o,_)) => s.partial_cmp(o),
+            (&Type::Nil, &Type::Nil)
+            | (&Type::Float, &Type::Float)
+            | (&Type::Int, &Type::Int)
+            | (&Type::Str, &Type::Str)
+            | (&Type::Bool, &Type::Bool) => Some(Ordering::Equal),
             _ => None,
         }
     }
@@ -218,8 +212,16 @@ impl Hash for Type {
                 key.hash(state);
                 value.hash(state)
             }
-            Type::Array(ref ty) => ty.hash(state),
-            Type::Simple(ref ty) => ty.hash(state),
+            Type::Array(ref ty,ref len) => {
+                ty.hash(state);
+                len.hash(state);
+
+            },
+            Type::Nil => "nil".hash(state),
+            Type::Float => "float".hash(state),
+            Type::Int => "int".hash(state),
+            Type::Str => "str".hash(state),
+            Type::Bool => "bool".hash(state),
         }
     }
 }

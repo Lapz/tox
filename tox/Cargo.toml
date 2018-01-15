@@ -10,6 +10,7 @@ util = {path = "../util"}
 syntax = {path = "../syntax"}
 compiler = {path = "../compiler"}
 sem = {path = "../sem"}
+interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 

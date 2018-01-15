@@ -2,10 +2,10 @@ use super::TyChecker;
 use syntax::ast::statement::Statement;
 use util::pos::WithPos;
 use util::env::{Entry, TypeEnv};
-use types::{BaseType, InferedType, Type, TypeError};
+use util::types::{Type, TypeError};
 use std::collections::HashMap;
 use util::symbol::Symbol;
-use CheckType;
+use super::InferedType;
 
 impl TyChecker {
     pub fn transform_statement(
@@ -169,7 +169,7 @@ impl TyChecker {
                         let return_type = if let Some(ref return_ty) = *returns {
                             self.get_type(return_ty, statement.pos, env)?
                         } else {
-                            Type::Simple(BaseType::Nil)
+                            Type::Nil
                         };
 
                         let mut param_names = vec![];

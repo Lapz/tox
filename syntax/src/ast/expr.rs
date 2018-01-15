@@ -7,6 +7,7 @@ pub enum Expression {
     // The different type of expressions availabe
     Array {
         items: Vec<WithPos<Expression>>,
+        len: usize,
     },
 
     Assign {
@@ -85,7 +86,7 @@ pub enum Expression {
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum ExpressionTy {
     Simple(Symbol),
-    Arr(Box<ExpressionTy>),
+    Arr(Box<ExpressionTy>,usize),
     Func(Vec<ExpressionTy>, Option<Box<ExpressionTy>>),
 }
 

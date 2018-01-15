@@ -20,17 +20,7 @@ pub enum RuntimeError {
     UndefinedSymbol(Symbol),
 }
 
-pub fn interpret(
-    statements: &[WithPos<Statement>],
-    locals: &HashMap<VariableUseHandle, usize>,
-    env: &mut Environment,
-) -> Result<Object, RuntimeError> {
-    let mut result = Object::None;
-    for statement in statements {
-        result = evaluate_statement(statement, locals, env)?
-    }
-    Ok(result)
-}
+
 
 pub(crate) fn evaluate_statement(
     statement: &WithPos<Statement>,
@@ -242,7 +232,7 @@ fn evaluate_expression(
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match expression.node {
-        Expression::Array { ref items } => {
+        Expression::Array { ref items,.. } => {
             let mut values = Vec::with_capacity(items.len());
             for item in items {
                 values.push(evaluate_expression(item, locals, env)?)
@@ -632,7 +622,7 @@ pub mod env {
 
     use std::collections::HashMap;
     use util::symbol::Symbol;
-    use util::env::Unique;
+    use util::Unique;
 
     use object::Object;
     use super::RuntimeError;

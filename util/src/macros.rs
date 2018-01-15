@@ -2,7 +2,7 @@
 macro_rules! nil_type {
     () => {
         InferedType {
-            ty:Type::Simple(BaseType::Nil)
+            ty:Type::Nil
         }
     };
 }
@@ -11,7 +11,7 @@ macro_rules! nil_type {
 macro_rules! bool_type {
     () => {
         InferedType {
-            ty:Type::Simple(BaseType::Bool)
+            ty:Type::Bool
         }
     };
 }
@@ -20,7 +20,7 @@ macro_rules! bool_type {
 macro_rules! str_type {
     () => {
         InferedType {
-            ty:Type::Simple(BaseType::Str)
+            ty:Type::Str
         }
     };
 }
@@ -29,7 +29,7 @@ macro_rules! str_type {
 macro_rules! float_type {
     () => {
         InferedType {
-            ty:Type::Simple(BaseType::Float)
+            ty:Type::Float
         }
     };
 }
@@ -38,7 +38,7 @@ macro_rules! float_type {
 macro_rules! int_type {
     () => {
         InferedType {
-            ty:Type::Simple(BaseType::Int)
+            ty:Type::Int
         }
     };
 }

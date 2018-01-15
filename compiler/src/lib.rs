@@ -1,35 +1,34 @@
 #![feature(use_nested_groups)]
-#[macro_use]
 extern crate llvm;
 extern crate llvm_sys;
 extern crate syntax;
 extern crate util;
 
-use std::rc::Rc;
 use std::collections::HashMap;
 use llvm::{Arg, Builder, CBox, CSemiBox, Compile, Context, DoubleType, FunctionType, IntegerType,
-           Module, Type, Value,VoidType};
+           Module, Type, Value, VoidType,PointerType};
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, Literal, Operator};
-use util::{env::{Entry, TypeEnv}, pos::WithPos, types::{BaseType, Type as Ty}};
-use llvm::{Function, Predicate, types::ArrayType};
-use llvm_sys::core::LLVMConstVector;
-use util::symbol::{Symbol, SymbolFactory, Table};
+use util::{env::{Entry, TypeEnv}, pos::WithPos, types::{Type as Ty}};
+use llvm::{Predicate, types::ArrayType};
+use util::symbol::{Symbol};
 use llvm_sys::prelude::*;
 
-pub fn compile<'a>(ast: &[WithPos<Statement>], strings: &Rc<SymbolFactory>, env: &TypeEnv) -> Result<(), CompilerError> {
+pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), CompilerError> {
     let ctx = Context::new();
     let module = Module::new("tox", &ctx);
     let builder = Builder::new(&ctx);
     let values = HashMap::new();
-   
+
     for statement in ast {
         compile_statement(statement, &builder, &module, &ctx, &values, env)?;
     }
 
     // builder.build_ret(value);
 
-    module.write_bitcode("out.ll").expect("Couldn't write to file");
+    module
+        .write_bitcode("out.bc")
+        .expect("Couldn't write to file");
 
     module.verify().unwrap();
 
@@ -38,6 +37,7 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], strings: &Rc<SymbolFactory>, env:
     Ok(())
 }
 
+#[derive(Debug)]
 pub enum CompilerError {}
 
 fn compile_expr<'a, 'b>(
@@ -109,15 +109,15 @@ fn compile_expr<'a, 'b>(
             }
         }
 
-        Expression::Array { ref items } => {
-            let mut v = Vec::with_capacity(items.len());
+        Expression::Array { ref items,ref len } => {
+            let mut v = Vec::with_capacity(*len);
 
             for item in items {
                 v.push(compile_expr(item, builder, module, context, values, env)?)
             }
 
             let ty = v[0].get_type();
-            let array_ty = ArrayType::new(ty, v.len());
+            let array_ty = ArrayType::new(ty, *len);
 
             Ok(builder.build_array_alloca(array_ty, v.len().compile(&context)))
         }
@@ -140,7 +140,9 @@ fn compile_expr<'a, 'b>(
             _ => unimplemented!(),
         },
 
-        Expression::Func{ref body,..} => compile_statement(body, builder, module, context, values, env),
+        Expression::Func { ref body, .. } => {
+            compile_statement(body, builder, module, context, values, env)
+        }
 
         Expression::Var(ref sym, _) => Ok(values.get(sym).unwrap()),
 
@@ -175,9 +177,7 @@ fn compile_statement<'a, 'b>(
             let val = if let Some(ref r) = *ret {
                 compile_expr(r, builder, module, context, values, env)?
             } else {
-                builder.build_ret(Value::new_null(
-                   VoidType::new(context)
-                ))
+                builder.build_ret(Value::new_null(VoidType::new(context)))
             };
 
             Ok(val)
@@ -191,10 +191,10 @@ fn compile_statement<'a, 'b>(
                 } => {
                     let mut arg_tys: Vec<_> = params
                         .iter()
-                        .map(|param| get_type(param, context))
+                        .map(|param| get_llvm_type(param, context))
                         .collect();
 
-                    let sig = FunctionType::new(get_type(returns, context), &arg_tys);
+                    let sig = FunctionType::new(get_llvm_type(returns, context), &arg_tys);
                     let func = module.add_function(&env.name(*name), sig);
 
                     match body.node {
@@ -222,7 +222,7 @@ fn compile_statement<'a, 'b>(
                     for (i, param) in parameters.iter().enumerate() {
                         values.insert(&param.0, &func[i]);
                     }
-                },
+                }
 
                 _ => unreachable!(),
             }
@@ -238,22 +238,33 @@ fn compile_statement<'a, 'b>(
         _ => unimplemented!(),
     }
 }
-fn get_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
+fn get_llvm_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
     match *ty {
-        Ty::Simple(ref sim) => match *sim {
-            BaseType::Int => IntegerType::new(context, 64),
-            BaseType::Float => DoubleType::new(context),
-            BaseType::Str => <[u8; 0]>::get_type(context),
-            BaseType::Nil => <()>::get_type(context),
-            BaseType::Bool => bool::get_type(context),
+        Ty::Int => IntegerType::new(context, 64),
+        Ty::Float => DoubleType::new(context),
+        Ty::Str => <[u8; 0]>::get_type(context),
+        Ty::Nil => <()>::get_type(context),
+        Ty::Bool => bool::get_type(context),
+        Ty::Name(_,ref ty) => get_llvm_type(ty, context),
+        Ty::Array(ref arr,ref len) => {
+            let element_ty = get_llvm_type(arr, context);
+            ArrayType::new(element_ty,*len)
         },
-        _ => unimplemented!(),
-    }
-}
+        Ty::Func(ref params,ref returns) => {
+            let mut arg_tys: Vec<_> = params
+                        .iter()
+                        .map(|param| get_llvm_type(param, context))
+                        .collect();
+            
+            let returns = get_llvm_type(returns, context);
 
-fn get_sym(expr: &WithPos<Expression>, env: &TypeEnv) -> String {
-    match expr.node {
-        Expression::Var(sym, _) => env.name(sym),
-        _ => unreachable!(),
+            PointerType::new(
+                FunctionType::new(returns,&arg_tys)
+            )
+            
+        }
+
+
+        _ => unimplemented!(),
     }
 }

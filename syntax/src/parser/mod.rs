@@ -949,7 +949,7 @@ impl<'a> Parser<'a> {
 
                     if self.recognise(&TokenType::RBRACKET) {
                         self.advance();
-                        return Ok(WithPos::new(Expression::Array { items }, *pos));
+                        return Ok(WithPos::new(Expression::Array { len:items.len(),items}, *pos));
                     }
 
                     while {
@@ -964,7 +964,7 @@ impl<'a> Parser<'a> {
                         "Expected a ']' to close the brackets .",
                     )?;
 
-                    Ok(WithPos::new(Expression::Array { items }, *pos))
+                    Ok(WithPos::new(Expression::Array { len:items.len(),items }, *pos))
                 }
 
                 TokenType::LBRACE => {
@@ -1068,12 +1068,19 @@ impl<'a> Parser<'a> {
             self.advance();
             let ty = self.parse_type()?;
 
+            self.consume(&TokenType::SEMICOLON, "Expected a \''\' after declaring array type")?;
+
+            let len = match self.advance() {
+                Some(Token{token:TokenType::INT(i),..}) => i,
+                _ => unimplemented!()
+            };
+
             self.consume(
                 &TokenType::RBRACKET,
                 "Expected a \']\' to close an array type",
             )?;
 
-            Ok(ExpressionTy::Arr(Box::new(ty)))
+            Ok(ExpressionTy::Arr(Box::new(ty),len as usize))
         } else if self.recognise(&TokenType::FUNCTION) {
             self.advance();
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;

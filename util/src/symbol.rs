@@ -1,3 +1,6 @@
+//! This module provides a Table which keeps a track of the mappings between a
+//! `Symbol` and a `String`
+
 use std::fmt::{Display, Formatter, Result};
 use std::collections::HashMap;
 use std::cell::RefCell;
@@ -24,6 +27,7 @@ pub struct Table<T: Clone> {
 }
 
 impl<T: Clone> Table<T> {
+    /// A new Table Instance
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Table {
             strings,
@@ -33,7 +37,6 @@ impl<T: Clone> Table<T> {
     }
 
     /// Adds a new scope to the table
-
     pub fn begin_scope(&mut self) {
         self.scopes.push(None);
     }
@@ -45,6 +48,7 @@ impl<T: Clone> Table<T> {
         }
     }
 
+    /// Enters a peice of data into the current scope
     pub fn enter(&mut self, symbol: Symbol, data: T) {
         let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
 
@@ -52,16 +56,19 @@ impl<T: Clone> Table<T> {
         self.scopes.push(Some(symbol));
     }
 
-    /// Looks in the table for the symbol and if found returns the top element in
+    /// Looks in the table for the `Symbol` and if found returns the top element in
     /// the stack of Vec<T>
     pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 
+    /// Finds the name given to a `Symbol`
     pub fn name(&self, symbol: Symbol) -> String {
         self.strings.mappings.borrow()[&symbol].to_owned()
     }
 
+    /// Checks if the given name allready exists within the table
+    /// a new `Symbol` is returned else the previous `Symbol`
     pub fn symbol(&mut self, name: &str) -> Symbol {
         for (key, value) in self.strings.mappings.borrow().iter() {
             if value == name {
@@ -76,7 +83,7 @@ impl<T: Clone> Table<T> {
         *self.strings.next.borrow_mut() += 1;
         symbol
     }
-
+    /// Inserts the `Symbol` into the table
     pub fn replace(&mut self, symbol: Symbol, data: T) {
         let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
         bindings.pop().expect("Call enter() before replace()");
