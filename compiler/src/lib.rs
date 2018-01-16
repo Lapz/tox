@@ -266,6 +266,39 @@ fn compile_statement<'a, 'b>(
             Ok(val)
         }
 
+        Statement::ExternFunction {
+            ref name,
+            ref params,
+            ..
+        } => {
+            let func = match *env.look_var(*name).unwrap() {
+                Entry::FunEntry {
+                    params:ref parameters,
+                    returns:ref returns,
+                } => {
+                    let mut arg_tys: Vec<_> = parameters
+                        .iter()
+                        .map(|p| get_llvm_type(p, context))
+                        .collect();
+
+                    let sig = FunctionType::new(get_llvm_type(returns, context), &arg_tys);
+                    let func = module.add_function(&env.name(*name), sig);
+
+                    for (i, p) in params.iter().enumerate() {
+                        &func[i].set_name(&env.name(p.0));
+                    }
+
+                    func
+                }
+
+                _ => unreachable!(),
+            };
+
+            Ok(().compile(context))
+
+
+        }
+
         Statement::Function { ref name, ref body } => {
             let func = match *env.look_var(*name).unwrap() {
                 Entry::FunEntry {
@@ -325,7 +358,7 @@ fn get_llvm_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
     match *ty {
         Ty::Int => IntegerType::new(context, 64),
         Ty::Float => DoubleType::new(context),
-        Ty::Str => <[u8; 0]>::get_type(context),
+        Ty::Str => <*const str>::get_type(context),
         Ty::Nil => <()>::get_type(context),
         Ty::Bool => bool::get_type(context),
         Ty::Name(_, ref ty) => get_llvm_type(ty, context),

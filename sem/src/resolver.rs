@@ -308,7 +308,7 @@ impl Resolver {
                 Ok(())
             }
 
-            Statement::ExternFunction{ref name,..} => {
+            Statement::ExternFunction { ref name, .. } => {
                 self.declare(*name, statement.pos)?;
                 self.define(*name);
                 Ok(())

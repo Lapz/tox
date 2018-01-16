@@ -220,7 +220,7 @@ pub(crate) fn evaluate_statement(
             }
 
             Ok(Object::None)
-        },
+        }
 
         _ => unimplemented!("Extern linking of functions is not available"),
     }

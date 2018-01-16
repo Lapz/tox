@@ -168,6 +168,7 @@ impl TyChecker {
 
                 Err(TypeError::UndefindedType(env.name(s), pos))
             }
+            ExpressionTy::Nil => Ok(Type::Nil),
             ExpressionTy::Arr(ref s, ref len) => {
                 Ok(Type::Array(Box::new(self.get_type(s, pos, env)?), *len))
             }

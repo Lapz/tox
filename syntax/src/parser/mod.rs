@@ -312,6 +312,9 @@ impl<'a> Parser<'a> {
             returns = Some(self.parse_type()?);
         }
 
+
+        self.consume(&TokenType::SEMICOLON, "Expected ';' after extern function ")?;
+
         Ok(WithPos::new(
             Statement::ExternFunction {
                 name,
@@ -1126,7 +1129,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type(&mut self) -> Result<ExpressionTy, ParserError> {
-        if self.recognise(&TokenType::LBRACKET) {
+        if self.recognise(&TokenType::NIL) {
+            self.advance();
+
+            Ok(ExpressionTy::Nil)
+        } else if self.recognise(&TokenType::LBRACKET) {
             self.advance();
             let ty = self.parse_type()?;
 

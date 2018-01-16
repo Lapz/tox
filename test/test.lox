@@ -1,10 +1,13 @@
+extern cos(a:float) -> float;
+extern puts(s:str);
+
 type Int = int;
 
 fun add(a:int,b:int) -> Int {
     return a+b;
 }
 
-fun main() -> Int {
-    true ? add(10,2) : 1;
-    return 10;
+fun main() -> float {
+    puts("hello");
+    return cos(90.0);
 }

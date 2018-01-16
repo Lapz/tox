@@ -223,7 +223,7 @@ impl TyChecker {
                     },
                 );
 
-                Ok(InferedType {ty:return_type})
+                Ok(InferedType { ty: return_type })
             }
 
             Statement::ForStmt {

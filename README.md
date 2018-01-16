@@ -92,6 +92,5 @@ if (int(guess) == secret_number) {
 
 
 ## Run the Compiler
-llc -filetype=obj out.bc
-clang out.o
-./a.out
+cargo run ../test/test.lox && llc -filetype=obj out.bc \
+&& clang -g -O3 out.bc `llvm-config --cxxflags --ldflags --system-libs --libs core` -o tox && ./toy
