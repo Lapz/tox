@@ -4,14 +4,35 @@ use util::symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
-    ExpressionStmt(WithPos<Expression>),
+    
     Var(Symbol, Option<WithPos<Expression>>, Option<ExpressionTy>),
     Block(Vec<WithPos<Statement>>),
+    Break,
     Class {
         name: Symbol,
         superclass: Option<Symbol>,
         methods: Vec<WithPos<Statement>>,
         properties: Vec<(Symbol, ExpressionTy)>,
+    },
+    Continue,
+    
+    DoStmt {
+        condition: WithPos<Expression>,
+        body: Box<WithPos<Statement>>,
+    },
+
+    ExpressionStmt(WithPos<Expression>),
+
+    Function {
+        name: Symbol,
+        body: WithPos<Expression>,
+    },
+
+    ForStmt {
+        initializer: Option<Box<WithPos<Statement>>>,
+        condition: Option<WithPos<Expression>>,
+        increment: Option<WithPos<Expression>>,
+        body: Box<WithPos<Statement>>,
     },
 
     IfStmt {
@@ -21,31 +42,16 @@ pub enum Statement {
     },
 
     Print(WithPos<Expression>),
+    
     WhileStmt {
         condition: WithPos<Expression>,
         body: Box<WithPos<Statement>>,
     },
-    ForStmt {
-        initializer: Option<Box<WithPos<Statement>>>,
-        condition: Option<WithPos<Expression>>,
-        increment: Option<WithPos<Expression>>,
-        body: Box<WithPos<Statement>>,
-    },
-    Function {
-        name: Symbol,
-        body: WithPos<Expression>,
-    },
 
-    DoStmt {
-        condition: WithPos<Expression>,
-        body: Box<WithPos<Statement>>,
-    },
+    Return(Option<WithPos<Expression>>),
 
-    Break,
-    Continue,
     TypeAlias {
         alias: Symbol,
         ty: ExpressionTy,
     },
-    Return(Option<WithPos<Expression>>),
 }

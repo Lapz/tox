@@ -171,8 +171,42 @@ fn compile_expr<'a, 'b>(
 
         Expression::Ternary {ref condition,ref then_branch,ref else_branch} => {
             let mut cond = compile_expr(condition, builder, module, context, values, env)?;
-            cond = builder.build_cmp()
-            unimplemented!()
+            cond = builder.build_cmp(cond,true.compile(context),Predicate::Equal);
+            let func = BasicBlock::get_insert_block(builder).get_parent().unwrap();
+            
+            let mut thenbb = func.append("then");
+            let mut elsebb = func.append("else");
+            let mergebb = func.append("terncont");
+            
+            builder.build_cond_br(cond,thenbb,elsebb);
+            
+            builder.position_at_end(thenbb);
+
+            let thenv = compile_expr(then_branch, builder, module, context, values, env)?;
+
+            builder.build_br(mergebb);
+
+            thenbb = builder.get_insert_block();
+
+            builder.position_at_end(elsebb);
+            
+            let elsev = compile_expr(else_branch, builder, module, context, values, env)?;
+
+            builder.build_br(mergebb);
+
+            elsebb = builder.get_insert_block();
+
+            
+
+            builder.position_at_end(mergebb);
+
+            let mut e:Vec<(&Value, &BasicBlock)> = vec![];
+            let ty = thenv.get_type();
+
+            e.append(&mut vec![(thenv,thenbb)]);
+            e.append(&mut vec![(elsev,elsebb)]);
+
+           Ok(builder.build_phi(ty,&e))
         },
         Expression::Unary{ref operator,ref expr} => {
 
@@ -280,6 +314,7 @@ fn compile_statement<'a, 'b>(
         ref e => unimplemented!("{:?}",e),
     }
 }
+
 fn get_llvm_type<'a>(ty: &Ty, context: &'a CBox<Context>) -> &'a Type {
     match *ty {
         Ty::Int => IntegerType::new(context, 64),

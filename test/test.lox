@@ -5,6 +5,6 @@ fun add(a:int,b:int) -> Int {
 }
 
 fun main() -> Int {
-   add(1,2);
+    true ? add(10,2) : 1;
     return 10;
 }
