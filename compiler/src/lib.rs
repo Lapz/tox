@@ -8,11 +8,12 @@ use std::collections::HashMap;
 use llvm::{Arg, Builder, CBox, CSemiBox, Compile, Context, DoubleType, FunctionType, IntegerType,
            Module, Type, BasicBlock,Value, VoidType,PointerType};
 use syntax::ast::statement::Statement;
-use syntax::ast::expr::{Expression, Literal, Operator};
+use syntax::ast::expr::{Expression, Literal, Operator,LogicOperator,UnaryOperator};
 use util::{env::{Entry, TypeEnv}, pos::WithPos, types::{Type as Ty}};
 use llvm::{Predicate, types::ArrayType};
 use util::symbol::{Symbol};
-use llvm_sys::prelude::*;
+use llvm::ffi::core::LLVMConstExtractElement;
+
 
 pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), CompilerError> {
     let ctx = Context::new();
@@ -30,7 +31,7 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), Comp
         .write_bitcode("out.bc")
         .expect("Couldn't write to file");
 
-    // module.verify().unwrap();
+    module.verify().unwrap();
 
     println!("{:?}", module);
 
@@ -49,13 +50,7 @@ fn compile_expr<'a, 'b>(
     env: &TypeEnv,
 ) -> Result<&'a Value, CompilerError> {
     match expr.node {
-        Expression::Literal(ref lit) => match *lit {
-            Literal::True(b) | Literal::False(b) => Ok(b.compile(&context)),
-            Literal::Str(ref s) => Ok(s.compile(&context)),
-            Literal::Float(ref n) => Ok(n.compile(&context)),
-            Literal::Int(ref n) => Ok(n.compile(&context)),
-            Literal::Nil => Ok(().compile(&context)),
-        },
+       
         Expression::Binary {
             ref left_expr,
             ref operator,
@@ -67,13 +62,12 @@ fn compile_expr<'a, 'b>(
                 Operator::Plus => Ok(builder.build_add(left, right)),
                 Operator::Minus => Ok(builder.build_sub(left, right)),
                 Operator::Star => Ok(builder.build_mul(left, right)),
-
+                Operator::Slash => Ok(builder.build_div(left,right)),
                 Operator::LessThan => {
                     let comp = builder.build_cmp(&left, &right, Predicate::LessThan);
                     let res = builder.build_bit_cast(&comp, &Type::get::<f64>(&context));
                     Ok(res)
                 }
-
                 Operator::LessThanEqual => {
                     let comp = builder.build_cmp(&left, &right, Predicate::LessThanOrEqual);
                     let res = builder.build_bit_cast(&comp, &Type::get::<f64>(&context));
@@ -105,7 +99,7 @@ fn compile_expr<'a, 'b>(
 
                 Operator::Modulo => Ok(builder.build_rem(left, right)),
 
-                _ => unimplemented!(),
+                _ => unimplemented!()
             }
         }
 
@@ -142,8 +136,53 @@ fn compile_expr<'a, 'b>(
 
         Expression::Func { ref body, .. } => {
             compile_statement(body, builder, module, context, values, env)
-        }
+        },
 
+        Expression::Grouping{ref expr} => compile_expr(expr, builder, module, context, values, env),
+
+        Expression::IndexExpr{ref target,ref index} => {
+            let target = builder.build_load(compile_expr(expr, builder, module, context, values, env)?);
+            let index = compile_expr(expr, builder, module, context, values, env)?;
+          
+
+            Ok(unsafe{LLVMConstExtractElement(
+                target.into(),
+                index.into(),
+            )}.into())
+            
+        },
+
+        Expression::Literal(ref lit) => match *lit {
+            Literal::True(b) | Literal::False(b) => Ok(b.compile(&context)),
+            Literal::Str(ref s) => Ok(s.compile(&context)),
+            Literal::Float(ref n) => Ok(n.compile(&context)),
+            Literal::Int(ref n) => Ok(n.compile(&context)),
+            Literal::Nil => Ok(().compile(&context)),
+        },
+
+        Expression::Logical{ref left,ref operator,ref right} => {
+            let left = compile_expr(left, builder, module, context, values, env)?;
+            let right = compile_expr(right, builder, module, context, values, env)?;
+            match *operator{
+                LogicOperator::And => Ok(builder.build_and(left,right)),
+                LogicOperator::Or => Ok(builder.build_or(left,right)),
+            }
+        },
+
+        Expression::Ternary {ref condition,ref then_branch,ref else_branch} => {
+            let mut cond = compile_expr(condition, builder, module, context, values, env)?;
+            cond = builder.build_cmp()
+            unimplemented!()
+        },
+        Expression::Unary{ref operator,ref expr} => {
+
+            let expr = compile_expr(expr, builder, module, context, values, env)?;
+            
+            match *operator {
+                UnaryOperator::Bang => Ok(builder.build_not(expr)),
+                UnaryOperator::Minus => Ok(builder.build_neg(expr)),
+            }
+        },
         Expression::Var(ref sym, _) => Ok(values.get(sym).unwrap()),
 
         // Expression::
@@ -162,18 +201,18 @@ fn compile_statement<'a, 'b>(
     match statement.node {
         Statement::ExpressionStmt(ref expr) => {
             compile_expr(expr, builder, module, context, values, env)
+        },
+
+        Statement::TypeAlias{..} => {
+            Ok(().compile(context))
         }
         
         Statement::Block(ref statements) => {
-            let bb = BasicBlock::get_insert_block(builder).get_parent().unwrap()s;
-
-
             let mut ret = Ok(Value::new_null(VoidType::new(context)));
 
             for statement in statements {
                 ret = compile_statement(statement, builder, module, context, values, env);
             }
-
             ret
         }
 
@@ -232,12 +271,11 @@ fn compile_statement<'a, 'b>(
             }
 
             let ret = compile_expr(body, builder, module, context, &values, env)?;
+            
             builder.build_ret(ret);
-            // block.get_terminator();
-
-            // module.verify().unwrap();
+            module.verify().unwrap();
+            
             Ok(func)
-            // unimplemented!()
         }
         ref e => unimplemented!("{:?}",e),
     }

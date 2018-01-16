@@ -1,12 +1,10 @@
-fun sub(a:fun(int,int) -> int) -> int {
-    return 100;
-}
+type Int = int;
 
-fun add(a:int,b:int) -> int {
+fun add(a:int,b:int) -> Int {
     return a+b;
 }
 
-fun main() -> int {
-    sub(add);
+fun main() -> Int {
+   add(1,2);
     return 10;
 }
