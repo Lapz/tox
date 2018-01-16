@@ -6,7 +6,7 @@ extern crate util;
 
 use std::collections::HashMap;
 use llvm::{Arg, Builder, CBox, CSemiBox, Compile, Context, DoubleType, FunctionType, IntegerType,
-           Module, Type, Value, VoidType,PointerType};
+           Module, Type, BasicBlock,Value, VoidType,PointerType};
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, Literal, Operator};
 use util::{env::{Entry, TypeEnv}, pos::WithPos, types::{Type as Ty}};
@@ -163,8 +163,12 @@ fn compile_statement<'a, 'b>(
         Statement::ExpressionStmt(ref expr) => {
             compile_expr(expr, builder, module, context, values, env)
         }
+        
         Statement::Block(ref statements) => {
-            let mut ret = Ok(().compile(&context));
+            let bb = BasicBlock::get_insert_block(builder).get_parent().unwrap()s;
+
+
+            let mut ret = Ok(Value::new_null(VoidType::new(context)));
 
             for statement in statements {
                 ret = compile_statement(statement, builder, module, context, values, env);
