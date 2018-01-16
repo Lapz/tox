@@ -20,8 +20,6 @@ pub enum RuntimeError {
     UndefinedSymbol(Symbol),
 }
 
-
-
 pub(crate) fn evaluate_statement(
     statement: &WithPos<Statement>,
     locals: &HashMap<VariableUseHandle, usize>,
@@ -222,7 +220,9 @@ pub(crate) fn evaluate_statement(
             }
 
             Ok(Object::None)
-        }
+        },
+
+        _ => unimplemented!("Extern linking of functions is not available"),
     }
 }
 
@@ -232,7 +232,7 @@ fn evaluate_expression(
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match expression.node {
-        Expression::Array { ref items,.. } => {
+        Expression::Array { ref items, .. } => {
             let mut values = Vec::with_capacity(items.len());
             for item in items {
                 values.push(evaluate_expression(item, locals, env)?)

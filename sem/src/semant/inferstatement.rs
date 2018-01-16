@@ -196,6 +196,36 @@ impl TyChecker {
                 Ok(body_ty)
             }
 
+            Statement::ExternFunction {
+                ref name,
+                ref params,
+                ref returns,
+            } => {
+                let return_type = if let Some(ref return_ty) = *returns {
+                    self.get_type(return_ty, statement.pos, env)?
+                } else {
+                    Type::Nil
+                };
+
+                let mut param_names = vec![];
+                let mut param_ty = vec![];
+
+                for &(param, ref p_ty) in params {
+                    param_ty.push(self.get_type(p_ty, statement.pos, env)?);
+                    param_names.push(param);
+                }
+
+                env.add_var(
+                    *name,
+                    Entry::FunEntry {
+                        params: param_ty,
+                        returns: return_type.clone(),
+                    },
+                );
+
+                Ok(InferedType {ty:return_type})
+            }
+
             Statement::ForStmt {
                 ref initializer,
                 ref condition,

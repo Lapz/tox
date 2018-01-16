@@ -12,10 +12,10 @@ impl TyChecker {
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match expr.node {
-            Expression::Array { ref items,ref len} => {
+            Expression::Array { ref items, ref len } => {
                 if items.is_empty() {
                     return Ok(InferedType {
-                        ty: Type::Array(Box::new(Type::Nil),0),
+                        ty: Type::Array(Box::new(Type::Nil), 0),
                     });
                 }
 
@@ -27,7 +27,7 @@ impl TyChecker {
                 }
 
                 Ok(InferedType {
-                    ty: Type::Array(Box::new(first_ty.ty),*len),
+                    ty: Type::Array(Box::new(first_ty.ty), *len),
                 })
             }
 
@@ -167,8 +167,8 @@ impl TyChecker {
                         }
                         _ => unreachable!(),
                     }
-                },
-                Expression::Call{..}=> self.transform_expression(callee,env),
+                }
+                Expression::Call { .. } => self.transform_expression(callee, env),
                 _ => Err(TypeError::NotCallable(callee.pos)),
             },
 
@@ -327,7 +327,7 @@ impl TyChecker {
                     index_ty.check_int(index.pos)?;
 
                     match target_ty.ty {
-                        Type::Array(ref exp_ty,_) => Ok(InferedType {
+                        Type::Array(ref exp_ty, _) => Ok(InferedType {
                             ty: *exp_ty.clone(),
                         }),
                         Type::Str => Ok(str_type!()),

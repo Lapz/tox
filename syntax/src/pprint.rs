@@ -88,6 +88,25 @@ impl Statement {
                 expr.node.pprint_into(pprint_string, symbols);
             }
 
+            Statement::ExternFunction {
+                ref name,
+                ref params,
+                ref returns,
+            } => {
+                pprint_string.push_str("(extern ");
+
+                pprint_string.push_str(&symbols.name(*name));
+
+                for item in params {
+                    pprint_string.push_str(&symbols.name(item.0));
+                    pprint_string.push_str(":");
+                    pprint_string.push_str(&item.1.pprint(symbols));
+                    pprint_string.push_str(" ");
+                }
+
+                pprint_string.push_str(")");
+            }
+
             Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(*alias));
@@ -256,7 +275,7 @@ impl Statement {
 impl Expression {
     fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
         match *self {
-            Expression::Array { ref items ,..} => {
+            Expression::Array { ref items, .. } => {
                 pprint_string.push_str("(array");
                 for item in items {
                     item.node.pprint_into(pprint_string, symbols);

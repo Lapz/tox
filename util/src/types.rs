@@ -21,7 +21,7 @@ pub enum TypeError {
     NotMethodOrProperty(String, Postition),
     TooManyProperty(Postition),
     TooLittleProperty(Postition),
-    ExpectedOneOf(String,Postition),
+    ExpectedOneOf(String, Postition),
     NotInstanceOrClass(Type, Symbol, Postition),
     SuperClass(Symbol, Postition),
 }
@@ -36,7 +36,7 @@ pub enum Type {
     This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
     Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
-    Array(Box<Type>,usize),
+    Array(Box<Type>, usize),
     Name(Symbol, Box<Type>),
     Int,
     Str,
@@ -69,7 +69,7 @@ impl Display for Type {
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
-            Type::Array(ref a,ref len) => write!(f, "Array of {} with len {}", a,len),
+            Type::Array(ref a, ref len) => write!(f, "Array of {} with len {}", a, len),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
@@ -114,7 +114,7 @@ impl Display for TypeError {
                 ty, property, pos
             ),
 
-            TypeError::ExpectedOneOf(ref msg,ref pos) => write!(f, "{} on {}", msg,pos),
+            TypeError::ExpectedOneOf(ref msg, ref pos) => write!(f, "{} on {}", msg, pos),
 
             TypeError::NotMethodOrProperty(ref name, ref pos) => {
                 write!(f, "Undefined method/property \'{}\' on {}", name, pos)
@@ -157,9 +157,7 @@ impl<'a> PartialEq for Type {
                 name == oname && ty == oty
             }
 
-            (&Type::Array(ref s,ref len),&Type::Array(ref o,ref olen)) => {
-                s == o && len == olen
-            }
+            (&Type::Array(ref s, ref len), &Type::Array(ref o, ref olen)) => s == o && len == olen,
 
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
@@ -185,7 +183,7 @@ impl<'a> PartialOrd for Type {
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
             | (s @ &Type::Func(_, _), o @ &Type::Func(_, _)) => s.partial_cmp(o),
-            (&Type::Array(ref s,_), &Type::Array(ref o,_)) => s.partial_cmp(o),
+            (&Type::Array(ref s, _), &Type::Array(ref o, _)) => s.partial_cmp(o),
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
             | (&Type::Int, &Type::Int)
@@ -212,11 +210,10 @@ impl Hash for Type {
                 key.hash(state);
                 value.hash(state)
             }
-            Type::Array(ref ty,ref len) => {
+            Type::Array(ref ty, ref len) => {
                 ty.hash(state);
                 len.hash(state);
-
-            },
+            }
             Type::Nil => "nil".hash(state),
             Type::Float => "float".hash(state),
             Type::Int => "int".hash(state),

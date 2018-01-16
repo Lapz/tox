@@ -139,7 +139,7 @@ impl TyChecker {
                 for (arg, param) in arguments.iter().zip(params) {
                     let exp_ty = self.transform_expression(arg, env)?;
 
-                    self.check_types(&exp_ty.ty,param, pos)?;
+                    self.check_types(&exp_ty.ty, param, pos)?;
                 }
                 Ok(InferedType {
                     ty: self.actual_type(returns).clone(),
@@ -168,7 +168,9 @@ impl TyChecker {
 
                 Err(TypeError::UndefindedType(env.name(s), pos))
             }
-            ExpressionTy::Arr(ref s,ref len) => Ok(Type::Array(Box::new(self.get_type(s, pos, env)?),*len )),
+            ExpressionTy::Arr(ref s, ref len) => {
+                Ok(Type::Array(Box::new(self.get_type(s, pos, env)?), *len))
+            }
             ExpressionTy::Func(ref params, ref returns) => {
                 let mut param_tys = Vec::with_capacity(params.len());
 
@@ -193,7 +195,7 @@ impl InferedType {
     /// Given an `InferedType` check if it an {int} or {float}
     fn check_int_float(&self, pos: Postition) -> Result<(), TypeError> {
         if self.check_int(pos).is_err() && self.check_float(pos).is_err() {
-            Err(TypeError::ExpectedOneOf("Int or Float".into(),pos))
+            Err(TypeError::ExpectedOneOf("Int or Float".into(), pos))
         } else {
             Ok(())
         }
@@ -202,11 +204,7 @@ impl InferedType {
     /// Checks if `InferedType` is {bool}
     fn check_bool(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Bool {
-            return Err(TypeError::Expected(
-                Type::Bool,
-                self.ty.clone(),
-                pos,
-            ));
+            return Err(TypeError::Expected(Type::Bool, self.ty.clone(), pos));
         }
         Ok(())
     }
@@ -214,11 +212,7 @@ impl InferedType {
     /// Checks if `InferedType` is {int}
     fn check_int(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Int {
-            return Err(TypeError::Expected(
-                Type::Int,
-                self.ty.clone(),
-                pos,
-            ));
+            return Err(TypeError::Expected(Type::Int, self.ty.clone(), pos));
         }
         Ok(())
     }
@@ -226,22 +220,14 @@ impl InferedType {
     /// Checks if `InferedType` is {str}
     fn check_str(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Str {
-            return Err(TypeError::Expected(
-                Type::Str,
-                self.ty.clone(),
-                pos,
-            ));
+            return Err(TypeError::Expected(Type::Str, self.ty.clone(), pos));
         }
         Ok(())
     }
     /// Checks if `InferedType` is {float}
     fn check_float(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Float {
-            return Err(TypeError::Expected(
-                Type::Float,
-                self.ty.clone(),
-                pos,
-            ));
+            return Err(TypeError::Expected(Type::Float, self.ty.clone(), pos));
         }
         Ok(())
     }
@@ -251,30 +237,21 @@ impl InferedType {
         if self.check_int(pos).is_err() || self.check_int(pos).is_err() {
             if self.check_float(pos).is_ok() {
                 self.check_float(pos)?;
-                Ok(InferedType {
-                    ty: Type::Float,
-                })
+                Ok(InferedType { ty: Type::Float })
             } else if self.check_str(pos).is_ok() {
                 // self.check_str pos)?;
                 self.check_str(pos)?;
-                Ok(InferedType {
-                    ty: Type::Str,
-                })
+                Ok(InferedType { ty: Type::Str })
             } else {
                 Err(TypeError::ExpectedOneOf(
-                    "Exepected on of 'Int', 'Float', or 'Str'".into()
-                ,pos))
+                    "Exepected on of 'Int', 'Float', or 'Str'".into(),
+                    pos,
+                ))
             }
         } else if self.check_int(pos).is_ok() && self.check_int(pos).is_ok() {
-            Ok(InferedType {
-                ty: Type::Int,
-            })
+            Ok(InferedType { ty: Type::Int })
         } else {
-            Err(TypeError::Expected(
-                Type::Int,
-                self.ty.clone(),
-                pos,
-            ))
+            Err(TypeError::Expected(Type::Int, self.ty.clone(), pos))
         }
     }
 }

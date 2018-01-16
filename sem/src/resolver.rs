@@ -308,6 +308,12 @@ impl Resolver {
                 Ok(())
             }
 
+            Statement::ExternFunction{ref name,..} => {
+                self.declare(*name, statement.pos)?;
+                self.define(*name);
+                Ok(())
+            }
+
             Statement::Class {
                 ref name,
                 ref methods,
@@ -375,7 +381,7 @@ impl Resolver {
         pos: Postition,
     ) -> Result<(), ResolverError> {
         match *expr {
-            Expression::Array { ref items,..} => {
+            Expression::Array { ref items, .. } => {
                 for item in items {
                     self.resolve_expression(&item.node, pos)?;
                 }

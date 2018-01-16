@@ -4,7 +4,6 @@ use util::symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
-    
     Var(Symbol, Option<WithPos<Expression>>, Option<ExpressionTy>),
     Block(Vec<WithPos<Statement>>),
     Break,
@@ -15,13 +14,19 @@ pub enum Statement {
         properties: Vec<(Symbol, ExpressionTy)>,
     },
     Continue,
-    
+
     DoStmt {
         condition: WithPos<Expression>,
         body: Box<WithPos<Statement>>,
     },
 
     ExpressionStmt(WithPos<Expression>),
+
+    ExternFunction {
+        name: Symbol,
+        params: Vec<(Symbol, ExpressionTy)>,
+        returns: Option<ExpressionTy>,
+    },
 
     Function {
         name: Symbol,
@@ -42,7 +47,7 @@ pub enum Statement {
     },
 
     Print(WithPos<Expression>),
-    
+
     WhileStmt {
         condition: WithPos<Expression>,
         body: Box<WithPos<Statement>>,

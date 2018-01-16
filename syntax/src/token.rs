@@ -76,6 +76,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
+            TokenType::EXTERN => write!(f, "extern"),
         }
     }
 }
@@ -146,6 +147,7 @@ pub enum TokenType<'a> {
     OR,
     NIL,
     TYPE,
+    EXTERN,
 
     // Other
     EOF,

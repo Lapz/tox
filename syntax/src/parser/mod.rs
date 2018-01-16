@@ -233,6 +233,8 @@ impl<'a> Parser<'a> {
             self.for_statement()
         } else if self.recognise(&TokenType::PRINT) {
             self.print_statement()
+        } else if self.recognise(&TokenType::EXTERN) {
+            self.extern_statment()
         } else {
             self.expression_statement()
         }
@@ -269,6 +271,54 @@ impl<'a> Parser<'a> {
                 body: self.fun_body(kind)?,
             },
             func_pos,
+        ))
+    }
+
+    fn extern_statment(&mut self) -> Result<WithPos<Statement>, ParserError> {
+        let extern_pos = self.get_pos()?;
+
+        let name = self.consume_name("Expected a extern function name")?;
+
+        self.consume(&TokenType::LPAREN, "Expected \'('")?;
+
+        let mut params = Vec::with_capacity(32);
+
+        let mut returns = None;
+
+        if !self.recognise(&TokenType::RPAREN) {
+            while {
+                if params.len() >= 32 {
+                    return Err(ParserError::TooManyParams(extern_pos));
+                };
+
+                let identifier = self.consume_name("Expected an external param name")?;
+
+                self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                let ty = self.parse_type()?;
+
+                params.push((identifier, ty));
+
+                self.recognise(&TokenType::COMMA)
+                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
+            } {}
+        }
+
+        self.consume(&TokenType::RPAREN, "Expected ')' after parameters.")?;
+
+        if self.recognise(&TokenType::FRETURN) {
+            self.advance();
+
+            returns = Some(self.parse_type()?);
+        }
+
+        Ok(WithPos::new(
+            Statement::ExternFunction {
+                name,
+                params,
+                returns,
+            },
+            extern_pos,
         ))
     }
 
@@ -949,7 +999,13 @@ impl<'a> Parser<'a> {
 
                     if self.recognise(&TokenType::RBRACKET) {
                         self.advance();
-                        return Ok(WithPos::new(Expression::Array { len:items.len(),items}, *pos));
+                        return Ok(WithPos::new(
+                            Expression::Array {
+                                len: items.len(),
+                                items,
+                            },
+                            *pos,
+                        ));
                     }
 
                     while {
@@ -964,7 +1020,13 @@ impl<'a> Parser<'a> {
                         "Expected a ']' to close the brackets .",
                     )?;
 
-                    Ok(WithPos::new(Expression::Array { len:items.len(),items }, *pos))
+                    Ok(WithPos::new(
+                        Expression::Array {
+                            len: items.len(),
+                            items,
+                        },
+                        *pos,
+                    ))
                 }
 
                 TokenType::LBRACE => {
@@ -1068,11 +1130,17 @@ impl<'a> Parser<'a> {
             self.advance();
             let ty = self.parse_type()?;
 
-            self.consume(&TokenType::SEMICOLON, "Expected a \''\' after declaring array type")?;
+            self.consume(
+                &TokenType::SEMICOLON,
+                "Expected a \''\' after declaring array type",
+            )?;
 
             let len = match self.advance() {
-                Some(Token{token:TokenType::INT(i),..}) => i,
-                _ => unimplemented!()
+                Some(Token {
+                    token: TokenType::INT(i),
+                    ..
+                }) => i,
+                _ => unimplemented!(),
             };
 
             self.consume(
@@ -1080,7 +1148,7 @@ impl<'a> Parser<'a> {
                 "Expected a \']\' to close an array type",
             )?;
 
-            Ok(ExpressionTy::Arr(Box::new(ty),len as usize))
+            Ok(ExpressionTy::Arr(Box::new(ty), len as usize))
         } else if self.recognise(&TokenType::FUNCTION) {
             self.advance();
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
