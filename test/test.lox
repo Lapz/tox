@@ -1,9 +1,14 @@
-extern cos(a:float) -> float;
+extern cos(v:float) -> float;
 
 type Int = int;
 
 fun add(a:int,b:int) -> Int {
     return a+b;
+}
+
+fun test(x:int) -> int {
+    (1+2+x)*(x+(1+2));
+    return 1;
 }
 
 fun main() -> float {

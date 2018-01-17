@@ -92,5 +92,5 @@ if (int(guess) == secret_number) {
 
 
 ## Run the Compiler
- RUST_BACKTRACE=1 cargo run ../test/test.lox && llc -filetype=obj out.bc \
+ RUSTFLAGS='-C link-args=-lffi' RUST_BACKTRACE=1 cargo run ../test/test.lox && llc -filetype=obj out.bc \
 && clang++ -g -O3 out.bc `lvm-config --cxxflags --ldflags --system-libs --libs core` && ./toy

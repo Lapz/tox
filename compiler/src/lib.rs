@@ -6,7 +6,7 @@ extern crate util;
 
 use std::collections::HashMap;
 use llvm::{Arg, BasicBlock, Builder, CBox, CSemiBox, Compile, Context, DoubleType, FunctionType,
-           IntegerType, Module, PointerType, Type, Value, VoidType};
+           IntegerType, Module, PointerType, Type, Value, VoidType,PassManager};
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, Literal, LogicOperator, Operator, UnaryOperator};
 use util::{env::{Entry, TypeEnv}, pos::WithPos, types::Type as Ty};
@@ -20,8 +20,16 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), Comp
     let builder = Builder::new(&ctx);
     let values = HashMap::new();
 
+    let fpm = PassManager::new_func_pass(&module);
+
+    fpm.add_instruction_combining();
+    fpm.add_reassociate();
+    fpm.add_gvn();
+    fpm.add_cfg();
+
+
     for statement in ast {
-        compile_statement(statement, &builder, &module, &ctx, &values, env)?;
+        compile_statement(statement, &builder, &module, &ctx, &values,&fpm,env)?;
     }
 
     // builder.build_ret(value);
@@ -32,12 +40,9 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), Comp
 
     module.verify().unwrap();
 
-    // let ee = JitEngine::new(JitOptions{
-    //     opt_level:3
-    // }).unwrap();
-
     
 
+    
     println!("{:?}", module);
 
     Ok(())
@@ -52,6 +57,7 @@ fn compile_expr<'a, 'b>(
     module: &'a CSemiBox<'a, Module>,
     context: &'a CBox<Context>,
     values: &'a HashMap<&Symbol, &'a Arg>,
+    fpm: &'a PassManager,
     env: &TypeEnv,
 ) -> Result<&'a Value, CompilerError> {
     match expr.node {
@@ -60,8 +66,8 @@ fn compile_expr<'a, 'b>(
             ref operator,
             ref right_expr,
         } => {
-            let left = compile_expr(left_expr, builder, module, context, values, env)?;
-            let right = compile_expr(right_expr, builder, module, context, values, env)?;
+            let left = compile_expr(left_expr, builder, module, context, values,fpm, env)?;
+            let right = compile_expr(right_expr, builder, module, context, values,fpm,env)?;
             match *operator {
                 Operator::Plus => Ok(builder.build_add(left, right)),
                 Operator::Minus => Ok(builder.build_sub(left, right)),
@@ -111,7 +117,7 @@ fn compile_expr<'a, 'b>(
             let mut v = Vec::with_capacity(*len);
 
             for item in items {
-                v.push(compile_expr(item, builder, module, context, values, env)?)
+                v.push(compile_expr(item, builder, module, context, values,fpm, env)?)
             }
 
             let ty = v[0].get_type();
@@ -130,7 +136,7 @@ fn compile_expr<'a, 'b>(
                 let mut v = vec![];
 
                 for arg in arguments {
-                    v.push(compile_expr(arg, builder, module, context, values, env)?)
+                    v.push(compile_expr(arg, builder, module, context, values, fpm,env)?)
                 }
 
                 Ok(builder.build_call(func, &v))
@@ -139,11 +145,11 @@ fn compile_expr<'a, 'b>(
         },
 
         Expression::Func { ref body, .. } => {
-            compile_statement(body, builder, module, context, values, env)
+            compile_statement(body, builder, module, context, values,fpm, env)
         }
 
         Expression::Grouping { ref expr } => {
-            compile_expr(expr, builder, module, context, values, env)
+            compile_expr(expr, builder, module, context, values,fpm, env)
         }
 
         Expression::IndexExpr {
@@ -151,8 +157,8 @@ fn compile_expr<'a, 'b>(
             ref index,
         } => {
             let target =
-                builder.build_load(compile_expr(expr, builder, module, context, values, env)?);
-            let index = compile_expr(expr, builder, module, context, values, env)?;
+                builder.build_load(compile_expr(expr, builder, module, context, values,fpm, env)?);
+            let index = compile_expr(expr, builder, module, context, values,fpm, env)?;
 
             Ok(unsafe { LLVMConstExtractElement(target.into(), index.into()) }.into())
         }
@@ -170,8 +176,8 @@ fn compile_expr<'a, 'b>(
             ref operator,
             ref right,
         } => {
-            let left = compile_expr(left, builder, module, context, values, env)?;
-            let right = compile_expr(right, builder, module, context, values, env)?;
+            let left = compile_expr(left, builder, module, context, values,fpm, env)?;
+            let right = compile_expr(right, builder, module, context, values,fpm, env)?;
             match *operator {
                 LogicOperator::And => Ok(builder.build_and(left, right)),
                 LogicOperator::Or => Ok(builder.build_or(left, right)),
@@ -183,7 +189,7 @@ fn compile_expr<'a, 'b>(
             ref then_branch,
             ref else_branch,
         } => {
-            let mut cond = compile_expr(condition, builder, module, context, values, env)?;
+            let mut cond = compile_expr(condition, builder, module, context, values,fpm, env)?;
             cond = builder.build_cmp(cond, true.compile(context), Predicate::Equal);
             let func = BasicBlock::get_insert_block(builder).get_parent().unwrap();
 
@@ -195,7 +201,7 @@ fn compile_expr<'a, 'b>(
 
             builder.position_at_end(thenbb);
 
-            let thenv = compile_expr(then_branch, builder, module, context, values, env)?;
+            let thenv = compile_expr(then_branch, builder, module, context, values,fpm, env)?;
 
             builder.build_br(mergebb);
 
@@ -203,7 +209,7 @@ fn compile_expr<'a, 'b>(
 
             builder.position_at_end(elsebb);
 
-            let elsev = compile_expr(else_branch, builder, module, context, values, env)?;
+            let elsev = compile_expr(else_branch, builder, module, context, values, fpm,env)?;
 
             builder.build_br(mergebb);
 
@@ -224,7 +230,7 @@ fn compile_expr<'a, 'b>(
             ref operator,
             ref expr,
         } => {
-            let expr = compile_expr(expr, builder, module, context, values, env)?;
+            let expr = compile_expr(expr, builder, module, context, values,fpm, env)?;
 
             match *operator {
                 UnaryOperator::Bang => Ok(builder.build_not(expr)),
@@ -244,11 +250,12 @@ fn compile_statement<'a, 'b>(
     module: &'a CSemiBox<'a, Module>,
     context: &'a CBox<Context>,
     values: &'a HashMap<&Symbol, &'a Arg>,
+    fpm: &'a PassManager,
     env: &TypeEnv,
 ) -> Result<&'a Value, CompilerError> {
     match statement.node {
         Statement::ExpressionStmt(ref expr) => {
-            compile_expr(expr, builder, module, context, values, env)
+            compile_expr(expr, builder, module, context, values, fpm,env)
         }
 
         Statement::TypeAlias { .. } => Ok(().compile(context)),
@@ -257,14 +264,14 @@ fn compile_statement<'a, 'b>(
             let mut ret = Ok(Value::new_null(VoidType::new(context)));
 
             for statement in statements {
-                ret = compile_statement(statement, builder, module, context, values, env);
+                ret = compile_statement(statement, builder, module, context, values, fpm,env);
             }
             ret
         }
 
         Statement::Return(ref ret) => {
             let val = if let Some(ref r) = *ret {
-                compile_expr(r, builder, module, context, values, env)?
+                compile_expr(r, builder, module, context, values,fpm, env)?
             } else {
                 builder.build_ret(Value::new_null(VoidType::new(context)))
             };
@@ -349,9 +356,10 @@ fn compile_statement<'a, 'b>(
                 _ => unreachable!(),
             }
 
-            let ret = compile_expr(body, builder, module, context, &values, env)?;
+            let ret = compile_expr(body, builder, module, context, &values, fpm,env)?;
 
             builder.build_ret(ret);
+            fpm.run_func_pass(func);
             module.verify().unwrap();
 
             Ok(func)
