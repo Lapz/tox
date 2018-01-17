@@ -1,5 +1,4 @@
 extern cos(a:float) -> float;
-extern puts(s:str);
 
 type Int = int;
 
@@ -8,6 +7,5 @@ fun add(a:int,b:int) -> Int {
 }
 
 fun main() -> float {
-    puts("hello");
     return cos(90.0);
 }

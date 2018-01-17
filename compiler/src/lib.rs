@@ -32,6 +32,12 @@ pub fn compile<'a>(ast: &[WithPos<Statement>], env: &TypeEnv) -> Result<(), Comp
 
     module.verify().unwrap();
 
+    // let ee = JitEngine::new(JitOptions{
+    //     opt_level:3
+    // }).unwrap();
+
+    
+
     println!("{:?}", module);
 
     Ok(())
