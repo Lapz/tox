@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use util::symbol::Symbol;
+use util::{pos::WithPos,symbol::Symbol};
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::VariableUseHandle;
 use super::interpreter::RuntimeError;
@@ -12,6 +12,7 @@ use interpreter::env::Environment;
 use std::rc::Rc;
 use std::cell::RefCell;
 use builtins::BuiltInFunction;
+
 
 #[derive(Clone)]
 pub enum Object {
@@ -25,7 +26,7 @@ pub enum Object {
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
-    Function(Symbol, Vec<Symbol>, Statement, Environment),
+    Function(Symbol, Vec<Symbol>, WithPos<Statement>, Environment),
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,
@@ -85,6 +86,7 @@ impl Object {
                 ref methods,
                 ref sclassmethods,
             } => {
+                
                 if fields.borrow().contains_key(name) {
                     return Ok(fields.borrow().get(name).unwrap().clone());
                 }
@@ -118,33 +120,32 @@ impl Object {
         &self,
         arguments: &[Object],
         locals: &HashMap<VariableUseHandle, usize>,
-        env: &mut Environment,
     ) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
-            Object::Function(_, ref params, ref body, ref fn_env) => {
-                let mut local_environment = Environment::new_with_outer(fn_env);
+            Object::Function(_, ref params, ref body, ref fenv) => {
+                let mut local_environment = Environment::new_with_outer(fenv);
 
                 let zipped = params.iter().zip(arguments.iter());
 
                 for (_, (symbol, value)) in zipped.enumerate() {
-                    env.define(*symbol, value.clone());
+                    local_environment.define(*symbol, value.clone());
                 }
 
                 use interpreter::evaluate_statement;
 
-                match *body {
-                    Statement::Block(ref statements) => for statement in statements {
-                        match evaluate_statement(statement, locals, &mut local_environment) {
-                            Ok(val) => if let Object::Return(r) = val {
-                                return Ok(*r);
-                            },
 
-                            Err(e) => return Err(e),
-                        }
-                    },
-                    _ => unreachable!(),
+                match evaluate_statement(body,locals,&mut local_environment) {
+                     Ok(_) => (),
+                     Err(e) => match e {
+                         RuntimeError::Return(ref r) => {
+                             return Ok(*r.clone());
+                         },
+
+                         _ => return Err(e),                     }
                 }
+
+             
 
                 Ok(Object::Nil)
             }

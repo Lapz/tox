@@ -7,7 +7,7 @@ use util::symbol::Symbol;
 use util::types::{Type, TypeError};
 use util::env::{Entry, TypeEnv};
 use util::pos::{Postition, WithPos};
-use util::types;
+
 
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq, Default)]

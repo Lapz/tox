@@ -2,12 +2,9 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
-extern crate rand;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
-
-extern crate compiler;
 extern crate interpreter;
 extern crate sem;
 extern crate syntax;
@@ -88,6 +85,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         resolver.resolve(&ast).unwrap();
 
         let mut env = Environment::new();
+        
 
         // match TyChecker::new().analyse(&ast, &mut env) {
         //     Ok(_) => (),
@@ -174,8 +172,13 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     resolver.resolve(&ast).unwrap();
 
-    let env = Environment::new();
+    let mut env = Environment::new();
+
     let mut tyenv = TypeEnv::new(&strings);
+
+    env.fill_env(&mut tyenv);
+
+   
 
     match TyChecker::new().analyse(&ast, &mut tyenv) {
         Ok(_) => (),
@@ -192,21 +195,21 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     };
 
     if penv {
-        println!("{:#?}", env);
+        println!("{:#?}", tyenv);
     }
 
-    // unsafe {
-    compiler::compile(&ast, &tyenv).expect("Couldn't compile the modle");
-    // }
+    
 
-    // match interpret(&ast, &mut env) {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         println!("{:?}", err);
+   
 
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    match interpret(&ast, &mut resolver.locals,&mut env,) {
+        Ok(_) => (),
+        Err(err) => {
+            println!("{:?}", err);
+
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", env);

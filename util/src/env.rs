@@ -34,11 +34,45 @@ impl TypeEnv {
         types.enter(nil_symbol, Type::Nil);
         types.enter(string_symbol, Type::Str);
 
-        TypeEnv {
+
+        let mut env = TypeEnv {
             types,
             vars: Table::new(Rc::clone(strings)),
             unique: Unique::new(),
-        }
+        };
+
+        env.add_builtin(
+            "clock",
+            vec![],
+            Type::Float,
+           
+        );
+        env.add_builtin(
+            "hex",
+            vec![Type::Int],
+            Type::Str,
+           
+        );
+        env.add_builtin(
+            "oct",
+            vec![Type::Int],
+            Type::Str,
+           
+        );
+        env.add_builtin(
+            "rand",
+            vec![Type::Int, Type::Int],
+            Type::Int,
+          
+        );
+        env.add_builtin(
+            "to_int",
+            vec![Type::Str],
+            Type::Int,
+           
+        );
+
+        env
     }
     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
         self.types.look(symbol)
@@ -72,5 +106,45 @@ impl TypeEnv {
 
     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
         self.vars.enter(symbol, data)
+    }
+
+    pub fn get_symbol(&mut self,name:&str) -> Symbol {
+        self.vars.symbol(name)
+    }
+
+    //  fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, BuiltInFunction, Entry)>) {
+    //     let symbol = self.vars.symbol(name);
+
+    //     use std::collections::HashMap;
+
+    //     let mut methods_ty = HashMap::new();
+    //     let mut map = HashMap::new();
+
+    //     for method in methods {
+    //         let name = self.vars.symbol(method.0);
+    //         methods_ty.insert(name, method.2);
+    //         map.insert(name, Object::BuiltIn(name, method.1));
+    //     }
+
+    //     let entry = Entry::VarEntry(Type::Class {
+    //         name: symbol,
+    //         methods: methods_ty,
+    //         fields: HashMap::new(),
+    //     });
+
+    //     let object = Object::Class(symbol, None, map);
+
+    //     self.vars.enter(symbol, entry);
+    //     self.objects.enter(symbol, object);
+    // }
+
+    fn add_builtin(
+        &mut self,
+        name: &str,
+        params: Vec<::types::Type>,
+        returns: Type,
+    ) {
+        let symbol = self.vars.symbol(name);
+        self.vars.enter(symbol, Entry::FunEntry { params, returns });
     }
 }

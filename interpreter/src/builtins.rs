@@ -1,6 +1,9 @@
-// use std::time::{SystemTime, UNIX_EPOCH};
+
+use std::time::{SystemTime, UNIX_EPOCH};
 use object::Object;
 use interpreter::RuntimeError;
+use rand::{thread_rng,Rng};
+use util::{env::TypeEnv,symbol::Symbol};
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
 
@@ -16,159 +19,92 @@ impl BuiltIn {
     pub fn new() -> Self {
         BuiltIn {}
     }
+
+    pub fn get_built_ins(&self,env:&mut TypeEnv) -> Vec<(Symbol, Object)> {
+        vec![
+            add_builtin(env.get_symbol("clock"),built_in_clock),
+            add_builtin(env.get_symbol("random"),built_in_rand),
+            add_builtin(env.get_symbol("int"),built_in_int),
+            add_builtin(env.get_symbol("oct"),built_in_oct),
+            add_builtin(env.get_symbol("hex"),built_in_hex),
+        ]
+    }
 }
 
-// impl Env {
-//     pub fn get_builtins(&mut self) {
-//         self.add_builtin(
-//             "clock",
-//             vec![],
-//             Type::Simple(BaseType::Float),
-//             built_in_clock,
-//         );
-//         self.add_builtin(
-//             "hex",
-//             vec![Type::Simple(BaseType::Int)],
-//             Type::Simple(BaseType::Str),
-//             built_in_hex,
-//         );
-//         self.add_builtin(
-//             "oct",
-//             vec![Type::Simple(BaseType::Int)],
-//             Type::Simple(BaseType::Str),
-//             built_in_oct,
-//         );
-//         self.add_builtin(
-//             "rand",
-//             vec![Type::Simple(BaseType::Int), Type::Simple(BaseType::Int)],
-//             Type::Simple(BaseType::Int),
-//             built_in_rand,
-//         );
-//         self.add_builtin(
-//             "int",
-//             vec![Type::Simple(BaseType::Str)],
-//             Type::Simple(BaseType::Int),
-//             built_in_int,
-//         );
-//         self.add_builtin_class(
-//             "io",
-//             vec![
-//                 (
-//                     "readline",
-//                     built_in_readline,
-//                     Entry::FunEntry {
-//                         params: vec![],
-//                         returns: Type::Simple(BaseType::Str),
-//                     },
-//                 ),
-//             ],
-//         )
-//     }
 
-//     fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, BuiltInFunction, Entry)>) {
-//         let symbol = self.vars.symbol(name);
+pub(crate) fn add_builtin(name:Symbol, func: BuiltInFunction) -> (Symbol, Object) {
+    (
+        name,
+        Object::BuiltIn(name, func),
+    )
+}
 
-//         use std::collections::HashMap;
 
-//         let mut methods_ty = HashMap::new();
-//         let mut map = HashMap::new();
+fn built_in_clock(_: &[Object]) -> Result<Object, RuntimeError> {
+    let time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
 
-//         for method in methods {
-//             let name = self.vars.symbol(method.0);
-//             methods_ty.insert(name, method.2);
-//             map.insert(name, Object::BuiltIn(name, method.1));
-//         }
+    Ok(Object::Int(time as i64))
+}
 
-//         let entry = Entry::VarEntry(Type::Class {
-//             name: symbol,
-//             methods: methods_ty,
-//             fields: HashMap::new(),
-//         });
+fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let number = match arguments.iter().next() {
+        Some(&Object::Int(a)) => a,
+        _ => unreachable!(),
+    };
 
-//         let object = Object::Class(symbol, None, map);
+    Ok(Object::Str(format!("{:#X}", number)))
+}
 
-//         self.vars.enter(symbol, entry);
-//         self.objects.enter(symbol, object);
-//     }
+fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let number = match arguments.iter().next() {
+        Some(&Object::Int(a)) => a,
+        _ => unreachable!(),
+    };
 
-//     fn add_builtin(
-//         &mut self,
-//         name: &str,
-//         params: Vec<::types::Type>,
-//         returns: Type,
-//         func: BuiltInFunction,
-//     ) {
-//         let symbol = self.vars.symbol(name);
-//         self.vars.enter(symbol, Entry::FunEntry { params, returns });
-//         self.add_object(symbol, Object::BuiltIn(symbol, func));
-//     }
-// }
+    Ok(Object::Str(format!("{:#o}", number)))
+}
 
-// fn built_in_clock(_: &[Object]) -> Result<Object, RuntimeError> {
-//     let time = SystemTime::now()
-//         .duration_since(UNIX_EPOCH)
-//         .unwrap()
-//         .as_secs();
+fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let mut arguments = arguments.into_iter();
+    let min = match arguments.next() {
+        Some(&Object::Int(n)) => n,
 
-//     Ok(Object::Int(time as i64))
-// }
+        _ => unreachable!(),
+    };
 
-// fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {
-//     let number = match arguments.iter().next() {
-//         Some(&Object::Int(a)) => a,
-//         _ => unreachable!(),
-//     };
+    let max = match arguments.next() {
+        Some(&Object::Int(n)) => n,
+        _ => unreachable!(),
+    };
 
-//     Ok(Object::Str(format!("{:#X}", number)))
-// }
+    let mut rng = thread_rng();
 
-// fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
-//     let number = match arguments.iter().next() {
-//         Some(&Object::Int(a)) => a,
-//         _ => unreachable!(),
-//     };
+    Ok(Object::Int(rng.gen_range(min, max)))
+}
 
-//     Ok(Object::Str(format!("{:#o}", number)))
-// }
+fn built_in_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let string = match arguments.iter().next() {
+        Some(&Object::Str(ref s)) => s,
+        _ => unreachable!(),
+    };
 
-// fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
-//     let mut arguments = arguments.into_iter();
-//     let min = match arguments.next() {
-//         Some(&Object::Int(n)) => n,
+    match string.trim().parse::<i64>() {
+        Ok(n) => Ok(Object::Int(n)),
+        Err(_) => Err(RuntimeError::CantParseAsInt),
+    }
+}
 
-//         _ => unreachable!(),
-//     };
+fn built_in_readline(_: &[Object]) -> Result<Object, RuntimeError> {
+    let mut input = String::new();
 
-//     let max = match arguments.next() {
-//         Some(&Object::Int(n)) => n,
-//         _ => unreachable!(),
-//     };
+    use std::io;
 
-//     let mut rng = thread_rng();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Unable to read input from stdin");
 
-//     Ok(Object::Int(rng.gen_range(min, max)))
-// }
-
-// fn built_in_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
-//     let string = match arguments.iter().next() {
-//         Some(&Object::Str(ref s)) => s,
-//         _ => unreachable!(),
-//     };
-
-//     match string.trim().parse::<i64>() {
-//         Ok(n) => Ok(Object::Int(n)),
-//         Err(_) => Err(RuntimeError::CantParseAsInt),
-//     }
-// }
-
-// fn built_in_readline(_: &[Object]) -> Result<Object, RuntimeError> {
-//     let mut input = String::new();
-
-//     use std::io;
-
-//     io::stdin()
-//         .read_line(&mut input)
-//         .expect("Unable to read input from stdin");
-
-//     Ok(Object::Str(input))
-// }
+    Ok(Object::Str(input))
+}

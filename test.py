@@ -42,7 +42,7 @@ class Interpreter:
 
 def rust_interpreter(name, tests):
   if name == 'tox':
-    dir = 'target/debug/lexer'
+    dir = 'target/debug/tox'
   else:
     dir = 'build/gen/' + name
 

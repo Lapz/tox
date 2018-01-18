@@ -8,15 +8,11 @@ default = []
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
-compiler = {path = "../compiler"}
 sem = {path = "../sem"}
 interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
-
 clippy = {version = "*", optional = true}
-
-rand = "0.3.16"
 
 
 [dev-dependencies]

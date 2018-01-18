@@ -18,6 +18,7 @@ pub enum RuntimeError {
     UndefinedProperty,
     CantParseAsInt,
     UndefinedSymbol(Symbol),
+    Return(Box<Object>),
 }
 
 pub(crate) fn evaluate_statement(
@@ -27,9 +28,10 @@ pub(crate) fn evaluate_statement(
 ) -> Result<Object, RuntimeError> {
     match statement.node {
         Statement::Block(ref statements) => {
-            let mut env = Environment::new_with_outer(env);
+            let mut environment = Environment::new_with_outer(env);
+            
             for statement in statements {
-                evaluate_statement(statement, locals, &mut env)?;
+                evaluate_statement(statement, locals, &mut environment)?;
             }
 
             Ok(Object::None)
@@ -72,7 +74,7 @@ pub(crate) fn evaluate_statement(
                                 parameters.iter().map(|params| params.0).collect();
                             sym_methods.insert(
                                 *name,
-                                Object::Function(*name, params, body.node.clone(), env.clone()),
+                                Object::Function(*name, params, *body.clone(), env.clone()),
                             );
                         }
                         _ => unreachable!(),
@@ -163,11 +165,12 @@ pub(crate) fn evaluate_statement(
                 ..
             } => {
                 let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
-
                 env.define(
                     *name,
-                    Object::Function(*name, params, body.node.clone(), env.clone()),
+                    Object::Function(*name, params, *body.clone(), env.clone()),
                 );
+
+                
                 Ok(Object::None)
             }
             _ => unreachable!(),
@@ -201,14 +204,13 @@ pub(crate) fn evaluate_statement(
 
         Statement::Return(ref r) => {
             if let Some(ref expr) = *r {
-                return Ok(Object::Return(Box::new(evaluate_expression(
+                return Err(RuntimeError::Return(Box::new(evaluate_expression(
                     expr,
                     locals,
                     env,
                 )?)));
             }
-
-            Ok(Object::Return(Box::new(Object::Nil)))
+         Err(RuntimeError::Return(Box::new(Object::Nil)))
         }
 
         Statement::TypeAlias { .. } => Ok(Object::None),
@@ -217,7 +219,10 @@ pub(crate) fn evaluate_statement(
             if let Some(ref expr) = *expression {
                 let value = evaluate_expression(expr, locals, env)?;
                 env.define(*symbol, value);
+                return Ok(Object::None)
             }
+
+            env.define(*symbol,Object::Nil);
 
             Ok(Object::None)
         }
@@ -339,7 +344,7 @@ fn evaluate_expression(
                 obj_arguments.push(evaluate_expression(expr, locals, env)?);
             }
 
-            callee.call(&obj_arguments, locals, env)
+            callee.call(&obj_arguments, locals,)
         }
 
         Expression::ClassInstance {
@@ -349,6 +354,7 @@ fn evaluate_expression(
             Object::Class(_, ref superclass, ref methods) => {
                 let mut props: HashMap<Symbol, Object> = HashMap::new();
                 let mut s_class_methods = None;
+                
                 if let Some(ref sklass) = *superclass {
                     match **sklass {
                         Object::Class(_, _, ref methods_) => {
@@ -464,7 +470,7 @@ fn evaluate_expression(
             Ok(Object::Function(
                 env.unique_id(),
                 params,
-                body.node.clone(),
+                *body.clone(),
                 env.clone(),
             ))
         }
@@ -621,11 +627,12 @@ fn get_distance(
 pub mod env {
 
     use std::collections::HashMap;
-    use util::symbol::Symbol;
+    use util::{env::TypeEnv,symbol::Symbol};
     use util::Unique;
 
     use object::Object;
     use super::RuntimeError;
+    use builtins::BuiltIn;
 
     use std::rc::Rc;
     use std::cell::RefCell;
@@ -647,10 +654,11 @@ pub mod env {
 
     impl Environment {
         pub fn new() -> Self {
-            Environment {
+           Environment {
                 actual: Rc::new(RefCell::new(EnvironmentImpl::new())),
                 unique: Unique::new(),
-            }
+           }
+
         }
 
         pub fn new_with_outer(outer: &Environment) -> Environment {
@@ -661,9 +669,18 @@ pub mod env {
         }
 
         pub fn unique_id(&mut self) -> Symbol {
-            let next = Unique::new().0;
+            let next = Unique::new().0 + 3;
             Symbol(next)
         }
+
+        pub fn fill_env(&mut self,env:&mut TypeEnv) {
+        let built_in = BuiltIn::new().get_built_ins(env);
+
+        for (variable, run_time_value) in built_in {
+            self.define(variable, run_time_value);
+        }
+}
+
 
         /// Defines a Symbol by inserting the name and
         /// value into thelocals,environmentImpl

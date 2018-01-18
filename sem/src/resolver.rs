@@ -206,7 +206,7 @@ impl Resolver {
             }
 
             Statement::TypeAlias { ref alias, .. } => {
-                self.declare(alias.clone(), statement.pos)?;
+                self.declare(*alias, statement.pos)?;
                 self.define(*alias);
 
                 Ok(())
@@ -301,8 +301,8 @@ impl Resolver {
             }
 
             Statement::Function { ref name, ref body } => {
-                self.declare(name.clone(), statement.pos)?;
-                self.define(name.clone());
+                self.declare(*name, statement.pos)?;
+                self.define(*name);
 
                 self.resolve_func(&body.node, FunctionType::Function, statement.pos)?;
                 Ok(())
@@ -374,6 +374,8 @@ impl Resolver {
         }
     }
 }
+
+
 impl Resolver {
     fn resolve_expression(
         &mut self,
@@ -421,15 +423,13 @@ impl Resolver {
 
                 Ok(())
             }
+
             Expression::ClassInstance { ref properties, .. } => {
-                self.begin_scope();
                 for &(ref property_name, ref property_value) in properties {
                     self.declare(*property_name, pos)?;
                     self.define(*property_name);
                     self.resolve_expression(&property_value.node, pos)?;
                 }
-
-                self.end_scope();
                 Ok(())
             }
 

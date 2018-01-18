@@ -1,16 +1,8 @@
-extern cos(v:float) -> float;
-
-type Int = int;
-
-fun add(a:int,b:int) -> Int {
-    return a+b;
+class Person {
+  name:str;
 }
 
-fun test(x:int) -> int {
-    (1+2+x)*(x+(1+2));
-    return 1;
-}
 
-fun main() -> float {
-    return cos(90.0);
-}
+var john = Person{name:"a"};
+
+print john.name;
