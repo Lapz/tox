@@ -60,7 +60,7 @@ impl TypeEnv {
            
         );
         env.add_builtin(
-            "rand",
+            "random",
             vec![Type::Int, Type::Int],
             Type::Int,
           
@@ -70,6 +70,20 @@ impl TypeEnv {
             vec![Type::Str],
             Type::Int,
            
+        );
+
+
+        env.add_builtin_class(
+            "io",
+            vec![
+                (
+                    "readline",
+                    Entry::FunEntry {
+                        params: vec![],
+                        returns: Type::Str,
+                    },
+                ),
+            ],
         );
 
         env
@@ -112,31 +126,28 @@ impl TypeEnv {
         self.vars.symbol(name)
     }
 
-    //  fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, BuiltInFunction, Entry)>) {
-    //     let symbol = self.vars.symbol(name);
+     fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str,Entry)>) {
+        let symbol = self.vars.symbol(name);
 
-    //     use std::collections::HashMap;
+        use std::collections::HashMap;
 
-    //     let mut methods_ty = HashMap::new();
-    //     let mut map = HashMap::new();
+        let mut methods_ty = HashMap::new();
 
-    //     for method in methods {
-    //         let name = self.vars.symbol(method.0);
-    //         methods_ty.insert(name, method.2);
-    //         map.insert(name, Object::BuiltIn(name, method.1));
-    //     }
+        for method in methods {
+            let name = self.vars.symbol(method.0);
+            methods_ty.insert(name, method.1);
+        }
 
-    //     let entry = Entry::VarEntry(Type::Class {
-    //         name: symbol,
-    //         methods: methods_ty,
-    //         fields: HashMap::new(),
-    //     });
+        let entry = Entry::VarEntry(Type::Class {
+            name: symbol,
+            methods: methods_ty,
+            fields: HashMap::new(),
+        });
+        
+        self.vars.enter(symbol, entry);
 
-    //     let object = Object::Class(symbol, None, map);
-
-    //     self.vars.enter(symbol, entry);
-    //     self.objects.enter(symbol, object);
-    // }
+    
+    }
 
     fn add_builtin(
         &mut self,

@@ -53,7 +53,7 @@ impl Object {
             Object::Instance { ref mut fields, .. } => {
                 fields.borrow_mut().insert(name, value.clone());
             }
-            _ => unimplemented!(),
+            _ => unreachable!(), // Type checking means no dynamically adding fields
         }
     }
 
@@ -67,12 +67,8 @@ impl Object {
                 Object::Function(name.clone(), param.clone(), body.clone(), environment)
             }
 
-            Object::BuiltIn(_, _) => {
-                let environment = Environment::new_with_outer(&Environment::new());
-
-                environment.define(Symbol(0), instance.clone());
-
-                instance.clone()
+            ref value @ Object::BuiltIn(_, _) => {
+                value.clone()
             }
 
             _ => unreachable!(),
@@ -112,7 +108,8 @@ impl Object {
                 }
                 Err(RuntimeError::UndefinedProperty)
             }
-            _ => unimplemented!(),
+            _ => unreachable!(), // Type checking means no trying to access a property
+                                // that dosen't exist
         }
     }
 
@@ -148,9 +145,8 @@ impl Object {
              
 
                 Ok(Object::Nil)
-            }
-
-            _ => panic!("Should not be calling this method"),
+            },
+            ref e => panic!("{:?} Should not be calling this method ",e),
         }
     }
 

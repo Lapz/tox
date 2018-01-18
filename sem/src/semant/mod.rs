@@ -97,6 +97,12 @@ impl TyChecker {
                 }
             }
 
+            (&Type::Func(_,ref returns),u) |  (u,&Type::Func(_,ref returns))=> {
+                if **returns != *u {
+                    return Err(TypeError::Expected(*returns.clone(), u.clone(), pos));
+                }
+            }
+
             (e, u) => {
                 if expected != unknown {
                     return Err(TypeError::Expected(e.clone(), u.clone(), pos));
@@ -220,9 +226,19 @@ impl InferedType {
 
     /// Checks if `InferedType` is {str}
     fn check_str(&self, pos: Postition) -> Result<(), TypeError> {
-        if self.ty != Type::Str {
+        match self.ty {
+            Type::Func(_,ref returns) => {
+                if **returns != Type::Str {
+                    return Err(TypeError::Expected(Type::Str, self.ty.clone(), pos));
+                }
+            },
+
+            _ =>  if self.ty != Type::Str {
             return Err(TypeError::Expected(Type::Str, self.ty.clone(), pos));
         }
+        }
+
+       
         Ok(())
     }
     /// Checks if `InferedType` is {float}

@@ -509,7 +509,7 @@ fn evaluate_expression(
             ..
         } => {
             let object = evaluate_expression(object, locals, env)?;
-
+           
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),

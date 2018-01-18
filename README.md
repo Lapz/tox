@@ -88,8 +88,8 @@ if (int(guess) == secret_number) {
 - [x] Move the functions in inference onto a struct called ```TyChecker```
 - [x] Have a field on the type check that contains the types that this points too. When this is acessed check if that field exist and the return the type of that field.
 - [ ] Change how method inheritance is done
-- [ ] Implement closures properly
-
+- [x] Implement closures properly
+- [ ] Fix the typechecking of vars introduced in a nested scope
 
 ## Run the Compiler
  RUSTFLAGS='-C link-args=-lffi' RUST_BACKTRACE=1 cargo run ../test/test.lox && llc -filetype=obj out.bc \

@@ -180,22 +180,24 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
    
 
-    match TyChecker::new().analyse(&ast, &mut tyenv) {
-        Ok(_) => (),
-        Err(errors) => {
-            for err in errors {
-                println!("{}", err);
-            }
+    // match TyChecker::new().analyse(&ast, &mut tyenv) {
+    //     Ok(_) => (),
+    //     Err(errors) => {
+    //         for err in errors {
+    //             println!("{}", err);
+    //         }
 
-            if penv {
-                println!("{:#?}", env);
-            }
-            ::std::process::exit(65)
-        }
-    };
+    //         if penv {
+    //             println!("{:#?}", tyenv);
+    //              println!("{:#?}", env);
+    //         }
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
     if penv {
         println!("{:#?}", tyenv);
+         println!("{:#?}", env);
     }
 
     

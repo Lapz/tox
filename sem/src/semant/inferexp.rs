@@ -130,43 +130,32 @@ impl TyChecker {
                         } => {
                             let mut found = false;
 
+                            let mut ty = Type::Nil;
+                         
+
                             for (name, method) in methods {
                                 if name == property {
                                     found = true;
                                     self.infer_params(method, arguments, env, object.pos)?;
+
+                                    ty = self.get_actual_ty(method)?;
                                 }
                             }
 
                             if !found {
-                                if let Some(class) = env.look_type(*name).cloned() {
-                                    match class {
-                                        Type::Class { ref methods, .. } => {
-                                            found = false;
-                                            for (name, method) in methods {
-                                                if name == property {
-                                                    found = true;
-                                                    self.infer_params(
-                                                        method,
-                                                        arguments,
-                                                        env,
-                                                        object.pos,
-                                                    )?;
-                                                }
-                                            }
-                                        }
-
-                                        _ => unreachable!(),
-                                    }
-                                }
-                            }
-
-                            Err(TypeError::NotMethodOrProperty(
+                            return Err(TypeError::NotMethodOrProperty(
                                 env.name(*property),
                                 expr.pos,
                             ))
-                        }
-                        _ => unreachable!(),
                     }
+
+                    Ok(InferedType{ty})
+
+                        },
+
+                        _ => unimplemented!()
+                    }
+                
                 }
                 Expression::Call { .. } => self.transform_expression(callee, env),
                 _ => Err(TypeError::NotCallable(callee.pos)),
