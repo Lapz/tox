@@ -104,6 +104,14 @@ impl Statement {
                     pprint_string.push_str(" ");
                 }
 
+                pprint_string.push_str("-> ");
+
+                if let Some(ref ret) = *returns {
+                    ret.pprint(symbols);
+                }else {
+                    pprint_string.push_str("nil")
+                }
+
                 pprint_string.push_str(")");
             }
 

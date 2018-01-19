@@ -561,10 +561,10 @@ impl Resolver {
 
 #[cfg(test)]
 mod test {
-    use ast::statement::Statement;
-    use lexer::Lexer;
-    use symbol::{SymbolFactory, Table};
-    use parser::Parser;
+    use syntax::ast::statement::Statement;
+    use syntax::lexer::Lexer;
+    use util::symbol::{SymbolFactory, Table};
+    use syntax::parser::Parser;
     use resolver::Resolver;
     use util::pos::WithPos;
 

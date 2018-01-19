@@ -168,7 +168,7 @@ impl TyChecker {
                 let class = self.transform_var(name, expr.pos, env)?;
                 match class.ty {
                     Type::Class { ref fields, .. } => {
-                        let mut found = true;
+                        let mut found = false;
                         for (key, value) in fields {
                             for &(ref instance_name, ref instance_val) in properties {
                                 if instance_name == key {

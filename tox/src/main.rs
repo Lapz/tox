@@ -35,6 +35,9 @@ fn main() {
 
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
+
+   
+
     loop {
         let _ = io::stdout().write(b"lexer>> ");
         let _ = io::stdout().flush();
@@ -85,17 +88,6 @@ pub fn repl(ptokens: bool, pprint: bool) {
         resolver.resolve(&ast).unwrap();
 
         let mut env = Environment::new();
-        
-
-        // match TyChecker::new().analyse(&ast, &mut env) {
-        //     Ok(_) => (),
-        //     Err(errors) => {
-        //         for err in errors {
-        //             println!("{:?}", err);
-        //         }
-        //         continue;
-        //     }
-        // };
 
         match interpret(&ast, &mut resolver.locals, &mut env) {
             Ok(_) => (),
@@ -180,29 +172,25 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
    
 
-    // match TyChecker::new().analyse(&ast, &mut tyenv) {
-    //     Ok(_) => (),
-    //     Err(errors) => {
-    //         for err in errors {
-    //             println!("{}", err);
-    //         }
+    match TyChecker::new().analyse(&ast, &mut tyenv) {
+        Ok(_) => (),
+        Err(errors) => {
+            for err in errors {
+                println!("{}", err);
+            }
 
-    //         if penv {
-    //             println!("{:#?}", tyenv);
-    //              println!("{:#?}", env);
-    //         }
-    //         ::std::process::exit(65)
-    //     }
-    // };
+            if penv {
+                println!("{:#?}", tyenv);
+                 println!("{:#?}", env);
+            }
+            ::std::process::exit(65)
+        }
+    };
 
     if penv {
         println!("{:#?}", tyenv);
          println!("{:#?}", env);
     }
-
-    
-
-   
 
     match interpret(&ast, &mut resolver.locals,&mut env,) {
         Ok(_) => (),
@@ -214,8 +202,11 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     };
 
     if penv {
+        println!("{:#?}",tyenv);
         println!("{:#?}", env);
     }
+
+
 }
 
 #[derive(StructOpt, Debug)]

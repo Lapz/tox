@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use pos::Postition;
+    use util::pos::Postition;
     use token::{Token, TokenType};
     use lexer::Lexer;
 

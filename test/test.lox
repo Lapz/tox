@@ -1,22 +1,3 @@
-print "Guess the number!";
+ var add:fun(int,int) -> int = fun (a:int,b:int) -> int {return a+b;};
 
-while (true) {
-  var secret_number = random(1,50);
-  print "Please input your guess.";
-  var guess = io.readline();
-  print "You guessed: " + guess;
-
-  if (to_int(guess) > secret_number) {
-    print "Too big!";
-  }
-
-  if (to_int(guess) < secret_number) {
-    print "Too small!";
-  }
-
-  if (to_int(guess) == secret_number) {
-    print "You win!";
-    break;
-  }
-
-}
+print add(10,1);

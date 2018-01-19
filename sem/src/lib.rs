@@ -1,3 +1,5 @@
+#![feature(use_nested_groups)] 
+
 extern crate rand;
 extern crate syntax;
 #[macro_use]

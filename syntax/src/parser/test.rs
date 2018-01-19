@@ -4,7 +4,7 @@ mod test {
     use parser::Parser;
     use ast::expr::*;
     use ast::statement::*;
-    use pos::{Postition, WithPos};
+    use util::pos::{Postition, WithPos};
     use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
 
@@ -370,6 +370,7 @@ mod test {
                         },
                     ),
                 ],
+                len:3
             },
             Postition {
                 line: 1,
