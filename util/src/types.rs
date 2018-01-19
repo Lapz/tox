@@ -156,6 +156,10 @@ impl<'a> PartialEq for Type {
                 params == oparams && returns == oreturns
             }
 
+            (&Type::Func(_,ref returns), unknown) => {
+                **returns == *unknown
+            }
+
             (&Type::Name(ref name, ref ty), &Type::Name(ref oname, ref oty)) => {
                 name == oname && ty == oty
             }
