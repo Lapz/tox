@@ -96,7 +96,7 @@ impl TyChecker {
                     return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
                 }
             }
-            
+
             (e, u) => {
                 if expected != unknown {
                     return Err(TypeError::Expected(e.clone(), u.clone(), pos));
@@ -169,8 +169,8 @@ impl TyChecker {
                 Err(TypeError::UndefindedType(env.name(s), pos))
             }
             ExpressionTy::Nil => Ok(Type::Nil),
-            ExpressionTy::Arr(ref s, ref len) => {
-                Ok(Type::Array(Box::new(self.get_type(s, pos, env)?), *len))
+            ExpressionTy::Arr(ref s) => {
+                Ok(Type::Array(Box::new(self.get_type(s, pos, env)?)))
             }
             ExpressionTy::Func(ref params, ref returns) => {
                 let mut param_tys = Vec::with_capacity(params.len());

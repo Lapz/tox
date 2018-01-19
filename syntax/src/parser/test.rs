@@ -53,7 +53,7 @@ mod test {
 
     #[test]
     fn arr_types() {
-        let input = "var a:[int;1] = [10];";
+        let input = "var a:[int] = [10];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
@@ -63,7 +63,7 @@ mod test {
 
     #[test]
     fn fun_arr_types() {
-        let input = "var a:[fun(int,int);0];";
+        let input = "var a:[fun(int,int)];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
@@ -73,7 +73,7 @@ mod test {
 
     #[test]
     fn fun_arr_return_types() {
-        let input = "var a:[fun(int,int)->int;0];";
+        let input = "var a:[fun(int,int)->int];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
@@ -83,7 +83,7 @@ mod test {
 
     #[test]
     fn nested_arr_types() {
-        let input = "var a:[[fun(int,int)->int;1];1];";
+        let input = "var a:[[fun(int,int)->int]];";
         let tokens = Lexer::new(input).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
@@ -370,7 +370,6 @@ mod test {
                         },
                     ),
                 ],
-                len:3
             },
             Postition {
                 line: 1,

@@ -1004,7 +1004,6 @@ impl<'a> Parser<'a> {
                         self.advance();
                         return Ok(WithPos::new(
                             Expression::Array {
-                                len: items.len(),
                                 items,
                             },
                             *pos,
@@ -1025,7 +1024,6 @@ impl<'a> Parser<'a> {
 
                     Ok(WithPos::new(
                         Expression::Array {
-                            len: items.len(),
                             items,
                         },
                         *pos,
@@ -1136,26 +1134,12 @@ impl<'a> Parser<'a> {
         } else if self.recognise(&TokenType::LBRACKET) {
             self.advance();
             let ty = self.parse_type()?;
-
-            self.consume(
-                &TokenType::SEMICOLON,
-                "Expected a \''\' after declaring array type",
-            )?;
-
-            let len = match self.advance() {
-                Some(Token {
-                    token: TokenType::INT(i),
-                    ..
-                }) => i,
-                _ => unimplemented!(),
-            };
-
             self.consume(
                 &TokenType::RBRACKET,
                 "Expected a \']\' to close an array type",
             )?;
 
-            Ok(ExpressionTy::Arr(Box::new(ty), len as usize))
+            Ok(ExpressionTy::Arr(Box::new(ty)))
         } else if self.recognise(&TokenType::FUNCTION) {
             self.advance();
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;

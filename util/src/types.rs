@@ -36,7 +36,7 @@ pub enum Type {
     This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
     Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
-    Array(Box<Type>, usize),
+    Array(Box<Type>),
     Name(Symbol, Box<Type>),
     Int,
     Str,
@@ -72,7 +72,7 @@ impl Display for Type {
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
-            Type::Array(ref a, ref len) => write!(f, "Array of {} with len {}", a, len),
+            Type::Array(ref a) => write!(f, "Array of {} ",a),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
@@ -160,7 +160,7 @@ impl<'a> PartialEq for Type {
                 name == oname && ty == oty
             }
 
-            (&Type::Array(ref s, ref len), &Type::Array(ref o, ref olen)) => s == o && len == olen,
+            (&Type::Array(ref s), &Type::Array(ref o)) => s == o,
 
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
@@ -185,8 +185,8 @@ impl<'a> PartialOrd for Type {
             | (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
-            | (s @ &Type::Func(_, _), o @ &Type::Func(_, _)) => s.partial_cmp(o),
-            (&Type::Array(ref s, _), &Type::Array(ref o, _)) => s.partial_cmp(o),
+            | (s @ &Type::Func(_, _), o @ &Type::Func(_, _))| 
+            (s @ &Type::Array(_), o @ &Type::Array(_)) => s.partial_cmp(o),
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
             | (&Type::Int, &Type::Int)
@@ -213,9 +213,8 @@ impl Hash for Type {
                 key.hash(state);
                 value.hash(state)
             }
-            Type::Array(ref ty, ref len) => {
+            Type::Array(ref ty) => {
                 ty.hash(state);
-                len.hash(state);
             }
             Type::Nil => "nil".hash(state),
             Type::Float => "float".hash(state),
