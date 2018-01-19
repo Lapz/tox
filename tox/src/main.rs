@@ -1,4 +1,4 @@
-#![feature(use_nested_groups)]
+
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -11,9 +11,11 @@ use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use sem::resolver::Resolver;
 use sem::semant::TyChecker;
-use interpreter::{interpret, interpreter::env::Environment};
+use interpreter::interpret;
+use interpreter::interpreter::env::Environment;
 use std::io;
-use util::{env::TypeEnv, symbol::{SymbolFactory, Table}};
+use util::env::TypeEnv;
+use util::symbol::{SymbolFactory, Table};
 use std::rc::Rc;
 use std::io::Write;
 use structopt::StructOpt;

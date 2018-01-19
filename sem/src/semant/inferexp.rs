@@ -119,7 +119,7 @@ impl TyChecker {
                         }
 
                         Expression::Call { .. } => self.transform_expression(object, env)?,
-                        _ => unimplemented!(),
+                        ref e => unimplemented!("{:?}",e),
                     };
 
                     match ty.ty {
@@ -153,7 +153,7 @@ impl TyChecker {
 
                         },
 
-                        _ => unimplemented!()
+                        ref e => unimplemented!("{:?}",e)
                     }
                 
                 }
@@ -194,7 +194,7 @@ impl TyChecker {
                             return Err(TypeError::TooLittleProperty(expr.pos));
                         }
                     }
-                    _ => unimplemented!(), //TODO CHANGE INTO HARD ERROR
+                    ref e => unimplemented!("{:?}",e), //TODO CHANGE INTO HARD ERROR
                 };
 
                 Ok(class)

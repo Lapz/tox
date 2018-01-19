@@ -1,21 +1,18 @@
-print "Guess the number!";
-
-
-var secret_number = random(1,101);
-print "Please input your guess.";
-
-var guess = io.readline();
-
-print "You guessed: " + guess;
-
-if (to_int(guess) > secret_number) {
-  print "Too small!";
+class Toggle {
+    state:bool;
+  
+    fun value() -> bool {
+      return this.state;
+    }
+  
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
+    }
 }
+  
+var toggle  = Toggle{state:true};
 
-if (to_int(guess) < secret_number) {
-  print "Too big!";
-}
+print toggle.activate().value();
 
-if (to_int(guess) == secret_number) {
-  print "You win!";
-}
+print toggle.activate().value();

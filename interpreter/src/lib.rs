@@ -1,4 +1,3 @@
-#![feature(use_nested_groups)]
 
 extern crate syntax;
 extern crate util;
@@ -9,10 +8,12 @@ pub mod interpreter;
 mod builtins;
 
 use object::Object;
-use syntax::ast::{expr::VariableUseHandle, statement::Statement};
+use syntax::ast::expr::VariableUseHandle;
+use syntax::ast::statement::Statement;
 use util::pos::WithPos;
 use std::collections::HashMap;
-use self::interpreter::{evaluate_statement, RuntimeError, env::Environment};
+use self::interpreter::{evaluate_statement, RuntimeError};
+use self::interpreter::env::Environment;
 
 pub fn interpret(
     statements: &[WithPos<Statement>],

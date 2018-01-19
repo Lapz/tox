@@ -3,7 +3,9 @@
 mod test {
    
     use semant::TyChecker;
-    use util::{env::TypeEnv,symbol::SymbolFactory,pos::WithPos};
+    use util::env::TypeEnv;
+    use util::pos::WithPos;
+    use util::symbol::SymbolFactory;
     use syntax::ast::statement::Statement;
     use std::rc::Rc;
     

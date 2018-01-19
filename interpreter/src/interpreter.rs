@@ -627,7 +627,8 @@ fn get_distance(
 pub mod env {
 
     use std::collections::HashMap;
-    use util::{env::TypeEnv,symbol::Symbol};
+    use util::env::TypeEnv;
+    use util::symbol::Symbol;
     use util::Unique;
 
     use object::Object;

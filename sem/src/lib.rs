@@ -1,5 +1,3 @@
-#![feature(use_nested_groups)] 
-
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
