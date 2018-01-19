@@ -265,6 +265,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "sem"
 version = "0.1.0"
 dependencies = [
+ "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntax 0.1.0",
  "util 0.1.0",
@@ -362,6 +363,7 @@ dependencies = [
 name = "syntax"
 version = "0.1.0"
 dependencies = [
+ "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "util 0.1.0",
 ]
 
@@ -406,7 +408,6 @@ version = "0.1.0"
 dependencies = [
  "clippy 0.0.180 (registry+https://github.com/rust-lang/crates.io-index)",
  "interpreter 0.1.0",
- "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sem 0.1.0",
  "structopt 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt-derive 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,7 +1,4 @@
 #![feature(use_nested_groups)]
-#[cfg(test)]
-#[macro_use]
-extern crate pretty_assertions;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;

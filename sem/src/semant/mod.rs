@@ -96,13 +96,7 @@ impl TyChecker {
                     return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
                 }
             }
-
-            (&Type::Func(_,ref returns),u) |  (u,&Type::Func(_,ref returns))=> {
-                if **returns != *u {
-                    return Err(TypeError::Expected(*returns.clone(), u.clone(), pos));
-                }
-            }
-
+            
             (e, u) => {
                 if expected != unknown {
                     return Err(TypeError::Expected(e.clone(), u.clone(), pos));
@@ -198,6 +192,31 @@ impl TyChecker {
     }
 }
 
+macro_rules! check_type {
+    ($sel:ident,$ty:expr,$pos:expr) => {
+        match $sel.ty {
+            Type::Func(_,ref returns) => {
+                if **returns != $ty {
+                    return Err(TypeError::Expected($ty,$sel.ty.clone(), $pos));
+                }
+
+                Ok(())
+            },
+
+            _ =>  {
+                if $sel.ty != $ty {
+            return Err(TypeError::Expected($ty, $sel.ty.clone(), $pos));
+            }
+
+            Ok(())
+            }
+
+            
+        }
+        
+    }
+}
+
 impl InferedType {
     /// Given an `InferedType` check if it an {int} or {float}
     fn check_int_float(&self, pos: Postition) -> Result<(), TypeError> {
@@ -210,37 +229,21 @@ impl InferedType {
 
     /// Checks if `InferedType` is {bool}
     fn check_bool(&self, pos: Postition) -> Result<(), TypeError> {
-        if self.ty != Type::Bool {
-            return Err(TypeError::Expected(Type::Bool, self.ty.clone(), pos));
-        }
-        Ok(())
+        check_type!(self,Type::Bool,pos)
     }
 
     /// Checks if `InferedType` is {int}
     fn check_int(&self, pos: Postition) -> Result<(), TypeError> {
-        if self.ty != Type::Int {
-            return Err(TypeError::Expected(Type::Int, self.ty.clone(), pos));
-        }
-        Ok(())
+        check_type!(self,Type::Int,pos)
     }
 
     /// Checks if `InferedType` is {str}
     fn check_str(&self, pos: Postition) -> Result<(), TypeError> {
-        match self.ty {
-            Type::Func(_,ref returns) => {
-                if **returns != Type::Str {
-                    return Err(TypeError::Expected(Type::Str, self.ty.clone(), pos));
-                }
-            },
-
-            _ =>  if self.ty != Type::Str {
-            return Err(TypeError::Expected(Type::Str, self.ty.clone(), pos));
-        }
-        }
+        check_type!(self,Type::Str,pos)
+    }
 
        
-        Ok(())
-    }
+    
     /// Checks if `InferedType` is {float}
     fn check_float(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Float {
@@ -272,3 +275,5 @@ impl InferedType {
         }
     }
 }
+
+
