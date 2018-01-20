@@ -29,7 +29,7 @@ pub(crate) fn evaluate_statement(
     match statement.node {
         Statement::Block(ref statements) => {
             let mut environment = Environment::new_with_outer(env);
-            
+
             for statement in statements {
                 evaluate_statement(statement, locals, &mut environment)?;
             }
@@ -170,7 +170,6 @@ pub(crate) fn evaluate_statement(
                     Object::Function(*name, params, *body.clone(), env.clone()),
                 );
 
-                
                 Ok(Object::None)
             }
             _ => unreachable!(),
@@ -210,7 +209,7 @@ pub(crate) fn evaluate_statement(
                     env,
                 )?)));
             }
-         Err(RuntimeError::Return(Box::new(Object::Nil)))
+            Err(RuntimeError::Return(Box::new(Object::Nil)))
         }
 
         Statement::TypeAlias { .. } => Ok(Object::None),
@@ -219,10 +218,10 @@ pub(crate) fn evaluate_statement(
             if let Some(ref expr) = *expression {
                 let value = evaluate_expression(expr, locals, env)?;
                 env.define(*symbol, value);
-                return Ok(Object::None)
+                return Ok(Object::None);
             }
 
-            env.define(*symbol,Object::Nil);
+            env.define(*symbol, Object::Nil);
 
             Ok(Object::None)
         }
@@ -344,7 +343,7 @@ fn evaluate_expression(
                 obj_arguments.push(evaluate_expression(expr, locals, env)?);
             }
 
-            callee.call(&obj_arguments, locals,)
+            callee.call(&obj_arguments, locals)
         }
 
         Expression::ClassInstance {
@@ -354,7 +353,7 @@ fn evaluate_expression(
             Object::Class(_, ref superclass, ref methods) => {
                 let mut props: HashMap<Symbol, Object> = HashMap::new();
                 let mut s_class_methods = None;
-                
+
                 if let Some(ref sklass) = *superclass {
                     match **sklass {
                         Object::Class(_, _, ref methods_) => {
@@ -509,7 +508,7 @@ fn evaluate_expression(
             ..
         } => {
             let object = evaluate_expression(object, locals, env)?;
-           
+
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
@@ -655,11 +654,10 @@ pub mod env {
 
     impl Environment {
         pub fn new() -> Self {
-           Environment {
+            Environment {
                 actual: Rc::new(RefCell::new(EnvironmentImpl::new())),
                 unique: Unique::new(),
-           }
-
+            }
         }
 
         pub fn new_with_outer(outer: &Environment) -> Environment {
@@ -674,14 +672,13 @@ pub mod env {
             Symbol(next)
         }
 
-        pub fn fill_env(&mut self,env:&mut TypeEnv) {
-        let built_in = BuiltIn::new().get_built_ins(env);
+        pub fn fill_env(&mut self, env: &mut TypeEnv) {
+            let built_in = BuiltIn::new().get_built_ins(env);
 
-        for (variable, run_time_value) in built_in {
-            self.define(variable, run_time_value);
+            for (variable, run_time_value) in built_in {
+                self.define(variable, run_time_value);
+            }
         }
-}
-
 
         /// Defines a Symbol by inserting the name and
         /// value into thelocals,environmentImpl

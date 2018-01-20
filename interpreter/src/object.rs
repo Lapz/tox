@@ -14,7 +14,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use builtins::BuiltInFunction;
 
-
 #[derive(Clone)]
 pub enum Object {
     Float(f64),
@@ -68,9 +67,7 @@ impl Object {
                 Object::Function(name.clone(), param.clone(), body.clone(), environment)
             }
 
-            ref value @ Object::BuiltIn(_, _) => {
-                value.clone()
-            }
+            ref value @ Object::BuiltIn(_, _) => value.clone(),
 
             _ => unreachable!(),
         }
@@ -83,7 +80,6 @@ impl Object {
                 ref methods,
                 ref sclassmethods,
             } => {
-                
                 if fields.borrow().contains_key(name) {
                     return Ok(fields.borrow().get(name).unwrap().clone());
                 }
@@ -110,7 +106,7 @@ impl Object {
                 Err(RuntimeError::UndefinedProperty)
             }
             _ => unreachable!(), // Type checking means no trying to access a property
-                                // that dosen't exist
+                                 // that dosen't exist
         }
     }
 
@@ -132,22 +128,20 @@ impl Object {
 
                 use interpreter::evaluate_statement;
 
+                match evaluate_statement(body, locals, &mut local_environment) {
+                    Ok(_) => (),
+                    Err(e) => match e {
+                        RuntimeError::Return(ref r) => {
+                            return Ok(*r.clone());
+                        }
 
-                match evaluate_statement(body,locals,&mut local_environment) {
-                     Ok(_) => (),
-                     Err(e) => match e {
-                         RuntimeError::Return(ref r) => {
-                             return Ok(*r.clone());
-                         },
-
-                         _ => return Err(e),                     }
+                        _ => return Err(e),
+                    },
                 }
 
-             
-
                 Ok(Object::Nil)
-            },
-            ref e => panic!("{:?} Should not be calling this method ",e),
+            }
+            ref e => panic!("{:?} Should not be calling this method ", e),
         }
     }
 

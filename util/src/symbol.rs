@@ -2,7 +2,7 @@
 //! `Symbol` and a `String`
 
 use std::fmt::{Display, Formatter, Result};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -26,7 +26,7 @@ pub struct Table<T: Clone> {
     scopes: Vec<Option<Symbol>>,
 }
 
-impl<T: Clone> Table<T> {
+impl<T: Clone + ::std::fmt::Debug> Table<T> {
     /// A new Table Instance
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Table {
@@ -52,7 +52,7 @@ impl<T: Clone> Table<T> {
     pub fn enter(&mut self, symbol: Symbol, data: T) {
         let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
         mapping.push(data);
-        
+
         self.scopes.push(Some(symbol));
     }
 
@@ -60,6 +60,11 @@ impl<T: Clone> Table<T> {
     /// the stack of Vec<T>
     pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
+    }
+
+    pub fn look_where(&self, sybmol: Symbol, distance: usize) -> Option<&T> {
+        println!("{:?}", self.table.get(&sybmol));
+        self.table.get(&sybmol).and_then(|vec| vec.get(distance))
     }
 
     /// Finds the name given to a `Symbol`

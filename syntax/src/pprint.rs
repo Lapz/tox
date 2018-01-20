@@ -108,7 +108,7 @@ impl Statement {
 
                 if let Some(ref ret) = *returns {
                     ret.pprint(symbols);
-                }else {
+                } else {
                     pprint_string.push_str("nil")
                 }
 

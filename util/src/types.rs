@@ -45,9 +45,6 @@ pub enum Type {
     Float,
 }
 
-
-
-
 impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
@@ -72,7 +69,7 @@ impl Display for Type {
                 params, returns
             ),
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
-            Type::Array(ref a) => write!(f, "Array of {} ",a),
+            Type::Array(ref a) => write!(f, "Array of {} ", a),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
             Type::Int => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
@@ -156,9 +153,7 @@ impl<'a> PartialEq for Type {
                 params == oparams && returns == oreturns
             }
 
-            (&Type::Func(_,ref returns), unknown) => {
-                **returns == *unknown
-            }
+            (&Type::Func(_, ref returns), unknown) => **returns == *unknown,
 
             (&Type::Name(ref name, ref ty), &Type::Name(ref oname, ref oty)) => {
                 name == oname && ty == oty
@@ -189,8 +184,8 @@ impl<'a> PartialOrd for Type {
             | (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
-            | (s @ &Type::Func(_, _), o @ &Type::Func(_, _))| 
-            (s @ &Type::Array(_), o @ &Type::Array(_)) => s.partial_cmp(o),
+            | (s @ &Type::Func(_, _), o @ &Type::Func(_, _))
+            | (s @ &Type::Array(_), o @ &Type::Array(_)) => s.partial_cmp(o),
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
             | (&Type::Int, &Type::Int)

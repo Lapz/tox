@@ -1,7 +1,6 @@
-
+extern crate rand;
 extern crate syntax;
 extern crate util;
-extern crate rand;
 
 mod object;
 pub mod interpreter;

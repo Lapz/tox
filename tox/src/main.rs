@@ -1,9 +1,8 @@
-
+extern crate interpreter;
+extern crate sem;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
-extern crate interpreter;
-extern crate sem;
 extern crate syntax;
 extern crate util;
 
@@ -34,8 +33,6 @@ fn main() {
 
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
-
-   
 
     loop {
         let _ = io::stdout().write(b"lexer>> ");
@@ -169,8 +166,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     env.fill_env(&mut tyenv);
 
-   
-
     match TyChecker::new().analyse(&ast, &mut tyenv) {
         Ok(_) => (),
         Err(errors) => {
@@ -180,7 +175,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
             if penv {
                 println!("{:#?}", tyenv);
-                 println!("{:#?}", env);
+                println!("{:#?}", env);
             }
             ::std::process::exit(65)
         }
@@ -188,10 +183,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     if penv {
         println!("{:#?}", tyenv);
-         println!("{:#?}", env);
+        println!("{:#?}", env);
     }
 
-    match interpret(&ast, &mut resolver.locals,&mut env,) {
+    match interpret(&ast, &mut resolver.locals, &mut env) {
         Ok(_) => (),
         Err(err) => {
             println!("{:?}", err);
@@ -201,11 +196,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     };
 
     if penv {
-        println!("{:#?}",tyenv);
+        println!("{:#?}", tyenv);
         println!("{:#?}", env);
     }
-
-
 }
 
 #[derive(StructOpt, Debug)]

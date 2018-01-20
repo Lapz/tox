@@ -12,7 +12,7 @@ impl TyChecker {
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match expr.node {
-            Expression::Array { ref items} => {
+            Expression::Array { ref items } => {
                 if items.is_empty() {
                     return Ok(InferedType {
                         ty: Type::Array(Box::new(Type::Nil)),
@@ -119,7 +119,7 @@ impl TyChecker {
                         }
 
                         Expression::Call { .. } => self.transform_expression(object, env)?,
-                        ref e => unimplemented!("{:?}",e),
+                        ref e => unimplemented!("{:?}", e),
                     };
 
                     match ty.ty {
@@ -131,7 +131,6 @@ impl TyChecker {
                             let mut found = false;
 
                             let mut ty = Type::Nil;
-                         
 
                             for (name, method) in methods {
                                 if name == property {
@@ -143,19 +142,17 @@ impl TyChecker {
                             }
 
                             if !found {
-                            return Err(TypeError::NotMethodOrProperty(
-                                env.name(*property),
-                                expr.pos,
-                            ))
+                                return Err(TypeError::NotMethodOrProperty(
+                                    env.name(*property),
+                                    expr.pos,
+                                ));
+                            }
+
+                            Ok(InferedType { ty })
+                        }
+
+                        ref e => unimplemented!("{:?}", e),
                     }
-
-                    Ok(InferedType{ty})
-
-                        },
-
-                        ref e => unimplemented!("{:?}",e)
-                    }
-                
                 }
                 Expression::Call { .. } => self.transform_expression(callee, env),
                 _ => Err(TypeError::NotCallable(callee.pos)),
@@ -194,7 +191,7 @@ impl TyChecker {
                             return Err(TypeError::TooLittleProperty(expr.pos));
                         }
                     }
-                    ref e => unimplemented!("{:?}",e), //TODO CHANGE INTO HARD ERROR
+                    ref e => unimplemented!("{:?}", e), //TODO CHANGE INTO HARD ERROR
                 };
 
                 Ok(class)

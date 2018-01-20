@@ -8,7 +8,6 @@ use util::types::{Type, TypeError};
 use util::env::{Entry, TypeEnv};
 use util::pos::{Postition, WithPos};
 
-
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq, Default)]
 pub struct TyChecker {
@@ -51,7 +50,6 @@ impl TyChecker {
         pos: Postition,
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
-        
         match env.look_var(*symbol) {
             Some(ty) => Ok(InferedType {
                 ty: self.actual_type(&self.get_actual_ty(ty)?).clone(),
@@ -170,9 +168,7 @@ impl TyChecker {
                 Err(TypeError::UndefinedType(env.name(s), pos))
             }
             ExpressionTy::Nil => Ok(Type::Nil),
-            ExpressionTy::Arr(ref s) => {
-                Ok(Type::Array(Box::new(self.get_type(s, pos, env)?)))
-            }
+            ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(self.get_type(s, pos, env)?))),
             ExpressionTy::Func(ref params, ref returns) => {
                 let mut param_tys = Vec::with_capacity(params.len());
 
@@ -212,9 +208,9 @@ macro_rules! check_type {
             Ok(())
             }
 
-            
+
         }
-        
+
     }
 }
 
@@ -230,21 +226,19 @@ impl InferedType {
 
     /// Checks if `InferedType` is {bool}
     fn check_bool(&self, pos: Postition) -> Result<(), TypeError> {
-        check_type!(self,Type::Bool,pos)
+        check_type!(self, Type::Bool, pos)
     }
 
     /// Checks if `InferedType` is {int}
     fn check_int(&self, pos: Postition) -> Result<(), TypeError> {
-        check_type!(self,Type::Int,pos)
+        check_type!(self, Type::Int, pos)
     }
 
     /// Checks if `InferedType` is {str}
     fn check_str(&self, pos: Postition) -> Result<(), TypeError> {
-        check_type!(self,Type::Str,pos)
+        check_type!(self, Type::Str, pos)
     }
 
-       
-    
     /// Checks if `InferedType` is {float}
     fn check_float(&self, pos: Postition) -> Result<(), TypeError> {
         if self.ty != Type::Float {
@@ -276,5 +270,3 @@ impl InferedType {
         }
     }
 }
-
-

@@ -375,7 +375,6 @@ impl Resolver {
     }
 }
 
-
 impl Resolver {
     fn resolve_expression(
         &mut self,

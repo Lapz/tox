@@ -312,7 +312,6 @@ impl<'a> Parser<'a> {
             returns = Some(self.parse_type()?);
         }
 
-
         self.consume(&TokenType::SEMICOLON, "Expected ';' after extern function ")?;
 
         Ok(WithPos::new(
@@ -1002,12 +1001,7 @@ impl<'a> Parser<'a> {
 
                     if self.recognise(&TokenType::RBRACKET) {
                         self.advance();
-                        return Ok(WithPos::new(
-                            Expression::Array {
-                                items,
-                            },
-                            *pos,
-                        ));
+                        return Ok(WithPos::new(Expression::Array { items }, *pos));
                     }
 
                     while {
@@ -1022,12 +1016,7 @@ impl<'a> Parser<'a> {
                         "Expected a ']' to close the brackets .",
                     )?;
 
-                    Ok(WithPos::new(
-                        Expression::Array {
-                            items,
-                        },
-                        *pos,
-                    ))
+                    Ok(WithPos::new(Expression::Array { items }, *pos))
                 }
 
                 TokenType::LBRACE => {

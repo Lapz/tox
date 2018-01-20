@@ -34,44 +34,17 @@ impl TypeEnv {
         types.enter(nil_symbol, Type::Nil);
         types.enter(string_symbol, Type::Str);
 
-
         let mut env = TypeEnv {
             types,
             vars: Table::new(Rc::clone(strings)),
             unique: Unique::new(),
         };
 
-        env.add_builtin(
-            "clock",
-            vec![],
-            Type::Float,
-           
-        );
-        env.add_builtin(
-            "hex",
-            vec![Type::Int],
-            Type::Str,
-           
-        );
-        env.add_builtin(
-            "oct",
-            vec![Type::Int],
-            Type::Str,
-           
-        );
-        env.add_builtin(
-            "random",
-            vec![Type::Int, Type::Int],
-            Type::Int,
-          
-        );
-        env.add_builtin(
-            "to_int",
-            vec![Type::Str],
-            Type::Int,
-           
-        );
-
+        env.add_builtin("clock", vec![], Type::Float);
+        env.add_builtin("hex", vec![Type::Int], Type::Str);
+        env.add_builtin("oct", vec![Type::Int], Type::Str);
+        env.add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
+        env.add_builtin("to_int", vec![Type::Str], Type::Int);
 
         env.add_builtin_class(
             "io",
@@ -92,11 +65,20 @@ impl TypeEnv {
         self.types.look(symbol)
     }
 
+    pub fn look_type_at(&self, symbol: Symbol, distance: usize) -> Option<&Type> {
+        self.types.look_where(symbol, distance)
+    }
+
     pub fn name(&self, symbol: Symbol) -> String {
         self.vars.name(symbol)
     }
+
     pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
         self.vars.look(symbol)
+    }
+
+    pub fn look_var_at(&self, symbol: Symbol, distance: usize) -> Option<&Entry> {
+        self.vars.look_where(symbol, distance)
     }
 
     pub fn unique_id(&mut self) -> Symbol {
@@ -122,11 +104,11 @@ impl TypeEnv {
         self.vars.enter(symbol, data)
     }
 
-    pub fn get_symbol(&mut self,name:&str) -> Symbol {
+    pub fn get_symbol(&mut self, name: &str) -> Symbol {
         self.vars.symbol(name)
     }
 
-     fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str,Entry)>) {
+    fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, Entry)>) {
         let symbol = self.vars.symbol(name);
 
         use std::collections::HashMap;
@@ -143,18 +125,11 @@ impl TypeEnv {
             methods: methods_ty,
             fields: HashMap::new(),
         });
-        
-        self.vars.enter(symbol, entry);
 
-    
+        self.vars.enter(symbol, entry);
     }
 
-    fn add_builtin(
-        &mut self,
-        name: &str,
-        params: Vec<::types::Type>,
-        returns: Type,
-    ) {
+    fn add_builtin(&mut self, name: &str, params: Vec<::types::Type>, returns: Type) {
         let symbol = self.vars.symbol(name);
         self.vars.enter(symbol, Entry::FunEntry { params, returns });
     }

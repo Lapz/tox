@@ -1,8 +1,7 @@
-
 use std::time::{SystemTime, UNIX_EPOCH};
 use object::Object;
 use interpreter::RuntimeError;
-use rand::{thread_rng,Rng};
+use rand::{thread_rng, Rng};
 use util::symbol::Symbol;
 use util::env::TypeEnv;
 
@@ -21,41 +20,42 @@ impl BuiltIn {
         BuiltIn {}
     }
 
-    pub fn get_built_ins(&self,env:&mut TypeEnv) -> Vec<(Symbol, Object)> {
+    pub fn get_built_ins(&self, env: &mut TypeEnv) -> Vec<(Symbol, Object)> {
         vec![
-            add_builtin(env.get_symbol("clock"),built_in_clock),
-            add_builtin(env.get_symbol("random"),built_in_rand),
-            add_builtin(env.get_symbol("oct"),built_in_oct),
-            add_builtin(env.get_symbol("hex"),built_in_hex),
-            add_builtin(env.get_symbol("to_int"),built_in_to_int),
-            add_builtin_class(env.get_symbol("io"),env,vec![("readline",built_in_readline)]),
+            add_builtin(env.get_symbol("clock"), built_in_clock),
+            add_builtin(env.get_symbol("random"), built_in_rand),
+            add_builtin(env.get_symbol("oct"), built_in_oct),
+            add_builtin(env.get_symbol("hex"), built_in_hex),
+            add_builtin(env.get_symbol("to_int"), built_in_to_int),
+            add_builtin_class(
+                env.get_symbol("io"),
+                env,
+                vec![("readline", built_in_readline)],
+            ),
         ]
     }
 }
 
-
-pub(crate) fn add_builtin(name:Symbol, func: BuiltInFunction) -> (Symbol, Object) {
-    (
-        name,
-        Object::BuiltIn(name, func),
-    )
+pub(crate) fn add_builtin(name: Symbol, func: BuiltInFunction) -> (Symbol, Object) {
+    (name, Object::BuiltIn(name, func))
 }
 
-fn add_builtin_class(name:Symbol,env:&mut TypeEnv,methods:Vec<(&str,BuiltInFunction)>) -> (Symbol,Object) {
-    
+fn add_builtin_class(
+    name: Symbol,
+    env: &mut TypeEnv,
+    methods: Vec<(&str, BuiltInFunction)>,
+) -> (Symbol, Object) {
     use std::collections::HashMap;
 
     let mut map = HashMap::new();
 
-     for method in methods {
-            let name = env.get_symbol(method.0);
-            map.insert(name, Object::BuiltIn(name, method.1));
+    for method in methods {
+        let name = env.get_symbol(method.0);
+        map.insert(name, Object::BuiltIn(name, method.1));
     }
 
-    (name,Object::Class(name,None,map))
-
+    (name, Object::Class(name, None, map))
 }
-
 
 fn built_in_clock(_: &[Object]) -> Result<Object, RuntimeError> {
     let time = SystemTime::now()

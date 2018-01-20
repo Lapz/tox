@@ -1,14 +1,13 @@
 #[cfg(test)]
 
 mod test {
-   
+
     use semant::TyChecker;
     use util::env::TypeEnv;
     use util::pos::WithPos;
     use util::symbol::SymbolFactory;
     use syntax::ast::statement::Statement;
     use std::rc::Rc;
-    
 
     fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
         use syntax::lexer::Lexer;
