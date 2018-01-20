@@ -1,18 +1,26 @@
-class Toggle {
-    state:bool;
-  
-    fun value() -> bool {
-      return this.state;
-    }
-  
-    fun activate() -> Toggle {
-      this.state = !this.state;
-      return this;
-    }
+
+print "Guess the number!";
+
+
+while (true) {
+  var secret_number = random(1,101);
+  print "Please input your guess.";
+
+  var guess = io.readline();
+
+  print "You guessed: " + guess;
+
+  if (to_int(guess) > secret_number) {
+    print "Too small!";
+  }
+
+  if (to_int(guess) < secret_number) {
+    print "Too big!";
+  }
+
+
+  if (to_int(guess) == secret_number) {
+    print "You win!";
+    break;
+  }
 }
-  
-var toggle  = Toggle{state:true};
-
-print toggle.activate().value();
-
-print toggle.activate().value();

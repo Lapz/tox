@@ -12,9 +12,9 @@ use std::cmp::{Ordering, PartialOrd};
 #[derive(Debug, Clone)]
 pub enum TypeError {
     Expected(Type, Type, Postition),
-    UndefindedType(String, Postition),
-    UndefindedVar(String, Postition),
-    UndefindedClass(String, Postition),
+    UndefinedType(String, Postition),
+    UndefinedVar(String, Postition),
+    UndefinedClass(String, Postition),
     NotCallable(Postition),
     InvalidIndex(Postition),
     IndexAble(String, Postition),
@@ -97,14 +97,14 @@ impl Display for TypeError {
 
             TypeError::InvalidIndex(ref pos) => write!(f, "Cannot index on line '{}'", pos),
 
-            TypeError::UndefindedVar(ref name, ref pos) => {
-                write!(f, "Undefinded variable \'{}\' on {}", name, pos)
+            TypeError::UndefinedVar(ref name, ref pos) => {
+                write!(f, "Undefined variable \'{}\' on {}", name, pos)
             }
             TypeError::SuperClass(ref name, ref pos) => {
                 write!(f, "{} is not a class on {}", name, pos)
             }
-            TypeError::UndefindedClass(ref name, ref pos) => {
-                write!(f, "Undefinded Class\'{}\' on {}", name, pos)
+            TypeError::UndefinedClass(ref name, ref pos) => {
+                write!(f, "Undefined Class\'{}\' on {}", name, pos)
             }
 
             TypeError::NotCallable(ref pos) => {
@@ -123,7 +123,7 @@ impl Display for TypeError {
                 write!(f, "Undefined method/property \'{}\' on {}", name, pos)
             }
 
-            TypeError::UndefindedType(ref name, ref pos) => {
+            TypeError::UndefinedType(ref name, ref pos) => {
                 write!(f, "Undefined Type \'{}\' on {}", name, pos)
             }
 

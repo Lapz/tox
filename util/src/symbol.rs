@@ -2,7 +2,7 @@
 //! `Symbol` and a `String`
 
 use std::fmt::{Display, Formatter, Result};
-use std::collections::HashMap;
+use std::collections::{HashMap};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -51,8 +51,8 @@ impl<T: Clone> Table<T> {
     /// Enters a peice of data into the current scope
     pub fn enter(&mut self, symbol: Symbol, data: T) {
         let mapping = self.table.entry(symbol).or_insert_with(Vec::new);
-
         mapping.push(data);
+        
         self.scopes.push(Some(symbol));
     }
 

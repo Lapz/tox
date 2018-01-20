@@ -99,7 +99,7 @@ impl TyChecker {
                     if let Some(entry) = env.look_var(sym).cloned() {
                         self.infer_params(&entry, arguments, env, callee.pos)
                     } else {
-                        Err(TypeError::UndefindedVar(env.name(sym), callee.pos))
+                        Err(TypeError::UndefinedVar(env.name(sym), callee.pos))
                     }
                 }
 
@@ -115,7 +115,7 @@ impl TyChecker {
                                 return Ok(InferedType { ty: ty.clone() });
                             }
 
-                            return Err(TypeError::UndefindedClass(env.name(*name), expr.pos));
+                            return Err(TypeError::UndefinedClass(env.name(*name), expr.pos));
                         }
 
                         Expression::Call { .. } => self.transform_expression(object, env)?,

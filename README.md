@@ -46,7 +46,7 @@ A guessing game example
 print "Guess the number!";
 
 
-var secret_number = rand(1,101);
+var secret_number = random(1,101);
 print "Please input your guess.";
 
 var guess = io.readline();

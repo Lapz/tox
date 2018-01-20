@@ -51,11 +51,12 @@ impl TyChecker {
         pos: Postition,
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
+        
         match env.look_var(*symbol) {
             Some(ty) => Ok(InferedType {
                 ty: self.actual_type(&self.get_actual_ty(ty)?).clone(),
             }),
-            None => Err(TypeError::UndefindedVar(env.name(*symbol), pos)),
+            None => Err(TypeError::UndefinedVar(env.name(*symbol), pos)),
         }
     }
 
@@ -166,7 +167,7 @@ impl TyChecker {
                     return Ok(ty.clone());
                 }
 
-                Err(TypeError::UndefindedType(env.name(s), pos))
+                Err(TypeError::UndefinedType(env.name(s), pos))
             }
             ExpressionTy::Nil => Ok(Type::Nil),
             ExpressionTy::Arr(ref s) => {
