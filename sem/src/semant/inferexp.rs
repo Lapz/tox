@@ -124,7 +124,6 @@ impl TyChecker {
 
                     match ty.ty {
                         Type::Class {
-                            ref name,
                             ref methods,
                             ..
                         } => {
@@ -500,7 +499,7 @@ impl TyChecker {
                     param_names.push(symbol);
                 }
 
-                env.begin_scope();
+              
 
                 for (name, ty) in param_names.iter().zip(params_ty.clone()) {
                     env.add_var(*name, Entry::VarEntry(ty));
@@ -510,7 +509,6 @@ impl TyChecker {
 
                 self.check_types(&return_type, &body_ty.ty, expr.pos)?;
 
-                env.end_scope();
 
                 Ok(InferedType {
                     ty: Type::Func(params_ty, Box::new(return_type)),

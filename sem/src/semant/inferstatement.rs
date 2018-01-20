@@ -19,15 +19,11 @@ impl TyChecker {
                     return Ok(nil_type!());
                 }
 
-                env.begin_scope();
-
-                for expr in expressions.iter().rev().skip(1) {
+                for expr in expressions {
                     self.transform_statement(expr, env)?;
                 }
 
                 let result = self.transform_statement(expressions.last().unwrap(), env);
-
-                env.end_scope();
 
                 result
             }
@@ -300,7 +296,8 @@ impl TyChecker {
                         return Ok(InferedType { ty: expr_ty.ty });
                     }
 
-                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
+                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone())
+);
 
                     Ok(expr_ty)
                 } else {
