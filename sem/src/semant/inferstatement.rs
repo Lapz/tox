@@ -145,9 +145,10 @@ impl TyChecker {
                 ref condition,
                 ref body,
             } => {
+
+                
                 self.transform_expression(condition, env)?
                     .check_bool(condition.pos)?;
-
                 let body_ty = self.transform_statement(body, env)?;
 
                 Ok(body_ty)

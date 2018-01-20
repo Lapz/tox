@@ -62,11 +62,6 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
     }
 
-    pub fn look_where(&self, sybmol: Symbol, distance: usize) -> Option<&T> {
-        println!("{:?}", self.table.get(&sybmol));
-        self.table.get(&sybmol).and_then(|vec| vec.get(distance))
-    }
-
     /// Finds the name given to a `Symbol`
     pub fn name(&self, symbol: Symbol) -> String {
         self.strings.mappings.borrow()[&symbol].to_owned()

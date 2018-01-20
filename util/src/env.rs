@@ -65,20 +65,12 @@ impl TypeEnv {
         self.types.look(symbol)
     }
 
-    pub fn look_type_at(&self, symbol: Symbol, distance: usize) -> Option<&Type> {
-        self.types.look_where(symbol, distance)
-    }
-
     pub fn name(&self, symbol: Symbol) -> String {
         self.vars.name(symbol)
     }
 
     pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
         self.vars.look(symbol)
-    }
-
-    pub fn look_var_at(&self, symbol: Symbol, distance: usize) -> Option<&Entry> {
-        self.vars.look_where(symbol, distance)
     }
 
     pub fn unique_id(&mut self) -> Symbol {
