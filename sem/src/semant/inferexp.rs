@@ -94,68 +94,163 @@ impl TyChecker {
             Expression::Call {
                 ref callee,
                 ref arguments,
-            } => match callee.node {
-                Expression::Var(sym, _) => {
-                    if let Some(entry) = env.look_var(sym).cloned() {
-                        self.infer_params(&entry, arguments, env, callee.pos)
-                    } else {
-                        Err(TypeError::UndefinedVar(env.name(sym), callee.pos))
-                    }
-                }
+            } => {
+                use util::symbol::Symbol;
+                let callee = match callee.node {
+                    Expression::Var(sym, _) => sym,
+                    Expression::Get {
+                        ref object,
+                        ref property,
+                        ..
+                    } => {
+                        let mut _symbol = Symbol(0); // For the undefined error message
+                        let ty = match object.node {
+                            Expression::Var(ref sym, _) => {
+                                _symbol = *sym;
+                                self.transform_var(sym, expr.pos, env)?
+                            }
+                            Expression::ClassInstance { ref name, .. } => {
+                                if let Some(ty) = env.look_type(*name) {
+                                    return Ok(InferedType { ty: ty.clone() });
+                                }
 
-                Expression::Get {
-                    ref object,
-                    ref property,
-                    ..
-                } => {
-                    let ty = match object.node {
-                        Expression::Var(sym, _) => self.transform_var(&sym, object.pos, env)?,
-                        Expression::ClassInstance { ref name, .. } => {
-                            if let Some(ty) = env.look_type(*name) {
-                                return Ok(InferedType { ty: ty.clone() });
+                                return Err(TypeError::UndefinedClass(env.name(*name), expr.pos));
                             }
 
-                            return Err(TypeError::UndefinedClass(env.name(*name), expr.pos));
-                        }
+                            Expression::Call { .. } => {
+                                return self.transform_expression(callee, env)
+                            }
+                            ref e => unimplemented!("{:?}", e),
+                        };
 
-                        Expression::Call { .. } => self.transform_expression(object, env)?,
-                        ref e => unimplemented!("{:?}", e),
-                    };
+                        match ty.ty {
+                            Type::Class {
+                                ref methods,
+                                ref name,
+                                ..
+                            } => {
+                                let mut _found = false;
+                                for (key, value) in methods {
+                                    if key == property {
+                                        _found = true;
 
-                    match ty.ty {
-                        Type::Class {
-                            ref methods,
-                            ..
-                        } => {
-                            let mut found = false;
+                                        match value {
+                                            &Entry::VarEntry(ref ty) => {
+                                                return Ok(InferedType { ty: ty.clone() })
+                                            }
 
-                            let mut ty = Type::Nil;
+                                            &Entry::FunEntry {
+                                                ref params,
+                                                ref returns,
+                                            } => {
+                                                for (arg, param) in arguments.iter().zip(params) {
+                                                    let exp = self.transform_expression(
+                                                        arg,
+                                                        &mut env.clone(),
+                                                    )?;
 
-                            for (name, method) in methods {
-                                if name == property {
-                                    found = true;
-                                    self.infer_params(method, arguments, env, object.pos)?;
+                                                    self.check_types(&param, &exp.ty, expr.pos)?;
+                                                }
+                                                return Ok(InferedType {
+                                                    ty: self.actual_type(returns).clone(),
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
 
-                                    ty = self.get_actual_ty(method)?;
+                                if !_found {
+                                    if let Some(class) = env.look_type(*name).cloned() {
+                                        // When the Class type is added to the environment the methods fields is empty
+                                        // After the first pass the class type with all the methods and fields is added to the  env
+                                        // so I check to see if the method being called occus their if not error
+
+                                        match class {
+                                            Type::Class { ref methods, .. } => {
+                                                _found = false;
+
+                                                for (key, value) in methods {
+                                                    if key == property {
+                                                        _found = true;
+
+                                                        match value {
+                                                            &Entry::VarEntry(ref ty) => {
+                                                                return Ok(InferedType {
+                                                                    ty: ty.clone(),
+                                                                })
+                                                            }
+
+                                                            &Entry::FunEntry {
+                                                                ref params,
+                                                                ref returns,
+                                                            } => {
+                                                                for (arg, param) in
+                                                                    arguments.iter().zip(params)
+                                                                {
+                                                                    let exp = self.transform_expression(
+                                                        arg,
+                                                        &mut env.clone(),
+                                                    )?;
+
+                                                                    self.check_types(
+                                                                        &param,
+                                                                        &exp.ty,
+                                                                        expr.pos,
+                                                                    )?;
+                                                                }
+                                                                return Ok(InferedType {
+                                                                    ty: self.actual_type(returns)
+                                                                        .clone(),
+                                                                });
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            _ => unimplemented!(),
+                                        }
+                                    }
+
+                                    return Err(TypeError::NotMethodOrProperty(
+                                        env.name(*property),
+                                        expr.pos,
+                                    ));
                                 }
                             }
 
-                            if !found {
-                                return Err(TypeError::NotMethodOrProperty(
-                                    env.name(*property),
-                                    expr.pos,
-                                ));
-                            }
+                            e => unimplemented!("TODO ADD AN ERROR, {:?} on {}", e, expr.pos),
+                        }
+                        return Err(TypeError::UndefinedVar(env.name(_symbol), expr.pos));
+                    }
+                    _ => return Err(TypeError::NotCallable(expr.pos)),
+                };
 
-                            Ok(InferedType { ty })
+                if let Some(entry) = env.look_var(callee).cloned() {
+                    match entry {
+                        Entry::FunEntry {
+                            ref params,
+                            ref returns,
+                        } => {
+                            for (arg, param) in arguments.iter().zip(params) {
+                                let exp = self.transform_expression(arg, &mut env.clone())?;
+
+                                self.check_types(&param, &exp.ty, expr.pos)?;
+                            }
+                            return Ok(InferedType {
+                                ty: self.actual_type(returns).clone(),
+                            });
                         }
 
-                        ref e => unimplemented!("{:?}", e),
+                        Entry::VarEntry(ref ty) => match ty {
+                            &Type::Class { .. } => return Err(TypeError::NotCallable(expr.pos)),
+                            e => return Ok(InferedType { ty: e.clone() }),
+                        },
                     }
                 }
-                Expression::Call { .. } => self.transform_expression(callee, env),
-                _ => Err(TypeError::NotCallable(callee.pos)),
-            },
+
+                Err(TypeError::UndefinedVar(env.name(callee), expr.pos))
+            }
 
             Expression::ClassInstance {
                 ref properties,
@@ -233,7 +328,7 @@ impl TyChecker {
                     Type::Class {
                         ref fields,
                         ref methods,
-                        ..
+                        ref name,
                     } => {
                         let mut found = false;
 
@@ -499,7 +594,7 @@ impl TyChecker {
                     param_names.push(symbol);
                 }
 
-              
+                env.begin_scope();
 
                 for (name, ty) in param_names.iter().zip(params_ty.clone()) {
                     env.add_var(*name, Entry::VarEntry(ty));
@@ -509,6 +604,7 @@ impl TyChecker {
 
                 self.check_types(&return_type, &body_ty.ty, expr.pos)?;
 
+                env.end_scope();
 
                 Ok(InferedType {
                     ty: Type::Func(params_ty, Box::new(return_type)),

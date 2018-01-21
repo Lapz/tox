@@ -61,15 +61,6 @@ impl TyChecker {
                     }
                 }
 
-                env.add_type(
-                    *name,
-                    Type::Class {
-                        name: *name,
-                        fields: HashMap::new(),
-                        methods: HashMap::new(),
-                    },
-                );
-
                 for &(property, ref ty) in properties {
                     let ty = self.get_type(ty, statement.pos, env)?;
                     fields.insert(property, ty.clone());
@@ -101,15 +92,54 @@ impl TyChecker {
                 for method in methods {
                     match method.node {
                         Statement::Function { ref name, ref body } => {
-                            let method_ty = self.transform_expression(body, env)?;
-                            match method_ty.ty {
-                                Type::Func(params, returns) => class_methods.insert(
-                                    *name,
-                                    Entry::FunEntry {
-                                        params,
-                                        returns: *returns,
-                                    },
-                                ),
+                            use syntax::ast::expr::Expression;
+                            match body.node {
+                                Expression::Func {
+                                    ref returns,
+                                    ref parameters,
+                                    ref body,
+                                } => {
+                                    let return_type = if let Some(ref return_ty) = *returns {
+                                        self.get_type(return_ty, statement.pos, env)?
+                                    } else {
+                                        Type::Nil
+                                    };
+
+                                    match self.this {
+                                        Some(Type::This(_, ref mut methods, _)) => {
+                                            methods.insert(*name, return_type.clone());
+                                        }
+                                        _ => unreachable!(),
+                                    }
+
+                                    let mut param_names = vec![];
+                                    let mut param_tys = vec![];
+
+                                    for &(param, ref p_ty) in parameters {
+                                        param_tys.push(self.get_type(p_ty, statement.pos, env)?);
+                                        param_names.push(param);
+                                    }
+
+                                    env.begin_scope();
+
+                                    for (name, ty) in param_names.iter().zip(param_tys.clone()) {
+                                        env.add_var(*name, Entry::VarEntry(ty));
+                                    }
+
+                                    let body = &self.transform_statement(body, env)?;
+
+                                    self.check_types(&return_type, &body.ty, statement.pos)?;
+
+                                    env.end_scope();
+
+                                    class_methods.insert(
+                                        *name,
+                                        Entry::FunEntry {
+                                            params: param_tys,
+                                            returns: return_type.clone(),
+                                        },
+                                    );
+                                }
                                 _ => unreachable!(),
                             };
                         }
@@ -141,8 +171,6 @@ impl TyChecker {
                 ref condition,
                 ref body,
             } => {
-
-                
                 self.transform_expression(condition, env)?
                     .check_bool(condition.pos)?;
                 let body_ty = self.transform_statement(body, env)?;
@@ -296,8 +324,7 @@ impl TyChecker {
                         return Ok(InferedType { ty: expr_ty.ty });
                     }
 
-                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone())
-);
+                    env.add_var(*symbol, Entry::VarEntry(expr_ty.ty.clone()));
 
                     Ok(expr_ty)
                 } else {
