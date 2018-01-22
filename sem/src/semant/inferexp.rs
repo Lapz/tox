@@ -326,18 +326,23 @@ impl TyChecker {
 
                 match instance.ty {
                     Type::Class {
-                        ref fields,
-                        ref methods,
                         ref name,
+                        ..
                     } => {
                         let mut found = false;
 
-                        for (field, field_ty) in fields {
+
+                        if let Some(class) = env.look_type(*name).cloned() {
+
+                        match class {
+                            Type::Class{ref fields,ref methods,..} => {
+                                    for (field, field_ty) in fields {
                             if field == property {
                                 found = true;
                                 ty = field_ty.clone();
                             }
                         }
+
 
                         for (method, methods_ty) in methods {
                             if method == property {
@@ -349,7 +354,12 @@ impl TyChecker {
                             }
                         }
 
-                        if !found {
+                                },
+                                _ => unimplemented!(),
+                            }
+                        }
+
+                        else {
                             return Err(TypeError::NotMethodOrProperty(
                                 env.name(*property),
                                 expr.pos,
