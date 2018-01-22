@@ -134,28 +134,7 @@ impl TyChecker {
                                     if key == property {
                                         _found = true;
 
-                                        match value {
-                                            &Entry::VarEntry(ref ty) => {
-                                                return Ok(InferedType { ty: ty.clone() })
-                                            }
-
-                                            &Entry::FunEntry {
-                                                ref params,
-                                                ref returns,
-                                            } => {
-                                                for (arg, param) in arguments.iter().zip(params) {
-                                                    let exp = self.transform_expression(
-                                                        arg,
-                                                        &mut env.clone(),
-                                                    )?;
-
-                                                    self.check_types(&param, &exp.ty, expr.pos)?;
-                                                }
-                                                return Ok(InferedType {
-                                                    ty: self.actual_type(returns).clone(),
-                                                });
-                                            }
-                                        }
+                                        return self.infer_params(value, arguments, env, callee.pos);
                                     }
                                 }
 
@@ -168,46 +147,15 @@ impl TyChecker {
                                         match class {
                                             Type::Class { ref methods, .. } => {
                                                 _found = false;
-
                                                 for (key, value) in methods {
-                                                    if key == property {
-                                                        _found = true;
-
-                                                        match value {
-                                                            &Entry::VarEntry(ref ty) => {
-                                                                return Ok(InferedType {
-                                                                    ty: ty.clone(),
-                                                                })
-                                                            }
-
-                                                            &Entry::FunEntry {
-                                                                ref params,
-                                                                ref returns,
-                                                            } => {
-                                                                for (arg, param) in
-                                                                    arguments.iter().zip(params)
-                                                                {
-                                                                    let exp = self.transform_expression(
-                                                        arg,
-                                                        &mut env.clone(),
-                                                    )?;
-
-                                                                    self.check_types(
-                                                                        &param,
-                                                                        &exp.ty,
-                                                                        expr.pos,
-                                                                    )?;
-                                                                }
-                                                                return Ok(InferedType {
-                                                                    ty: self.actual_type(returns)
-                                                                        .clone(),
-                                                                });
-                                                            }
-                                                        }
-                                                    }
+                                                    return self.infer_params(
+                                                        value,
+                                                        arguments,
+                                                        env,
+                                                        callee.pos,
+                                                    );
                                                 }
                                             }
-
                                             _ => unimplemented!(),
                                         }
                                     }
@@ -325,41 +273,34 @@ impl TyChecker {
                 let mut ty = Type::Nil;
 
                 match instance.ty {
-                    Type::Class {
-                        ref name,
-                        ..
-                    } => {
-                        let mut found = false;
-
-
+                    Type::Class { ref name, .. } => {
                         if let Some(class) = env.look_type(*name).cloned() {
-
-                        match class {
-                            Type::Class{ref fields,ref methods,..} => {
+                            match class {
+                                Type::Class {
+                                    ref fields,
+                                    ref methods,
+                                    ..
+                                } => {
                                     for (field, field_ty) in fields {
-                            if field == property {
-                                found = true;
-                                ty = field_ty.clone();
-                            }
-                        }
+                                        if field == property {
+                                            ty = field_ty.clone();
+                                        }
+                                    }
 
-
-                        for (method, methods_ty) in methods {
-                            if method == property {
-                                found = true;
-                                ty = match *methods_ty {
-                                    Entry::VarEntry(ref t) => t.clone(),
-                                    Entry::FunEntry { ref returns, .. } => returns.clone(),
+                                    for (method, methods_ty) in methods {
+                                        if method == property {
+                                            ty = match *methods_ty {
+                                                Entry::VarEntry(ref t) => t.clone(),
+                                                Entry::FunEntry { ref returns, .. } => {
+                                                    returns.clone()
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                        }
-
-                                },
                                 _ => unimplemented!(),
                             }
-                        }
-
-                        else {
+                        } else {
                             return Err(TypeError::NotMethodOrProperty(
                                 env.name(*property),
                                 expr.pos,
