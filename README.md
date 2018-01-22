@@ -46,23 +46,27 @@ A guessing game example
 print "Guess the number!";
 
 
-var secret_number = rand(1,101);
-print "Please input your guess.";
+while (true) {
+  var secret_number = random(1,101);
+  print "Please input your guess.";
 
-var guess = io.readline();
+  var guess = io.readline();
 
-print "You guessed: " + guess;
+  print "You guessed: " + guess;
 
-if (int(guess) > secret_number) {
-  print "Too small!";
-}
+  if (to_int(guess) > secret_number) {
+    print "Too small!";
+  }
 
-if (int(guess) < secret_number) {
-  print "Too big!";
-}
+  if (to_int(guess) < secret_number) {
+    print "Too big!";
+  }
 
-if (int(guess) == secret_number) {
-  print "You win!";
+
+  if (to_int(guess) == secret_number) {
+    print "You win!";
+    break;
+  }
 }
 
 ```
@@ -88,4 +92,9 @@ if (int(guess) == secret_number) {
 - [x] Move the functions in inference onto a struct called ```TyChecker```
 - [x] Have a field on the type check that contains the types that this points too. When this is acessed check if that field exist and the return the type of that field.
 - [ ] Change how method inheritance is done
-- [ ] Implement closures properly
+- [x] Implement closures properly
+- [x] Fix the typechecking of vars introduced in a nested scope
+
+## Run the Compiler
+ RUSTFLAGS='-C link-args=-lffi' RUST_BACKTRACE=1 cargo run ../test/test.lox && llc -filetype=obj out.bc \
+&& clang++ -g -O3 out.bc `lvm-config --cxxflags --ldflags --system-libs --libs core` && ./toy

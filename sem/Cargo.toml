@@ -1,0 +1,13 @@
+[package]
+name = "sem"
+version = "0.1.0"
+authors = ["rowlandsonpratt <striderman34@gmail.com>"]
+
+[dependencies]
+util = {path = "../util"}
+syntax = {path= "../syntax"}
+rand = "0.3.16"
+
+
+[dev-dependencies]
+pretty_assertions = "0.4.0"
