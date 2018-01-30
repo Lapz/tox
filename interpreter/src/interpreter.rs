@@ -7,7 +7,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use util::symbol::Symbol;
 use interpreter::env::Environment;
-
+use std::mem;
 #[derive(Debug)]
 pub enum RuntimeError {
     Break,
@@ -50,16 +50,21 @@ pub(crate) fn evaluate_statement(
             let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
 
             let mut sklass = None;
+
             let mut s = false;
 
-            if let Some(sclass) = *superclass {
-                // env = &Environment::new_with_outer(env);
+            let old_env = env.clone();
 
-                // let sk =env.look_object(sclass).unwrap().clone();
+            if let Some(ref sclass) = *superclass {
+                let new_env = Environment::new_with_outer(env);
+                mem::replace(env, new_env);
 
-                //locals,env.define(Symbol(1), sk);
-                // sklass = Some(Box::new(env.look_object(sclass).unwrap().clone()));
                 s = true;
+
+                let superclass = env.get(sclass, 1)?;
+
+                sklass = Some(Box::new(env.get(sclass, 1).unwrap().clone()));
+                env.define(Symbol(1), superclass);
             }
 
             for method in methods {
@@ -84,9 +89,11 @@ pub(crate) fn evaluate_statement(
                 }
             }
 
-            if s {}
+            if s {
+                mem::replace(env, old_env);
+            }
 
-            env.assign(name, Object::Class(*name, sklass, sym_methods), 0)?;
+            env.define(*name, Object::Class(*name, sklass, sym_methods));
             Ok(Object::None)
         }
 
@@ -497,10 +504,6 @@ fn evaluate_expression(
 
             Ok(value)
         }
-        Expression::Super(ref handle) => {
-            let distance = get_distance(locals, &Symbol(1), handle)?;
-            env.get(&Symbol(1), distance)
-        }
 
         Expression::Get {
             ref object,
@@ -684,6 +687,10 @@ pub mod env {
         /// value into thelocals,environmentImpl
         pub fn define(&self, name: Symbol, value: Object) {
             self.actual.borrow_mut().values.insert(name, value);
+        }
+
+        pub fn remove(&self, name: &Symbol) {
+            self.actual.borrow_mut().values.remove(name);
         }
 
         /// Takes a Symbol and a value.

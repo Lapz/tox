@@ -70,7 +70,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::FALSE(_) => write!(f, "false"),
             TokenType::THIS => write!(f, "this"),
             TokenType::CLASS => write!(f, "class"),
-            TokenType::SUPER => write!(f, "super"),
             TokenType::FOR => write!(f, "for"),
             TokenType::WHILE => write!(f, "while"),
             TokenType::AND => write!(f, "and"),
@@ -140,7 +139,7 @@ pub enum TokenType<'a> {
     PRINT,
     THIS,
     CLASS,
-    SUPER,
+
     FOR,
     WHILE,
     AND,

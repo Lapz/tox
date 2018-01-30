@@ -40,8 +40,8 @@ impl TyChecker {
                 let mut fields: HashMap<Symbol, Type> = HashMap::new();
                 let mut class_methods = HashMap::new();
 
-                if let Some(sclass) = *superclass {
-                    if let Some(mut entry) = env.look_var(sclass) {
+                if let Some(ref sclass) = *superclass {
+                    if let Some(mut entry) = env.look_var(*sclass) {
                         match *entry {
                             Entry::VarEntry(ref sty) => match *sty {
                                 Type::Class {
@@ -53,10 +53,10 @@ impl TyChecker {
                                     class_methods.extend(methods.clone());
                                 }
 
-                                _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                                _ => return Err(TypeError::SuperClass(*sclass, statement.pos)),
                             },
 
-                            _ => return Err(TypeError::SuperClass(sclass, statement.pos)),
+                            _ => return Err(TypeError::SuperClass(*sclass, statement.pos)),
                         }
                     }
                 }

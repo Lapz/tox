@@ -1,18 +1,12 @@
-class Toggle {
-    state:bool;
-  
-    fun value() -> bool {
-      return this.state;
-    }
-  
-    fun activate() -> Toggle {
-      this.state = !this.state;
-      return this;
-    }
+class Doughnut {
+  name:str;
+  fun cook() {
+    print "Fry until golden brown.";
+  }
 }
+
+class BostonCream < Doughnut {
   
-var toggle  = Toggle{state:true};
+}
 
-print toggle.activate().value();
-
-print toggle.activate().value();
+BostonCream{}.cook();

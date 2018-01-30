@@ -147,7 +147,7 @@ impl TyChecker {
                                         match class {
                                             Type::Class { ref methods, .. } => {
                                                 _found = false;
-                                                for (key, value) in methods {
+                                                for (_, value) in methods {
                                                     return self.infer_params(
                                                         value,
                                                         arguments,
@@ -476,8 +476,6 @@ impl TyChecker {
 
                 Ok(InferedType { ty })
             }
-
-            Expression::Super { .. } => unimplemented!(),
 
             Expression::This(_) => {
                 if let Some(ref this) = self.this {

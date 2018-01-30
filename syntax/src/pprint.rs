@@ -156,9 +156,9 @@ impl Statement {
                 pprint_string.push_str("(class ");
                 pprint_string.push_str(&symbols.name(*name));
 
-                if let Some(sclass) = *superclass {
-                    pprint_string.push_str("<");
-                    pprint_string.push_str(&symbols.name(sclass))
+                if let Some(ref sclass) = *superclass {
+                    pprint_string.push_str("< ");
+                    pprint_string.push_str(&symbols.name(*sclass));
                 }
 
                 for method in methods {
@@ -333,8 +333,9 @@ impl Expression {
                 ref properties,
                 ref name,
             } => {
-                pprint_string.push_str("(instance ");
                 pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(" instance ");
+
                 pprint_string.push_str(" ");
 
                 for &(ref key, ref value) in properties {
@@ -434,10 +435,6 @@ impl Expression {
                 object.node.pprint_into(pprint_string, symbols);
                 value.node.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(")");
-            }
-
-            Expression::Super(_) => {
-                pprint_string.push_str("super");
             }
 
             Expression::Ternary {
