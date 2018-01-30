@@ -85,11 +85,25 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         let mut env = Environment::new();
 
-        match interpret(&ast, &mut resolver.locals, &mut env) {
+        let mut tyenv = TypeEnv::new(&strings);
+
+        env.fill_env(&mut tyenv);
+
+        match TyChecker::new().analyse(&ast, &mut tyenv) {
+            Ok(_) => (),
+            Err(errors) => {
+                for err in errors {
+                    println!("{}", err);
+                }
+
+               continue;
+            }
+        };
+
+        match interpret(&ast, &resolver.locals, &mut env) {
             Ok(_) => (),
             Err(err) => {
                 println!("{:?}", err);
-
                 continue;
             }
         };
@@ -186,7 +200,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", env);
     }
 
-    match interpret(&ast, &mut resolver.locals, &mut env) {
+    match interpret(&ast, &resolver.locals, &mut env) {
         Ok(_) => (),
         Err(err) => {
             println!("{:?}", err);

@@ -186,28 +186,24 @@ mod tests {
 
     #[test]
     fn statement_keywords() {
-        let input = "pprint,class,super,this,fun,var,or,and";
+        let input = "class,this,fun,var,or,and";
 
         let mut lexer = Lexer::new(input);
 
         let lexer_tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
-            add_token(1, 1, 0, TokenType::IDENTIFIER("pprint")),
-            add_token(1, 7, 6, TokenType::COMMA),
-            add_token(1, 8, 7, TokenType::CLASS),
-            add_token(1, 13, 12, TokenType::COMMA),
-            add_token(1, 14, 13, TokenType::SUPER),
+            add_token(1, 1, 0, TokenType::CLASS),
+            add_token(1, 6, 5, TokenType::COMMA),
+            add_token(1, 7, 6, TokenType::THIS),
+            add_token(1, 11, 10, TokenType::COMMA),
+            add_token(1, 12, 11, TokenType::FUNCTION),
+            add_token(1, 15, 14, TokenType::COMMA),
+            add_token(1, 16, 15, TokenType::VAR),
             add_token(1, 19, 18, TokenType::COMMA),
-            add_token(1, 20, 19, TokenType::THIS),
-            add_token(1, 24, 23, TokenType::COMMA),
-            add_token(1, 25, 24, TokenType::FUNCTION),
-            add_token(1, 28, 27, TokenType::COMMA),
-            add_token(1, 29, 28, TokenType::VAR),
-            add_token(1, 32, 31, TokenType::COMMA),
-            add_token(1, 33, 32, TokenType::OR),
-            add_token(1, 35, 34, TokenType::COMMA),
-            add_token(1, 36, 35, TokenType::AND),
+            add_token(1, 20, 19, TokenType::OR),
+            add_token(1, 22, 21, TokenType::COMMA),
+            add_token(1, 23, 22, TokenType::AND),
         ];
         assert_eq!(lexer_tokens, expected_tokens);
     }

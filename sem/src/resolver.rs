@@ -328,8 +328,8 @@ impl Resolver {
 
                 self.current_class = ClassType::Class;
 
-                if let Some(sclass) = *superclass {
-                    self.define(sclass);
+                if let Some(ref sclass) = *superclass {
+                    self.define(*sclass);
                     self.begin_scope();
                     self.insert(Symbol(1), true); // super
                     sklass = true;
@@ -500,19 +500,6 @@ impl Resolver {
             } => {
                 self.resolve_expression(&value.node, pos)?;
                 self.resolve_expression(&object.node, pos)?;
-                Ok(())
-            }
-
-            Expression::Super(ref handle) => {
-                if self.current_class == ClassType::None {
-                    return Err(ResolverError::This(self.error(
-                        "Cannot use 'super' outside of a class.",
-                        pos,
-                    )));
-                }
-
-                self.resolve_local(&Symbol(1), *handle);
-
                 Ok(())
             }
 

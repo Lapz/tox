@@ -529,6 +529,7 @@ impl<'a> Parser<'a> {
         let name = self.consume_name("Expected a class name")?;
 
         let superclass = if self.recognise(&TokenType::LESSTHAN) {
+            self.advance();
             Some(self.consume_name("Expected a superclass name")?)
         } else {
             None
@@ -991,10 +992,6 @@ impl<'a> Parser<'a> {
                     *pos,
                 )),
 
-                TokenType::SUPER => Ok(WithPos::new(
-                    Expression::Super(self.variable_use_maker.next()),
-                    *pos,
-                )),
                 TokenType::FUNCTION => self.fun_body("function"),
                 TokenType::LBRACKET => {
                     let mut items = vec![];
