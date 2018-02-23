@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use util::pos::WithPos;
+use util::pos::Spanned;
 use util::symbol::Symbol;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::VariableUseHandle;
@@ -26,7 +26,7 @@ pub enum Object {
     Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
-    Function(Symbol, Vec<Symbol>, WithPos<Statement>, Environment),
+    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,

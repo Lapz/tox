@@ -4,7 +4,7 @@ mod test {
     use parser::Parser;
     use ast::expr::*;
     use ast::statement::*;
-    use util::pos::{Postition, WithPos};
+    use util::pos::{Position, Spanned};
     use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
 
@@ -17,12 +17,12 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
+            Spanned::new(
                 Statement::Var(
                     Symbol(2),
-                    Some(WithPos::new(
+                    Some(Spanned::new(
                         Expression::Literal(Literal::Int(10)),
-                        Postition {
+                        Position {
                             line: 1,
                             column: 13,
                             absolute: 12,
@@ -30,7 +30,7 @@ mod test {
                     )),
                     Some(ExpressionTy::Simple(Symbol(3))),
                 ),
-                Postition {
+                Position {
                     line: 1,
                     column: 1,
                     absolute: 0,
@@ -239,14 +239,14 @@ mod test {
 
         let name = Symbol(2);
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::Class {
                 name,
                 methods: vec![],
                 properties: vec![],
                 superclass: None,
             },
-            Postition {
+            Position {
                 line: 1,
                 column: 1,
                 absolute: 0,
@@ -280,19 +280,19 @@ mod test {
         let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::IfStmt {
-                condition: WithPos::new(
+                condition: Spanned::new(
                     Expression::Literal(Literal::True(true)),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 5,
                         absolute: 4,
                     },
                 ),
-                then_branch: Box::new(WithPos::new(
+                then_branch: Box::new(Spanned::new(
                     Statement::Block(vec![]),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 11,
                         absolute: 10,
@@ -300,7 +300,7 @@ mod test {
                 )),
                 else_branch: None,
             },
-            Postition {
+            Position {
                 line: 1,
                 column: 1,
                 absolute: 0,
@@ -320,9 +320,9 @@ mod test {
         let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::Block(vec![]),
-            Postition {
+            Position {
                 line: 1,
                 column: 1,
                 absolute: 0,
@@ -342,28 +342,28 @@ mod test {
         let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let array = WithPos::new(
+        let array = Spanned::new(
             Expression::Array {
                 items: vec![
-                    WithPos::new(
+                    Spanned::new(
                         Expression::Literal(Literal::Int(10)),
-                        Postition {
+                        Position {
                             line: 1,
                             column: 2,
                             absolute: 1,
                         },
                     ),
-                    WithPos::new(
+                    Spanned::new(
                         Expression::Literal(Literal::Int(12)),
-                        Postition {
+                        Position {
                             line: 1,
                             column: 5,
                             absolute: 4,
                         },
                     ),
-                    WithPos::new(
+                    Spanned::new(
                         Expression::Literal(Literal::Int(13)),
-                        Postition {
+                        Position {
                             line: 1,
                             column: 8,
                             absolute: 7,
@@ -371,16 +371,16 @@ mod test {
                     ),
                 ],
             },
-            Postition {
+            Position {
                 line: 1,
                 column: 1,
                 absolute: 0,
             },
         );
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::ExpressionStmt(array),
-            Postition {
+            Position {
                 line: 1,
                 column: 11,
                 absolute: 10,
@@ -400,53 +400,53 @@ mod test {
         let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let index = WithPos::new(
+        let index = Spanned::new(
             Expression::IndexExpr {
-                target: Box::new(WithPos::new(
+                target: Box::new(Spanned::new(
                     Expression::Var(Symbol(2), VariableUseHandle(0)),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 1,
                         absolute: 0,
                     },
                 )),
-                index: Box::new(WithPos::new(
+                index: Box::new(Spanned::new(
                     Expression::Binary {
-                        left_expr: Box::new(WithPos::new(
+                        left_expr: Box::new(Spanned::new(
                             Expression::Literal(Literal::Int(2)),
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 3,
                                 absolute: 2,
                             },
                         )),
                         operator: Operator::Plus,
-                        right_expr: Box::new(WithPos::new(
+                        right_expr: Box::new(Spanned::new(
                             Expression::Literal(Literal::Int(1)),
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 5,
                                 absolute: 4,
                             },
                         )),
                     },
-                    Postition {
+                    Position {
                         line: 1,
                         column: 4,
                         absolute: 3,
                     },
                 )),
             },
-            Postition {
+            Position {
                 line: 1,
                 column: 6,
                 absolute: 5,
             },
         );
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::ExpressionStmt(index),
-            Postition {
+            Position {
                 line: 1,
                 column: 7,
                 absolute: 6,
@@ -466,36 +466,36 @@ mod test {
         let mut symbols = Table::new(strings);
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
-        let expr = WithPos::new(
+        let expr = Spanned::new(
             Expression::Binary {
-                left_expr: Box::new(WithPos::new(
+                left_expr: Box::new(Spanned::new(
                     Expression::Literal(Literal::Int(9)),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 7,
                         absolute: 6,
                     },
                 )),
                 operator: Operator::Plus,
-                right_expr: Box::new(WithPos::new(
+                right_expr: Box::new(Spanned::new(
                     Expression::Literal(Literal::Int(9)),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 9,
                         absolute: 8,
                     },
                 )),
             },
-            Postition {
+            Position {
                 line: 1,
                 column: 8,
                 absolute: 7,
             },
         );
 
-        let expected = WithPos::new(
+        let expected = Spanned::new(
             Statement::Print(expr),
-            Postition {
+            Position {
                 line: 1,
                 column: 1,
                 absolute: 0,
@@ -515,16 +515,16 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
-                Statement::ExpressionStmt(WithPos::new(
+            Spanned::new(
+                Statement::ExpressionStmt(Spanned::new(
                     Expression::Literal(Literal::Int(123)),
-                    Postition {
+                    Position {
                         line: 1,
                         column: 1,
                         absolute: 0,
                     },
                 )),
-                Postition {
+                Position {
                     line: 1,
                     column: 4,
                     absolute: 3,
@@ -570,53 +570,53 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
-                Statement::ExpressionStmt(WithPos::new(
+            Spanned::new(
+                Statement::ExpressionStmt(Spanned::new(
                     Expression::Binary {
-                        left_expr: Box::new(WithPos::new(
+                        left_expr: Box::new(Spanned::new(
                             Expression::Unary {
                                 operator: UnaryOperator::Minus,
-                                expr: Box::new(WithPos::new(
+                                expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Int(123)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 2,
                                         absolute: 1,
                                     },
                                 )),
                             },
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 1,
                                 absolute: 0,
                             },
                         )),
                         operator: Operator::Star,
-                        right_expr: Box::new(WithPos::new(
+                        right_expr: Box::new(Spanned::new(
                             Expression::Grouping {
-                                expr: Box::new(WithPos::new(
+                                expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Float(45.67)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 7,
                                         absolute: 6,
                                     },
                                 )),
                             },
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 12,
                                 absolute: 11,
                             },
                         )),
                     },
-                    Postition {
+                    Position {
                         line: 1,
                         column: 5,
                         absolute: 4,
                     },
                 )),
-                Postition {
+                Position {
                     line: 1,
                     column: 13,
                     absolute: 12,
@@ -638,52 +638,52 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos {
-                node: Statement::ExpressionStmt(WithPos {
+            Spanned {
+                node: Statement::ExpressionStmt(Spanned {
                     node: Expression::Binary {
-                        left_expr: Box::new(WithPos {
+                        left_expr: Box::new(Spanned {
                             node: Expression::Literal(Literal::Int(123)),
-                            pos: Postition {
+                            pos: Position {
                                 line: 1,
                                 column: 1,
                                 absolute: 0,
                             },
                         }),
                         operator: Operator::Plus,
-                        right_expr: Box::new(WithPos {
+                        right_expr: Box::new(Spanned {
                             node: Expression::Binary {
-                                left_expr: Box::new(WithPos {
+                                left_expr: Box::new(Spanned {
                                     node: Expression::Literal(Literal::Int(456)),
-                                    pos: Postition {
+                                    pos: Position {
                                         line: 1,
                                         column: 5,
                                         absolute: 4,
                                     },
                                 }),
                                 operator: Operator::Star,
-                                right_expr: Box::new(WithPos {
+                                right_expr: Box::new(Spanned {
                                     node: Expression::Literal(Literal::Int(789)),
-                                    pos: Postition {
+                                    pos: Position {
                                         line: 1,
                                         column: 9,
                                         absolute: 8,
                                     },
                                 }),
                             },
-                            pos: Postition {
+                            pos: Position {
                                 line: 1,
                                 column: 8,
                                 absolute: 7,
                             },
                         }),
                     },
-                    pos: Postition {
+                    pos: Position {
                         line: 1,
                         column: 4,
                         absolute: 3,
                     },
                 }),
-                pos: Postition {
+                pos: Position {
                     line: 1,
                     column: 12,
                     absolute: 11,
@@ -705,79 +705,79 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
-                Statement::ExpressionStmt(WithPos::new(
+            Spanned::new(
+                Statement::ExpressionStmt(Spanned::new(
                     Expression::Binary {
-                        left_expr: Box::new(WithPos::new(
+                        left_expr: Box::new(Spanned::new(
                             Expression::Literal(Literal::Int(123)),
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 1,
                                 absolute: 0,
                             },
                         )),
                         operator: Operator::Plus,
-                        right_expr: Box::new(WithPos::new(
+                        right_expr: Box::new(Spanned::new(
                             Expression::Grouping {
-                                expr: Box::new(WithPos::new(
+                                expr: Box::new(Spanned::new(
                                     Expression::Binary {
-                                        left_expr: Box::new(WithPos::new(
+                                        left_expr: Box::new(Spanned::new(
                                             Expression::Binary {
-                                                left_expr: Box::new(WithPos::new(
+                                                left_expr: Box::new(Spanned::new(
                                                     Expression::Literal(Literal::Float(45.76)),
-                                                    Postition {
+                                                    Position {
                                                         line: 1,
                                                         column: 6,
                                                         absolute: 5,
                                                     },
                                                 )),
                                                 operator: Operator::Star,
-                                                right_expr: Box::new(WithPos::new(
+                                                right_expr: Box::new(Spanned::new(
                                                     Expression::Literal(Literal::Int(789)),
-                                                    Postition {
+                                                    Position {
                                                         line: 1,
                                                         column: 12,
                                                         absolute: 11,
                                                     },
                                                 )),
                                             },
-                                            Postition {
+                                            Position {
                                                 line: 1,
                                                 column: 11,
                                                 absolute: 10,
                                             },
                                         )),
                                         operator: Operator::Minus,
-                                        right_expr: Box::new(WithPos::new(
+                                        right_expr: Box::new(Spanned::new(
                                             Expression::Literal(Literal::Int(3)),
-                                            Postition {
+                                            Position {
                                                 line: 1,
                                                 column: 16,
                                                 absolute: 15,
                                             },
                                         )),
                                     },
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 15,
                                         absolute: 14,
                                     },
                                 )),
                             },
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 17,
                                 absolute: 16,
                             },
                         )),
                     },
-                    Postition {
+                    Position {
                         line: 1,
                         column: 4,
                         absolute: 3,
                     },
                 )),
-                Postition {
+                Position {
                     line: 1,
                     column: 18,
                     absolute: 17,
@@ -799,52 +799,52 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
-                Statement::ExpressionStmt(WithPos::new(
+            Spanned::new(
+                Statement::ExpressionStmt(Spanned::new(
                     Expression::Binary {
-                        left_expr: Box::new(WithPos::new(
+                        left_expr: Box::new(Spanned::new(
                             Expression::Binary {
-                                left_expr: Box::new(WithPos::new(
+                                left_expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Int(123)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 1,
                                         absolute: 0,
                                     },
                                 )),
                                 operator: Operator::Star,
-                                right_expr: Box::new(WithPos::new(
+                                right_expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Int(456)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 5,
                                         absolute: 4,
                                     },
                                 )),
                             },
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 4,
                                 absolute: 3,
                             },
                         )),
                         operator: Operator::Plus,
-                        right_expr: Box::new(WithPos::new(
+                        right_expr: Box::new(Spanned::new(
                             Expression::Literal(Literal::Int(789)),
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 9,
                                 absolute: 8,
                             },
                         )),
                     },
-                    Postition {
+                    Position {
                         line: 1,
                         column: 8,
                         absolute: 7,
                     },
                 )),
-                Postition {
+                Position {
                     line: 1,
                     column: 12,
                     absolute: 11,
@@ -866,52 +866,52 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos::new(
-                Statement::ExpressionStmt(WithPos::new(
+            Spanned::new(
+                Statement::ExpressionStmt(Spanned::new(
                     Expression::Binary {
-                        left_expr: Box::new(WithPos::new(
+                        left_expr: Box::new(Spanned::new(
                             Expression::Binary {
-                                left_expr: Box::new(WithPos::new(
+                                left_expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Int(123)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 1,
                                         absolute: 0,
                                     },
                                 )),
                                 operator: Operator::Star,
-                                right_expr: Box::new(WithPos::new(
+                                right_expr: Box::new(Spanned::new(
                                     Expression::Literal(Literal::Int(456)),
-                                    Postition {
+                                    Position {
                                         line: 1,
                                         column: 5,
                                         absolute: 4,
                                     },
                                 )),
                             },
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 4,
                                 absolute: 3,
                             },
                         )),
                         operator: Operator::Star,
-                        right_expr: Box::new(WithPos::new(
+                        right_expr: Box::new(Spanned::new(
                             Expression::Literal(Literal::Int(789)),
-                            Postition {
+                            Position {
                                 line: 1,
                                 column: 9,
                                 absolute: 8,
                             },
                         )),
                     },
-                    Postition {
+                    Position {
                         line: 1,
                         column: 8,
                         absolute: 7,
                     },
                 )),
-                Postition {
+                Position {
                     line: 1,
                     column: 12,
                     absolute: 11,
@@ -932,62 +932,62 @@ mod test {
         let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
 
         let expected = vec![
-            WithPos {
-                node: Statement::ExpressionStmt(WithPos {
+            Spanned {
+                node: Statement::ExpressionStmt(Spanned {
                     node: Expression::Binary {
-                        left_expr: Box::new(WithPos {
+                        left_expr: Box::new(Spanned {
                             node: Expression::Binary {
-                                left_expr: Box::new(WithPos {
+                                left_expr: Box::new(Spanned {
                                     node: Expression::Unary {
                                         operator: UnaryOperator::Minus,
-                                        expr: Box::new(WithPos {
+                                        expr: Box::new(Spanned {
                                             node: Expression::Literal(Literal::Int(123)),
-                                            pos: Postition {
+                                            pos: Position {
                                                 line: 1,
                                                 column: 2,
                                                 absolute: 1,
                                             },
                                         }),
                                     },
-                                    pos: Postition {
+                                    pos: Position {
                                         line: 1,
                                         column: 1,
                                         absolute: 0,
                                     },
                                 }),
                                 operator: Operator::Star,
-                                right_expr: Box::new(WithPos {
+                                right_expr: Box::new(Spanned {
                                     node: Expression::Literal(Literal::Int(456)),
-                                    pos: Postition {
+                                    pos: Position {
                                         line: 1,
                                         column: 6,
                                         absolute: 5,
                                     },
                                 }),
                             },
-                            pos: Postition {
+                            pos: Position {
                                 line: 1,
                                 column: 5,
                                 absolute: 4,
                             },
                         }),
                         operator: Operator::Plus,
-                        right_expr: Box::new(WithPos {
+                        right_expr: Box::new(Spanned {
                             node: Expression::Literal(Literal::Int(789)),
-                            pos: Postition {
+                            pos: Position {
                                 line: 1,
                                 column: 10,
                                 absolute: 9,
                             },
                         }),
                     },
-                    pos: Postition {
+                    pos: Position {
                         line: 1,
                         column: 9,
                         absolute: 8,
                     },
                 }),
-                pos: Postition {
+                pos: Position {
                     line: 1,
                     column: 13,
                     absolute: 12,

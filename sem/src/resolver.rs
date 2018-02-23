@@ -3,7 +3,7 @@ use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, VariableUseHandle};
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use util::pos::{Postition, WithPos};
+use util::pos::{Position, Spanned};
 use util::symbol::Symbol;
 
 #[derive(Debug)]
@@ -65,7 +65,7 @@ impl Resolver {
         Self::default()
     }
 
-    pub fn resolve(&mut self, statements: &[WithPos<Statement>]) -> Result<(), Vec<ResolverError>> {
+    pub fn resolve(&mut self, statements: &[Spanned<Statement>]) -> Result<(), Vec<ResolverError>> {
         let mut errors = vec![];
 
         for statement in statements {
@@ -98,7 +98,7 @@ impl Resolver {
         !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&false)
     }
 
-    fn declare(&mut self, name: Symbol, pos: Postition) -> Result<(), ResolverError> {
+    fn declare(&mut self, name: Symbol, pos: Position) -> Result<(), ResolverError> {
         if self.scopes.is_empty() {
             return Ok(());
         }
@@ -149,7 +149,7 @@ impl Resolver {
         &mut self,
         body: &Expression,
         kind: FunctionType,
-        pos: Postition,
+        pos: Position,
     ) -> Result<(), ResolverError> {
         let enclosing_function = self.current_function;
 
@@ -181,13 +181,13 @@ impl Resolver {
         }
     }
 
-    fn error(&self, message: &str, pos: Postition) -> String {
+    fn error(&self, message: &str, pos: Position) -> String {
         format!("{} on {}", message, pos)
     }
 }
 
 impl Resolver {
-    fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
+    fn resolve_statement(&mut self, statement: &Spanned<Statement>) -> Result<(), ResolverError> {
         match statement.node {
             Statement::Print(ref expr) | Statement::ExpressionStmt(ref expr) => {
                 self.resolve_expression(&expr.node, statement.pos)?;
@@ -348,7 +348,7 @@ impl Resolver {
                     let mut declaration = FunctionType::Method;
 
                     match *method {
-                        WithPos { ref node, ref pos } => match *node {
+                        Spanned { ref node, ref pos } => match *node {
                             Statement::Function { ref name, ref body } => {
                                 if name == &Symbol(1) {
                                     declaration = FunctionType::Init;
@@ -379,7 +379,7 @@ impl Resolver {
     fn resolve_expression(
         &mut self,
         expr: &Expression,
-        pos: Postition,
+        pos: Position,
     ) -> Result<(), ResolverError> {
         match *expr {
             Expression::Array { ref items, .. } => {
@@ -552,9 +552,9 @@ mod test {
     use util::symbol::{SymbolFactory, Table};
     use syntax::parser::Parser;
     use resolver::Resolver;
-    use util::pos::WithPos;
+    use util::pos::Spanned;
 
-    fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
+    fn get_ast(input: &str) -> Vec<Spanned<Statement>> {
         use std::rc::Rc;
 
         let tokens = Lexer::new(input).lex().unwrap();

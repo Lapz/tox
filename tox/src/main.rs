@@ -96,7 +96,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
                     println!("{}", err);
                 }
 
-               continue;
+                continue;
             }
         };
 

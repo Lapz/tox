@@ -6,7 +6,7 @@ use syntax::ast::statement::Statement;
 use util::symbol::Symbol;
 use util::types::{Type, TypeError};
 use util::env::{Entry, TypeEnv};
-use util::pos::{Postition, WithPos};
+use util::pos::{Position, Spanned};
 
 /// The struct that is in control of type checking
 #[derive(Debug, PartialEq, Default)]
@@ -26,7 +26,7 @@ impl TyChecker {
 
     pub fn analyse(
         &mut self,
-        statements: &[WithPos<Statement>],
+        statements: &[Spanned<Statement>],
         env: &mut TypeEnv,
     ) -> Result<(), Vec<TypeError>> {
         let mut errors = vec![];
@@ -47,7 +47,7 @@ impl TyChecker {
     fn transform_var(
         &self,
         symbol: &Symbol,
-        pos: Postition,
+        pos: Position,
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match env.look_var(*symbol) {
@@ -60,12 +60,7 @@ impl TyChecker {
 
     /// Checks if two types are eqivilant. If the types are two classes it checks the name and says
     /// they are equivilant
-    fn check_types(
-        &self,
-        expected: &Type,
-        unknown: &Type,
-        pos: Postition,
-    ) -> Result<(), TypeError> {
+    fn check_types(&self, expected: &Type, unknown: &Type, pos: Position) -> Result<(), TypeError> {
         let expected = self.actual_type(expected);
         let unknown = self.actual_type(unknown);
 
@@ -126,9 +121,9 @@ impl TyChecker {
     fn infer_params(
         &mut self,
         entry: &Entry,
-        arguments: &[WithPos<Expression>],
+        arguments: &[Spanned<Expression>],
         env: &mut TypeEnv,
-        pos: Postition,
+        pos: Position,
     ) -> Result<InferedType, TypeError> {
         match *entry {
             Entry::FunEntry {
@@ -156,7 +151,7 @@ impl TyChecker {
     fn get_type(
         &self,
         ident: &ExpressionTy,
-        pos: Postition,
+        pos: Position,
         env: &mut TypeEnv,
     ) -> Result<Type, TypeError> {
         match *ident {
@@ -216,7 +211,7 @@ macro_rules! check_type {
 
 impl InferedType {
     /// Given an `InferedType` check if it an {int} or {float}
-    fn check_int_float(&self, pos: Postition) -> Result<(), TypeError> {
+    fn check_int_float(&self, pos: Position) -> Result<(), TypeError> {
         if self.check_int(pos).is_err() && self.check_float(pos).is_err() {
             Err(TypeError::ExpectedOneOf("Int or Float".into(), pos))
         } else {
@@ -225,22 +220,22 @@ impl InferedType {
     }
 
     /// Checks if `InferedType` is {bool}
-    fn check_bool(&self, pos: Postition) -> Result<(), TypeError> {
+    fn check_bool(&self, pos: Position) -> Result<(), TypeError> {
         check_type!(self, Type::Bool, pos)
     }
 
     /// Checks if `InferedType` is {int}
-    fn check_int(&self, pos: Postition) -> Result<(), TypeError> {
+    fn check_int(&self, pos: Position) -> Result<(), TypeError> {
         check_type!(self, Type::Int, pos)
     }
 
     /// Checks if `InferedType` is {str}
-    fn check_str(&self, pos: Postition) -> Result<(), TypeError> {
+    fn check_str(&self, pos: Position) -> Result<(), TypeError> {
         check_type!(self, Type::Str, pos)
     }
 
     /// Checks if `InferedType` is {float}
-    fn check_float(&self, pos: Postition) -> Result<(), TypeError> {
+    fn check_float(&self, pos: Position) -> Result<(), TypeError> {
         if self.ty != Type::Float {
             return Err(TypeError::Expected(Type::Float, self.ty.clone(), pos));
         }
@@ -248,7 +243,7 @@ impl InferedType {
     }
 
     /// Checks if they {Int,Float,Str}
-    fn check_int_float_str(&self, pos: Postition) -> Result<InferedType, TypeError> {
+    fn check_int_float_str(&self, pos: Position) -> Result<InferedType, TypeError> {
         if self.check_int(pos).is_err() || self.check_int(pos).is_err() {
             if self.check_float(pos).is_ok() {
                 self.check_float(pos)?;

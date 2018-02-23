@@ -1,7 +1,7 @@
 use super::object::Object;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
-use util::pos::WithPos;
+use util::pos::Spanned;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -22,7 +22,7 @@ pub enum RuntimeError {
 }
 
 pub(crate) fn evaluate_statement(
-    statement: &WithPos<Statement>,
+    statement: &Spanned<Statement>,
     locals: &HashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
@@ -238,7 +238,7 @@ pub(crate) fn evaluate_statement(
 }
 
 fn evaluate_expression(
-    expression: &WithPos<Expression>,
+    expression: &Spanned<Expression>,
     locals: &HashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {

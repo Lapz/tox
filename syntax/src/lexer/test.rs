@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use util::pos::Postition;
+    use util::pos::Position;
     use token::{Token, TokenType};
     use lexer::Lexer;
 
     fn add_token(line: i64, column: i64, absolute: usize, token: TokenType) -> Token {
         Token {
-            pos: Postition {
+            pos: Position {
                 line,
                 column,
                 absolute,

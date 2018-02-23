@@ -1,6 +1,6 @@
 use super::TyChecker;
 use syntax::ast::statement::Statement;
-use util::pos::WithPos;
+use util::pos::Spanned;
 use util::env::{Entry, TypeEnv};
 use util::types::{Type, TypeError};
 use std::collections::HashMap;
@@ -10,7 +10,7 @@ use super::InferedType;
 impl TyChecker {
     pub fn transform_statement(
         &mut self,
-        statement: &WithPos<Statement>,
+        statement: &Spanned<Statement>,
         env: &mut TypeEnv,
     ) -> Result<InferedType, TypeError> {
         match statement.node {

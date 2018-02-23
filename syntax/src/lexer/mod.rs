@@ -1,26 +1,37 @@
 mod test;
 
 use token::{Token, TokenType};
-use util::pos::{CharPosition, Postition};
-
+use util::pos::{CharPosition, Position, Span, Spanned};
+use util::emmiter::Reporter;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
 #[derive(Debug)]
 pub enum LexerError {
-    UnclosedString(String),
-    UnclosedBlockComment(String),
+    UnclosedString,
+    UnclosedBlockComment,
     EOF,
-    Unexpected(char, Postition),
+    Unexpected(char, Position),
 }
 
 impl Display for LexerError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            LexerError::UnclosedString(ref e) => write!(f, "unclosed string {}", e),
+            LexerError::UnclosedString => write!(f, "unclosed string"),
             LexerError::EOF => write!(f, "Unexpected EOf"),
-            LexerError::UnclosedBlockComment(ref e) => write!(f, "unclosed block comment {}", e),
+            LexerError::UnclosedBlockComment => write!(f, "unclosed block comment"),
             LexerError::Unexpected(ref c, ref p) => write!(f, "Unexpected char {} on {}", c, p),
+        }
+    }
+}
+
+impl Into<String> for LexerError {
+    fn into(self) -> String {
+        match self {
+            LexerError::UnclosedString => format!("Unclosed string"),
+            LexerError::EOF => format!("Unexpected EOF"),
+            LexerError::UnclosedBlockComment => format!("Unclosed block comment"),
+            LexerError::Unexpected(ref c, _) => format!("Unexpected char '{}' ", c),
         }
     }
 }
@@ -30,24 +41,40 @@ pub struct Lexer<'a> {
     // A lexer instance
     input: &'a str,
     chars: CharPosition<'a>,
-    lookahead: Option<(Postition, char)>,
-    end: Postition,
+    reporter: Reporter,
+    lookahead: Option<(Position, char)>,
+    end: Position,
 }
 
 impl<'a> Lexer<'a> {
     /// Returns a new Lexer
-    pub fn new(input: &'a str) -> Lexer {
+    pub fn new(input: &'a str, reporter: Reporter) -> Lexer {
         let mut chars = CharPosition::new(input);
         let end = chars.pos;
         Lexer {
             input: input,
             end: end,
+            reporter,
             lookahead: chars.next(),
             chars: chars,
         }
     }
 
-    fn advance(&mut self) -> Option<(Postition, char)> {
+    fn span_error<T: Into<String>>(&mut self, msg: T, start: Position, end: Position) {
+        self.reporter.error(msg.into(), Span { start, end })
+    }
+
+    fn error<T: Into<String>>(&mut self, msg: T, pos: Position) {
+        self.reporter.error(
+            msg.into(),
+            Span {
+                start: pos,
+                end: pos,
+            },
+        )
+    }
+
+    fn advance(&mut self) -> Option<(Position, char)> {
         match self.lookahead {
             Some((pos, ch)) => {
                 self.end = self.end.shift(ch);
@@ -59,11 +86,11 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn slice(&self, start: Postition, end: Postition) -> &'a str {
+    fn slice(&self, start: Position, end: Position) -> &'a str {
         &self.input[start.absolute..end.absolute]
     }
 
-    fn take_whilst<F>(&mut self, start: Postition, mut terminate: F) -> (Postition, &'a str)
+    fn take_whilst<F>(&mut self, start: Position, mut terminate: F) -> (Position, &'a str)
     where
         F: FnMut(char) -> bool,
     {
@@ -84,16 +111,11 @@ impl<'a> Lexer<'a> {
         self.lookahead.map_or(false, |(_, ch)| check(ch))
     }
 
-    fn line_comment(&mut self, start: Postition) -> Token<'a> {
+    fn line_comment(&mut self, start: Position) {
         let (_, _) = self.take_whilst(start, |ch| ch != '\n');
-
-        Token {
-            token: TokenType::COMMENT,
-            pos: start,
-        }
     }
 
-    fn block_comment(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
+    fn block_comment(&mut self, start: Position) -> Result<(), LexerError> {
         self.advance(); // Eats the '*'
         loop {
             self.advance(); // Eats the '*'
@@ -101,190 +123,195 @@ impl<'a> Lexer<'a> {
             match self.lookahead {
                 Some((_, '/')) => {
                     self.advance();
-                    return Ok(Token {
-                        token: TokenType::COMMENT,
-                        pos: start,
-                    });
+                    return Ok(());
                 }
                 Some((_, _)) => continue,
 
-                None => return Err(LexerError::UnclosedBlockComment(String::from("Unclosed"))),
+                None => return Err(LexerError::UnclosedBlockComment),
             }
         }
     }
 
-    fn string_literal(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
+    fn string_literal(&mut self, start: Position) -> Result<Spanned<Token<'a>>, LexerError> {
         let mut string = String::new();
 
-        while let Some((_, ch)) = self.advance() {
+        while let Some((next, ch)) = self.advance() {
             match ch {
                 '"' => {
-                    return Ok(Token {
-                        token: TokenType::STRING(string),
-                        pos: start,
-                    });
+                    let end = next.shift(ch);
+
+                    return Ok(spans(
+                        TokenType::STRING(string.as_bytes().to_vec()),
+                        start,
+                        end,
+                    ));
                 }
 
                 ch => string.push(ch),
             }
         }
 
-        Err(LexerError::UnclosedString(String::from("adaf")))
+        Err(LexerError::UnclosedString)
     }
 
-    fn number(&mut self, start: Postition) -> Result<Token<'a>, LexerError> {
+    fn number(&mut self, start: Position) -> Result<Spanned<Token<'a>>, LexerError> {
         let (end, int) = self.take_whilst(start, |c| c.is_numeric());
 
-        let (_, token) = match self.lookahead {
+        let (token, start, end) = match self.lookahead {
             Some((_, '.')) => {
                 self.advance();
 
-                let (_, float) = self.take_whilst(start, |c| c.is_numeric());
+                let (end, float) = self.take_whilst(start, |c| c.is_numeric());
 
                 match self.lookahead {
                     Some((_, ch)) if ch.is_alphabetic() => {
                         return Err(LexerError::Unexpected(ch, start)); // Rejects floats like 10.k
                     }
 
-                    _ => (start, TokenType::FLOAT(float.parse().unwrap())),
+                    _ => (TokenType::FLOAT(float.parse().unwrap()), start, end),
                 }
             }
 
             Some((_, ch)) if ch.is_alphabetic() => return Err(LexerError::Unexpected(ch, start)),
             None | Some(_) => {
                 if let Ok(val) = int.parse() {
-                    (end, TokenType::INT(val))
+                    (TokenType::INT(val), start, end)
                 } else {
                     return Err(LexerError::EOF); // change
                 }
             }
         };
 
-        Ok(Token {
-            token: token,
-            pos: start,
-        })
+        Ok(spans(token, start, end))
     }
 
-    fn identifier(&mut self, start: Postition) -> Token<'a> {
-        let (_, ident) = self.take_whilst(start, is_letter_ch);
-        Token {
-            token: look_up_identifier(ident),
-            pos: start,
-        }
+    fn identifier(&mut self, start: Position) -> Spanned<Token<'a>> {
+        let (end, ident) = self.take_whilst(start, is_letter_ch);
+        spans(look_up_identifier(ident), start, end)
     }
 
-    fn next(&mut self) -> Result<Token<'a>, LexerError> {
+    fn next(&mut self) -> Result<Spanned<Token<'a>>, LexerError> {
         while let Some((start, ch)) = self.advance() {
             return match ch {
-                '.' => Ok(token_with_info(TokenType::DOT, start)),
-                '?' => Ok(token_with_info(TokenType::QUESTION, start)),
-                ';' => Ok(token_with_info(TokenType::SEMICOLON, start)),
-                '{' => Ok(token_with_info(TokenType::LBRACE, start)),
-                '}' => Ok(token_with_info(TokenType::RBRACE, start)),
-                '[' => Ok(token_with_info(TokenType::LBRACKET, start)),
-                ']' => Ok(token_with_info(TokenType::RBRACKET, start)),
-                '(' => Ok(token_with_info(TokenType::LPAREN, start)),
-                ')' => Ok(token_with_info(TokenType::RPAREN, start)),
-                ',' => Ok(token_with_info(TokenType::COMMA, start)),
-                ':' => Ok(token_with_info(TokenType::COLON, start)),
-                '^' => Ok(token_with_info(TokenType::EXPONENTIAL, start)),
-                '%' => Ok(token_with_info(TokenType::MODULO, start)),
-                '"' => self.string_literal(start),
+                '.' => Ok(span(TokenType::DOT, start)),
+                '?' => Ok(span(TokenType::QUESTION, start)),
+                ';' => Ok(span(TokenType::SEMICOLON, start)),
+                '{' => Ok(span(TokenType::LBRACE, start)),
+                '}' => Ok(span(TokenType::RBRACE, start)),
+                '[' => Ok(span(TokenType::LBRACKET, start)),
+                ']' => Ok(span(TokenType::RBRACKET, start)),
+                '(' => Ok(span(TokenType::LPAREN, start)),
+                ')' => Ok(span(TokenType::RPAREN, start)),
+                ',' => Ok(span(TokenType::COMMA, start)),
+                ':' => Ok(span(TokenType::COLON, start)),
+                '^' => Ok(span(TokenType::EXPONENTIAL, start)),
+                '%' => Ok(span(TokenType::MODULO, start)),
+                '"' => match self.string_literal(start) {
+                    Ok(token) => Ok(token),
+                    Err(e) => {
+                        let msg: String = e.into();
+                        let end = self.end;
+                        self.span_error(msg, start, end);
+                        continue;
+                    }
+                },
 
                 '=' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::EQUALEQUAL, start))
+                        Ok(spans(TokenType::EQUALEQUAL, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::ASSIGN, start))
+                        Ok(span(TokenType::ASSIGN, start))
                     }
                 }
 
                 '+' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::PLUSASSIGN, start))
+                        Ok(spans(TokenType::PLUSASSIGN, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::PLUS, start))
+                        Ok(span(TokenType::PLUS, start))
                     }
                 }
 
                 '-' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::MINUSASSIGN, start))
+                        Ok(spans(TokenType::MINUSASSIGN, start, start.shift('=')))
                     } else if self.peek(|ch| ch == '>') {
                         self.advance();
-                        Ok(token_with_info(TokenType::FRETURN, start))
+                        Ok(spans(TokenType::FRETURN, start, start.shift('>')))
                     } else {
-                        Ok(token_with_info(TokenType::MINUS, start))
+                        Ok(span(TokenType::MINUS, start))
                     }
                 }
 
                 '*' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::STARASSIGN, start))
+                        Ok(spans(TokenType::STARASSIGN, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::STAR, start))
+                        Ok(span(TokenType::STAR, start))
                     }
                 }
 
                 '/' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::SLASHASSIGN, start))
+                        Ok(spans(TokenType::SLASHASSIGN, start, start.shift('=')))
                     } else if self.peek(|ch| ch == '/') {
                         self.advance();
-                        Ok(self.line_comment(start))
+                        self.line_comment(start);
+                        continue;
                     } else if self.peek(|ch| ch == '*') {
-                        self.block_comment(start)
+                        self.block_comment(start)?;
+                        continue;
                     } else {
-                        Ok(token_with_info(TokenType::SLASH, start))
+                        Ok(span(TokenType::SLASH, start))
                     }
                 }
 
                 '!' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::BANGEQUAL, start))
+                        Ok(spans(TokenType::BANGEQUAL, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::BANG, start))
+                        Ok(span(TokenType::BANG, start))
                     }
                 }
 
                 '>' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::GREATERTHANEQUAL, start))
+                        Ok(spans(TokenType::GREATERTHANEQUAL, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::GREATERTHAN, start))
+                        Ok(span(TokenType::GREATERTHAN, start))
                     }
                 }
                 '<' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        Ok(token_with_info(TokenType::LESSTHANEQUAL, start))
+                        Ok(spans(TokenType::LESSTHANEQUAL, start, start.shift('=')))
                     } else {
-                        Ok(token_with_info(TokenType::LESSTHAN, start))
+                        Ok(span(TokenType::LESSTHAN, start))
                     }
                 }
 
                 ch if ch.is_numeric() => self.number(start),
                 ch if is_letter_ch(ch) => Ok(self.identifier(start)),
                 ch if ch.is_whitespace() => continue,
-                ch => Err(LexerError::Unexpected(ch, start)),
+                ch => {
+                    let msg: String = LexerError::Unexpected(ch, start).into();
+                    self.error(msg, start);
+                    continue;
+                }
             };
         }
 
-        Ok(Token {
-            token: TokenType::EOF,
-            pos: self.end,
-        })
+        Ok(spans(TokenType::EOF, self.end, self.end))
     }
 
-    pub fn lex(&mut self) -> Result<Vec<Token<'a>>, Vec<LexerError>> {
+    pub fn lex(&mut self) -> Result<Vec<Spanned<Token<'a>>>, ()> {
         let mut tokens = vec![];
 
         let mut errors = vec![];
@@ -296,22 +323,38 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        tokens.retain(|t| t.token != TokenType::COMMENT);
-
         if errors.is_empty() {
             return Ok(tokens);
         }
 
-        Err(errors)
+        Err(())
     }
 }
 
-fn token_with_info(token: TokenType, pos: Postition) -> Token {
-    Token { token, pos }
-}
-
+#[inline]
 fn is_letter_ch(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
+}
+
+#[inline]
+fn span(token: TokenType, start: Position) -> Spanned<Token> {
+    Spanned {
+        value: token_with_info(token),
+        span: Span { start, end: start },
+    }
+}
+
+#[inline]
+fn spans(token: TokenType, start: Position, end: Position) -> Spanned<Token> {
+    Spanned {
+        value: token_with_info(token),
+        span: Span { start, end },
+    }
+}
+
+#[inline]
+fn token_with_info(token: TokenType) -> Token {
+    Token { token }
 }
 
 #[inline]

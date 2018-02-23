@@ -4,12 +4,12 @@ mod test {
 
     use semant::TyChecker;
     use util::env::TypeEnv;
-    use util::pos::WithPos;
+    use util::pos::Spanned;
     use util::symbol::SymbolFactory;
     use syntax::ast::statement::Statement;
     use std::rc::Rc;
 
-    fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<WithPos<Statement>> {
+    fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<Spanned<Statement>> {
         use syntax::lexer::Lexer;
         use syntax::parser::Parser;
         use util::symbol::Table;
