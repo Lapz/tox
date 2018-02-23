@@ -1,5 +1,1 @@
-type Foo = int;
-type Foo = int;
-type Foo = int;
-type Foo = int;
-type Foo = int
+print(nil);

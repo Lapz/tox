@@ -14,20 +14,19 @@ pub enum Expression {
         kind: Spanned<AssignOperator>,
         value: Box<Spanned<Expression>>,
     },
-
     Binary {
-        left_expr: Box<Spanned<Expression>>,
-        operator: Spanned<Op>,
-        right_expr: Box<Spanned<Expression>>,
+        lhs: Box<Spanned<Expression>>,
+        op: Spanned<Op>,
+        rhs: Box<Spanned<Expression>>,
     },
     Call {
         callee: Box<Spanned<Expression>>,
-        arguments: Vec<Spanned<Expression>>,
+        args: Vec<Spanned<Expression>>,
     },
 
     ClassInstance {
-        name: Symbol,
-        properties: Vec<(Spanned<Symbol>, Spanned<Expression>)>,
+        symbol: Spanned<Symbol>,
+        props: Box<Vec<Spanned<InstanceField>>>,
     },
     Dict {
         items: Vec<(Spanned<Expression>, Spanned<Expression>)>,
@@ -46,7 +45,7 @@ pub enum Expression {
         expr: Box<Spanned<Expression>>,
     },
 
-    IndexExpr {
+    Index {
         target: Box<Spanned<Expression>>,
         index: Box<Spanned<Expression>>,
     },
@@ -66,7 +65,7 @@ pub enum Expression {
         else_branch: Box<Spanned<Expression>>,
     },
     Unary {
-        operator: Spanned<UnaryOp>,
+        op: Spanned<UnaryOp>,
         expr: Box<Spanned<Expression>>,
     },
 
@@ -78,6 +77,12 @@ pub enum Expression {
 pub struct FunctionParams {
     pub name: Spanned<Symbol>,
     pub ty: Spanned<Ty>,
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+pub struct InstanceField {
+    pub symbol: Spanned<Symbol>,
+    pub expr: Spanned<Expression>,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
@@ -93,7 +98,7 @@ pub enum Literal {
     // The raw values available
     Float(f64),
     Int(i64),
-    Str(String),
+    Str(Vec<u8>),
     True(bool),
     False(bool),
     Nil,
@@ -118,6 +123,19 @@ impl VariableUseMaker {
         self.next_value += 1;
         VariableUseHandle(value)
     }
+}
+
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum Var {
+    Field {
+        ident: Spanned<Symbol>,
+        value: Spanned<Symbol>,
+    },
+    Simple(Spanned<Symbol>, VariableUseHandle),
+    SubScript {
+        expr: Box<Spanned<Expression>>,
+        target: Spanned<Symbol>,
+    },
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
@@ -147,19 +165,6 @@ pub enum AssignOperator {
     PlusEqual,
     StarEqual,
     SlashEqual,
-}
-
-use token::TokenType;
-#[inline]
-pub(crate) fn get_assign_operator(token: &TokenType) -> AssignOperator {
-    match *token {
-        TokenType::BANGEQUAL => AssignOperator::StarEqual,
-        TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
-        TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
-        TokenType::ASSIGN => AssignOperator::Equal,
-        TokenType::SLASHASSIGN => AssignOperator::SlashEqual,
-        _ => unreachable!(),
-    }
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]

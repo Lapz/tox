@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use std::fmt::{self, Display};
 use ansi_term::Colour::{Blue, Fixed, Red, Yellow};
 use pos::EMPTYSPAN;
+
 #[derive(Debug)]
 pub struct Diagnostic {
     msg: String,
@@ -101,7 +102,7 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::Error => Red.bold().paint(carets),
             };
 
-            let whitespace = repeat_string(" ", span.end.column as usize-1);
+            let whitespace = repeat_string(" ", span.start.column as usize - 1);
             println!("     {}{}{}", prefix, whitespace, carets);
         } else if line_idx == span.end.line as usize {
             let carets = repeat_string("^", span.end.column as usize);

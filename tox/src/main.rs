@@ -25,10 +25,10 @@ fn main() {
 
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
-    } 
-// else {
-//         repl(opts.ptokens, opts.pprint)
-//     }
+    }
+    // else {
+    //         repl(opts.ptokens, opts.pprint)
+    //     }
 }
 
 // use compiler::compile;

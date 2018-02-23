@@ -4,7 +4,7 @@ use std::iter::Peekable;
 use std::vec::IntoIter;
 use super::ast::expr::*;
 use super::ast::statement::*;
-use util::pos::{Position, Span, Spanned};
+use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;
 use symbol::{Symbol, Table};
 
@@ -408,17 +408,15 @@ impl<'a> Parser<'a> {
         })
     }
 
-    // fn get_type(&mut self) -> Result<Option<Ty>, ParserError> {
-    //     if self.recognise(TokenType::COLON) {
-    //         self.advance();
-
-    //         let ty = self.parse_type()?;
-
-    //         Ok(Some(ty))
-    //     } else {
-    //         Ok(None)
-    //     }
-    // }
+    fn get_assign_op(&mut self) -> ParserResult<Spanned<AssignOperator>> {
+        get_assign_op!(self,{
+            ASSIGN => Equal,
+            PLUSASSIGN => MinusEqual,
+            MINUSASSIGN => PlusEqual,
+            STARASSIGN => StarEqual,
+            SLASHASSIGN => SlashEqual
+        })
+    }
 }
 
 impl<'a> Parser<'a> {
@@ -722,7 +720,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type(&mut self) -> ParserResult<Spanned<Ty>> {
-       
         if self.recognise(TokenType::NIL) {
             Ok(Spanned {
                 value: Ty::Nil,
@@ -742,9 +739,8 @@ impl<'a> Parser<'a> {
                 span: ty.get_span().to(ty.get_span()),
                 value: Ty::Simple(ty),
             })
-
         }
-        
+
         /*else if self.recognise(TokenType::FUNCTION) {
             self.advance();
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
@@ -871,18 +867,11 @@ impl<'a> Parser<'a> {
 
 impl<'a> Parser<'a> {
     fn expression(&mut self) -> ParserResult<Spanned<Expression>> {
-        unimplemented!()
-    }
-}
-/*
-// Expression Parsing
-impl<'a> Parser<'a> {
-    fn expression(&mut self) -> Result<Spanned<Expression>, ParserError> {
         self.assignment()
     }
 
-    fn assignment(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let expr = self.ternary()?;
+    fn assignment(&mut self) -> ParserResult<Spanned<Expression>> {
+        let expr = self.parse_or()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -891,41 +880,47 @@ impl<'a> Parser<'a> {
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
         ]) {
-            let next = self.advance().unwrap();
-            let kind = get_assign_operator(&next.token);
+            let kind = self.get_assign_op()?;
 
             let value = self.assignment()?;
 
-            match expr.node {
-                Expression::Var(name, _) => {
-                    return Ok(Spanned::new(
-                        Expression::Assign {
+            match expr {
+                Spanned {
+                    span,
+                    value: Expression::Var(var, _),
+                } => {
+                    return Ok(Spanned {
+                        span: span.to(value.get_span()),
+                        value: Expression::Assign {
                             handle: self.variable_use_maker.next(),
-                            name,
+                            name: var,
                             value: Box::new(value),
                             kind,
                         },
-                        next.pos,
-                    ))
+                    })
                 }
 
-                Expression::Get {
-                    object, property, ..
+                Spanned {
+                    span,
+                    value:
+                        Expression::Get {
+                            object, property, ..
+                        },
                 } => {
-                    return Ok(Spanned::new(
-                        Expression::Set {
+                    return Ok(Spanned {
+                        span: span.to(value.get_span()),
+                        value: Expression::Set {
                             object,
                             name: property,
                             value: Box::new(value),
                             handle: self.variable_use_maker.next(),
                         },
-                        next.pos,
-                    ));
+                    })
                 }
-                _ => {
-                    return Err(ParserError::IllegalExpression(
-                        "Error at '=': Invalid assignment target.".to_owned(),
-                    ))
+
+                Spanned { ref span, .. } => {
+                    self.error("Not a valid assingment target", *span);
+                    return Err(());
                 }
             }
         }
@@ -933,231 +928,242 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn ternary(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut condition = self.or()?;
+    fn parse_or(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_and()?;
 
-        while self.matched(vec![TokenType::QUESTION]) {
-            let ternary_pos = self.consume_get_pos(&TokenType::QUESTION, "Expected a '?'")?;
+        use self::TokenType::*;
 
-            let then_branch = Box::new(self.expression()?);
+        binary!(self, OR, lhs, parse_and);
 
-            self.consume(
-                &TokenType::COLON,
-                "Expected ':' after lhs ternary condition.",
-            )?;
-
-            let else_branch = Box::new(self.ternary()?);
-
-            condition = Spanned::new(
-                Expression::Ternary {
-                    condition: Box::new(condition),
-                    then_branch,
-                    else_branch,
-                },
-                ternary_pos,
-            )
-        }
-
-        Ok(condition)
+        Ok(lhs)
     }
 
-    fn or(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.and()?;
+    fn parse_and(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_equality()?;
 
-        while self.recognise(TokenType::OR) {
-            let next = self.advance().unwrap();
+        use self::TokenType::*;
 
-            let operator = get_logic_operator(&next.token);
+        binary!(self, OR, lhs, parse_equality);
 
-            let right = Box::new(self.and()?);
-
-            expr = Spanned::new(
-                Expression::Logical {
-                    left: Box::new(expr),
-                    operator,
-                    right,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn and(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.equality()?;
+    fn parse_equality(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_comparison()?;
 
-        while self.recognise(TokenType::AND) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL],
+            lhs,
+            parse_comparison
+        );
 
-            let operator = get_logic_operator(&next.token);
-
-            let right = Box::new(self.equality()?);
-
-            expr = Spanned::new(
-                Expression::Logical {
-                    left: Box::new(expr),
-                    operator,
-                    right,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn equality(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.comparison()?;
+    fn parse_comparison(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_addition()?;
 
-        while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![
+                TokenType::LESSTHAN,
+                TokenType::LESSTHANEQUAL,
+                TokenType::GREATERTHAN,
+                TokenType::GREATERTHANEQUAL,
+            ],
+            lhs,
+            parse_addition
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.comparison()?);
-
-            expr = Spanned::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            );
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn comparison(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.addition()?;
+    fn parse_addition(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_multiplication()?;
 
-        while self.matched(vec![
-            TokenType::LESSTHAN,
-            TokenType::LESSTHANEQUAL,
-            TokenType::GREATERTHAN,
-            TokenType::GREATERTHANEQUAL,
-        ]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::MINUS, TokenType::PLUS],
+            lhs,
+            parse_multiplication
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.addition()?);
-
-            expr = Spanned::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn addition(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.multiplication()?;
+    fn parse_multiplication(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_unary()?;
 
-        while self.matched(vec![TokenType::MINUS, TokenType::MODULO, TokenType::PLUS]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::SLASH, TokenType::STAR],
+            lhs,
+            parse_unary
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.multiplication()?);
-
-            expr = Spanned::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn multiplication(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        let mut expr = self.unary()?;
-
-        while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
-            let next = self.advance().unwrap();
-
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.unary()?);
-
-            expr = Spanned::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
-    }
-
-    fn unary(&mut self) -> Result<Spanned<Expression>, ParserError> {
+    fn parse_unary(&mut self) -> ParserResult<Spanned<Expression>> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
-            let next = self.advance().unwrap();
+            let op = self.get_unary_op()?;
 
-            let operator = get_unary_operator(&next.token);
+            let right = self.parse_unary()?;
 
-            let right = Box::new(self.unary()?);
-
-            return Ok(Spanned::new(
-                Expression::Unary {
-                    expr: right,
-                    operator,
+            return Ok(Spanned {
+                span: op.get_span().to(right.get_span()),
+                value: Expression::Unary {
+                    op,
+                    expr: Box::new(right),
                 },
-                next.pos,
-            ));
+            });
         }
 
         self.call()
     }
 
-    fn call(&mut self) -> Result<Spanned<Expression>, ParserError> {
+    fn primary(&mut self) -> ParserResult<Spanned<Expression>> {
+        match self.advance() {
+            Some(Spanned {
+                ref span,
+                ref value,
+            }) => match value.token {
+                TokenType::TRUE(_) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::True(true)),
+                }),
+                TokenType::NIL => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Nil),
+                }),
+                TokenType::FALSE(_) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::False(false)),
+                }),
+                TokenType::STRING(ref s) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Str(s.clone())),
+                }),
+                TokenType::INT(n) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Int(n)),
+                }),
+                TokenType::FLOAT(n) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Float(n)),
+                }),
+
+                TokenType::LPAREN => {
+                    let expr = Box::new(self.expression()?);
+
+                    let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected ')'")?;
+
+                    Ok(Spanned {
+                        span: span.to(close_span),
+                        value: Expression::Grouping { expr },
+                    })
+                }
+
+                TokenType::IDENTIFIER(ident) => {
+                    let ident = Spanned {
+                        value: self.symbols.symbol(ident),
+                        span: *span,
+                    };
+                    self.parse_ident(ident)
+                }
+
+                ref other => {
+                    let msg = format!("No rules expected '{}' ", other);
+
+                    self.error(msg, *span);
+
+                    Err(())
+                }
+            },
+            None => Err(()), // TODO: ADD an error?
+        }
+    }
+
+    fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
+        if self.recognise(TokenType::LBRACE) {
+            self.advance();
+
+            let mut props = vec![];
+
+            if !self.recognise(TokenType::RBRACE) {
+                loop {
+                    let (open_span, symbol) =
+                        self.consume_get_symbol_and_span("Expected a field name")?;
+
+                    self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                    let expr = self.expression()?;
+
+                    props.push(Spanned {
+                        span: open_span.to(symbol.get_span()),
+                        value: InstanceField { symbol, expr },
+                    });
+
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
+
+            Ok(Spanned {
+                span: symbol.get_span().to(close_span),
+                value: Expression::ClassInstance {
+                    symbol,
+                    props: Box::new(props),
+                },
+            })
+        } else {
+            return Ok(Spanned {
+                span: symbol.get_span(),
+                value: Expression::Var(symbol, self.variable_use_maker.next()),
+            });
+        }
+    }
+
+    fn call(&mut self) -> ParserResult<Spanned<Expression>> {
         let mut expr = self.primary()?;
 
         loop {
-            if self.recognise(TokenType::LBRACKET) {
-                self.advance();
+            if self.recognise(TokenType::LPAREN) {
+                expr = self.finish_call(expr)?;
+            } else if self.recognise(TokenType::LBRACKET) {
+                let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
+
                 let index = Box::new(self.expression()?);
-                let index_pos = self.consume_get_pos(
-                    &TokenType::RBRACKET,
-                    "Expected ']' to close an index expression",
-                )?;
-                return Ok(Spanned::new(
-                    Expression::IndexExpr {
+
+                let close_span = self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?;
+
+                return Ok(Spanned {
+                    span: open_span.to(close_span),
+                    value: Expression::Index {
                         target: Box::new(expr),
                         index,
                     },
-                    index_pos,
-                ));
-            } else if self.recognise(TokenType::LPAREN) {
-                let call_pos = self.advance().unwrap().pos;
-                expr.pos = call_pos;
-                expr = self.finish_call(expr)?;
+                });
             } else if self.recognise(TokenType::DOT) {
                 self.advance();
 
-                let (property, pos) = self.consume_get_name_symbol("Expected a \'class\' name")?;
-                expr = Spanned::new(
-                    Expression::Get {
+                let (close_span, property) =
+                    self.consume_get_symbol_and_span("Expected an identifier")?;
+
+                expr = Spanned {
+                    span: expr.get_span().to(close_span),
+                    value: Expression::Get {
                         object: Box::new(expr),
                         property,
                         handle: self.variable_use_maker.next(),
                     },
-                    pos,
-                )
+                }
             } else {
                 break;
             }
@@ -1166,6 +1172,36 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn finish_call(&mut self, callee: Spanned<Expression>) -> ParserResult<Spanned<Expression>> {
+        self.consume(&TokenType::LPAREN, "Expected '(' ")?;
+
+        let mut args = vec![];
+
+        if !self.recognise(TokenType::RPAREN) {
+            loop {
+                args.push(self.expression()?);
+
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected '(' ")?;
+
+        Ok(Spanned {
+            span: callee.get_span().to(close_span),
+            value: Expression::Call {
+                callee: Box::new(callee),
+                args,
+            },
+        })
+    }
+}
+
+/*
     fn primary(&mut self) -> Result<Spanned<Expression>, ParserError> {
         match self.advance() {
             Some(Token { ref token, ref pos }) => match *token {
