@@ -734,6 +734,37 @@ impl<'a> Parser<'a> {
                 value: Ty::Arr(Box::new(ty)),
                 span: self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?,
             })
+        } else if self.recognise(TokenType::FUNCTION) {
+            let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'fun' ")?;
+
+            self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
+            let mut param_ty = Vec::with_capacity(32);
+
+            loop {
+                param_ty.push(self.parse_type()?);
+
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+
+            let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
+
+            if self.recognise(TokenType::FRETURN) {
+                self.advance();
+                let ty = self.parse_type()?;
+                Ok(Spanned {
+                    span: open_span.to(ty.get_span()),
+                    value: Ty::Func(param_ty, Some(Box::new(ty))),
+                })
+            } else {
+                Ok(Spanned {
+                    span: open_span.to(close_span),
+                    value: Ty::Func(param_ty, None),
+                })
+            }
         } else {
             let ty = self.consume_get_symbol("Expected a type param")?;
 
@@ -742,31 +773,6 @@ impl<'a> Parser<'a> {
                 value: Ty::Simple(ty),
             })
         }
-
-        /*else if self.recognise(TokenType::FUNCTION) {
-            self.advance();
-            self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
-            let mut param_ty = Vec::with_capacity(32);
-
-            while {
-                let ty = self.parse_type()?;
-
-                param_ty.push(ty);
-
-                self.recognise(TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
-
-            self.consume(&TokenType::RPAREN, "Expected  \')\'")?;
-
-            if self.recognise(TokenType::FRETURN) {
-                self.advance();
-                let ty = self.parse_type()?;
-                Ok(Ty::Func(param_ty, Some(Box::new(ty))))
-            } else {
-                Ok(Ty::Func(param_ty, None))
-            }
-        }  */
     }
 
     fn class_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
