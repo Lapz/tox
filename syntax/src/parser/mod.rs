@@ -197,45 +197,45 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // pub fn parse(&mut self) -> Result<Vec<Spanned<Statement>>, Vec<ParserError>> {
-    //     let mut statements = vec![];
+    pub fn parse(&mut self) -> ParserResult<Vec<Spanned<Statement>>> {
+        let mut statements = vec![];
 
-    //     let mut errors = vec![];
+        let mut had_error = false;
 
-    //     while self.peek(|token| token != &TokenType::EOF) {
-    //         match self.declaration() {
-    //             Ok(statement) => statements.push(statement),
-    //             Err(e) => {
-    //                 errors.push(e);
-    //                 self.synchronize();
-    //             }
-    //         }
-    //     }
+        while self.peek(|token| token != &TokenType::EOF) {
+            match self.declaration() {
+                Ok(statement) => statements.push(statement),
+                Err(e) => {
+                    had_error = true;
+                    self.synchronize();
+                }
+            }
+        }
 
-    //     if errors.is_empty() {
-    //         Ok(statements)
-    //     } else {
-    //         Err(errors)
-    //     }
-    // }
+        if had_error {
+            Err(())
+        } else {
+            Ok(statements)
+        }
+    }
 
-    // pub fn synchronize(&mut self) {
-    //     self.advance();
+    pub fn synchronize(&mut self) {
+        self.advance();
 
-    //     while self.peek(|token| token == &TokenType::EOF) {
-    //         match self.advance().map(|t| t.token) {
-    //             Some(TokenType::CLASS)
-    //             | Some(TokenType::FUNCTION)
-    //             | Some(TokenType::IDENTIFIER(_))
-    //             | Some(TokenType::FOR)
-    //             | Some(TokenType::IF)
-    //             | Some(TokenType::WHILE)
-    //             | Some(TokenType::RETURN) => break,
-    //             None => unreachable!(),
-    //             _ => self.advance(),
-    //         };
-    //     }
-    // }
+        while self.peek(|token| token == &TokenType::EOF) {
+            match self.advance().map(|span| span.value.token) {
+                Some(TokenType::CLASS)
+                | Some(TokenType::FUNCTION)
+                | Some(TokenType::IDENTIFIER(_))
+                | Some(TokenType::FOR)
+                | Some(TokenType::IF)
+                | Some(TokenType::WHILE)
+                | Some(TokenType::RETURN) => break,
+                None => unreachable!(),
+                _ => self.advance(),
+            };
+        }
+    }
 
     fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
         self.reporter.error(msg, span)
@@ -722,8 +722,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type(&mut self) -> ParserResult<Spanned<Ty>> {
-        unimplemented!();
-        /* if self.recognise(TokenType::NIL) {
+       
+        if self.recognise(TokenType::NIL) {
             Ok(Spanned {
                 value: Ty::Nil,
                 span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
@@ -731,13 +731,21 @@ impl<'a> Parser<'a> {
         } else if self.recognise(TokenType::LBRACKET) {
             self.advance();
             let ty = self.parse_type()?;
-            self.consume(
-                &TokenType::RBRACKET,
-                "Expected a \']\' to close an array type",
-            )?;
+            Ok(Spanned {
+                value: Ty::Arr(Box::new(ty)),
+                span: self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?,
+            })
+        } else {
+            let ty = self.consume_get_symbol("Expected a type param")?;
 
-            Ok(Ty::Arr(Box::new(ty)))
-        } else if self.recognise(TokenType::FUNCTION) {
+            Ok(Spanned {
+                span: ty.get_span().to(ty.get_span()),
+                value: Ty::Simple(ty),
+            })
+
+        }
+        
+        /*else if self.recognise(TokenType::FUNCTION) {
             self.advance();
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
             let mut param_ty = Vec::with_capacity(32);
@@ -760,10 +768,7 @@ impl<'a> Parser<'a> {
             } else {
                 Ok(Ty::Func(param_ty, None))
             }
-        } else {
-            let ty = self.consume_get_symbol("Expected a type param")?;
-            Ok(Ty::Simple(ty))
-        } */
+        }  */
     }
 
     fn class_declaration(&mut self) -> ParserResult<Spanned<Statement>> {

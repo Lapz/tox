@@ -3,5 +3,5 @@ members = [
     "syntax",
    # "sem",
     "util",
-    # "tox",
+    "tox",
 ]

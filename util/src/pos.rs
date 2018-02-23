@@ -31,9 +31,9 @@ pub const EMPTYSPAN: Span = Span {
     },
     end: Position {
         line: 1,
-        column: 1,
+        column: 0,
         absolute: 1,
-    },
+    }
 };
 
 #[derive(Debug, Copy, PartialOrd, Clone, PartialEq)]

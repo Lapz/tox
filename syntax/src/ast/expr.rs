@@ -82,9 +82,9 @@ pub struct FunctionParams {
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Ty {
-    Simple(Symbol),
-    Arr(Box<Ty>),
-    Func(Vec<Ty>, Option<Box<Ty>>),
+    Simple(Spanned<Symbol>),
+    Arr(Box<Spanned<Ty>>),
+    Func(Vec<Spanned<Ty>>, Option<Box<Spanned<Ty>>>),
     Nil,
 }
 

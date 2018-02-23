@@ -1,5 +1,5 @@
-extern crate interpreter;
-extern crate sem;
+// extern crate interpreter;
+// extern crate sem;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -8,13 +8,14 @@ extern crate util;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
-use interpreter::interpret;
-use interpreter::interpreter::env::Environment;
+// use sem::resolver::Resolver;
+// use sem::semant::TyChecker;
+// use interpreter::interpret;
+// use interpreter::interpreter::env::Environment;
 use std::io;
-use util::env::TypeEnv;
+// use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Table};
+use util::emmiter::Reporter;
 use std::rc::Rc;
 use std::io::Write;
 use structopt::StructOpt;
@@ -24,13 +25,14 @@ fn main() {
 
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
-    } else {
-        repl(opts.ptokens, opts.pprint)
-    }
+    } 
+// else {
+//         repl(opts.ptokens, opts.pprint)
+//     }
 }
 
 // use compiler::compile;
-
+/*
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
 
@@ -109,7 +111,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         };
     }
 }
-
+*/
 pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
@@ -127,7 +129,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         ::std::process::exit(0)
     }
 
-    let tokens = match Lexer::new(input).lex() {
+    let reporter = Reporter::new();
+
+    let tokens = match Lexer::new(&input, reporter.clone()).lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -137,9 +141,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
             tokens
         }
         Err(errors) => {
-            for err in errors {
-                println!("{}", err);
-            }
+            reporter.emit(&input);
             ::std::process::exit(65)
         }
     };
@@ -147,19 +149,17 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Table::new(Rc::clone(&strings));
 
-    let ast = match Parser::new(tokens, &mut symbols).parse() {
+    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
             if pprint {
-                for statement in &statements {
-                    println!("{}", statement.node.pprint(&mut symbols));
-                }
+                // for statement in &statements {
+                //     println!("{}", statement.node.pprint(&mut symbols));
+                // }
             }
             statements
         }
         Err(errors) => {
-            for err in errors {
-                println!("{}", err);
-            }
+            reporter.emit(&input);
             ::std::process::exit(65)
         }
     };
@@ -168,51 +168,51 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", ast);
     }
 
-    Resolver::new().resolve(&ast).unwrap();
+    // Resolver::new().resolve(&ast).unwrap();
 
-    let mut resolver = Resolver::new();
+    // let mut resolver = Resolver::new();
 
-    resolver.resolve(&ast).unwrap();
+    // resolver.resolve(&ast).unwrap();
 
-    let mut env = Environment::new();
+    // let mut env = Environment::new();
 
-    let mut tyenv = TypeEnv::new(&strings);
+    // let mut tyenv = TypeEnv::new(&strings);
 
-    env.fill_env(&mut tyenv);
+    // env.fill_env(&mut tyenv);
 
-    match TyChecker::new().analyse(&ast, &mut tyenv) {
-        Ok(_) => (),
-        Err(errors) => {
-            for err in errors {
-                println!("{}", err);
-            }
+    // match TyChecker::new().analyse(&ast, &mut tyenv) {
+    //     Ok(_) => (),
+    //     Err(errors) => {
+    //         for err in errors {
+    //             println!("{}", err);
+    //         }
 
-            if penv {
-                println!("{:#?}", tyenv);
-                println!("{:#?}", env);
-            }
-            ::std::process::exit(65)
-        }
-    };
+    //         if penv {
+    //             println!("{:#?}", tyenv);
+    //             println!("{:#?}", env);
+    //         }
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
-    if penv {
-        println!("{:#?}", tyenv);
-        println!("{:#?}", env);
-    }
+    // if penv {
+    //     println!("{:#?}", tyenv);
+    //     println!("{:#?}", env);
+    // }
 
-    match interpret(&ast, &resolver.locals, &mut env) {
-        Ok(_) => (),
-        Err(err) => {
-            println!("{:?}", err);
+    // match interpret(&ast, &resolver.locals, &mut env) {
+    //     Ok(_) => (),
+    //     Err(err) => {
+    //         println!("{:?}", err);
 
-            ::std::process::exit(65)
-        }
-    };
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
-    if penv {
-        println!("{:#?}", tyenv);
-        println!("{:#?}", env);
-    }
+    // if penv {
+    //     println!("{:#?}", tyenv);
+    //     println!("{:#?}", env);
+    // }
 }
 
 #[derive(StructOpt, Debug)]
