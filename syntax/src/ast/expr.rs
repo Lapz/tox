@@ -17,7 +17,7 @@ pub enum Expression {
 
     Binary {
         left_expr: Box<Spanned<Expression>>,
-        operator: Spanned<Operator>,
+        operator: Spanned<Op>,
         right_expr: Box<Spanned<Expression>>,
     },
     Call {
@@ -33,7 +33,7 @@ pub enum Expression {
         items: Vec<(Spanned<Expression>, Spanned<Expression>)>,
     },
     Func {
-        parameters: Vec<(Spanned<Symbol>, Spanned<Ty>)>,
+        params: Spanned<Vec<Spanned<FunctionParams>>>,
         body: Box<Spanned<Statement>>,
         returns: Option<Spanned<Ty>>,
     },
@@ -66,12 +66,18 @@ pub enum Expression {
         else_branch: Box<Spanned<Expression>>,
     },
     Unary {
-        operator: Spanned<UnaryOperator>,
+        operator: Spanned<UnaryOp>,
         expr: Box<Spanned<Expression>>,
     },
 
     This(VariableUseHandle),
     Var(Spanned<Symbol>, VariableUseHandle),
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+pub struct FunctionParams {
+    pub name: Spanned<Symbol>,
+    pub ty: Spanned<Ty>,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
@@ -115,7 +121,7 @@ impl VariableUseMaker {
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub enum Operator {
+pub enum Op {
     // The possible operators for the binary and unary expression
     BangEqual,
     EqualEqual,
@@ -156,17 +162,8 @@ pub(crate) fn get_assign_operator(token: &TokenType) -> AssignOperator {
     }
 }
 
-#[inline]
-pub(crate) fn get_unary_operator(token: &TokenType) -> UnaryOperator {
-    match *token {
-        TokenType::BANG => UnaryOperator::Bang,
-        TokenType::MINUS => UnaryOperator::Minus,
-        _ => unreachable!(),
-    }
-}
-
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
-pub enum UnaryOperator {
+pub enum UnaryOp {
     Bang,
     Minus,
 }
