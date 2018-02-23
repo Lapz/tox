@@ -205,7 +205,7 @@ impl<'a> Parser<'a> {
         while self.peek(|token| token != &TokenType::EOF) {
             match self.declaration() {
                 Ok(statement) => statements.push(statement),
-                Err(e) => {
+                Err(_) => {
                     had_error = true;
                     self.synchronize();
                 }
@@ -659,7 +659,9 @@ impl<'a> Parser<'a> {
                     break;
                 };
 
-                let (open_span, name) = self.consume_get_symbol_and_span("Expected a param name")?;
+                let msg = format!("Expected a {} name", kind);
+
+                let (open_span, name) = self.consume_get_symbol_and_span(&msg)?;
 
                 self.consume(&TokenType::COLON, "Expected a colon")?;
 

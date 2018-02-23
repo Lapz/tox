@@ -115,7 +115,7 @@ impl<'a> Lexer<'a> {
         let (_, _) = self.take_whilst(start, |ch| ch != '\n');
     }
 
-    fn block_comment(&mut self, start: Position) -> Result<(), LexerError> {
+    fn block_comment(&mut self) -> Result<(), LexerError> {
         self.advance(); // Eats the '*'
         loop {
             self.advance(); // Eats the '*'
@@ -264,7 +264,7 @@ impl<'a> Lexer<'a> {
                         self.line_comment(start);
                         continue;
                     } else if self.peek(|ch| ch == '*') {
-                        self.block_comment(start)?;
+                        self.block_comment()?;
                         continue;
                     } else {
                         Ok(span(TokenType::SLASH, start))

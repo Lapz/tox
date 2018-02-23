@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use util::pos::Position;
 
 /// A Token is spat out by the lexer.
 /// It contains a Type and the position and column it is found in in the lexer

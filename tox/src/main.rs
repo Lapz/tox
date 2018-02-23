@@ -25,14 +25,12 @@ fn main() {
 
     if let Some(file) = opts.source {
         run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
+    } else {
+        repl(opts.ptokens, opts.pprint)
     }
-    // else {
-    //         repl(opts.ptokens, opts.pprint)
-    //     }
 }
 
 // use compiler::compile;
-/*
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
 
@@ -40,11 +38,14 @@ pub fn repl(ptokens: bool, pprint: bool) {
         let _ = io::stdout().write(b"lexer>> ");
         let _ = io::stdout().flush();
         let mut input = String::new();
+
         io::stdin()
             .read_line(&mut input)
             .expect("Couldn't read input");
 
-        let tokens = match Lexer::new(&input).lex() {
+        let reporter = Reporter::new();
+
+        let tokens = match Lexer::new(&input, reporter.clone()).lex() {
             Ok(tokens) => {
                 if ptokens {
                     for token in &tokens {
@@ -53,10 +54,8 @@ pub fn repl(ptokens: bool, pprint: bool) {
                 }
                 tokens
             }
-            Err(errors) => {
-                for err in errors {
-                    println!("{}", err);
-                }
+            Err(_) => {
+                reporter.emit(&input);
                 continue;
             }
         };
@@ -64,54 +63,52 @@ pub fn repl(ptokens: bool, pprint: bool) {
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(Rc::clone(&strings));
 
-        let ast = match Parser::new(tokens, &mut symbols).parse() {
+        let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
             Ok(statements) => {
                 if pprint {
-                    for statement in &statements {
-                        println!("{}", statement.node.pprint(&mut symbols));
-                    }
+                    // for statement in &statements {
+                    //     println!("{}", statement.node.pprint(&mut symbols));
+                    // }
                 }
                 statements
             }
-            Err(errors) => {
-                for err in errors {
-                    println!("{}", err);
-                }
+            Err(_) => {
+                reporter.emit(&input);
                 continue;
             }
         };
 
-        let mut resolver = Resolver::new();
+        // let mut resolver = Resolver::new();
 
-        resolver.resolve(&ast).unwrap();
+        // resolver.resolve(&ast).unwrap();
 
-        let mut env = Environment::new();
+        // let mut env = Environment::new();
 
-        let mut tyenv = TypeEnv::new(&strings);
+        // let mut tyenv = TypeEnv::new(&strings);
 
-        env.fill_env(&mut tyenv);
+        // env.fill_env(&mut tyenv);
 
-        match TyChecker::new().analyse(&ast, &mut tyenv) {
-            Ok(_) => (),
-            Err(errors) => {
-                for err in errors {
-                    println!("{}", err);
-                }
+        // match TyChecker::new().analyse(&ast, &mut tyenv) {
+        //     Ok(_) => (),
+        //     Err(errors) => {
+        //         for err in errors {
+        //             println!("{}", err);
+        //         }
 
-                continue;
-            }
-        };
+        //         continue;
+        //     }
+        // };
 
-        match interpret(&ast, &resolver.locals, &mut env) {
-            Ok(_) => (),
-            Err(err) => {
-                println!("{:?}", err);
-                continue;
-            }
-        };
+        // match interpret(&ast, &resolver.locals, &mut env) {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         println!("{:?}", err);
+        //         continue;
+        //     }
+        // };
     }
 }
-*/
+
 pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
@@ -131,7 +128,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let reporter = Reporter::new();
 
-    let tokens = match Lexer::new(&input, reporter.clone()).lex() {
+    let tokens = match Lexer::new(input, reporter.clone()).lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -140,8 +137,8 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
             }
             tokens
         }
-        Err(errors) => {
-            reporter.emit(&input);
+        Err(_) => {
+            reporter.emit(input);
             ::std::process::exit(65)
         }
     };
@@ -158,8 +155,8 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
             }
             statements
         }
-        Err(errors) => {
-            reporter.emit(&input);
+        Err(_) => {
+            reporter.emit(input);
             ::std::process::exit(65)
         }
     };
