@@ -1,5 +1,5 @@
 // extern crate interpreter;
-// extern crate sem;
+extern crate sem;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -9,11 +9,11 @@ extern crate util;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 // use sem::resolver::Resolver;
-// use sem::semant::TyChecker;
+use sem::semant::TyChecker;
 // use interpreter::interpret;
 // use interpreter::interpreter::env::Environment;
 use std::io;
-// use util::env::TypeEnv;
+use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Table};
 use util::emmiter::Reporter;
 use std::rc::Rc;
@@ -84,20 +84,18 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         // let mut env = Environment::new();
 
-        // let mut tyenv = TypeEnv::new(&strings);
+        let mut tyenv = TypeEnv::new(&strings);
 
         // env.fill_env(&mut tyenv);
 
-        // match TyChecker::new().analyse(&ast, &mut tyenv) {
-        //     Ok(_) => (),
-        //     Err(errors) => {
-        //         for err in errors {
-        //             println!("{}", err);
-        //         }
+        match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
+            Ok(_) => (),
+            Err(errors) => {
+                reporter.emit(&input);
 
-        //         continue;
-        //     }
-        // };
+                continue;
+            }
+        };
 
         // match interpret(&ast, &resolver.locals, &mut env) {
         //     Ok(_) => (),
@@ -173,24 +171,17 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     // let mut env = Environment::new();
 
-    // let mut tyenv = TypeEnv::new(&strings);
+    let mut tyenv = TypeEnv::new(&strings);
 
     // env.fill_env(&mut tyenv);
 
-    // match TyChecker::new().analyse(&ast, &mut tyenv) {
-    //     Ok(_) => (),
-    //     Err(errors) => {
-    //         for err in errors {
-    //             println!("{}", err);
-    //         }
-
-    //         if penv {
-    //             println!("{:#?}", tyenv);
-    //             println!("{:#?}", env);
-    //         }
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
+        Ok(_) => (),
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
     // if penv {
     //     println!("{:#?}", tyenv);

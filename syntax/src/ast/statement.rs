@@ -1,4 +1,4 @@
-use ast::expr::{Expression, Ty};
+use ast::expr::{Expression, FunctionParams, Ty};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
@@ -18,8 +18,8 @@ pub enum Statement {
 
     ExternFunction {
         name: Spanned<Symbol>,
-        params: Vec<(Symbol, Ty)>,
-        returns: Option<Ty>,
+        params: Spanned<Vec<Spanned<FunctionParams>>>,
+        returns: Option<Spanned<Ty>>,
     },
 
     Function {

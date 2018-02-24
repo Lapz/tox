@@ -1,66 +1,120 @@
 mod inferexp;
 mod inferstatement;
 
-use syntax::ast::expr::{Expression, ExpressionTy};
+use syntax::ast::expr::{Expression, Ty};
 use syntax::ast::statement::Statement;
 use util::symbol::Symbol;
 use util::types::{Type, TypeError};
 use util::env::{Entry, TypeEnv};
-use util::pos::{Position, Spanned};
+use util::pos::{Span, Spanned};
+use util::emmiter::Reporter;
 
 /// The struct that is in control of type checking
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, Default)]
 pub struct TyChecker {
     pub this: Option<Type>,
+    reporter: Reporter,
 }
+
+pub type InferResult<T> = Result<T, ()>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct InferedType {
     pub ty: Type,
 }
 
+macro_rules! check_type {
+    ($sel:ident,$ty:expr,$unknown_ty:expr,$span:expr) => {
+        match $ty.ty {
+            Type::Func(_,ref returns) => {
+                if **returns != $unknown_ty {
+
+                    $sel.expected(&$ty.ty,&$unknown_ty,$span);
+
+                    return Err(());
+                }
+
+                Ok(())
+            },
+
+            _ =>  {
+                if $ty.ty != $unknown_ty {
+                 $sel.expected(&$ty.ty,&$unknown_ty,$span);
+
+                    return Err(());
+            }
+
+            Ok(())
+            }
+
+
+        }
+
+    }
+}
+
 impl TyChecker {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(reporter: Reporter) -> Self {
+        TyChecker {
+            this: None,
+            reporter,
+        }
     }
 
     pub fn analyse(
         &mut self,
         statements: &[Spanned<Statement>],
         env: &mut TypeEnv,
-    ) -> Result<(), Vec<TypeError>> {
-        let mut errors = vec![];
+    ) -> Result<(), ()> {
+        let mut had_error = false;
 
         for statement in statements {
-            if let Err(e) = self.transform_statement(statement, env) {
-                errors.push(e);
+            if let Err(_) = self.transform_statement(statement, env) {
+                had_error = true;
             }
         }
 
-        if errors.is_empty() {
-            Ok(())
+        if had_error {
+            Err(())
         } else {
-            Err(errors)
+            Ok(())
         }
+    }
+
+    fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.error(msg, span)
+    }
+
+    fn expected(&mut self, expected: &Type, unknown: &Type, span: Span) {
+        let msg = format!(
+            "Expected Type '{}' but instead got '{}' ",
+            expected, unknown
+        );
+
+        self.error(msg, span);
     }
 
     fn transform_var(
         &self,
-        symbol: &Symbol,
-        pos: Position,
+        symbol: &Spanned<Symbol>,
+        span: Span,
         env: &mut TypeEnv,
-    ) -> Result<InferedType, TypeError> {
-        match env.look_var(*symbol) {
+    ) -> InferResult<InferedType> {
+        match env.look_var(symbol.value) {
             Some(ty) => Ok(InferedType {
                 ty: self.actual_type(&self.get_actual_ty(ty)?).clone(),
             }),
-            None => Err(TypeError::UndefinedVar(env.name(*symbol), pos)),
+            None => {
+                let msg = format!("Undefined variable '{}' ", env.name(symbol.value));
+                self.reporter.warn(&msg, symbol.span);
+                Err(())
+            }
         }
     }
 
     /// Checks if two types are eqivilant. If the types are two classes it checks the name and says
     /// they are equivilant
-    fn check_types(&self, expected: &Type, unknown: &Type, pos: Position) -> Result<(), TypeError> {
+    fn check_types(&mut self, expected: &Type, unknown: &Type, span: Span) -> InferResult<()> {
         let expected = self.actual_type(expected);
         let unknown = self.actual_type(unknown);
 
@@ -80,20 +134,23 @@ impl TyChecker {
                 // Due to how class are inferred if a method on the class returns its self.
                 // Its class type will have an empty methods; So we compare the name and the fields instead
                 if n != sym && methods != m {
-                    return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+                    self.expected(expected, unknown, span);
+                    return Err(());
                 }
             }
 
             (&Type::This(ref this, _, _), &Type::Class { ref name, .. })
             | (&Type::Class { ref name, .. }, &Type::This(ref this, _, _)) => {
                 if this != name {
-                    return Err(TypeError::Expected(expected.clone(), unknown.clone(), pos));
+                    self.expected(expected, unknown, span);
+                    return Err(());
                 }
             }
 
             (e, u) => {
-                if expected != unknown {
-                    return Err(TypeError::Expected(e.clone(), u.clone(), pos));
+                if expected != unknown && unknown != &Type::Nil {
+                    self.expected(e, u, span);
+                    return Err(());
                 }
             }
         }
@@ -101,7 +158,7 @@ impl TyChecker {
         Ok(())
     }
 
-    fn get_actual_ty(&self, entry: &Entry) -> Result<Type, TypeError> {
+    fn get_actual_ty(&self, entry: &Entry) -> InferResult<Type> {
         match *entry {
             Entry::VarEntry(ref ty) => Ok(ty.clone()),
             Entry::FunEntry {
@@ -123,8 +180,8 @@ impl TyChecker {
         entry: &Entry,
         arguments: &[Spanned<Expression>],
         env: &mut TypeEnv,
-        pos: Position,
-    ) -> Result<InferedType, TypeError> {
+        span: Span,
+    ) -> InferResult<InferedType> {
         match *entry {
             Entry::FunEntry {
                 ref params,
@@ -133,7 +190,7 @@ impl TyChecker {
                 for (arg, param) in arguments.iter().zip(params) {
                     let exp_ty = self.transform_expression(arg, env)?;
 
-                    self.check_types(&exp_ty.ty, param, pos)?;
+                    self.check_types(&exp_ty.ty, param, span)?;
                 }
                 Ok(InferedType {
                     ty: self.actual_type(returns).clone(),
@@ -141,40 +198,45 @@ impl TyChecker {
             }
 
             Entry::VarEntry(ref ty) => match ty {
-                &Type::Class { .. } => Err(TypeError::NotCallable(pos)),
+                &Type::Class { .. } => {
+                    self.error("Can only call functions and classes", span);
+                    Err(())
+                }
                 rest => Ok(InferedType { ty: rest.clone() }),
             },
         }
     }
 
-    /// Iterativiy walks the the `ExpressionTy` and returns a `Type`
+    /// Iterativiy walks the the `Ty` and returns a `Type`
     fn get_type(
-        &self,
-        ident: &ExpressionTy,
-        pos: Position,
+        &mut self,
+        ident: &Spanned<Ty>,
+        span: Span,
         env: &mut TypeEnv,
-    ) -> Result<Type, TypeError> {
-        match *ident {
-            ExpressionTy::Simple(s) => {
-                if let Some(ty) = env.look_type(s) {
+    ) -> InferResult<Type> {
+        match ident.value {
+            Ty::Simple(ref s) => {
+                if let Some(ty) = env.look_type(s.value) {
                     return Ok(ty.clone());
                 }
 
-                Err(TypeError::UndefinedType(env.name(s), pos))
+                let msg = format!("Undefined Type '{}'", env.name(s.value));
+                self.error(msg, ident.span);
+                Err(())
             }
-            ExpressionTy::Nil => Ok(Type::Nil),
-            ExpressionTy::Arr(ref s) => Ok(Type::Array(Box::new(self.get_type(s, pos, env)?))),
-            ExpressionTy::Func(ref params, ref returns) => {
+            Ty::Nil => Ok(Type::Nil),
+            Ty::Arr(ref s) => Ok(Type::Array(Box::new(self.get_type(s, span, env)?))),
+            Ty::Func(ref params, ref returns) => {
                 let mut param_tys = Vec::with_capacity(params.len());
 
                 for e_ty in params {
-                    param_tys.push(self.get_type(e_ty, pos, env)?)
+                    param_tys.push(self.get_type(e_ty, span, env)?)
                 }
 
                 if let Some(ref ret) = *returns {
                     Ok(Type::Func(
                         param_tys,
-                        Box::new(self.get_type(ret, pos, env)?),
+                        Box::new(self.get_type(ret, span, env)?),
                     ))
                 } else {
                     Ok(Type::Func(param_tys, Box::new(Type::Nil)))
@@ -182,86 +244,62 @@ impl TyChecker {
             }
         }
     }
-}
 
-macro_rules! check_type {
-    ($sel:ident,$ty:expr,$pos:expr) => {
-        match $sel.ty {
-            Type::Func(_,ref returns) => {
-                if **returns != $ty {
-                    return Err(TypeError::Expected($ty,$sel.ty.clone(), $pos));
-                }
-
-                Ok(())
-            },
-
-            _ =>  {
-                if $sel.ty != $ty {
-            return Err(TypeError::Expected($ty, $sel.ty.clone(), $pos));
-            }
-
-            Ok(())
-            }
-
-
-        }
-
-    }
-}
-
-impl InferedType {
-    /// Given an `InferedType` check if it an {int} or {float}
-    fn check_int_float(&self, pos: Position) -> Result<(), TypeError> {
-        if self.check_int(pos).is_err() && self.check_float(pos).is_err() {
-            Err(TypeError::ExpectedOneOf("Int or Float".into(), pos))
+    fn check_int_float(&mut self, ty: &InferedType, span: Span) -> InferResult<()> {
+        if self.check_int(ty, span).is_err() && self.check_float(ty, span).is_err() {
+            let msg = "Expected one of 'int' or 'float' ";
+            self.error(msg, span);
+            Err(())
         } else {
             Ok(())
         }
     }
 
     /// Checks if `InferedType` is {bool}
-    fn check_bool(&self, pos: Position) -> Result<(), TypeError> {
-        check_type!(self, Type::Bool, pos)
+    fn check_bool(&mut self, ty: &InferedType, span: Span) -> InferResult<()> {
+        check_type!(self, ty, Type::Bool, span)
     }
 
     /// Checks if `InferedType` is {int}
-    fn check_int(&self, pos: Position) -> Result<(), TypeError> {
-        check_type!(self, Type::Int, pos)
+    fn check_int(&mut self, ty: &InferedType, span: Span) -> InferResult<()> {
+        check_type!(self, ty, Type::Int, span)
     }
 
     /// Checks if `InferedType` is {str}
-    fn check_str(&self, pos: Position) -> Result<(), TypeError> {
-        check_type!(self, Type::Str, pos)
+    fn check_str(&mut self, ty: &InferedType, span: Span) -> InferResult<()> {
+        check_type!(self, ty, Type::Str, span)
     }
 
     /// Checks if `InferedType` is {float}
-    fn check_float(&self, pos: Position) -> Result<(), TypeError> {
-        if self.ty != Type::Float {
-            return Err(TypeError::Expected(Type::Float, self.ty.clone(), pos));
+    fn check_float(&mut self, ty: &InferedType, span: Span) -> InferResult<()> {
+        if ty.ty != Type::Float {
+            self.expected(&Type::Float, &ty.ty, span);
+            Err(())
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
     /// Checks if they {Int,Float,Str}
-    fn check_int_float_str(&self, pos: Position) -> Result<InferedType, TypeError> {
-        if self.check_int(pos).is_err() || self.check_int(pos).is_err() {
-            if self.check_float(pos).is_ok() {
-                self.check_float(pos)?;
+    fn check_int_float_str(&mut self, ty: &InferedType, span: Span) -> InferResult<InferedType> {
+        if self.check_int(ty, span).is_err() || self.check_int(ty, span).is_err() {
+            if self.check_float(ty, span).is_ok() {
+                self.check_float(ty, span)?;
                 Ok(InferedType { ty: Type::Float })
-            } else if self.check_str(pos).is_ok() {
-                // self.check_str pos)?;
-                self.check_str(pos)?;
+            } else if self.check_str(ty, span).is_ok() {
+                // self.check_str span)?;
+                self.check_str(ty, span)?;
                 Ok(InferedType { ty: Type::Str })
             } else {
-                Err(TypeError::ExpectedOneOf(
-                    "Exepected on of 'Int', 'Float', or 'Str'".into(),
-                    pos,
-                ))
+                let msg = "Expected onE of 'Int', 'Float', or 'Str'";
+                self.error(msg, span);
+                Err(())
             }
-        } else if self.check_int(pos).is_ok() && self.check_int(pos).is_ok() {
+        } else if self.check_int(ty, span).is_ok() && self.check_int(ty, span).is_ok() {
             Ok(InferedType { ty: Type::Int })
         } else {
-            Err(TypeError::Expected(Type::Int, self.ty.clone(), pos))
+            self.expected(&Type::Int, &ty.ty, span);
+            Err(())
         }
     }
 }

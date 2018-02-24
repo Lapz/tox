@@ -11,7 +11,7 @@ pub struct CharPosition<'a> {
 
 /// Represents a Span in the source file along with its value
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct Spanned<T> {
+pub struct Spanned<T: PartialEq> {
     pub span: Span,
     pub value: T,
 }
@@ -88,7 +88,7 @@ impl Span {
     }
 }
 
-impl<T> Spanned<T> {
+impl<T: PartialEq> Spanned<T> {
     pub fn new(value: T, span: Span) -> Self {
         Spanned { span, value }
     }
