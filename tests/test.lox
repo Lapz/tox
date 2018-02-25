@@ -1,9 +1,18 @@
-fun fib(n:int) -> int {
-  if (n < 2) 
-    return n;
-  return fib(n - 2) + fib(n - 1);
+class Toggle {
+    state:bool;
+  
+    fun value() -> bool {
+      return this.state;
+    }
+  
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
+    }
 }
+  
+var toggle  = Toggle{state:true};
 
-var start = clock();
-print(fib(30) == 832040);
-print(clock() - start);
+print toggle.activate().value();
+
+print toggle.activate().value();

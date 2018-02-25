@@ -791,41 +791,39 @@ impl<'a> Parser<'a> {
         let open_span =
             self.consume_get_span(&TokenType::LBRACE, "Expected a '{' after class name")?;
 
-        if !self.recognise(TokenType::RBRACE) {
-            loop {
-                if !self.recognise(TokenType::FUNCTION) {
-                    loop {
-                        let (open_span, name) =
-                            self.consume_get_symbol_and_span("Expected a property name")?;
+        while !self.recognise(TokenType::RBRACE) {
+            if !self.recognise(TokenType::FUNCTION) {
+                loop {
+                    let (open_span, name) =
+                        self.consume_get_symbol_and_span("Expected a property name")?;
 
-                        self.consume(&TokenType::COLON, "Expected ':'")?;
+                    self.consume(&TokenType::COLON, "Expected ':'")?;
 
-                        let ty = self.parse_type()?;
+                    let ty = self.parse_type()?;
 
-                        properties.push(Spanned {
-                            span: open_span.to(ty.get_span()),
-                            value: Field { name, ty },
-                        });
+                    properties.push(Spanned {
+                        span: open_span.to(ty.get_span()),
+                        value: Field { name, ty },
+                    });
 
-                        if self.recognise(TokenType::COMMA) {
-                            self.advance();
-                        } else {
-                            break;
-                        }
-                    }
-
-                    self.consume(
-                        &TokenType::SEMICOLON,
-                        "Expected a semicolon after declaring properties",
-                    )?;
-
-                    if self.recognise(TokenType::RBRACE) {
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
                         break;
                     }
                 }
 
-                methods.push(self.function("method")?);
+                self.consume(
+                    &TokenType::SEMICOLON,
+                    "Expected a semicolon after declaring properties",
+                )?;
+
+                if self.recognise(TokenType::RBRACE) {
+                    break;
+                }
             }
+
+            methods.push(self.function("method")?);
         }
 
         let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
@@ -1059,6 +1057,11 @@ impl<'a> Parser<'a> {
                 TokenType::FLOAT(n) => Ok(Spanned {
                     span: *span,
                     value: Expression::Literal(Literal::Float(n)),
+                }),
+
+                TokenType::THIS => Ok(Spanned {
+                    span: *span,
+                    value: Expression::This(self.variable_use_maker.next()),
                 }),
 
                 TokenType::LPAREN => {

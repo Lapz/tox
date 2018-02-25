@@ -95,7 +95,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             } else {
                 line.len()
             };
-            let carets = repeat_string("^", end - span.start.column as usize);
+            let carets = repeat_string("^", end - span.start.column as usize+1);
 
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
@@ -106,11 +106,19 @@ pub fn print(input: &str, d: &Diagnostic) {
             println!("     {}{}{}", prefix, whitespace, carets);
         } else if line_idx == span.end.line as usize {
             let carets = repeat_string("^", span.end.column as usize);
+             let carets = match d.level {
+                Level::Warn => Yellow.bold().paint(carets),
+                Level::Error => Red.bold().paint(carets),
+            };
             println!("     {}{}", prefix, carets);
         } else if line_idx > span.start.line as usize && line_idx < span.end.line as usize
             && !line.is_empty()
         {
             let carets = repeat_string("^", line.len());
+             let carets = match d.level {
+                Level::Warn => Yellow.bold().paint(carets),
+                Level::Error => Red.bold().paint(carets),
+            };
             println!("     {}{}", prefix, carets);
         }
 

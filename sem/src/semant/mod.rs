@@ -4,7 +4,7 @@ mod inferstatement;
 use syntax::ast::expr::{Expression, Ty};
 use syntax::ast::statement::Statement;
 use util::symbol::Symbol;
-use util::types::{Type,};
+use util::types::Type;
 use util::env::{Entry, TypeEnv};
 use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;

@@ -2,7 +2,7 @@ use super::TyChecker;
 use syntax::ast::expr::{Expression, Literal, UnaryOp};
 use util::pos::Spanned;
 use util::env::{Entry, TypeEnv};
-use util::types::{Type};
+use util::types::Type;
 use super::{InferResult, InferedType};
 
 impl TyChecker {
@@ -134,7 +134,7 @@ impl TyChecker {
                             }
 
                             ref e => {
-                                let msg = format!("Type is '{}' not callable", e);
+                                let msg = format!("Type '{}' is not callable", e);
 
                                 self.error(msg, callee.span);
                                 return Err(());

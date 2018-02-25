@@ -2,7 +2,7 @@ use super::TyChecker;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 use util::env::{Entry, TypeEnv};
-use util::types::{Type};
+use util::types::Type;
 use std::collections::HashMap;
 use util::symbol::Symbol;
 use super::{InferResult, InferedType};
@@ -127,7 +127,11 @@ impl TyChecker {
                                     let mut param_tys = Vec::with_capacity(params.value.len());
 
                                     for method_param in &params.value {
-                                        param_tys.push(self.get_type(&method_param.value.ty, method.span, env)?);
+                                        param_tys.push(self.get_type(
+                                            &method_param.value.ty,
+                                            method.span,
+                                            env,
+                                        )?);
                                         param_names.push(method_param.value.name.clone());
                                     }
 
