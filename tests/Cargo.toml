@@ -1,0 +1,8 @@
+[package]
+name = "test"
+version = "0.1.0"
+authors = ["LenardPratt <striderman34@gmail.com>"]
+
+
+[dependencies]
+walkdir = "2"

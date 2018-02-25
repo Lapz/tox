@@ -1,4 +1,3 @@
-mod test;
 
 use token::{Token, TokenType};
 use util::pos::{CharPosition, Position, Span, Spanned};
