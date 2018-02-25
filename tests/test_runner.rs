@@ -15,9 +15,9 @@ fn main() {
     let mut fail = 0i32;
 
     for entry in WalkDir::new("../tests") {
-        let mut underscorec = Command::new("cargo");
+        let mut tox = Command::new("cargo");
         let entry = entry.unwrap();
-        let mut expected = Vec::new();
+        let mut expected = Vec::with_capacity(5);
 
         if entry.path().is_dir() {
             continue;
@@ -30,7 +30,7 @@ fn main() {
         file.read_to_string(&mut source)
             .expect("something went wrong reading the file");
 
-        let pattern = "// Expect :";
+        let pattern = "// expect:";
 
         for line in source.lines() {
             if let Some((index, _)) = line.match_indices(&pattern).next() {
@@ -40,9 +40,9 @@ fn main() {
             }
         }
 
-        underscorec.args(&["run", "--", entry.path().to_str().unwrap()]);
+        tox.args(&["run", "--", entry.path().to_str().unwrap()]);
 
-        let output = underscorec.output().expect("failed to execute process");
+        let output = tox.output().expect("failed to execute process");
 
         let output = String::from_utf8_lossy(&output.stdout);
 
@@ -61,22 +61,4 @@ fn main() {
         Red.bold().paint(fail.to_string())
     );
 
-    assert!(fail == 0);
-
-    for entry in WalkDir::new("../tests/fail") {
-        let mut underscorec = Command::new("cargo");
-        let entry = entry.unwrap();
-
-        if entry.path().is_dir() {
-            continue;
-        }
-
-        underscorec.args(&["run", "--", entry.path().to_str().unwrap()]);
-        assert!(
-            underscorec
-                .status()
-                .expect("failed to execute process")
-                .success() != true
-        );
-    }
 }
