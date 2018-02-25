@@ -90,9 +90,8 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
             Ok(_) => (),
-            Err(errors) => {
+            Err(_) => {
                 reporter.emit(&input);
-
                 continue;
             }
         };
@@ -183,10 +182,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
-    // if penv {
-    //     println!("{:#?}", tyenv);
-    //     println!("{:#?}", env);
-    // }
+    if penv {
+        println!("{:#?}", tyenv);
+        // println!("{:#?}", env);
+    }
 
     // match interpret(&ast, &resolver.locals, &mut env) {
     //     Ok(_) => (),

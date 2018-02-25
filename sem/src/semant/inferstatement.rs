@@ -2,7 +2,7 @@ use super::TyChecker;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 use util::env::{Entry, TypeEnv};
-use util::types::{Type, TypeError};
+use util::types::{Type};
 use std::collections::HashMap;
 use util::symbol::Symbol;
 use super::{InferResult, InferedType};
@@ -30,139 +30,149 @@ impl TyChecker {
 
             Statement::Break | Statement::Continue => Ok(nil_type!()),
 
-            // Statement::Class {
-            //     ref name,
-            //     ref methods,
-            //     ref properties,
-            //     ref superclass,
-            // } => {
-            //     let mut infered_fields = HashMap::new();
-            //     let mut fields: HashMap<Symbol, Type> = HashMap::new();
-            //     let mut class_methods = HashMap::new();
+            Statement::Class {
+                ref name,
+                ref body,
+                ref superclass,
+            } => {
+                let mut infered_fields = HashMap::new();
+                let mut fields: HashMap<Symbol, Type> = HashMap::new();
+                let mut class_methods = HashMap::new();
 
-            //     if let Some(ref sclass) = *superclass {
-            //         if let Some(mut entry) = env.look_var(*sclass) {
-            //             match *entry {
-            //                 Entry::VarEntry(ref sty) => match *sty {
-            //                     Type::Class {
-            //                         fields: ref sfields,
-            //                         ref methods,
-            //                         ..
-            //                     } => {
-            //                         infered_fields.extend(sfields.clone());
-            //                         class_methods.extend(methods.clone());
-            //                     }
+                if let Some(ref sclass) = *superclass {
+                    if let Some(mut entry) = env.look_var(sclass.value) {
+                        match *entry {
+                            Entry::VarEntry(ref sty) => match *sty {
+                                Type::Class {
+                                    fields: ref sfields,
+                                    ref methods,
+                                    ..
+                                } => {
+                                    infered_fields.extend(sfields.clone());
+                                    class_methods.extend(methods.clone());
+                                }
 
-            //                     _ => return Err(TypeError::SuperClass(*sclass, statement.span)),
-            //                 },
+                                _ => {
+                                    let msg = format!("{} is not a class", env.name(sclass.value));
 
-            //                 _ => return Err(TypeError::SuperClass(*sclass, statement.span)),
-            //             }
-            //         }
-            //     }
+                                    self.error(msg, sclass.span);
 
-            //     for &(property, ref ty) in properties {
-            //         let ty = self.get_type(ty, statement.span, env)?;
-            //         fields.insert(property, ty.clone());
-            //         infered_fields.insert(property, ty);
-            //     }
+                                    return Err(());
+                                }
+                            },
 
-            //     self.this = Some(Type::This(*name, fields, HashMap::new()));
+                            _ => {
+                                let msg = format!("{} is not a class", env.name(sclass.value));
 
-            //     env.add_type(
-            //         *name,
-            //         Type::Class {
-            //             name: *name,
-            //             fields: infered_fields.clone(),
-            //             methods: HashMap::new(),
-            //         },
-            //     ); // Add the class as a type so you can return the class
-            //        //e.g fn new() -> Class
+                                self.error(msg, sclass.span);
 
-            //     env.add_var(
-            //         *name,
-            //         Entry::VarEntry(Type::Class {
-            //             name: *name,
-            //             fields: infered_fields.clone(),
-            //             methods: HashMap::new(),
-            //         }),
-            //     ); // Add the class as a variable so you can return the class
-            //        //e.g fn new() -> Class
+                                return Err(());
+                            }
+                        }
+                    }
+                }
 
-            //     for method in methods {
-            //         match method.value {
-            //             Statement::Function { ref name, ref body } => {
-            //                 use syntax::ast::expr::Expression;
-            //                 match body.value {
-            //                     Expression::Func {
-            //                         ref returns,
-            //                         ref parameters,
-            //                         ref body,
-            //                     } => {
-            //                         let return_type = if let Some(ref return_ty) = *returns {
-            //                             self.get_type(return_ty, statement.span, env)?
-            //                         } else {
-            //                             Type::Nil
-            //                         };
+                for field in &body.value.1 {
+                    let ty = self.get_type(&field.value.ty, field.span, env)?;
+                    fields.insert(field.value.name.value, ty.clone());
+                    infered_fields.insert(field.value.name.value, ty);
+                }
 
-            //                         match self.this {
-            //                             Some(Type::This(_, ref mut methods, _)) => {
-            //                                 methods.insert(*name, return_type.clone());
-            //                             }
-            //                             _ => unreachable!(),
-            //                         }
+                self.this = Some(Type::This(name.value, fields, HashMap::new()));
 
-            //                         let mut param_names = vec![];
-            //                         let mut param_tys = vec![];
+                env.add_type(
+                    name.value,
+                    Type::Class {
+                        name: name.value,
+                        fields: infered_fields.clone(),
+                        methods: HashMap::new(),
+                    },
+                ); // Add the class as a type so you can return the class
+                   //e.g fn new() -> Class
 
-            //                         for &(param, ref p_ty) in parameters {
-            //                             param_tys.push(self.get_type(p_ty, statement.span, env)?);
-            //                             param_names.push(param);
-            //                         }
+                env.add_var(
+                    name.value,
+                    Entry::VarEntry(Type::Class {
+                        name: name.value,
+                        fields: infered_fields.clone(),
+                        methods: HashMap::new(),
+                    }),
+                ); // Add the class as a variable so you can return the class
+                   //e.g fn new() -> Class
 
-            //                         env.begin_scope();
+                for method in &body.value.0 {
+                    match method.value {
+                        Statement::Function { ref name, ref body } => {
+                            use syntax::ast::expr::Expression;
+                            match body.value {
+                                Expression::Func {
+                                    ref returns,
+                                    ref params,
+                                    ref body,
+                                } => {
+                                    let return_type = if let Some(ref return_ty) = *returns {
+                                        self.get_type(return_ty, statement.span, env)?
+                                    } else {
+                                        Type::Nil
+                                    };
 
-            //                         for (name, ty) in param_names.iter().zip(param_tys.clone()) {
-            //                             env.add_var(*name, Entry::VarEntry(ty));
-            //                         }
+                                    match self.this {
+                                        Some(Type::This(_, ref mut methods, _)) => {
+                                            methods.insert(name.value, return_type.clone());
+                                        }
+                                        _ => unreachable!(),
+                                    }
 
-            //                         let body = &self.transform_statement(body, env)?;
+                                    let mut param_names = Vec::with_capacity(params.value.len());
+                                    let mut param_tys = Vec::with_capacity(params.value.len());
 
-            //                         self.check_types(&return_type, &body.ty, statement.span)?;
+                                    for method_param in &params.value {
+                                        param_tys.push(self.get_type(&method_param.value.ty, method.span, env)?);
+                                        param_names.push(method_param.value.name.clone());
+                                    }
 
-            //                         env.end_scope();
+                                    env.begin_scope();
 
-            //                         class_methods.insert(
-            //                             *name,
-            //                             Entry::FunEntry {
-            //                                 params: param_tys,
-            //                                 returns: return_type.clone(),
-            //                             },
-            //                         );
-            //                     }
-            //                     _ => unreachable!(),
-            //                 };
-            //             }
+                                    for (name, ty) in param_names.iter().zip(param_tys.clone()) {
+                                        env.add_var(name.value, Entry::VarEntry(ty));
+                                    }
 
-            //             _ => unreachable!(),
-            //         }
-            //     }
+                                    let body = &self.transform_statement(body, env)?;
 
-            //     let ty = Type::Class {
-            //         name: *name,
-            //         methods: class_methods,
-            //         fields: infered_fields,
-            //     };
+                                    self.check_types(&return_type, &body.ty, statement.span)?;
 
-            //     env.add_type(*name, ty.clone());
+                                    env.end_scope();
 
-            //     self.this = None;
+                                    class_methods.insert(
+                                        name.value,
+                                        Entry::FunEntry {
+                                            params: param_tys,
+                                            returns: return_type.clone(),
+                                        },
+                                    );
+                                }
+                                _ => unreachable!(),
+                            };
+                        }
 
-            //     env.add_var(*name, Entry::VarEntry(ty.clone()));
+                        _ => unreachable!(),
+                    }
+                }
 
-            //     Ok(InferedType { ty })
-            // }
-            
+                let ty = Type::Class {
+                    name: name.value,
+                    methods: class_methods,
+                    fields: infered_fields,
+                };
+
+                env.add_type(name.value, ty.clone());
+
+                self.this = None;
+
+                env.add_var(name.value, Entry::VarEntry(ty.clone()));
+
+                Ok(InferedType { ty })
+            }
             Statement::While { ref cond, ref body } => {
                 let ty = self.transform_expression(cond, env)?;
 
@@ -308,7 +318,11 @@ impl TyChecker {
                 Ok(InferedType { ty: alias_ty })
             }
 
-            Statement::Var{ref ident,ref ty, ref expr} => {
+            Statement::Var {
+                ref ident,
+                ref ty,
+                ref expr,
+            } => {
                 if let Some(ref expr) = *expr {
                     let expr_ty = self.transform_expression(expr, env)?;
 
@@ -335,8 +349,7 @@ impl TyChecker {
 
                     Ok(nil_type!())
                 }
-            },
-            _ => unimplemented!(),
+            }
         }
     }
 }

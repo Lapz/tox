@@ -4,7 +4,7 @@ mod inferstatement;
 use syntax::ast::expr::{Expression, Ty};
 use syntax::ast::statement::Statement;
 use util::symbol::Symbol;
-use util::types::{Type, TypeError};
+use util::types::{Type,};
 use util::env::{Entry, TypeEnv};
 use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;
@@ -97,7 +97,6 @@ impl TyChecker {
     fn transform_var(
         &self,
         symbol: &Spanned<Symbol>,
-        span: Span,
         env: &mut TypeEnv,
     ) -> InferResult<InferedType> {
         match env.look_var(symbol.value) {

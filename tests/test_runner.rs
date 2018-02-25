@@ -60,5 +60,4 @@ fn main() {
         Green.bold().paint(pass.to_string()),
         Red.bold().paint(fail.to_string())
     );
-
 }

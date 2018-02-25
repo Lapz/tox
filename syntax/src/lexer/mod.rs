@@ -1,4 +1,3 @@
-
 use token::{Token, TokenType};
 use util::pos::{CharPosition, Position, Span, Spanned};
 use util::emmiter::Reporter;
@@ -366,7 +365,6 @@ fn look_up_identifier(id: &str) -> TokenType {
         "type" => TokenType::TYPE,
         // Functions and vars
         "fun" => TokenType::FUNCTION,
-        "extern" => TokenType::EXTERN,
         "var" => TokenType::VAR,
         // Control Flow
         "if" => TokenType::IF,
