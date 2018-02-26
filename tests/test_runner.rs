@@ -16,7 +16,7 @@ fn main() {
 
     for entry in WalkDir::new("../tests") {
 
-        let entry = entry.unwrap()
+        let entry = entry.unwrap();
         
         if entry.path().is_dir() {
             continue;
