@@ -23,7 +23,7 @@ fn main() {
         }
 
         let mut tox = Command::new("cargo");
-        let entry = entry.unwrap();
+        
         let mut expected = Vec::with_capacity(5);
 
         let mut source = String::new();
