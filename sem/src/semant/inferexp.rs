@@ -89,8 +89,27 @@ impl TyChecker {
             } => {
                 let symbol = match callee.value {
                     Expression::Var(ref sym, _) => sym.value,
-                    Expression::Get { ref property, .. } => {
-                        let inferred_ty = self.infer_call_get(callee, env)?;
+                    Expression::Get {
+                        ref property,
+                        ref object,
+                        ..
+                    } => {
+                        let inferred_ty = match object.value {
+                            Expression::Var(ref symbol, _) => self.transform_var(symbol, env)?,
+                            Expression::ClassInstance { ref symbol, .. } => {
+                                if let Some(ty) = env.look_type(symbol.value) {
+                                    return Ok(InferedType { ty: ty.clone() });
+                                }
+
+                                let msg = format!("Undefined Class '{}'", env.name(symbol.value));
+
+                                self.error(msg, object.span);
+                                return Err(());
+                            }
+
+                            Expression::Call { .. } => return self.transform_expression(callee, env),
+                            _ => unimplemented!(),
+                        };
 
                         match inferred_ty.ty {
                             Type::Class {
@@ -162,14 +181,14 @@ impl TyChecker {
                                 ty: self.actual_type(returns).clone(),
                             });
                         }
-
-                        Entry::VarEntry(ref ty) => match ty {
-                            &Type::Class { .. } => {
-                                self.error("Can only call functions and classes", expr.span);
-                                return Err(());
-                            }
-                            e => return Ok(InferedType { ty: e.clone() }),
-                        },
+                        Entry::VarEntry(ref ty) => {
+                            let msg = format!(
+                                "Type '{}' is not callable. \n Can only call functions",
+                                ty
+                            );
+                            self.error(msg, expr.span);
+                            return Err(());
+                        }
                     }
                 }
 
@@ -503,32 +522,6 @@ impl TyChecker {
             }
 
             Expression::Var(ref symbol, _) => self.transform_var(symbol, env),
-        }
-    }
-
-    fn infer_call_get(
-        &mut self,
-        expr: &Spanned<Expression>,
-        env: &mut TypeEnv,
-    ) -> InferResult<InferedType> {
-        match expr.value {
-            Expression::Get { ref object, .. } => match object.value {
-                Expression::Var(ref symbol, _) => self.transform_var(symbol, env),
-                Expression::ClassInstance { ref symbol, .. } => {
-                    if let Some(ty) = env.look_type(symbol.value) {
-                        return Ok(InferedType { ty: ty.clone() });
-                    }
-
-                    let msg = format!("Undefined Class '{}'", env.name(symbol.value));
-
-                    self.error(msg, object.span);
-                    return Err(());
-                }
-
-                Expression::Call { .. } => return self.transform_expression(expr, env),
-                _ => unimplemented!(),
-            },
-            _ => unreachable!(),
         }
     }
 

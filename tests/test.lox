@@ -11,7 +11,7 @@ class Toggle {
     }
 }
   
-var toggle  = Toggle{state:true};
+var toggle  = true;
 
 print toggle.activate().value();
 
