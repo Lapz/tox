@@ -95,7 +95,7 @@ impl TyChecker {
                         ..
                     } => {
                         let inferred_ty = match object.value {
-                            Expression::Var(ref symbol, _) => self.transform_var(symbol, env)?,
+                            Expression::Var(ref sym, _) => self.transform_var(sym, env)?,
                             Expression::ClassInstance { ref symbol, .. } => {
                                 if let Some(ty) = env.look_type(symbol.value) {
                                     return Ok(InferedType { ty: ty.clone() });
@@ -161,7 +161,7 @@ impl TyChecker {
                         }
                     }
                     _ => {
-                        self.error("Can only call functions and classes", expr.span);
+                        self.error("Can only call functions and classes", callee.span);
                         return Err(());
                     }
                 };
@@ -186,14 +186,14 @@ impl TyChecker {
                                 "Type '{}' is not callable. \n Can only call functions",
                                 ty
                             );
-                            self.error(msg, expr.span);
+                            self.error(msg, callee.span);
                             return Err(());
                         }
                     }
                 }
 
                 let msg = format!("Undefined variable '{}' ", env.name(symbol));
-                self.reporter.warn(&msg, callee.span);
+                self.reporter.error(msg, callee.span);
                 Err(())
             }
 
