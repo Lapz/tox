@@ -15,6 +15,8 @@ fn main() {
     let mut fail = 0i32;
 
     for entry in WalkDir::new("../tests") {
+
+        let entry = entry.unwrap()
         
         if entry.path().is_dir() {
             continue;
