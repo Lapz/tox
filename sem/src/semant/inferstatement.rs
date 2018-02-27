@@ -15,10 +15,6 @@ impl TyChecker {
     ) -> InferResult<InferedType> {
         match statement.value {
             Statement::Block(ref expressions) => {
-                if expressions.is_empty() {
-                    return Ok(nil_type!());
-                }
-
                 let mut result = InferedType { ty: Type::Nil };
 
                 for expr in expressions {
@@ -176,12 +172,14 @@ impl TyChecker {
 
                 self.check_bool(&ty, cond.span)?;
 
-                let body_ty = self.transform_statement(body, env)?;
+                self.transform_statement(body, env)?;
 
-                Ok(body_ty)
+                Ok(nil_type!())
             }
 
-            Statement::Expr(ref expr) | Statement::Print(ref expr) => {
+            Statement::Expr(ref expr) => self.transform_expression(expr, env),
+
+            Statement::Print(ref expr) => {
                 self.transform_expression(expr, env)?;
                 Ok(nil_type!())
             }

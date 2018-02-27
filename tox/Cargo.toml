@@ -22,3 +22,4 @@ harness = false
 [dev-dependencies]
 walkdir = "2"
 ansi_term = "0.10"
+rayon = "^1"

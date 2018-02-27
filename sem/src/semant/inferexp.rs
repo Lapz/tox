@@ -183,14 +183,18 @@ impl TyChecker {
                                 ty: self.actual_type(returns).clone(),
                             });
                         }
-                        Entry::VarEntry(ref ty) => {
-                            let msg = format!(
-                                "Type '{}' is not callable. \n Can only call functions",
-                                ty
-                            );
-                            self.error(msg, callee.span);
-                            return Err(());
-                        }
+                        Entry::VarEntry(ref ty) => match ty {
+                            func @ &Type::Func { .. } => return Ok(InferedType { ty: func.clone() }),
+
+                            ref ty => {
+                                let msg = format!(
+                                    "Type '{}' is not callable. \n Can only call functions",
+                                    ty
+                                );
+                                self.error(msg, callee.span);
+                                return Err(());
+                            }
+                        },
                     }
                 }
 
@@ -524,6 +528,4 @@ impl TyChecker {
             Expression::Var(ref symbol, _) => self.transform_var(symbol, env),
         }
     }
-
-   
 }

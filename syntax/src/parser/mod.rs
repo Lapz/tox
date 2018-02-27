@@ -229,6 +229,7 @@ impl<'a> Parser<'a> {
                 | Some(TokenType::FOR)
                 | Some(TokenType::IF)
                 | Some(TokenType::WHILE)
+                | Some(TokenType::LBRACE)
                 | Some(TokenType::RETURN) => break,
                 None => unreachable!(),
                 _ => self.advance(),
@@ -637,7 +638,7 @@ impl<'a> Parser<'a> {
 
         let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
 
-        let open_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
+        let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
         let mut params = Vec::with_capacity(32);
         let mut returns = None;
@@ -687,7 +688,7 @@ impl<'a> Parser<'a> {
                 name,
                 body,
                 params: Spanned {
-                    span: open_span.to(rparen_span),
+                    span: param_span.to(rparen_span),
                     value: params,
                 },
                 returns,
@@ -731,13 +732,15 @@ impl<'a> Parser<'a> {
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
             let mut param_ty = Vec::with_capacity(32);
 
-            loop {
-                param_ty.push(self.parse_type()?);
+            if !self.recognise(TokenType::RPAREN) {
+                loop {
+                    param_ty.push(self.parse_type()?);
 
-                if self.recognise(TokenType::COMMA) {
-                    self.advance();
-                } else {
-                    break;
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
                 }
             }
 

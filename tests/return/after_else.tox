@@ -1,8 +1,8 @@
-fun f() {
+fun f() -> str {
   if (false) 
     "no";
   else 
     return "ok";
-  }
+}
 
 print(f()); // expect: ok
