@@ -1,4 +1,3 @@
-use ast::statement::Statement;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
@@ -31,11 +30,7 @@ pub enum Expression {
     Dict {
         items: Vec<(Spanned<Expression>, Spanned<Expression>)>,
     },
-    Func {
-        params: Spanned<Vec<Spanned<FunctionParams>>>,
-        body: Box<Spanned<Statement>>,
-        returns: Option<Spanned<Ty>>,
-    },
+
     Get {
         object: Box<Spanned<Expression>>,
         property: Spanned<Symbol>,
@@ -71,12 +66,6 @@ pub enum Expression {
 
     This(VariableUseHandle),
     Var(Spanned<Symbol>, VariableUseHandle),
-}
-
-#[derive(Debug, PartialOrd, PartialEq, Clone)]
-pub struct FunctionParams {
-    pub name: Spanned<Symbol>,
-    pub ty: Spanned<Ty>,
 }
 
 #[derive(Debug, PartialOrd, PartialEq, Clone)]

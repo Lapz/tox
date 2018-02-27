@@ -1,4 +1,4 @@
-use ast::expr::{Expression, FunctionParams, Ty};
+use ast::expr::{Expression, Ty};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
@@ -24,7 +24,9 @@ pub enum Statement {
 
     Function {
         name: Spanned<Symbol>,
-        body: Spanned<Expression>,
+        params: Spanned<Vec<Spanned<FunctionParams>>>,
+        body: Box<Spanned<Statement>>,
+        returns: Option<Spanned<Ty>>,
     },
 
     For {
@@ -63,6 +65,12 @@ pub enum Statement {
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Field {
+    pub name: Spanned<Symbol>,
+    pub ty: Spanned<Ty>,
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+pub struct FunctionParams {
     pub name: Spanned<Symbol>,
     pub ty: Spanned<Ty>,
 }

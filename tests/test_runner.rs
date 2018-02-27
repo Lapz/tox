@@ -15,15 +15,14 @@ fn main() {
     let mut fail = 0i32;
 
     for entry in WalkDir::new("../tests") {
-
         let entry = entry.unwrap();
-        
+
         if entry.path().is_dir() {
             continue;
         }
 
         let mut tox = Command::new("cargo");
-        
+
         let mut expected = Vec::with_capacity(5);
 
         let mut source = String::new();

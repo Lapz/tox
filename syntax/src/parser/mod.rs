@@ -463,7 +463,7 @@ impl<'a> Parser<'a> {
         let mut statements = vec![];
 
         while !self.recognise(TokenType::RBRACE) {
-            statements.push(self.statement()?);
+            statements.push(self.declaration()?);
         }
 
         let close_span =
@@ -637,15 +637,6 @@ impl<'a> Parser<'a> {
 
         let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
 
-        let body = self.fun_body(kind)?;
-
-        Ok(Spanned {
-            span: open_span.to(body.get_span()),
-            value: Statement::Function { name, body },
-        })
-    }
-
-    fn fun_body(&mut self, kind: &str) -> ParserResult<Spanned<Expression>> {
         let open_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
         let mut params = Vec::with_capacity(32);
@@ -692,12 +683,13 @@ impl<'a> Parser<'a> {
 
         Ok(Spanned {
             span: open_span.to(body.get_span()),
-            value: Expression::Func {
+            value: Statement::Function {
+                name,
+                body,
                 params: Spanned {
                     span: open_span.to(rparen_span),
                     value: params,
                 },
-                body,
                 returns,
             },
         })
@@ -842,13 +834,20 @@ impl<'a> Parser<'a> {
     }
 
     fn var_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
-        let open_span = self.consume_get_span(&TokenType::VAR, "Expected 'let' ")?;
+        let open_span = self.consume_get_span(&TokenType::VAR, "Expected 'var' ")?;
 
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
-        let ty = if self.recognise(TokenType::COLON) {
-            self.advance();
-            Some(self.parse_type()?)
+        let ty = if self.recognise(TokenType::SEMICOLON) {
+            let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';'")?;
+            return Ok(Spanned {
+                span: open_span.to(close_span),
+                value: Statement::Var {
+                    ident,
+                    ty: None,
+                    expr: None,
+                },
+            });
         } else {
             None
         };

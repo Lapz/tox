@@ -1,18 +1,5 @@
-class Toggle {
-    state:bool;
-  
-    fun value() -> bool {
-      return this.state;
-    }
-  
-    fun activate() -> Toggle {
-      this.state = !this.state;
-      return this;
-    }
+fun foo(a:int) {
+  var a = 10;
+
+  return 10;
 }
-  
-var toggle  = Toggle{state:true};
-
-print toggle.activate().value();
-
-print toggle.activate().value();

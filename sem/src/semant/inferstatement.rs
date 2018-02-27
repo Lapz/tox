@@ -19,13 +19,13 @@ impl TyChecker {
                     return Ok(nil_type!());
                 }
 
+                let mut result = InferedType { ty: Type::Nil };
+
                 for expr in expressions {
-                    self.transform_statement(expr, env)?;
+                    result = self.transform_statement(expr, env)?;
                 }
 
-                let result = self.transform_statement(expressions.last().unwrap(), env);
-
-                result
+                Ok(result)
             }
 
             Statement::Break | Statement::Continue => Ok(nil_type!()),
@@ -102,65 +102,59 @@ impl TyChecker {
 
                 for method in &body.value.0 {
                     match method.value {
-                        Statement::Function { ref name, ref body } => {
-                            use syntax::ast::expr::Expression;
-                            match body.value {
-                                Expression::Func {
-                                    ref returns,
-                                    ref params,
-                                    ref body,
-                                } => {
-                                    let return_type = if let Some(ref return_ty) = *returns {
-                                        self.get_type(return_ty, statement.span, env)?
-                                    } else {
-                                        Type::Nil
-                                    };
+                        Statement::Function {
+                            ref name,
+                            ref body,
+                            ref params,
+                            ref returns,
+                        } => {
+                            let return_type = if let Some(ref return_ty) = *returns {
+                                self.get_type(return_ty, statement.span, env)?
+                            } else {
+                                Type::Nil
+                            };
 
-                                    match self.this {
-                                        Some(Type::This(_, ref mut methods, _)) => {
-                                            methods.insert(name.value, return_type.clone());
-                                        }
-                                        _ => unreachable!(),
-                                    }
-
-                                    let mut param_names = Vec::with_capacity(params.value.len());
-                                    let mut param_tys = Vec::with_capacity(params.value.len());
-
-                                    for method_param in &params.value {
-                                        param_tys.push(self.get_type(
-                                            &method_param.value.ty,
-                                            method.span,
-                                            env,
-                                        )?);
-                                        param_names.push(method_param.value.name.clone());
-                                    }
-
-                                    env.begin_scope();
-
-                                    for (name, ty) in param_names.iter().zip(param_tys.clone()) {
-                                        env.add_var(name.value, Entry::VarEntry(ty));
-                                    }
-
-                                    let body = &self.transform_statement(body, env)?;
-
-                                    self.check_types(&return_type, &body.ty, statement.span)?;
-
-                                    env.end_scope();
-
-                                    class_methods.insert(
-                                        name.value,
-                                        Entry::FunEntry {
-                                            params: param_tys,
-                                            returns: return_type.clone(),
-                                        },
-                                    );
+                            match self.this {
+                                Some(Type::This(_, ref mut methods, _)) => {
+                                    methods.insert(name.value, return_type.clone());
                                 }
                                 _ => unreachable!(),
-                            };
-                        }
+                            }
 
+                            let mut param_names = Vec::with_capacity(params.value.len());
+                            let mut param_tys = Vec::with_capacity(params.value.len());
+
+                            for method_param in &params.value {
+                                param_tys.push(self.get_type(
+                                    &method_param.value.ty,
+                                    method.span,
+                                    env,
+                                )?);
+                                param_names.push(method_param.value.name.clone());
+                            }
+
+                            env.begin_scope();
+
+                            for (name, ty) in param_names.iter().zip(param_tys.clone()) {
+                                env.add_var(name.value, Entry::VarEntry(ty));
+                            }
+
+                            let body = &self.transform_statement(body, env)?;
+
+                            self.check_types(&return_type, &body.ty, statement.span)?;
+
+                            env.end_scope();
+
+                            class_methods.insert(
+                                name.value,
+                                Entry::FunEntry {
+                                    params: param_tys,
+                                    returns: return_type.clone(),
+                                },
+                            );
+                        }
                         _ => unreachable!(),
-                    }
+                    };
                 }
 
                 let ty = Type::Class {
@@ -192,44 +186,37 @@ impl TyChecker {
                 Ok(nil_type!())
             }
 
-            Statement::Function { ref name, ref body } => {
-                use syntax::ast::expr::Expression;
-                match body.value {
-                    Expression::Func {
-                        ref returns,
-                        ref params,
-                        ..
-                    } => {
-                        let return_type = if let Some(ref return_ty) = *returns {
-                            self.get_type(return_ty, statement.span, env)?
-                        } else {
-                            Type::Nil
-                        };
-
-                        let mut param_names = vec![];
-                        let mut param_ty = vec![];
-
-                        for function_param in &params.value {
-                            param_ty.push(self.get_type(
-                                &function_param.value.ty,
-                                statement.span,
-                                env,
-                            )?);
-                            param_names.push(function_param.value.name.clone());
-                        }
-
-                        env.add_var(
-                            name.value,
-                            Entry::FunEntry {
-                                params: param_ty,
-                                returns: return_type.clone(),
-                            },
-                        );
-                    }
-                    _ => unreachable!(),
+            Statement::Function {
+                ref name,
+                ref body,
+                ref params,
+                ref returns,
+            } => {
+                let return_type = if let Some(ref return_ty) = *returns {
+                    self.get_type(return_ty, statement.span, env)?
+                } else {
+                    Type::Nil
                 };
 
-                let body_ty = self.transform_expression(body, env)?;
+                let mut param_names = vec![];
+                let mut param_ty = vec![];
+
+                for function_param in &params.value {
+                    param_ty.push(self.get_type(&function_param.value.ty, statement.span, env)?);
+                    param_names.push(function_param.value.name.clone());
+                }
+
+                let body_ty = self.transform_statement(body, env)?;
+
+                self.check_types(&return_type, &body_ty.ty, body.span)?;
+
+                env.add_var(
+                    name.value,
+                    Entry::FunEntry {
+                        params: param_ty,
+                        returns: return_type.clone(),
+                    },
+                );
 
                 Ok(body_ty)
             }
@@ -310,7 +297,12 @@ impl TyChecker {
                 }
             }
 
-            Statement::Return(ref returns) => self.transform_expression(returns, env),
+            Statement::Return(ref returns) => {
+                println!("returns {:?}", returns);
+                let result = self.transform_expression(returns, env)?;
+
+                Ok(result)
+            }
 
             Statement::TypeAlias { ref alias, ref ty } => {
                 let alias_ty = self.get_type(ty, statement.span, env)?;
@@ -341,7 +333,7 @@ impl TyChecker {
 
                     env.add_var(ident.value, Entry::VarEntry(expr_ty.ty.clone()));
 
-                    Ok(expr_ty)
+                    Ok(nil_type!())
                 } else {
                     if let Some(ref id) = *ty {
                         let ty = self.get_type(id, statement.span, env)?;

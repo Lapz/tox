@@ -107,7 +107,9 @@ impl TyChecker {
                                 return Err(());
                             }
 
-                            Expression::Call { .. } => return self.transform_expression(callee, env),
+                            Expression::Call { .. } => {
+                                return self.transform_expression(callee, env)
+                            }
                             _ => unimplemented!(),
                         };
 
@@ -258,8 +260,6 @@ impl TyChecker {
                     ty: Type::Dict(Box::new(first_key_ty.ty), Box::new(first_value_ty.ty)),
                 })
             }
-
-            Expression::Func { .. } => self.infer_func(expr, env),
 
             Expression::Get {
                 ref object,
@@ -525,48 +525,5 @@ impl TyChecker {
         }
     }
 
-    pub fn infer_func(
-        &mut self,
-        expr: &Spanned<Expression>,
-        env: &mut TypeEnv,
-    ) -> InferResult<InferedType> {
-        match expr.value {
-            Expression::Func {
-                ref body,
-                ref returns,
-                ref params,
-            } => {
-                let return_type = if let Some(ref return_ty) = *returns {
-                    self.get_type(return_ty, expr.span, env)?
-                } else {
-                    Type::Nil
-                };
-
-                let mut params_ty = Vec::with_capacity(params.value.len());
-                let mut param_names = Vec::with_capacity(params.value.len());
-
-                for function_param in &params.value {
-                    params_ty.push(self.get_type(&function_param.value.ty, expr.span, env)?);
-                    param_names.push(function_param.value.name.clone());
-                }
-
-                env.begin_scope();
-
-                for (name, ty) in param_names.iter().zip(params_ty.clone()) {
-                    env.add_var(name.value, Entry::VarEntry(ty));
-                }
-
-                let body_ty = self.transform_statement(body, env)?;
-
-                self.check_types(&return_type, &body_ty.ty, expr.span)?;
-
-                env.end_scope();
-
-                Ok(InferedType {
-                    ty: Type::Func(params_ty, Box::new(return_type)),
-                })
-            }
-            _ => unreachable!(),
-        }
-    }
+   
 }
