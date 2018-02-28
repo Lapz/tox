@@ -201,8 +201,6 @@ mod test {
             .unwrap();
     }
 
-   
-
     #[test]
     fn str_index() {
         let input = "var a = \"h\"; a[0];";
@@ -345,7 +343,7 @@ mod test {
             .unwrap();
     }
 
-   /* #[test]
+    /* #[test]
     fn array_types() {
         let input =
             "var a = [10]; var b = [10.0]; var c = [nil]; var d = [\"h\"]; var e = [true]; var f = [false]; ";

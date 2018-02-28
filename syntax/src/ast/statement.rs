@@ -16,12 +16,6 @@ pub enum Statement {
 
     Expr(Spanned<Expression>),
 
-    ExternFunction {
-        name: Spanned<Symbol>,
-        params: Spanned<Vec<Spanned<FunctionParams>>>,
-        returns: Option<Spanned<Ty>>,
-    },
-
     Function {
         name: Spanned<Symbol>,
         params: Spanned<Vec<Spanned<FunctionParams>>>,

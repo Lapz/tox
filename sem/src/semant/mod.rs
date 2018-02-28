@@ -105,7 +105,7 @@ impl TyChecker {
             }),
             None => {
                 let msg = format!("Undefined variable '{}' ", env.name(symbol.value));
-                self.reporter.warn(&msg, symbol.span);
+                self.reporter.warn(msg, symbol.span);
                 Err(())
             }
         }

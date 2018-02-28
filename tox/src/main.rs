@@ -8,7 +8,7 @@ extern crate util;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
-// use sem::resolver::Resolver;
+use sem::resolver::Resolver;
 use sem::semant::TyChecker;
 // use interpreter::interpret;
 // use interpreter::interpreter::env::Environment;
@@ -164,15 +164,17 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     // Resolver::new().resolve(&ast).unwrap();
 
-    // let mut resolver = Resolver::new();
-
-    // resolver.resolve(&ast).unwrap();
-
-    // let mut env = Environment::new();
-
     let mut tyenv = TypeEnv::new(&strings);
 
-    // env.fill_env(&mut tyenv);
+    let mut resolver = Resolver::new(reporter.clone());
+
+    match resolver.resolve(&ast, &tyenv) {
+        Ok(_) => (),
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    }
 
     match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
         Ok(_) => (),

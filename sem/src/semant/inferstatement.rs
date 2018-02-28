@@ -222,44 +222,11 @@ impl TyChecker {
 
                 self.check_types(&return_type, &body_ty.ty, body.span)?;
 
-
-                
-
-                 env.end_scope();
+                env.end_scope();
 
                 Ok(InferedType {
                     ty: Type::Func(param_ty, Box::new(return_type)),
                 })
-            }
-
-            Statement::ExternFunction {
-                ref name,
-                ref params,
-                ref returns,
-            } => {
-                let return_type = if let Some(ref return_ty) = *returns {
-                    self.get_type(return_ty, statement.span, env)?
-                } else {
-                    Type::Nil
-                };
-
-                let mut param_names = vec![];
-                let mut param_ty = vec![];
-
-                for function_param in &params.value {
-                    param_ty.push(self.get_type(&function_param.value.ty, statement.span, env)?);
-                    param_names.push(function_param.value.name.clone());
-                }
-
-                env.add_var(
-                    name.value,
-                    Entry::FunEntry {
-                        params: param_ty,
-                        returns: return_type.clone(),
-                    },
-                );
-
-                Ok(InferedType { ty: return_type })
             }
 
             Statement::For {

@@ -59,7 +59,7 @@ impl Reporter {
         })
     }
 
-    pub fn warn(&self, msg: &str, span: Span) {
+    pub fn warn<T: Into<String>>(&self, msg: T, span: Span) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
             span: span,

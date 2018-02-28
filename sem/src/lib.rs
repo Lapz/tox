@@ -8,5 +8,5 @@ extern crate util;
 
 #[macro_use]
 pub mod semant;
-// pub mod resolver;
+pub mod resolver;
 mod test;
