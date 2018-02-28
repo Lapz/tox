@@ -204,19 +204,32 @@ impl TyChecker {
                     param_names.push(function_param.value.name.clone());
                 }
 
-                let body_ty = self.transform_statement(body, env)?;
-
-                self.check_types(&return_type, &body_ty.ty, body.span)?;
-
                 env.add_var(
                     name.value,
                     Entry::FunEntry {
-                        params: param_ty,
+                        params: param_ty.clone(),
                         returns: return_type.clone(),
                     },
                 );
 
-                Ok(body_ty)
+                env.begin_scope();
+
+                for (name, ty) in param_names.iter().zip(param_ty.clone()) {
+                    env.add_var(name.value, Entry::VarEntry(ty));
+                }
+
+                let body_ty = self.transform_statement(body, env)?;
+
+                self.check_types(&return_type, &body_ty.ty, body.span)?;
+
+
+                
+
+                 env.end_scope();
+
+                Ok(InferedType {
+                    ty: Type::Func(param_ty, Box::new(return_type)),
+                })
             }
 
             Statement::ExternFunction {

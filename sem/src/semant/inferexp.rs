@@ -184,7 +184,9 @@ impl TyChecker {
                             });
                         }
                         Entry::VarEntry(ref ty) => match ty {
-                            func @ &Type::Func { .. } => return Ok(InferedType { ty: func.clone() }),
+                            func @ &Type::Func { .. } => {
+                                return Ok(InferedType { ty: func.clone() })
+                            }
 
                             ref ty => {
                                 let msg = format!(

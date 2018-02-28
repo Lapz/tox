@@ -8,26 +8,36 @@ mod test {
     use util::symbol::SymbolFactory;
     use syntax::ast::statement::Statement;
     use std::rc::Rc;
+    use util::emmiter::Reporter;
 
-    fn get_ast(input: &str, strings: Rc<SymbolFactory>) -> Vec<Spanned<Statement>> {
+    fn get_ast(
+        input: &str,
+        strings: Rc<SymbolFactory>,
+        reporter: Reporter,
+    ) -> Vec<Spanned<Statement>> {
         use syntax::lexer::Lexer;
         use syntax::parser::Parser;
         use util::symbol::Table;
 
-        let tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
 
         let mut symbols = Table::new(strings);
-        Parser::new(tokens, &mut symbols).parse().unwrap()
+        Parser::new(tokens, reporter.clone(), &mut symbols)
+            .parse()
+            .unwrap()
     }
 
     #[test]
     #[should_panic]
     fn float_int() {
         let input = "123.0+456;";
+
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -37,8 +47,9 @@ mod test {
         let input = "10+\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -48,8 +59,9 @@ mod test {
         let input = "10.0+\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -60,8 +72,9 @@ mod test {
         var lenard = Person{name:\"Lenard\"};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -72,8 +85,9 @@ mod test {
         var lenard = Person{name:\"Lenard\"};lenard.name = 10";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -84,9 +98,10 @@ mod test {
         var lenard = Person{name:\"Lenard\"};lenard.name = \"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -97,19 +112,9 @@ mod test {
         var lenard = Person{name:\"Lenard\",name:\"Lenard\",name:\"Lenard\",name:\"Lenard\"};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
-    }
-
-    #[test]
-    fn typed_lambda() {
-        let input = " var add:fun(int,int) -> int = fun (a:int,b:int) -> int {return a+b;};
-        print add(10,1);";
-        let strings = Rc::new(SymbolFactory::new());
-        let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -130,9 +135,10 @@ mod test {
     print point(\"y\"); ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
     #[test]
@@ -141,8 +147,9 @@ mod test {
         let input = "fun add(a:int,b:int) {return a+b;}";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -152,9 +159,10 @@ mod test {
         let input = "!true;!false!";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap()
     }
 
@@ -164,8 +172,9 @@ mod test {
         let input = "class Person{name:str;} var john = Person {john:\"a\"};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap()
     }
 
@@ -175,8 +184,9 @@ mod test {
         let input = "!\"h\";";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -185,28 +195,22 @@ mod test {
         let input = "fun fib(n:int) -> int {if (n < 2) return n;return fib(n - 2) + fib(n - 1);}";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
-    #[test]
-    fn array_index() {
-        let input = "var a = [10]; a[0];";
-        let strings = Rc::new(SymbolFactory::new());
-        let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
-            .unwrap();
-    }
+   
 
     #[test]
     fn str_index() {
         let input = "var a = \"h\"; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -216,8 +220,9 @@ mod test {
         let input = "var a = 10; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -227,8 +232,9 @@ mod test {
         let input = "var a = 10.0; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -238,8 +244,9 @@ mod test {
         let input = "var a = true; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -249,8 +256,9 @@ mod test {
         let input = "var a = false; a[0];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -260,8 +268,9 @@ mod test {
         let input = "var add = fun(a:int,b:int) -> int {a+b;};";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -271,8 +280,9 @@ mod test {
         let input = "var a:[[int]] = [10];";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -286,9 +296,10 @@ mod test {
         add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -302,9 +313,10 @@ mod test {
         add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -313,9 +325,10 @@ mod test {
         let input = "fun add(a:int,b:int) -> int {return a+b;} add(10,10);";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
@@ -325,22 +338,35 @@ mod test {
             "var a = 10; var b = 10.0; var c = nil; var d = \"h\"; var e = true; var f = false; ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
 
-    #[test]
+   /* #[test]
     fn array_types() {
         let input =
             "var a = [10]; var b = [10.0]; var c = [nil]; var d = [\"h\"]; var e = [true]; var f = [false]; ";
         let strings = Rc::new(SymbolFactory::new());
         let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
 
-        TyChecker::new()
-            .analyse(&get_ast(input, strings), &mut env)
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
             .unwrap();
     }
+
+     #[test]
+    fn array_index() {
+        let input = "var a = [10]; a[0];";
+        let strings = Rc::new(SymbolFactory::new());
+        let mut env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        TyChecker::new(reporter.clone())
+            .analyse(&get_ast(input, strings, reporter), &mut env)
+            .unwrap();
+    } */
 
 }

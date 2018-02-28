@@ -11,6 +11,7 @@ use std::fs::File;
 use std::io::Read;
 use ansi_term::Colour::{Green, Red};
 
+
 fn main() {
     let mut pass = 0i32;
     let mut fail = 0i32;

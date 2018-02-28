@@ -841,8 +841,8 @@ impl<'a> Parser<'a> {
 
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
-        let ty = if self.recognise(TokenType::SEMICOLON) {
-            let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';'")?;
+        let ty = if self.recognise(TokenType::COLON) {
+            let close_span = self.consume_get_span(&TokenType::COLON, "Expected ':'")?;
             return Ok(Spanned {
                 span: open_span.to(close_span),
                 value: Statement::Var {

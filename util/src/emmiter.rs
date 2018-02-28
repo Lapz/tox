@@ -39,6 +39,10 @@ impl Reporter {
         Default::default()
     }
 
+    pub fn has_error(&self) -> bool {
+        self.diagnostics.borrow().is_empty()
+    }
+
     pub fn global_error(&self, msg: &str) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
