@@ -25,7 +25,7 @@ fn main() {
                 } else {
                     let mut tox = Command::new("cargo");
 
-                    let mut expected = Vec::with_capacity(5);
+                    let mut expected = Vec::with_capacity(10);
 
                     let mut source = String::new();
 

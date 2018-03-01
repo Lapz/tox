@@ -2,44 +2,44 @@ use std::ops::Not;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
-use std::fmt::{Display, Formatter};
-use std::fmt;
+use std::fmt::{self, Display, Formatter};
+use std::str;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use syntax::ast::statement::Statement;
-use syntax::ast::expr::VariableUseHandle;
-use super::interpreter::RuntimeError;
+// use syntax::ast::expr::VariableUseHandle;
+// use super::interpreter::RuntimeError;
 use interpreter::env::Environment;
 use std::rc::Rc;
 use std::cell::RefCell;
 use builtins::BuiltInFunction;
 
 #[derive(Clone)]
-pub enum Object {
+pub enum Object<'a> {
     Float(f64),
-    BuiltIn(Symbol, BuiltInFunction),
-    Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
+    BuiltIn(Symbol, BuiltInFunction<'a>),
+    Class(Symbol, Option<&'a Object<'a>>, HashMap<Symbol, Object<'a>>),
     Int(i64),
-    Str(String),
+    Str(&'a [u8]),
     Bool(bool),
 
-    Return(Box<Object>),
-    Array(Vec<Object>),
-    Dict(HashMap<Object, Object>),
-    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
+    Return(&'a Object<'a>),
+    Array(&'a [Object<'a>]),
+    Dict(HashMap<Object<'a>, Object<'a>>),
+    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment<'a>),
     Instance {
-        methods: HashMap<Symbol, Object>,
-        fields: Rc<RefCell<HashMap<Symbol, Object>>>,
-        sclassmethods: Option<HashMap<Symbol, Object>>,
+        methods: HashMap<Symbol, Object<'a>>,
+        fields: Rc<RefCell<HashMap<Symbol, Object<'a>>>>,
+        sclassmethods: Option<HashMap<Symbol, Object<'a>>>,
     },
     Nil,
     None,
 }
 
-unsafe impl Sync for Object {}
-unsafe impl Send for Object {}
+// unsafe impl Sync for Object {}
+// unsafe impl Send for Object {}
 
-impl Object {
+impl<'a> Object<'a> {
     pub fn is_truthy(&self) -> bool {
         match *self {
             Object::Nil => false,
@@ -47,8 +47,10 @@ impl Object {
             _ => true,
         }
     }
+}
 
-    pub fn set(&mut self, name: Symbol, value: &Object) {
+/*
+    pub fn set(&mut self, name: Symbol, value: &Object<'a>) {
         match *self {
             Object::Instance { ref mut fields, .. } => {
                 fields.borrow_mut().insert(name, value.clone());
@@ -57,7 +59,7 @@ impl Object {
         }
     }
 
-    pub fn bind(&self, instance: &Object) -> Object {
+    pub fn bind(&self, instance: &Object<'a>) -> Object {
         match *self {
             Object::Function(ref name, ref param, ref body, ref fn_env) => {
                 let environment = Environment::new_with_outer(fn_env);
@@ -187,10 +189,11 @@ impl Object {
         }
     }
 }
+*/
 
-impl Eq for Object {}
+impl<'a> Eq for Object<'a> {}
 
-impl Hash for Object {
+impl<'a> Hash for Object<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match *self {
             Object::Int(i) => i.hash(state),
@@ -206,10 +209,10 @@ impl Hash for Object {
     }
 }
 
-impl Not for Object {
-    type Output = Object;
+impl<'a> Not for Object<'a> {
+    type Output = Object<'a>;
 
-    fn not(self) -> Object {
+    fn not(self) -> Object<'a> {
         match self {
             Object::Bool(b) => Object::Bool(!b),
             _ => Object::Bool(false),
@@ -217,8 +220,8 @@ impl Not for Object {
     }
 }
 
-impl PartialEq for Object {
-    fn eq(&self, other: &Object) -> bool {
+impl<'a> PartialEq for Object<'a> {
+    fn eq(&self, other: &Object<'a>) -> bool {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
@@ -237,7 +240,7 @@ impl PartialEq for Object {
     }
 }
 
-impl fmt::Debug for Object {
+impl<'a> fmt::Debug for Object<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
@@ -293,13 +296,13 @@ impl fmt::Debug for Object {
 
             Object::Nil => write!(f, "nil"),
 
-            Object::Str(ref s) => write!(f, "{}", s),
+            Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
 }
 
-impl PartialOrd for Object {
-    fn partial_cmp(&self, other: &Object) -> Option<Ordering> {
+impl<'a> PartialOrd for Object<'a> {
+    fn partial_cmp(&self, other: &Object<'a>) -> Option<Ordering> {
         match (self, other) {
             (&Object::Float(ref s), &Object::Float(ref o)) => (s.partial_cmp(o)),
             (&Object::Int(ref s), &Object::Int(ref o)) => (s.partial_cmp(o)),
@@ -314,7 +317,7 @@ impl PartialOrd for Object {
     }
 }
 
-impl Display for Object {
+impl<'a> Display for Object<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Object::Instance { .. } => write!(f, "instance"),
@@ -340,7 +343,7 @@ impl Display for Object {
             }
             Object::Nil => write!(f, "nil"),
 
-            Object::Str(ref s) => write!(f, "{}", s.clone()),
+            Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
 
             Object::Dict(ref hashmap) => {
                 let mut fmt_string = String::new();

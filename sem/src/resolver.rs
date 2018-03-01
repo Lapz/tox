@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, VariableUseHandle};
-use std::fmt::{Display, Formatter};
-use std::fmt;
 use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;
 use util::symbol::Symbol;
@@ -25,27 +23,6 @@ pub struct Resolver {
 }
 
 pub type ResolveError<T> = Result<T, ()>;
-
-#[derive(Debug)]
-pub enum ResolverError {
-    ReadInInit(String),
-    AllReadyDecleared(String),
-    Return(String),
-    This(String),
-    Init(String),
-}
-
-impl Display for ResolverError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match *self {
-            ResolverError::ReadInInit(ref s)
-            | ResolverError::Init(ref s)
-            | ResolverError::Return(ref s)
-            | ResolverError::This(ref s)
-            | ResolverError::AllReadyDecleared(ref s) => write!(f, "{}", s),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FunctionType {
@@ -558,15 +535,17 @@ mod test {
     }
 
     #[test]
-    
+
     fn shadowing() {
         let input = "var a = 0; { var a = a;}";
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        assert!(Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter), &env)
-            .is_ok())
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
@@ -575,9 +554,11 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        assert!(Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter), &env)
-            .is_ok())
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
@@ -612,8 +593,11 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        assert!(Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter), &env).is_err())
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_err()
+        )
     }
 
 }
