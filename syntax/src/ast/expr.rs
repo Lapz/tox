@@ -27,9 +27,6 @@ pub enum Expression {
         symbol: Spanned<Symbol>,
         props: Box<Vec<Spanned<InstanceField>>>,
     },
-    Dict {
-        items: Vec<(Spanned<Expression>, Spanned<Expression>)>,
-    },
 
     Get {
         object: Box<Spanned<Expression>>,

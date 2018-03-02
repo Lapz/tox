@@ -7,30 +7,29 @@ use std::str;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use syntax::ast::statement::Statement;
-// use syntax::ast::expr::VariableUseHandle;
-// use super::interpreter::RuntimeError;
+use syntax::ast::expr::VariableUseHandle;
+use super::interpreter::RuntimeError;
 use interpreter::env::Environment;
 use std::rc::Rc;
 use std::cell::RefCell;
 use builtins::BuiltInFunction;
 
 #[derive(Clone)]
-pub enum Object<'a> {
+pub enum Object {
     Float(f64),
-    BuiltIn(Symbol, BuiltInFunction<'a>),
-    Class(Symbol, Option<&'a Object<'a>>, HashMap<Symbol, Object<'a>>),
+    BuiltIn(Symbol, BuiltInFunction),
+    Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
     Int(i64),
-    Str(&'a [u8]),
+    Str(Vec<u8>),
     Bool(bool),
-
-    Return(&'a Object<'a>),
-    Array(&'a [Object<'a>]),
-    Dict(HashMap<Object<'a>, Object<'a>>),
-    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment<'a>),
+    Return(Box<Object>),
+    Array(Vec<Object>),
+    Dict(HashMap<Object, Object>),
+    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
-        methods: HashMap<Symbol, Object<'a>>,
-        fields: Rc<RefCell<HashMap<Symbol, Object<'a>>>>,
-        sclassmethods: Option<HashMap<Symbol, Object<'a>>>,
+        methods: HashMap<Symbol, Object>,
+        fields: Rc<RefCell<HashMap<Symbol, Object>>>,
+        sclassmethods: Option<HashMap<Symbol, Object>>,
     },
     Nil,
     None,
@@ -39,7 +38,7 @@ pub enum Object<'a> {
 // unsafe impl Sync for Object {}
 // unsafe impl Send for Object {}
 
-impl<'a> Object<'a> {
+impl Object {
     pub fn is_truthy(&self) -> bool {
         match *self {
             Object::Nil => false,
@@ -47,10 +46,8 @@ impl<'a> Object<'a> {
             _ => true,
         }
     }
-}
 
-/*
-    pub fn set(&mut self, name: Symbol, value: &Object<'a>) {
+    pub fn set(&mut self, name: Symbol, value: &Object) {
         match *self {
             Object::Instance { ref mut fields, .. } => {
                 fields.borrow_mut().insert(name, value.clone());
@@ -59,10 +56,10 @@ impl<'a> Object<'a> {
         }
     }
 
-    pub fn bind(&self, instance: &Object<'a>) -> Object {
+    pub fn bind(&self, instance: &Object) -> Object {
         match *self {
             Object::Function(ref name, ref param, ref body, ref fn_env) => {
-                let environment = Environment::new_with_outer(fn_env);
+                let mut environment = Environment::new_with_outer(fn_env);
 
                 environment.define(Symbol(0), instance.clone());
 
@@ -133,8 +130,8 @@ impl<'a> Object<'a> {
                 match evaluate_statement(body, locals, &mut local_environment) {
                     Ok(_) => (),
                     Err(e) => match e {
-                        RuntimeError::Return(ref r) => {
-                            return Ok(*r.clone());
+                        RuntimeError::Return(r) => {
+                            return Ok(r);
                         }
 
                         _ => return Err(e),
@@ -172,7 +169,7 @@ impl<'a> Object<'a> {
             Object::Int(b) => b.to_string(),
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
-            Object::Str(ref s) => s.clone(),
+            Object::Str(ref s) => str::from_utf8(s).unwrap().into(),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -189,11 +186,19 @@ impl<'a> Object<'a> {
         }
     }
 }
+
+/*
+    
+
+  
+
+    
+}
 */
 
-impl<'a> Eq for Object<'a> {}
+impl Eq for Object {}
 
-impl<'a> Hash for Object<'a> {
+impl Hash for Object {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match *self {
             Object::Int(i) => i.hash(state),
@@ -209,10 +214,10 @@ impl<'a> Hash for Object<'a> {
     }
 }
 
-impl<'a> Not for Object<'a> {
-    type Output = Object<'a>;
+impl Not for Object {
+    type Output = Object;
 
-    fn not(self) -> Object<'a> {
+    fn not(self) -> Object {
         match self {
             Object::Bool(b) => Object::Bool(!b),
             _ => Object::Bool(false),
@@ -220,8 +225,8 @@ impl<'a> Not for Object<'a> {
     }
 }
 
-impl<'a> PartialEq for Object<'a> {
-    fn eq(&self, other: &Object<'a>) -> bool {
+impl PartialEq for Object {
+    fn eq(&self, other: &Object) -> bool {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
@@ -240,7 +245,7 @@ impl<'a> PartialEq for Object<'a> {
     }
 }
 
-impl<'a> fmt::Debug for Object<'a> {
+impl fmt::Debug for Object {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
@@ -301,8 +306,8 @@ impl<'a> fmt::Debug for Object<'a> {
     }
 }
 
-impl<'a> PartialOrd for Object<'a> {
-    fn partial_cmp(&self, other: &Object<'a>) -> Option<Ordering> {
+impl PartialOrd for Object {
+    fn partial_cmp(&self, other: &Object) -> Option<Ordering> {
         match (self, other) {
             (&Object::Float(ref s), &Object::Float(ref o)) => (s.partial_cmp(o)),
             (&Object::Int(ref s), &Object::Int(ref o)) => (s.partial_cmp(o)),
@@ -317,7 +322,7 @@ impl<'a> PartialOrd for Object<'a> {
     }
 }
 
-impl<'a> Display for Object<'a> {
+impl Display for Object {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Object::Instance { .. } => write!(f, "instance"),

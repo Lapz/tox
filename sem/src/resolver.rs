@@ -53,18 +53,15 @@ impl Resolver {
         let mut had_errors = false;
 
         for statement in statements {
-            match self.resolve_statement(statement, env) {
-                Ok(_) => (),
-                Err(_) => {
-                    had_errors = true;
-                }
+            if let Err(_) = self.resolve_statement(statement, env) {
+                had_errors = true;
             }
         }
 
         if had_errors {
-            Ok(())
-        } else {
             Err(())
+        } else {
+            Ok(())
         }
     }
 
@@ -388,15 +385,6 @@ impl Resolver {
                 Ok(())
             }
 
-            Expression::Dict { ref items } => {
-                for &(ref key, ref value) in items {
-                    self.resolve_expression(key, env)?;
-                    self.resolve_expression(value, env)?;
-                }
-
-                Ok(())
-            }
-
             Expression::Get { ref object, .. } => {
                 self.resolve_expression(object, env)?;
                 Ok(())
@@ -504,7 +492,7 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
+                .is_ok()
         )
     }
 
@@ -517,7 +505,7 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
+                .is_ok()
         )
     }
 
@@ -530,13 +518,12 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
+                .is_ok()
         )
     }
 
     #[test]
-
-    fn shadowing() {
+    fn shadowing_erro() {
         let input = "var a = 0; { var a = a;}";
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
@@ -544,7 +531,7 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
+                .is_err()
         )
     }
 
@@ -557,7 +544,7 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
+                .is_err()
         )
     }
 
@@ -570,20 +557,20 @@ mod test {
         assert!(
             Resolver::new(reporter.clone())
                 .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
+                .is_ok()
         )
     }
 
     #[test]
-    #[should_panic]
     fn return_top_level() {
         let input = "return 10;";
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
         Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter), &env)
-            .unwrap()
+            .resolve(&get_ast(input, strings, reporter.clone()), &env)
+            .is_err();
+        assert!(reporter.has_error())
     }
 
     #[test]
@@ -593,11 +580,11 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
-        )
+        
+        Resolver::new(reporter.clone())
+            .resolve(&get_ast(input, strings, reporter.clone()), &env).is_err();
+                
+        assert!(reporter.has_error())
     }
 
 }

@@ -245,28 +245,6 @@ impl TyChecker {
                 Ok(class)
             }
 
-            Expression::Dict { ref items } => {
-                if items.is_empty() {
-                    return Ok(InferedType {
-                        ty: Type::Dict(Box::new(Type::Nil), Box::new(Type::Nil)),
-                    });
-                }
-
-                let first_key_ty = self.transform_expression(&items[0].0, env)?;
-                let first_value_ty = self.transform_expression(&items[0].0, env)?;
-
-                for item in items {
-                    let key_ty = &self.transform_expression(&item.0, env)?.ty;
-                    let value_ty = &self.transform_expression(&item.1, env)?.ty;
-                    self.check_types(&first_key_ty.ty, key_ty, expr.span)?;
-                    self.check_types(&first_value_ty.ty, value_ty, expr.span)?;
-                }
-
-                Ok(InferedType {
-                    ty: Type::Dict(Box::new(first_key_ty.ty), Box::new(first_value_ty.ty)),
-                })
-            }
-
             Expression::Get {
                 ref object,
                 ref property,

@@ -290,8 +290,8 @@ impl TyChecker {
                 self.check_str(ty, span)?;
                 Ok(InferedType { ty: Type::Str })
             } else {
-                let msg = "Expected onE of 'Int', 'Float', or 'Str'";
-                self.error(msg, span);
+                let msg = "Expected one of 'Int', 'Float', or 'Str'";
+               self.error(msg, span);
                 Err(())
             }
         } else if self.check_int(ty, span).is_ok() && self.check_int(ty, span).is_ok() {

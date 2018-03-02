@@ -1,4 +1,4 @@
-// extern crate interpreter;
+extern crate interpreter;
 extern crate sem;
 extern crate structopt;
 #[macro_use]
@@ -10,8 +10,8 @@ use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use sem::resolver::Resolver;
 use sem::semant::TyChecker;
-// use interpreter::interpret;
-// use interpreter::interpreter::env::Environment;
+use interpreter::interpret;
+use interpreter::interpreter::env::Environment;
 use std::io;
 use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Table};
@@ -78,13 +78,10 @@ pub fn repl(ptokens: bool, pprint: bool) {
             }
         };
 
-        // let mut resolver = Resolver::new();
-
-        // resolver.resolve(&ast).unwrap();
-
-        // let mut env = Environment::new();
-
         let mut tyenv = TypeEnv::new(&strings);
+        let mut resolver = Resolver::new(reporter.clone());
+
+        resolver.resolve(&ast, &tyenv).unwrap();
 
         // env.fill_env(&mut tyenv);
 
@@ -96,13 +93,15 @@ pub fn repl(ptokens: bool, pprint: bool) {
             }
         };
 
-        // match interpret(&ast, &resolver.locals, &mut env) {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         println!("{:?}", err);
-        //         continue;
-        //     }
-        // };
+        let mut env = Environment::new();
+
+        match interpret(&ast, &resolver.locals, &mut env) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("{:?}", err);
+                continue;
+            }
+        };
     }
 }
 
@@ -189,19 +188,19 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         // println!("{:#?}", env);
     }
 
-    // match interpret(&ast, &resolver.locals, &mut env) {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         println!("{:?}", err);
+    let mut env = Environment::new();
 
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    match interpret(&ast, &resolver.locals, &mut env) {
+        Ok(_) => (),
+        Err(err) => {
+            println!("{:?}", err);
+            ::std::process::exit(65)
+        }
+    };
 
-    // if penv {
-    //     println!("{:#?}", tyenv);
-    //     println!("{:#?}", env);
-    // }
+    if penv {
+        println!("{:#?}", tyenv);
+    }
 }
 
 #[derive(StructOpt, Debug)]
