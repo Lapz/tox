@@ -1,1 +1,5 @@
-this.name;
+class Person {
+    name:str;
+}
+
+var a = Person {name:"Lenard"};

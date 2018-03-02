@@ -145,9 +145,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
             if pprint {
-                // for statement in &statements {
-                //     println!("{}", statement.node.pprint(&mut symbols));
-                // }
+                for statement in &statements {
+                    println!("{}", statement.value.pprint(&mut symbols));
+                }
             }
             statements
         }
