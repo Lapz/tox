@@ -580,10 +580,11 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        
+
         Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter.clone()), &env).is_err();
-                
+            .resolve(&get_ast(input, strings, reporter.clone()), &env)
+            .is_err();
+
         assert!(reporter.has_error())
     }
 

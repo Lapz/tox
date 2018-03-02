@@ -25,7 +25,6 @@ impl Ty {
     }
 }
 
-
 impl UnaryOp {
     fn pprint(&self) -> &'static str {
         match *self {
@@ -51,20 +50,20 @@ impl Literal {
 impl Op {
     fn pprint(&self) -> &'static str {
         match *self {
-           Op::BangEqual => "!=",
-           Op::EqualEqual => "==",
-           Op::LessThan => "<",
-           Op::LessThanEqual => "<=",
-           Op::GreaterThan => ">",
-           Op::GreaterThanEqual => ">=",
-           Op::Plus => "+",
-           Op::Minus => "-",
-           Op::Star => "*",
-           Op::Slash => "/",
-           Op::Modulo => "%",
-           Op::Exponential => "^",
-           Op::And => "and",
-           Op::Or => "or",
+            Op::BangEqual => "!=",
+            Op::EqualEqual => "==",
+            Op::LessThan => "<",
+            Op::LessThanEqual => "<=",
+            Op::GreaterThan => ">",
+            Op::GreaterThanEqual => ">=",
+            Op::Plus => "+",
+            Op::Minus => "-",
+            Op::Star => "*",
+            Op::Slash => "/",
+            Op::Modulo => "%",
+            Op::Exponential => "^",
+            Op::And => "and",
+            Op::Or => "or",
         }
     }
 }
@@ -84,7 +83,6 @@ impl Statement {
                 expr.value.pprint_into(pprint_string, symbols);
             }
 
-            
             Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
                 pprint_string.push_str(&symbols.name(alias.value));
@@ -93,7 +91,11 @@ impl Statement {
 
                 pprint_string.push_str(" )");
             }
-            Statement::Var{ref ident,ref ty,ref expr} => {
+            Statement::Var {
+                ref ident,
+                ref ty,
+                ref expr,
+            } => {
                 pprint_string.push_str("(var ");
                 pprint_string.push_str(&symbols.name(ident.value));
 
@@ -124,32 +126,38 @@ impl Statement {
                 ref superclass,
                 ref body,
             } => {
-                // pprint_string.push_str("(class ");
-                // pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str("(class ");
+                pprint_string.push_str(&symbols.name(name.value));
 
-                // if let Some(ref sclass) = *superclass {
-                //     pprint_string.push_str("< ");
-                //     pprint_string.push_str(&symbols.name(*sclass));
-                // }
+                if let Some(ref sclass) = *superclass {
+                    pprint_string.push_str("< ");
+                    pprint_string.push_str(&symbols.name(sclass.value));
+                }
 
-                // for method in methods {
-                //     method.value.pprint_into(pprint_string, symbols);
-                // }
+                if body.value.0.len() > 0 {
+                    pprint_string.push_str(" (methods => ");
 
-                // pprint_string.push_str("(properties:");
+                    for method in &body.value.0 {
+                        method.value.pprint_into(pprint_string, symbols);
+                    }
 
-                // for property in properties {
-                //     pprint_string.push_str(" ");
-                //     pprint_string.push_str(&symbols.name(property.0));
-                //     pprint_string.push_str(": ");
-                //     pprint_string.push_str(&property.1.pprint(symbols));
-                //     pprint_string.push_str(",");
-                // }
+                    pprint_string.push_str(") ");
+                }
 
-                // pprint_string.push_str(")");
+                if body.value.1.len() > 0 {
+                    pprint_string.push_str(" (props => ");
 
-                // pprint_string.push_str(" )");
-                
+                    for property in &body.value.1 {
+                        pprint_string.push_str("( ");
+                        pprint_string.push_str(&symbols.name(property.value.name.value));
+                        pprint_string.push_str(":");
+                        pprint_string.push_str(&property.value.ty.value.pprint(symbols));
+                        pprint_string.push_str(")");
+                    }
+                    pprint_string.push_str(") ");
+                }
+
+                pprint_string.push_str(")");
             }
 
             Statement::If {
@@ -186,7 +194,7 @@ impl Statement {
                     cond.value.pprint_into(pprint_string, symbols);
                 }
 
-                if let Some(ref init) = *init{
+                if let Some(ref init) = *init {
                     init.value.pprint_into(pprint_string, symbols);
                 }
 
@@ -195,11 +203,16 @@ impl Statement {
                 pprint_string.push_str(" )");
             }
 
-            Statement::Function { ref name, ref body,ref params,ref returns } => {
+            Statement::Function {
+                ref name,
+                ref body,
+                ref params,
+                ref returns,
+            } => {
                 pprint_string.push_str("(fun ");
                 pprint_string.push_str(&symbols.name(name.value));
 
-                 pprint_string.push_str(" params (");
+                pprint_string.push_str(" params (");
 
                 for param in &params.value {
                     pprint_string.push_str(&symbols.name(param.value.name.value));
@@ -207,7 +220,7 @@ impl Statement {
                     pprint_string.push_str(&param.value.ty.value.pprint(symbols));
                     pprint_string.push_str(" ");
                 }
-                
+
                 pprint_string.push_str(")");
 
                 pprint_string.push_str("body (");
@@ -219,17 +232,13 @@ impl Statement {
                 pprint_string.push_str("-> ");
 
                 if let Some(ref ty) = *returns {
-
                     ty.value.pprint(symbols);
                 }
 
                 pprint_string.push_str(" )");
             }
 
-            Statement::While{
-                ref body,
-                ref cond,
-            } => {
+            Statement::While { ref body, ref cond } => {
                 pprint_string.push_str("(while ");
 
                 cond.value.pprint_into(pprint_string, symbols);
@@ -250,7 +259,6 @@ impl Statement {
                 pprint_string.push_str("(return ");
 
                 returns.value.pprint_into(pprint_string, symbols);
-                
 
                 pprint_string.push_str(" )");
             }
@@ -324,12 +332,8 @@ impl Expression {
                 }
 
                 pprint_string.push_str(") ) )");
-            
             }
 
-          
-
-           
             Expression::Get {
                 ref object,
                 ref property,
@@ -359,8 +363,6 @@ impl Expression {
                 pprint_string.push_str(" ");
             }
 
-         
-
             Expression::Set {
                 ref object,
                 ref name,
@@ -388,10 +390,7 @@ impl Expression {
                 pprint_string.push_str(" )");
             }
 
-            Expression::Unary {
-                ref expr,
-                ref op,
-            } => {
+            Expression::Unary { ref expr, ref op } => {
                 pprint_string.push_str(op.value.pprint());
                 expr.value.pprint_into(pprint_string, symbols);
             }

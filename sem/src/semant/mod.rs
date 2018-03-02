@@ -291,7 +291,7 @@ impl TyChecker {
                 Ok(InferedType { ty: Type::Str })
             } else {
                 let msg = "Expected one of 'Int', 'Float', or 'Str'";
-               self.error(msg, span);
+                self.error(msg, span);
                 Err(())
             }
         } else if self.check_int(ty, span).is_ok() && self.check_int(ty, span).is_ok() {

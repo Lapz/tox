@@ -590,7 +590,8 @@ pub mod env {
 
     use object::Object;
     use super::RuntimeError;
-    // use builtins::BuiltIn;
+    use builtins::BuiltIn;
+    use util::env::TypeEnv;
 
     use std::rc::Rc;
 
@@ -631,13 +632,13 @@ pub mod env {
             Symbol(next)
         }
 
-        // pub fn fill_env(&mut self, env: &mut TypeEnv) {
-        //     let built_in = BuiltIn::new().get_built_ins(env);
+        pub fn fill_env(&mut self, env: &mut TypeEnv) {
+            let built_in = BuiltIn::new().get_built_ins(env);
 
-        //     for (variable, run_time_value) in built_in {
-        //         self.define(variable, run_time_value);
-        //     }
-        // }
+            for (variable, run_time_value) in built_in {
+                self.define(variable, run_time_value);
+            }
+        }
 
         /// Defines a Symbol by inserting the name and
         /// value into thelocals,environmentImpl
