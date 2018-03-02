@@ -83,8 +83,6 @@ pub fn repl(ptokens: bool, pprint: bool) {
 
         resolver.resolve(&ast, &tyenv).unwrap();
 
-        // env.fill_env(&mut tyenv);
-
         match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
             Ok(_) => (),
             Err(_) => {
@@ -94,7 +92,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         };
 
         let mut env = Environment::new();
-
+        env.fill_env(&mut tyenv);
         match interpret(&ast, &resolver.locals, &mut env) {
             Ok(_) => (),
             Err(err) => {
@@ -153,6 +151,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
         Err(_) => {
             reporter.emit(input);
+            // vec![];
             ::std::process::exit(65)
         }
     };
@@ -160,8 +159,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     if past {
         println!("{:#?}", ast);
     }
-
-    // Resolver::new().resolve(&ast).unwrap();
 
     let mut tyenv = TypeEnv::new(&strings);
 
@@ -189,11 +186,11 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     }
 
     let mut env = Environment::new();
-
+    env.fill_env(&mut tyenv);
     match interpret(&ast, &resolver.locals, &mut env) {
         Ok(_) => (),
-        Err(err) => {
-            println!("{:?}", err);
+        Err(_) => {
+            // println!("{:?}", err);
             ::std::process::exit(65)
         }
     };

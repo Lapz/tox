@@ -187,15 +187,6 @@ impl Object {
     }
 }
 
-/*
-    
-
-  
-
-    
-}
-*/
-
 impl Eq for Object {}
 
 impl Hash for Object {
@@ -252,7 +243,7 @@ impl fmt::Debug for Object {
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::Return(ref r) => write!(f, "return {}", r),
-            Object::None => write!(f, "none"),
+            Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
                 write!(f, "instance")?;
 
@@ -329,7 +320,7 @@ impl Display for Object {
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
-            Object::None => write!(f, "none"),
+            Object::None => write!(f, "None"),
             Object::Return(ref r) => write!(f, "return {}", r),
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),

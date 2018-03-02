@@ -507,7 +507,7 @@ impl<'a> Parser<'a> {
 
         Ok(Spanned {
             span: open_span.to(self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?),
-            value: Statement::Expr(expr),
+            value: Statement::Print(expr),
         })
     }
 

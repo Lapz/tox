@@ -190,11 +190,11 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) => Err(RuntimeError::Return(evaluate_expression(
-            expr,
-            locals,
-            env,
-        )?)),
+        Statement::Return(ref expr) => {
+            let value = evaluate_expression(expr, locals, env)?;
+
+            Err(RuntimeError::Return(value))
+        }
 
         Statement::If {
             ref cond,
@@ -714,7 +714,7 @@ pub mod env {
 
     /// The actual struct that contains the values.
     /// It is wrapped within a Rc<RefCell<_>>
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub(crate) struct EnvironmentImpl {
         outer: Option<Environment>,
         values: HashMap<Symbol, Object>,
