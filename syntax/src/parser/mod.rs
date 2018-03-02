@@ -514,7 +514,20 @@ impl<'a> Parser<'a> {
     fn return_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         let open_span = self.consume_get_span(&TokenType::RETURN, "Expected 'return' ")?;
 
-        let expr = self.expression()?;
+        let expr = if self.recognise(TokenType::SEMICOLON) {
+            let span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
+
+            return Ok(Spanned{
+                span:open_span.to(span),
+                value:Statement::Expr(Spanned {
+                    span:span,
+                    value:Expression::Literal(Literal::Nil)
+                })
+            })
+           
+        } else {
+            self.expression()?
+        };
 
         let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
 

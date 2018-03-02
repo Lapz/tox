@@ -19,7 +19,7 @@ pub enum RuntimeError {
     UndefinedProperty,
     CantParseAsInt,
     UndefinedSymbol(Symbol),
-    Return(Object),
+    Return(Box<Object>),
 }
 
 pub(crate) fn evaluate_statement(
@@ -98,6 +98,7 @@ pub(crate) fn evaluate_statement(
             env.define(name.value, Object::Class(name.value, sklass, class_methods));
             Ok(Object::None)
         }
+        
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, locals, env)?.is_truthy() {
                 match evaluate_statement(body, locals, env) {
@@ -190,11 +191,11 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) => {
-            let value = evaluate_expression(expr, locals, env)?;
-
-            Err(RuntimeError::Return(value))
-        }
+        Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
+            expr,
+            locals,
+            env,
+        )?))),
 
         Statement::If {
             ref cond,

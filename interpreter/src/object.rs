@@ -35,8 +35,8 @@ pub enum Object {
     None,
 }
 
-// unsafe impl Sync for Object {}
-// unsafe impl Send for Object {}
+unsafe impl Sync for Object {}
+unsafe impl Send for Object {}
 
 impl Object {
     pub fn is_truthy(&self) -> bool {
@@ -130,8 +130,8 @@ impl Object {
                 match evaluate_statement(body, locals, &mut local_environment) {
                     Ok(_) => (),
                     Err(e) => match e {
-                        RuntimeError::Return(r) => {
-                            return Ok(r);
+                        RuntimeError::Return(ref r) => {
+                            return Ok(*r.clone());
                         }
 
                         _ => return Err(e),
