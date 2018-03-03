@@ -180,6 +180,8 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
+    println!("{:#?}",resolver );
+
     if penv {
         println!("{:#?}", tyenv);
         // println!("{:#?}", env);

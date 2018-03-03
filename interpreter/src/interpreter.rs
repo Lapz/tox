@@ -349,8 +349,8 @@ fn evaluate_expression(
 
             let mut obj_arguments = Vec::with_capacity(args.len());
 
-            for expr in args {
-                obj_arguments.push(evaluate_expression(expr, locals, env)?);
+            for arg in args {
+                obj_arguments.push(evaluate_expression(arg, locals, env)?);
             }
 
             callee.call(&obj_arguments, locals)

@@ -22,7 +22,6 @@ pub enum Object {
     Int(i64),
     Str(Vec<u8>),
     Bool(bool),
-    Return(Box<Object>),
     Array(Vec<Object>),
     Dict(HashMap<Object, Object>),
     Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
@@ -152,7 +151,7 @@ impl Object {
             Object::Class(ref name, _, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
-            Object::Return(ref val) => val.as_string(),
+
             Object::Dict(ref hashmap) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("{");
@@ -229,7 +228,7 @@ impl PartialEq for Object {
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
-            (&Object::Return(ref x), &Object::Return(ref y)) => x == y,
+
             (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
             _ => false,
         }
@@ -242,7 +241,7 @@ impl fmt::Debug for Object {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
-            Object::Return(ref r) => write!(f, "return {}", r),
+
             Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
                 write!(f, "instance")?;
@@ -304,7 +303,6 @@ impl PartialOrd for Object {
             (&Object::Int(ref s), &Object::Int(ref o)) => (s.partial_cmp(o)),
             (&Object::Str(ref s), &Object::Str(ref o)) => (s.partial_cmp(o)),
             (&Object::Bool(ref s), &Object::Bool(ref o)) => (s.partial_cmp(o)),
-            (&Object::Return(ref s), &Object::Return(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
             (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
@@ -321,7 +319,7 @@ impl Display for Object {
             Object::Function(ref s, _, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
             Object::None => write!(f, "None"),
-            Object::Return(ref r) => write!(f, "return {}", r),
+
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),

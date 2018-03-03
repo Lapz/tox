@@ -411,8 +411,8 @@ impl<'a> Parser<'a> {
     fn get_assign_op(&mut self) -> ParserResult<Spanned<AssignOperator>> {
         get_assign_op!(self,{
             ASSIGN => Equal,
-            PLUSASSIGN => MinusEqual,
-            MINUSASSIGN => PlusEqual,
+            PLUSASSIGN => PlusEqual,
+            MINUSASSIGN => MinusEqual,
             STARASSIGN => StarEqual,
             SLASHASSIGN => SlashEqual
         })
@@ -517,14 +517,13 @@ impl<'a> Parser<'a> {
         let expr = if self.recognise(TokenType::SEMICOLON) {
             let span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
 
-            return Ok(Spanned{
-                span:open_span.to(span),
-                value:Statement::Expr(Spanned {
-                    span:span,
-                    value:Expression::Literal(Literal::Nil)
-                })
-            })
-           
+            return Ok(Spanned {
+                span: open_span.to(span),
+                value: Statement::Expr(Spanned {
+                    span: span,
+                    value: Expression::Literal(Literal::Nil),
+                }),
+            });
         } else {
             self.expression()?
         };
@@ -1225,231 +1224,3 @@ impl<'a> Parser<'a> {
         })
     }
 }
-
-/*
-    fn primary(&mut self) -> Result<Spanned<Expression>, ParserError> {
-        match self.advance() {
-            Some(Token { ref token, ref pos }) => match *token {
-                TokenType::FALSE(_) => Ok(Spanned::new(
-                    Expression::Literal(Literal::False(false)),
-                    *pos,
-                )),
-                TokenType::TRUE(_) => {
-                    Ok(Spanned::new(Expression::Literal(Literal::True(true)), *pos))
-                }
-                TokenType::NIL => Ok(Spanned::new(Expression::Literal(Literal::Nil), *pos)),
-                TokenType::INT(ref i) => {
-                    Ok(Spanned::new(Expression::Literal(Literal::Int(*i)), *pos))
-                }
-                TokenType::FLOAT(ref f) => {
-                    Ok(Spanned::new(Expression::Literal(Literal::Float(*f)), *pos))
-                }
-                TokenType::STRING(ref s) => Ok(Spanned::new(
-                    Expression::Literal(Literal::Str(s.clone())),
-                    *pos,
-                )),
-                TokenType::IDENTIFIER(ident) => {
-                    if self.recognise(TokenType::LBRACE) {
-                        self.advance();
-                        let mut properties = vec![];
-
-                        if self.recognise(TokenType::RBRACE) {
-                            self.advance();
-                            return Ok(Spanned::new(
-                                Expression::ClassInstance {
-                                    properties,
-                                    name: self.symbols.symbol(ident),
-                                },
-                                *pos,
-                            ));
-                        }
-
-                        while {
-                        let property_name = self.consume_get_symbol("Expected an Property name ")?;
-
-                            self.consume(
-                                &TokenType::COLON,
-                                "Expected a colon after a class property name",
-                            )?;
-
-                            let property_value = self.expression()?;
-
-                            properties.push((property_name, property_value));
-
-                            self.recognise(TokenType::COMMA)
-                                && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                        } {}
-
-                        self.consume(
-                            &TokenType::RBRACE,
-                            "Expected a \'}\' to close a Class Instance",
-                        )?;
-
-                        return Ok(Spanned::new(
-                            Expression::ClassInstance {
-                                properties,
-                                name: self.symbols.symbol(ident),
-                            },
-                            *pos,
-                        ));
-                    }
-
-                    Ok(Spanned::new(
-                        Expression::Var(self.symbols.symbol(ident), self.variable_use_maker.next()),
-                        *pos,
-                    ))
-                }
-                TokenType::THIS => Ok(Spanned::new(
-                    Expression::This(self.variable_use_maker.next()),
-                    *pos,
-                )),
-
-                TokenType::FUNCTION => self.fun_body("function"),
-                TokenType::LBRACKET => {
-                    let mut items = vec![];
-
-                    if self.recognise(TokenType::RBRACKET) {
-                        self.advance();
-                        return Ok(Spanned::new(Expression::Array { items }, *pos));
-                    }
-
-                    while {
-                        items.push(self.expression()?);
-
-                        self.recognise(TokenType::COMMA)
-                            && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                    } {}
-
-                    self.consume(
-                        &TokenType::RBRACKET,
-                        "Expected a ']' to close the brackets .",
-                    )?;
-
-                    Ok(Spanned::new(Expression::Array { items }, *pos))
-                }
-
-                TokenType::LBRACE => {
-                    let mut items: Vec<
-                        (Spanned<Expression>, Spanned<Expression>),
-                    > = vec![];
-
-                    if self.recognise(TokenType::RBRACE) {
-                        self.advance();
-                        return Ok(Spanned::new(Expression::Dict { items }, *pos));
-                    }
-
-                    while {
-                        let left = self.expression()?;
-                        self.consume(&TokenType::COLON, "Expected a ':' after dict key ")?;
-                        let right = self.expression()?;
-
-                        items.push((left, right));
-                        self.recognise(TokenType::COMMA)
-                            && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                    } {}
-
-                    let pos = self.consume_get_pos(
-                        &TokenType::RBRACE,
-                        "Expected a '}' to close a dictionary.",
-                    )?;
-
-                    Ok(Spanned::new(Expression::Dict { items }, pos))
-                }
-
-                TokenType::LPAREN => {
-                    let expr = Box::new(self.expression()?);
-                    let pos =
-                        self.consume_get_pos(&TokenType::RPAREN, "Expect \')\' after expression")?;
-
-                    Ok(Spanned::new(Expression::Grouping { expr }, pos))
-                }
-
-                ref e => {
-                    println!("{:?} on {}", e, *pos);
-                    Err(ParserError::IllegalExpression(self.error(
-                        "Cannot parse the expression",
-                        *pos,
-                    )))
-                }
-            },
-            None => Err(ParserError::EOF),
-        }
-    }
-}
-
-// Helper parsing functions
-impl<'a> Parser<'a> {
-    fn fun_body(&mut self, kind: &str) -> Result<Spanned<Expression>, ParserError> {
-        let func_pos = self.consume_get_pos(&TokenType::LPAREN, "Expected '(' ")?;
-
-        let mut parameters = Vec::with_capacity(32);
-        let mut returns = None;
-
-        if !self.recognise(TokenType::RPAREN) {
-            while {
-                if parameters.len() >= 32 {
-                    return Err(ParserError::TooManyParams(func_pos));
-                };
-
-                let identifier = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
-
-                self.consume(&TokenType::COLON, "Expected a colon")?;
-
-                let ty = self.parse_type()?;
-
-                parameters.push((identifier, ty));
-
-                self.recognise(TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
-        }
-
-        self.consume(&TokenType::RPAREN, "Expected ')' after parameters.")?;
-
-        if self.recognise(TokenType::FRETURN) {
-            self.advance();
-
-            returns = Some(self.parse_type()?);
-        }
-
-        let body = Box::new(self.block()?);
-
-        Ok(Spanned::new(
-            Expression::Func {
-                parameters,
-                body,
-                returns,
-            },
-            func_pos,
-        ))
-    }
-    fn finish_call(
-        &mut self,
-        callee: Spanned<Expression>,
-    ) -> Result<Spanned<Expression>, ParserError> {
-        let mut arguments = Vec::with_capacity(32);
-
-        if !self.recognise(TokenType::RPAREN) {
-            while {
-                if arguments.len() >= 32 {
-                    return Err(ParserError::TooManyParams(callee.pos));
-                }
-
-                arguments.push(self.expression()?);
-                self.recognise(TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
-        }
-
-        let pos = self.consume_get_pos(&TokenType::RPAREN, "Expected ')' after arguments.")?;
-
-        Ok(Spanned::new(
-            Expression::Call {
-                callee: Box::new(callee),
-                arguments,
-            },
-            pos,
-        ))
-    }
-}
-*/

@@ -1,10 +1,9 @@
-fun main() {
-    while true {
-        return;
-    }
-    
-    print("got here");
-    
+fun fib(n:int) -> int {
+  if (n < 2) 
+    return n;
+  return fib(n - 2) + fib(n - 1);
 }
 
-main();
+var start = clock();
+print(fib(10) == 832040);
+print(clock() - start);
