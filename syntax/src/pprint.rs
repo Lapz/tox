@@ -412,15 +412,17 @@ mod test {
     use lexer::Lexer;
     use symbol::{SymbolFactory, Table};
     use parser::Parser;
+    use util::emmiter::Reporter;
 
     #[test]
     fn it_works() {
         let input = "var a =0;";
+        let reporter = Reporter::new();
         use std::rc::Rc;
-        let tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input,reporter.clone()).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
-        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, reporter.clone(),&mut symbols).parse().unwrap();
 
         for statement in ast {
             statement.value.pprint(&mut symbols);
