@@ -98,7 +98,7 @@ pub(crate) fn evaluate_statement(
             env.define(name.value, Object::Class(name.value, sklass, class_methods));
             Ok(Object::None)
         }
-        
+
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, locals, env)?.is_truthy() {
                 match evaluate_statement(body, locals, env) {

@@ -5,6 +5,10 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
 
+[dependencies.vm]
+path = "../vm"
+features = ["debug"]
+
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
@@ -13,3 +17,4 @@ interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}
+

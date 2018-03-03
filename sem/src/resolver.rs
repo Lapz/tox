@@ -567,9 +567,11 @@ mod test {
         let strings = Rc::new(SymbolFactory::new());
         let env = TypeEnv::new(&strings);
         let reporter = Reporter::new();
-        assert!(Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter.clone()), &env)
-            .is_err())
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter.clone()), &env)
+                .is_err()
+        )
     }
 
     #[test]
