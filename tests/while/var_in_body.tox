@@ -1,0 +1,3 @@
+// expect:No rules expected 'var'
+while (true) 
+    var foo;

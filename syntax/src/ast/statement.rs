@@ -1,62 +1,70 @@
-use ast::expr::{Expression, ExpressionTy};
-use util::pos::WithPos;
+use ast::expr::{Expression, Ty};
+use util::pos::Spanned;
 use util::symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Statement {
-    Var(Symbol, Option<WithPos<Expression>>, Option<ExpressionTy>),
-    Block(Vec<WithPos<Statement>>),
+    Block(Vec<Spanned<Statement>>),
     Break,
     Class {
-        name: Symbol,
-        superclass: Option<Symbol>,
-        methods: Vec<WithPos<Statement>>,
-        properties: Vec<(Symbol, ExpressionTy)>,
+        name: Spanned<Symbol>,
+        superclass: Option<Spanned<Symbol>>,
+        body: Spanned<(Vec<Spanned<Statement>>, Vec<Spanned<Field>>)>,
     },
+
     Continue,
 
-    DoStmt {
-        condition: WithPos<Expression>,
-        body: Box<WithPos<Statement>>,
-    },
-
-    ExpressionStmt(WithPos<Expression>),
-
-    ExternFunction {
-        name: Symbol,
-        params: Vec<(Symbol, ExpressionTy)>,
-        returns: Option<ExpressionTy>,
-    },
+    Expr(Spanned<Expression>),
 
     Function {
-        name: Symbol,
-        body: WithPos<Expression>,
+        name: Spanned<Symbol>,
+        params: Spanned<Vec<Spanned<FunctionParams>>>,
+        body: Box<Spanned<Statement>>,
+        returns: Option<Spanned<Ty>>,
     },
 
-    ForStmt {
-        initializer: Option<Box<WithPos<Statement>>>,
-        condition: Option<WithPos<Expression>>,
-        increment: Option<WithPos<Expression>>,
-        body: Box<WithPos<Statement>>,
+    For {
+        init: Option<Box<Spanned<Statement>>>,
+        cond: Option<Spanned<Expression>>,
+        incr: Option<Spanned<Expression>>,
+        body: Box<Spanned<Statement>>,
     },
 
-    IfStmt {
-        condition: WithPos<Expression>,
-        then_branch: Box<WithPos<Statement>>,
-        else_branch: Option<Box<WithPos<Statement>>>,
+    If {
+        cond: Spanned<Expression>,
+        then: Box<Spanned<Statement>>,
+        otherwise: Option<Box<Spanned<Statement>>>,
     },
 
-    Print(WithPos<Expression>),
+    Print(Spanned<Expression>),
 
-    WhileStmt {
-        condition: WithPos<Expression>,
-        body: Box<WithPos<Statement>>,
+    While {
+        cond: Spanned<Expression>,
+        body: Box<Spanned<Statement>>,
     },
 
-    Return(Option<WithPos<Expression>>),
+    Var {
+        ident: Spanned<Symbol>,
+        ty: Option<Spanned<Ty>>,
+        expr: Option<Spanned<Expression>>,
+    },
+
+    Return(Spanned<Expression>),
 
     TypeAlias {
-        alias: Symbol,
-        ty: ExpressionTy,
+        alias: Spanned<Symbol>,
+        ty: Spanned<Ty>,
     },
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
+pub struct Field {
+    pub name: Spanned<Symbol>,
+    pub ty: Spanned<Ty>,
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+pub struct FunctionParams {
+    pub name: Spanned<Symbol>,
+    pub ty: Spanned<Ty>,
 }

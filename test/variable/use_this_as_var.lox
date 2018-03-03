@@ -1,2 +1,0 @@
-// Expected an IDENTIFIER after a 'var'  on line 2, column 5.
-var this = "value";

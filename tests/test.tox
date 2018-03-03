@@ -1,0 +1,7 @@
+fun main() {
+  while true {
+  return nil;
+}
+}
+
+main();

@@ -1,0 +1,18 @@
+var i = 0;
+while (i < 10) {
+    i = i + 1;
+
+    if (i == 6) 
+        continue;
+    print(i);
+
+}
+// expect: 1 
+// expect: 2 
+// expect: 3 
+// expect: 4 
+// expect: 5 
+// expect: 7 
+// expect: 8 
+// expect: 9
+// expect: 10

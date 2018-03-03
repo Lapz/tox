@@ -1,0 +1,5 @@
+fun foo(a:int) {
+  var a = 10;
+
+  return 10;
+}

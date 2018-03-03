@@ -54,24 +54,24 @@ rust_interpreter('tox', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 })
 
 rust_interpreter('chap04_scanning', {
   # No interpreter yet.
   'test': 'skip',
 
-  'test/scanning': 'pass'
+  'tests/scanning': 'pass'
 })
 
 # No test for chapter 5. It just has a hardcoded main() in AstPrinter.
@@ -80,264 +80,264 @@ rust_interpreter('chap06_parsing', {
   # No real interpreter yet.
   'test': 'skip',
 
-  'test/expressions/parse.lox': 'pass'
+  'tests/expressions/parse.tox': 'pass'
 })
 
 rust_interpreter('chap07_evaluating', {
   # No real interpreter yet.
   'test': 'skip',
 
-  'test/expressions/evaluate.lox': 'pass'
+  'tests/expressions/evaluate.tox': 'pass'
 })
 
 rust_interpreter('chap08_statements', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'pass',
-  'test/limit/reuse_constants.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'pass',
+  'tests/limit/reuse_constants.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 
   # No control flow.
-  'test/block/empty.lox': 'skip',
-  'test/for': 'skip',
-  'test/if': 'skip',
-  'test/logical_operator': 'skip',
-  'test/while': 'skip',
-  'test/variable/unreached_undefined.lox': 'skip',
+  'tests/block/empty.tox': 'skip',
+  'tests/for': 'skip',
+  'tests/if': 'skip',
+  'tests/logical_operator': 'skip',
+  'tests/while': 'skip',
+  'tests/variable/unreached_undefined.tox': 'skip',
 
   # No functions.
-  'test/call': 'skip',
-  'test/closure': 'skip',
-  'test/function': 'skip',
-  'test/operator/not.lox': 'skip',
-  'test/regression/40.lox': 'skip',
-  'test/return': 'skip',
-  'test/unexpected_character.lox': 'skip',
+  'tests/call': 'skip',
+  'tests/closure': 'skip',
+  'tests/function': 'skip',
+  'tests/operator/not.tox': 'skip',
+  'tests/regression/40.tox': 'skip',
+  'tests/return': 'skip',
+  'tests/unexpected_character.tox': 'skip',
 
   # Broken because we haven't fixed it yet by detecting the error.
-  'test/return/at_top_level.lox': 'skip',
-  'test/variable/use_local_in_initializer.lox': 'skip',
+  'tests/return/at_top_level.tox': 'skip',
+  'tests/variable/use_local_in_initializer.tox': 'skip',
 
   # No resolution.
-  'test/closure/assign_to_shadowed_later.lox': 'skip',
-  'test/function/local_mutual_recursion.lox': 'skip',
-  'test/variable/collide_with_parameter.lox': 'skip',
-  'test/variable/duplicate_local.lox': 'skip',
-  'test/variable/duplicate_parameter.lox': 'skip',
-  'test/variable/early_bound.lox': 'skip',
+  'tests/closure/assign_to_shadowed_later.tox': 'skip',
+  'tests/function/local_mutual_recursion.tox': 'skip',
+  'tests/variable/collide_with_parameter.tox': 'skip',
+  'tests/variable/duplicate_local.tox': 'skip',
+  'tests/variable/duplicate_parameter.tox': 'skip',
+  'tests/variable/early_bound.tox': 'skip',
 
   # No classes.
-  'test/assignment/to_this.lox': 'skip',
-  'test/call/object.lox': 'skip',
-  'test/class': 'skip',
-  'test/closure/close_over_method_parameter.lox': 'skip',
-  'test/constructor': 'skip',
-  'test/field': 'skip',
-  'test/inheritance': 'skip',
-  'test/method': 'skip',
-  'test/number/decimal_point_at_eof.lox': 'skip',
-  'test/number/trailing_dot.lox': 'skip',
-  'test/operator/equals_class.lox': 'skip',
-  'test/operator/not_class.lox': 'skip',
-  'test/super': 'skip',
-  'test/this': 'skip',
-  'test/return/in_method.lox': 'skip',
-  'test/variable/local_from_method.lox': 'skip',
+  'tests/assignment/to_this.tox': 'skip',
+  'tests/call/object.tox': 'skip',
+  'tests/class': 'skip',
+  'tests/closure/close_over_method_parameter.tox': 'skip',
+  'tests/constructor': 'skip',
+  'tests/field': 'skip',
+  'tests/inheritance': 'skip',
+  'tests/method': 'skip',
+  'tests/number/decimal_point_at_eof.tox': 'skip',
+  'tests/number/trailing_dot.tox': 'skip',
+  'tests/operator/equals_class.tox': 'skip',
+  'tests/operator/not_class.tox': 'skip',
+  'tests/super': 'skip',
+  'tests/this': 'skip',
+  'tests/return/in_method.tox': 'skip',
+  'tests/variable/local_from_method.tox': 'skip',
 })
 
 rust_interpreter('chap09_control', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/reuse_constants.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/reuse_constants.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 
   # No functions.
-  'test/call': 'skip',
-  'test/closure': 'skip',
-  'test/for/closure_in_body.lox': 'skip',
-  'test/for/return_closure.lox': 'skip',
-  'test/for/return_inside.lox': 'skip',
-  'test/for/syntax.lox': 'skip',
-  'test/function': 'skip',
-  'test/operator/not.lox': 'skip',
-  'test/regression/40.lox': 'skip',
-  'test/return': 'skip',
-  'test/unexpected_character.lox': 'skip',
-  'test/while/closure_in_body.lox': 'skip',
-  'test/while/return_closure.lox': 'skip',
-  'test/while/return_inside.lox': 'skip',
+  'tests/call': 'skip',
+  'tests/closure': 'skip',
+  'tests/for/closure_in_body.tox': 'skip',
+  'tests/for/return_closure.tox': 'skip',
+  'tests/for/return_inside.tox': 'skip',
+  'tests/for/syntax.tox': 'skip',
+  'tests/function': 'skip',
+  'tests/operator/not.tox': 'skip',
+  'tests/regression/40.tox': 'skip',
+  'tests/return': 'skip',
+  'tests/unexpected_character.tox': 'skip',
+  'tests/while/closure_in_body.tox': 'skip',
+  'tests/while/return_closure.tox': 'skip',
+  'tests/while/return_inside.tox': 'skip',
 
   # Broken because we haven't fixed it yet by detecting the error.
-  'test/return/at_top_level.lox': 'skip',
-  'test/variable/use_local_in_initializer.lox': 'skip',
+  'tests/return/at_top_level.tox': 'skip',
+  'tests/variable/use_local_in_initializer.tox': 'skip',
 
   # No resolution.
-  'test/closure/assign_to_shadowed_later.lox': 'skip',
-  'test/function/local_mutual_recursion.lox': 'skip',
-  'test/variable/collide_with_parameter.lox': 'skip',
-  'test/variable/duplicate_local.lox': 'skip',
-  'test/variable/duplicate_parameter.lox': 'skip',
-  'test/variable/early_bound.lox': 'skip',
+  'tests/closure/assign_to_shadowed_later.tox': 'skip',
+  'tests/function/local_mutual_recursion.tox': 'skip',
+  'tests/variable/collide_with_parameter.tox': 'skip',
+  'tests/variable/duplicate_local.tox': 'skip',
+  'tests/variable/duplicate_parameter.tox': 'skip',
+  'tests/variable/early_bound.tox': 'skip',
 
   # No classes.
-  'test/assignment/to_this.lox': 'skip',
-  'test/call/object.lox': 'skip',
-  'test/class': 'skip',
-  'test/closure/close_over_method_parameter.lox': 'skip',
-  'test/constructor': 'skip',
-  'test/field': 'skip',
-  'test/inheritance': 'skip',
-  'test/method': 'skip',
-  'test/number/decimal_point_at_eof.lox': 'skip',
-  'test/number/trailing_dot.lox': 'skip',
-  'test/operator/equals_class.lox': 'skip',
-  'test/operator/not_class.lox': 'skip',
-  'test/super': 'skip',
-  'test/this': 'skip',
-  'test/return/in_method.lox': 'skip',
-  'test/variable/local_from_method.lox': 'skip',
+  'tests/assignment/to_this.tox': 'skip',
+  'tests/call/object.tox': 'skip',
+  'tests/class': 'skip',
+  'tests/closure/close_over_method_parameter.tox': 'skip',
+  'tests/constructor': 'skip',
+  'tests/field': 'skip',
+  'tests/inheritance': 'skip',
+  'tests/method': 'skip',
+  'tests/number/decimal_point_at_eof.tox': 'skip',
+  'tests/number/trailing_dot.tox': 'skip',
+  'tests/operator/equals_class.tox': 'skip',
+  'tests/operator/not_class.tox': 'skip',
+  'tests/super': 'skip',
+  'tests/this': 'skip',
+  'tests/return/in_method.tox': 'skip',
+  'tests/variable/local_from_method.tox': 'skip',
 })
 
 rust_interpreter('chap10_functions', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 
   # Broken because we haven't fixed it yet by detecting the error.
-  'test/return/at_top_level.lox': 'skip',
-  'test/variable/use_local_in_initializer.lox': 'skip',
+  'tests/return/at_top_level.tox': 'skip',
+  'tests/variable/use_local_in_initializer.tox': 'skip',
 
   # No resolution.
-  'test/closure/assign_to_shadowed_later.lox': 'skip',
-  'test/function/local_mutual_recursion.lox': 'skip',
-  'test/variable/collide_with_parameter.lox': 'skip',
-  'test/variable/duplicate_local.lox': 'skip',
-  'test/variable/duplicate_parameter.lox': 'skip',
-  'test/variable/early_bound.lox': 'skip',
+  'tests/closure/assign_to_shadowed_later.tox': 'skip',
+  'tests/function/local_mutual_recursion.tox': 'skip',
+  'tests/variable/collide_with_parameter.tox': 'skip',
+  'tests/variable/duplicate_local.tox': 'skip',
+  'tests/variable/duplicate_parameter.tox': 'skip',
+  'tests/variable/early_bound.tox': 'skip',
 
   # No classes.
-  'test/assignment/to_this.lox': 'skip',
-  'test/call/object.lox': 'skip',
-  'test/class': 'skip',
-  'test/closure/close_over_method_parameter.lox': 'skip',
-  'test/constructor': 'skip',
-  'test/field': 'skip',
-  'test/inheritance': 'skip',
-  'test/method': 'skip',
-  'test/number/decimal_point_at_eof.lox': 'skip',
-  'test/number/trailing_dot.lox': 'skip',
-  'test/operator/equals_class.lox': 'skip',
-  'test/operator/not_class.lox': 'skip',
-  'test/super': 'skip',
-  'test/this': 'skip',
-  'test/return/in_method.lox': 'skip',
-  'test/variable/local_from_method.lox': 'skip',
+  'tests/assignment/to_this.tox': 'skip',
+  'tests/call/object.tox': 'skip',
+  'tests/class': 'skip',
+  'tests/closure/close_over_method_parameter.tox': 'skip',
+  'tests/constructor': 'skip',
+  'tests/field': 'skip',
+  'tests/inheritance': 'skip',
+  'tests/method': 'skip',
+  'tests/number/decimal_point_at_eof.tox': 'skip',
+  'tests/number/trailing_dot.tox': 'skip',
+  'tests/operator/equals_class.tox': 'skip',
+  'tests/operator/not_class.tox': 'skip',
+  'tests/super': 'skip',
+  'tests/this': 'skip',
+  'tests/return/in_method.tox': 'skip',
+  'tests/variable/local_from_method.tox': 'skip',
 })
 
 rust_interpreter('chap11_resolving', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 
   # No classes.
-  'test/assignment/to_this.lox': 'skip',
-  'test/call/object.lox': 'skip',
-  'test/class': 'skip',
-  'test/closure/close_over_method_parameter.lox': 'skip',
-  'test/constructor': 'skip',
-  'test/field': 'skip',
-  'test/inheritance': 'skip',
-  'test/method': 'skip',
-  'test/number/decimal_point_at_eof.lox': 'skip',
-  'test/number/trailing_dot.lox': 'skip',
-  'test/operator/equals_class.lox': 'skip',
-  'test/operator/not_class.lox': 'skip',
-  'test/super': 'skip',
-  'test/this': 'skip',
-  'test/return/in_method.lox': 'skip',
-  'test/variable/local_from_method.lox': 'skip',
+  'tests/assignment/to_this.tox': 'skip',
+  'tests/call/object.tox': 'skip',
+  'tests/class': 'skip',
+  'tests/closure/close_over_method_parameter.tox': 'skip',
+  'tests/constructor': 'skip',
+  'tests/field': 'skip',
+  'tests/inheritance': 'skip',
+  'tests/method': 'skip',
+  'tests/number/decimal_point_at_eof.tox': 'skip',
+  'tests/number/trailing_dot.tox': 'skip',
+  'tests/operator/equals_class.tox': 'skip',
+  'tests/operator/not_class.tox': 'skip',
+  'tests/super': 'skip',
+  'tests/this': 'skip',
+  'tests/return/in_method.tox': 'skip',
+  'tests/variable/local_from_method.tox': 'skip',
 })
 
 rust_interpreter('chap12_classes', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 
   # No inheritance.
-  'test/class/inherited_method.lox': 'skip',
-  'test/inheritance': 'skip',
-  'test/super': 'skip',
+  'tests/class/inherited_method.tox': 'skip',
+  'tests/inheritance': 'skip',
+  'tests/super': 'skip',
 })
 
 rust_interpreter('chap13_inheritance', {
   'test': 'pass',
 
   # These are just for earlier chapters.
-  'test/scanning': 'skip',
-  'test/expressions': 'skip',
+  'tests/scanning': 'skip',
+  'tests/expressions': 'skip',
 
   # No hardcoded limits in tox.
-  'test/limit/loop_too_large.lox': 'skip',
-  'test/limit/too_many_constants.lox': 'skip',
-  'test/limit/too_many_locals.lox': 'skip',
-  'test/limit/too_many_upvalues.lox': 'skip',
+  'tests/limit/loop_too_large.tox': 'skip',
+  'tests/limit/too_many_constants.tox': 'skip',
+  'tests/limit/too_many_locals.tox': 'skip',
+  'tests/limit/too_many_upvalues.tox': 'skip',
 
   # Rely on JVM for stack overflow checking.
-  'test/limit/stack_overflow.lox': 'skip',
+  'tests/limit/stack_overflow.tox': 'skip',
 })
 
 
@@ -623,7 +623,7 @@ def run_script(path):
   global failed
   global num_skipped
 
-  if (splitext(path)[1] != '.lox'):
+  if (splitext(path)[1] != '.tox'):
     return
 
   # Check if we are just running a subset of the tests.
@@ -679,7 +679,7 @@ def run_suite(name):
   num_skipped = 0
   expectations = 0
 
-  walk(join(REPO_DIR, 'test'), run_script)
+  walk(join(REPO_DIR, 'tests'), run_script)
   print_line()
 
   if failed == 0:

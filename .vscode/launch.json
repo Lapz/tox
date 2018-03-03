@@ -9,8 +9,8 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceRoot}/target/debug/lexer",
-            "args": ["test/test.lox"],
+            "program": "/Users/rowlandsonpratt/Lenard/Rust/tox/target/debug/deps/tox-14aaf93dc5c3311d",
+            "args": ["/Users/rowlandsonpratt/Lenard/Rust/tox/tests/test.tox"],
             "cwd": "${workspaceRoot}",
         
             

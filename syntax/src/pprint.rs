@@ -2,6 +2,7 @@ use ast::expr::*;
 use ast::statement::Statement;
 
 use symbol::Table;
+use std::str;
 
 impl AssignOperator {
     fn pprint(&self) -> &'static str {
@@ -15,28 +16,20 @@ impl AssignOperator {
     }
 }
 
-impl ExpressionTy {
+impl Ty {
     fn pprint(&self, symbols: &mut Table<()>) -> String {
         match *self {
-            ExpressionTy::Simple(s) => symbols.name(s),
+            Ty::Simple(ref s) => symbols.name(s.value),
             _ => unimplemented!(),
         }
     }
 }
-impl LogicOperator {
-    fn pprint(&self) -> &'static str {
-        match *self {
-            LogicOperator::Or => "or",
-            LogicOperator::And => "and",
-        }
-    }
-}
 
-impl UnaryOperator {
+impl UnaryOp {
     fn pprint(&self) -> &'static str {
         match *self {
-            UnaryOperator::Bang => "!",
-            UnaryOperator::Minus => "-",
+            UnaryOp::Bang => "!",
+            UnaryOp::Minus => "-",
         }
     }
 }
@@ -46,7 +39,7 @@ impl Literal {
         match *self {
             Literal::Int(ref i) => i.to_string(),
             Literal::Float(ref f) => f.to_string(),
-            Literal::Str(ref s) => s.to_string(),
+            Literal::Str(ref s) => str::from_utf8(s).unwrap().to_string(),
             Literal::False(_) => "false".into(),
             Literal::True(_) => "true".into(),
             Literal::Nil => "nil".into(),
@@ -54,21 +47,23 @@ impl Literal {
     }
 }
 
-impl Operator {
+impl Op {
     fn pprint(&self) -> &'static str {
         match *self {
-            Operator::BangEqual => "!=",
-            Operator::EqualEqual => "==",
-            Operator::LessThan => "<",
-            Operator::LessThanEqual => "<=",
-            Operator::GreaterThan => ">",
-            Operator::GreaterThanEqual => ">=",
-            Operator::Plus => "+",
-            Operator::Minus => "-",
-            Operator::Star => "*",
-            Operator::Slash => "/",
-            Operator::Modulo => "%",
-            Operator::Exponential => "^",
+            Op::BangEqual => "!=",
+            Op::EqualEqual => "==",
+            Op::LessThan => "<",
+            Op::LessThanEqual => "<=",
+            Op::GreaterThan => ">",
+            Op::GreaterThanEqual => ">=",
+            Op::Plus => "+",
+            Op::Minus => "-",
+            Op::Star => "*",
+            Op::Slash => "/",
+            Op::Modulo => "%",
+            Op::Exponential => "^",
+            Op::And => "and",
+            Op::Or => "or",
         }
     }
 }
@@ -84,177 +79,170 @@ impl Statement {
 
     fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
         match *self {
-            Statement::ExpressionStmt(ref expr) | Statement::Print(ref expr) => {
-                expr.node.pprint_into(pprint_string, symbols);
-            }
-
-            Statement::ExternFunction {
-                ref name,
-                ref params,
-                ref returns,
-            } => {
-                pprint_string.push_str("(extern ");
-
-                pprint_string.push_str(&symbols.name(*name));
-
-                for item in params {
-                    pprint_string.push_str(&symbols.name(item.0));
-                    pprint_string.push_str(":");
-                    pprint_string.push_str(&item.1.pprint(symbols));
-                    pprint_string.push_str(" ");
-                }
-
-                pprint_string.push_str("-> ");
-
-                if let Some(ref ret) = *returns {
-                    ret.pprint(symbols);
-                } else {
-                    pprint_string.push_str("nil")
-                }
-
-                pprint_string.push_str(")");
+            Statement::Expr(ref expr) | Statement::Print(ref expr) => {
+                expr.value.pprint_into(pprint_string, symbols);
             }
 
             Statement::TypeAlias { ref alias, ref ty } => {
                 pprint_string.push_str("(type ");
-                pprint_string.push_str(&symbols.name(*alias));
+                pprint_string.push_str(&symbols.name(alias.value));
                 pprint_string.push_str("=");
-                pprint_string.push_str(&ty.pprint(symbols));
+                pprint_string.push_str(&ty.value.pprint(symbols));
 
                 pprint_string.push_str(" )");
             }
-            Statement::Var(ref name, ref expression, ref ty) => {
+            Statement::Var {
+                ref ident,
+                ref ty,
+                ref expr,
+            } => {
                 pprint_string.push_str("(var ");
-                pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(&symbols.name(ident.value));
+
+                pprint_string.push_str(" => ");
 
                 if let Some(ref var_ty) = *ty {
                     pprint_string.push_str(":");
-                    pprint_string.push_str(&var_ty.pprint(symbols));
+                    pprint_string.push_str(&var_ty.value.pprint(symbols));
                 }
 
-                if let Some(ref expr) = *expression {
-                    expr.node.pprint_into(pprint_string, symbols);
+                if let Some(ref expr) = *expr {
+                    expr.value.pprint_into(pprint_string, symbols);
                 }
 
-                pprint_string.push_str(" )");
+                pprint_string.push_str(" ) )");
             }
 
             Statement::Block(ref statements) => {
                 pprint_string.push_str("(block ");
                 for statement in statements {
-                    statement.node.pprint_into(pprint_string, symbols);
+                    statement.value.pprint_into(pprint_string, symbols);
                 }
                 pprint_string.push_str(" )");
             }
 
             Statement::Class {
                 ref name,
-                ref methods,
-                ref properties,
                 ref superclass,
+                ref body,
             } => {
                 pprint_string.push_str("(class ");
-                pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(&symbols.name(name.value));
 
                 if let Some(ref sclass) = *superclass {
                     pprint_string.push_str("< ");
-                    pprint_string.push_str(&symbols.name(*sclass));
+                    pprint_string.push_str(&symbols.name(sclass.value));
                 }
 
-                for method in methods {
-                    method.node.pprint_into(pprint_string, symbols);
+                if body.value.0.len() > 0 {
+                    pprint_string.push_str(" (methods => ");
+
+                    for method in &body.value.0 {
+                        method.value.pprint_into(pprint_string, symbols);
+                    }
+
+                    pprint_string.push_str(") ");
                 }
 
-                pprint_string.push_str("(properties:");
+                if body.value.1.len() > 0 {
+                    pprint_string.push_str(" (props => ");
 
-                for property in properties {
-                    pprint_string.push_str(" ");
-                    pprint_string.push_str(&symbols.name(property.0));
-                    pprint_string.push_str(": ");
-                    pprint_string.push_str(&property.1.pprint(symbols));
-                    pprint_string.push_str(",");
+                    for property in &body.value.1 {
+                        pprint_string.push_str("( ");
+                        pprint_string.push_str(&symbols.name(property.value.name.value));
+                        pprint_string.push_str(":");
+                        pprint_string.push_str(&property.value.ty.value.pprint(symbols));
+                        pprint_string.push_str(")");
+                    }
+                    pprint_string.push_str(") ");
                 }
 
                 pprint_string.push_str(")");
-
-                pprint_string.push_str(" )");
             }
 
-            Statement::IfStmt {
-                ref condition,
-                ref then_branch,
-                ref else_branch,
+            Statement::If {
+                ref cond,
+                ref otherwise,
+                ref then,
             } => {
                 pprint_string.push_str("(if ");
 
-                condition.node.pprint_into(pprint_string, symbols);
+                cond.value.pprint_into(pprint_string, symbols);
 
-                then_branch.node.pprint_into(pprint_string, symbols);
+                then.value.pprint_into(pprint_string, symbols);
 
-                if let Some(ref else_) = *else_branch {
-                    else_.node.pprint_into(pprint_string, symbols);
+                if let Some(ref else_) = *otherwise {
+                    else_.value.pprint_into(pprint_string, symbols);
                 }
 
                 pprint_string.push_str(" )");
             }
 
-            Statement::ForStmt {
-                ref initializer,
-                ref condition,
-                ref increment,
+            Statement::For {
+                ref incr,
+                ref cond,
+                ref init,
                 ref body,
             } => {
                 pprint_string.push_str("(for ");
 
-                if let Some(ref init) = *initializer {
-                    init.node.pprint_into(pprint_string, symbols);
+                if let Some(ref incr) = *incr {
+                    incr.value.pprint_into(pprint_string, symbols);
                 }
 
-                if let Some(ref cond) = *condition {
-                    cond.node.pprint_into(pprint_string, symbols);
+                if let Some(ref cond) = *cond {
+                    cond.value.pprint_into(pprint_string, symbols);
                 }
 
-                if let Some(ref inc) = *increment {
-                    inc.node.pprint_into(pprint_string, symbols);
+                if let Some(ref init) = *init {
+                    init.value.pprint_into(pprint_string, symbols);
                 }
 
-                body.node.pprint_into(pprint_string, symbols);
+                body.value.pprint_into(pprint_string, symbols);
 
                 pprint_string.push_str(" )");
             }
 
-            Statement::Function { ref name, ref body } => {
+            Statement::Function {
+                ref name,
+                ref body,
+                ref params,
+                ref returns,
+            } => {
                 pprint_string.push_str("(fun ");
-                pprint_string.push_str(&symbols.name(*name));
+                pprint_string.push_str(&symbols.name(name.value));
 
-                body.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str(" params (");
+
+                for param in &params.value {
+                    pprint_string.push_str(&symbols.name(param.value.name.value));
+                    pprint_string.push_str(":");
+                    pprint_string.push_str(&param.value.ty.value.pprint(symbols));
+                    pprint_string.push_str(" ");
+                }
+
+                pprint_string.push_str(")");
+
+                pprint_string.push_str("body (");
+
+                body.value.pprint_into(pprint_string, symbols);
+
+                pprint_string.push_str(")");
+
+                pprint_string.push_str("-> ");
+
+                if let Some(ref ty) = *returns {
+                    ty.value.pprint(symbols);
+                }
 
                 pprint_string.push_str(" )");
             }
 
-            Statement::WhileStmt {
-                ref body,
-                ref condition,
-            } => {
+            Statement::While { ref body, ref cond } => {
                 pprint_string.push_str("(while ");
 
-                condition.node.pprint_into(pprint_string, symbols);
-                body.node.pprint_into(pprint_string, symbols);
-
-                pprint_string.push_str(" )");
-            }
-
-            Statement::DoStmt {
-                ref body,
-                ref condition,
-            } => {
-                pprint_string.push_str("(do ");
-
-                body.node.pprint_into(pprint_string, symbols);
-
-                pprint_string.push_str("(while ");
-
-                condition.node.pprint_into(pprint_string, symbols);
+                cond.value.pprint_into(pprint_string, symbols);
+                body.value.pprint_into(pprint_string, symbols);
 
                 pprint_string.push_str(" )");
             }
@@ -270,9 +258,7 @@ impl Statement {
             Statement::Return(ref returns) => {
                 pprint_string.push_str("(return ");
 
-                if let Some(ref value) = *returns {
-                    value.node.pprint_into(pprint_string, symbols);
-                }
+                returns.value.pprint_into(pprint_string, symbols);
 
                 pprint_string.push_str(" )");
             }
@@ -286,7 +272,7 @@ impl Expression {
             Expression::Array { ref items, .. } => {
                 pprint_string.push_str("(array");
                 for item in items {
-                    item.node.pprint_into(pprint_string, symbols);
+                    item.value.pprint_into(pprint_string, symbols);
                 }
                 pprint_string.push_str(" )");
             }
@@ -298,86 +284,54 @@ impl Expression {
                 ..
             } => {
                 pprint_string.push_str("(");
-                pprint_string.push_str(&symbols.name(*name));
-                pprint_string.push_str(kind.pprint());
-                value.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str(&symbols.name(name.value));
+                pprint_string.push_str(kind.value.pprint());
+                value.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(" )");
             }
             Expression::Binary {
-                ref left_expr,
-                ref right_expr,
-                ref operator,
+                ref lhs,
+                ref rhs,
+                ref op,
             } => {
                 pprint_string.push_str("(");
-                pprint_string.push_str(operator.pprint());
-                left_expr.node.pprint_into(pprint_string, symbols);
-                right_expr.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str(op.value.pprint());
+                lhs.value.pprint_into(pprint_string, symbols);
+                rhs.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(" )");
             }
 
             Expression::Call {
                 ref callee,
-                ref arguments,
+                ref args,
             } => {
                 pprint_string.push_str("(call ");
-                callee.node.pprint_into(pprint_string, symbols);
+                callee.value.pprint_into(pprint_string, symbols);
 
-                for argument in arguments {
-                    argument.node.pprint_into(pprint_string, symbols);
+                for argument in args {
+                    argument.value.pprint_into(pprint_string, symbols);
                 }
 
                 pprint_string.push_str(" )");
             }
 
             Expression::ClassInstance {
-                ref properties,
-                ref name,
+                ref props,
+                ref symbol,
             } => {
-                pprint_string.push_str(&symbols.name(*name));
-                pprint_string.push_str(" instance ");
-
+                pprint_string.push_str("( ");
+                pprint_string.push_str(&symbols.name(symbol.value));
                 pprint_string.push_str(" ");
 
-                for &(ref key, ref value) in properties {
-                    pprint_string.push_str(&symbols.name(*key));
-                    pprint_string.push_str(".");
-                    value.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str("(props (");
+
+                for prop in props.iter() {
+                    pprint_string.push_str(&symbols.name(prop.value.symbol.value));
+                    pprint_string.push_str(" =>");
+                    prop.value.expr.value.pprint_into(pprint_string, symbols);
                 }
 
-                pprint_string.push_str(" )");
-            }
-
-            Expression::Dict { ref items } => {
-                pprint_string.push_str("(dict ");
-
-                for &(ref key, ref value) in items {
-                    key.node.pprint_into(pprint_string, symbols);
-
-                    pprint_string.push_str(":");
-
-                    value.node.pprint_into(pprint_string, symbols);
-                }
-
-                pprint_string.push_str(" )");
-            }
-
-            Expression::Func {
-                ref parameters,
-                ref body,
-                ..
-            } => {
-                pprint_string.push_str("(");
-
-                for item in parameters {
-                    pprint_string.push_str(&symbols.name(item.0));
-                    pprint_string.push_str(":");
-                    pprint_string.push_str(&item.1.pprint(symbols));
-                    pprint_string.push_str(" ");
-                }
-
-                body.node.pprint_into(pprint_string, symbols);
-
-                pprint_string.push_str(")");
+                pprint_string.push_str(") ) )");
             }
 
             Expression::Get {
@@ -386,42 +340,27 @@ impl Expression {
                 ..
             } => {
                 pprint_string.push_str("( get (");
-                pprint_string.push_str(&symbols.name(*property));
-                object.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str(&symbols.name(property.value));
+                object.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str("))");
             }
 
             Expression::Grouping { ref expr } => {
-                expr.node.pprint_into(pprint_string, symbols);
+                expr.value.pprint_into(pprint_string, symbols);
             }
 
-            Expression::IndexExpr {
+            Expression::Index {
                 ref index,
                 ref target,
             } => {
-                index.node.pprint_into(pprint_string, symbols);
-                target.node.pprint_into(pprint_string, symbols);
+                index.value.pprint_into(pprint_string, symbols);
+                target.value.pprint_into(pprint_string, symbols);
             }
 
             Expression::Literal(ref literal) => {
                 pprint_string.push_str(" ");
                 pprint_string.push_str(&literal.pprint());
                 pprint_string.push_str(" ");
-            }
-
-            Expression::Logical {
-                ref left,
-                ref right,
-                ref operator,
-            } => {
-                pprint_string.push_str("(");
-
-                pprint_string.push_str(operator.pprint());
-
-                left.node.pprint_into(pprint_string, symbols);
-
-                right.node.pprint_into(pprint_string, symbols);
-                pprint_string.push_str(")");
             }
 
             Expression::Set {
@@ -431,9 +370,9 @@ impl Expression {
                 ..
             } => {
                 pprint_string.push_str("( set ");
-                pprint_string.push_str(&symbols.name(*name));
-                object.node.pprint_into(pprint_string, symbols);
-                value.node.pprint_into(pprint_string, symbols);
+                pprint_string.push_str(&symbols.name(name.value));
+                object.value.pprint_into(pprint_string, symbols);
+                value.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(")");
             }
 
@@ -443,20 +382,17 @@ impl Expression {
                 ref else_branch,
             } => {
                 pprint_string.push_str("(");
-                condition.node.pprint_into(pprint_string, symbols);
+                condition.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str("?");
-                then_branch.node.pprint_into(pprint_string, symbols);
+                then_branch.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(":");
-                else_branch.node.pprint_into(pprint_string, symbols);
+                else_branch.value.pprint_into(pprint_string, symbols);
                 pprint_string.push_str(" )");
             }
 
-            Expression::Unary {
-                ref expr,
-                ref operator,
-            } => {
-                pprint_string.push_str(operator.pprint());
-                expr.node.pprint_into(pprint_string, symbols);
+            Expression::Unary { ref expr, ref op } => {
+                pprint_string.push_str(op.value.pprint());
+                expr.value.pprint_into(pprint_string, symbols);
             }
 
             Expression::This(_) => {
@@ -465,7 +401,7 @@ impl Expression {
 
             Expression::Var(ref v, ..) => {
                 pprint_string.push_str(" ");
-                pprint_string.push_str(&symbols.name(*v));
+                pprint_string.push_str(&symbols.name(v.value));
             }
         }
     }
@@ -476,18 +412,20 @@ mod test {
     use lexer::Lexer;
     use symbol::{SymbolFactory, Table};
     use parser::Parser;
+    use util::emmiter::Reporter;
 
     #[test]
     fn it_works() {
         let input = "var a =0;";
+        let reporter = Reporter::new();
         use std::rc::Rc;
-        let tokens = Lexer::new(input).lex().unwrap();
+        let tokens = Lexer::new(input,reporter.clone()).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
-        let ast = Parser::new(tokens, &mut symbols).parse().unwrap();
+        let ast = Parser::new(tokens, reporter.clone(),&mut symbols).parse().unwrap();
 
         for statement in ast {
-            statement.node.pprint(&mut symbols);
+            statement.value.pprint(&mut symbols);
         }
     }
 }

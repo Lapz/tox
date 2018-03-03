@@ -1,73 +1,220 @@
-mod test;
 use token::{Token, TokenType};
 use std::iter::Peekable;
 use std::vec::IntoIter;
 use super::ast::expr::*;
 use super::ast::statement::*;
-use util::pos::{Postition, WithPos};
+use util::pos::{Span, Spanned};
+use util::emmiter::Reporter;
 use symbol::{Symbol, Table};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
-    tokens: Peekable<IntoIter<Token<'a>>>,
+    tokens: Peekable<IntoIter<Spanned<Token<'a>>>>,
+    reporter: Reporter,
     loop_depth: i32,
     pub symbols: &'a mut Table<()>,
+    parsing_cond: bool,
     variable_use_maker: VariableUseMaker,
 }
 
-use std::fmt::{Display, Formatter};
-use std::fmt;
+pub type ParserResult<T> = Result<T, ()>;
 
-#[derive(Clone, Debug)]
-pub enum ParserError {
-    IllegalExpression(String),
-    EOF,
-    Expected(String),
-    Break(String),
-    TooManyParams(Postition),
+/// Macro that is used to generate the code that parse a binary op
+macro_rules! binary {
+    ($_self:ident,$e:ident,$lhs:expr,$func:ident) => {
+        while $_self.recognise($e) {
+            let op = $_self.get_binary_op()?;
+
+            let rhs = Box::new($_self.$func()?);
+
+           $lhs = Spanned {
+                span: $lhs.get_span().to(rhs.get_span()),
+                value: Expression::Binary {
+                    lhs: Box::new($lhs),
+                    op,
+                    rhs,
+                },
+            }
+        }
+    };
+
+    ($_self:ident,$expr:expr, $lhs:expr,$func:ident) => {
+        while $_self.matched($expr) {
+            let op = $_self.get_binary_op()?;
+
+            let rhs = Box::new($_self.$func()?);
+
+           $lhs = Spanned {
+                span: $lhs.get_span().to(rhs.get_span()),
+                value: Expression::Binary {
+                    lhs: Box::new($lhs),
+                    op,
+                    rhs,
+                },
+            }
+        }
+    };
+}
+/// Macro that expands to a match that takes a `TokenType` and turns it into a Operator
+macro_rules! get_op {
+    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
+        {
+            match $_self.advance() {
+                 $(Some(Spanned{
+                    value: Token {
+                        token:TokenType::$p,
+                    },
+                    ref span,
+                }) => {
+                    Ok(Spanned {
+                    span: *span,
+                    value: Op::$t,
+                    })
+                },)+
+
+                Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
+                let msg = format!(
+                    "Expected one of '!' '+' '-' '/''*' '=' '<' '>' '<=' '=>' but instead found {}",
+                    token
+                );
+
+                $_self.error(msg, *span);
+
+                Err(())
+            }
+
+
+            None => {
+                $_self.reporter.global_error("Unexpected EOF");
+                    Err(())
+                }
+            }
+        }
+
+    }
 }
 
-impl Display for ParserError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match *self {
-            ParserError::Expected(ref e)
-            | ParserError::IllegalExpression(ref e)
-            | ParserError::Break(ref e) => write!(f, "{}", e),
-            ParserError::EOF => write!(f, "Unexpected end of file"),
-            ParserError::TooManyParams(ref pos) => write!(f, "Too many params on  {}", pos),
+// The unary version of the get_binary_op macro
+macro_rules! get_unary_op {
+    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
+        {
+            match $_self.advance() {
+                 $(Some(Spanned{
+                    value: Token {
+                        token:TokenType::$p,
+                    },
+                    ref span,
+                }) => {
+                    Ok(Spanned {
+                    span: *span,
+                    value: UnaryOp::$t,
+                    })
+                },)+
+
+                Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
+                let msg = format!(
+                    "Expected one  '!' or '-' but instead found {}",
+                    token
+                );
+
+                $_self.error(msg, *span);
+
+                Err(())
+            }
+
+
+            None => {
+                $_self.reporter.global_error("Unexpected EOF");
+                    Err(())
+                }
+            }
         }
+
+    }
+}
+
+macro_rules! get_assign_op {
+    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
+        {
+            match $_self.advance() {
+                 $(Some(Spanned{
+                    value: Token {
+                        token:TokenType::$p,
+                    },
+                    ref span,
+                }) => {
+                    Ok(Spanned {
+                    span: *span,
+                    value: AssignOperator::$t,
+                    })
+                },)+
+
+                Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
+                let msg = format!(
+                    "Expected one  '+=','-=','*=','/='  but instead found {}",
+                    token
+                );
+
+                $_self.error(msg, *span);
+
+                Err(())
+            }
+
+
+            None => {
+                $_self.reporter.global_error("Unexpected EOF");
+                    Err(())
+                }
+            }
+        }
+
     }
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>, symbols: &'a mut Table<()>) -> Self {
+    pub fn new(
+        tokens: Vec<Spanned<Token<'a>>>,
+        reporter: Reporter,
+        symbols: &'a mut Table<()>,
+    ) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
             symbols,
             loop_depth: 0,
+            parsing_cond: false,
+            reporter,
             variable_use_maker: VariableUseMaker::new(),
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<WithPos<Statement>>, Vec<ParserError>> {
+    pub fn parse(&mut self) -> ParserResult<Vec<Spanned<Statement>>> {
         let mut statements = vec![];
 
-        let mut errors = vec![];
+        let mut had_error = false;
 
         while self.peek(|token| token != &TokenType::EOF) {
             match self.declaration() {
                 Ok(statement) => statements.push(statement),
-                Err(e) => {
-                    errors.push(e);
+                Err(_) => {
+                    had_error = true;
                     self.synchronize();
                 }
             }
         }
 
-        if errors.is_empty() {
-            Ok(statements)
+        if had_error {
+            Err(())
         } else {
-            Err(errors)
+            Ok(statements)
         }
     }
 
@@ -75,13 +222,14 @@ impl<'a> Parser<'a> {
         self.advance();
 
         while self.peek(|token| token == &TokenType::EOF) {
-            match self.advance().map(|t| t.token) {
+            match self.advance().map(|span| span.value.token) {
                 Some(TokenType::CLASS)
                 | Some(TokenType::FUNCTION)
                 | Some(TokenType::IDENTIFIER(_))
                 | Some(TokenType::FOR)
                 | Some(TokenType::IF)
                 | Some(TokenType::WHILE)
+                | Some(TokenType::LBRACE)
                 | Some(TokenType::RETURN) => break,
                 None => unreachable!(),
                 _ => self.advance(),
@@ -89,8 +237,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn error(&self, message: &str, pos: Postition) -> String {
-        format!("{} on {}", message, pos)
+    fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.error(msg, span)
     }
 
     fn peek<F>(&mut self, mut check: F) -> bool
@@ -99,14 +247,13 @@ impl<'a> Parser<'a> {
     {
         self.tokens
             .peek()
-            .map_or(false, |token| check(&token.token))
+            .map_or(false, |span| check(&span.value.token))
     }
 
-    fn recognise(&mut self, token: &TokenType<'a>) -> bool {
-        if self.peek(|peeked| peeked == token) {
+    fn recognise(&mut self, token: TokenType<'a>) -> bool {
+        if self.peek(|peeked| peeked == &token) {
             return true;
         }
-
         false
     }
 
@@ -122,268 +269,354 @@ impl<'a> Parser<'a> {
         found
     }
 
-    fn advance(&mut self) -> Option<Token<'a>> {
+    fn advance(&mut self) -> Option<Spanned<Token<'a>>> {
         self.tokens.next()
     }
 
-    fn consume(&mut self, token_to_check: &TokenType<'a>, msg: &str) -> Result<(), ParserError> {
+    pub fn consume(&mut self, token_to_check: &TokenType<'a>, msg: &str) -> ParserResult<()> {
         match self.advance() {
-            Some(Token { ref token, ref pos }) => {
+            Some(Spanned {
+                ref span,
+                value: Token { ref token },
+            }) => {
                 if token == token_to_check {
                     return Ok(());
                 }
 
-                Err(ParserError::Expected(self.error(msg, *pos)))
+                let msg = format!("{} but instead found {}", msg, token);
+
+                self.error(msg, *span);
+
+                Err(())
             }
-            None => Err(ParserError::EOF),
+            None => {
+                self.reporter.global_error("Unexpected EOF");
+                Err(())
+            }
         }
     }
 
-    fn consume_get_pos(
+    fn consume_get_span(
         &mut self,
         token_to_check: &TokenType<'a>,
         msg: &str,
-    ) -> Result<Postition, ParserError> {
+    ) -> ParserResult<Span> {
         match self.advance() {
-            Some(Token { ref token, ref pos }) => {
+            Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
                 if token == token_to_check {
-                    return Ok(*pos);
+                    return Ok(*span);
                 }
 
-                Err(ParserError::Expected(self.error(msg, *pos)))
+                let msg = format!("{} but instead found {}", msg, token);
+
+                self.error(msg, *span);
+
+                Err(())
             }
-            None => Err(ParserError::EOF),
+            None => {
+                self.reporter.global_error("Unexpected EOF");
+                Err(())
+            }
         }
     }
 
-    fn consume_name(&mut self, msg: &str) -> Result<Symbol, ParserError> {
+    pub fn consume_get_symbol(&mut self, msg: &str) -> ParserResult<Spanned<Symbol>> {
         match self.advance() {
-            Some(Token {
-                token: TokenType::IDENTIFIER(ident),
-                ..
-            }) => Ok(self.symbols.symbol(ident)),
-            Some(Token { ref pos, .. }) => Err(ParserError::Expected(self.error(msg, *pos))),
-            None => Err(ParserError::EOF),
+            Some(Spanned {
+                value:
+                    Token {
+                        token: TokenType::IDENTIFIER(ident),
+                    },
+                ref span,
+            }) => Ok(Spanned {
+                span: *span,
+                value: self.symbols.symbol(ident),
+            }),
+            Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
+                let msg = format!("{} but instead found {}", msg, token);
+
+                self.error(msg, *span);
+
+                Err(())
+            }
+            None => {
+                self.reporter.global_error("Unexpected EOF");
+                Err(())
+            }
         }
     }
 
-    fn consume_name_symbol(&mut self, msg: &str) -> Result<(Symbol, Postition), ParserError> {
+    fn consume_get_symbol_and_span(&mut self, msg: &str) -> ParserResult<(Span, Spanned<Symbol>)> {
         match self.advance() {
-            Some(Token {
-                token: TokenType::IDENTIFIER(ident),
-                ref pos,
-            }) => Ok((self.symbols.symbol(ident), *pos)),
-            Some(Token { ref pos, .. }) => Err(ParserError::Expected(self.error(msg, *pos))),
-            None => Err(ParserError::EOF),
+            Some(Spanned {
+                value:
+                    Token {
+                        token: TokenType::IDENTIFIER(ident),
+                    },
+                ref span,
+            }) => Ok((
+                *span,
+                Spanned {
+                    span: *span,
+                    value: self.symbols.symbol(ident),
+                },
+            )),
+            Some(Spanned {
+                value: Token { ref token },
+                ref span,
+            }) => {
+                let msg = format!("{} but instead found {}", msg, token);
+
+                self.error(msg, *span);
+
+                Err(())
+            }
+            None => {
+                self.reporter.global_error("Unexpected EOF");
+                Err(())
+            }
         }
     }
 
-    fn get_pos(&mut self) -> Result<Postition, ParserError> {
-        match self.advance() {
-            Some(Token { ref pos, .. }) => Ok(*pos),
-            None => Err(ParserError::EOF),
-        }
+    fn get_unary_op(&mut self) -> ParserResult<Spanned<UnaryOp>> {
+        get_unary_op!(self,{
+            BANG => Bang,
+            MINUS => Minus
+        })
     }
 
-    fn get_type(&mut self) -> Result<Option<ExpressionTy>, ParserError> {
-        if self.recognise(&TokenType::COLON) {
-            self.advance();
+    fn get_binary_op(&mut self) -> ParserResult<Spanned<Op>> {
+        get_op!(self, {
+            AND => And,
+            OR => Or,
+            GREATERTHAN =>  GreaterThan,
+            LESSTHAN => LessThan,
+            GREATERTHANEQUAL => GreaterThanEqual,
+            LESSTHANEQUAL => LessThanEqual,
+            PLUS => Plus,
+            MINUS => Minus,
+            STAR => Star,
+            SLASH => Slash,
+            EQUALEQUAL => EqualEqual,
+            MODULO => Modulo
+        })
+    }
 
-            let ty = self.parse_type()?;
-
-            Ok(Some(ty))
-        } else {
-            Ok(None)
-        }
+    fn get_assign_op(&mut self) -> ParserResult<Spanned<AssignOperator>> {
+        get_assign_op!(self,{
+            ASSIGN => Equal,
+            PLUSASSIGN => PlusEqual,
+            MINUSASSIGN => MinusEqual,
+            STARASSIGN => StarEqual,
+            SLASHASSIGN => SlashEqual
+        })
     }
 }
 
-// Statements
 impl<'a> Parser<'a> {
-    fn declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        if self.recognise(&TokenType::VAR) {
+    fn declaration(&mut self) -> ParserResult<Spanned<Statement>> {
+        if self.recognise(TokenType::VAR) {
             self.var_declaration()
-        } else if self.recognise(&TokenType::FUNCTION) {
+        } else if self.recognise(TokenType::FUNCTION) {
             self.function("function")
-        } else if self.recognise(&TokenType::CLASS) {
+        } else if self.recognise(TokenType::CLASS) {
             self.class_declaration()
-        } else if self.recognise(&TokenType::TYPE) {
+        } else if self.recognise(TokenType::TYPE) {
             self.type_declaration()
         } else {
             self.statement()
         }
     }
 
-    fn statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        if self.recognise(&TokenType::LBRACE) {
+    fn statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        if self.recognise(TokenType::LBRACE) {
             self.block()
-        } else if self.recognise(&TokenType::BREAK) {
+        } else if self.recognise(TokenType::BREAK) {
             self.break_statement()
-        } else if self.recognise(&TokenType::CONTINUE) {
+        } else if self.recognise(TokenType::CONTINUE) {
             self.continue_statement()
-        } else if self.recognise(&TokenType::RETURN) {
+        } else if self.recognise(TokenType::RETURN) {
             self.return_statement()
-        } else if self.recognise(&TokenType::IF) {
+        } else if self.recognise(TokenType::IF) {
             self.if_statement()
-        } else if self.recognise(&TokenType::DO) {
+        } else if self.recognise(TokenType::DO) {
             self.do_statement()
-        } else if self.recognise(&TokenType::WHILE) {
+        } else if self.recognise(TokenType::WHILE) {
             self.while_statement()
-        } else if self.recognise(&TokenType::FOR) {
+        } else if self.recognise(TokenType::FOR) {
             self.for_statement()
-        } else if self.recognise(&TokenType::PRINT) {
+        } else if self.recognise(TokenType::PRINT) {
             self.print_statement()
-        } else if self.recognise(&TokenType::EXTERN) {
-            self.extern_statment()
         } else {
             self.expression_statement()
         }
     }
 
-    fn expression_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let expr = self.expression()?;
+    fn block(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected a '{' ")?;
 
-        let pos = self.consume_get_pos(&TokenType::SEMICOLON, "Expected \';\' after value.")?;
+        let mut statements = vec![];
 
-        Ok(WithPos::new(Statement::ExpressionStmt(expr), pos))
-    }
-
-    fn print_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let print_pos = self.get_pos()?;
-
-        let expr = self.expression()?;
-
-        self.consume(
-            &TokenType::SEMICOLON,
-            "Expected a \';\' after a print statement",
-        )?;
-
-        Ok(WithPos::new(Statement::Print(expr), print_pos))
-    }
-
-    fn function(&mut self, kind: &str) -> Result<WithPos<Statement>, ParserError> {
-        let func_pos = self.get_pos()?;
-
-        let name = self.consume_name(&format!("Expected a {} name", kind))?;
-        Ok(WithPos::new(
-            Statement::Function {
-                name,
-                body: self.fun_body(kind)?,
-            },
-            func_pos,
-        ))
-    }
-
-    fn extern_statment(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let extern_pos = self.get_pos()?;
-
-        let name = self.consume_name("Expected a extern function name")?;
-
-        self.consume(&TokenType::LPAREN, "Expected \'('")?;
-
-        let mut params = Vec::with_capacity(32);
-
-        let mut returns = None;
-
-        if !self.recognise(&TokenType::RPAREN) {
-            while {
-                if params.len() >= 32 {
-                    return Err(ParserError::TooManyParams(extern_pos));
-                };
-
-                let identifier = self.consume_name("Expected an external param name")?;
-
-                self.consume(&TokenType::COLON, "Expected a colon")?;
-
-                let ty = self.parse_type()?;
-
-                params.push((identifier, ty));
-
-                self.recognise(&TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
+        while !self.recognise(TokenType::RBRACE) {
+            statements.push(self.declaration()?);
         }
 
-        self.consume(&TokenType::RPAREN, "Expected ')' after parameters.")?;
+        let close_span =
+            self.consume_get_span(&TokenType::RBRACE, "Expected a \'}\' after block.")?;
+        Ok(Spanned {
+            span: open_span.to(close_span),
+            value: Statement::Block(statements),
+        })
+    }
 
-        if self.recognise(&TokenType::FRETURN) {
+    fn break_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        self.consume_get_span(&TokenType::BREAK, "Expected a 'break' ")?;
+        Ok(Spanned {
+            value: Statement::Break,
+            span: self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?,
+        })
+    }
+
+    fn continue_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        self.consume_get_span(&TokenType::CONTINUE, "Expected 'continue' ")?;
+        Ok(Spanned {
+            value: Statement::Continue,
+            span: self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?,
+        })
+    }
+
+    fn expression_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let expr = self.expression()?;
+
+        Ok(Spanned {
+            span: self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?,
+            value: Statement::Expr(expr),
+        })
+    }
+
+    fn print_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::PRINT, "Expected 'print' ")?;
+
+        let expr = self.expression()?;
+
+        Ok(Spanned {
+            span: open_span.to(self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?),
+            value: Statement::Print(expr),
+        })
+    }
+
+    fn return_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::RETURN, "Expected 'return' ")?;
+
+        let expr = if self.recognise(TokenType::SEMICOLON) {
+            let span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
+
+            return Ok(Spanned {
+                span: open_span.to(span),
+                value: Statement::Return(Spanned {
+                    span: span,
+                    value: Expression::Literal(Literal::Nil),
+                }),
+            });
+        } else {
+            self.expression()?
+        };
+
+        let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
+
+        Ok(Spanned {
+            span: open_span.to(close_span),
+            value: Statement::Return(expr),
+        })
+    }
+
+    fn while_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::WHILE, "Expected 'while' ")?;
+
+        self.parsing_cond = true;
+        let cond = self.expression()?;
+        self.parsing_cond = false;
+
+        let body = self.statement()?;
+
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Statement::While {
+                cond,
+                body: Box::new(body),
+            },
+        })
+    }
+
+    fn do_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::DO, "Expected 'do' ")?;
+
+        let body = self.statement()?;
+
+        self.consume(&TokenType::WHILE, "Expected while after 'do' condition")?;
+
+        let cond = self.expression()?;
+
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Statement::While {
+                cond,
+                body: Box::new(body),
+            },
+        })
+    }
+
+    fn if_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::IF, "Expected 'if' ")?;
+
+        self.parsing_cond = true;
+        let cond = self.expression()?;
+        self.parsing_cond = false;
+
+        let then = Box::new(self.statement()?);
+
+        let (close_span, otherwise) = if self.recognise(TokenType::ELSE) {
             self.advance();
 
-            returns = Some(self.parse_type()?);
-        }
+            let otherwise = self.statement()?;
 
-        self.consume(&TokenType::SEMICOLON, "Expected ';' after extern function ")?;
+            (Some(otherwise.get_span()), Some(Box::new(otherwise)))
+        } else {
+            (None, None)
+        };
 
-        Ok(WithPos::new(
-            Statement::ExternFunction {
-                name,
-                params,
-                returns,
+        Ok(Spanned {
+            span: open_span.to(close_span.unwrap_or(open_span)),
+            value: Statement::If {
+                cond,
+                then,
+                otherwise,
             },
-            extern_pos,
-        ))
+        })
     }
 
-    // Keyword statements
+    fn for_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::FOR, "Expected 'for' ")?;
 
-    fn break_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let break_pos = self.get_pos()?;
-
-        if !(self.loop_depth >= 0) {
-            let error = "Must be inside a loop to use break".to_owned();
-            return Err(ParserError::Break(error));
-        }
-
-        self.consume(&TokenType::SEMICOLON, "Expected ';' after 'break'")?;
-
-        Ok(WithPos::new(Statement::Break, break_pos))
-    }
-
-    fn continue_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let cont_pos = self.get_pos()?;
-
-        if !(self.loop_depth >= 0) {
-            let error = "Must be inside a loop to use 'continue'".to_owned();
-
-            return Err(ParserError::Break(error));
-        }
-
-        self.consume(&TokenType::SEMICOLON, "Expected ';' after 'continue'")?;
-
-        Ok(WithPos::new(Statement::Continue, cont_pos))
-    }
-
-    fn type_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let type_pos = self.get_pos()?;
-
-        let alias = self.consume_name("Expected a type alias name")?;
-
-        self.consume(&TokenType::ASSIGN, "Expecte a \'=\'")?;
-
-        let ty = self.parse_type()?;
-
-        self.consume(&TokenType::SEMICOLON, "Expected ';' after 'type alias'")?;
-
-        Ok(WithPos::new(Statement::TypeAlias { alias, ty }, type_pos))
-    }
-
-    // Control Flow Statements
-
-    fn for_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let for_pos = self.get_pos()?;
         self.consume(&TokenType::LPAREN, "Expected '(' after 'for'")?;
 
-        let mut initializer = None;
+        let mut init = None;
 
-        if self.recognise(&TokenType::SEMICOLON) {
+        if self.recognise(TokenType::SEMICOLON) {
             self.advance();
-        } else if self.recognise(&TokenType::VAR) {
-            initializer = Some(Box::new(self.var_declaration()?));
+        } else if self.recognise(TokenType::VAR) {
+            init = Some(Box::new(self.var_declaration()?));
         } else {
-            initializer = Some(Box::new(self.expression_statement()?));
+            init = Some(Box::new(self.expression_statement()?));
         }
 
-        let condition = if !self.recognise(&TokenType::SEMICOLON) {
+        let cond = if !self.recognise(TokenType::SEMICOLON) {
             Some(self.expression()?)
         } else {
             None
@@ -391,7 +624,7 @@ impl<'a> Parser<'a> {
 
         self.consume(&TokenType::SEMICOLON, "Expected ';' after loop condition .")?;
 
-        let increment = if !self.recognise(&TokenType::RPAREN) {
+        let incr = if !self.recognise(TokenType::RPAREN) {
             Some(self.expression()?)
         } else {
             None
@@ -399,171 +632,200 @@ impl<'a> Parser<'a> {
 
         self.consume(&TokenType::RPAREN, "Expected ')' after for clauses.")?;
 
-        self.loop_depth += 1;
+        let body = self.statement()?;
 
-        let body = Box::new(self.statement()?);
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Statement::For {
+                init,
+                cond,
+                incr,
+                body: Box::new(body),
+            },
+        })
+    }
 
-        self.loop_depth -= 1;
-        Ok(WithPos::new(
-            Statement::ForStmt {
-                initializer,
-                condition,
-                increment,
+    fn function(&mut self, kind: &str) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
+
+        let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
+
+        let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
+
+        let mut params = Vec::with_capacity(32);
+        let mut returns = None;
+
+        if !self.recognise(TokenType::RPAREN) {
+            loop {
+                if params.len() >= 32 {
+                    self.error("Too many params", open_span);
+                    break;
+                };
+
+                let msg = format!("Expected a {} name", kind);
+
+                let (open_span, name) = self.consume_get_symbol_and_span(&msg)?;
+
+                self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                let ty = self.parse_type()?;
+
+                params.push(Spanned {
+                    span: open_span.to(ty.get_span()),
+                    value: FunctionParams { name, ty },
+                });
+
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        let rparen_span =
+            self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
+
+        if self.recognise(TokenType::FRETURN) {
+            self.advance();
+
+            returns = Some(self.parse_type()?);
+        }
+
+        let body = Box::new(self.block()?);
+
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Statement::Function {
+                name,
                 body,
-            },
-            for_pos,
-        ))
-    }
-
-    fn do_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let do_pos = self.get_pos()?;
-
-        let body = self.statement()?;
-
-        self.consume(&TokenType::WHILE, "Expected while after 'do' condition")?;
-
-        self.consume(&TokenType::LPAREN, "Expected '(' after while'")?;
-
-        let condition = self.expression()?;
-
-        self.consume(&TokenType::RPAREN, "Expected ')' after 'while'")?;
-
-        let do_statement = Statement::DoStmt {
-            body: Box::new(body),
-            condition,
-        };
-
-        Ok(WithPos::new(do_statement, do_pos))
-    }
-
-    fn while_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let while_pos = self.get_pos()?; // Eats the while;
-
-        self.consume(&TokenType::LPAREN, "Expected '(' after while'")?;
-
-        let condition = self.expression()?;
-
-        self.consume(&TokenType::RPAREN, "Expected ')' after 'while'")?;
-
-        self.loop_depth += 1;
-
-        let body = self.statement()?;
-
-        let while_st = Statement::WhileStmt {
-            condition,
-            body: Box::new(body),
-        };
-
-        self.loop_depth -= 1;
-
-        Ok(WithPos::new(while_st, while_pos))
-    }
-
-    fn if_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let if_pos = self.get_pos()?; // Eats the if ;
-
-        self.consume(&TokenType::LPAREN, "Expected a \'(\' after \'if\'")?;
-
-        let condition = self.expression()?;
-
-        self.consume(&TokenType::RPAREN, "Expected ')' after 'if'")?;
-
-        let then_branch = Box::new(self.statement()?);
-        let mut else_branch = None;
-
-        if self.recognise(&TokenType::ELSE) {
-            self.advance();
-            else_branch = Some(Box::new(self.statement()?));
-
-            return Ok(WithPos::new(
-                Statement::IfStmt {
-                    condition,
-                    then_branch,
-                    else_branch,
+                params: Spanned {
+                    span: param_span.to(rparen_span),
+                    value: params,
                 },
-                if_pos,
-            ));
-        }
-
-        Ok(WithPos::new(
-            Statement::IfStmt {
-                condition,
-                then_branch,
-                else_branch,
+                returns,
             },
-            if_pos,
-        ))
+        })
     }
 
-    fn return_statement(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos()?;
+    fn type_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::TYPE, "Expected 'type' ")?;
 
-        let value = if !self.recognise(&TokenType::COLON) {
-            Some(self.expression()?)
-        } else {
-            None
-        };
+        let alias = self.consume_get_symbol("Expected an identifier")?;
 
-        self.consume(&TokenType::SEMICOLON, "Expected a ")?;
+        self.consume(&TokenType::ASSIGN, "Expected '=' ")?;
 
-        Ok(WithPos::new(Statement::Return(value), pos))
+        let ty = self.parse_type()?;
+
+        let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?;
+
+        Ok(Spanned {
+            span: open_span.to(close_span),
+            value: Statement::TypeAlias { alias, ty },
+        })
     }
 
-    fn block(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let pos = self.get_pos()?;
-
-        let mut statement = vec![];
-
-        while !self.recognise(&TokenType::RBRACE) {
-            statement.push(self.declaration()?);
-        }
-
-        self.consume(&TokenType::RBRACE, "Expected a \'}\' after block.")?;
-
-        Ok(WithPos::new(Statement::Block(statement), pos))
-    }
-
-    fn class_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let class_pos = self.get_pos()?;
-
-        let name = self.consume_name("Expected a class name")?;
-
-        let superclass = if self.recognise(&TokenType::LESSTHAN) {
+    fn parse_type(&mut self) -> ParserResult<Spanned<Ty>> {
+        if self.recognise(TokenType::NIL) {
+            Ok(Spanned {
+                value: Ty::Nil,
+                span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
+            })
+        } else if self.recognise(TokenType::LBRACKET) {
             self.advance();
-            Some(self.consume_name("Expected a superclass name")?)
+            let ty = self.parse_type()?;
+            Ok(Spanned {
+                value: Ty::Arr(Box::new(ty)),
+                span: self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?,
+            })
+        } else if self.recognise(TokenType::FUNCTION) {
+            let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'fun' ")?;
+
+            self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
+            let mut param_ty = Vec::with_capacity(32);
+
+            if !self.recognise(TokenType::RPAREN) {
+                loop {
+                    param_ty.push(self.parse_type()?);
+
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
+
+            if self.recognise(TokenType::FRETURN) {
+                self.advance();
+                let ty = self.parse_type()?;
+                Ok(Spanned {
+                    span: open_span.to(ty.get_span()),
+                    value: Ty::Func(param_ty, Some(Box::new(ty))),
+                })
+            } else {
+                Ok(Spanned {
+                    span: open_span.to(close_span),
+                    value: Ty::Func(param_ty, None),
+                })
+            }
+        } else {
+            let ty = self.consume_get_symbol("Expected a type param")?;
+
+            Ok(Spanned {
+                span: ty.get_span().to(ty.get_span()),
+                value: Ty::Simple(ty),
+            })
+        }
+    }
+
+    fn class_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
+        let struct_span = self.consume_get_span(&TokenType::CLASS, "Expected 'class' ")?;
+
+        let name = self.consume_get_symbol("Expected a class name")?;
+
+        let superclass = if self.recognise(TokenType::LESSTHAN) {
+            self.advance();
+            Some(self.consume_get_symbol("Expected a superclass name")?)
         } else {
             None
         };
 
-        self.consume(&TokenType::LBRACE, "Expect \'{ \' before class body")?;
-
-        let mut methods = vec![];
         let mut properties = vec![];
+        let mut methods = vec![];
+        let open_span =
+            self.consume_get_span(&TokenType::LBRACE, "Expected a '{' after class name")?;
 
-        while !self.recognise(&TokenType::RBRACE) {
-            if !self.recognise(&TokenType::FUNCTION) {
-                while {
-                    let name = self.consume_name("Expected an Property name ")?;
+        while !self.recognise(TokenType::RBRACE) {
+            if !self.recognise(TokenType::FUNCTION) {
+                loop {
+                    let (open_span, name) =
+                        self.consume_get_symbol_and_span("Expected a property name")?;
 
-                    self.consume(
-                        &TokenType::COLON,
-                        "Expected a colon after a class property name",
-                    )?;
+                    self.consume(&TokenType::COLON, "Expected ':'")?;
 
                     let ty = self.parse_type()?;
 
-                    properties.push((name, ty));
+                    properties.push(Spanned {
+                        span: open_span.to(ty.get_span()),
+                        value: Field { name, ty },
+                    });
 
-                    self.recognise(&TokenType::COMMA)
-                        && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                } {}
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
 
                 self.consume(
                     &TokenType::SEMICOLON,
                     "Expected a semicolon after declaring properties",
                 )?;
 
-                if self.recognise(&TokenType::RBRACE) {
+                if self.recognise(TokenType::RBRACE) {
                     break;
                 }
             }
@@ -571,67 +833,64 @@ impl<'a> Parser<'a> {
             methods.push(self.function("method")?);
         }
 
-        self.consume(&TokenType::RBRACE, "Expect \'}\'' after class body")?;
+        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
 
-        Ok(WithPos::new(
-            Statement::Class {
-                methods,
+        Ok(Spanned {
+            span: struct_span.to(close_span),
+            value: Statement::Class {
                 name,
-                properties,
                 superclass,
+                body: Spanned {
+                    span: open_span.to(close_span),
+                    value: (methods, properties),
+                },
             },
-            class_pos,
-        ))
+        })
     }
 
-    fn var_declaration(&mut self) -> Result<WithPos<Statement>, ParserError> {
-        let var_pos = self.get_pos()?;
-        let name = self.consume_name("Expected an IDENTIFIER after a \'var\' ")?;
+    fn var_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
+        let open_span = self.consume_get_span(&TokenType::VAR, "Expected 'var' ")?;
 
-        let var_type = self.get_type()?;
+        let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
-        if self.recognise(&TokenType::SEMICOLON) {
-            let pos = self.consume_get_pos(&TokenType::SEMICOLON, "Expected a ';'")?;
+        let ty = if self.recognise(TokenType::COLON) {
+            let close_span = self.consume_get_span(&TokenType::COLON, "Expected ':'")?;
+            return Ok(Spanned {
+                span: open_span.to(close_span),
+                value: Statement::Var {
+                    ident,
+                    ty: None,
+                    expr: None,
+                },
+            });
+        } else {
+            None
+        };
 
-            let value = None;
+        self.consume(&TokenType::ASSIGN, "Expected '='")?;
 
-            return Ok(WithPos::new(Statement::Var(name, value, var_type), pos));
-        }
+        let expr = if self.recognise(TokenType::SEMICOLON) {
+            None
+        } else {
+            Some(self.expression()?)
+        };
 
-        if self.matched(vec![
-            TokenType::ASSIGN,
-            TokenType::MINUSASSIGN,
-            TokenType::PLUSASSIGN,
-            TokenType::SLASHASSIGN,
-            TokenType::STARASSIGN,
-        ]) {
-            self.advance();
-            let expr = self.expression()?;
-            self.consume(
-                &TokenType::SEMICOLON,
-                "Expect \';\' after variable decleration.",
-            )?;
-            return Ok(WithPos::new(
-                Statement::Var(name, Some(expr), var_type),
-                var_pos,
-            ));
-        }
+        let close_span = self.consume_get_span(&TokenType::SEMICOLON, "Expected ';'")?;
 
-        Err(ParserError::Expected(self.error(
-            "Expected an assignment",
-            var_pos,
-        )))
+        Ok(Spanned {
+            span: open_span.to(close_span),
+            value: Statement::Var { ident, ty, expr },
+        })
     }
 }
 
-// Expression Parsing
 impl<'a> Parser<'a> {
-    fn expression(&mut self) -> Result<WithPos<Expression>, ParserError> {
+    fn expression(&mut self) -> ParserResult<Spanned<Expression>> {
         self.assignment()
     }
 
-    fn assignment(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let expr = self.ternary()?;
+    fn assignment(&mut self) -> ParserResult<Spanned<Expression>> {
+        let expr = self.parse_or()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -640,41 +899,47 @@ impl<'a> Parser<'a> {
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
         ]) {
-            let next = self.advance().unwrap();
-            let kind = get_assign_operator(&next.token);
+            let kind = self.get_assign_op()?;
 
             let value = self.assignment()?;
 
-            match expr.node {
-                Expression::Var(name, _) => {
-                    return Ok(WithPos::new(
-                        Expression::Assign {
+            match expr {
+                Spanned {
+                    span,
+                    value: Expression::Var(var, _),
+                } => {
+                    return Ok(Spanned {
+                        span: span.to(value.get_span()),
+                        value: Expression::Assign {
                             handle: self.variable_use_maker.next(),
-                            name,
+                            name: var,
                             value: Box::new(value),
                             kind,
                         },
-                        next.pos,
-                    ))
+                    })
                 }
 
-                Expression::Get {
-                    object, property, ..
+                Spanned {
+                    span,
+                    value:
+                        Expression::Get {
+                            object, property, ..
+                        },
                 } => {
-                    return Ok(WithPos::new(
-                        Expression::Set {
+                    return Ok(Spanned {
+                        span: span.to(value.get_span()),
+                        value: Expression::Set {
                             object,
                             name: property,
                             value: Box::new(value),
                             handle: self.variable_use_maker.next(),
                         },
-                        next.pos,
-                    ));
+                    })
                 }
-                _ => {
-                    return Err(ParserError::IllegalExpression(
-                        "Error at '=': Invalid assignment target.".to_owned(),
-                    ))
+
+                Spanned { ref span, .. } => {
+                    self.error("Not a valid assingment target", *span);
+                    return Err(());
                 }
             }
         }
@@ -682,231 +947,247 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn ternary(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut condition = self.or()?;
+    fn parse_or(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_and()?;
 
-        while self.matched(vec![TokenType::QUESTION]) {
-            let ternary_pos = self.consume_get_pos(&TokenType::QUESTION, "Expected a '?'")?;
+        use self::TokenType::*;
 
-            let then_branch = Box::new(self.expression()?);
+        binary!(self, OR, lhs, parse_and);
 
-            self.consume(
-                &TokenType::COLON,
-                "Expected ':' after lhs ternary condition.",
-            )?;
-
-            let else_branch = Box::new(self.ternary()?);
-
-            condition = WithPos::new(
-                Expression::Ternary {
-                    condition: Box::new(condition),
-                    then_branch,
-                    else_branch,
-                },
-                ternary_pos,
-            )
-        }
-
-        Ok(condition)
+        Ok(lhs)
     }
 
-    fn or(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.and()?;
+    fn parse_and(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_equality()?;
 
-        while self.recognise(&TokenType::OR) {
-            let next = self.advance().unwrap();
+        use self::TokenType::*;
 
-            let operator = get_logic_operator(&next.token);
+        binary!(self, OR, lhs, parse_equality);
 
-            let right = Box::new(self.and()?);
-
-            expr = WithPos::new(
-                Expression::Logical {
-                    left: Box::new(expr),
-                    operator,
-                    right,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn and(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.equality()?;
+    fn parse_equality(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_comparison()?;
 
-        while self.recognise(&TokenType::AND) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL],
+            lhs,
+            parse_comparison
+        );
 
-            let operator = get_logic_operator(&next.token);
-
-            let right = Box::new(self.equality()?);
-
-            expr = WithPos::new(
-                Expression::Logical {
-                    left: Box::new(expr),
-                    operator,
-                    right,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn equality(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.comparison()?;
+    fn parse_comparison(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_addition()?;
 
-        while self.matched(vec![TokenType::BANGEQUAL, TokenType::EQUALEQUAL]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![
+                TokenType::LESSTHAN,
+                TokenType::LESSTHANEQUAL,
+                TokenType::GREATERTHAN,
+                TokenType::GREATERTHANEQUAL,
+            ],
+            lhs,
+            parse_addition
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.comparison()?);
-
-            expr = WithPos::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            );
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn comparison(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.addition()?;
+    fn parse_addition(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_multiplication()?;
 
-        while self.matched(vec![
-            TokenType::LESSTHAN,
-            TokenType::LESSTHANEQUAL,
-            TokenType::GREATERTHAN,
-            TokenType::GREATERTHANEQUAL,
-        ]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::MINUS, TokenType::PLUS],
+            lhs,
+            parse_multiplication
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.addition()?);
-
-            expr = WithPos::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn addition(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.multiplication()?;
+    fn parse_multiplication(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut lhs = self.parse_unary()?;
 
-        while self.matched(vec![TokenType::MINUS, TokenType::MODULO, TokenType::PLUS]) {
-            let next = self.advance().unwrap();
+        binary!(
+            self,
+            vec![TokenType::SLASH, TokenType::STAR],
+            lhs,
+            parse_unary
+        );
 
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.multiplication()?);
-
-            expr = WithPos::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
+        Ok(lhs)
     }
 
-    fn multiplication(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        let mut expr = self.unary()?;
-
-        while self.matched(vec![TokenType::SLASH, TokenType::STAR]) {
-            let next = self.advance().unwrap();
-
-            let operator = get_operator(&next.token);
-
-            let right_expr = Box::new(self.unary()?);
-
-            expr = WithPos::new(
-                Expression::Binary {
-                    left_expr: Box::new(expr),
-                    operator,
-                    right_expr,
-                },
-                next.pos,
-            )
-        }
-
-        Ok(expr)
-    }
-
-    fn unary(&mut self) -> Result<WithPos<Expression>, ParserError> {
+    fn parse_unary(&mut self) -> ParserResult<Spanned<Expression>> {
         if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
-            let next = self.advance().unwrap();
+            let op = self.get_unary_op()?;
 
-            let operator = get_unary_operator(&next.token);
+            let right = self.parse_unary()?;
 
-            let right = Box::new(self.unary()?);
-
-            return Ok(WithPos::new(
-                Expression::Unary {
-                    expr: right,
-                    operator,
+            return Ok(Spanned {
+                span: op.get_span().to(right.get_span()),
+                value: Expression::Unary {
+                    op,
+                    expr: Box::new(right),
                 },
-                next.pos,
-            ));
+            });
         }
 
         self.call()
     }
 
-    fn call(&mut self) -> Result<WithPos<Expression>, ParserError> {
+    fn primary(&mut self) -> ParserResult<Spanned<Expression>> {
+        match self.advance() {
+            Some(Spanned {
+                ref span,
+                ref value,
+            }) => match value.token {
+                TokenType::TRUE(_) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::True(true)),
+                }),
+                TokenType::NIL => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Nil),
+                }),
+                TokenType::FALSE(_) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::False(false)),
+                }),
+                TokenType::STRING(ref s) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Str(s.clone())),
+                }),
+                TokenType::INT(n) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Int(n)),
+                }),
+                TokenType::FLOAT(n) => Ok(Spanned {
+                    span: *span,
+                    value: Expression::Literal(Literal::Float(n)),
+                }),
+
+                TokenType::THIS => Ok(Spanned {
+                    span: *span,
+                    value: Expression::This(self.variable_use_maker.next()),
+                }),
+
+                TokenType::LPAREN => {
+                    let expr = Box::new(self.expression()?);
+
+                    let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected ')'")?;
+
+                    Ok(Spanned {
+                        span: span.to(close_span),
+                        value: Expression::Grouping { expr },
+                    })
+                }
+
+                TokenType::IDENTIFIER(ident) => {
+                    let ident = Spanned {
+                        value: self.symbols.symbol(ident),
+                        span: *span,
+                    };
+                    self.parse_ident(ident)
+                }
+
+                ref other => {
+                    let msg = format!("No rules expected '{}' ", other);
+
+                    self.error(msg, *span);
+
+                    Err(())
+                }
+            },
+            None => Err(()), // TODO: ADD an error?
+        }
+    }
+
+    fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
+        if self.recognise(TokenType::LBRACE) {
+            self.advance();
+
+            let mut props = vec![];
+
+            if !self.recognise(TokenType::RBRACE) {
+                loop {
+                    let (open_span, symbol) =
+                        self.consume_get_symbol_and_span("Expected a field name")?;
+
+                    self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                    let expr = self.expression()?;
+
+                    props.push(Spanned {
+                        span: open_span.to(symbol.get_span()),
+                        value: InstanceField { symbol, expr },
+                    });
+
+                    if self.recognise(TokenType::COMMA) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
+
+            Ok(Spanned {
+                span: symbol.get_span().to(close_span),
+                value: Expression::ClassInstance {
+                    symbol,
+                    props: Box::new(props),
+                },
+            })
+        } else {
+            return Ok(Spanned {
+                span: symbol.get_span(),
+                value: Expression::Var(symbol, self.variable_use_maker.next()),
+            });
+        }
+    }
+
+    fn call(&mut self) -> ParserResult<Spanned<Expression>> {
         let mut expr = self.primary()?;
 
         loop {
-            if self.recognise(&TokenType::LBRACKET) {
-                self.advance();
+            if self.recognise(TokenType::LPAREN) {
+                expr = self.finish_call(expr)?;
+            } else if self.recognise(TokenType::LBRACKET) {
+                let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
+
                 let index = Box::new(self.expression()?);
-                let index_pos = self.consume_get_pos(
-                    &TokenType::RBRACKET,
-                    "Expected ']' to close an index expression",
-                )?;
-                return Ok(WithPos::new(
-                    Expression::IndexExpr {
+
+                let close_span = self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?;
+
+                return Ok(Spanned {
+                    span: open_span.to(close_span),
+                    value: Expression::Index {
                         target: Box::new(expr),
                         index,
                     },
-                    index_pos,
-                ));
-            } else if self.recognise(&TokenType::LPAREN) {
-                let call_pos = self.advance().unwrap().pos;
-                expr.pos = call_pos;
-                expr = self.finish_call(expr)?;
-            } else if self.recognise(&TokenType::DOT) {
+                });
+            } else if self.recognise(TokenType::DOT) {
                 self.advance();
 
-                let (property, pos) = self.consume_name_symbol("Expected a \'class\' name")?;
-                expr = WithPos::new(
-                    Expression::Get {
+                let (close_span, property) =
+                    self.consume_get_symbol_and_span("Expected an identifier")?;
+
+                expr = Spanned {
+                    span: expr.get_span().to(close_span),
+                    value: Expression::Get {
                         object: Box::new(expr),
                         property,
                         handle: self.variable_use_maker.next(),
                     },
-                    pos,
-                )
+                }
             } else {
                 break;
             }
@@ -915,272 +1196,31 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn primary(&mut self) -> Result<WithPos<Expression>, ParserError> {
-        match self.advance() {
-            Some(Token { ref token, ref pos }) => match *token {
-                TokenType::FALSE(_) => Ok(WithPos::new(
-                    Expression::Literal(Literal::False(false)),
-                    *pos,
-                )),
-                TokenType::TRUE(_) => {
-                    Ok(WithPos::new(Expression::Literal(Literal::True(true)), *pos))
+    fn finish_call(&mut self, callee: Spanned<Expression>) -> ParserResult<Spanned<Expression>> {
+        self.consume(&TokenType::LPAREN, "Expected '(' ")?;
+
+        let mut args = vec![];
+
+        if !self.recognise(TokenType::RPAREN) {
+            loop {
+                args.push(self.expression()?);
+
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
                 }
-                TokenType::NIL => Ok(WithPos::new(Expression::Literal(Literal::Nil), *pos)),
-                TokenType::INT(ref i) => {
-                    Ok(WithPos::new(Expression::Literal(Literal::Int(*i)), *pos))
-                }
-                TokenType::FLOAT(ref f) => {
-                    Ok(WithPos::new(Expression::Literal(Literal::Float(*f)), *pos))
-                }
-                TokenType::STRING(ref s) => Ok(WithPos::new(
-                    Expression::Literal(Literal::Str(s.clone())),
-                    *pos,
-                )),
-                TokenType::IDENTIFIER(ident) => {
-                    if self.recognise(&TokenType::LBRACE) {
-                        self.advance();
-                        let mut properties = vec![];
-
-                        if self.recognise(&TokenType::RBRACE) {
-                            self.advance();
-                            return Ok(WithPos::new(
-                                Expression::ClassInstance {
-                                    properties,
-                                    name: self.symbols.symbol(ident),
-                                },
-                                *pos,
-                            ));
-                        }
-
-                        while {
-                            let property_name = self.consume_name("Expected an Property name ")?;
-
-                            self.consume(
-                                &TokenType::COLON,
-                                "Expected a colon after a class property name",
-                            )?;
-
-                            let property_value = self.expression()?;
-
-                            properties.push((property_name, property_value));
-
-                            self.recognise(&TokenType::COMMA)
-                                && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                        } {}
-
-                        self.consume(
-                            &TokenType::RBRACE,
-                            "Expected a \'}\' to close a Class Instance",
-                        )?;
-
-                        return Ok(WithPos::new(
-                            Expression::ClassInstance {
-                                properties,
-                                name: self.symbols.symbol(ident),
-                            },
-                            *pos,
-                        ));
-                    }
-
-                    Ok(WithPos::new(
-                        Expression::Var(self.symbols.symbol(ident), self.variable_use_maker.next()),
-                        *pos,
-                    ))
-                }
-                TokenType::THIS => Ok(WithPos::new(
-                    Expression::This(self.variable_use_maker.next()),
-                    *pos,
-                )),
-
-                TokenType::FUNCTION => self.fun_body("function"),
-                TokenType::LBRACKET => {
-                    let mut items = vec![];
-
-                    if self.recognise(&TokenType::RBRACKET) {
-                        self.advance();
-                        return Ok(WithPos::new(Expression::Array { items }, *pos));
-                    }
-
-                    while {
-                        items.push(self.expression()?);
-
-                        self.recognise(&TokenType::COMMA)
-                            && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                    } {}
-
-                    self.consume(
-                        &TokenType::RBRACKET,
-                        "Expected a ']' to close the brackets .",
-                    )?;
-
-                    Ok(WithPos::new(Expression::Array { items }, *pos))
-                }
-
-                TokenType::LBRACE => {
-                    let mut items: Vec<
-                        (WithPos<Expression>, WithPos<Expression>),
-                    > = vec![];
-
-                    if self.recognise(&TokenType::RBRACE) {
-                        self.advance();
-                        return Ok(WithPos::new(Expression::Dict { items }, *pos));
-                    }
-
-                    while {
-                        let left = self.expression()?;
-                        self.consume(&TokenType::COLON, "Expected a ':' after dict key ")?;
-                        let right = self.expression()?;
-
-                        items.push((left, right));
-                        self.recognise(&TokenType::COMMA)
-                            && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-                    } {}
-
-                    let pos = self.consume_get_pos(
-                        &TokenType::RBRACE,
-                        "Expected a '}' to close a dictionary.",
-                    )?;
-
-                    Ok(WithPos::new(Expression::Dict { items }, pos))
-                }
-
-                TokenType::LPAREN => {
-                    let expr = Box::new(self.expression()?);
-                    let pos =
-                        self.consume_get_pos(&TokenType::RPAREN, "Expect \')\' after expression")?;
-
-                    Ok(WithPos::new(Expression::Grouping { expr }, pos))
-                }
-
-                ref e => {
-                    println!("{:?} on {}", e, *pos);
-                    Err(ParserError::IllegalExpression(self.error(
-                        "Cannot parse the expression",
-                        *pos,
-                    )))
-                }
-            },
-            None => Err(ParserError::EOF),
-        }
-    }
-}
-
-// Helper parsing functions
-impl<'a> Parser<'a> {
-    fn fun_body(&mut self, kind: &str) -> Result<WithPos<Expression>, ParserError> {
-        let func_pos = self.consume_get_pos(&TokenType::LPAREN, "Expected '(' ")?;
-
-        let mut parameters = Vec::with_capacity(32);
-        let mut returns = None;
-
-        if !self.recognise(&TokenType::RPAREN) {
-            while {
-                if parameters.len() >= 32 {
-                    return Err(ParserError::TooManyParams(func_pos));
-                };
-
-                let identifier = self.consume_name(&format!("Expected a {} name", kind))?;
-
-                self.consume(&TokenType::COLON, "Expected a colon")?;
-
-                let ty = self.parse_type()?;
-
-                parameters.push((identifier, ty));
-
-                self.recognise(&TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
-        }
-
-        self.consume(&TokenType::RPAREN, "Expected ')' after parameters.")?;
-
-        if self.recognise(&TokenType::FRETURN) {
-            self.advance();
-
-            returns = Some(self.parse_type()?);
-        }
-
-        let body = Box::new(self.block()?);
-
-        Ok(WithPos::new(
-            Expression::Func {
-                parameters,
-                body,
-                returns,
-            },
-            func_pos,
-        ))
-    }
-
-    fn parse_type(&mut self) -> Result<ExpressionTy, ParserError> {
-        if self.recognise(&TokenType::NIL) {
-            self.advance();
-
-            Ok(ExpressionTy::Nil)
-        } else if self.recognise(&TokenType::LBRACKET) {
-            self.advance();
-            let ty = self.parse_type()?;
-            self.consume(
-                &TokenType::RBRACKET,
-                "Expected a \']\' to close an array type",
-            )?;
-
-            Ok(ExpressionTy::Arr(Box::new(ty)))
-        } else if self.recognise(&TokenType::FUNCTION) {
-            self.advance();
-            self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
-            let mut param_ty = Vec::with_capacity(32);
-
-            while {
-                let ty = self.parse_type()?;
-
-                param_ty.push(ty);
-
-                self.recognise(&TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
-
-            self.consume(&TokenType::RPAREN, "Expected  \')\'")?;
-
-            if self.recognise(&TokenType::FRETURN) {
-                self.advance();
-                let ty = self.parse_type()?;
-                Ok(ExpressionTy::Func(param_ty, Some(Box::new(ty))))
-            } else {
-                Ok(ExpressionTy::Func(param_ty, None))
             }
-        } else {
-            let ty = self.consume_name("Expected a type param")?;
-            Ok(ExpressionTy::Simple(ty))
-        }
-    }
-
-    fn finish_call(
-        &mut self,
-        callee: WithPos<Expression>,
-    ) -> Result<WithPos<Expression>, ParserError> {
-        let mut arguments = Vec::with_capacity(32);
-
-        if !self.recognise(&TokenType::RPAREN) {
-            while {
-                if arguments.len() >= 32 {
-                    return Err(ParserError::TooManyParams(callee.pos));
-                }
-
-                arguments.push(self.expression()?);
-                self.recognise(&TokenType::COMMA)
-                    && self.advance().map(|t| t.token) == Some(TokenType::COMMA)
-            } {}
         }
 
-        let pos = self.consume_get_pos(&TokenType::RPAREN, "Expected ')' after arguments.")?;
+        let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected '(' ")?;
 
-        Ok(WithPos::new(
-            Expression::Call {
+        Ok(Spanned {
+            span: callee.get_span().to(close_span),
+            value: Expression::Call {
                 callee: Box::new(callee),
-                arguments,
+                args,
             },
-            pos,
-        ))
+        })
     }
 }

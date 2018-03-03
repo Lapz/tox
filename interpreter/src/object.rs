@@ -2,9 +2,9 @@ use std::ops::Not;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use util::pos::WithPos;
+use std::fmt::{self, Display, Formatter};
+use std::str;
+use util::pos::Spanned;
 use util::symbol::Symbol;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::VariableUseHandle;
@@ -20,13 +20,10 @@ pub enum Object {
     BuiltIn(Symbol, BuiltInFunction),
     Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
     Int(i64),
-    Str(String),
+    Str(Vec<u8>),
     Bool(bool),
-
-    Return(Box<Object>),
     Array(Vec<Object>),
-    Dict(HashMap<Object, Object>),
-    Function(Symbol, Vec<Symbol>, WithPos<Statement>, Environment),
+    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
         methods: HashMap<Symbol, Object>,
         fields: Rc<RefCell<HashMap<Symbol, Object>>>,
@@ -60,7 +57,7 @@ impl Object {
     pub fn bind(&self, instance: &Object) -> Object {
         match *self {
             Object::Function(ref name, ref param, ref body, ref fn_env) => {
-                let environment = Environment::new_with_outer(fn_env);
+                let mut environment = Environment::new_with_outer(fn_env);
 
                 environment.define(Symbol(0), instance.clone());
 
@@ -153,24 +150,10 @@ impl Object {
             Object::Class(ref name, _, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
-            Object::Return(ref val) => val.as_string(),
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                fmt_string
-            }
-
             Object::Int(b) => b.to_string(),
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
-            Object::Str(ref s) => s.clone(),
+            Object::Str(ref s) => str::from_utf8(s).unwrap().into(),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -222,15 +205,12 @@ impl PartialEq for Object {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
-
-            (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
             (&Object::Function(ref x, _, _, _), &Object::Function(ref y, _, _, _))
             | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _))
             | (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
-            (&Object::Return(ref x), &Object::Return(ref y)) => x == y,
             (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
             _ => false,
         }
@@ -243,8 +223,8 @@ impl fmt::Debug for Object {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
-            Object::Return(ref r) => write!(f, "return {}", r),
-            Object::None => write!(f, "none"),
+
+            Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
                 write!(f, "instance")?;
 
@@ -278,22 +258,10 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
 
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                write!(f, "{}", fmt_string)
-            }
 
             Object::Nil => write!(f, "nil"),
 
-            Object::Str(ref s) => write!(f, "{}", s),
+            Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
 }
@@ -305,9 +273,8 @@ impl PartialOrd for Object {
             (&Object::Int(ref s), &Object::Int(ref o)) => (s.partial_cmp(o)),
             (&Object::Str(ref s), &Object::Str(ref o)) => (s.partial_cmp(o)),
             (&Object::Bool(ref s), &Object::Bool(ref o)) => (s.partial_cmp(o)),
-            (&Object::Return(ref s), &Object::Return(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
-            (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
+            
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
             _ => None,
         }
@@ -321,8 +288,8 @@ impl Display for Object {
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::Function(ref s, _, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
-            Object::None => write!(f, "none"),
-            Object::Return(ref r) => write!(f, "return {}", r),
+            Object::None => write!(f, "None"),
+
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),
@@ -340,20 +307,9 @@ impl Display for Object {
             }
             Object::Nil => write!(f, "nil"),
 
-            Object::Str(ref s) => write!(f, "{}", s.clone()),
+            Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
 
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                write!(f, "{}", fmt_string)
-            }
+         
         }
     }
 }

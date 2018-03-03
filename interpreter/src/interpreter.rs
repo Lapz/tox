@@ -1,13 +1,14 @@
 use super::object::Object;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
-use util::pos::WithPos;
+use util::pos::Spanned;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 use util::symbol::Symbol;
 use interpreter::env::Environment;
 use std::mem;
+
 #[derive(Debug)]
 pub enum RuntimeError {
     Break,
@@ -22,11 +23,11 @@ pub enum RuntimeError {
 }
 
 pub(crate) fn evaluate_statement(
-    statement: &WithPos<Statement>,
+    statement: &Spanned<Statement>,
     locals: &HashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
-    match statement.node {
+    match statement.value {
         Statement::Block(ref statements) => {
             let mut environment = Environment::new_with_outer(env);
 
@@ -41,13 +42,12 @@ pub(crate) fn evaluate_statement(
         Statement::Continue => Err(RuntimeError::Continue),
         Statement::Class {
             ref name,
-            ref methods,
+            ref body,
             ref superclass,
-            ..
         } => {
-            env.define(*name, Object::Nil);
+            env.define(name.value, Object::Nil);
 
-            let mut sym_methods: HashMap<Symbol, Object> = HashMap::new();
+            let mut class_methods: HashMap<Symbol, Object> = HashMap::new();
 
             let mut sklass = None;
 
@@ -61,31 +61,33 @@ pub(crate) fn evaluate_statement(
 
                 s = true;
 
-                let superclass = env.get(sclass, 1)?;
+                let superclass = env.get(&sclass.value, 1)?;
 
-                sklass = Some(Box::new(env.get(sclass, 1).unwrap().clone()));
+                sklass = Some(Box::new(env.get(&sclass.value, 1).unwrap().clone()));
                 env.define(Symbol(1), superclass);
             }
 
-            for method in methods {
-                match method.node {
-                    Statement::Function { ref name, ref body } => match body.node {
-                        Expression::Func {
-                            ref parameters,
-                            ref body,
-                            ..
-                        } => {
-                            let mut params: Vec<Symbol> =
-                                parameters.iter().map(|params| params.0).collect();
-                            sym_methods.insert(
-                                *name,
-                                Object::Function(*name, params, *body.clone(), env.clone()),
-                            );
-                        }
-                        _ => unreachable!(),
-                    },
+            for method in &body.value.0 {
+                match method.value {
+                    Statement::Function {
+                        ref name,
+                        ref body,
+                        ref params,
+                        ..
+                    } => {
+                        let mut func_params = Vec::with_capacity(params.value.len());
 
-                    _ => unimplemented!(),
+                        for param in &params.value {
+                            func_params.push(param.value.name.value);
+                        }
+
+                        class_methods.insert(
+                            name.value,
+                            Object::Function(name.value, func_params, *body.clone(), env.clone()),
+                        );
+                    }
+
+                    _ => unreachable!(),
                 }
             }
 
@@ -93,19 +95,12 @@ pub(crate) fn evaluate_statement(
                 mem::replace(env, old_env);
             }
 
-            env.define(*name, Object::Class(*name, sklass, sym_methods));
+            env.define(name.value, Object::Class(name.value, sklass, class_methods));
             Ok(Object::None)
         }
-
-        Statement::DoStmt {
-            ref condition,
-            ref body,
-        }
-        | Statement::WhileStmt {
-            ref body,
-            ref condition,
-        } => {
-            while evaluate_expression(condition, locals, env)?.is_truthy() {
+        
+        Statement::While { ref body, ref cond } => {
+            while evaluate_expression(cond, locals, env)?.is_truthy() {
                 match evaluate_statement(body, locals, env) {
                     Ok(value) => value,
                     Err(e) => match e {
@@ -119,15 +114,15 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::ExpressionStmt(ref expr) => evaluate_expression(expr, locals, env),
+        Statement::Expr(ref expr) => evaluate_expression(expr, locals, env),
 
-        Statement::ForStmt {
-            ref initializer,
-            ref condition,
-            ref increment,
+        Statement::For {
+            ref init,
+            ref cond,
+            ref incr,
             ref body,
         } => {
-            if initializer.is_none() && condition.is_none() && increment.is_none() {
+            if init.is_none() && cond.is_none() && incr.is_none() {
                 loop {
                     match evaluate_statement(body, locals, env) {
                         Ok(value) => value,
@@ -141,11 +136,11 @@ pub(crate) fn evaluate_statement(
                 return Ok(Object::None);
             }
 
-            if let Some(ref init) = *initializer {
+            if let Some(ref init) = *init {
                 evaluate_statement(init, locals, env)?;
             }
 
-            if let Some(ref cond) = *condition {
+            if let Some(ref cond) = *cond {
                 while evaluate_expression(cond, locals, env)?.is_truthy() {
                     match evaluate_statement(body, locals, env) {
                         Ok(value) => value,
@@ -156,7 +151,7 @@ pub(crate) fn evaluate_statement(
                         },
                     };
 
-                    if let Some(ref inc) = *increment {
+                    if let Some(ref inc) = *incr {
                         evaluate_expression(inc, locals, env)?;
                     }
                 }
@@ -165,35 +160,24 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Function { ref name, ref body } => match body.node {
-            Expression::Func {
-                ref parameters,
-                ref body,
-                ..
-            } => {
-                let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
-                env.define(
-                    *name,
-                    Object::Function(*name, params, *body.clone(), env.clone()),
-                );
-
-                Ok(Object::None)
-            }
-            _ => unreachable!(),
-        },
-
-        Statement::IfStmt {
-            ref condition,
-            ref else_branch,
-            ref then_branch,
+        Statement::Function {
+            ref name,
+            ref body,
+            ref params,
+            ..
         } => {
-            if evaluate_expression(condition, locals, env)?.is_truthy() {
-                evaluate_statement(then_branch, locals, env)
-            } else if let Some(ref else_statement) = *else_branch {
-                evaluate_statement(else_statement, locals, env)
-            } else {
-                Ok(Object::None)
+            let mut func_params = Vec::with_capacity(params.value.len());
+
+            for param in &params.value {
+                func_params.push(param.value.name.value);
             }
+
+            env.define(
+                name.value,
+                Object::Function(name.value, func_params, *body.clone(), env.clone()),
+            );
+
+            Ok(Object::None)
         }
 
         Statement::Print(ref expr) => {
@@ -201,59 +185,64 @@ pub(crate) fn evaluate_statement(
             use std::io::prelude::*;
 
             let value = evaluate_expression(expr, locals, env)?;
-
             println!("{}", value.as_string());
             let _ = io::stdout().flush();
 
             Ok(Object::None)
         }
 
-        Statement::Return(ref r) => {
-            if let Some(ref expr) = *r {
-                return Err(RuntimeError::Return(Box::new(evaluate_expression(
-                    expr,
-                    locals,
-                    env,
-                )?)));
+        Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
+            expr,
+            locals,
+            env,
+        )?))),
+
+        Statement::If {
+            ref cond,
+            ref otherwise,
+            ref then,
+        } => {
+            if evaluate_expression(cond, locals, env)?.is_truthy() {
+                evaluate_statement(then, locals, env)
+            } else if let Some(ref else_statement) = *otherwise {
+                evaluate_statement(else_statement, locals, env)
+            } else {
+                Ok(Object::None)
             }
-            Err(RuntimeError::Return(Box::new(Object::Nil)))
         }
 
         Statement::TypeAlias { .. } => Ok(Object::None),
 
-        Statement::Var(ref symbol, ref expression, ..) => {
-            if let Some(ref expr) = *expression {
+        Statement::Var {
+            ref ident,
+            ref expr,
+            ..
+        } => {
+            if let Some(ref expr) = *expr {
                 let value = evaluate_expression(expr, locals, env)?;
-                env.define(*symbol, value);
+                env.define(ident.value, value);
                 return Ok(Object::None);
             }
 
-            env.define(*symbol, Object::Nil);
+            env.define(ident.value, Object::Nil);
 
             Ok(Object::None)
         }
-
-        _ => unimplemented!("Extern linking of functions is not available"),
     }
 }
 
 fn evaluate_expression(
-    expression: &WithPos<Expression>,
+    expression: &Spanned<Expression>,
     locals: &HashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
-    match expression.node {
+    match expression.value {
         Expression::Array { ref items, .. } => {
             let mut values = Vec::with_capacity(items.len());
             for item in items {
                 values.push(evaluate_expression(item, locals, env)?)
             }
             Ok(Object::Array(values))
-        }
-
-        Expression::This(ref handle) => {
-            let distance = get_distance(locals, &Symbol(0), handle)?;
-            env.get(&Symbol(0), distance)
         }
 
         Expression::Assign {
@@ -264,12 +253,12 @@ fn evaluate_expression(
         } => {
             let mut value = evaluate_expression(value, locals, env)?;
 
-            let distance = get_distance(locals, name, handle)?;
-            match *kind {
+            let distance = get_distance(locals, &name.value, handle)?;
+            match kind.value {
                 AssignOperator::Equal => (),
 
                 AssignOperator::PlusEqual => {
-                    let current = env.get(name, distance)?;
+                    let current = env.get(&name.value, distance)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x + y),
@@ -279,7 +268,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::MinusEqual => {
-                    let current = env.get(name, distance)?;
+                    let current = env.get(&name.value, distance)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x - y),
@@ -289,7 +278,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::SlashEqual => {
-                    let current = env.get(name, distance)?;
+                    let current = env.get(&name.value, distance)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x / y),
@@ -299,7 +288,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::StarEqual => {
-                    let current = env.get(name, distance)?;
+                    let current = env.get(&name.value, distance)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x * y),
@@ -309,56 +298,69 @@ fn evaluate_expression(
                 }
             }
 
-            env.assign(name, value.clone(), distance)?;
+            env.assign(&name.value, value.clone(), distance)?;
 
             Ok(value)
         }
 
         Expression::Binary {
-            ref left_expr,
-            ref operator,
-            ref right_expr,
+            ref lhs,
+            ref op,
+            ref rhs,
         } => {
-            let left = evaluate_expression(left_expr, locals, env)?;
-            let right = evaluate_expression(right_expr, locals, env)?;
+            let left = evaluate_expression(lhs, locals, env)?;
+            let right = evaluate_expression(rhs, locals, env)?;
 
-            match *operator {
-                Operator::BangEqual => Ok(Object::Bool(left != right)),
-                Operator::EqualEqual => Ok(Object::Bool(left == right)),
-                Operator::LessThan => Ok(Object::Bool(left < right)),
-                Operator::LessThanEqual => Ok(Object::Bool(left <= right)),
-                Operator::GreaterThan => Ok(Object::Bool(left > right)),
-                Operator::GreaterThanEqual => Ok(Object::Bool(left >= right)),
-                Operator::Plus => add(left, right),
-                Operator::Minus => minus(left, right),
-                Operator::Star => times(left, right),
-                Operator::Slash => divide(left, right),
-                Operator::Modulo => modulo(left, right),
-                Operator::Exponential => expon(left, right),
+            match op.value {
+                Op::BangEqual => Ok(Object::Bool(left != right)),
+                Op::EqualEqual => Ok(Object::Bool(left == right)),
+                Op::LessThan => Ok(Object::Bool(left < right)),
+                Op::LessThanEqual => Ok(Object::Bool(left <= right)),
+                Op::GreaterThan => Ok(Object::Bool(left > right)),
+                Op::GreaterThanEqual => Ok(Object::Bool(left >= right)),
+                Op::Plus => add(left, right),
+                Op::Minus => minus(left, right),
+                Op::Star => times(left, right),
+                Op::Slash => divide(left, right),
+                Op::Modulo => modulo(left, right),
+                Op::Exponential => expon(left, right),
+                Op::And => {
+                    if !left.is_truthy() {
+                        Ok(left)
+                    } else {
+                        Ok(right)
+                    }
+                }
+                Op::Or => {
+                    if left.is_truthy() {
+                        Ok(left)
+                    } else {
+                        Ok(right)
+                    }
+                }
             }
         }
 
         Expression::Call {
             ref callee,
-            ref arguments,
+            ref args,
         } => {
             let callee = evaluate_expression(callee, locals, env)?;
 
-            let mut obj_arguments = Vec::with_capacity(arguments.len());
+            let mut obj_arguments = Vec::with_capacity(args.len());
 
-            for expr in arguments {
-                obj_arguments.push(evaluate_expression(expr, locals, env)?);
+            for arg in args {
+                obj_arguments.push(evaluate_expression(arg, locals, env)?);
             }
 
             callee.call(&obj_arguments, locals)
         }
-
         Expression::ClassInstance {
-            ref name,
-            ref properties,
-        } => match env.get(name, 0)? {
+            ref symbol,
+            ref props,
+        } => match env.get(&symbol.value, 0)? {
             Object::Class(_, ref superclass, ref methods) => {
-                let mut props: HashMap<Symbol, Object> = HashMap::new();
+                let mut instance_props: HashMap<Symbol, Object> = HashMap::new();
                 let mut s_class_methods = None;
 
                 if let Some(ref sklass) = *superclass {
@@ -370,46 +372,46 @@ fn evaluate_expression(
                     }
                 }
 
-                for &(ref name, ref expr) in properties {
-                    let value = evaluate_expression(expr, locals, env)?;
-                    props.insert(*name, value);
+                for prop in props.iter() {
+                    let value = evaluate_expression(&prop.value.expr, locals, env)?;
+                    instance_props.insert(prop.value.symbol.value, value);
                 }
 
                 env.define(
-                    *name,
+                    symbol.value,
                     Object::Instance {
                         methods: methods.clone(),
-                        fields: Rc::new(RefCell::new(props.clone())),
+                        fields: Rc::new(RefCell::new(instance_props.clone())),
                         sclassmethods: s_class_methods.clone(),
                     },
                 );
 
                 Ok(Object::Instance {
                     methods: methods.clone(),
-                    fields: Rc::new(RefCell::new(props)),
+                    fields: Rc::new(RefCell::new(instance_props)),
                     sclassmethods: s_class_methods,
                 })
             }
 
-            _ => unreachable!(),
+            _ => unimplemented!(),
         },
 
-        Expression::Dict { ref items } => {
-            let mut dict: HashMap<Object, Object> = HashMap::new();
+        Expression::Literal(ref lit) => evaluate_literal(lit),
+        Expression::Get {
+            ref object,
+            ref property,
+            ..
+        } => {
+            let object = evaluate_expression(object, locals, env)?;
 
-            for &(ref key, ref value) in items {
-                let eval_key = evaluate_expression(key, locals, env)?;
-                let eval_value = evaluate_expression(value, locals, env)?;
-
-                dict.insert(eval_key, eval_value);
+            match object {
+                instance @ Object::Instance { .. } => instance.get_property(&property.value, env),
+                class @ Object::Class(_, _, _) => class.get_property(&property.value, env),
+                _ => Err(RuntimeError::NotAnIn),
             }
-
-            Ok(Object::Dict(dict))
         }
-
         Expression::Grouping { ref expr } => evaluate_expression(expr, locals, env),
-
-        Expression::IndexExpr {
+        Expression::Index {
             ref target,
             ref index,
         } => {
@@ -429,61 +431,8 @@ fn evaluate_expression(
 
                     Ok(r[index as usize].to_owned())
                 }
-                Object::Dict(r) => {
-                    let index = match index {
-                        Object::Int(i) => Object::Int(i),
-                        Object::Str(r) => Object::Str(r),
-                        Object::Bool(b) => Object::Bool(b),
-                        _ => return Err(RuntimeError::InvalidIndexType),
-                    };
-
-                    let nil = Object::Nil;
-
-                    Ok(r.get(&index).unwrap_or(&nil).clone())
-                }
                 _ => unimplemented!(),
             }
-        }
-        Expression::Literal(ref lit) => evaluate_literal(lit),
-
-        Expression::Logical {
-            ref left,
-            ref operator,
-            ref right,
-        } => {
-            let left = evaluate_expression(left, locals, env)?;
-
-            match *operator {
-                LogicOperator::Or => if left.is_truthy() {
-                    return Ok(left);
-                },
-                LogicOperator::And => if !left.is_truthy() {
-                    return Ok(left);
-                },
-            }
-
-            let right = evaluate_expression(right, locals, env)?;
-
-            Ok(right)
-        }
-
-        Expression::Func {
-            ref parameters,
-            ref body,
-            ..
-        } => {
-            let mut params: Vec<Symbol> = parameters.iter().map(|params| params.0).collect();
-            Ok(Object::Function(
-                env.unique_id(),
-                params,
-                *body.clone(),
-                env.clone(),
-            ))
-        }
-        Expression::Var(ref symbol, ref handle) => {
-            let distance = get_distance(locals, symbol, handle)?;
-
-            env.get(symbol, distance)
         }
 
         Expression::Set {
@@ -497,7 +446,7 @@ fn evaluate_expression(
 
             match object {
                 mut instance @ Object::Instance { .. } => {
-                    instance.set(*name, &value);
+                    instance.set(name.value, &value);
                 }
                 _ => return Err(RuntimeError::NotAnIn),
             }
@@ -505,46 +454,41 @@ fn evaluate_expression(
             Ok(value)
         }
 
-        Expression::Get {
-            ref object,
-            ref property,
-            ..
-        } => {
-            let object = evaluate_expression(object, locals, env)?;
+        Expression::Var(ref symbol, ref handle) => {
+            let distance = get_distance(locals, &symbol.value, handle)?;
 
-            match object {
-                instance @ Object::Instance { .. } => instance.get_property(property, env),
-                class @ Object::Class(_, _, _) => class.get_property(property, env),
-                _ => Err(RuntimeError::NotAnIn),
-            }
+            env.get(&symbol.value, distance)
         }
+
         Expression::Ternary {
             ref condition,
             ref then_branch,
             ref else_branch,
         } => {
-            let condition = evaluate_expression(condition, locals, env)?;
+            let cond = evaluate_expression(condition, locals, env)?;
 
-            if condition.is_truthy() {
+            if cond.is_truthy() {
                 evaluate_expression(then_branch, locals, env)
             } else {
                 evaluate_expression(else_branch, locals, env)
             }
         }
 
-        Expression::Unary {
-            ref operator,
-            ref expr,
-        } => {
+        Expression::This(ref handle) => {
+            let distance = get_distance(locals, &Symbol(0), handle)?;
+            env.get(&Symbol(0), distance)
+        }
+
+        Expression::Unary { ref op, ref expr } => {
             let right = evaluate_expression(expr, locals, env)?;
 
-            match *operator {
-                UnaryOperator::Minus => match right {
+            match op.value {
+                UnaryOp::Minus => match right {
                     Object::Float(f) => Ok(Object::Float(-f)),
                     Object::Int(i) => Ok(Object::Int(-i)),
                     _ => unreachable!(),
                 },
-                UnaryOperator::Bang => Ok(!right),
+                UnaryOp::Bang => Ok(!right),
             }
         }
     }
@@ -554,10 +498,10 @@ fn add(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l + r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l + r)),
-        (Object::Str(ref mut l), Object::Str(ref r)) => {
-            l.push_str(r);
+        (Object::Str(mut l), Object::Str(r)) => {
+            l.extend(r.iter());
 
-            Ok(Object::Str(l.to_owned()))
+            Ok(Object::Str(l))
         }
         _ => unreachable!(),
     }
@@ -588,7 +532,7 @@ fn expon(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     }
 }
-
+#[inline]
 fn minus(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l - r)),
@@ -596,7 +540,7 @@ fn minus(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     }
 }
-
+#[inline]
 fn divide(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l / r)),
@@ -609,7 +553,7 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
     match *expression {
         Literal::Float(i) => Ok(Object::Float(i)),
         Literal::Int(i) => Ok(Object::Int(i)),
-        Literal::Str(ref s) => Ok(Object::Str(s.to_owned())),
+        Literal::Str(ref s) => Ok(Object::Str(s.clone())),
         Literal::Nil => Ok(Object::Nil),
         Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
     }
@@ -629,15 +573,17 @@ fn get_distance(
 pub mod env {
 
     use std::collections::HashMap;
-    use util::env::TypeEnv;
+
     use util::symbol::Symbol;
     use util::Unique;
 
     use object::Object;
     use super::RuntimeError;
     use builtins::BuiltIn;
+    use util::env::TypeEnv;
 
     use std::rc::Rc;
+
     use std::cell::RefCell;
 
     #[derive(Debug, Clone)]

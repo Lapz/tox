@@ -1,39 +1,28 @@
 use std::collections::HashMap;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, VariableUseHandle};
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use util::pos::{Postition, WithPos};
+use util::pos::{Span, Spanned};
+use util::emmiter::Reporter;
 use util::symbol::Symbol;
+use util::env::TypeEnv;
+
+#[derive(Debug, PartialEq)]
+pub enum State {
+    Declared,
+    Defined,
+    Read,
+}
 
 #[derive(Debug)]
 pub struct Resolver {
-    scopes: Vec<HashMap<Symbol, bool>>,
+    scopes: Vec<HashMap<Symbol, State>>,
     current_function: FunctionType,
     current_class: ClassType,
     pub locals: HashMap<VariableUseHandle, usize>,
+    pub reporter: Reporter,
 }
 
-#[derive(Debug)]
-pub enum ResolverError {
-    ReadInInit(String),
-    AllReadyDecleared(String),
-    Return(String),
-    This(String),
-    Init(String),
-}
-
-impl Display for ResolverError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match *self {
-            ResolverError::ReadInInit(ref s)
-            | ResolverError::Init(ref s)
-            | ResolverError::Return(ref s)
-            | ResolverError::This(ref s)
-            | ResolverError::AllReadyDecleared(ref s) => write!(f, "{}", s),
-        }
-    }
-}
+pub type ResolveError<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FunctionType {
@@ -49,36 +38,30 @@ pub enum ClassType {
     Class,
 }
 
-impl Default for Resolver {
-    fn default() -> Self {
+impl Resolver {
+    pub fn new(reporter: Reporter) -> Self {
         Resolver {
             scopes: vec![],
+            reporter,
             current_function: FunctionType::None,
             current_class: ClassType::None,
             locals: HashMap::new(),
         }
     }
-}
 
-impl Resolver {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn resolve(&mut self, statements: &[WithPos<Statement>]) -> Result<(), Vec<ResolverError>> {
-        let mut errors = vec![];
+    pub fn resolve(&mut self, statements: &[Spanned<Statement>], env: &TypeEnv) -> Result<(), ()> {
+        let mut had_errors = false;
 
         for statement in statements {
-            match self.resolve_statement(statement) {
-                Ok(_) => (),
-                Err(e) => errors.push(e),
+            if let Err(_) = self.resolve_statement(statement, env) {
+                had_errors = true;
             }
         }
 
-        if errors.is_empty() {
-            Ok(())
+        if had_errors {
+            Err(())
         } else {
-            Err(errors)
+            Ok(())
         }
     }
 
@@ -86,8 +69,15 @@ impl Resolver {
         self.scopes.push(HashMap::new())
     }
 
-    fn end_scope(&mut self) {
-        self.scopes.pop();
+    fn end_scope(&mut self, span: Span, env: &TypeEnv) {
+        let scopes = self.scopes.pop().unwrap();
+
+        for (symbol, state) in scopes.iter() {
+            if state == &State::Defined {
+                let msg = format!("Local variable '{}' is not used.", env.name(*symbol));
+                self.warn(msg, span)
+            }
+        }
     }
 
     fn peek(&self) -> usize {
@@ -95,10 +85,10 @@ impl Resolver {
     }
 
     fn not_resolved(&self, name: &Symbol) -> bool {
-        !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&false)
+        !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&State::Declared)
     }
 
-    fn declare(&mut self, name: Symbol, pos: Postition) -> Result<(), ResolverError> {
+    fn declare(&mut self, name: Symbol, span: Span, env: &TypeEnv) -> ResolveError<()> {
         if self.scopes.is_empty() {
             return Ok(());
         }
@@ -108,17 +98,19 @@ impl Resolver {
         if self.scopes[index].contains_key(&name) {
             let msg = format!(
                 "Variable with name '{}', already declared in this scope.",
-                name
+                env.name(name)
             );
-            return Err(ResolverError::AllReadyDecleared(self.error(&msg, pos)));
+
+            self.warn(msg, span);
+            return Err(());
         }
 
-        self.scopes[index].insert(name, false);
+        self.scopes[index].insert(name, State::Declared);
 
         Ok(())
     }
 
-    pub fn insert(&mut self, name: Symbol, state: bool) {
+    pub fn insert(&mut self, name: Symbol, state: State) {
         let top = self.peek();
         self.scopes[top].insert(name, state);
     }
@@ -129,14 +121,19 @@ impl Resolver {
         };
 
         let index = self.peek();
-        self.scopes[index].insert(name, true);
+        self.scopes[index].insert(name, State::Defined);
     }
 
-    pub fn resolve_local(&mut self, name: &Symbol, handle: VariableUseHandle) {
+    pub fn resolve_local(&mut self, name: &Symbol, handle: VariableUseHandle, is_read: bool) {
         let max_depth = self.scopes.len();
 
         for i in 0..max_depth {
             if self.scopes[max_depth - i - 1].contains_key(name) {
+                if is_read {
+                    if let Some(state) = self.scopes[max_depth - i - 1].get_mut(name) {
+                        *state = State::Read
+                    }
+                }
                 self.locals.insert(handle, i);
                 return;
             }
@@ -145,122 +142,88 @@ impl Resolver {
         self.locals.insert(handle, max_depth); // Globals
     }
 
-    fn resolve_func(
-        &mut self,
-        body: &Expression,
-        kind: FunctionType,
-        pos: Postition,
-    ) -> Result<(), ResolverError> {
-        let enclosing_function = self.current_function;
-
-        self.current_function = kind;
-
-        match *body {
-            Expression::Func {
-                ref body,
-                ref parameters,
-                ..
-            } => {
-                self.begin_scope();
-
-                for param in parameters {
-                    self.declare(param.0, pos)?;
-                    self.define(param.0);
-                }
-
-                self.resolve_statement(body)?;
-
-                self.end_scope();
-
-                self.current_function = enclosing_function;
-
-                Ok(())
-            }
-
-            _ => unreachable!(),
-        }
+    fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.error(msg, span)
     }
 
-    fn error(&self, message: &str, pos: Postition) -> String {
-        format!("{} on {}", message, pos)
+    fn warn<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.warn(msg, span)
     }
 }
 
 impl Resolver {
-    fn resolve_statement(&mut self, statement: &WithPos<Statement>) -> Result<(), ResolverError> {
-        match statement.node {
-            Statement::Print(ref expr) | Statement::ExpressionStmt(ref expr) => {
-                self.resolve_expression(&expr.node, statement.pos)?;
+    fn resolve_statement(
+        &mut self,
+        statement: &Spanned<Statement>,
+        env: &TypeEnv,
+    ) -> ResolveError<()> {
+        match statement.value {
+            Statement::Print(ref expr) | Statement::Expr(ref expr) => {
+                self.resolve_expression(&expr, env)?;
                 Ok(())
             }
             Statement::Block(ref statements) => {
                 self.begin_scope();
 
                 for statement in statements {
-                    self.resolve_statement(statement)?;
+                    self.resolve_statement(statement, env)?;
                 }
 
-                self.end_scope();
+                self.end_scope(statement.span, env);
 
                 Ok(())
             }
 
             Statement::TypeAlias { ref alias, .. } => {
-                self.declare(*alias, statement.pos)?;
-                self.define(*alias);
+                self.declare(alias.value, alias.span, env)?;
+                self.define(alias.value);
 
                 Ok(())
             }
 
-            Statement::IfStmt {
-                ref condition,
-                ref then_branch,
-                ref else_branch,
+            Statement::If {
+                ref cond,
+                ref then,
+                ref otherwise,
             } => {
-                self.resolve_expression(&condition.node, statement.pos)?;
-                self.resolve_statement(then_branch)?;
+                self.resolve_expression(cond, env)?;
 
-                match *else_branch {
-                    Some(ref expr) => self.resolve_statement(expr)?,
+                self.resolve_statement(then, env)?;
+
+                match *otherwise {
+                    Some(ref expr) => self.resolve_statement(expr, env)?,
                     None => return Ok(()),
                 };
 
                 Ok(())
             }
 
-            Statement::ForStmt {
-                ref initializer,
-                ref condition,
-                ref increment,
+            Statement::For {
+                ref init,
+                ref cond,
+                ref incr,
                 ref body,
             } => {
-                if let Some(ref init) = *initializer {
-                    self.resolve_statement(init)?;
+                if let Some(ref init) = *init {
+                    self.resolve_statement(init, env)?;
                 }
 
-                if let Some(ref cond) = *condition {
-                    self.resolve_expression(&cond.node, statement.pos)?;
+                if let Some(ref cond) = *cond {
+                    self.resolve_expression(cond, env)?;
                 }
 
-                if let Some(ref inc) = *increment {
-                    self.resolve_expression(&inc.node, statement.pos)?;
+                if let Some(ref incr) = *incr {
+                    self.resolve_expression(incr, env)?;
                 }
 
-                self.resolve_statement(body)?;
+                self.resolve_statement(body, env)?;
 
                 Ok(())
             }
 
-            Statement::WhileStmt {
-                ref condition,
-                ref body,
-            }
-            | Statement::DoStmt {
-                ref condition,
-                ref body,
-            } => {
-                self.resolve_expression(&condition.node, statement.pos)?;
-                self.resolve_statement(body)?;
+            Statement::While { ref cond, ref body } => {
+                self.resolve_expression(cond, env)?;
+                self.resolve_statement(body, env)?;
                 Ok(())
             }
 
@@ -268,60 +231,62 @@ impl Resolver {
 
             Statement::Return(ref r) => {
                 if self.current_function == FunctionType::None {
-                    return Err(ResolverError::Return(self.error(
-                        "Cannot return from top-level code",
-                        statement.pos,
-                    )));
+                    self.error("Cannot return from top-level code", statement.span);
+                    return Err(());
                 }
-
-                match *r {
-                    None => Ok(()),
-                    Some(ref value) => {
-                        if self.current_function == FunctionType::Init {
-                            return Err(ResolverError::Init(self.error(
-                                "Cannot return a value from an initializer",
-                                statement.pos,
-                            )));
-                        }
-
-                        self.resolve_expression(&value.node, statement.pos)
-                    }
-                }
+                self.resolve_expression(r, env)
             }
 
-            Statement::Var(ref variable, ref expression, _) => {
-                self.declare(*variable, statement.pos)?;
+            Statement::Var {
+                ref ident,
+                ref expr,
+                ..
+            } => {
+                self.declare(ident.value, ident.span, env)?;
 
-                if let Some(ref expr) = *expression {
-                    self.resolve_expression(&expr.node, statement.pos)?
+                if let Some(ref expr) = *expr {
+                    self.resolve_expression(expr, env)?
                 }
 
-                self.define(*variable);
+                self.define(ident.value);
                 Ok(())
             }
 
-            Statement::Function { ref name, ref body } => {
-                self.declare(*name, statement.pos)?;
-                self.define(*name);
+            Statement::Function {
+                ref name,
+                ref body,
+                ref params,
+                ..
+            } => {
+                self.declare(name.value, name.span, env)?;
+                self.define(name.value);
 
-                self.resolve_func(&body.node, FunctionType::Function, statement.pos)?;
+                let enclosing_function = self.current_function;
+
+                self.current_function = FunctionType::Function;
+
+                self.begin_scope();
+
+                for param in &params.value {
+                    self.declare(param.value.name.value, param.span, env)?;
+                    self.define(param.value.name.value)
+                }
+
+                self.resolve_statement(body, env)?;
+
+                self.end_scope(body.span, env);
+
+                self.current_function = enclosing_function;
+
                 Ok(())
             }
-
-            Statement::ExternFunction { ref name, .. } => {
-                self.declare(*name, statement.pos)?;
-                self.define(*name);
-                Ok(())
-            }
-
             Statement::Class {
                 ref name,
-                ref methods,
-                ref properties,
+                ref body,
                 ref superclass,
             } => {
-                self.declare(*name, statement.pos)?;
-                self.define(*name);
+                self.declare(name.value, name.span, env)?;
+                self.define(name.value);
 
                 let enclosing_class = self.current_class;
                 let mut sklass = false;
@@ -329,43 +294,33 @@ impl Resolver {
                 self.current_class = ClassType::Class;
 
                 if let Some(ref sclass) = *superclass {
-                    self.define(*sclass);
+                    self.define(sclass.value);
                     self.begin_scope();
-                    self.insert(Symbol(1), true); // super
+                    self.insert(Symbol(1), State::Read); // super
                     sklass = true;
                 }
 
                 self.begin_scope();
 
-                self.insert(Symbol(0), true); // this
+                self.insert(Symbol(0), State::Read); // this
 
-                for property in properties {
-                    self.declare(property.0, statement.pos)?;
-                    self.define(property.0);
+                for field in &body.value.1 {
+                    self.declare(field.value.name.value, field.value.name.span, env)?;
+                    self.define(field.value.name.value);
                 }
 
-                for method in methods {
-                    let mut declaration = FunctionType::Method;
-
-                    match *method {
-                        WithPos { ref node, ref pos } => match *node {
-                            Statement::Function { ref name, ref body } => {
-                                if name == &Symbol(1) {
-                                    declaration = FunctionType::Init;
-                                }
-
-                                self.resolve_func(&body.node, declaration, *pos)?;
-                            }
-                            _ => unreachable!(),
-                        },
-                    };
+                for method in &body.value.0 {
+                    self.current_function = FunctionType::Method;
+                    self.resolve_statement(method, env)?;
                 }
+
+                self.current_function = FunctionType::None;
 
                 if sklass {
-                    self.end_scope();
+                    self.end_scope(body.span, env);
                 }
 
-                self.end_scope();
+                self.end_scope(body.span, env);
 
                 self.current_class = enclosing_class;
 
@@ -378,13 +333,13 @@ impl Resolver {
 impl Resolver {
     fn resolve_expression(
         &mut self,
-        expr: &Expression,
-        pos: Postition,
-    ) -> Result<(), ResolverError> {
-        match *expr {
+        expr: &Spanned<Expression>,
+        env: &TypeEnv,
+    ) -> ResolveError<()> {
+        match expr.value {
             Expression::Array { ref items, .. } => {
                 for item in items {
-                    self.resolve_expression(&item.node, pos)?;
+                    self.resolve_expression(item, env)?;
                 }
                 Ok(())
             }
@@ -395,111 +350,66 @@ impl Resolver {
                 ref value,
                 ..
             } => {
-                self.resolve_expression(&value.node, pos)?;
-                self.resolve_local(name, *handle);
+                self.resolve_expression(value, env)?;
+                self.resolve_local(&name.value, *handle, false);
                 Ok(())
             }
 
             Expression::Binary {
-                ref left_expr,
-                ref right_expr,
-                ..
+                ref lhs, ref rhs, ..
             } => {
-                self.resolve_expression(&left_expr.node, pos)?;
-                self.resolve_expression(&right_expr.node, pos)?;
+                self.resolve_expression(lhs, env)?;
+                self.resolve_expression(rhs, env)?;
                 Ok(())
             }
 
             Expression::Call {
                 ref callee,
-                ref arguments,
+                ref args,
             } => {
-                self.resolve_expression(&callee.node, pos)?;
+                self.resolve_expression(callee, env)?;
 
-                for argument in arguments {
-                    self.resolve_expression(&argument.node, pos)?;
+                for argument in args {
+                    self.resolve_expression(argument, env)?;
                 }
 
                 Ok(())
             }
 
-            Expression::ClassInstance { ref properties, .. } => {
-                for &(ref property_name, ref property_value) in properties {
-                    self.declare(*property_name, pos)?;
-                    self.define(*property_name);
-                    self.resolve_expression(&property_value.node, pos)?;
+            Expression::ClassInstance { ref props, .. } => {
+                for prop in props.iter() {
+                    self.declare(prop.value.symbol.value, prop.value.symbol.span, env)?;
+                    self.define(prop.value.symbol.value);
+                    self.resolve_expression(&prop.value.expr, env)?;
                 }
-                Ok(())
-            }
-
-            Expression::Dict { ref items } => {
-                for &(ref key, ref value) in items {
-                    self.resolve_expression(&key.node, pos)?;
-                    self.resolve_expression(&value.node, pos)?;
-                }
-
-                Ok(())
-            }
-
-            Expression::Func {
-                ref parameters,
-                ref body,
-                ..
-            } => {
-                let enclosing_function = self.current_function;
-
-                self.current_function = FunctionType::Function;
-
-                self.begin_scope();
-
-                for parameter in parameters {
-                    self.declare(parameter.0, pos)?;
-                    self.define(parameter.0);
-                }
-
-                self.resolve_statement(body)?;
-
-                self.end_scope();
-
-                self.current_function = enclosing_function;
                 Ok(())
             }
 
             Expression::Get { ref object, .. } => {
-                self.resolve_expression(&object.node, pos)?;
+                self.resolve_expression(object, env)?;
                 Ok(())
             }
 
-            Expression::Grouping { ref expr } => self.resolve_expression(&expr.node, pos),
+            Expression::Grouping { ref expr } => self.resolve_expression(expr, env),
 
-            Expression::IndexExpr {
+            Expression::Index {
                 ref index,
                 ref target,
             } => {
-                self.resolve_expression(&index.node, pos)?;
-                self.resolve_expression(&target.node, pos)?;
+                self.resolve_expression(index, env)?;
+                self.resolve_expression(target, env)?;
                 Ok(())
             }
 
             Expression::Literal(_) => Ok(()),
-
-            Expression::Logical {
-                ref left,
-                ref right,
-                ..
-            } => {
-                self.resolve_expression(&left.node, pos)?;
-                self.resolve_expression(&right.node, pos)?;
-                Ok(())
-            }
 
             Expression::Set {
                 ref value,
                 ref object,
                 ..
             } => {
-                self.resolve_expression(&value.node, pos)?;
-                self.resolve_expression(&object.node, pos)?;
+                self.resolve_expression(value, env)?;
+                self.resolve_expression(object, env)?;
                 Ok(())
             }
 
@@ -508,37 +418,40 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expression(&condition.node, pos)?;
-                self.resolve_expression(&else_branch.node, pos)?;
-                self.resolve_expression(&then_branch.node, pos)?;
+                self.resolve_expression(condition, env)?;
+                self.resolve_expression(else_branch, env)?;
+                self.resolve_expression(then_branch, env)?;
                 Ok(())
             }
 
             Expression::Unary { ref expr, .. } => {
-                self.resolve_expression(&expr.node, pos)?;
+                self.resolve_expression(expr, env)?;
                 Ok(())
             }
 
             Expression::This(ref handle) => {
                 if self.current_class == ClassType::None {
-                    return Err(ResolverError::This(self.error(
-                        "Cannot use 'this' outside of a class.",
-                        pos,
-                    )));
+                    self.error("Cannot use 'this' outside of a class.", expr.span);
+                    return Err(());
                 }
 
-                self.resolve_local(&Symbol(0), *handle);
+                self.resolve_local(&Symbol(0), *handle, false);
 
                 Ok(())
             }
 
             Expression::Var(ref v, ref handle) => {
-                if self.not_resolved(v) {
-                    let msg = format!("Cannot read local variable '{}' in its own initializer.", v);
-                    return Err(ResolverError::ReadInInit(self.error(&msg, pos)));
+                if self.not_resolved(&v.value) {
+                    let msg = format!(
+                        "Cannot read local variable '{}' in its own initializer.",
+                        env.name(v.value)
+                    );
+
+                    self.error(msg, expr.span);
+                    return Err(());
                 }
 
-                self.resolve_local(v, *handle);
+                self.resolve_local(&v.value, *handle, true);
                 Ok(())
             }
         }
@@ -552,67 +465,126 @@ mod test {
     use util::symbol::{SymbolFactory, Table};
     use syntax::parser::Parser;
     use resolver::Resolver;
-    use util::pos::WithPos;
+    use util::pos::Spanned;
+    use util::emmiter::Reporter;
+    use util::env::TypeEnv;
+    use std::rc::Rc;
 
-    fn get_ast(input: &str) -> Vec<WithPos<Statement>> {
-        use std::rc::Rc;
+    fn get_ast(
+        input: &str,
+        strings: Rc<SymbolFactory>,
+        reporter: Reporter,
+    ) -> Vec<Spanned<Statement>> {
+        let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
 
-        let tokens = Lexer::new(input).lex().unwrap();
-        let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Table::new(strings);
-        Parser::new(tokens, &mut symbols).parse().unwrap()
+        Parser::new(tokens, reporter.clone(), &mut symbols)
+            .parse()
+            .unwrap()
     }
 
     #[test]
     fn global() {
         let input = "var a = 0; { fun f() { print(a);} }";
-        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
     fn captured() {
         let input = "{var a = 0;fun f() {print(a);}}";
-        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
+        let reporter = Reporter::new();
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
     fn lexical_capture() {
         let input = "var a = 0;{fun f() {print(a);} var a = 1;}";
-        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
-    #[should_panic]
-    fn shadowing_error() {
+    fn shadowing_erro() {
         let input = "var a = 0; { var a = a;}";
-        Resolver::new().resolve(&get_ast(input)).unwrap()
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_err()
+        )
     }
 
     #[test]
-    #[should_panic]
-    fn local_redeclar_error() {
+    fn local_redeclar() {
         let input = "{var a = 1;var a = 2;}";
-        Resolver::new().resolve(&get_ast(input)).unwrap()
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_err()
+        )
     }
 
     #[test]
     fn global_redeclar() {
         let input = "var a = 1;var a = 2;";
-        assert!(Resolver::new().resolve(&get_ast(input)).is_ok())
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(
+            Resolver::new(reporter.clone())
+                .resolve(&get_ast(input, strings, reporter), &env)
+                .is_ok()
+        )
     }
 
     #[test]
-    #[should_panic]
     fn return_top_level() {
         let input = "return 10;";
-        Resolver::new().resolve(&get_ast(input)).unwrap()
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+        assert!(Resolver::new(reporter.clone())
+            .resolve(&get_ast(input, strings, reporter.clone()), &env)
+            .is_err())
     }
 
     #[test]
     #[should_panic]
     fn this_outside_class() {
         let input = "this.name;";
-        Resolver::new().resolve(&get_ast(input)).unwrap()
+        let strings = Rc::new(SymbolFactory::new());
+        let env = TypeEnv::new(&strings);
+        let reporter = Reporter::new();
+
+        Resolver::new(reporter.clone())
+            .resolve(&get_ast(input, strings, reporter.clone()), &env)
+            .is_err();
+
+        assert!(reporter.has_error())
     }
 
 }

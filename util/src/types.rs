@@ -1,6 +1,6 @@
 //! This module provides the types that are used throughout tox for the typeChecking
 
-use super::pos::Postition;
+use super::pos::Span;
 use super::symbol::Symbol;
 use env::Entry;
 use std::fmt::{Display, Formatter};
@@ -11,19 +11,19 @@ use std::cmp::{Ordering, PartialOrd};
 
 #[derive(Debug, Clone)]
 pub enum TypeError {
-    Expected(Type, Type, Postition),
-    UndefinedType(String, Postition),
-    UndefinedVar(String, Postition),
-    UndefinedClass(String, Postition),
-    NotCallable(Postition),
-    InvalidIndex(Postition),
-    IndexAble(String, Postition),
-    NotMethodOrProperty(String, Postition),
-    TooManyProperty(Postition),
-    TooLittleProperty(Postition),
-    ExpectedOneOf(String, Postition),
-    NotInstanceOrClass(Type, Symbol, Postition),
-    SuperClass(Symbol, Postition),
+    Expected(Type, Type, Span),
+    UndefinedType(String, Span),
+    UndefinedVar(String, Span),
+    UndefinedClass(String, Span),
+    NotCallable(Span),
+    InvalidIndex(Span),
+    IndexAble(String, Span),
+    NotMethodOrProperty(String, Span),
+    TooManyProperty(Span),
+    TooLittleProperty(Span),
+    ExpectedOneOf(String, Span),
+    NotInstanceOrClass(Type, Symbol, Span),
+    SuperClass(Symbol, Span),
 }
 
 #[derive(Debug, Clone)]

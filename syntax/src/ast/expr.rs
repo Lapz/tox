@@ -1,90 +1,81 @@
-use ast::statement::Statement;
-use util::pos::WithPos;
+use util::pos::Spanned;
 use util::symbol::Symbol;
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
     Array {
-        items: Vec<WithPos<Expression>>,
+        items: Vec<Spanned<Expression>>,
     },
-
     Assign {
         handle: VariableUseHandle,
-        name: Symbol,
-        kind: AssignOperator,
-        value: Box<WithPos<Expression>>,
+        name: Spanned<Symbol>,
+        kind: Spanned<AssignOperator>,
+        value: Box<Spanned<Expression>>,
     },
-
     Binary {
-        left_expr: Box<WithPos<Expression>>,
-        operator: Operator,
-        right_expr: Box<WithPos<Expression>>,
+        lhs: Box<Spanned<Expression>>,
+        op: Spanned<Op>,
+        rhs: Box<Spanned<Expression>>,
     },
     Call {
-        callee: Box<WithPos<Expression>>,
-        arguments: Vec<WithPos<Expression>>,
+        callee: Box<Spanned<Expression>>,
+        args: Vec<Spanned<Expression>>,
     },
 
     ClassInstance {
-        name: Symbol,
-        properties: Vec<(Symbol, WithPos<Expression>)>,
+        symbol: Spanned<Symbol>,
+        props: Box<Vec<Spanned<InstanceField>>>,
     },
-    Dict {
-        items: Vec<(WithPos<Expression>, WithPos<Expression>)>,
-    },
-    Func {
-        parameters: Vec<(Symbol, ExpressionTy)>,
-        body: Box<WithPos<Statement>>,
-        returns: Option<ExpressionTy>,
-    },
+
     Get {
-        object: Box<WithPos<Expression>>,
-        property: Symbol,
+        object: Box<Spanned<Expression>>,
+        property: Spanned<Symbol>,
         handle: VariableUseHandle,
     },
     Grouping {
-        expr: Box<WithPos<Expression>>,
+        expr: Box<Spanned<Expression>>,
     },
 
-    IndexExpr {
-        target: Box<WithPos<Expression>>,
-        index: Box<WithPos<Expression>>,
+    Index {
+        target: Box<Spanned<Expression>>,
+        index: Box<Spanned<Expression>>,
     },
 
     Literal(Literal),
-    Logical {
-        left: Box<WithPos<Expression>>,
-        operator: LogicOperator,
-        right: Box<WithPos<Expression>>,
-    },
 
     Set {
-        object: Box<WithPos<Expression>>,
+        object: Box<Spanned<Expression>>,
         handle: VariableUseHandle,
-        name: Symbol,
-        value: Box<WithPos<Expression>>,
+        name: Spanned<Symbol>,
+        value: Box<Spanned<Expression>>,
     },
 
     Ternary {
-        condition: Box<WithPos<Expression>>,
-        then_branch: Box<WithPos<Expression>>,
-        else_branch: Box<WithPos<Expression>>,
+        condition: Box<Spanned<Expression>>,
+        then_branch: Box<Spanned<Expression>>,
+        else_branch: Box<Spanned<Expression>>,
     },
     Unary {
-        operator: UnaryOperator,
-        expr: Box<WithPos<Expression>>,
+        op: Spanned<UnaryOp>,
+        expr: Box<Spanned<Expression>>,
     },
 
     This(VariableUseHandle),
-    Var(Symbol, VariableUseHandle),
+    Var(Spanned<Symbol>, VariableUseHandle),
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+pub struct InstanceField {
+    pub symbol: Spanned<Symbol>,
+    pub expr: Spanned<Expression>,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub enum ExpressionTy {
-    Simple(Symbol),
-    Arr(Box<ExpressionTy>),
-    Func(Vec<ExpressionTy>, Option<Box<ExpressionTy>>),
+pub enum Ty {
+    Simple(Spanned<Symbol>),
+    Arr(Box<Spanned<Ty>>),
+    Func(Vec<Spanned<Ty>>, Option<Box<Spanned<Ty>>>),
     Nil,
 }
 
@@ -93,7 +84,7 @@ pub enum Literal {
     // The raw values available
     Float(f64),
     Int(i64),
-    Str(String),
+    Str(Vec<u8>),
     True(bool),
     False(bool),
     Nil,
@@ -120,8 +111,21 @@ impl VariableUseMaker {
     }
 }
 
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum Var {
+    Field {
+        ident: Spanned<Symbol>,
+        value: Spanned<Symbol>,
+    },
+    Simple(Spanned<Symbol>, VariableUseHandle),
+    SubScript {
+        expr: Box<Spanned<Expression>>,
+        target: Spanned<Symbol>,
+    },
+}
+
 #[derive(Debug, PartialOrd, Clone, PartialEq)]
-pub enum Operator {
+pub enum Op {
     // The possible operators for the binary and unary expression
     BangEqual,
     EqualEqual,
@@ -135,6 +139,8 @@ pub enum Operator {
     Slash,
     Modulo,
     Exponential,
+    And,
+    Or,
 }
 
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
@@ -147,66 +153,8 @@ pub enum AssignOperator {
     SlashEqual,
 }
 
-use token::TokenType;
-#[inline]
-pub(crate) fn get_assign_operator(token: &TokenType) -> AssignOperator {
-    match *token {
-        TokenType::BANGEQUAL => AssignOperator::StarEqual,
-        TokenType::MINUSASSIGN => AssignOperator::MinusEqual,
-        TokenType::PLUSASSIGN => AssignOperator::PlusEqual,
-        TokenType::ASSIGN => AssignOperator::Equal,
-        TokenType::SLASHASSIGN => AssignOperator::SlashEqual,
-        _ => unreachable!(),
-    }
-}
-
-#[inline]
-pub(crate) fn get_operator(token: &TokenType) -> Operator {
-    match *token {
-        TokenType::BANGEQUAL => Operator::BangEqual,
-        TokenType::EQUALEQUAL => Operator::EqualEqual,
-        TokenType::LESSTHAN => Operator::LessThan,
-        TokenType::LESSTHANEQUAL => Operator::LessThanEqual,
-        TokenType::GREATERTHAN => Operator::GreaterThan,
-        TokenType::GREATERTHANEQUAL => Operator::GreaterThanEqual,
-        TokenType::PLUS => Operator::Plus,
-        TokenType::MINUS => Operator::Minus,
-        TokenType::STAR => Operator::Star,
-        TokenType::SLASH => Operator::Slash,
-        TokenType::MODULO => Operator::Modulo,
-        TokenType::EXPONENTIAL => Operator::Exponential,
-
-        _ => unreachable!(),
-    }
-}
-
-#[inline]
-pub(crate) fn get_unary_operator(token: &TokenType) -> UnaryOperator {
-    match *token {
-        TokenType::BANG => UnaryOperator::Bang,
-        TokenType::MINUS => UnaryOperator::Minus,
-        _ => unreachable!(),
-    }
-}
-
-#[inline]
-pub(crate) fn get_logic_operator(token: &TokenType) -> LogicOperator {
-    match *token {
-        TokenType::AND => LogicOperator::And,
-        TokenType::OR => LogicOperator::Or,
-
-        _ => unreachable!(),
-    }
-}
-
 #[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
-pub enum UnaryOperator {
+pub enum UnaryOp {
     Bang,
     Minus,
-}
-
-#[derive(Debug, PartialOrd, Clone, PartialEq, Hash)]
-pub enum LogicOperator {
-    Or,
-    And,
 }

@@ -1,18 +1,16 @@
 use std::fmt::{Display, Formatter};
 use std::fmt;
-use util::pos::Postition;
 
 /// A Token is spat out by the lexer.
 /// It contains a Type and the position and column it is found in in the lexer
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token<'a> {
     pub token: TokenType<'a>,
-    pub pos: Postition,
 }
 
 impl<'a> Display for Token<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "\'{}\' found on {}", self.token, self.pos)
+        write!(f, "\'{}\'", self.token)
     }
 }
 
@@ -20,7 +18,7 @@ impl<'a> Display for TokenType<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             TokenType::EOF => write!(f, "\0"),
-            TokenType::IDENTIFIER(s) => write!(f, "id {}", s),
+            TokenType::IDENTIFIER(s) => write!(f, "{}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
             TokenType::FLOAT(ref float) => write!(f, "{}", float),
             TokenType::ASSIGN => write!(f, "="),
@@ -44,7 +42,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::BANGEQUAL => write!(f, "!="),     // !=
             TokenType::LESSTHANEQUAL => write!(f, "<="), // <=
             TokenType::GREATERTHANEQUAL => write!(f, "=>"), // =>
-            TokenType::STRING(ref s) => write!(f, "{}", s),
+            TokenType::STRING(ref s) => write!(f, "{:?}", s),
             TokenType::COMMA => write!(f, ","),     // ,
             TokenType::COMMENT => write!(f, "//"),  // //
             TokenType::SEMICOLON => write!(f, ";"), //
@@ -75,7 +73,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
-            TokenType::EXTERN => write!(f, "extern"),
         }
     }
 }
@@ -86,7 +83,7 @@ pub enum TokenType<'a> {
     IDENTIFIER(&'a str),
     INT(i64),
     FLOAT(f64),
-    STRING(String),
+    STRING(Vec<u8>),
 
     // Assignment
     ASSIGN,      // =
@@ -146,7 +143,6 @@ pub enum TokenType<'a> {
     OR,
     NIL,
     TYPE,
-    EXTERN,
 
     // Other
     EOF,

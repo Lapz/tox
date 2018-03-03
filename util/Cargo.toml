@@ -3,3 +3,6 @@ name = "util"
 version = "0.1.0"
 authors = ["rowlandsonpratt <striderman34@gmail.com>"]
 
+
+[dependencies]
+ansi_term = "0.10"

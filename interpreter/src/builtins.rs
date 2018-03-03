@@ -4,6 +4,7 @@ use interpreter::RuntimeError;
 use rand::{thread_rng, Rng};
 use util::symbol::Symbol;
 use util::env::TypeEnv;
+use std::str;
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
 
@@ -72,7 +73,7 @@ fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    Ok(Object::Str(format!("{:#X}", number)))
+    Ok(Object::Str(format!("{:#X}", number).as_bytes().to_vec()))
 }
 
 fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
@@ -81,7 +82,7 @@ fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    Ok(Object::Str(format!("{:#o}", number)))
+    Ok(Object::Str(format!("{:#o}", number).as_bytes().to_vec()))
 }
 
 fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
@@ -108,7 +109,7 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    match string.trim().parse::<i64>() {
+    match str::from_utf8(string).unwrap().parse::<i64>() {
         Ok(n) => Ok(Object::Int(n)),
         Err(_) => Err(RuntimeError::CantParseAsInt),
     }
@@ -123,5 +124,5 @@ fn built_in_readline(_: &[Object]) -> Result<Object, RuntimeError> {
         .read_line(&mut input)
         .expect("Unable to read input from stdin");
 
-    Ok(Object::Str(input))
+    Ok(Object::Str(input.as_bytes().to_vec()))
 }
