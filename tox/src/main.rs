@@ -180,11 +180,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
-    println!("{:#?}",resolver );
-
     if penv {
         println!("{:#?}", tyenv);
-        // println!("{:#?}", env);
+        
     }
 
     let mut env = Environment::new();
@@ -199,6 +197,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     if penv {
         println!("{:#?}", tyenv);
+        println!("{:#?}", env);
     }
 }
 

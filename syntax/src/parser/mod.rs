@@ -519,7 +519,7 @@ impl<'a> Parser<'a> {
 
             return Ok(Spanned {
                 span: open_span.to(span),
-                value: Statement::Expr(Spanned {
+                value: Statement::Return(Spanned {
                     span: span,
                     value: Expression::Literal(Literal::Nil),
                 }),
@@ -532,7 +532,7 @@ impl<'a> Parser<'a> {
 
         Ok(Spanned {
             span: open_span.to(close_span),
-            value: Statement::Expr(expr),
+            value: Statement::Return(expr),
         })
     }
 

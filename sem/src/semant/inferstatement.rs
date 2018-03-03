@@ -276,7 +276,6 @@ impl TyChecker {
             }
 
             Statement::Return(ref returns) => {
-                println!("returns {:?}", returns);
                 let result = self.transform_expression(returns, env)?;
 
                 Ok(result)
