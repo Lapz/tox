@@ -1,9 +1,3 @@
-fun fib(n:int) -> int {
-  if (n < 2) 
-    return n;
-  return fib(n - 2) + fib(n - 1);
+while true {
+  return nil;
 }
-
-var start = clock();
-print(fib(10) == 832040);
-print(clock() - start);

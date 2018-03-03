@@ -23,7 +23,6 @@ pub enum Object {
     Str(Vec<u8>),
     Bool(bool),
     Array(Vec<Object>),
-    Dict(HashMap<Object, Object>),
     Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
         methods: HashMap<Symbol, Object>,
@@ -151,20 +150,6 @@ impl Object {
             Object::Class(ref name, _, _) => format!("class <{}>", name),
             Object::Float(f) => f.to_string(),
             Object::None => "None".into(),
-
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                fmt_string
-            }
-
             Object::Int(b) => b.to_string(),
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
@@ -220,15 +205,12 @@ impl PartialEq for Object {
         match (self, other) {
             (&Object::Array(ref x), &Object::Array(ref y)) => x == y,
             (&Object::Bool(ref x), &Object::Bool(ref y)) => x == y,
-
-            (&Object::Dict(ref x), &Object::Dict(ref y)) => x == y,
             (&Object::Function(ref x, _, _, _), &Object::Function(ref y, _, _, _))
             | (&Object::Class(ref x, _, _), &Object::Class(ref y, _, _))
             | (&Object::BuiltIn(ref x, _), &Object::BuiltIn(ref y, _)) => x == y,
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => true,
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
-
             (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
             _ => false,
         }
@@ -276,18 +258,6 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
 
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                write!(f, "{}", fmt_string)
-            }
 
             Object::Nil => write!(f, "nil"),
 
@@ -304,7 +274,7 @@ impl PartialOrd for Object {
             (&Object::Str(ref s), &Object::Str(ref o)) => (s.partial_cmp(o)),
             (&Object::Bool(ref s), &Object::Bool(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
-            (&Object::Dict(ref d), &Object::Dict(ref o)) => (d.iter().partial_cmp(o.iter())),
+            
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
             _ => None,
         }
@@ -339,18 +309,7 @@ impl Display for Object {
 
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
 
-            Object::Dict(ref hashmap) => {
-                let mut fmt_string = String::new();
-                fmt_string.push_str("{");
-                for (i, (k, v)) in hashmap.iter().enumerate() {
-                    fmt_string.push_str(format!("{} : {}", k, v).as_str());
-                    if i < hashmap.len() - 1 {
-                        fmt_string.push_str(", ");
-                    }
-                }
-                fmt_string.push_str("}");
-                write!(f, "{}", fmt_string)
-            }
+         
         }
     }
 }

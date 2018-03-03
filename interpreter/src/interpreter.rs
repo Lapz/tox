@@ -431,18 +431,6 @@ fn evaluate_expression(
 
                     Ok(r[index as usize].to_owned())
                 }
-                Object::Dict(r) => {
-                    let index = match index {
-                        Object::Int(i) => Object::Int(i),
-                        Object::Str(r) => Object::Str(r),
-                        Object::Bool(b) => Object::Bool(b),
-                        _ => return Err(RuntimeError::InvalidIndexType),
-                    };
-
-                    let nil = Object::Nil;
-
-                    Ok(r.get(&index).unwrap_or(&nil).clone())
-                }
                 _ => unimplemented!(),
             }
         }
