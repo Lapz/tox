@@ -2,7 +2,7 @@
 //! `Symbol` and a `String`
 
 use std::fmt::{Display, Formatter, Result};
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -16,13 +16,13 @@ impl Display for Symbol {
 #[derive(Debug, Clone)]
 pub struct SymbolFactory {
     next: RefCell<u64>,
-    mappings: RefCell<HashMap<Symbol, String>>,
+    mappings: RefCell<FnvHashMap<Symbol, String>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Table<T: Clone> {
     strings: Rc<SymbolFactory>,
-    table: HashMap<Symbol, Vec<T>>,
+    table: FnvHashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }
 
@@ -31,7 +31,7 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
         Table {
             strings,
-            table: HashMap::new(),
+            table: FnvHashMap::default(),
             scopes: vec![],
         }
     }
@@ -93,7 +93,7 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
 
 impl SymbolFactory {
     pub fn new() -> Self {
-        let mut map = HashMap::new();
+        let mut map = FnvHashMap::default();
         map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
 

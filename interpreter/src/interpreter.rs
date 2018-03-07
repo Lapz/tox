@@ -2,7 +2,7 @@ use super::object::Object;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 use util::symbol::Symbol;
@@ -24,7 +24,7 @@ pub enum RuntimeError {
 
 pub(crate) fn evaluate_statement(
     statement: &Spanned<Statement>,
-    locals: &HashMap<VariableUseHandle, usize>,
+    locals: &FnvHashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match statement.value {
@@ -47,7 +47,7 @@ pub(crate) fn evaluate_statement(
         } => {
             env.define(name.value, Object::Nil);
 
-            let mut class_methods: HashMap<Symbol, Object> = HashMap::new();
+            let mut class_methods: FnvHashMap<Symbol, Object> = FnvHashMap::default();
 
             let mut sklass = None;
 
@@ -233,7 +233,7 @@ pub(crate) fn evaluate_statement(
 
 fn evaluate_expression(
     expression: &Spanned<Expression>,
-    locals: &HashMap<VariableUseHandle, usize>,
+    locals: &FnvHashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match expression.value {
@@ -360,7 +360,7 @@ fn evaluate_expression(
             ref props,
         } => match env.get(&symbol.value, 0)? {
             Object::Class(_, ref superclass, ref methods) => {
-                let mut instance_props: HashMap<Symbol, Object> = HashMap::new();
+                let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
                 let mut s_class_methods = None;
 
                 if let Some(ref sklass) = *superclass {
@@ -560,7 +560,7 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
 }
 
 fn get_distance(
-    locals: &HashMap<VariableUseHandle, usize>,
+    locals: &FnvHashMap<VariableUseHandle, usize>,
     variable: &Symbol,
     handle: &VariableUseHandle,
 ) -> Result<usize, RuntimeError> {
@@ -571,8 +571,6 @@ fn get_distance(
 }
 
 pub mod env {
-
-    use std::collections::HashMap;
 
     use util::symbol::Symbol;
     use util::Unique;
@@ -585,6 +583,7 @@ pub mod env {
     use std::rc::Rc;
 
     use std::cell::RefCell;
+    use fnv::FnvHashMap;
 
     #[derive(Debug, Clone)]
     /// A Loxlocals,enviroment
@@ -706,21 +705,21 @@ pub mod env {
     #[derive(Debug)]
     pub(crate) struct EnvironmentImpl {
         outer: Option<Environment>,
-        values: HashMap<Symbol, Object>,
+        values: FnvHashMap<Symbol, Object>,
     }
 
     impl EnvironmentImpl {
         fn new() -> Self {
             EnvironmentImpl {
                 outer: None,
-                values: HashMap::new(),
+                values: FnvHashMap::default(),
             }
         }
 
         fn with_values(outer: &Environment) -> Self {
             EnvironmentImpl {
                 outer: Some(outer.clone()),
-                values: HashMap::new(),
+                values: FnvHashMap::default(),
             }
         }
     }

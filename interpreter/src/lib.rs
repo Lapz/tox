@@ -1,7 +1,7 @@
 extern crate rand;
 extern crate syntax;
 extern crate util;
-
+extern crate fnv;
 mod object;
 pub mod interpreter;
 mod builtins;
@@ -10,13 +10,13 @@ use object::Object;
 use syntax::ast::expr::VariableUseHandle;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use self::interpreter::{evaluate_statement, RuntimeError};
 use self::interpreter::env::Environment;
 
 pub fn interpret(
     statements: &[Spanned<Statement>],
-    locals: &HashMap<VariableUseHandle, usize>,
+    locals: &FnvHashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     let mut result = Object::None;

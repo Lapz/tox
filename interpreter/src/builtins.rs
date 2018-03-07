@@ -46,9 +46,9 @@ fn add_builtin_class(
     env: &mut TypeEnv,
     methods: Vec<(&str, BuiltInFunction)>,
 ) -> (Symbol, Object) {
-    use std::collections::HashMap;
+    use fnv::FnvHashMap;
 
-    let mut map = HashMap::new();
+    let mut map = FnvHashMap::default();
 
     for method in methods {
         let name = env.get_symbol(method.0);

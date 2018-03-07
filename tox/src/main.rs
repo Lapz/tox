@@ -5,6 +5,7 @@ extern crate structopt;
 extern crate structopt_derive;
 extern crate syntax;
 extern crate util;
+extern crate fnv;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;

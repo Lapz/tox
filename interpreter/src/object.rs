@@ -1,5 +1,5 @@
 use std::ops::Not;
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{self, Display, Formatter};
@@ -18,16 +18,16 @@ use builtins::BuiltInFunction;
 pub enum Object {
     Float(f64),
     BuiltIn(Symbol, BuiltInFunction),
-    Class(Symbol, Option<Box<Object>>, HashMap<Symbol, Object>),
+    Class(Symbol, Option<Box<Object>>, FnvHashMap<Symbol, Object>),
     Int(i64),
     Str(Vec<u8>),
     Bool(bool),
     Array(Vec<Object>),
     Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
-        methods: HashMap<Symbol, Object>,
-        fields: Rc<RefCell<HashMap<Symbol, Object>>>,
-        sclassmethods: Option<HashMap<Symbol, Object>>,
+        methods: FnvHashMap<Symbol, Object>,
+        fields: Rc<RefCell< FnvHashMap<Symbol, Object>>>,
+        sclassmethods: Option< FnvHashMap<Symbol, Object>>,
     },
     Nil,
     None,
@@ -110,7 +110,7 @@ impl Object {
     pub fn call(
         &self,
         arguments: &[Object],
-        locals: &HashMap<VariableUseHandle, usize>,
+        locals: &FnvHashMap<VariableUseHandle, usize>,
     ) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),

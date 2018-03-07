@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use syntax::ast::statement::Statement;
 use syntax::ast::expr::{Expression, VariableUseHandle};
 use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;
 use util::symbol::Symbol;
 use util::env::TypeEnv;
-
+use fnv::FnvHashMap;
 #[derive(Debug, PartialEq)]
 pub enum State {
     Declared,
@@ -15,10 +14,10 @@ pub enum State {
 
 #[derive(Debug)]
 pub struct Resolver {
-    scopes: Vec<HashMap<Symbol, State>>,
+    scopes: Vec<FnvHashMap<Symbol, State>>,
     current_function: FunctionType,
     current_class: ClassType,
-    pub locals: HashMap<VariableUseHandle, usize>,
+    pub locals: FnvHashMap<VariableUseHandle, usize>,
     pub reporter: Reporter,
 }
 
@@ -45,7 +44,7 @@ impl Resolver {
             reporter,
             current_function: FunctionType::None,
             current_class: ClassType::None,
-            locals: HashMap::new(),
+            locals: FnvHashMap::default(),
         }
     }
 
@@ -66,7 +65,7 @@ impl Resolver {
     }
 
     fn begin_scope(&mut self) {
-        self.scopes.push(HashMap::new())
+        self.scopes.push(FnvHashMap::default())
     }
 
     fn end_scope(&mut self, span: Span, env: &TypeEnv) {
