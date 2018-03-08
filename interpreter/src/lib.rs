@@ -1,7 +1,7 @@
+extern crate fnv;
 extern crate rand;
 extern crate syntax;
 extern crate util;
-extern crate fnv;
 mod object;
 pub mod interpreter;
 mod builtins;

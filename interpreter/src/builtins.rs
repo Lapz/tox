@@ -59,12 +59,11 @@ fn add_builtin_class(
 }
 
 fn built_in_clock(_: &[Object]) -> Result<Object, RuntimeError> {
-    let time = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+    let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
-    Ok(Object::Int(time as i64))
+    Ok(Object::Float(
+        time.as_secs() as f64 + time.subsec_nanos() as f64 * 1e-9,
+    ))
 }
 
 fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {

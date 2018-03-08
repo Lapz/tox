@@ -1,3 +1,4 @@
+extern crate fnv;
 extern crate interpreter;
 extern crate sem;
 extern crate structopt;
@@ -5,7 +6,6 @@ extern crate structopt;
 extern crate structopt_derive;
 extern crate syntax;
 extern crate util;
-extern crate fnv;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
@@ -183,7 +183,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     if penv {
         println!("{:#?}", tyenv);
-        
     }
 
     let mut env = Environment::new();

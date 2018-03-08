@@ -26,8 +26,8 @@ pub enum Object {
     Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
     Instance {
         methods: FnvHashMap<Symbol, Object>,
-        fields: Rc<RefCell< FnvHashMap<Symbol, Object>>>,
-        sclassmethods: Option< FnvHashMap<Symbol, Object>>,
+        fields: Rc<RefCell<FnvHashMap<Symbol, Object>>>,
+        sclassmethods: Option<FnvHashMap<Symbol, Object>>,
     },
     Nil,
     None,
@@ -258,7 +258,6 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
 
-
             Object::Nil => write!(f, "nil"),
 
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
@@ -274,7 +273,7 @@ impl PartialOrd for Object {
             (&Object::Str(ref s), &Object::Str(ref o)) => (s.partial_cmp(o)),
             (&Object::Bool(ref s), &Object::Bool(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
-            
+
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
             _ => None,
         }
@@ -308,8 +307,6 @@ impl Display for Object {
             Object::Nil => write!(f, "nil"),
 
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
-
-         
         }
     }
 }

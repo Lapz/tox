@@ -1,8 +1,8 @@
 #[cfg(test)]
 extern crate pretty_assertions;
 
-extern crate rand;
 extern crate fnv;
+extern crate rand;
 extern crate syntax;
 #[macro_use]
 extern crate util;
