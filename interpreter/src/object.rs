@@ -63,12 +63,9 @@ impl Object {
         match *self {
             Object::Function(ref name, ref param, ref body, ref fn_env) => {
                 let mut environment = Environment::new_with_outer(fn_env);
-
                 environment.define(Symbol(0), instance.clone());
-
                 Object::Function(*name, param.clone(), body.clone(), Box::new(environment))
             }
-
             ref value @ Object::BuiltIn(_, _) => value.clone(),
 
             _ => unreachable!(),
@@ -85,17 +82,14 @@ impl Object {
                 if fields.borrow().contains_key(name) {
                     return Ok(fields.borrow().get(name).unwrap().clone());
                 }
-
                 if methods.contains_key(name) {
                     return Ok(methods.get(name).unwrap().bind(self));
                 }
-
                 if let Some(ref smethods) = *sclassmethods {
                     if smethods.contains_key(name) {
                         return Ok(smethods.get(name).unwrap().bind(self));
                     }
                 }
-
                 Err(RuntimeError::UndefinedProperty)
             }
 
@@ -228,7 +222,6 @@ impl fmt::Debug for Object {
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
-
             Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
                 write!(f, "instance")?;
@@ -246,7 +239,6 @@ impl fmt::Debug for Object {
                 fmt_string.push_str("}");
                 write!(f, "{}", fmt_string)
             }
-
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),
             Object::Function(ref s, _, _, _) => write!(f, "fn <{}> ", s),
             Object::BuiltIn(ref v, _) => write!(f, "fn <builtin {}>", v),
@@ -262,9 +254,7 @@ impl fmt::Debug for Object {
                 fmt_string.push_str("]");
                 write!(f, "{}", fmt_string)
             }
-
             Object::Nil => write!(f, "nil"),
-
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
@@ -278,7 +268,6 @@ impl PartialOrd for Object {
             (&Object::Str(ref s), &Object::Str(ref o)) => (s.partial_cmp(o)),
             (&Object::Bool(ref s), &Object::Bool(ref o)) => (s.partial_cmp(o)),
             (&Object::Array(ref a), &Object::Array(ref o)) => (a.partial_cmp(o)),
-
             (&Object::Nil, &Object::Nil) | (&Object::None, &Object::None) => Some(Ordering::Equal),
             _ => None,
         }
@@ -293,7 +282,6 @@ impl Display for Object {
             Object::Function(ref s, _, _, _) => write!(f, "fn <{}>", s),
             Object::BuiltIn(ref s, _) => write!(f, "fn <builtin{}>", s),
             Object::None => write!(f, "None"),
-
             Object::Float(ref n) => write!(f, "{}", n.to_string()),
             Object::Int(ref n) => write!(f, "{}", n.to_string()),
             Object::Bool(ref b) => write!(f, "{}", b.to_string()),
@@ -310,7 +298,6 @@ impl Display for Object {
                 write!(f, "{}", fmt_string)
             }
             Object::Nil => write!(f, "nil"),
-
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }

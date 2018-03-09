@@ -96,9 +96,16 @@ impl SymbolFactory {
         let mut map = FnvHashMap::default();
         map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
+        map.insert(Symbol(2), "clock".into());
+        map.insert(Symbol(3), "hex".into());
+        map.insert(Symbol(4), "oct".into());
+        map.insert(Symbol(5), "rand".into());
+        map.insert(Symbol(6), "to_int".into());
+        map.insert(Symbol(7), "readline".into());
+        map.insert(Symbol(8), "io".into());
 
         SymbolFactory {
-            next: RefCell::new(2),
+            next: RefCell::new(9),
             mappings: RefCell::new(map),
         }
     }
@@ -125,6 +132,6 @@ mod test {
         assert_eq!(Some(&"c".into()), map.look(Symbol(2)));
         map.end_scope();
         assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
-        assert_eq!(map.symbol("c".into()), Symbol(2));
+        assert_eq!(map.symbol("c".into()), Symbol(9));
     }
 }
