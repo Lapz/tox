@@ -54,7 +54,7 @@ impl Reporter {
     pub fn error<T: Into<String>>(&self, msg: T, span: Span) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
-            span: span,
+            span,
             level: Level::Error,
         })
     }
@@ -62,17 +62,17 @@ impl Reporter {
     pub fn warn<T: Into<String>>(&self, msg: T, span: Span) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
-            span: span,
+            span,
             level: Level::Warn,
         })
     }
 
     pub fn emit(&self, input: &str) {
-        let _: () = self.diagnostics
-            .borrow()
-            .iter()
-            .map(|d| print(input, d))
-            .collect::<_>();
+
+        for diagnostic in self.diagnostics.borrow().iter() {
+            print(input, diagnostic)
+        }
+        
     }
 }
 

@@ -62,7 +62,7 @@ fn built_in_clock(_: &[Object]) -> Result<Object, RuntimeError> {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
     Ok(Object::Float(
-        time.as_secs() as f64 + time.subsec_nanos() as f64 * 1e-9,
+        time.as_secs() as f64 + f64::from(time.subsec_nanos()) * 1e-9,
     ))
 }
 

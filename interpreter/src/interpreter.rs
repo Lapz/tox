@@ -83,7 +83,12 @@ pub(crate) fn evaluate_statement(
 
                         class_methods.insert(
                             name.value,
-                            Object::Function(name.value, func_params, *body.clone(), env.clone()),
+                            Object::Function(
+                                name.value,
+                                func_params,
+                                Box::new(*body.clone()),
+                                Box::new(env.clone()),
+                            ),
                         );
                     }
 
@@ -174,7 +179,12 @@ pub(crate) fn evaluate_statement(
 
             env.define(
                 name.value,
-                Object::Function(name.value, func_params, *body.clone(), env.clone()),
+                Object::Function(
+                    name.value,
+                    func_params,
+                    Box::new(*body.clone()),
+                    Box::new(env.clone()),
+                ),
             );
 
             Ok(Object::None)
@@ -585,7 +595,7 @@ pub mod env {
     use std::cell::RefCell;
     use fnv::FnvHashMap;
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Default)]
     /// A Loxlocals,enviroment
     /// which contains a map of a Symbol and value and the scope in which a
     /// Symbol was declared
@@ -596,16 +606,13 @@ pub mod env {
 
     impl PartialEq for Environment {
         fn eq(&self, other: &Environment) -> bool {
-            &self.actual.borrow().values == &other.actual.borrow().values
+            self.actual.borrow().values == other.actual.borrow().values
         }
     }
 
     impl Environment {
         pub fn new() -> Self {
-            Environment {
-                actual: Rc::new(RefCell::new(EnvironmentImpl::new())),
-                unique: Unique::new(),
-            }
+            Self::default()
         }
 
         pub fn new_with_outer(outer: &Environment) -> Environment {
@@ -651,16 +658,16 @@ pub mod env {
             let mut actual = self.actual.borrow_mut();
 
             if distance == 0 {
-                if actual.values.contains_key(&name) {
+                if actual.values.contains_key(name) {
                     *actual.values.get_mut(name).unwrap() = value;
-                    return Ok(());
+                    Ok(())
                 } else {
                     Err(RuntimeError::UndefinedSymbol(*name))
                 }
             } else {
-                match &actual.outer {
-                    &Some(ref outer) => outer.assign(name, value, distance - 1),
-                    &None => Err(RuntimeError::UndefinedSymbol(*name)),
+                match actual.outer {
+                    Some(ref outer) => outer.assign(name, value, distance - 1),
+                    None => Err(RuntimeError::UndefinedSymbol(*name)),
                 }
             }
         }
@@ -679,9 +686,9 @@ pub mod env {
                     Err(RuntimeError::UndefinedSymbol(*name))
                 }
             } else {
-                match &actual.outer {
-                    &Some(ref outer) => outer.get(name, distance - 1),
-                    &None => Err(RuntimeError::UndefinedSymbol(*name)),
+                match actual.outer {
+                    Some(ref outer) => outer.get(name, distance - 1),
+                    None => Err(RuntimeError::UndefinedSymbol(*name)),
                 }
             }
         }
@@ -693,29 +700,21 @@ pub mod env {
                 println!("name:{}, value:{}", name, value)
             }
 
-            match actual.outer {
-                Some(ref outer) => outer.dump(),
-                None => (),
+            if let Some(ref outer) = actual.outer {
+                outer.dump()
             }
         }
     }
 
     /// The actual struct that contains the values.
     /// It is wrapped within a Rc<RefCell<_>>
-    #[derive(Debug)]
+    #[derive(Debug, Default)]
     pub(crate) struct EnvironmentImpl {
         outer: Option<Environment>,
         values: FnvHashMap<Symbol, Object>,
     }
 
     impl EnvironmentImpl {
-        fn new() -> Self {
-            EnvironmentImpl {
-                outer: None,
-                values: FnvHashMap::default(),
-            }
-        }
-
         fn with_values(outer: &Environment) -> Self {
             EnvironmentImpl {
                 outer: Some(outer.clone()),

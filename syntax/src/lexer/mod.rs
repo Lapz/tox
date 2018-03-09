@@ -26,9 +26,9 @@ impl Display for LexerError {
 impl Into<String> for LexerError {
     fn into(self) -> String {
         match self {
-            LexerError::UnclosedString => format!("Unclosed string"),
-            LexerError::EOF => format!("Unexpected EOF"),
-            LexerError::UnclosedBlockComment => format!("Unclosed block comment"),
+            LexerError::UnclosedString => "Unclosed string".into(),
+            LexerError::EOF => "Unexpected EOF".into(),
+            LexerError::UnclosedBlockComment => "Unclosed block comment".into(),
             LexerError::Unexpected(ref c, _) => format!("Unexpected char '{}' ", c),
         }
     }
@@ -50,11 +50,11 @@ impl<'a> Lexer<'a> {
         let mut chars = CharPosition::new(input);
         let end = chars.pos;
         Lexer {
-            input: input,
-            end: end,
+            input,
+            end,
             reporter,
             lookahead: chars.next(),
-            chars: chars,
+            chars,
         }
     }
 

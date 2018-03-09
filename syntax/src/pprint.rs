@@ -134,7 +134,7 @@ impl Statement {
                     pprint_string.push_str(&symbols.name(sclass.value));
                 }
 
-                if body.value.0.len() > 0 {
+                if !body.value.0.is_empty() {
                     pprint_string.push_str(" (methods => ");
 
                     for method in &body.value.0 {
@@ -144,7 +144,7 @@ impl Statement {
                     pprint_string.push_str(") ");
                 }
 
-                if body.value.1.len() > 0 {
+                if body.value.1.is_empty() {
                     pprint_string.push_str(" (props => ");
 
                     for property in &body.value.1 {

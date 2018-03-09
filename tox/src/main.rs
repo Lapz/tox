@@ -6,6 +6,7 @@ extern crate structopt;
 extern crate structopt_derive;
 extern crate syntax;
 extern crate util;
+extern crate vm;
 
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
@@ -185,6 +186,60 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", tyenv);
     }
 
+    // let mut chunk = Chunk::new();
+
+    // let constant = chunk.add_constant(1.2);
+
+    // chunk.write(
+    //     OpCode::Constant,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
+
+    // chunk.write(
+    //     constant,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
+
+    // chunk.write(
+    //     OpCode::Return,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
+
+    // chunk.dissassemble("test chunk");
+
     let mut env = Environment::new();
     env.fill_env(&mut tyenv);
     match interpret(&ast, &resolver.locals, &mut env) {
@@ -195,10 +250,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
-    if penv {
-        println!("{:#?}", tyenv);
-        println!("{:#?}", env);
-    }
+    // if penv {
+    //     println!("{:#?}", tyenv);
+    //     println!("{:#?}", env);
+    // }
 }
 
 #[derive(StructOpt, Debug)]

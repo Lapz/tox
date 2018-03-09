@@ -132,13 +132,13 @@ impl TyChecker {
 
                                     match class {
                                         Type::Class { ref methods, .. } => {
-                                            for (_, value) in methods {
-                                                return self.infer_params(
+                                            for value in methods.values() {
+                                                self.infer_params(
                                                     value,
                                                     args,
                                                     env,
                                                     callee.span,
-                                                );
+                                                )?;
                                             }
                                         }
                                         _ => unimplemented!(),
@@ -177,7 +177,7 @@ impl TyChecker {
                             for (arg, param) in args.iter().zip(params) {
                                 let exp = self.transform_expression(arg, &mut env.clone())?;
 
-                                self.check_types(&param, &exp.ty, expr.span)?;
+                                self.check_types(param, &exp.ty, expr.span)?;
                             }
                             return Ok(InferedType {
                                 ty: self.actual_type(returns).clone(),
@@ -188,7 +188,7 @@ impl TyChecker {
                                 return Ok(InferedType { ty: func.clone() })
                             }
 
-                            ref ty => {
+                            ty => {
                                 let msg = format!(
                                     "Type '{}' is not callable. \n Can only call functions",
                                     ty

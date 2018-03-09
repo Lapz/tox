@@ -520,7 +520,7 @@ impl<'a> Parser<'a> {
             return Ok(Spanned {
                 span: open_span.to(span),
                 value: Statement::Return(Spanned {
-                    span: span,
+                    span,
                     value: Expression::Literal(Literal::Nil),
                 }),
             });
@@ -911,7 +911,7 @@ impl<'a> Parser<'a> {
                     return Ok(Spanned {
                         span: span.to(value.get_span()),
                         value: Expression::Assign {
-                            handle: self.variable_use_maker.next(),
+                            handle: self.variable_use_maker.next_handle(),
                             name: var,
                             value: Box::new(value),
                             kind,
@@ -932,7 +932,7 @@ impl<'a> Parser<'a> {
                             object,
                             name: property,
                             value: Box::new(value),
-                            handle: self.variable_use_maker.next(),
+                            handle: self.variable_use_maker.next_handle(),
                         },
                     })
                 }
@@ -1075,7 +1075,7 @@ impl<'a> Parser<'a> {
 
                 TokenType::THIS => Ok(Spanned {
                     span: *span,
-                    value: Expression::This(self.variable_use_maker.next()),
+                    value: Expression::This(self.variable_use_maker.next_handle()),
                 }),
 
                 TokenType::LPAREN => {
@@ -1143,14 +1143,14 @@ impl<'a> Parser<'a> {
                 span: symbol.get_span().to(close_span),
                 value: Expression::ClassInstance {
                     symbol,
-                    props: Box::new(props),
+                    props: props,
                 },
             })
         } else {
-            return Ok(Spanned {
+            Ok(Spanned {
                 span: symbol.get_span(),
-                value: Expression::Var(symbol, self.variable_use_maker.next()),
-            });
+                value: Expression::Var(symbol, self.variable_use_maker.next_handle()),
+            })
         }
     }
 
@@ -1185,7 +1185,7 @@ impl<'a> Parser<'a> {
                     value: Expression::Get {
                         object: Box::new(expr),
                         property,
-                        handle: self.variable_use_maker.next(),
+                        handle: self.variable_use_maker.next_handle(),
                     },
                 }
             } else {
