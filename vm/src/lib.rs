@@ -1,7 +1,6 @@
 extern crate util;
 
 use util::pos::Span;
-use std::fmt::{self,Display,Formatter};
 
 pub trait TryFrom<T>: Sized {
     /// The type returned in the event of a conversion error.
@@ -13,22 +12,37 @@ pub trait TryFrom<T>: Sized {
 
 #[derive(Clone, Copy, Debug)]
 pub enum OpCode {
-    Return,
-    Constant(u8),
+    Return = 1,
+    Constant = 2,
 }
 
-impl Display for OpCode {
-    fn fmt(&self,f:&mut Formatter) -> fmt::Result {
-        match *self {
-            OpCode::Return => write!(f,"return",),
-            OpCode::Constant(ref offset) => write!(f,"{}",offset),
+impl Into<u8> for OpCode {
+    fn into(self) -> u8 {
+        self as u8
+    }
+}
+
+#[cfg(feature = "debug")]
+pub fn simple_instruction(name: &str, offset: usize) -> usize {
+    println!("{:?}", name);
+    offset + 1
+}
+
+impl TryFrom<u8> for OpCode {
+    type Error = ();
+
+    fn try_from(original: u8) -> Result<Self, Self::Error> {
+        match original {
+            1 => Ok(OpCode::Return),
+            2 => Ok(OpCode::Constant),
+            _ => Err(()),
         }
     }
 }
 
 #[derive(Default)]
 pub struct Chunk {
-    code: Vec<OpCode>,
+    code: Vec<u8>,
     constants: Vec<f64>,
     lines: Vec<Span>,
 }
@@ -38,8 +52,8 @@ impl Chunk {
         Self::default()
     }
 
-    pub fn write(&mut self, op: OpCode, span: Span) {
-        self.code.push(op);
+    pub fn write<T: Into<u8>>(&mut self, byte: T, span: Span) {
+        self.code.push(byte.into());
         self.lines.push(span)
     }
     /// Add a constant and returns the index where it was appended
@@ -53,12 +67,14 @@ impl Chunk {
     pub fn dissassemble(&mut self, name: &str) {
         println!("== {} ==", name);
 
-        for (mut i, _) in self.code.iter().enumerate() {
-            i = self.read_instruction(i);
+        let mut i = 0;
+        while i < self.code.len() {
+            i = self.dissassemble_instruction(i);
         }
     }
+
     #[cfg(feature = "debug")]
-    pub fn read_instruction(&self, offset: usize) -> usize {
+    pub fn dissassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04} ", offset);
 
         if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
@@ -69,10 +85,12 @@ impl Chunk {
 
         let instruction = self.code[offset];
 
-        match instruction {
-            OpCode::Return => simple_instruction("OP_RETURN", offset),
-            OpCode::Constant(ref offset) => {
-                self.constant_instruction("OP_CONSTANT", *offset as usize)
+        match OpCode::try_from(instruction) {
+            Ok(OpCode::Return) => simple_instruction("OP_RETURN", offset),
+            Ok(OpCode::Constant) => self.constant_instruction("OP_CONSTANT", offset as usize),
+            _ => {
+                println!("Unknown opcode {}", instruction);
+                offset + 1
             }
         }
     }
@@ -82,41 +100,77 @@ impl Chunk {
     /// Matches on the instruction and uses that pointer offset for
     /// were the value is stored
     pub fn constant_instruction(&self, name: &str, offset: usize) -> usize {
-        let constant = self.code[offset];
+        let constant = self.code[offset + 1];
 
-        print!("{:16} {:04}", name, constant);
+        println!(
+            "{:16} {:04} {}",
+            name, constant, self.constants[constant as usize]
+        );
 
-        let const_index = match constant {
-            OpCode::Constant(offset) => offset as usize,
-            _ => unreachable!(),
-        };
-        print!(" '{}' \n", self.constants[const_index]);
-       
-        offset + 1
-    }
-}
-
-#[cfg(feature = "debug")]
-pub fn simple_instruction(name: &str, offset: usize) -> usize {
-    print!("{}", name);
-    offset + 1
-}
-
-impl TryFrom<u8> for OpCode {
-    type Error = ();
-
-    fn try_from(original: u8) -> Result<Self, Self::Error> {
-        match original {
-            0 => Ok(OpCode::Return),
-            _ => Err(()),
-        }
+        offset as usize + 2
     }
 }
 
 #[cfg(test)]
+#[cfg(feature = "debug")]
 mod tests {
+
+    use util::pos::{Position, Span};
+    use super::{Chunk, OpCode};
+
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let mut chunk = Chunk::new();
+
+        let constant = chunk.add_constant(1.2);
+
+        chunk.write(
+            OpCode::Constant,
+            Span {
+                start: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+                end: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+            },
+        );
+
+        chunk.write(
+            constant,
+            Span {
+                start: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+                end: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+            },
+        );
+
+        chunk.write(
+            OpCode::Return,
+            Span {
+                start: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+                end: Position {
+                    line: 1,
+                    column: 0,
+                    absolute: 1,
+                },
+            },
+        );
+        chunk.dissassemble("test chunk")
     }
 }
