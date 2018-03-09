@@ -10,7 +10,7 @@ pub mod emmiter;
 
 static mut UNIQUE_COUNT: u64 = 0;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Unique(pub u64);
 
 impl Unique {

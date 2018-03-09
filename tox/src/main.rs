@@ -21,8 +21,6 @@ use util::emmiter::Reporter;
 use std::rc::Rc;
 use std::io::Write;
 use structopt::StructOpt;
-use vm::{Chunk, OpCode};
-use util::pos::{Position, Span};
 
 fn main() {
     let opts = Cli::from_args();
@@ -188,53 +186,69 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", tyenv);
     }
 
-    let mut chunk = Chunk::new();
+    // let mut chunk = Chunk::new();
 
-    let constant = chunk.add_constant(1.2);
+    // let constant = chunk.add_constant(1.2);
 
-    chunk.write(
-        OpCode::Constant(constant),
-        Span {
-            start: Position {
-                line: 1,
-                column: 0,
-                absolute: 1,
-            },
-            end: Position {
-                line: 1,
-                column: 0,
-                absolute: 1,
-            },
-        },
-    );
+    // chunk.write(
+    //     OpCode::Constant,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
 
-    chunk.write(
-        OpCode::Return,
-        Span {
-            start: Position {
-                line: 1,
-                column: 0,
-                absolute: 1,
-            },
-            end: Position {
-                line: 1,
-                column: 0,
-                absolute: 1,
-            },
-        },
-    );
+    // chunk.write(
+    //     constant,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
 
-    chunk.dissassemble("test chunk");
+    // chunk.write(
+    //     OpCode::Return,
+    //     Span {
+    //         start: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //         end: Position {
+    //             line: 1,
+    //             column: 0,
+    //             absolute: 1,
+    //         },
+    //     },
+    // );
 
-    // let mut env = Environment::new();
-    // env.fill_env(&mut tyenv);
-    // match interpret(&ast, &resolver.locals, &mut env) {
-    //     Ok(_) => (),
-    //     Err(_) => {
-    //         // println!("{:?}", err);
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    // chunk.dissassemble("test chunk");
+
+    let mut env = Environment::new();
+    env.fill_env(&mut tyenv);
+    match interpret(&ast, &resolver.locals, &mut env) {
+        Ok(_) => (),
+        Err(_) => {
+            // println!("{:?}", err);
+            ::std::process::exit(65)
+        }
+    };
 
     // if penv {
     //     println!("{:#?}", tyenv);

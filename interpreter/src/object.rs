@@ -23,7 +23,12 @@ pub enum Object {
     Str(Vec<u8>),
     Bool(bool),
     Array(Vec<Object>),
-    Function(Symbol, Vec<Symbol>, Spanned<Statement>, Environment),
+    Function(
+        Symbol,
+        Vec<Symbol>,
+        Box<Spanned<Statement>>,
+        Box<Environment>,
+    ),
     Instance {
         methods: FnvHashMap<Symbol, Object>,
         fields: Rc<RefCell<FnvHashMap<Symbol, Object>>>,
@@ -61,7 +66,7 @@ impl Object {
 
                 environment.define(Symbol(0), instance.clone());
 
-                Object::Function(name.clone(), param.clone(), body.clone(), environment)
+                Object::Function(*name, param.clone(), body.clone(), Box::new(environment))
             }
 
             ref value @ Object::BuiltIn(_, _) => value.clone(),

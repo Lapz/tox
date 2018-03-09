@@ -69,7 +69,7 @@ impl TyChecker {
         let mut had_error = false;
 
         for statement in statements {
-            if let Err(_) = self.transform_statement(statement, env) {
+            if self.transform_statement(statement, env).is_err() {
                 had_error = true;
             }
         }

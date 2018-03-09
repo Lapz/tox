@@ -52,7 +52,7 @@ impl Resolver {
         let mut had_errors = false;
 
         for statement in statements {
-            if let Err(_) = self.resolve_statement(statement, env) {
+            if self.resolve_statement(statement, env).is_err() {
                 had_errors = true;
             }
         }
@@ -71,7 +71,7 @@ impl Resolver {
     fn end_scope(&mut self, span: Span, env: &TypeEnv) {
         let scopes = self.scopes.pop().unwrap();
 
-        for (symbol, state) in scopes.iter() {
+        for (symbol, state) in &scopes {
             if state == &State::Defined {
                 let msg = format!("Local variable '{}' is not used.", env.name(*symbol));
                 self.warn(msg, span)
@@ -158,7 +158,7 @@ impl Resolver {
     ) -> ResolveError<()> {
         match statement.value {
             Statement::Print(ref expr) | Statement::Expr(ref expr) => {
-                self.resolve_expression(&expr, env)?;
+                self.resolve_expression(expr, env)?;
                 Ok(())
             }
             Statement::Block(ref statements) => {

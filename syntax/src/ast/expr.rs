@@ -25,7 +25,7 @@ pub enum Expression {
 
     ClassInstance {
         symbol: Spanned<Symbol>,
-        props: Box<Vec<Spanned<InstanceField>>>,
+        props: Vec<Spanned<InstanceField>>,
     },
 
     Get {
@@ -93,17 +93,17 @@ pub enum Literal {
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Hash, Eq)]
 pub struct VariableUseHandle(pub u64);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy,Default)]
 pub struct VariableUseMaker {
     next_value: u64,
 }
 
 impl VariableUseMaker {
     pub fn new() -> Self {
-        VariableUseMaker { next_value: 0 }
+        Self::default()
     }
 
-    pub fn next(&mut self) -> VariableUseHandle {
+    pub fn next_handle(&mut self) -> VariableUseHandle {
         let value = self.next_value;
 
         self.next_value += 1;
