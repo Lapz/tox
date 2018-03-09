@@ -433,7 +433,6 @@ name = "tox"
 version = "0.2.0"
 dependencies = [
  "clippy 0.0.186 (registry+https://github.com/rust-lang/crates.io-index)",
- "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "interpreter 0.1.0",
  "sem 0.1.0",
  "structopt 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
