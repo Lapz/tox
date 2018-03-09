@@ -17,8 +17,4 @@ interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}
-<<<<<<< HEAD
 fnv = "*"
-=======
-
->>>>>>> Implemented the basic chapter
