@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/Lapz/lexer.svg?branch=master)](https://travis-ci.org/Lapz/tox)
 # TOX
 
-LLROX is a statically typed version of [lox](http://www.craftinginterpreters.com) that is written in rust.
+Tox is a statically typed version of [lox](http://www.craftinginterpreters.com) that is written in rust.
 
 # Example Program
 
@@ -70,31 +70,3 @@ while (true) {
 }
 
 ```
-
-
-# TODO
-
-- [x] Add with position to the ~~variables~~ and expressions themselves
-- [x] Add the parsing of types
-- [x] Add the resolution of function
-- ~~[ ] Add a reporter which reportes errors~~
-- [x] Add the infernece of function method calling
-- [x] Add an expression that allows for the construction of a class. e.g
-    ```rust
-    class Person {
-        name:str,surname:str;
-    }
-    ```
-- [x] Improve type inference messages
-- [x] Implement the interpreter
-- [x] Add Exponential to the parser
-- [x] Improve the inference of comparison operators
-- [x] Move the functions in inference onto a struct called ```TyChecker```
-- [x] Have a field on the type check that contains the types that this points too. When this is acessed check if that field exist and the return the type of that field.
-- [ ] Change how method inheritance is done
-- [x] Implement closures properly
-- [x] Fix the typechecking of vars introduced in a nested scope
-
-## Run the Compiler
- RUSTFLAGS='-C link-args=-lffi' RUST_BACKTRACE=1 cargo run ../test/test.lox && llc -filetype=obj out.bc \
-&& clang++ -g -O3 out.bc `lvm-config --cxxflags --ldflags --system-libs --libs core` && ./toy
