@@ -68,11 +68,9 @@ impl Reporter {
     }
 
     pub fn emit(&self, input: &str) {
-
         for diagnostic in self.diagnostics.borrow().iter() {
             print(input, diagnostic)
         }
-        
     }
 }
 

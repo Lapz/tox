@@ -93,7 +93,7 @@ pub enum Literal {
 #[derive(Debug, PartialOrd, PartialEq, Clone, Copy, Hash, Eq)]
 pub struct VariableUseHandle(pub u64);
 
-#[derive(Debug, Clone, Copy,Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct VariableUseMaker {
     next_value: u64,
 }

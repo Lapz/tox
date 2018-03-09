@@ -12,7 +12,7 @@ use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 use fnv::FnvHashMap;
 use self::interpreter::{evaluate_statement, RuntimeError};
-use self::interpreter::env::Environment;
+pub use self::interpreter::env::Environment;
 
 pub fn interpret(
     statements: &[Spanned<Statement>],

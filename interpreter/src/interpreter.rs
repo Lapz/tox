@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use util::symbol::Symbol;
 use interpreter::env::Environment;
 use std::mem;
+use util::env::TypeEnv;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -20,6 +21,17 @@ pub enum RuntimeError {
     CantParseAsInt,
     UndefinedSymbol(Symbol),
     Return(Box<Object>),
+}
+
+impl RuntimeError {
+    pub fn fmt(&self, env: &TypeEnv) {
+        match *self {
+            RuntimeError::UndefinedSymbol(ref symbol) => {
+                println!("Undefined variable '{}' ", env.name(*symbol));
+            }
+            _ => (),
+        }
+    }
 }
 
 pub(crate) fn evaluate_statement(

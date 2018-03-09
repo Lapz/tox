@@ -13,7 +13,7 @@ use syntax::parser::Parser;
 use sem::resolver::Resolver;
 use sem::semant::TyChecker;
 use interpreter::interpret;
-use interpreter::interpreter::env::Environment;
+use interpreter::Environment;
 use std::io;
 use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Table};
@@ -32,7 +32,6 @@ fn main() {
     }
 }
 
-// use compiler::compile;
 pub fn repl(ptokens: bool, pprint: bool) {
     println!("Welcome to the lexer programming language");
 
@@ -153,7 +152,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
         Err(_) => {
             reporter.emit(input);
-            // vec![];
             ::std::process::exit(65)
         }
     };
@@ -186,74 +184,20 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", tyenv);
     }
 
-    // let mut chunk = Chunk::new();
-
-    // let constant = chunk.add_constant(1.2);
-
-    // chunk.write(
-    //     OpCode::Constant,
-    //     Span {
-    //         start: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //         end: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //     },
-    // );
-
-    // chunk.write(
-    //     constant,
-    //     Span {
-    //         start: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //         end: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //     },
-    // );
-
-    // chunk.write(
-    //     OpCode::Return,
-    //     Span {
-    //         start: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //         end: Position {
-    //             line: 1,
-    //             column: 0,
-    //             absolute: 1,
-    //         },
-    //     },
-    // );
-
-    // chunk.dissassemble("test chunk");
-
     let mut env = Environment::new();
     env.fill_env(&mut tyenv);
     match interpret(&ast, &resolver.locals, &mut env) {
         Ok(_) => (),
-        Err(_) => {
-            // println!("{:?}", err);
+        Err(err) => {
+            err.fmt(&tyenv);
             ::std::process::exit(65)
         }
     };
 
-    // if penv {
-    //     println!("{:#?}", tyenv);
-    //     println!("{:#?}", env);
-    // }
+    if penv {
+        println!("{:#?}", tyenv);
+        println!("{:#?}", env);
+    }
 }
 
 #[derive(StructOpt, Debug)]

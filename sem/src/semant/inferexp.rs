@@ -133,12 +133,7 @@ impl TyChecker {
                                     match class {
                                         Type::Class { ref methods, .. } => {
                                             for value in methods.values() {
-                                                self.infer_params(
-                                                    value,
-                                                    args,
-                                                    env,
-                                                    callee.span,
-                                                )?;
+                                                self.infer_params(value, args, env, callee.span)?;
                                             }
                                         }
                                         _ => unimplemented!(),
