@@ -2,7 +2,7 @@
 //! `Symbol` and a `Type` or an `Entry`
 
 use types::Type;
-use super::symbol::{Symbol, SymbolFactory, Table};
+use super::symbol::{Symbol, SymbolFactory, Symbols};
 use std::rc::Rc;
 use super::Unique;
 
@@ -14,14 +14,14 @@ pub enum Entry {
 
 #[derive(Debug, Clone)]
 pub struct TypeEnv {
-    pub types: Table<Type>,
-    pub vars: Table<Entry>,
+    pub types: Symbols<Type>,
+    pub vars: Symbols<Entry>,
     pub unique: Unique,
 }
 
 impl TypeEnv {
     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
-        let mut types = Table::new(Rc::clone(strings));
+        let mut types = Symbols::new(Rc::clone(strings));
         let string_symbol = types.symbol("str");
         let int_symbol = types.symbol("int");
         let float_symbol = types.symbol("float");
@@ -36,7 +36,7 @@ impl TypeEnv {
 
         let mut env = TypeEnv {
             types,
-            vars: Table::new(Rc::clone(strings)),
+            vars: Symbols::new(Rc::clone(strings)),
             unique: Unique::new(),
         };
 

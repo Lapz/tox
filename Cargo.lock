@@ -91,6 +91,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "codegen"
+version = "0.1.0"
+dependencies = [
+ "syntax 0.1.0",
+ "util 0.1.0",
+]
+
+[[package]]
 name = "difference"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

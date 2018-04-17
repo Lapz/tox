@@ -17,11 +17,11 @@ mod test {
     ) -> Vec<Spanned<Statement>> {
         use syntax::lexer::Lexer;
         use syntax::parser::Parser;
-        use util::symbol::Table;
+        use util::symbol::Symbols;
 
         let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
 
-        let mut symbols = Table::new(strings);
+        let mut symbols = Symbols::new(strings);
         Parser::new(tokens, reporter.clone(), &mut symbols)
             .parse()
             .unwrap()

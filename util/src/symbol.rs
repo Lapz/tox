@@ -1,4 +1,4 @@
-//! This module provides a Table which keeps a track of the mappings between a
+//! This module provides a Symbols which keeps a track of the mappings between a
 //! `Symbol` and a `String`
 
 use std::fmt::{Display, Formatter, Result};
@@ -20,30 +20,30 @@ pub struct SymbolFactory {
 }
 
 #[derive(Debug, Clone)]
-pub struct Table<T: Clone> {
+pub struct Symbols<T: Clone> {
     strings: Rc<SymbolFactory>,
     table: FnvHashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }
 
-impl<T: Clone + ::std::fmt::Debug> Table<T> {
-    /// A new Table Instance
+impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
+    /// A new Symbols Instance
     pub fn new(strings: Rc<SymbolFactory>) -> Self {
-        Table {
+        Symbols {
             strings,
             table: FnvHashMap::default(),
             scopes: vec![],
         }
     }
 
-    /// Adds a new scope to the table
+    /// Adds a new scope to the Symbols
     pub fn begin_scope(&mut self) {
         self.scopes.push(None);
     }
     /// Recursivly destorys the scopes
     pub fn end_scope(&mut self) {
         while let Some(Some(symbol)) = self.scopes.pop() {
-            let mapping = self.table.get_mut(&symbol).expect("Symbol not in table");
+            let mapping = self.table.get_mut(&symbol).expect("Symbol not in Symbols");
             mapping.pop();
         }
     }
@@ -56,7 +56,7 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
         self.scopes.push(Some(symbol));
     }
 
-    /// Looks in the table for the `Symbol` and if found returns the top element in
+    /// Looks in the Symbols for the `Symbol` and if found returns the top element in
     /// the stack of Vec<T>
     pub fn look(&self, symbol: Symbol) -> Option<&T> {
         self.table.get(&symbol).and_then(|vec| vec.last())
@@ -67,7 +67,7 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
         self.strings.mappings.borrow()[&symbol].to_owned()
     }
 
-    /// Checks if the given name allready exists within the table
+    /// Checks if the given name allready exists within the Symbols
     /// a new `Symbol` is returned else the previous `Symbol`
     pub fn symbol(&mut self, name: &str) -> Symbol {
         for (key, value) in self.strings.mappings.borrow().iter() {
@@ -83,7 +83,7 @@ impl<T: Clone + ::std::fmt::Debug> Table<T> {
         *self.strings.next.borrow_mut() += 1;
         symbol
     }
-    /// Inserts the `Symbol` into the table
+    /// Inserts the `Symbol` into the Symbols
     pub fn replace(&mut self, symbol: Symbol, data: T) {
         let bindings = self.table.entry(symbol).or_insert_with(Vec::new);
         bindings.pop().expect("Call enter() before replace()");
@@ -113,13 +113,13 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, SymbolFactory, Table};
+    use symbol::{Symbol, SymbolFactory, Symbols};
     use std::rc::Rc;
 
     #[test]
     fn test() {
         let strings = Rc::new(SymbolFactory::new());
-        let mut map: Table<String> = Table::new(strings);
+        let mut map: Symbols<String> = Symbols::new(strings);
         map.enter(Symbol(0), "a".into());
         map.enter(Symbol(1), "b".into());
         map.begin_scope();

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "codegen",
     "syntax",
     "sem",
     "util",

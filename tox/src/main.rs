@@ -16,7 +16,7 @@ use interpreter::interpret;
 use interpreter::Environment;
 use std::io;
 use util::env::TypeEnv;
-use util::symbol::{SymbolFactory, Table};
+use util::symbol::{SymbolFactory, Symbols};
 use util::emmiter::Reporter;
 use std::rc::Rc;
 use std::io::Write;
@@ -62,7 +62,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         };
 
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Table::new(Rc::clone(&strings));
+        let mut symbols = Symbols::new(Rc::clone(&strings));
 
         let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
             Ok(statements) => {
@@ -139,7 +139,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     };
 
     let strings = Rc::new(SymbolFactory::new());
-    let mut symbols = Table::new(Rc::clone(&strings));
+    let mut symbols = Symbols::new(Rc::clone(&strings));
 
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {

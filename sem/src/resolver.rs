@@ -461,7 +461,7 @@ impl Resolver {
 mod test {
     use syntax::ast::statement::Statement;
     use syntax::lexer::Lexer;
-    use util::symbol::{SymbolFactory, Table};
+    use util::symbol::{SymbolFactory, Symbols};
     use syntax::parser::Parser;
     use resolver::Resolver;
     use util::pos::Spanned;
@@ -476,7 +476,7 @@ mod test {
     ) -> Vec<Spanned<Statement>> {
         let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
 
-        let mut symbols = Table::new(strings);
+        let mut symbols = Symbols::new(strings);
         Parser::new(tokens, reporter.clone(), &mut symbols)
             .parse()
             .unwrap()
