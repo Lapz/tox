@@ -18,9 +18,11 @@ use std::io;
 use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Table};
 use util::emmiter::Reporter;
+use util::print_err;
 use std::rc::Rc;
 use std::io::Write;
 use structopt::StructOpt;
+
 
 fn main() {
     let opts = Cli::from_args();
@@ -189,7 +191,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     match interpret(&ast, &resolver.locals, &mut env) {
         Ok(_) => (),
         Err(err) => {
-            err.fmt(&tyenv);
+            print_err(err.fmt(&tyenv));
             ::std::process::exit(65)
         }
     };

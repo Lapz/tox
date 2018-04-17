@@ -28,6 +28,7 @@ impl BuiltIn {
             add_builtin(env.get_symbol("oct"), built_in_oct),
             add_builtin(env.get_symbol("hex"), built_in_hex),
             add_builtin(env.get_symbol("to_int"), built_in_to_int),
+            add_builtin(env.get_symbol("trim"), built_in_trim),
             add_builtin_class(
                 env.get_symbol("io"),
                 env,
@@ -92,6 +93,15 @@ fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
     Ok(Object::Int(rng.gen_range(min, max)))
 }
 
+fn built_in_trim(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let string = match arguments.iter().next() {
+        Some(&Object::Str(ref s)) => s.clone(),
+        _ => unreachable!(),
+    };
+
+    Ok(Object::Str(str::from_utf8(&string).unwrap().trim().as_bytes().to_vec()))
+}
+
 fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
     let string = match arguments.iter().next() {
         Some(&Object::Str(ref s)) => s,
@@ -99,7 +109,7 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
     };
     match str::from_utf8(string).unwrap().parse::<i64>() {
         Ok(n) => Ok(Object::Int(n)),
-        Err(_) => Err(RuntimeError::CantParseAsInt),
+        Err(_) => Err(RuntimeError::CantParseAsInt(string.to_vec())),
     }
 }
 
