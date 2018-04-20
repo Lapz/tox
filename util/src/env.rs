@@ -45,6 +45,7 @@ impl TypeEnv {
         env.add_builtin("oct", vec![Type::Int], Type::Str);
         env.add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
         env.add_builtin("to_int", vec![Type::Str], Type::Int);
+        env.add_builtin("trim", vec![Type::Str], Type::Str);
 
         env.add_builtin_class(
             "io",

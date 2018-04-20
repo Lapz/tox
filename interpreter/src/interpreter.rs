@@ -9,6 +9,7 @@ use util::symbol::Symbol;
 use interpreter::env::Environment;
 use std::mem;
 use util::env::TypeEnv;
+use std::str;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -18,18 +19,23 @@ pub enum RuntimeError {
     InvalidIndexType,
     NotAnIn,
     UndefinedProperty,
-    CantParseAsInt,
+    CantParseAsInt(Vec<u8>),
     UndefinedSymbol(Symbol),
     Return(Box<Object>),
 }
 
 impl RuntimeError {
-    pub fn fmt(&self, env: &TypeEnv) {
+    pub fn fmt(&self, env: &TypeEnv) -> String {
         match *self {
             RuntimeError::UndefinedSymbol(ref symbol) => {
-                println!("Undefined variable '{}' ", env.name(*symbol));
-            }
-            _ => (),
+                format!("Undefined variable '{}' ", env.name(*symbol))
+                            },
+            RuntimeError::CantParseAsInt(ref string) => {
+               format!("Cannot parse the string {:?} to an int",str::from_utf8(string).unwrap())
+            },
+
+
+            ref e => format!("{:?}",e),
         }
     }
 }
@@ -119,7 +125,7 @@ pub(crate) fn evaluate_statement(
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, locals, env)?.is_truthy() {
                 match evaluate_statement(body, locals, env) {
-                    Ok(value) => value,
+                    Ok(_) => (),
                     Err(e) => match e {
                         RuntimeError::Break => break,
                         RuntimeError::Continue => continue,
