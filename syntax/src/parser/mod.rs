@@ -5,14 +5,14 @@ use super::ast::expr::*;
 use super::ast::statement::*;
 use util::pos::{Span, Spanned};
 use util::emmiter::Reporter;
-use symbol::{Symbol, Table};
+use symbol::{Symbol, Symbols};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Spanned<Token<'a>>>>,
     reporter: Reporter,
     loop_depth: i32,
-    pub symbols: &'a mut Table<()>,
+    pub symbols: &'a mut Symbols<()>,
     parsing_cond: bool,
     variable_use_maker: VariableUseMaker,
 }
@@ -184,7 +184,7 @@ impl<'a> Parser<'a> {
     pub fn new(
         tokens: Vec<Spanned<Token<'a>>>,
         reporter: Reporter,
-        symbols: &'a mut Table<()>,
+        symbols: &'a mut Symbols<()>,
     ) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),

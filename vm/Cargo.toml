@@ -5,6 +5,7 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 
 [dependencies]
 util = {path = "../util"}
+byteorder = "1.2.2"
 
 [features]
 debug = []
