@@ -38,8 +38,8 @@ pub const EMPTYSPAN: Span = Span {
 
 #[derive(Debug, Copy, PartialOrd, Clone, PartialEq)]
 pub struct Position {
-    pub line: i64,
-    pub column: i64,
+    pub line: u32,
+    pub column: u32,
     pub absolute: usize,
 }
 
