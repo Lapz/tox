@@ -3,7 +3,7 @@ use object::Object;
 use rand::{thread_rng, Rng};
 use std::str;
 use std::time::{SystemTime, UNIX_EPOCH};
-use util::env::TypeEnv;
+use util::symbol::Symbols;
 use util::symbol::Symbol;
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
@@ -21,15 +21,15 @@ impl BuiltIn {
         BuiltIn {}
     }
 
-    pub fn get_built_ins(&self, env: &mut TypeEnv) -> Vec<(Symbol, Object)> {
+    pub fn get_built_ins(&self, env:  &mut Symbols<()>) -> Vec<(Symbol, Object)> {
         vec![
-            add_builtin(env.get_symbol("clock"), built_in_clock),
-            add_builtin(env.get_symbol("random"), built_in_rand),
-            add_builtin(env.get_symbol("oct"), built_in_oct),
-            add_builtin(env.get_symbol("hex"), built_in_hex),
-            add_builtin(env.get_symbol("to_int"), built_in_to_int),
+            add_builtin(env.symbol("clock"), built_in_clock),
+            add_builtin(env.symbol("random"), built_in_rand),
+            add_builtin(env.symbol("oct"), built_in_oct),
+            add_builtin(env.symbol("hex"), built_in_hex),
+            add_builtin(env.symbol("to_int"), built_in_to_int),
             add_builtin_class(
-                env.get_symbol("io"),
+                env.symbol("io"),
                 env,
                 vec![("readline", built_in_readline)],
             ),
@@ -43,13 +43,13 @@ pub(crate) fn add_builtin(name: Symbol, func: BuiltInFunction) -> (Symbol, Objec
 
 fn add_builtin_class(
     name: Symbol,
-    env: &mut TypeEnv,
+    env: &mut Symbols<()>,
     methods: Vec<(&str, BuiltInFunction)>,
 ) -> (Symbol, Object) {
     use fnv::FnvHashMap;
     let mut map = FnvHashMap::default();
     for method in methods {
-        let name = env.get_symbol(method.0);
+        let name = env.symbol(method.0);
         map.insert(name, Object::BuiltIn(name, method.1));
     }
     (name, Object::Class(name, None, map))

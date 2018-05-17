@@ -1,8 +1,8 @@
 //! This module provides an Environment which keeps a track of the mappings between a
 //! `Symbol` and a `Type` or an `Entry`
 
-use super::symbol::{Symbol, SymbolFactory, Symbols};
-use super::Unique;
+use util::symbol::{Symbol, SymbolFactory, Symbols};
+use util::Unique;
 use std::rc::Rc;
 use types::Type;
 

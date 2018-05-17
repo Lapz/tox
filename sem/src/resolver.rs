@@ -2,7 +2,7 @@ use fnv::FnvHashMap;
 use syntax::ast::expr::{Expression, VariableUseHandle};
 use syntax::ast::statement::Statement;
 use util::emmiter::Reporter;
-use util::env::TypeEnv;
+use env::TypeEnv;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 #[derive(Debug, PartialEq)]
@@ -465,7 +465,7 @@ mod test {
     use syntax::lexer::Lexer;
     use syntax::parser::Parser;
     use util::emmiter::Reporter;
-    use util::env::TypeEnv;
+    use env::TypeEnv;
     use util::pos::Spanned;
     use util::symbol::{SymbolFactory, Symbols};
 

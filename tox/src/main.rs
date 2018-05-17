@@ -10,18 +10,16 @@ extern crate vm;
 
 use interpreter::interpret;
 use interpreter::Environment;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
+use sem::{Resolver,TyChecker,TypeEnv};
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
-use util::emmiter::Reporter;
-use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::{Chunk, VM};
+use util::emmiter::Reporter;
 
 fn main() {
     let opts = Cli::from_args();
@@ -94,7 +92,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
         };
 
         let mut env = Environment::new();
-        env.fill_env(&mut tyenv);
+        env.fill_env(&mut symbols);
         match interpret(&ast, &resolver.locals, &mut env) {
             Ok(_) => (),
             Err(err) => {

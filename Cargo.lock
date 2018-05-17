@@ -512,6 +512,7 @@ name = "vm"
 version = "0.1.0"
 dependencies = [
  "byteorder 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syntax 0.1.0",
  "util 0.1.0",
 ]
 

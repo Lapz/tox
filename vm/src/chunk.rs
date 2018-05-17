@@ -23,6 +23,7 @@ pub fn simple_instruction(name: &str, offset: usize) -> usize {
     offset + 1
 }
 
+#[cfg(feature = "debug")]
 macro_rules! to_num {
     ([$stack:expr, $top:expr] => $type:ty) => {{
         use std::default;

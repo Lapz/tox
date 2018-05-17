@@ -4,10 +4,10 @@ mod inferstatement;
 use syntax::ast::expr::{Expression, Ty};
 use syntax::ast::statement::Statement;
 use util::emmiter::Reporter;
-use util::env::{Entry, TypeEnv};
+use env::{Entry, TypeEnv};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use util::types::Type;
+use types::Type;
 
 /// The struct that is in control of type checking
 #[derive(Debug, Default)]

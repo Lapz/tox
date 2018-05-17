@@ -6,7 +6,7 @@ mod test {
     use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use util::emmiter::Reporter;
-    use util::env::TypeEnv;
+    use env::TypeEnv;
     use util::pos::Spanned;
     use util::symbol::SymbolFactory;
 

@@ -1,7 +1,7 @@
 //! This module provides the types that are used throughout tox for the typeChecking
 
-use super::pos::Span;
-use super::symbol::Symbol;
+use util::pos::Span;
+use util::symbol::Symbol;
 use env::Entry;
 use std::cmp::{Ordering, PartialOrd};
 use std::collections::HashMap;

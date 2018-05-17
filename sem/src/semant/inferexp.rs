@@ -1,9 +1,9 @@
 use super::TyChecker;
 use super::{InferResult, InferedType};
 use syntax::ast::expr::{Expression, Literal, UnaryOp};
-use util::env::{Entry, TypeEnv};
+use env::{Entry, TypeEnv};
 use util::pos::Spanned;
-use util::types::Type;
+use types::Type;
 
 impl TyChecker {
     pub fn transform_expression(
