@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum Value {
-    Int(i64),
-    Float(f64),
+pub enum ValueType {
+    Long,
+    Constant,
 }

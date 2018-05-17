@@ -3,11 +3,11 @@ mod inferstatement;
 
 use syntax::ast::expr::{Expression, Ty};
 use syntax::ast::statement::Statement;
-use util::symbol::Symbol;
-use util::types::Type;
+use util::emmiter::Reporter;
 use util::env::{Entry, TypeEnv};
 use util::pos::{Span, Spanned};
-use util::emmiter::Reporter;
+use util::symbol::Symbol;
+use util::types::Type;
 
 /// The struct that is in control of type checking
 #[derive(Debug, Default)]
@@ -24,33 +24,29 @@ pub struct InferedType {
 }
 
 macro_rules! check_type {
-    ($sel:ident,$ty:expr,$unknown_ty:expr,$span:expr) => {
+    ($sel:ident, $ty:expr, $unknown_ty:expr, $span:expr) => {
         match $ty.ty {
-            Type::Func(_,ref returns) => {
+            Type::Func(_, ref returns) => {
                 if **returns != $unknown_ty {
-
-                    $sel.expected(&$ty.ty,&$unknown_ty,$span);
+                    $sel.expected(&$ty.ty, &$unknown_ty, $span);
 
                     return Err(());
                 }
 
                 Ok(())
-            },
+            }
 
-            _ =>  {
+            _ => {
                 if $ty.ty != $unknown_ty {
-                 $sel.expected(&$ty.ty,&$unknown_ty,$span);
+                    $sel.expected(&$ty.ty, &$unknown_ty, $span);
 
                     return Err(());
+                }
+
+                Ok(())
             }
-
-            Ok(())
-            }
-
-
         }
-
-    }
+    };
 }
 
 impl TyChecker {

@@ -1,11 +1,11 @@
-use token::{Token, TokenType};
-use std::iter::Peekable;
-use std::vec::IntoIter;
 use super::ast::expr::*;
 use super::ast::statement::*;
-use util::pos::{Span, Spanned};
-use util::emmiter::Reporter;
+use std::iter::Peekable;
+use std::vec::IntoIter;
 use symbol::{Symbol, Symbols};
+use token::{Token, TokenType};
+use util::emmiter::Reporter;
+use util::pos::{Span, Spanned};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -21,13 +21,13 @@ pub type ParserResult<T> = Result<T, ()>;
 
 /// Macro that is used to generate the code that parse a binary op
 macro_rules! binary {
-    ($_self:ident,$e:ident,$lhs:expr,$func:ident) => {
+    ($_self:ident, $e:ident, $lhs:expr, $func:ident) => {
         while $_self.recognise($e) {
             let op = $_self.get_binary_op()?;
 
             let rhs = Box::new($_self.$func()?);
 
-           $lhs = Spanned {
+            $lhs = Spanned {
                 span: $lhs.get_span().to(rhs.get_span()),
                 value: Expression::Binary {
                     lhs: Box::new($lhs),
@@ -38,13 +38,13 @@ macro_rules! binary {
         }
     };
 
-    ($_self:ident,$expr:expr, $lhs:expr,$func:ident) => {
+    ($_self:ident, $expr:expr, $lhs:expr, $func:ident) => {
         while $_self.matched($expr) {
             let op = $_self.get_binary_op()?;
 
             let rhs = Box::new($_self.$func()?);
 
-           $lhs = Spanned {
+            $lhs = Spanned {
                 span: $lhs.get_span().to(rhs.get_span()),
                 value: Expression::Binary {
                     lhs: Box::new($lhs),

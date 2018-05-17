@@ -8,19 +8,23 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
-use syntax::lexer::Lexer;
-use syntax::parser::Parser;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
 use interpreter::interpret;
 use interpreter::Environment;
+use sem::resolver::Resolver;
+use sem::semant::TyChecker;
 use std::io;
+use std::io::Write;
+use std::rc::Rc;
+use structopt::StructOpt;
+use syntax::lexer::Lexer;
+use syntax::parser::Parser;
+use util::emmiter::Reporter;
 use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Symbols};
-use util::emmiter::Reporter;
-use std::rc::Rc;
-use std::io::Write;
-use structopt::StructOpt;
+use vm::{
+    chunks::Chunk,
+    value::ValueType,
+    vm::VM};
 
 fn main() {
     let opts = Cli::from_args();
@@ -180,24 +184,26 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
-    if penv {
-        println!("{:#?}", tyenv);
-    }
+     let mut chunk = Chunk::new();
 
-    let mut env = Environment::new();
-    env.fill_env(&mut tyenv);
-    match interpret(&ast, &resolver.locals, &mut env) {
-        Ok(_) => (),
-        Err(err) => {
-            err.fmt(&tyenv);
-            ::std::process::exit(65)
+        chunk.write_constant(
+            &unsafe {
+                use std::mem;
+                mem::transmute::<f64, [u8; mem::size_of::<f64>()]>(1.23)
+            },
+            ValueType::Long,
+            1,
+        );
+
+        let mut vm = VM::new(chunk);
+
+
+        match vm.interpert() {
+            Ok(_) =>(),
+            Err(ref e) => panic!("{:?}",e)
         }
-    };
 
-    if penv {
-        println!("{:#?}", tyenv);
-        println!("{:#?}", env);
-    }
+    
 }
 
 #[derive(StructOpt, Debug)]

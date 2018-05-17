@@ -1,11 +1,11 @@
 use super::TyChecker;
-use syntax::ast::statement::Statement;
-use util::pos::Spanned;
-use util::env::{Entry, TypeEnv};
-use util::types::Type;
-use std::collections::HashMap;
-use util::symbol::Symbol;
 use super::{InferResult, InferedType};
+use std::collections::HashMap;
+use syntax::ast::statement::Statement;
+use util::env::{Entry, TypeEnv};
+use util::pos::Spanned;
+use util::symbol::Symbol;
+use util::types::Type;
 
 impl TyChecker {
     pub fn transform_statement(

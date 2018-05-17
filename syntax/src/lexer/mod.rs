@@ -1,8 +1,8 @@
-use token::{Token, TokenType};
-use util::pos::{CharPosition, Position, Span, Spanned};
-use util::emmiter::Reporter;
-use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::fmt::{Display, Formatter};
+use token::{Token, TokenType};
+use util::emmiter::Reporter;
+use util::pos::{CharPosition, Position, Span, Spanned};
 
 #[derive(Debug)]
 pub enum LexerError {

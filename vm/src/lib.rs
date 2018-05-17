@@ -1,10 +1,10 @@
- #![warn(exceeding_bitshifts)]
-extern crate util;
+#![warn(exceeding_bitshifts)]
 extern crate byteorder;
+extern crate util;
 
-mod chunks;
+
+pub mod chunks;
 mod op;
-mod value;
 mod pos;
-
-
+pub mod value;
+pub mod vm;

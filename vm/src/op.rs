@@ -1,7 +1,6 @@
-
 #[derive(Clone, Copy, Debug)]
 pub enum OpCode {
-    /// Return 
+    /// Return
     Return = 1,
     /// Ints
     Constant = 2,
@@ -22,7 +21,6 @@ impl Into<u8> for OpCode {
         self as u8
     }
 }
-
 
 impl TryFrom<u8> for OpCode {
     type Error = ();

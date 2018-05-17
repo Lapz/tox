@@ -1,10 +1,10 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use object::Object;
 use interpreter::RuntimeError;
+use object::Object;
 use rand::{thread_rng, Rng};
-use util::symbol::Symbol;
-use util::env::TypeEnv;
 use std::str;
+use std::time::{SystemTime, UNIX_EPOCH};
+use util::env::TypeEnv;
+use util::symbol::Symbol;
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
 

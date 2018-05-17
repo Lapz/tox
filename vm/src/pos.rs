@@ -1,11 +1,11 @@
 /// Each of these marks the beginning of a new source line
-use std::fmt::{Display,self};
+use std::fmt::{self, Display};
 use util::pos::Span;
 
-#[derive(PartialEq,Debug,Copy,Clone)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct LineStart {
-    pub offset:usize,
-    pub line:u32,
+    pub offset: usize,
+    pub line: u32,
 }
 
 impl Display for LineStart {
@@ -15,10 +15,10 @@ impl Display for LineStart {
 }
 
 impl LineStart {
-    pub fn new(pos:Span) -> Self {
+    pub fn new(pos: Span) -> Self {
         LineStart {
-            offset:pos.end.absolute,
-            line:pos.end.line,
+            offset: pos.end.absolute,
+            line: pos.end.line,
         }
     }
 }

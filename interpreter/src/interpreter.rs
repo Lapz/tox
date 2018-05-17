@@ -1,14 +1,14 @@
 use super::object::Object;
+use fnv::FnvHashMap;
+use interpreter::env::Environment;
+use std::cell::RefCell;
+use std::mem;
+use std::rc::Rc;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
-use util::pos::Spanned;
-use fnv::FnvHashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
-use util::symbol::Symbol;
-use interpreter::env::Environment;
-use std::mem;
 use util::env::TypeEnv;
+use util::pos::Spanned;
+use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -214,9 +214,7 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
-            expr,
-            locals,
-            env,
+            expr, locals, env,
         )?))),
 
         Statement::If {
@@ -597,15 +595,15 @@ pub mod env {
     use util::symbol::Symbol;
     use util::Unique;
 
-    use object::Object;
     use super::RuntimeError;
     use builtins::BuiltIn;
+    use object::Object;
     use util::env::TypeEnv;
 
     use std::rc::Rc;
 
-    use std::cell::RefCell;
     use fnv::FnvHashMap;
+    use std::cell::RefCell;
 
     #[derive(Debug, Clone, Default)]
     /// A Loxlocals,enviroment
