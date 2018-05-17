@@ -210,16 +210,16 @@ mod test {
 
         let mut constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 40, 64], 1);
 
-        chunk.write(OpCpde::Float, 1); //Float
+        chunk.write(OpCode::Float, 1); //Float
 
         chunk.write(constant as u8, 1); //index
 
         constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 57, 64], 1);
 
-        chunk.write(OpCpde::Float, 1); //Float
+        chunk.write(OpCode::Float, 1); //Float
         chunk.write(constant as u8, 1); //index
 
-        chunk.write(OpCode::Add, 2); // Add
+        chunk.write(OpCode::AddFloat, 2); // Add
 
         chunk.write(OpCode::Return, 2); // Return
         chunk.write(1, 2);
