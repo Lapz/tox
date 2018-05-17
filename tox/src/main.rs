@@ -1,6 +1,6 @@
 extern crate fnv;
 extern crate interpreter;
-extern crate sem;
+extern crate frontend;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -10,7 +10,7 @@ extern crate vm;
 
 use interpreter::interpret;
 use interpreter::Environment;
-use sem::{Resolver,TyChecker,TypeEnv};
+use frontend::{Resolver,TyChecker,TypeEnv};
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
