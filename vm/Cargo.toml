@@ -9,4 +9,5 @@ byteorder = "1.2.2"
 
 [features]
 debug = []
+stack = ["debug"]
 # default = ["debug"]

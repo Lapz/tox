@@ -21,10 +21,7 @@ use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::env::TypeEnv;
 use util::symbol::{SymbolFactory, Symbols};
-use vm::{
-    chunks::Chunk,
-    value::ValueType,
-    vm::VM};
+use vm::{Chunk, VM};
 
 fn main() {
     let opts = Cli::from_args();
@@ -184,26 +181,49 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
-     let mut chunk = Chunk::new();
+    let mut chunk = Chunk::new();
+    // let mut constant = chunk.add_constant(&[12, 0, 0, 0, 0, 0, 0, 0], 1);
 
-        chunk.write_constant(
-            &unsafe {
-                use std::mem;
-                mem::transmute::<f64, [u8; mem::size_of::<f64>()]>(1.23)
-            },
-            ValueType::Long,
-            1,
-        );
+    // chunk.write(1, 1); //Int
 
-        let mut vm = VM::new(chunk);
+    // chunk.write(constant as u8, 1); //index
 
+    // constant = chunk.add_constant(&[25, 0, 0, 0, 0, 0, 0, 0], 1);
 
-        match vm.interpert() {
-            Ok(_) =>(),
-            Err(ref e) => panic!("{:?}",e)
-        }
+    // chunk.write(1, 1); //Int
+    // chunk.write(constant as u8, 1); //index
 
-    
+    // chunk.write(6, 1); // Multiply
+
+    // chunk.write(0, 2); // Return
+    // chunk.write(8, 2);
+
+    chunk.add_string(&[104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100], 1);
+
+    chunk.write(3, 1); // string
+    chunk.write(11, 1); // length
+
+    let mut constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 40, 64], 1);
+
+    chunk.write(2, 1); //Float
+
+    chunk.write(constant as u8, 1); //index
+
+    constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 57, 64], 1);
+
+    chunk.write(2, 1); //Float
+    chunk.write(constant as u8, 1); //index
+
+    chunk.write(23, 2); // Add
+
+    chunk.write(0, 2); // Return
+    chunk.write(1, 2);
+
+    println!("{:?}", chunk);
+
+    let mut vm = VM::new(&mut chunk);
+
+    vm.run().expect("Err");
 }
 
 #[derive(StructOpt, Debug)]

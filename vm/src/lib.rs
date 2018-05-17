@@ -1,10 +1,9 @@
-#![warn(exceeding_bitshifts)]
-extern crate byteorder;
-extern crate util;
+#[macro_use]
+mod chunk;
 
-
-pub mod chunks;
 mod op;
-mod pos;
-pub mod value;
-pub mod vm;
+#[macro_use]
+mod vm;
+
+pub use chunk::Chunk;
+pub use vm::VM;
