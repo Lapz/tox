@@ -12,11 +12,8 @@ extern crate util;
 mod env;
 // mod resolver;
 // mod test;
+mod ast;
 mod ctx;
 mod types;
 pub(crate) type InferResult<T> = Result<T, ()>;
 use util::symbol::Symbols;
-
-// pub use semant::TyChecker;
-// pub use env::TypeEnv;
-// pub use resolver::Resolver;

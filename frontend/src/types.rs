@@ -6,7 +6,7 @@ use std::fmt::{self, Display, Formatter};
 use util::pos::Span;
 use util::symbol::Symbol;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Array(Box<Type>),
     Alias(Symbol, Box<Type>),

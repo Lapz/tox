@@ -6,14 +6,14 @@ use types::Type;
 use util::symbol::{Symbol, SymbolFactory, Symbols};
 use util::Unique;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Entry {
     Ty(Type),
     Class(Type),
     Fun(Type),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum VarEntry {
     Var(Type),
     Fun { ty: Type },
