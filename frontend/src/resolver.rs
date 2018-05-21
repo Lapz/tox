@@ -1,8 +1,8 @@
+use env::TypeEnv;
 use fnv::FnvHashMap;
 use syntax::ast::expr::{Expression, VariableUseHandle};
 use syntax::ast::statement::Statement;
 use util::emmiter::Reporter;
-use env::TypeEnv;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 #[derive(Debug, PartialEq)]
@@ -459,13 +459,13 @@ impl Resolver {
 
 #[cfg(test)]
 mod test {
+    use env::TypeEnv;
     use resolver::Resolver;
     use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use syntax::lexer::Lexer;
     use syntax::parser::Parser;
     use util::emmiter::Reporter;
-    use env::TypeEnv;
     use util::pos::Spanned;
     use util::symbol::{SymbolFactory, Symbols};
 

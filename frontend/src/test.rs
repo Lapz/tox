@@ -2,11 +2,11 @@
 
 mod test {
 
+    use env::TypeEnv;
     use semant::TyChecker;
     use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use util::emmiter::Reporter;
-    use env::TypeEnv;
     use util::pos::Spanned;
     use util::symbol::SymbolFactory;
 

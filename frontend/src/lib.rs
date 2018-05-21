@@ -8,12 +8,15 @@ extern crate syntax;
 extern crate util;
 
 #[macro_use]
- mod semant;
-mod resolver;
+// mod semant;
 mod env;
+// mod resolver;
+// mod test;
+mod ctx;
 mod types;
-mod test;
+pub(crate) type InferResult<T> = Result<T, ()>;
+use util::symbol::Symbols;
 
-pub use semant::TyChecker;
-pub use resolver::Resolver;
-pub use env::TypeEnv;
+// pub use semant::TyChecker;
+// pub use env::TypeEnv;
+// pub use resolver::Resolver;

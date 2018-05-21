@@ -14,8 +14,6 @@ use syntax::ast::expr::VariableUseHandle;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 
-
-
 pub fn interpret(
     statements: &[Spanned<Statement>],
     locals: &FnvHashMap<VariableUseHandle, usize>,

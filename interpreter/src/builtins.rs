@@ -3,8 +3,8 @@ use object::Object;
 use rand::{thread_rng, Rng};
 use std::str;
 use std::time::{SystemTime, UNIX_EPOCH};
-use util::symbol::Symbols;
 use util::symbol::Symbol;
+use util::symbol::Symbols;
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
 
@@ -21,18 +21,14 @@ impl BuiltIn {
         BuiltIn {}
     }
 
-    pub fn get_built_ins(&self, env:  &mut Symbols<()>) -> Vec<(Symbol, Object)> {
+    pub fn get_built_ins(&self, env: &mut Symbols<()>) -> Vec<(Symbol, Object)> {
         vec![
             add_builtin(env.symbol("clock"), built_in_clock),
             add_builtin(env.symbol("random"), built_in_rand),
             add_builtin(env.symbol("oct"), built_in_oct),
             add_builtin(env.symbol("hex"), built_in_hex),
             add_builtin(env.symbol("to_int"), built_in_to_int),
-            add_builtin_class(
-                env.symbol("io"),
-                env,
-                vec![("readline", built_in_readline)],
-            ),
+            add_builtin_class(env.symbol("io"), env, vec![("readline", built_in_readline)]),
         ]
     }
 }

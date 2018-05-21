@@ -6,9 +6,9 @@ use std::mem;
 use std::rc::Rc;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
-use util::symbol::Symbols;
 use util::pos::Spanned;
 use util::symbol::Symbol;
+use util::symbol::Symbols;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -24,10 +24,7 @@ pub enum RuntimeError {
 }
 
 impl RuntimeError {
-    
-
     pub fn fmt(&self, symbols: &Symbols<()>) {
-        
         match *self {
             RuntimeError::UndefinedSymbol(ref symbol) => {
                 println!("Undefined variable '{}' ", symbols.name(*symbol));
@@ -601,7 +598,6 @@ pub mod env {
     use builtins::BuiltIn;
     use object::Object;
 
-
     use std::rc::Rc;
 
     use fnv::FnvHashMap;
@@ -614,7 +610,6 @@ pub mod env {
     /// Symbol was declared
     pub struct Environment {
         actual: Rc<RefCell<EnvironmentImpl>>,
-     
     }
 
     impl PartialEq for Environment {
@@ -631,11 +626,8 @@ pub mod env {
         pub fn new_with_outer(outer: &Environment) -> Environment {
             Environment {
                 actual: Rc::new(RefCell::new(EnvironmentImpl::with_values(outer))),
-                
             }
         }
-
-
 
         pub fn fill_env(&mut self, symbols: &mut Symbols<()>) {
             let built_in = BuiltIn::new().get_built_ins(symbols);

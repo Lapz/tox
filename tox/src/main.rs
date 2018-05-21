@@ -1,6 +1,6 @@
 extern crate fnv;
-extern crate interpreter;
 extern crate frontend;
+extern crate interpreter;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -10,16 +10,16 @@ extern crate vm;
 
 use interpreter::interpret;
 use interpreter::Environment;
-use frontend::{Resolver,TyChecker,TypeEnv};
+// use frontend::{Resolver,TyChecker,TypeEnv};
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
+use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::{Chunk, VM};
-use util::emmiter::Reporter;
 
 fn main() {
     let opts = Cli::from_args();
@@ -78,28 +78,28 @@ pub fn repl(ptokens: bool, pprint: bool) {
             }
         };
 
-        let mut tyenv = TypeEnv::new(&strings);
-        let mut resolver = Resolver::new(reporter.clone());
+        // let mut tyenv = TypeEnv::new(&strings);
+        // let mut resolver = Resolver::new(reporter.clone());
 
-        resolver.resolve(&ast, &tyenv).unwrap();
+        // resolver.resolve(&ast, &tyenv).unwrap();
 
-        match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
-            Ok(_) => (),
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
+        // match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
+        //     Ok(_) => (),
+        //     Err(_) => {
+        //         reporter.emit(&input);
+        //         continue;
+        //     }
+        // };
 
-        let mut env = Environment::new();
-        env.fill_env(&mut symbols);
-        match interpret(&ast, &resolver.locals, &mut env) {
-            Ok(_) => (),
-            Err(err) => {
-                println!("{:?}", err);
-                continue;
-            }
-        };
+        // let mut env = Environment::new();
+        // env.fill_env(&mut symbols);
+        // match interpret(&ast, &resolver.locals, &mut env) {
+        //     Ok(_) => (),
+        //     Err(err) => {
+        //         println!("{:?}", err);
+        //         continue;
+        //     }
+        // };
     }
 }
 
@@ -159,25 +159,25 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", ast);
     }
 
-    let mut tyenv = TypeEnv::new(&strings);
+    // let mut tyenv = TypeEnv::new(&strings);
 
-    let mut resolver = Resolver::new(reporter.clone());
+    // let mut resolver = Resolver::new(reporter.clone());
 
-    match resolver.resolve(&ast, &tyenv) {
-        Ok(_) => (),
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    }
+    // match resolver.resolve(&ast, &tyenv) {
+    //     Ok(_) => (),
+    //     Err(_) => {
+    //         reporter.emit(input);
+    //         ::std::process::exit(65)
+    //     }
+    // }
 
-    match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
-        Ok(_) => (),
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
+    // match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
+    //     Ok(_) => (),
+    //     Err(_) => {
+    //         reporter.emit(input);
+    //         ::std::process::exit(65)
+    //     }
+    // };
 
     let mut chunk = Chunk::new();
     // let mut constant = chunk.add_constant(&[12, 0, 0, 0, 0, 0, 0, 0], 1);
