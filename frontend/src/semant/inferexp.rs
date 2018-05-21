@@ -5,6 +5,7 @@ use syntax::ast::expr::{Expression, Literal, UnaryOp};
 use types::Type;
 use util::pos::Spanned;
 
+
 impl TyChecker {
     pub fn transform_expression(
         &mut self,

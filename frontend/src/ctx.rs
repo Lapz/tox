@@ -1,18 +1,18 @@
 use env::{Entry, VarEntry};
 use std::rc::Rc;
-use types::Type;
+use types::{Type, Unique};
 use util::emmiter::Reporter;
-use util::symbol::{SymbolFactory, Symbols};
-
-struct CompileCtx {
+use util::pos::Span;
+use util::symbol::{Symbol, SymbolFactory, Symbols};
+pub struct CompileCtx<'a> {
     symbols: Symbols<()>,
     types: Symbols<Entry>,
-    var_env: Symbols<VarEntry>,
-    reporter: Reporter,
+    vars: Symbols<VarEntry>,
+    reporter: &'a mut Reporter,
 }
 
-impl CompileCtx {
-    pub fn new(strings: &Rc<SymbolFactory>, reporter: Reporter) -> Self {
+impl<'a> CompileCtx<'a> {
+    pub fn new(strings: &Rc<SymbolFactory>, reporter: &'a mut Reporter) -> Self {
         let mut types = Symbols::new(Rc::clone(strings));
 
         let string_symbol = types.symbol("str");
@@ -59,11 +59,12 @@ impl CompileCtx {
                 methods_ty.insert(name, method.1);
             }
 
-            let entry = VarEntry::Var(Type::Class {
-                name: symbol,
-                methods: methods_ty,
-                fields: HashMap::new(),
-            });
+            let entry = VarEntry::Var(Type::Class(
+                symbol,
+                methods_ty,
+                HashMap::new(),
+                Unique::new(),
+            ));
 
             vars.enter(symbol, entry);
         };
@@ -79,8 +80,48 @@ impl CompileCtx {
         CompileCtx {
             symbols: Symbols::new(Rc::clone(strings)),
             types: Symbols::new(Rc::clone(strings)),
-            var_env: Symbols::new(Rc::clone(strings)),
+            vars: Symbols::new(Rc::clone(strings)),
             reporter,
         }
+    }
+
+    /// Report an error
+    pub fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.error(msg, span)
+    }
+
+    /// Check for a type in the type Env
+    pub fn look_type(&mut self, symbol: Symbol) -> Option<&Entry> {
+        self.types.look(symbol)
+    }
+
+    /// Find the corresponding name for a symbol
+    pub fn name(&self, symbol: Symbol) -> String {
+        self.vars.name(symbol)
+    }
+
+    /// CHeck for a Type in the symbol Env
+    pub fn look_var(&self, symbol: Symbol) -> Option<&VarEntry> {
+        self.vars.look(symbol)
+    }
+
+    /// Begins a new scope
+    pub fn begin_scope(&mut self) {
+        self.types.begin_scope();
+        self.vars.begin_scope();
+    }
+
+    /// Ends the old scope
+    pub fn end_scope(&mut self) {
+        self.types.end_scope();
+        self.vars.end_scope();
+    }
+
+    pub fn add_type(&mut self, symbol: Symbol, data: Entry) {
+        self.types.enter(symbol, data)
+    }
+
+    pub fn add_var(&mut self, symbol: Symbol, data: VarEntry) {
+        self.vars.enter(symbol, data)
     }
 }

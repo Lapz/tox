@@ -19,6 +19,13 @@ pub enum VarEntry {
     Fun { ty: Type },
 }
 
+impl Entry {
+    pub fn ty(&self) -> &Type {
+        match *self {
+            Entry::Ty(ref ty) | Entry::Class(ref ty) | Entry::Fun(ref ty) => ty,
+        }
+    }
+}
 // #[derive(Debug, Clone)]
 // pub struct TypeEnv {
 //     pub types: Symbols<Type>,
@@ -40,44 +47,6 @@ pub enum VarEntry {
 //
 
 //         env
-//     }
-//     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
-//         self.types.look(symbol)
-//     }
-
-//     pub fn name(&self, symbol: Symbol) -> String {
-//         self.vars.name(symbol)
-//     }
-
-//     pub fn look_var(&self, symbol: Symbol) -> Option<&Entry> {
-//         self.vars.look(symbol)
-//     }
-
-//     pub fn unique_id(&mut self) -> Symbol {
-//         let next = Unique::new().0;
-//         self.vars.symbol(&next.to_string())
-//     }
-
-//     pub fn begin_scope(&mut self) {
-//         self.types.begin_scope();
-//         self.vars.begin_scope();
-//     }
-
-//     pub fn end_scope(&mut self) {
-//         self.types.end_scope();
-//         self.vars.end_scope();
-//     }
-
-//     pub fn add_type(&mut self, symbol: Symbol, data: Type) {
-//         self.types.enter(symbol, data)
-//     }
-
-//     pub fn add_var(&mut self, symbol: Symbol, data: Entry) {
-//         self.vars.enter(symbol, data)
-//     }
-
-//     pub fn get_symbol(&mut self, name: &str) -> Symbol {
-//         self.vars.symbol(name)
 //     }
 
 //     fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, Entry)>) {

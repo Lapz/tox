@@ -1,6 +1,6 @@
+use syntax::ast::expr::{AssignOperator, Literal, Op, UnaryOp};
 use types::Type;
 use util::symbol::Symbol;
-use syntax::ast::expr::{Literal,UnaryOp,AssignOperator,Op};
 
 #[derive(Debug)]
 pub struct Program {
@@ -24,10 +24,9 @@ pub struct Field {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
     pub name: Symbol,
-    pub params:Vec<Type>,
+    pub params: Vec<Type>,
     pub returns: Type,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypedExpression {
@@ -87,29 +86,19 @@ pub enum Statement {
     Return(TypedExpression),
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     // The different type of expressions availabe
     Array(Vec<TypedExpression>),
-    Assign(Symbol,AssignOperator, TypedExpression),
+    Assign(Symbol, AssignOperator, TypedExpression),
     Binary(TypedExpression, Op, TypedExpression),
-    Call(
-        TypedExpression,
-        Vec<TypedExpression>,
-    ),
+    Call(TypedExpression, Vec<TypedExpression>),
 
-    ClassInstance (
-        Symbol,
-        Vec<TypedExpression>,
-    ),
-    Get (
-        Symbol,
-        TypedExpression,
-    ),
-    Grouping (TypedExpression),
-      
-    Index (Symbol,TypedExpression),
+    ClassInstance(Symbol, Vec<TypedExpression>),
+    Get(Symbol, TypedExpression),
+    Grouping(TypedExpression),
+
+    Index(Symbol, TypedExpression),
 
     Literal(Literal),
 
@@ -119,12 +108,9 @@ pub enum Expression {
         value: TypedExpression,
     },
 
-    Ternary (TypedExpression,
-        TypedExpression,
-       TypedExpression,
-    ),
-    Unary (UnaryOp,TypedExpression),
+    Ternary(TypedExpression, TypedExpression, TypedExpression),
+    Unary(UnaryOp, TypedExpression),
 
     This,
-    Var(Symbol,Type),
+    Var(Symbol, Type),
 }

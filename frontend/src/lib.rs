@@ -15,5 +15,35 @@ mod env;
 mod ast;
 mod ctx;
 mod types;
+mod unify;
 pub(crate) type InferResult<T> = Result<T, ()>;
-use util::symbol::Symbols;
+
+#[derive(Debug)]
+pub struct Infer {
+    this: self::types::Type, // for this
+}
+
+use std::rc::Rc;
+
+impl Infer {
+    pub fn new() -> Self {
+        Self {
+            this: self::types::Type::Nil,
+        }
+    }
+
+    pub fn infer(
+        &mut self,
+        program: &[syntax::ast::statement::Statement],
+        strings: &Rc<util::symbol::SymbolFactory>,
+        reporter: &mut util::emmiter::Reporter,
+    ) -> InferResult<self::ast::Program> {
+        let mut ctx = self::ctx::CompileCtx::new(strings, reporter);
+
+        for statement in program {
+            // self.infer_program()
+        }
+
+        unimplemented!()
+    }
+}
