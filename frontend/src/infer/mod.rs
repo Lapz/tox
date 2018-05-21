@@ -245,6 +245,11 @@ impl Infer {
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<t::TypedExpression> {
+        match expr.value {
+            Expression::Array { items } => {}
+
+            _ => unimplemented!(),
+        }
         unimplemented!()
     }
     // add code here

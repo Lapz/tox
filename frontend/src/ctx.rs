@@ -90,6 +90,10 @@ impl<'a> CompileCtx<'a> {
         self.reporter.error(msg, span)
     }
 
+    pub fn warn<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.warn(msg, span)
+    }
+
     /// Check for a type in the type Env
     pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
         self.types.look(symbol)
