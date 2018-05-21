@@ -14,6 +14,7 @@ mod env;
 // mod test;
 mod ast;
 mod ctx;
+mod infer;
 mod types;
 mod unify;
 pub(crate) type InferResult<T> = Result<T, ()>;

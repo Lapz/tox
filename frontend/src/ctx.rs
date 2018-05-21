@@ -6,7 +6,7 @@ use util::pos::Span;
 use util::symbol::{Symbol, SymbolFactory, Symbols};
 pub struct CompileCtx<'a> {
     symbols: Symbols<()>,
-    types: Symbols<Entry>,
+    types: Symbols<Type>,
     vars: Symbols<VarEntry>,
     reporter: &'a mut Reporter,
 }
@@ -91,7 +91,7 @@ impl<'a> CompileCtx<'a> {
     }
 
     /// Check for a type in the type Env
-    pub fn look_type(&mut self, symbol: Symbol) -> Option<&Entry> {
+    pub fn look_type(&mut self, symbol: Symbol) -> Option<&Type> {
         self.types.look(symbol)
     }
 
@@ -117,7 +117,7 @@ impl<'a> CompileCtx<'a> {
         self.vars.end_scope();
     }
 
-    pub fn add_type(&mut self, symbol: Symbol, data: Entry) {
+    pub fn add_type(&mut self, symbol: Symbol, data: Type) {
         self.types.enter(symbol, data)
     }
 

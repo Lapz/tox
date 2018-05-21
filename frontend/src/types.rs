@@ -43,6 +43,12 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn is_int(&self) -> bool {
+        match *self {
+            Type::Int => true,
+            _ => false,
+        }
+    }
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
             Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
