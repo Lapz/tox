@@ -26,6 +26,15 @@ impl Entry {
         }
     }
 }
+
+impl VarEntry {
+    pub fn get_ty(self) -> Type {
+        match self {
+            VarEntry::Fun { ty } => ty,
+            VarEntry::Var(ty) => ty,
+        }
+    }
+}
 // #[derive(Debug, Clone)]
 // pub struct TypeEnv {
 //     pub types: Symbols<Type>,

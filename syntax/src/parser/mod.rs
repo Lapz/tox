@@ -854,15 +854,9 @@ impl<'a> Parser<'a> {
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
         let ty = if self.recognise(TokenType::COLON) {
-            let close_span = self.consume_get_span(&TokenType::COLON, "Expected ':'")?;
-            return Ok(Spanned {
-                span: open_span.to(close_span),
-                value: Statement::Var {
-                    ident,
-                    ty: None,
-                    expr: None,
-                },
-            });
+            self.advance();
+
+            Some(self.parse_type()?)
         } else {
             None
         };

@@ -1,3 +1,4 @@
+#![feature(nll)]
 #[cfg(test)]
 extern crate pretty_assertions;
 
@@ -35,19 +36,29 @@ impl Infer {
 
     pub fn infer(
         &mut self,
-        program: &[util::pos::Spanned<syntax::ast::statement::Statement>],
+        program: Vec<util::pos::Spanned<syntax::ast::statement::Statement>>,
         strings: &Rc<util::symbol::SymbolFactory>,
         reporter: &mut util::emmiter::Reporter,
     ) -> InferResult<self::ast::Program> {
         let mut ctx = self::ctx::CompileCtx::new(strings, reporter);
+
+        // println!("{:#?}",ctx);
         let mut resolver = self::resolver::Resolver::new();
 
-        resolver.resolve(program, &mut ctx)?;
+        let mut new_program = self::ast::Program {
+            classes: Vec::new(),
+            statements: Vec::new(),
+        };
+
+        resolver.resolve(&program, &mut ctx)?;
 
         for statement in program {
+            new_program
+                .statements
+                .push(self.infer_statement(statement, &mut ctx)?)
             // self.infer_program()
         }
 
-        unimplemented!()
+        Ok(new_program)
     }
 }

@@ -3,6 +3,7 @@ use ctx::CompileCtx;
 use syntax::ast::expr::Ty as astType;
 use types::Type;
 use util::pos::Spanned;
+use util::symbol::Symbol;
 
 impl Infer {
     pub(crate) fn trans_type(
@@ -34,6 +35,21 @@ impl Infer {
                 } else {
                     Ok(Type::Fun(param_tys, Box::new(Type::Nil)))
                 }
+            }
+        }
+    }
+
+    pub(crate) fn infer_var(
+        &self,
+        symbol: &Spanned<Symbol>,
+        ctx: &mut CompileCtx,
+    ) -> InferResult<Type> {
+        match ctx.look_var(symbol.value) {
+            Some(ty) => return Ok(ty.clone().get_ty()),
+            None => {
+                let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
+                ctx.error(msg, symbol.span);
+                Err(())
             }
         }
     }

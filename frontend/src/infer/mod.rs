@@ -5,8 +5,8 @@ use super::{Infer, InferResult};
 use ast as t;
 use ctx::CompileCtx;
 use env::VarEntry;
-use syntax::ast::expr::Expression;
-use syntax::ast::expr::Literal;
+// use syntax::ast::expr::Expression;
+use syntax::ast::expr::{Expression, Literal, UnaryOp};
 use syntax::ast::statement::Statement;
 use types::Type;
 use util::pos::Spanned;
@@ -245,12 +245,118 @@ impl Infer {
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<t::TypedExpression> {
-        match expr.value {
-            Expression::Array { items } => {}
+        let (typed, ty) = match expr.value {
+            Expression::Array { mut items } => {
+                if items.is_empty() {
+                    (
+                        t::Expression::Array(vec![]),
+                        Type::Array(Box::new(Type::Nil)),
+                    )
+                } else {
+                    let mut nitems = vec![self.infer_expr(items.remove(0), ctx)?];
 
+                    for item in items.into_iter().skip(1) {
+                        let span = item.span;
+                        let ty_expr = self.infer_expr(item, ctx)?;
+
+                        self.unify(&nitems[0].ty, &ty_expr.ty, span, ctx)?;
+                        nitems.push(ty_expr);
+                    }
+
+                    let ret_ty = nitems[0].ty.clone();
+
+                    (t::Expression::Array(nitems), Type::Array(Box::new(ret_ty)))
+                }
+            }
+
+            Expression::Assign {
+                name, kind, value, ..
+            } => {
+                let span = name.span.to(value.span);
+
+                println!("{}", ctx.name(name.value));
+
+                let ty = self.infer_var(&name, ctx)?;
+                let value_ty = self.infer_expr(*value, ctx)?;
+                use syntax::ast::expr::AssignOperator::*;
+                match kind.value {
+                    Equal => {
+                        self.unify(&ty, &value_ty.ty, span, ctx)?;
+                    }
+                    MinusEqual | PlusEqual | StarEqual | SlashEqual => {
+                        match self.unify(&ty, &value_ty.ty, span, ctx) {
+                            Ok(()) => (),
+                            Err(_) => match self.unify(&ty, &Type::Str, span, ctx) {
+                                Ok(()) => (),
+                                Err(_) => {
+                                    ctx.remove_error();
+                                    return Err(());
+                                }
+                            },
+                        }
+
+                        unimplemented!()
+                    }
+                }
+
+                let ty = value_ty.ty.clone();
+
+                (t::Expression::Assign(name.value, kind.value, value_ty), ty)
+            }
+
+            Expression::Grouping { expr } => {
+                let ty_expr = self.infer_expr(*expr, ctx)?;
+                let ty = ty_expr.ty.clone();
+
+                (t::Expression::Grouping(ty_expr), ty)
+            }
+
+            Expression::This(_) => (t::Expression::This, self.this.clone()),
+            Expression::Unary { expr, op } => {
+                let span = expr.span;
+                let expr = self.infer_expr(*expr, ctx)?;
+
+                match op.value {
+                    UnaryOp::Bang => (t::Expression::Unary(op.value, expr), Type::Bool),
+                    UnaryOp::Minus => {
+                        if !expr.ty.is_int() {
+                            let msg =
+                                format!("Cannot use `-` operator on type `{}`", expr.ty.print(ctx));
+
+                            ctx.error(msg, span);
+                            return Err(());
+                        }
+
+                        let ty = expr.ty.clone();
+                        (t::Expression::Unary(op.value, expr), ty)
+                    }
+                }
+            }
+            Expression::Literal(literal) => {
+                let ty = self.infer_literal(&literal);
+                (t::Expression::Literal(literal), ty)
+            }
             _ => unimplemented!(),
+        };
+
+        Ok(t::TypedExpression {
+            expr: Box::new(typed),
+            ty,
+        })
+    }
+
+    fn infer_literal(&self, literal: &Literal) -> Type {
+        match *literal {
+            Literal::Float(_) => Type::Float,
+
+            Literal::False(_) | Literal::True(_) => Type::Bool,
+
+            Literal::Str(_) => Type::Str,
+
+            Literal::Nil => Type::Nil, // Nil is given the type void as only statements return Nil
+
+            Literal::Int(_) => Type::Int,
         }
-        unimplemented!()
     }
     // add code here
 }

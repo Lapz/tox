@@ -4,6 +4,7 @@ use types::{Type, Unique};
 use util::emmiter::Reporter;
 use util::pos::Span;
 use util::symbol::{Symbol, SymbolFactory, Symbols};
+#[derive(Debug)]
 pub struct CompileCtx<'a> {
     symbols: Symbols<()>,
     types: Symbols<Type>,
@@ -47,40 +48,42 @@ impl<'a> CompileCtx<'a> {
             add_builtin("to_int", vec![Type::Str], Type::Int);
         }
 
-        let mut add_builtin_class = |name: &str, methods: Vec<(&str, Entry)>| {
-            let symbol = vars.symbol(name);
+        {
+            let mut add_builtin_class = |name: &str, methods: Vec<(&str, Entry)>| {
+                let symbol = vars.symbol(name);
 
-            use std::collections::HashMap;
+                use std::collections::HashMap;
 
-            let mut methods_ty = HashMap::new();
+                let mut methods_ty = HashMap::new();
 
-            for method in methods {
-                let name = vars.symbol(method.0);
-                methods_ty.insert(name, method.1);
-            }
+                for method in methods {
+                    let name = vars.symbol(method.0);
+                    methods_ty.insert(name, method.1);
+                }
 
-            let entry = VarEntry::Var(Type::Class(
-                symbol,
-                methods_ty,
-                HashMap::new(),
-                Unique::new(),
-            ));
+                let entry = VarEntry::Var(Type::Class(
+                    symbol,
+                    methods_ty,
+                    HashMap::new(),
+                    Unique::new(),
+                ));
 
-            vars.enter(symbol, entry);
-        };
+                vars.enter(symbol, entry);
+            };
 
-        add_builtin_class(
-            "io",
-            vec![(
-                "readline",
-                Entry::Fun(Type::Fun(vec![], Box::new(Type::Str))),
-            )],
-        );
+            add_builtin_class(
+                "io",
+                vec![(
+                    "readline",
+                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str))),
+                )],
+            );
+        }
 
         CompileCtx {
             symbols: Symbols::new(Rc::clone(strings)),
-            types: Symbols::new(Rc::clone(strings)),
-            vars: Symbols::new(Rc::clone(strings)),
+            types,
+            vars,
             reporter,
         }
     }
@@ -92,6 +95,10 @@ impl<'a> CompileCtx<'a> {
 
     pub fn warn<T: Into<String>>(&mut self, msg: T, span: Span) {
         self.reporter.warn(msg, span)
+    }
+
+    pub fn remove_error(&mut self) {
+        self.reporter.remove_error();
     }
 
     /// Check for a type in the type Env

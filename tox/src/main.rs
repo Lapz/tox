@@ -8,9 +8,9 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
+use frontend::Infer;
 use interpreter::interpret;
 use interpreter::Environment;
-// use frontend::{Resolver,TyChecker,TypeEnv};
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
@@ -120,7 +120,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         ::std::process::exit(0)
     }
 
-    let reporter = Reporter::new();
+    let mut reporter = Reporter::new();
 
     let tokens = match Lexer::new(input, reporter.clone()).lex() {
         Ok(tokens) => {
@@ -159,25 +159,15 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", ast);
     }
 
-    // let mut tyenv = TypeEnv::new(&strings);
+    let mut infer = Infer::new();
 
-    // let mut resolver = Resolver::new(reporter.clone());
-
-    // match resolver.resolve(&ast, &tyenv) {
-    //     Ok(_) => (),
-    //     Err(_) => {
-    //         reporter.emit(input);
-    //         ::std::process::exit(65)
-    //     }
-    // }
-
-    // match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
-    //     Ok(_) => (),
-    //     Err(_) => {
-    //         reporter.emit(input);
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    match infer.infer(ast, &strings, &mut reporter) {
+        Ok(_) => (),
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    }
 
     let mut chunk = Chunk::new();
     // let mut constant = chunk.add_constant(&[12, 0, 0, 0, 0, 0, 0, 0], 1);

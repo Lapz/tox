@@ -51,6 +51,10 @@ impl Reporter {
         })
     }
 
+    pub fn remove_error(&mut self) {
+        self.diagnostics.borrow_mut().pop();
+    }
+
     pub fn error<T: Into<String>>(&self, msg: T, span: Span) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
