@@ -309,6 +309,10 @@ impl Infer {
                 let ty = ty_expr.ty.clone();
 
                 (t::Expression::Grouping(ty_expr), ty)
+            },
+            Expression::Literal(literal) => {
+                let ty = self.infer_literal(&literal);
+                (t::Expression::Literal(literal), ty)
             }
 
             Expression::This(_) => (t::Expression::This, self.this.clone()),
@@ -332,10 +336,7 @@ impl Infer {
                     }
                 }
             }
-            Expression::Literal(literal) => {
-                let ty = self.infer_literal(&literal);
-                (t::Expression::Literal(literal), ty)
-            }
+            
             _ => unimplemented!(),
         };
 
