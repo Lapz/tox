@@ -25,6 +25,12 @@ impl Entry {
             Entry::Ty(ref ty) | Entry::Class(ref ty) | Entry::Fun(ref ty) => ty,
         }
     }
+
+    pub fn get_ty(self) -> Type {
+        match self {
+            Entry::Ty(ty) | Entry::Class(ty) | Entry::Fun(ty) => ty,
+        }
+    }
 }
 
 impl VarEntry {

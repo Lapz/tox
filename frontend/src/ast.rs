@@ -4,15 +4,7 @@ use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Program {
-    pub classes: Vec<Class>,
     pub statements: Vec<Statement>,
-}
-
-#[derive(Debug)]
-pub struct Class {
-    pub name: Symbol,
-    pub fields: Vec<Field>,
-    pub methods: Vec<Method>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -101,12 +93,8 @@ pub enum Expression {
     Index(Symbol, TypedExpression),
 
     Literal(Literal),
-
-    Set {
-        object: TypedExpression,
-        name: Symbol,
-        value: TypedExpression,
-    },
+    /// Name, Object, Value
+    Set(Symbol, TypedExpression, TypedExpression),
 
     Ternary(TypedExpression, TypedExpression, TypedExpression),
     Unary(UnaryOp, TypedExpression),

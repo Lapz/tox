@@ -31,7 +31,7 @@ pub enum Type {
     This {
         name: Symbol,
         fields: HashMap<Symbol, Type>,
-        methods: HashMap<Symbol, Type>,
+        methods: HashMap<Symbol, Entry>,
     },
     Fun(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value

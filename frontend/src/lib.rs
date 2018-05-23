@@ -23,7 +23,7 @@ pub(crate) type InferResult<T> = Result<T, ()>;
 #[derive(Debug)]
 pub struct Infer {
     this: self::types::Type,
-    body:self::types::Type, // for this
+    body: self::types::Type, // for this
 }
 
 use std::rc::Rc;
@@ -32,7 +32,7 @@ impl Infer {
     pub fn new() -> Self {
         Self {
             this: self::types::Type::Nil,
-            body:self::types::Type::Nil,
+            body: self::types::Type::Nil,
         }
     }
 
@@ -48,7 +48,6 @@ impl Infer {
         let mut resolver = self::resolver::Resolver::new();
 
         let mut new_program = self::ast::Program {
-            classes: Vec::new(),
             statements: Vec::new(),
         };
 

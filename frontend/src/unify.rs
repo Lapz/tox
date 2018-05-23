@@ -44,6 +44,8 @@ impl Infer {
             (&Type::Float, &Type::Float) => Ok(()),
             (&Type::Nil, &Type::Nil) => Ok(()),
             (&Type::Nil, &Type::Class(_, _, _, _)) => Ok(()),
+            (&Type::Array(_), &Type::Nil) => Ok(()),
+            (&Type::Dict(_, _), &Type::Nil) => Ok(()),
             (t1, t2) => {
                 let msg = format!("Cannot unify `{}` vs `{}`", t1.print(ctx), t2.print(ctx));
                 ctx.error(msg, span);

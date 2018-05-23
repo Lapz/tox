@@ -117,7 +117,8 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::Error => Red.bold().paint(carets),
             };
             println!("     {}{}", prefix, carets);
-        } else if line_idx > span.start.line as usize && line_idx < span.end.line as usize
+        } else if line_idx > span.start.line as usize
+            && line_idx < span.end.line as usize
             && !line.is_empty()
         {
             let carets = repeat_string("^", line.len());
