@@ -40,7 +40,7 @@ impl Infer {
             }
 
             Statement::Break => Ok(t::Statement::Break),
-            Statement::Class { .. } => unreachable!("Should be handled by infer_class"),
+            Statement::Class { .. } => unimplemented!("Should be handled by infer_class"),
             Statement::Continue => Ok(t::Statement::Continue),
             Statement::Expr(expr) => {
                 let type_expr = self.infer_expr(expr, ctx)?;
@@ -317,8 +317,6 @@ impl Infer {
                                 }
                             },
                         }
-
-                        unimplemented!()
                     }
                 }
 
@@ -366,6 +364,9 @@ impl Infer {
                 }
             }
             Expression::Call { .. } => self.infer_call(expr, ctx)?,
+
+
+            Expression::ClassInstance{..} => self.infer_class_instance(expr,ctx)?,
 
             Expression::Grouping { expr } => {
                 let ty_expr = self.infer_expr(*expr, ctx)?;
@@ -462,7 +463,7 @@ impl Infer {
                 (t::Expression::Var(var.value,ty.clone()),ty)
             }
 
-            // ref e => unimplemented!("{:?}", e),
+           
         };
 
         Ok(t::TypedExpression {
@@ -532,12 +533,10 @@ impl Infer {
                             return Err(());
                         }
 
-                        // unimplemented!()
-
-                        // self.infer_var(sym, ctx)?
+                      
                     }
 
-                    Expression::Get { .. } => unimplemented!(),
+                    Expression::Get { .. } => self.infer_object_get(*callee,ctx),
                     _ => {
                         ctx.error(" Not callable", callee.span);
                         return Err(());
@@ -564,6 +563,86 @@ impl Infer {
 
             Literal::Int(_) => Type::Int,
         }
+    }
+
+    fn infer_class_instance(
+        &self,
+        expr: Spanned<Expression>,
+        ctx: &mut CompileCtx,
+    ) -> InferResult<(t::Expression, Type)> {
+        match expr.value {
+            Expression::ClassInstance { symbol, props } => {
+                let class = if let Some(ty) = ctx.look_type(symbol.value).cloned() {
+                    ty
+                } else {
+                    let msg = format!("Undefined struct `{}` ", ctx.name(symbol.value));
+                    ctx.error(msg, symbol.span);
+                    return Err(());
+                };
+
+                match class {
+                    Type::This {
+                        ref name,
+                        ref fields,
+                        ..
+                    }
+                    | Type::Class(ref name, _, ref fields, _) => {
+                        let mut instance_exprs = Vec::new();
+                        let mut found = false;
+
+                        for (prop, prop_ty) in props.into_iter().zip(fields.iter()) {
+                            if &prop.value.symbol.value == prop_ty.0 {
+                                found = true;
+
+                                let span = prop.span;
+
+                                let ty = self.infer_expr(prop.value.expr, ctx)?;
+
+                                self.unify(&prop_ty.1, &ty.ty, span, ctx)?;
+
+                                instance_exprs.push(ty);
+                            } else {
+                                found = false;
+
+                                let msg = format!(
+                                    "`{}` is not a member of `{}` ",
+                                    ctx.name(prop.value.symbol.value),
+                                    ctx.name(*prop_ty.0)
+                                );
+                            }
+                        }
+
+                        if fields.len() > instance_exprs.len() {
+                            let msg =
+                                format!("class `{}` is missing fields", ctx.name(symbol.value));
+                            ctx.error(msg, expr.span);
+                            return Err(());
+                        } else if fields.len() < instance_exprs.len() {
+                            let msg =
+                                format!("class `{}` has too many fields", ctx.name(symbol.value));
+                            ctx.error(msg, expr.span);
+                            return Err(());
+                        } else if !found {
+                            return Err(());
+                        }
+
+                        Ok((
+                            t::Expression::ClassInstance(symbol.value, instance_exprs),
+                            class.clone(),
+                        ))
+                    }
+
+                    _ => {
+                        let msg = format!("`{}`is not a class", ctx.name(symbol.value));
+                        ctx.error(msg, symbol.span);
+                        Err(())
+                    }
+                }
+            }
+
+            _ => unreachable!(),
+        }
+    
     }
 
     fn infer_object_get(

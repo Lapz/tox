@@ -37,6 +37,10 @@ impl Infer {
 
                 Ok(())
             }
+            (&Type::Fun(_,ref ret),ref o) => {
+                self.unify(ret,o,span,ctx)?;
+                Ok(())
+            }
 
             (&Type::Int, &Type::Int) => Ok(()),
             (&Type::Str, &Type::Str) => Ok(()),

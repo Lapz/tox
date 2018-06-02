@@ -1,5 +1,5 @@
 
 
-foo(10);
+var s = io.readline();
 
-10 + "a";
+s = 10;
