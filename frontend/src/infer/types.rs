@@ -44,7 +44,7 @@ impl Infer {
         symbol: &Spanned<Symbol>,
         ctx: &mut CompileCtx,
     ) -> InferResult<Type> {
-        match ctx.look_var(symbol.value) {
+        match ctx.look_var(symbol.value).cloned() {
             Some(ty) => return Ok(ty.clone().get_ty()),
             None => {
                 let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
