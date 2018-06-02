@@ -479,96 +479,75 @@ mod test {
     fn global() {
         let input = "var a = 0; { fun f() { print(a);} }";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_ok()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn captured() {
         let input = "{var a = 0;fun f() {print(a);}}";
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
         let strings = Rc::new(SymbolFactory::new());
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_ok()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn lexical_capture() {
         let input = "var a = 0;{fun f() {print(a);} var a = 1;}";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_ok()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn shadowing_erro() {
         let input = "var a = 0; { var a = a;}";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_err()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
     fn local_redeclar() {
         let input = "{var a = 1;var a = 2;}";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_err()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
     fn global_redeclar() {
         let input = "var a = 1;var a = 2;";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter), &mut ctx)
-                .is_ok()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn return_top_level() {
         let input = "return 10;";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        assert!(
-            Resolver::new()
-                .resolve(&get_ast(input, strings, reporter.clone()), &mut ctx)
-                .is_err()
-        )
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
@@ -576,7 +555,7 @@ mod test {
     fn this_outside_class() {
         let input = "this.name;";
         let strings = Rc::new(SymbolFactory::new());
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
         let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 

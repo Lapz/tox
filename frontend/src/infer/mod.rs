@@ -53,9 +53,7 @@ impl Infer {
                 let mut fields = Vec::new();
 
                 if let Some(sclass) = superclass {
-                    if let Some(mut entry) = ctx.look_type(sclass.value) {
-                    
-                    }
+                    if let Some(mut entry) = ctx.look_type(sclass.value) {}
 
                     // match sclass {
                     //     _ => ()
@@ -95,7 +93,6 @@ impl Infer {
                         returns,
                     } = method.value
                     {
-                       
                         let returns = if let Some(ty) = returns {
                             self.trans_type(&ty, ctx)?
                         } else {
@@ -426,8 +423,6 @@ impl Infer {
             } => {
                 let span = name.span.to(value.span);
 
-            
-
                 let ty = self.infer_var(&name, ctx)?;
                 let value_ty = self.infer_expr(*value, ctx)?;
                 use syntax::ast::expr::AssignOperator::*;
@@ -505,34 +500,38 @@ impl Infer {
 
             Expression::Get { .. } => self.infer_object_get(expr, ctx)?,
 
-            Expression::Index { target, index } => match target.value {
-                Expression::Var(symbol, _) => {
-                    let target_ty = self.infer_var(&symbol, ctx)?;
+            Expression::Index { target, index } => {
+                let target_span = target.span;
 
-                    let span = index.span;
+                match target.value {
+                    Expression::Var(symbol, _) => {
+                        let target_ty = self.infer_var(&symbol, ctx)?;
 
-                    let index_ty = self.infer_expr(*index, ctx)?;
+                        let span = index.span;
 
-                    self.unify(&index_ty.ty, &Type::Int, span, ctx)?;
+                        let index_ty = self.infer_expr(*index, ctx)?;
 
-                    match target_ty {
-                        Type::Array(ref ty) => {
-                            (t::Expression::Index(symbol.value, index_ty), *ty.clone())
-                        }
-                        Type::Str => (t::Expression::Index(symbol.value, index_ty), Type::Str),
+                        self.unify(&index_ty.ty, &Type::Int, span, ctx)?;
 
-                        _ => {
-                            let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
-                            ctx.error(msg, target.span);
-                            return Err(());
+                        match target_ty {
+                            Type::Array(ref ty) => {
+                                (t::Expression::Index(symbol.value, index_ty), *ty.clone())
+                            }
+                            Type::Str => (t::Expression::Index(symbol.value, index_ty), Type::Str),
+
+                            _ => {
+                                let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
+                                ctx.error(msg, target_span);
+                                return Err(());
+                            }
                         }
                     }
+                    _ => {
+                        ctx.error("Invalid index target", target.span);
+                        return Err(());
+                    }
                 }
-                _ => {
-                    ctx.error("Invalid index target", target.span);
-                    return Err(());
-                }
-            },
+            }
             Expression::Literal(literal) => {
                 let ty = self.infer_literal(&literal);
                 (t::Expression::Literal(literal), ty)
@@ -772,16 +771,11 @@ impl Infer {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.ty.clone() {
-                    Type::This {
-                        ref name,
-                       ..
-                    }
-                    | Type::Class(ref name, _, _, _) => {
+                    Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name) {
                             // Look at the conical type
                             match *ty {
                                 Type::This {
-                                    
                                     ref methods,
                                     ref fields,
                                     ..
@@ -859,7 +853,7 @@ impl Infer {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.ty.clone() {
-                    Type::This { ref name,.. } | Type::Class(ref name, _, _, _) => {
+                    Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name).cloned() {
                             match ty {
                                 Type::This {
