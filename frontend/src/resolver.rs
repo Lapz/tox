@@ -551,7 +551,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+   
     fn this_outside_class() {
         let input = "this.name;";
         let strings = Rc::new(SymbolFactory::new());
@@ -559,9 +559,9 @@ mod test {
         let ast = get_ast(input, strings.clone(), reporter.clone());
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        Resolver::new().resolve(&ast, &mut ctx).is_err();
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
 
-        assert!(reporter.has_error())
+    
     }
 
 }
