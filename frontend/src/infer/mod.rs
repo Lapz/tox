@@ -54,7 +54,7 @@ impl Infer {
 
                 if let Some(sclass) = superclass {
                     if let Some(mut entry) = ctx.look_type(sclass.value) {
-                        println!("{:?}", entry)
+                    
                     }
 
                     // match sclass {
@@ -95,7 +95,7 @@ impl Infer {
                         returns,
                     } = method.value
                     {
-                        println!("{}", self.this.print(ctx));
+                       
                         let returns = if let Some(ty) = returns {
                             self.trans_type(&ty, ctx)?
                         } else {
@@ -426,7 +426,7 @@ impl Infer {
             } => {
                 let span = name.span.to(value.span);
 
-                println!("{}", ctx.name(name.value));
+            
 
                 let ty = self.infer_var(&name, ctx)?;
                 let value_ty = self.infer_expr(*value, ctx)?;
@@ -700,12 +700,7 @@ impl Infer {
                 };
 
                 match class {
-                    Type::This {
-
-                        ref fields,
-                        ..
-                    }
-                    | Type::Class(_,ref fields, _, _) => {
+                    Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
                         let mut instance_exprs = Vec::new();
                         let mut found = false;
 
@@ -779,26 +774,46 @@ impl Infer {
                 match ob_instance.ty.clone() {
                     Type::This {
                         ref name,
-                        ref methods,
-                        ref fields,
+                       ..
                     }
-                    | Type::Class(ref name, ref fields, ref methods, _) => {
-                        for (field_name, field_ty) in fields {
-                            if field_name == &property.value {
-                                return Ok((
-                                    t::Expression::Get(property.value, ob_instance),
-                                    field_ty.clone(),
-                                ));
-                            }
-                        }
+                    | Type::Class(ref name, _, _, _) => {
+                        if let Some(ty) = ctx.look_type(*name) {
+                            // Look at the conical type
+                            match *ty {
+                                Type::This {
+                                    
+                                    ref methods,
+                                    ref fields,
+                                    ..
+                                }
+                                | Type::Class(_, ref fields, ref methods, _) => {
+                                    for (field_name, field_ty) in fields {
+                                        if field_name == &property.value {
+                                            return Ok((
+                                                t::Expression::Get(property.value, ob_instance),
+                                                field_ty.clone(),
+                                            ));
+                                        }
+                                    }
 
-                        for (method_name, method_ty) in methods {
-                            if method_name == &property.value {
-                                let ty = method_ty.clone();
-                                return Ok((
-                                    t::Expression::Get(property.value, ob_instance),
-                                    ty.get_ty(), // Change to return the return type
-                                ));
+                                    for (method_name, method_ty) in methods {
+                                        if method_name == &property.value {
+                                            let ty = method_ty.clone().get_ty();
+
+                                            let ty = match ty {
+                                                Type::Fun(_, ret) => *ret,
+                                                _ => unreachable!(),
+                                            };
+
+                                            return Ok((
+                                                t::Expression::Get(property.value, ob_instance),
+                                                ty, // Change to return the return type
+                                            ));
+                                        }
+                                    }
+                                }
+
+                                _ => unreachable!(),
                             }
                         }
 
@@ -844,38 +859,51 @@ impl Infer {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.ty.clone() {
-                    Type::This {
-                        ref name,
-                        ref methods,
-                        ref fields,
-                    }
-                    | Type::Class(ref name, ref fields, ref methods, _) => {
-                        let value_span = value.span;
-                        let value_ty = self.infer_expr(*value, ctx)?;
+                    Type::This { ref name,.. } | Type::Class(ref name, _, _, _) => {
+                        if let Some(ty) = ctx.look_type(*name).cloned() {
+                            match ty {
+                                Type::This {
+                                    ref methods,
+                                    ref fields,
+                                    ..
+                                }
+                                | Type::Class(_, ref fields, ref methods, _) => {
+                                    let value_span = value.span;
+                                    let value_ty = self.infer_expr(*value, ctx)?;
 
-                        for (field_name, field_ty) in fields {
-                            if field_name == &property.value {
-                                self.unify(&value_ty.ty, field_ty, value_span, ctx)?;
-                                return Ok((
-                                    t::Expression::Set(property.value, ob_instance, value_ty),
-                                    field_ty.clone(),
-                                ));
+                                    for (field_name, field_ty) in fields {
+                                        if field_name == &property.value {
+                                            self.unify(&value_ty.ty, field_ty, value_span, ctx)?;
+                                            return Ok((
+                                                t::Expression::Set(
+                                                    property.value,
+                                                    ob_instance,
+                                                    value_ty,
+                                                ),
+                                                field_ty.clone(),
+                                            ));
+                                        }
+                                    }
+
+                                    for (method_name, method_ty) in methods {
+                                        if method_name == &property.value {
+                                            let ty = method_ty.clone().get_ty();
+
+                                            self.unify(&value_ty.ty, &ty, value_span, ctx)?;
+                                            return Ok((
+                                                t::Expression::Set(
+                                                    property.value,
+                                                    ob_instance,
+                                                    value_ty,
+                                                ),
+                                                ty,
+                                            ));
+                                        }
+                                    }
+                                }
+                                _ => unreachable!(),
                             }
                         }
-
-                        for (method_name, method_ty) in methods {
-                            if method_name == &property.value {
-                                let ty = method_ty.clone().get_ty();
-
-                                self.unify(&value_ty.ty, &ty, value_span, ctx)?;
-                                return Ok((
-                                    t::Expression::Set(property.value, ob_instance, value_ty),
-                                    ty,
-                                ));
-                            }
-                        }
-
-                        println!("{:?}", ob_instance.ty.print(ctx));
 
                         let msg = format!(
                             "class `{}` doesn't have a field named `{}`",
