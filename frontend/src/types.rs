@@ -24,8 +24,8 @@ pub enum Type {
     Alias(Symbol, Box<Type>),
     Class(
         Symbol,
-        HashMap<Symbol, Entry>,
         HashMap<Symbol, Type>,
+        HashMap<Symbol, Entry>,
         Unique,
     ),
     This {
@@ -65,7 +65,7 @@ impl Type {
 
                 for (i, method) in methods.iter().enumerate() {
                     if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
+                        fmt_string.push_str(&format!(" {}", ctx.name(*method.0)))
                     } else {
                         fmt_string.push_str(&format!("{},", ctx.name(*method.0)))
                     }
@@ -87,7 +87,7 @@ impl Type {
                     if i + 1 == fields.len() {
                         fmt_string.push_str(&ctx.name(*field.0))
                     } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
+                        fmt_string.push_str(&format!(",{}", ctx.name(*field.0)))
                     }
                 }
 
@@ -95,7 +95,7 @@ impl Type {
                     if i + 1 == fields.len() {
                         fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
                     } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*method.0)))
+                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
                     }
                 }
 

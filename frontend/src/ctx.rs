@@ -63,8 +63,8 @@ impl<'a> CompileCtx<'a> {
 
                 let entry = VarEntry::Var(Type::Class(
                     symbol,
-                    methods_ty,
                     HashMap::new(),
+                    methods_ty,
                     Unique::new(),
                 ));
 

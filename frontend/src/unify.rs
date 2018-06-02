@@ -13,8 +13,8 @@ impl Infer {
     ) -> InferResult<()> {
         match (lhs, rhs) {
             (
-                &Type::Class(ref name1, ref m1, ref f1, ref unique1),
-                &Type::Class(ref name2, ref m2, ref f2, ref unique2),
+                &Type::Class(ref name1, ref f1, ref m1, ref unique1),
+                &Type::Class(ref name2, ref f2, ref m2, ref unique2),
             ) => {
                 if unique1 != unique2 {
                     let msg = format!(
@@ -37,8 +37,23 @@ impl Infer {
 
                 Ok(())
             }
-            (&Type::Fun(_,ref ret),ref o) => {
-                self.unify(ret,o,span,ctx)?;
+
+            (&Type::Class(ref name1, _, _, _), &Type::This { ref name, .. }) => {
+                if name == name1 {
+                    Ok(())
+                } else {
+                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    ctx.error(msg, span);
+                    Err(())
+                }
+            }
+            (&Type::Fun(_, ref ret), ref o) => {
+                self.unify(ret, o, span, ctx)?;
+                Ok(())
+            }
+
+            (ref o, &Type::Fun(_, ref ret)) => {
+                self.unify(ret, o, span, ctx)?;
                 Ok(())
             }
 

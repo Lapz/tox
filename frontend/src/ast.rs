@@ -41,12 +41,6 @@ pub enum Statement {
         methods: Vec<Statement>,
         fields: Vec<Field>,
     },
-    ClassWthSClass {
-        name: Symbol,
-        sclass: Symbol,
-        methods: Vec<Statement>,
-        fields: Vec<Field>,
-    },
 
     Continue,
 
