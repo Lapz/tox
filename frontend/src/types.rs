@@ -65,9 +65,9 @@ impl Type {
 
                 for (i, method) in methods.iter().enumerate() {
                     if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!(" {}", ctx.name(*method.0)))
+                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
                     } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*method.0)))
+                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
                     }
                 }
 
@@ -81,15 +81,18 @@ impl Type {
                 ref methods,
                 ref fields,
             } => {
-                let mut fmt_string = format!("This {} {{", ctx.name(*name));
+                let mut fmt_string = format!("This {} {{ ", ctx.name(*name));
 
                 for (i, field) in fields.iter().enumerate() {
                     if i + 1 == fields.len() {
-                        fmt_string.push_str(&ctx.name(*field.0))
+                        fmt_string.push_str(&format!("{}", &ctx.name(*field.0)))          
                     } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*field.0)))
+                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
                     }
                 }
+
+
+                fmt_string.push(',');
 
                 for (i, method) in methods.iter().enumerate() {
                     if i + 1 == fields.len() {
