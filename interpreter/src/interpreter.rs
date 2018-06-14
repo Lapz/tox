@@ -1,15 +1,14 @@
 use super::object::Object;
+use fnv::FnvHashMap;
+use interpreter::env::Environment;
+use std::cell::RefCell;
+use std::mem;
+use std::rc::Rc;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
-use fnv::FnvHashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
 use util::symbol::Symbol;
-use interpreter::env::Environment;
-use std::mem;
-use util::env::TypeEnv;
-use std::str;
+use util::symbol::Symbols;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -25,17 +24,12 @@ pub enum RuntimeError {
 }
 
 impl RuntimeError {
-    pub fn fmt(&self, env: &TypeEnv) -> String {
+    pub fn fmt(&self, symbols: &Symbols<()>) {
         match *self {
             RuntimeError::UndefinedSymbol(ref symbol) => {
-                format!("Undefined variable '{}' ", env.name(*symbol))
-                            },
-            RuntimeError::CantParseAsInt(ref string) => {
-               format!("Cannot parse the string {:?} to an int",str::from_utf8(string).unwrap())
-            },
-
-
-            ref e => format!("{:?}",e),
+                println!("Undefined variable '{}' ", symbols.name(*symbol));
+            }
+            _ => (),
         }
     }
 }
@@ -220,9 +214,7 @@ pub(crate) fn evaluate_statement(
         }
 
         Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
-            expr,
-            locals,
-            env,
+            expr, locals, env,
         )?))),
 
         Statement::If {
@@ -601,17 +593,16 @@ fn get_distance(
 pub mod env {
 
     use util::symbol::Symbol;
-    use util::Unique;
 
-    use object::Object;
     use super::RuntimeError;
     use builtins::BuiltIn;
-    use util::env::TypeEnv;
+    use object::Object;
 
     use std::rc::Rc;
 
-    use std::cell::RefCell;
     use fnv::FnvHashMap;
+    use std::cell::RefCell;
+    use util::symbol::Symbols;
 
     #[derive(Debug, Clone, Default)]
     /// A Loxlocals,enviroment
@@ -619,7 +610,6 @@ pub mod env {
     /// Symbol was declared
     pub struct Environment {
         actual: Rc<RefCell<EnvironmentImpl>>,
-        unique: Unique,
     }
 
     impl PartialEq for Environment {
@@ -636,17 +626,11 @@ pub mod env {
         pub fn new_with_outer(outer: &Environment) -> Environment {
             Environment {
                 actual: Rc::new(RefCell::new(EnvironmentImpl::with_values(outer))),
-                unique: Unique::new(),
             }
         }
 
-        pub fn unique_id(&mut self) -> Symbol {
-            let next = Unique::new().0 + 3;
-            Symbol(next)
-        }
-
-        pub fn fill_env(&mut self, env: &mut TypeEnv) {
-            let built_in = BuiltIn::new().get_built_ins(env);
+        pub fn fill_env(&mut self, symbols: &mut Symbols<()>) {
+            let built_in = BuiltIn::new().get_built_ins(symbols);
 
             for (variable, run_time_value) in built_in {
                 self.define(variable, run_time_value);

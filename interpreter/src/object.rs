@@ -1,18 +1,18 @@
-use std::ops::Not;
+use super::interpreter::RuntimeError;
+use builtins::BuiltInFunction;
 use fnv::FnvHashMap;
-use std::hash::{Hash, Hasher};
+use interpreter::env::Environment;
+use std::cell::RefCell;
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::ops::Not;
+use std::rc::Rc;
 use std::str;
+use syntax::ast::expr::VariableUseHandle;
+use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 use util::symbol::Symbol;
-use syntax::ast::statement::Statement;
-use syntax::ast::expr::VariableUseHandle;
-use super::interpreter::RuntimeError;
-use interpreter::env::Environment;
-use std::rc::Rc;
-use std::cell::RefCell;
-use builtins::BuiltInFunction;
 
 #[derive(Clone)]
 pub enum Object {

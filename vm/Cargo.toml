@@ -5,7 +5,10 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 
 [dependencies]
 util = {path = "../util"}
+syntax = {path ="../syntax"}
+byteorder = "1.2.2"
 
 [features]
 debug = []
+stack = ["debug"]
 # default = ["debug"]

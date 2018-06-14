@@ -1,10 +1,10 @@
-use syntax::ast::statement::Statement;
-use syntax::ast::expr::{Expression, VariableUseHandle};
-use util::pos::{Span, Spanned};
-use util::emmiter::Reporter;
-use util::symbol::Symbol;
-use util::env::TypeEnv;
+use ctx::CompileCtx;
 use fnv::FnvHashMap;
+use syntax::ast::expr::{Expression, VariableUseHandle};
+use syntax::ast::statement::Statement;
+use util::pos::{Span, Spanned};
+use util::symbol::Symbol;
+
 #[derive(Debug, PartialEq)]
 pub enum State {
     Declared,
@@ -17,8 +17,7 @@ pub struct Resolver {
     scopes: Vec<FnvHashMap<Symbol, State>>,
     current_function: FunctionType,
     current_class: ClassType,
-    pub locals: FnvHashMap<VariableUseHandle, usize>,
-    pub reporter: Reporter,
+    locals: FnvHashMap<VariableUseHandle, usize>,
 }
 
 pub type ResolveError<T> = Result<T, ()>;
@@ -28,7 +27,6 @@ pub enum FunctionType {
     Function,
     None,
     Method,
-    Init,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -38,21 +36,24 @@ pub enum ClassType {
 }
 
 impl Resolver {
-    pub fn new(reporter: Reporter) -> Self {
+    pub fn new() -> Self {
         Resolver {
             scopes: vec![],
-            reporter,
             current_function: FunctionType::None,
             current_class: ClassType::None,
             locals: FnvHashMap::default(),
         }
     }
 
-    pub fn resolve(&mut self, statements: &[Spanned<Statement>], env: &TypeEnv) -> Result<(), ()> {
+    pub fn resolve(
+        &mut self,
+        statements: &[Spanned<Statement>],
+        ctx: &mut CompileCtx,
+    ) -> Result<(), ()> {
         let mut had_errors = false;
 
         for statement in statements {
-            if self.resolve_statement(statement, env).is_err() {
+            if self.resolve_statement(statement, ctx).is_err() {
                 had_errors = true;
             }
         }
@@ -68,13 +69,13 @@ impl Resolver {
         self.scopes.push(FnvHashMap::default())
     }
 
-    fn end_scope(&mut self, span: Span, env: &TypeEnv) {
+    fn end_scope(&mut self, span: Span, ctx: &mut CompileCtx) {
         let scopes = self.scopes.pop().unwrap();
 
         for (symbol, state) in &scopes {
             if state == &State::Defined {
-                let msg = format!("Local variable '{}' is not used.", env.name(*symbol));
-                self.warn(msg, span)
+                let msg = format!("Local variable '{}' is not used.", ctx.name(*symbol));
+                ctx.warn(msg, span)
             }
         }
     }
@@ -87,7 +88,7 @@ impl Resolver {
         !self.scopes.is_empty() && self.scopes[self.peek()].get(name) == Some(&State::Declared)
     }
 
-    fn declare(&mut self, name: Symbol, span: Span, env: &TypeEnv) -> ResolveError<()> {
+    fn declare(&mut self, name: Symbol, span: Span, ctx: &mut CompileCtx) -> ResolveError<()> {
         if self.scopes.is_empty() {
             return Ok(());
         }
@@ -97,10 +98,10 @@ impl Resolver {
         if self.scopes[index].contains_key(&name) {
             let msg = format!(
                 "Variable with name '{}', already declared in this scope.",
-                env.name(name)
+                ctx.name(name)
             );
 
-            self.warn(msg, span);
+            ctx.warn(msg, span);
             return Err(());
         }
 
@@ -140,41 +141,33 @@ impl Resolver {
 
         self.locals.insert(handle, max_depth); // Globals
     }
-
-    fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
-        self.reporter.error(msg, span)
-    }
-
-    fn warn<T: Into<String>>(&mut self, msg: T, span: Span) {
-        self.reporter.warn(msg, span)
-    }
 }
 
 impl Resolver {
     fn resolve_statement(
         &mut self,
         statement: &Spanned<Statement>,
-        env: &TypeEnv,
+        ctx: &mut CompileCtx,
     ) -> ResolveError<()> {
         match statement.value {
             Statement::Print(ref expr) | Statement::Expr(ref expr) => {
-                self.resolve_expression(expr, env)?;
+                self.resolve_expression(expr, ctx)?;
                 Ok(())
             }
             Statement::Block(ref statements) => {
                 self.begin_scope();
 
                 for statement in statements {
-                    self.resolve_statement(statement, env)?;
+                    self.resolve_statement(statement, ctx)?;
                 }
 
-                self.end_scope(statement.span, env);
+                self.end_scope(statement.span, ctx);
 
                 Ok(())
             }
 
             Statement::TypeAlias { ref alias, .. } => {
-                self.declare(alias.value, alias.span, env)?;
+                self.declare(alias.value, alias.span, ctx)?;
                 self.define(alias.value);
 
                 Ok(())
@@ -185,12 +178,12 @@ impl Resolver {
                 ref then,
                 ref otherwise,
             } => {
-                self.resolve_expression(cond, env)?;
+                self.resolve_expression(cond, ctx)?;
 
-                self.resolve_statement(then, env)?;
+                self.resolve_statement(then, ctx)?;
 
                 match *otherwise {
-                    Some(ref expr) => self.resolve_statement(expr, env)?,
+                    Some(ref expr) => self.resolve_statement(expr, ctx)?,
                     None => return Ok(()),
                 };
 
@@ -204,25 +197,25 @@ impl Resolver {
                 ref body,
             } => {
                 if let Some(ref init) = *init {
-                    self.resolve_statement(init, env)?;
+                    self.resolve_statement(init, ctx)?;
                 }
 
                 if let Some(ref cond) = *cond {
-                    self.resolve_expression(cond, env)?;
+                    self.resolve_expression(cond, ctx)?;
                 }
 
                 if let Some(ref incr) = *incr {
-                    self.resolve_expression(incr, env)?;
+                    self.resolve_expression(incr, ctx)?;
                 }
 
-                self.resolve_statement(body, env)?;
+                self.resolve_statement(body, ctx)?;
 
                 Ok(())
             }
 
             Statement::While { ref cond, ref body } => {
-                self.resolve_expression(cond, env)?;
-                self.resolve_statement(body, env)?;
+                self.resolve_expression(cond, ctx)?;
+                self.resolve_statement(body, ctx)?;
                 Ok(())
             }
 
@@ -230,10 +223,10 @@ impl Resolver {
 
             Statement::Return(ref r) => {
                 if self.current_function == FunctionType::None {
-                    self.error("Cannot return from top-level code", statement.span);
+                    ctx.error("Cannot return from top-level code", statement.span);
                     return Err(());
                 }
-                self.resolve_expression(r, env)
+                self.resolve_expression(r, ctx)
             }
 
             Statement::Var {
@@ -241,10 +234,10 @@ impl Resolver {
                 ref expr,
                 ..
             } => {
-                self.declare(ident.value, ident.span, env)?;
+                self.declare(ident.value, ident.span, ctx)?;
 
                 if let Some(ref expr) = *expr {
-                    self.resolve_expression(expr, env)?
+                    self.resolve_expression(expr, ctx)?
                 }
 
                 self.define(ident.value);
@@ -257,7 +250,7 @@ impl Resolver {
                 ref params,
                 ..
             } => {
-                self.declare(name.value, name.span, env)?;
+                self.declare(name.value, name.span, ctx)?;
                 self.define(name.value);
 
                 let enclosing_function = self.current_function;
@@ -267,13 +260,13 @@ impl Resolver {
                 self.begin_scope();
 
                 for param in &params.value {
-                    self.declare(param.value.name.value, param.span, env)?;
+                    self.declare(param.value.name.value, param.span, ctx)?;
                     self.define(param.value.name.value)
                 }
 
-                self.resolve_statement(body, env)?;
+                self.resolve_statement(body, ctx)?;
 
-                self.end_scope(body.span, env);
+                self.end_scope(body.span, ctx);
 
                 self.current_function = enclosing_function;
 
@@ -284,7 +277,7 @@ impl Resolver {
                 ref body,
                 ref superclass,
             } => {
-                self.declare(name.value, name.span, env)?;
+                self.declare(name.value, name.span, ctx)?;
                 self.define(name.value);
 
                 let enclosing_class = self.current_class;
@@ -304,22 +297,22 @@ impl Resolver {
                 self.insert(Symbol(0), State::Read); // this
 
                 for field in &body.value.1 {
-                    self.declare(field.value.name.value, field.value.name.span, env)?;
+                    self.declare(field.value.name.value, field.value.name.span, ctx)?;
                     self.define(field.value.name.value);
                 }
 
                 for method in &body.value.0 {
                     self.current_function = FunctionType::Method;
-                    self.resolve_statement(method, env)?;
+                    self.resolve_statement(method, ctx)?;
                 }
 
                 self.current_function = FunctionType::None;
 
                 if sklass {
-                    self.end_scope(body.span, env);
+                    self.end_scope(body.span, ctx);
                 }
 
-                self.end_scope(body.span, env);
+                self.end_scope(body.span, ctx);
 
                 self.current_class = enclosing_class;
 
@@ -333,12 +326,12 @@ impl Resolver {
     fn resolve_expression(
         &mut self,
         expr: &Spanned<Expression>,
-        env: &TypeEnv,
+        ctx: &mut CompileCtx,
     ) -> ResolveError<()> {
         match expr.value {
             Expression::Array { ref items, .. } => {
                 for item in items {
-                    self.resolve_expression(item, env)?;
+                    self.resolve_expression(item, ctx)?;
                 }
                 Ok(())
             }
@@ -349,7 +342,7 @@ impl Resolver {
                 ref value,
                 ..
             } => {
-                self.resolve_expression(value, env)?;
+                self.resolve_expression(value, ctx)?;
                 self.resolve_local(&name.value, *handle, false);
                 Ok(())
             }
@@ -357,8 +350,8 @@ impl Resolver {
             Expression::Binary {
                 ref lhs, ref rhs, ..
             } => {
-                self.resolve_expression(lhs, env)?;
-                self.resolve_expression(rhs, env)?;
+                self.resolve_expression(lhs, ctx)?;
+                self.resolve_expression(rhs, ctx)?;
                 Ok(())
             }
 
@@ -366,10 +359,10 @@ impl Resolver {
                 ref callee,
                 ref args,
             } => {
-                self.resolve_expression(callee, env)?;
+                self.resolve_expression(callee, ctx)?;
 
                 for argument in args {
-                    self.resolve_expression(argument, env)?;
+                    self.resolve_expression(argument, ctx)?;
                 }
 
                 Ok(())
@@ -377,26 +370,26 @@ impl Resolver {
 
             Expression::ClassInstance { ref props, .. } => {
                 for prop in props.iter() {
-                    self.declare(prop.value.symbol.value, prop.value.symbol.span, env)?;
+                    self.declare(prop.value.symbol.value, prop.value.symbol.span, ctx)?;
                     self.define(prop.value.symbol.value);
-                    self.resolve_expression(&prop.value.expr, env)?;
+                    self.resolve_expression(&prop.value.expr, ctx)?;
                 }
                 Ok(())
             }
 
             Expression::Get { ref object, .. } => {
-                self.resolve_expression(object, env)?;
+                self.resolve_expression(object, ctx)?;
                 Ok(())
             }
 
-            Expression::Grouping { ref expr } => self.resolve_expression(expr, env),
+            Expression::Grouping { ref expr } => self.resolve_expression(expr, ctx),
 
             Expression::Index {
                 ref index,
                 ref target,
             } => {
-                self.resolve_expression(index, env)?;
-                self.resolve_expression(target, env)?;
+                self.resolve_expression(index, ctx)?;
+                self.resolve_expression(target, ctx)?;
                 Ok(())
             }
 
@@ -407,8 +400,8 @@ impl Resolver {
                 ref object,
                 ..
             } => {
-                self.resolve_expression(value, env)?;
-                self.resolve_expression(object, env)?;
+                self.resolve_expression(value, ctx)?;
+                self.resolve_expression(object, ctx)?;
                 Ok(())
             }
 
@@ -417,20 +410,20 @@ impl Resolver {
                 ref then_branch,
                 ref else_branch,
             } => {
-                self.resolve_expression(condition, env)?;
-                self.resolve_expression(else_branch, env)?;
-                self.resolve_expression(then_branch, env)?;
+                self.resolve_expression(condition, ctx)?;
+                self.resolve_expression(else_branch, ctx)?;
+                self.resolve_expression(then_branch, ctx)?;
                 Ok(())
             }
 
             Expression::Unary { ref expr, .. } => {
-                self.resolve_expression(expr, env)?;
+                self.resolve_expression(expr, ctx)?;
                 Ok(())
             }
 
             Expression::This(ref handle) => {
                 if self.current_class == ClassType::None {
-                    self.error("Cannot use 'this' outside of a class.", expr.span);
+                    ctx.error("Cannot use 'this' outside of a class.", expr.span);
                     return Err(());
                 }
 
@@ -443,10 +436,10 @@ impl Resolver {
                 if self.not_resolved(&v.value) {
                     let msg = format!(
                         "Cannot read local variable '{}' in its own initializer.",
-                        env.name(v.value)
+                        ctx.name(v.value)
                     );
 
-                    self.error(msg, expr.span);
+                    ctx.error(msg, expr.span);
                     return Err(());
                 }
 
@@ -459,15 +452,15 @@ impl Resolver {
 
 #[cfg(test)]
 mod test {
+    use ctx::CompileCtx;
+    use resolver::Resolver;
+    use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use syntax::lexer::Lexer;
-    use util::symbol::{SymbolFactory, Table};
     use syntax::parser::Parser;
-    use resolver::Resolver;
-    use util::pos::Spanned;
     use util::emmiter::Reporter;
-    use util::env::TypeEnv;
-    use std::rc::Rc;
+    use util::pos::Spanned;
+    use util::symbol::{SymbolFactory, Symbols};
 
     fn get_ast(
         input: &str,
@@ -476,7 +469,7 @@ mod test {
     ) -> Vec<Spanned<Statement>> {
         let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
 
-        let mut symbols = Table::new(strings);
+        let mut symbols = Symbols::new(strings);
         Parser::new(tokens, reporter.clone(), &mut symbols)
             .parse()
             .unwrap()
@@ -486,106 +479,89 @@ mod test {
     fn global() {
         let input = "var a = 0; { fun f() { print(a);} }";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn captured() {
         let input = "{var a = 0;fun f() {print(a);}}";
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
-        )
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn lexical_capture() {
         let input = "var a = 0;{fun f() {print(a);} var a = 1;}";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn shadowing_erro() {
         let input = "var a = 0; { var a = a;}";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
     fn local_redeclar() {
         let input = "{var a = 1;var a = 2;}";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_err()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
     fn global_redeclar() {
         let input = "var a = 1;var a = 2;";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter), &env)
-                .is_ok()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_ok())
     }
 
     #[test]
     fn return_top_level() {
         let input = "return 10;";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
-        assert!(
-            Resolver::new(reporter.clone())
-                .resolve(&get_ast(input, strings, reporter.clone()), &env)
-                .is_err()
-        )
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
+
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
     }
 
     #[test]
-    #[should_panic]
+   
     fn this_outside_class() {
         let input = "this.name;";
         let strings = Rc::new(SymbolFactory::new());
-        let env = TypeEnv::new(&strings);
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
+        let ast = get_ast(input, strings.clone(), reporter.clone());
+        let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
-        Resolver::new(reporter.clone())
-            .resolve(&get_ast(input, strings, reporter.clone()), &env)
-            .is_err();
+        assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
 
-        assert!(reporter.has_error())
+    
     }
 
 }

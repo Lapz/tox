@@ -12,7 +12,7 @@ features = ["debug"]
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
-sem = {path = "../sem"}
+frontend = {path = "../frontend"}
 interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"

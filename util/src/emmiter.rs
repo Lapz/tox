@@ -1,11 +1,11 @@
 //! Error reporting that reports all compiler errors.
-use std::iter::repeat;
+use ansi_term::Colour::{Blue, Fixed, Red, Yellow};
 use pos::Span;
-use std::rc::Rc;
+use pos::EMPTYSPAN;
 use std::cell::RefCell;
 use std::fmt::{self, Display};
-use ansi_term::Colour::{Blue, Fixed, Red, Yellow};
-use pos::EMPTYSPAN;
+use std::iter::repeat;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Diagnostic {
@@ -49,6 +49,10 @@ impl Reporter {
             span: EMPTYSPAN,
             level: Level::Error,
         })
+    }
+
+    pub fn remove_error(&mut self) {
+        self.diagnostics.borrow_mut().pop();
     }
 
     pub fn error<T: Into<String>>(&self, msg: T, span: Span) {
@@ -113,7 +117,8 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::Error => Red.bold().paint(carets),
             };
             println!("     {}{}", prefix, carets);
-        } else if line_idx > span.start.line as usize && line_idx < span.end.line as usize
+        } else if line_idx > span.start.line as usize
+            && line_idx < span.end.line as usize
             && !line.is_empty()
         {
             let carets = repeat_string("^", line.len());
