@@ -1,6 +1,5 @@
 extern crate fnv;
 extern crate frontend;
-extern crate interpreter;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -9,8 +8,6 @@ extern crate util;
 extern crate vm;
 
 use frontend::Infer;
-use interpreter::interpret;
-use interpreter::Environment;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
@@ -20,6 +17,7 @@ use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::{Chunk, VM};
+
 
 fn main() {
     let opts = Cli::from_args();
@@ -174,7 +172,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     // chunk.write(1, 1); //Int
 
-    // chunk.write(constant as u8, 1); //index
 
     // constant = chunk.add_constant(&[25, 0, 0, 0, 0, 0, 0, 0], 1);
 

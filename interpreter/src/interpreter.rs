@@ -18,7 +18,7 @@ pub enum RuntimeError {
     InvalidIndexType,
     NotAnIn,
     UndefinedProperty,
-    CantParseAsInt,
+    CantParseAsInt(Vec<u8>),
     UndefinedSymbol(Symbol),
     Return(Box<Object>),
 }
@@ -119,7 +119,7 @@ pub(crate) fn evaluate_statement(
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, locals, env)?.is_truthy() {
                 match evaluate_statement(body, locals, env) {
-                    Ok(value) => value,
+                    Ok(_) => (),
                     Err(e) => match e {
                         RuntimeError::Break => break,
                         RuntimeError::Continue => continue,
