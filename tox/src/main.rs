@@ -22,18 +22,17 @@ use util::emmiter::Reporter;
 use util::env::TypeEnv;
 use util::print_err;
 use util::symbol::{SymbolFactory, Table};
-use vm::{VM,file as parse_tasm,CompleteStr};
+use vm::{file as parse_tasm, CompleteStr, VM};
 
 fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        if opts.vm  {
+        if opts.vm {
             run_vm(file);
-        }else {
+        } else {
             run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
         }
-
     } else {
         repl(opts.ptokens, opts.pprint)
     }
@@ -111,7 +110,7 @@ pub fn repl(ptokens: bool, pprint: bool) {
     }
 }
 
-pub fn run_vm(path:String)  {
+pub fn run_vm(path: String) {
     use std::fs::File;
     use std::io::Read;
 
@@ -128,33 +127,20 @@ pub fn run_vm(path:String)  {
         ::std::process::exit(0)
     }
 
-    let (_,program) = parse_tasm(CompleteStr(&contents)).unwrap();
+    let (_, program) = parse_tasm(CompleteStr(&contents)).unwrap();
 
     let bytecode = program.to_bytes();
 
     let mut vm = VM::new();
 
-    println!("{:?}",bytecode.len());
-
+    println!("{:?}", bytecode.len());
 
     vm.code(bytecode);
-    
 
-   
-println!("{:?}",vm);
+    println!("{:?}", vm);
     vm.run();
 
     vm.disassemble("test");
-
-     
-
-
-    
-
-    
-
-    
-
 }
 
 pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
@@ -272,5 +258,5 @@ pub struct Cli {
     pub past: bool,
     /// Run in vm mode
     #[structopt(long = "vm", short = "v")]
-    pub vm:bool,
+    pub vm: bool,
 }

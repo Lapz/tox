@@ -1,10 +1,8 @@
-use nom::{digit,alpha1};
 use nom::types::CompleteStr;
+use nom::{alpha1, digit};
 use opcode::{self, OpCode};
 
-
 pub struct Input<'a>(pub CompleteStr<'a>);
-
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -23,10 +21,8 @@ pub struct AssemblerInstruction {
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub instructions:Vec<AssemblerInstruction>
+    pub instructions: Vec<AssemblerInstruction>,
 }
-
-
 
 named!(opcode<CompleteStr,Token>,
     do_parse!(
@@ -36,8 +32,6 @@ named!(opcode<CompleteStr,Token>,
         )
     )
 );
-
-
 
 named!(register<CompleteStr,Token>,
     ws!(
@@ -133,7 +127,7 @@ named!(instruction_four<CompleteStr,AssemblerInstruction>,
 );
 
 /// Handles instructions of the following form:
-/// JMPF #7 
+/// JMPF #7
 named!(instruction_five<CompleteStr,AssemblerInstruction>,
     do_parse!(
         o: opcode >>
@@ -171,12 +165,12 @@ named!(pub file<CompleteStr,Program>,
     do_parse!(
         instructions: ws!(
             many1!(
-                alt!(instruction_one 
-                    | instruction_two  
+                alt!(instruction_one
+                    | instruction_two
                     | instruction_five
-                    | instruction_four 
+                    | instruction_four
                     | instruction_six
-                    | instruction_three 
+                    | instruction_three
                 )
             )
         ) >> (
@@ -190,8 +184,7 @@ named!(pub file<CompleteStr,Program>,
 
 impl Program {
     pub fn to_bytes(&self) -> Vec<u8> {
-
-        let mut program = Vec::with_capacity(self.instructions.len() *4);
+        let mut program = Vec::with_capacity(self.instructions.len() * 4);
 
         for inst in self.instructions.iter() {
             program.append(&mut inst.to_bytes());
@@ -203,7 +196,6 @@ impl Program {
 
 impl AssemblerInstruction {
     pub fn to_bytes(&self) -> Vec<u8> {
-
         let mut results = Vec::with_capacity(4);
 
         match self.opcode {
@@ -213,9 +205,9 @@ impl AssemblerInstruction {
             }
         }
 
-        for operand in &[&self.operand1,&self.operand2,&self.operand3] {
+        for operand in &[&self.operand1, &self.operand2, &self.operand3] {
             match operand {
-                Some(ref op) => AssemblerInstruction::extract_operand(op,&mut results),
+                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results),
                 None => (),
             }
         }
@@ -227,7 +219,7 @@ impl AssemblerInstruction {
         results
     }
 
-    fn extract_operand(t:&Token,results:&mut Vec<u8>) {
+    fn extract_operand(t: &Token, results: &mut Vec<u8>) {
         match t {
             Token::Register(ref reg) => results.push(*reg),
             Token::Number(ref num) => {
@@ -236,23 +228,18 @@ impl AssemblerInstruction {
 
                 results.push(byte2 as u8);
                 results.push(converted as u8);
-            },
-            _ => {
-                panic!("opcode found in operand field")
             }
+            _ => panic!("opcode found in operand field"),
         }
     }
-
-
 }
-
 
 pub trait FromInput<T> {
-    fn opcode(v:T) -> Self;
+    fn opcode(v: T) -> Self;
 }
 
-impl <'a> FromInput<CompleteStr<'a>> for u8 {
-    fn opcode(v:CompleteStr<'a>) -> Self {
+impl<'a> FromInput<CompleteStr<'a>> for u8 {
+    fn opcode(v: CompleteStr<'a>) -> Self {
         match v {
             CompleteStr("load") => opcode::LOAD,
             CompleteStr("add") => opcode::ADD,
@@ -291,9 +278,8 @@ impl <'a> FromInput<CompleteStr<'a>> for u8 {
     }
 }
 
-
-impl <'a> Input <'a> {
-    pub fn new(input:&'a str) -> Self {
+impl<'a> Input<'a> {
+    pub fn new(input: &'a str) -> Self {
         Input(CompleteStr(input))
     }
 }
@@ -359,18 +345,10 @@ mod test {
             opcode: Token::Op(opcode::LOAD),
             operand1: Some(Token::Register(0)),
             operand2: Some(Token::Number(10)),
-            operand3: None
+            operand3: None,
         }];
 
-        assert_eq!(
-            program,
-            Program {
-                instructions,
-            }
-
-        );
-
-
+        assert_eq!(program, Program { instructions });
 
         let result = file(CompleteStr("load $0 #10"));
 
@@ -380,15 +358,10 @@ mod test {
             opcode: Token::Op(opcode::LOAD),
             operand1: Some(Token::Register(0)),
             operand2: Some(Token::Number(10)),
-            operand3: None
+            operand3: None,
         }];
 
         let (rest, token) = result.unwrap();
-        assert_eq!(
-            program,
-            Program {
-                instructions
-            }
-        );
+        assert_eq!(program, Program { instructions });
     }
 }

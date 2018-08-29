@@ -6,7 +6,7 @@
 pub type OpCode = u8;
 
 /// ILLEGAL INST
-pub const IGL:u8 = 0x0;
+pub const IGL: u8 = 0x0;
 /// HLT
 /// Stops the running of the vm
 pub const HLT: u8 = 0x1;
@@ -55,5 +55,5 @@ pub const JMPF: u8 = 0x18;
 pub const JMPB: u8 = 0x19;
 /// JMPS if the equal flag is set;
 pub const JMPEQ: u8 = 0x20;
-pub const STORE:u8 = 0x21;
-pub const JMPNEQ:u8 = 0x22;
+pub const STORE: u8 = 0x21;
+pub const JMPNEQ: u8 = 0x22;

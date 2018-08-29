@@ -1,11 +1,7 @@
 use opcode;
 use vm::VM;
 
-
 impl VM {
-   
-
-
     #[cfg(feature = "debug")]
     pub fn disassemble(&self, name: &str) {
         println!("== {} ==\n", name);
@@ -37,14 +33,13 @@ impl VM {
             opcode::JMPF => simple_instruction("OPCODE::JMPF", offset),
             opcode::JMPB => simple_instruction("OPCODE::JMPB", offset),
             opcode::JMPEQ => simple_instruction("OPCODE::JMPEQ", offset),
-            opcode::HLT =>simple_instruction("OPCODE::HLT", offset),
+            opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1
             }
         }
     }
-
 }
 
 #[cfg(feature = "debug")]

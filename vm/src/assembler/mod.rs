@@ -1,4 +1,4 @@
 #[macro_use]
 mod parsers;
 
-pub use self::parsers::{Input,file};
+pub use self::parsers::{file, Input};

@@ -21,13 +21,9 @@ impl VM {
     }
 
     pub fn run(&mut self) {
-
-
-        
         loop {
-
             // println!("{:?}",self.equal_flag);
-            if self.ip>= self.code.len() {
+            if self.ip >= self.code.len() {
                 return;
             }
             match self.read_byte() {
@@ -117,8 +113,6 @@ impl VM {
                     } else {
                         self.equal_flag = false;
                     }
-
-                    
                 }
 
                 opcode::NOT => {
@@ -132,12 +126,11 @@ impl VM {
 
                     if self.equal_flag {
                         self.ip = location as usize;
-                    }else {
+                    } else {
                         self.next_8_bits();
                         self.next_8_bits();
                     }
-                    
-                },
+                }
 
                 opcode::STORE => {
                     let src = self.registers[self.next_8_bits() as usize];
@@ -146,15 +139,13 @@ impl VM {
                     self.registers[dest as usize] = self.registers[src as usize];
 
                     self.next_8_bits();
-
-                },
+                }
                 opcode::JMPNEQ => {
                     let location = self.registers[self.next_8_bits() as usize];
 
                     if !self.equal_flag {
                         self.ip = location as usize;
                     }
-
                 }
 
                 _ => {
