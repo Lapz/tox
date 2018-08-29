@@ -3,7 +3,7 @@ use opcode;
 #[derive(Debug)]
 pub struct VM {
     registers: [i32; 32],
-    code: Vec<u8>,
+    pub code: Vec<u8>,
     ip: usize,
     remainder: u32,
     equal_flag: bool,
@@ -21,7 +21,15 @@ impl VM {
     }
 
     pub fn run(&mut self) {
+
+
+        
         loop {
+
+            // println!("{:?}",self.equal_flag);
+            if self.ip>= self.code.len() {
+                return;
+            }
             match self.read_byte() {
                 opcode::HLT => {
                     break;
@@ -35,7 +43,6 @@ impl VM {
 
                 opcode::JMPF => {
                     let value = self.registers[self.next_8_bits() as usize];
-
                     self.ip += value as usize;
                 }
 
@@ -111,11 +118,11 @@ impl VM {
                         self.equal_flag = false;
                     }
 
-                    self.next_8_bits();
+                    
                 }
 
                 opcode::NOT => {
-                    let reg = self.registers[self.next_8_bits() as usize];
+                    self.next_8_bits();
                     self.equal_flag = !self.equal_flag;
                     self.next_8_bits();
                     self.next_8_bits();
@@ -125,7 +132,29 @@ impl VM {
 
                     if self.equal_flag {
                         self.ip = location as usize;
+                    }else {
+                        self.next_8_bits();
+                        self.next_8_bits();
                     }
+                    
+                },
+
+                opcode::STORE => {
+                    let src = self.registers[self.next_8_bits() as usize];
+                    let dest = self.registers[self.next_8_bits() as usize];
+
+                    self.registers[dest as usize] = self.registers[src as usize];
+
+                    self.next_8_bits();
+
+                },
+                opcode::JMPNEQ => {
+                    let location = self.registers[self.next_8_bits() as usize];
+
+                    if !self.equal_flag {
+                        self.ip = location as usize;
+                    }
+
                 }
 
                 _ => {

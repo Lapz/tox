@@ -23,7 +23,7 @@ pub struct AssemblerInstruction {
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    instructions:Vec<AssemblerInstruction>
+    pub instructions:Vec<AssemblerInstruction>
 }
 
 
@@ -37,19 +37,6 @@ named!(opcode<CompleteStr,Token>,
     )
 );
 
-named!(
-    opcode_load<CompleteStr,Token>,
-    do_parse!(
-        alt!(tag!("load")| tag!("LOAD")) >> (Token::Op(opcode::LOAD))
-    )
-);
-
-named!(
-    opcode_hlt<CompleteStr,Token>,
-    do_parse!(
-        alt!(tag!("hlt")| tag!("HLT")) >> (Token::Op(opcode::HLT))
-    )
-);
 
 
 named!(register<CompleteStr,Token>,
@@ -93,13 +80,85 @@ named!(instruction_one<CompleteStr,AssemblerInstruction>,
     )
 );
 
-named!(instruction_none<CompleteStr,AssemblerInstruction>,
+/// Handles instructions of the following form:
+/// ADD $1 $2 $3
+named!(instruction_two<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        o: opcode_hlt >>
+        o: opcode >>
+        r1: register >>
+        r2: register >>
+        r3: register >>
+        (
+            AssemblerInstruction {
+                opcode:o,
+                operand1:Some(r1),
+                operand2:Some(r2),
+                operand3:Some(r3),
+            }
+        )
+    )
+);
+/// Handles instructions of the following form:
+/// HLT
+named!(instruction_three<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
         (
             AssemblerInstruction {
                 opcode:o,
                 operand1:None,
+                operand2:None,
+                operand3:None
+            }
+        )
+    )
+);
+
+/// Handles instructions of the following form:
+/// LESS $0 $1
+named!(instruction_four<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
+        r1: register >>
+        r2: register >>
+        (
+            AssemblerInstruction {
+                opcode:o,
+                operand1:Some(r1),
+                operand2:Some(r2),
+                operand3:None
+            }
+        )
+    )
+);
+
+/// Handles instructions of the following form:
+/// JMPF #7 
+named!(instruction_five<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
+        value: integer_operand >>
+        (
+            AssemblerInstruction {
+                opcode:o,
+                operand1:Some(value),
+                operand2:None,
+                operand3:None
+            }
+        )
+    )
+);
+
+/// Handles instructions of the following form:
+/// JMPNEQ $7 JMPEQ $7
+named!(instruction_six<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
+        r: register >>
+        (
+            AssemblerInstruction {
+                opcode:o,
+                operand1:Some(r),
                 operand2:None,
                 operand3:None
             }
@@ -112,7 +171,13 @@ named!(pub file<CompleteStr,Program>,
     do_parse!(
         instructions: ws!(
             many1!(
-                alt!(instruction_one | instruction_none)
+                alt!(instruction_one 
+                    | instruction_two  
+                    | instruction_five
+                    | instruction_four 
+                    | instruction_six
+                    | instruction_three 
+                )
             )
         ) >> (
             Program {
@@ -153,6 +218,10 @@ impl AssemblerInstruction {
                 Some(ref op) => AssemblerInstruction::extract_operand(op,&mut results),
                 None => (),
             }
+        }
+
+        while results.len() < 4 {
+            results.push(0);
         }
 
         results
@@ -198,7 +267,9 @@ impl <'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("not") => opcode::NOT,
             CompleteStr("greater") => opcode::GREATER,
             CompleteStr("less") => opcode::LESS,
-            CompleteStr("jmpe") => opcode::JMPEQ,
+            CompleteStr("jmpeq") => opcode::JMPEQ,
+            CompleteStr("jmpneq") => opcode::JMPNEQ,
+            CompleteStr("store") => opcode::STORE,
             CompleteStr("LOAD") => opcode::LOAD,
             CompleteStr("ADD") => opcode::ADD,
             CompleteStr("SUB") => opcode::SUB,
@@ -212,7 +283,9 @@ impl <'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("NOT") => opcode::NOT,
             CompleteStr("GREATER") => opcode::GREATER,
             CompleteStr("LESS") => opcode::LESS,
-            CompleteStr("JMPE") => opcode::JMPEQ,
+            CompleteStr("JMPEQ") => opcode::JMPEQ,
+            CompleteStr("JMPNEQ") => opcode::JMPNEQ,
+            CompleteStr("STORE") => opcode::STORE,
             _ => opcode::IGL,
         }
     }
@@ -231,16 +304,16 @@ mod test {
 
     #[test]
     fn parse_load() {
-        let result = opcode_load(CompleteStr("load"));
+        let result = opcode(CompleteStr("load"));
         assert!(result.is_ok());
 
-        let result = opcode_load(CompleteStr("LOAD"));
+        let result = opcode(CompleteStr("LOAD"));
         assert!(result.is_ok());
 
         let (rest, token) = result.unwrap();
         assert_eq!(token, Token::Op(opcode::LOAD));
 
-        let result = opcode_load(CompleteStr("aold"));
+        let result = opcode(CompleteStr("aold"));
         let (rest, token) = result.unwrap();
         assert_eq!(token, Token::Op(opcode::IGL));
     }

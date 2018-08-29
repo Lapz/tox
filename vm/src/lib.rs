@@ -4,7 +4,7 @@ extern crate nom;
 #[macro_use]
 mod macros;
 mod assembler;
-mod chunks;
+mod debug;
 mod opcode;
 mod vm;
 

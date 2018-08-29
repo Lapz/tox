@@ -134,11 +134,26 @@ pub fn run_vm(path:String)  {
 
     let mut vm = VM::new();
 
-    vm.code(bytecode);
+    println!("{:?}",bytecode.len());
 
+
+    vm.code(bytecode);
+    
+
+   
+println!("{:?}",vm);
     vm.run();
 
-    println!("{:?}",vm);
+    vm.disassemble("test");
+
+     
+
+
+    
+
+    
+
+    
 
 }
 
