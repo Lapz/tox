@@ -3,13 +3,12 @@ LOAD $1 #1
 LOAD $2 #1
 LOAD $3 #1
 LOAD $4 #10
-LOAD $5 #15
 LOAD $6 #1
 LOAD $7 #36
+LOAD $8 #26
 LESS $3 $4
-ADD $1 $2 $1
-STORE $0 $1
-STORE $1 $2
+ADD $0 $1 $2
+STORE $1 $0
+STORE $2 $1
 ADD $3 $6 $3
-JMPEQ $7
 HLT

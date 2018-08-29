@@ -33,6 +33,7 @@ impl VM {
             opcode::JMPF => simple_instruction("OPCODE::JMPF", offset),
             opcode::JMPB => simple_instruction("OPCODE::JMPB", offset),
             opcode::JMPEQ => simple_instruction("OPCODE::JMPEQ", offset),
+            opcode::JMPNEQ => simple_instruction("OPCODE::JMPNEQ", offset),
             opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);

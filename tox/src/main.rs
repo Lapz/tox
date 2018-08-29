@@ -137,10 +137,12 @@ pub fn run_vm(path: String) {
 
     vm.code(bytecode);
 
-    println!("{:?}", vm);
+    
     vm.run();
 
     vm.disassemble("test");
+
+    println!("{:?}", vm);
 }
 
 pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {

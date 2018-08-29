@@ -22,10 +22,12 @@ impl VM {
 
     pub fn run(&mut self) {
         loop {
-            // println!("{:?}",self.equal_flag);
+            println!("{:?}",&self.registers[0..7]);
             if self.ip >= self.code.len() {
                 return;
             }
+
+
             match self.read_byte() {
                 opcode::HLT => {
                     break;
@@ -45,6 +47,28 @@ impl VM {
                 opcode::JMPB => {
                     let value = self.registers[self.next_8_bits() as usize];
                     self.ip -= value as usize;
+                }
+
+                 opcode::JMPEQ => {
+                    let location = self.registers[self.next_8_bits() as usize];
+
+                    if self.equal_flag {
+                        self.ip = location as usize;
+                    } else {
+                        self.next_8_bits();
+                        self.next_8_bits();
+                    }
+                }
+
+                opcode::JMPNEQ => {
+                    let location = self.registers[self.next_8_bits() as usize];
+
+                    if !self.equal_flag {
+                        self.ip = location as usize;
+                    } else {
+                        self.next_8_bits();
+                        self.next_8_bits();
+                    }
                 }
 
                 opcode::LOAD => {
@@ -121,16 +145,7 @@ impl VM {
                     self.next_8_bits();
                     self.next_8_bits();
                 }
-                opcode::JMPEQ => {
-                    let location = self.registers[self.next_8_bits() as usize];
-
-                    if self.equal_flag {
-                        self.ip = location as usize;
-                    } else {
-                        self.next_8_bits();
-                        self.next_8_bits();
-                    }
-                }
+               
 
                 opcode::STORE => {
                     let src = self.registers[self.next_8_bits() as usize];
@@ -140,13 +155,7 @@ impl VM {
 
                     self.next_8_bits();
                 }
-                opcode::JMPNEQ => {
-                    let location = self.registers[self.next_8_bits() as usize];
-
-                    if !self.equal_flag {
-                        self.ip = location as usize;
-                    }
-                }
+                
 
                 _ => {
                     println!("ip = {}", self.ip);
@@ -263,7 +272,7 @@ mod tests {
             0x16, 0, 0, 2, // LOAD $2 into REG 0
             0x16, 1, 0, 10, // LOAD $10 into REG 1
             0x8, 0, 1, 0, // MUL R1 R2 R1
-            1,
+            1,0,0,0
         ];
 
         test_vm.code(test_bytes);
@@ -281,7 +290,7 @@ mod tests {
             0x16, 0, 0, 5, // LOAD $2 into REG 0
             0x16, 1, 0, 3, // LOAD $10 into REG 1
             0x9, 0, 1, 0, // DIV R1 R2 R1
-            1,
+            1,0,0,0
         ];
 
         test_vm.code(test_bytes);
@@ -302,7 +311,7 @@ mod tests {
             0x2, 0, 0, 0, // JMP to $0
             0x16, 1, 0, 10, // LOAD $10 into REG 0
             0x16, 0, 0, 2, // LOAD $2 into REG 0
-            1,
+            1,0,0,0
         ];
 
         test_vm.code(test_bytes);
@@ -321,7 +330,7 @@ mod tests {
 
         let test_bytes = vec![
             0x18, 0, 0, 0, // JMPF by 3
-            1,
+            1,0,0,0
         ];
 
         test_vm.code(test_bytes);
@@ -339,8 +348,8 @@ mod tests {
 
         let test_bytes = vec![
             0x2, 0, 0, 0, // JMP to 5
-            1, //HLT
-            0x16, 1, 0, 7, // LOAD #7 into $1
+            1,0,0,0, //HLT
+            0x16, 1, 0, 11, // LOAD #7 into $1
             0x19, 1, 0, 0, // JMPB by $1(7)
         ];
 
@@ -348,7 +357,7 @@ mod tests {
 
         test_vm.run();
 
-        assert_eq!(test_vm.registers[1], 7);
+        assert_eq!(test_vm.registers[1], 11);
         assert_eq!(test_vm.ip, 5);
     }
 
@@ -361,7 +370,7 @@ mod tests {
 
         let test_bytes = vec![
             0x14, 0, 1, 0, // EQ $1 $2
-            1, //HLT
+            1,0,0,0 //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -380,7 +389,7 @@ mod tests {
 
         let test_bytes = vec![
             0x17, 0, 1, 0, // GREATER $1 $2
-            1, //HLT
+            1,0,0,0 //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -400,7 +409,7 @@ mod tests {
         let test_bytes = vec![
             0x14, 0, 1, 0, // EQUAL $1 $2
             0x13, 0, 0, 0, // NOT
-            1, //HLT
+            1, 0,0,0 //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -429,7 +438,7 @@ mod tests {
         let test_bytes = vec![
             0x14, 0, 1, 0, // EQUAL $1 $2
             0x13, 0, 0, 0, // NOT
-            1, //HLT
+            1,0,0,0 //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -458,7 +467,7 @@ mod tests {
         let test_bytes = vec![
             0x20, 0, 0, 0, // JMPEQUAL $1
             0x13, 0, 0, 0, // NOT
-            1, //HLT
+            1,0,0,0 //HLT
         ];
 
         test_vm.code(test_bytes);
