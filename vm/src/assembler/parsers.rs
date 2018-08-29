@@ -1,14 +1,21 @@
-use opcode::{self,OpCode};
 use nom::digit;
 use nom::types::CompleteStr;
+use opcode::{self, OpCode};
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Op(OpCode),
     Register(u8),
     Number(i32),
 }
 
+#[derive(Debug, PartialEq)]
+pub struct AssemblerInstruction {
+    opcode: Token,
+    operand1: Option<Token>,
+    operand2: Option<Token>,
+    operand3: Option<Token>,
+}
 
 named!(
     opcode_load<CompleteStr,Token>,
@@ -40,10 +47,28 @@ named!(integer_operand<CompleteStr,Token>,
     )
 );
 
-named!(file<CompleteStr,Vec<Token>>,
+/// Handles instructions of the following form:
+/// LOAD $0 #100
+named!(instruction_one<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        o: opcode_load >>
+        r: register >>
+        i : integer_operand >>
+        (
+            AssemblerInstruction {
+                opcode:o,
+                operand1:Some(r),
+                operand2:Some(i),
+                operand3:None
+            }
+        )
+    )
+);
+
+named!(pub file<CompleteStr,Vec<AssemblerInstruction>>,
     ws!(
         many0!(
-            alt!(opcode_load | register | integer_operand)
+            alt!(instruction_one)
         )
     )
 );
@@ -65,7 +90,6 @@ mod test {
 
         let result = opcode_load(CompleteStr("aold"));
         assert!(result.is_err());
-
     }
 
     #[test]
@@ -73,7 +97,6 @@ mod test {
         let result = register(CompleteStr("$10"));
 
         assert!(result.is_ok());
-
 
         let (rest, token) = result.unwrap();
         assert_eq!(token, Token::Register(10));
@@ -83,7 +106,6 @@ mod test {
 
         let result = register(CompleteStr("$a"));
         assert!(result.is_err());
-
     }
 
     #[test]
@@ -97,7 +119,6 @@ mod test {
 
         let result = integer_operand(CompleteStr("10"));
         assert!(result.is_err());
-
     }
 
     #[test]
@@ -106,16 +127,31 @@ mod test {
 
         assert!(result.is_ok());
 
-
         let (rest, token) = result.unwrap();
-        assert_eq!(token, vec![Token::Op(opcode::LOAD),Token::Register(0),Token::Number(10)]);
+
+        assert_eq!(
+            token,
+            vec![AssemblerInstruction {
+                opcode: Token::Op(opcode::LOAD),
+                operand1: Some(Token::Register(0)),
+                operand2: Some(Token::Number(10)),
+                operand3: None
+            }]
+        );
 
         let result = file(CompleteStr("load $0 #10"));
 
         assert!(result.is_ok());
 
-
         let (rest, token) = result.unwrap();
-        assert_eq!(token, vec![Token::Op(opcode::LOAD),Token::Register(0),Token::Number(10)]);
+        assert_eq!(
+            token,
+            vec![AssemblerInstruction {
+                opcode: Token::Op(opcode::LOAD),
+                operand1: Some(Token::Register(0)),
+                operand2: Some(Token::Number(10)),
+                operand3: None
+            }]
+        );
     }
 }

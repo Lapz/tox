@@ -6,7 +6,7 @@ pub struct VM {
     code: Vec<u8>,
     ip: usize,
     remainder: u32,
-    equal_flag:bool,
+    equal_flag: bool,
 }
 
 impl VM {
@@ -16,7 +16,7 @@ impl VM {
             registers: [0; 32],
             code: Vec::new(),
             remainder: 0,
-            equal_flag:false,
+            equal_flag: false,
         }
     }
 
@@ -73,7 +73,7 @@ impl VM {
                     let rhs = self.registers[self.next_8_bits() as usize];
                     self.registers[self.next_8_bits() as usize] = lhs / rhs;
                     self.remainder = (lhs % rhs) as u32;
-                },
+                }
 
                 opcode::EQUAL => {
                     let lhs = self.registers[self.next_8_bits() as usize];
@@ -81,12 +81,12 @@ impl VM {
 
                     if lhs == rhs {
                         self.equal_flag = true;
-                    }else {
+                    } else {
                         self.equal_flag = false;
                     }
 
                     self.next_8_bits();
-                },
+                }
 
                 opcode::GREATER => {
                     let lhs = self.registers[self.next_8_bits() as usize];
@@ -94,12 +94,12 @@ impl VM {
 
                     if lhs > rhs {
                         self.equal_flag = true;
-                    }else {
+                    } else {
                         self.equal_flag = false;
                     }
 
                     self.next_8_bits();
-                },
+                }
 
                 opcode::LESS => {
                     let lhs = self.registers[self.next_8_bits() as usize];
@@ -107,19 +107,19 @@ impl VM {
 
                     if lhs < rhs {
                         self.equal_flag = true;
-                    }else {
+                    } else {
                         self.equal_flag = false;
                     }
 
                     self.next_8_bits();
-                },
+                }
 
                 opcode::NOT => {
                     let reg = self.registers[self.next_8_bits() as usize];
-                    self.equal_flag = ! self.equal_flag;
+                    self.equal_flag = !self.equal_flag;
                     self.next_8_bits();
                     self.next_8_bits();
-                },
+                }
                 opcode::JMPEQ => {
                     let location = self.registers[self.next_8_bits() as usize];
 
@@ -332,7 +332,6 @@ mod tests {
         assert_eq!(test_vm.ip, 5);
     }
 
-
     #[test]
     fn test_eq_opcode() {
         let mut test_vm = VM::new();
@@ -349,10 +348,8 @@ mod tests {
 
         test_vm.run();
 
-
-        assert_eq!(test_vm.equal_flag,true);
+        assert_eq!(test_vm.equal_flag, true);
     }
-
 
     #[test]
     fn test_less_opcode() {
@@ -370,8 +367,7 @@ mod tests {
 
         test_vm.run();
 
-
-        assert_eq!(test_vm.equal_flag,true);
+        assert_eq!(test_vm.equal_flag, true);
     }
 
     #[test]
@@ -383,7 +379,7 @@ mod tests {
 
         let test_bytes = vec![
             0x14, 0, 1, 0, // EQUAL $1 $2
-            0x13,0 ,0 ,0, // NOT
+            0x13, 0, 0, 0, // NOT
             1, //HLT
         ];
 
@@ -391,8 +387,7 @@ mod tests {
 
         test_vm.run();
 
-
-        assert_eq!(test_vm.equal_flag,false);
+        assert_eq!(test_vm.equal_flag, false);
 
         test_vm.ip = 0;
 
@@ -401,8 +396,7 @@ mod tests {
 
         test_vm.run();
 
-        assert_eq!(test_vm.equal_flag,true);
-
+        assert_eq!(test_vm.equal_flag, true);
     }
 
     #[test]
@@ -414,7 +408,7 @@ mod tests {
 
         let test_bytes = vec![
             0x14, 0, 1, 0, // EQUAL $1 $2
-            0x13,0 ,0 ,0, // NOT
+            0x13, 0, 0, 0, // NOT
             1, //HLT
         ];
 
@@ -422,8 +416,7 @@ mod tests {
 
         test_vm.run();
 
-
-        assert_eq!(test_vm.equal_flag,false);
+        assert_eq!(test_vm.equal_flag, false);
 
         test_vm.ip = 0;
 
@@ -432,8 +425,7 @@ mod tests {
 
         test_vm.run();
 
-        assert_eq!(test_vm.equal_flag,true);
-
+        assert_eq!(test_vm.equal_flag, true);
     }
 
     #[test]
@@ -445,7 +437,7 @@ mod tests {
 
         let test_bytes = vec![
             0x20, 0, 0, 0, // JMPEQUAL $1
-            0x13,0 ,0 ,0, // NOT
+            0x13, 0, 0, 0, // NOT
             1, //HLT
         ];
 
@@ -453,10 +445,7 @@ mod tests {
 
         test_vm.run();
 
-
-        assert_eq!(test_vm.equal_flag,true);
+        assert_eq!(test_vm.equal_flag, true);
     }
-
-
 
 }

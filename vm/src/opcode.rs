@@ -51,4 +51,4 @@ pub const JMPF: u8 = 0x18;
 /// decrements the `ip` by the value stored in DEST
 pub const JMPB: u8 = 0x19;
 /// JMPS if the equal flag is set;
-pub const JMPEQ:u8 = 0x20;
+pub const JMPEQ: u8 = 0x20;
