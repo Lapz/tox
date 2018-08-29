@@ -5,6 +5,7 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 
 [dependencies]
 util = {path = "../util"}
+nom = "^4.0"
 
 [features]
 debug = []

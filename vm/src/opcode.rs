@@ -1,9 +1,9 @@
 //! Instruction in the VM;
 //! Each Instruction in the VM is 32 bits and the first 8 bits will
 //! contain our opcode
-//! The remaing 24 bits will be used for the Operands
-//!
+//! The reaming 24 bits will be used for the Operands
 
+pub type OpCode = u8;
 /// HLT
 /// Stops the running of the vm
 pub const HLT: u8 = 0x1;
@@ -30,14 +30,25 @@ pub const DIV: u8 = 0x9;
 pub const NIL: u8 = 0x10;
 pub const TRUE: u8 = 0x11;
 pub const FALSE: u8 = 0x12;
-
+/// NOT
+/// Set the equal_flag to !equal_flag
 pub const NOT: u8 = 0x13;
+/// EQUAL SRC SRC
+/// Sets the equal_flag to true
 pub const EQUAL: u8 = 0x14;
+/// GREATER SRC SRC
+/// Sets the equal_flag to true
 pub const GREATER: u8 = 0x15;
+/// Less SRC SRC
+/// Sets the equal_flag to 1
 pub const LESS: u8 = 0x17;
 /// LOAD SRC DEST
 pub const LOAD: u8 = 0x16;
 /// JMPF DEST
-pub const JUMPF: u8 = 0x18;
+/// increments the `ip` by the value stored in DEST
+pub const JMPF: u8 = 0x18;
 /// JMPB DEST
-pub const JUMPB: u8 = 0x19;
+/// decrements the `ip` by the value stored in DEST
+pub const JMPB: u8 = 0x19;
+/// JMPS if the equal flag is set;
+pub const JMPEQ:u8 = 0x20;
