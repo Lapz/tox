@@ -2,31 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interpreter/src/builtins.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/builtins.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interpreter/src/interpreter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/interpreter.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interpreter/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interpreter/src/object.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/object.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sem/src/resolver.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/resolver.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sem/src/semant/inferexp.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/inferexp.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sem/src/semant/inferstatement.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/inferstatement.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sem/src/semant/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sem/src/test.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/test.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/lexer/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/lexer/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/parser/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/parser/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/pprint.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/pprint.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/token.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/token.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/tox/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/emmiter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/emmiter.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/env.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/env.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/macros.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/macros.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/symbol.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/symbol.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/types.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/types.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vm/src/vm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/vm.rs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -66,8 +43,8 @@
           <file leaf-file-name="vm.rs" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="476">
-                  <caret line="281" column="43" selection-start-line="281" selection-start-column="43" selection-end-line="281" selection-end-column="43" />
+                <state relative-caret-position="656">
+                  <caret line="291" column="4" selection-start-line="291" selection-start-column="4" selection-end-line="291" selection-end-column="4" />
                 </state>
               </provider>
             </entry>
@@ -75,7 +52,7 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file leaf-file-name="opcode.rs" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
               <provider selected="true" editor-type-id="text-editor">
@@ -117,7 +94,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds">
     <option name="x" value="777" />
     <option name="y" value="23" />
     <option name="width" value="1389" />
@@ -128,7 +105,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="AndroidView" />
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -151,8 +129,7 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
+      <pane id="AndroidView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -298,13 +275,12 @@
       <window_info anchor="right" id="Capture Analysis" order="3" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="right" id="Maven Projects" order="3" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3287891" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3287891" />
       <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3287891" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3287891" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="Designer" order="2" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2568671" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.329591" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.26057908" />
       <window_info id="Learn" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -318,6 +294,7 @@
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.329591" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -335,7 +312,25 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
-      <provider selected="true" editor-type-id="text-editor" />
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4290">
+          <caret line="288" column="42" selection-start-line="288" selection-start-column="42" selection-end-line="288" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="43" selection-start-line="11" selection-start-column="43" selection-end-line="11" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/chunks.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" column="12" selection-start-line="13" selection-start-column="12" selection-end-line="13" selection-end-column="12" />
+        </state>
+      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
       <provider selected="true" editor-type-id="text-editor">
@@ -363,8 +358,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="281" column="43" selection-start-line="281" selection-start-column="43" selection-end-line="281" selection-end-column="43" />
+        <state relative-caret-position="656">
+          <caret line="291" column="4" selection-start-line="291" selection-start-column="4" selection-end-line="291" selection-end-column="4" />
         </state>
       </provider>
     </entry>

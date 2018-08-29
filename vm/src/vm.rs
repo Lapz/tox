@@ -5,7 +5,7 @@ pub struct VM {
     registers: [i32; 32],
     code: Vec<u8>,
     ip: usize,
-    remainder:u32,
+    remainder: u32,
 }
 
 impl VM {
@@ -14,7 +14,7 @@ impl VM {
             ip: 0,
             registers: [0; 32],
             code: Vec::new(),
-            remainder:0,
+            remainder: 0,
         }
     }
 
@@ -26,16 +26,16 @@ impl VM {
                 }
 
                 opcode::JMP => {
-                    let location = self.registers[self.next_8_bits() as usize] ;
+                    let location = self.registers[self.next_8_bits() as usize];
 
                     self.ip = location as usize;
-                },
+                }
 
                 opcode::JUMPF => {
                     let value = self.registers[self.next_8_bits() as usize];
 
                     self.ip += value as usize;
-                },
+                }
 
                 opcode::JUMPB => {
                     let value = self.registers[self.next_8_bits() as usize];
@@ -43,11 +43,10 @@ impl VM {
                 }
 
                 opcode::LOAD => {
-                    
                     let register = self.next_8_bits() as usize;
                     let number = self.next_16_bits() as u16;
                     self.registers[register] = number as i32;
-                },
+                }
 
                 opcode::ADD => {
                     let lhs = self.registers[self.next_8_bits() as usize];
@@ -75,10 +74,10 @@ impl VM {
                 }
 
                 _ => {
-                    println!("ip = {}",self.ip);
-                    println!("Unknown opcode {:x}",self.code[self.ip]);
+                    println!("ip = {}", self.ip);
+                    println!("Unknown opcode {:x}", self.code[self.ip]);
                     continue;
-                },
+                }
             }
         }
     }
@@ -136,7 +135,7 @@ mod tests {
     fn test_load_opcode() {
         let mut test_vm = VM::new();
 
-        let test_bytes = vec![0x16, 0, 1, 244,1];
+        let test_bytes = vec![0x16, 0, 1, 244, 1];
 
         test_vm.code(test_bytes);
 
@@ -147,14 +146,13 @@ mod tests {
 
     #[test]
     fn test_add_opcode() {
-        
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
             0x16, 0, 1, 244, // LOAD $500 into REG 0
             0x16, 1, 1, 250, // LOAD $506 into REG 1
-            0x6,  0, 1, 0,   // ADD R1 R2 R1
-            1,   
+            0x6, 0, 1, 0, // ADD R1 R2 R1
+            1,
         ];
 
         test_vm.code(test_bytes);
@@ -166,14 +164,13 @@ mod tests {
 
     #[test]
     fn test_sub_opcode() {
-        
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
             0x16, 0, 1, 250, // LOAD $500 into REG 0
             0x16, 1, 1, 244, // LOAD $506 into REG 1
-            0x7,  0, 1, 0,   // SUB R1 R2 R1
-            1,   
+            0x7, 0, 1, 0, // SUB R1 R2 R1
+            1,
         ];
 
         test_vm.code(test_bytes);
@@ -185,14 +182,13 @@ mod tests {
 
     #[test]
     fn test_mul_opcode() {
-        
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
             0x16, 0, 0, 2, // LOAD $2 into REG 0
             0x16, 1, 0, 10, // LOAD $10 into REG 1
-            0x8,  0, 1, 0,   // MUL R1 R2 R1
-            1,   
+            0x8, 0, 1, 0, // MUL R1 R2 R1
+            1,
         ];
 
         test_vm.code(test_bytes);
@@ -204,14 +200,13 @@ mod tests {
 
     #[test]
     fn test_div_opcode() {
-        
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
             0x16, 0, 0, 5, // LOAD $2 into REG 0
             0x16, 1, 0, 3, // LOAD $10 into REG 1
-            0x9,  0, 1, 0, // DIV R1 R2 R1
-            1,   
+            0x9, 0, 1, 0, // DIV R1 R2 R1
+            1,
         ];
 
         test_vm.code(test_bytes);
@@ -219,14 +214,12 @@ mod tests {
         test_vm.run();
 
         assert_eq!(test_vm.registers[0], 1);
-        assert_eq!(test_vm.remainder,2);
+        assert_eq!(test_vm.remainder, 2);
     }
 
     #[test]
     fn test_jmp_opcode() {
-        
         let mut test_vm = VM::new();
-
 
         test_vm.registers[0] = 8;
 
@@ -234,46 +227,40 @@ mod tests {
             0x2, 0, 0, 0, // JMP to $0
             0x16, 1, 0, 10, // LOAD $10 into REG 0
             0x16, 0, 0, 2, // LOAD $2 into REG 0
-            1,   
+            1,
         ];
 
         test_vm.code(test_bytes);
 
         test_vm.run();
 
-       assert_eq!(test_vm.registers[0], 2);
-       assert_eq!(test_vm.ip, 13);
+        assert_eq!(test_vm.registers[0], 2);
+        assert_eq!(test_vm.ip, 13);
     }
 
     #[test]
     fn test_jmpf_opcode() {
-
         let mut test_vm = VM::new();
-
 
         test_vm.registers[0] = 2;
 
         let test_bytes = vec![
             0x18, 0, 0, 0, // JMPF by 3
-            1
+            1,
         ];
 
         test_vm.code(test_bytes);
 
         test_vm.run();
-
 
         assert_eq!(test_vm.ip, 5);
     }
 
     #[test]
     fn test_jmpb_opcode() {
-
         let mut test_vm = VM::new();
 
-
         test_vm.registers[0] = 5;
-
 
         let test_bytes = vec![
             0x2, 0, 0, 0, // JMP to 5
@@ -289,7 +276,5 @@ mod tests {
         assert_eq!(test_vm.registers[1], 7);
         assert_eq!(test_vm.ip, 5);
     }
-
-
 
 }

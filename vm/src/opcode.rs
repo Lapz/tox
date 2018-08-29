@@ -2,7 +2,7 @@
 //! Each Instruction in the VM is 32 bits and the first 8 bits will
 //! contain our opcode
 //! The remaing 24 bits will be used for the Operands
-//! 
+//!
 
 /// HLT
 /// Stops the running of the vm
@@ -31,7 +31,6 @@ pub const NIL: u8 = 0x10;
 pub const TRUE: u8 = 0x11;
 pub const FALSE: u8 = 0x12;
 
-
 pub const NOT: u8 = 0x13;
 pub const EQUAL: u8 = 0x14;
 pub const GREATER: u8 = 0x15;
@@ -39,6 +38,6 @@ pub const LESS: u8 = 0x17;
 /// LOAD SRC DEST
 pub const LOAD: u8 = 0x16;
 /// JMPF DEST
-pub const JUMPF:u8 = 0x18;
+pub const JUMPF: u8 = 0x18;
 /// JMPB DEST
-pub const JUMPB:u8 = 0x19;
+pub const JUMPB: u8 = 0x19;
