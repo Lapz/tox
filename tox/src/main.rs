@@ -8,21 +8,20 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
-use syntax::lexer::Lexer;
-use syntax::parser::Parser;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
 use interpreter::interpret;
 use interpreter::Environment;
+use sem::resolver::Resolver;
+use sem::semant::TyChecker;
 use std::io;
-use util::env::TypeEnv;
-use util::symbol::{SymbolFactory, Table};
-use util::emmiter::Reporter;
-use util::print_err;
-use std::rc::Rc;
 use std::io::Write;
+use std::rc::Rc;
 use structopt::StructOpt;
-
+use syntax::lexer::Lexer;
+use syntax::parser::Parser;
+use util::emmiter::Reporter;
+use util::env::TypeEnv;
+use util::print_err;
+use util::symbol::{SymbolFactory, Table};
 
 fn main() {
     let opts = Cli::from_args();

@@ -1,8 +1,8 @@
 use ast::expr::*;
 use ast::statement::Statement;
 
-use symbol::Table;
 use std::str;
+use symbol::Table;
 
 impl AssignOperator {
     fn pprint(&self) -> &'static str {
@@ -410,8 +410,8 @@ impl Expression {
 #[cfg(test)]
 mod test {
     use lexer::Lexer;
-    use symbol::{SymbolFactory, Table};
     use parser::Parser;
+    use symbol::{SymbolFactory, Table};
     use util::emmiter::Reporter;
 
     #[test]

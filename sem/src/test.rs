@@ -3,12 +3,12 @@
 mod test {
 
     use semant::TyChecker;
+    use std::rc::Rc;
+    use syntax::ast::statement::Statement;
+    use util::emmiter::Reporter;
     use util::env::TypeEnv;
     use util::pos::Spanned;
     use util::symbol::SymbolFactory;
-    use syntax::ast::statement::Statement;
-    use std::rc::Rc;
-    use util::emmiter::Reporter;
 
     fn get_ast(
         input: &str,

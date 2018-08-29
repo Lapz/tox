@@ -1,10 +1,10 @@
-use syntax::ast::statement::Statement;
-use syntax::ast::expr::{Expression, VariableUseHandle};
-use util::pos::{Span, Spanned};
-use util::emmiter::Reporter;
-use util::symbol::Symbol;
-use util::env::TypeEnv;
 use fnv::FnvHashMap;
+use syntax::ast::expr::{Expression, VariableUseHandle};
+use syntax::ast::statement::Statement;
+use util::emmiter::Reporter;
+use util::env::TypeEnv;
+use util::pos::{Span, Spanned};
+use util::symbol::Symbol;
 #[derive(Debug, PartialEq)]
 pub enum State {
     Declared,
@@ -459,15 +459,15 @@ impl Resolver {
 
 #[cfg(test)]
 mod test {
+    use resolver::Resolver;
+    use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use syntax::lexer::Lexer;
-    use util::symbol::{SymbolFactory, Table};
     use syntax::parser::Parser;
-    use resolver::Resolver;
-    use util::pos::Spanned;
     use util::emmiter::Reporter;
     use util::env::TypeEnv;
-    use std::rc::Rc;
+    use util::pos::Spanned;
+    use util::symbol::{SymbolFactory, Table};
 
     fn get_ast(
         input: &str,

@@ -1,10 +1,10 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use object::Object;
 use interpreter::RuntimeError;
+use object::Object;
 use rand::{thread_rng, Rng};
-use util::symbol::Symbol;
-use util::env::TypeEnv;
 use std::str;
+use std::time::{SystemTime, UNIX_EPOCH};
+use util::env::TypeEnv;
+use util::symbol::Symbol;
 
 pub type BuiltInFunction = fn(&[Object]) -> Result<Object, RuntimeError>;
 
@@ -99,7 +99,9 @@ fn built_in_trim(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    Ok(Object::Str(str::from_utf8(&string).unwrap().trim().as_bytes().to_vec()))
+    Ok(Object::Str(
+        str::from_utf8(&string).unwrap().trim().as_bytes().to_vec(),
+    ))
 }
 
 fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {

@@ -1,9 +1,9 @@
 //! This module provides a Table which keeps a track of the mappings between a
 //! `Symbol` and a `String`
 
-use std::fmt::{Display, Formatter, Result};
 use fnv::FnvHashMap;
 use std::cell::RefCell;
+use std::fmt::{Display, Formatter, Result};
 use std::rc::Rc;
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
@@ -113,8 +113,8 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
-    use symbol::{Symbol, SymbolFactory, Table};
     use std::rc::Rc;
+    use symbol::{Symbol, SymbolFactory, Table};
 
     #[test]
     fn test() {

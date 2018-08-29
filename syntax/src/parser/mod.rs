@@ -1,11 +1,11 @@
-use token::{Token, TokenType};
-use std::iter::Peekable;
-use std::vec::IntoIter;
 use super::ast::expr::*;
 use super::ast::statement::*;
-use util::pos::{Span, Spanned};
-use util::emmiter::Reporter;
+use std::iter::Peekable;
+use std::vec::IntoIter;
 use symbol::{Symbol, Table};
+use token::{Token, TokenType};
+use util::emmiter::Reporter;
+use util::pos::{Span, Spanned};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -27,7 +27,7 @@ macro_rules! binary {
 
             let rhs = Box::new($_self.$func()?);
 
-           $lhs = Spanned {
+            $lhs = Spanned {
                 span: $lhs.get_span().to(rhs.get_span()),
                 value: Expression::Binary {
                     lhs: Box::new($lhs),
@@ -44,7 +44,7 @@ macro_rules! binary {
 
             let rhs = Box::new($_self.$func()?);
 
-           $lhs = Spanned {
+            $lhs = Spanned {
                 span: $lhs.get_span().to(rhs.get_span()),
                 value: Expression::Binary {
                     lhs: Box::new($lhs),

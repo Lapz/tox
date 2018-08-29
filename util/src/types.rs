@@ -3,11 +3,11 @@
 use super::pos::Span;
 use super::symbol::Symbol;
 use env::Entry;
-use std::fmt::{Display, Formatter};
-use std::fmt;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
 use std::cmp::{Ordering, PartialOrd};
+use std::collections::HashMap;
+use std::fmt;
+use std::fmt::{Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone)]
 pub enum TypeError {
