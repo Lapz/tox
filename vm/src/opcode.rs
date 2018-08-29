@@ -52,3 +52,6 @@ pub const JMPF: u8 = 0x18;
 pub const JMPB: u8 = 0x19;
 /// JMPS if the equal flag is set;
 pub const JMPEQ: u8 = 0x20;
+
+/// ILLEGAL INST
+pub const IGL:u8 = 0x0;

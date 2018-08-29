@@ -7,3 +7,7 @@ mod assembler;
 mod chunks;
 mod opcode;
 mod vm;
+
+pub use assembler::file;
+pub use vm::VM;
+pub use nom::types::CompleteStr;

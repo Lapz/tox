@@ -158,7 +158,7 @@ impl VM {
         result
     }
 
-    fn code(&mut self, code: Vec<u8>) {
+    pub fn code(&mut self, code: Vec<u8>) {
         self.code = code;
     }
 }
