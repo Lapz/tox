@@ -4,6 +4,7 @@ use opcode;
 pub struct VM {
     registers: [i32; 32],
     pub code: Vec<u8>,
+    heap:Vec<u8>,
     ip: usize,
     remainder: u32,
     equal_flag: bool,
@@ -17,6 +18,7 @@ impl VM {
             code: Vec::new(),
             remainder: 0,
             equal_flag: false,
+            heap:Vec::new()
         }
     }
 
@@ -75,6 +77,22 @@ impl VM {
                     let register = self.next_8_bits() as usize;
                     let number = self.next_16_bits() as u16;
                     self.registers[register] = number as i32;
+                }
+
+                opcode::ALLOC => {
+                    let bytes = self.registers[self.next_8_bits() as usize];
+                    let size = self.heap.len() + bytes as usize;
+
+                    self.heap.resize(size,0);
+                    self.next_16_bits();
+                }
+
+                opcode::FREE => {
+                    let bytes = self.registers[self.next_8_bits() as usize];
+                    let size = self.heap.len() - bytes as usize;
+
+                    self.heap.resize(size,0);
+                    self.next_16_bits();
                 }
 
                 opcode::ADD => {
@@ -475,6 +493,44 @@ mod tests {
         test_vm.run();
 
         assert_eq!(test_vm.equal_flag, true);
+    }
+
+    #[test]
+    fn test_alloc_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 1024;
+
+        let test_bytes = vec![
+            0x23, 0, 0, 0, // ALLOC $0
+            1,0,0,0 //HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.heap.len(), 1024);
+    }
+
+    #[test]
+    fn test_free_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 1024;
+        test_vm.registers[1] = 512;
+
+        let test_bytes = vec![
+            0x23, 0, 0, 0, // ALLOC $0
+            0x24,1,0,0, // FREE $1
+            1,0,0,0 //HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.heap.len(), 512);
     }
 
 }

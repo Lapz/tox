@@ -55,5 +55,14 @@ pub const JMPF: u8 = 0x18;
 pub const JMPB: u8 = 0x19;
 /// JMPS if the equal flag is set;
 pub const JMPEQ: u8 = 0x20;
+/// STORES $SRC $DEST
+/// stores the value in src in dest
 pub const STORE: u8 = 0x21;
+/// JMPS if the equal flag is not set;
 pub const JMPNEQ: u8 = 0x22;
+/// ALLOC $BYTES
+/// Extends the heap by n bytes
+pub const ALLOC:u8 = 0x23;
+/// FREE $BYTES
+/// Shrinks the heap by n bytes
+pub const FREE:u8 = 0x24;

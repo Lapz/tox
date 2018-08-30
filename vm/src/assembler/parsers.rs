@@ -9,6 +9,7 @@ pub enum Token {
     Op(OpCode),
     Register(u8),
     Number(i32),
+    Comment,
 }
 
 #[derive(Debug, PartialEq)]
@@ -257,6 +258,8 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("jmpeq") => opcode::JMPEQ,
             CompleteStr("jmpneq") => opcode::JMPNEQ,
             CompleteStr("store") => opcode::STORE,
+            CompleteStr("alloc") => opcode::ALLOC,
+            CompleteStr("free") => opcode::FREE,
             CompleteStr("LOAD") => opcode::LOAD,
             CompleteStr("ADD") => opcode::ADD,
             CompleteStr("SUB") => opcode::SUB,
@@ -273,16 +276,13 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("JMPEQ") => opcode::JMPEQ,
             CompleteStr("JMPNEQ") => opcode::JMPNEQ,
             CompleteStr("STORE") => opcode::STORE,
+            CompleteStr("ALLOC") => opcode::ALLOC,
+            CompleteStr("FREE") => opcode::FREE,
             _ => opcode::IGL,
         }
     }
 }
 
-impl<'a> Input<'a> {
-    pub fn new(input: &'a str) -> Self {
-        Input(CompleteStr(input))
-    }
-}
 
 #[cfg(test)]
 mod test {
