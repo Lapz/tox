@@ -23,7 +23,7 @@ impl SymbolTable {
     }
 
     pub fn add(&mut self, name: String, offset: usize, ty: SymbolType) {
-        for (key, value) in self.mappings.iter() {
+        for (_, value) in self.mappings.iter() {
             if value == &name {
                 return;
             }

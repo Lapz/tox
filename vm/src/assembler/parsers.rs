@@ -4,7 +4,6 @@ use nom::types::CompleteStr;
 use nom::{alpha1, alphanumeric, digit, multispace};
 use opcode;
 
-
 fn not_line_end(ch: char) -> bool {
     !(ch == '\n')
 }
@@ -49,11 +48,10 @@ named!(integer_operand<CompleteStr,Token>,
     )
 );
 
-
-named!(comment<CompleteStr,Token>,
+named!(comment<CompleteStr,()>,
     do_parse!(
         tag!("//") >>
-        take_while!(not_line_end) >> (Token::Comment)
+        take_while!(not_line_end) >> ()
     )
 );
 

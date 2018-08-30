@@ -1,6 +1,9 @@
+#[cfg(feature = "debug")]
 use opcode;
+#[cfg(feature = "debug")]
 use vm::VM;
 
+#[cfg(feature = "debug")]
 impl VM {
     #[cfg(feature = "debug")]
     pub fn disassemble(&self, name: &str) {

@@ -4,7 +4,7 @@ mod symbols;
 mod token;
 
 pub use self::parsers::file;
-use self::symbols::{Symbol, SymbolTable, SymbolType};
+use self::symbols::{SymbolTable, SymbolType};
 use self::token::Token;
 use nom::types::CompleteStr;
 
@@ -44,7 +44,6 @@ impl Assembler {
     pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
         match file(CompleteStr(raw)) {
             Ok((_, program)) => {
-
                 self.extract_labels(&program);
 
                 Some(program.to_bytes(&self.symbols))
@@ -63,7 +62,6 @@ impl Assembler {
                 if let Some(name) = instruction.label_name() {
                     self.symbols.add(name, i * 4, SymbolType::Label);
                 }
-
             }
         }
     }
@@ -107,16 +105,13 @@ impl AssemblerInstruction {
             }
 
             Token::LabelUsage(ref label) => {
-
                 if let Some(offset) = symbols.offset(label) {
                     let byte1 = offset;
                     let byte2 = offset >> 8;
                     results.push(byte2 as u8);
                     results.push(byte1 as u8);
                 }
-            },
-
-            Token::Comment => (),
+            }
             _ => panic!("opcode found in operand field"),
         }
     }

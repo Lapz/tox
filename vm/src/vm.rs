@@ -3,7 +3,6 @@ use opcode;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
-
 pub struct VM {
     registers: [i32; 32],
     stack: [i32; STACK_MAX],
@@ -188,7 +187,7 @@ impl VM {
                     let val = self.registers[self.next_8_bits() as usize];
                     self.push(val);
                     self.advance(2)
-                },
+                }
 
                 opcode::POP => {
                     let val = self.pop();
@@ -198,9 +197,9 @@ impl VM {
 
                 _ => {
                     println!("{:?}", self.equal_flag);
-//                    println!("ip = {}", self.ip);
-//                    println!("Unknown opcode {}", self.code[self.ip-1]);
-//                    println!("{:?}",&self.registers[0..7]);
+                    //                    println!("ip = {}", self.ip);
+                    //                    println!("Unknown opcode {}", self.code[self.ip-1]);
+                    //                    println!("{:?}",&self.registers[0..7]);
                     continue;
                 }
             }
@@ -241,7 +240,7 @@ impl VM {
         self.stack_top -= 1;
         self.stack[self.stack_top]
     }
- 
+
     pub fn code(&mut self, code: Vec<u8>) {
         self.code = code;
     }
@@ -262,7 +261,6 @@ impl Debug for VM {
         let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()
 
-
         //  f.debug_list().entries(self.stack[0..].iter()).finish()
     }
 }
@@ -270,6 +268,7 @@ impl Debug for VM {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opcode;
 
     #[test]
     fn it_works() {
@@ -282,7 +281,7 @@ mod tests {
     fn test_hlt_opcode() {
         let mut test_vm = VM::new();
 
-        let test_bytes = vec![0x1, 0, 0, 0];
+        let test_bytes = vec![opcode::HLT, 0, 0, 0];
 
         test_vm.code(test_bytes);
 
@@ -294,7 +293,7 @@ mod tests {
     fn test_load_opcode() {
         let mut test_vm = VM::new();
 
-        let test_bytes = vec![0x16, 0, 1, 244, 1];
+        let test_bytes = vec![opcode::LOAD, 0, 1, 244, 1];
 
         test_vm.code(test_bytes);
 
@@ -308,9 +307,18 @@ mod tests {
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
-            0x16, 0, 1, 244, // LOAD $500 into REG 0
-            0x16, 1, 1, 250, // LOAD $506 into REG 1
-            0x6, 0, 1, 0, // ADD R1 R2 R1
+            opcode::LOAD,
+            0,
+            1,
+            244, // LOAD $500 into REG 0
+            opcode::LOAD,
+            1,
+            1,
+            250, // LOAD $506 into REG 1
+            opcode::ADD,
+            0,
+            1,
+            0, // ADD R1 R2 R1
             1,
         ];
 
@@ -326,9 +334,18 @@ mod tests {
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
-            0x16, 0, 1, 250, // LOAD $500 into REG 0
-            0x16, 1, 1, 244, // LOAD $506 into REG 1
-            0x7, 0, 1, 0, // SUB R1 R2 R1
+            opcode::LOAD,
+            0,
+            1,
+            250, // LOAD $500 into REG 0
+            opcode::LOAD,
+            1,
+            1,
+            244, // LOAD $506 into REG 1
+            opcode::SUB,
+            0,
+            1,
+            0, // SUB R1 R2 R1
             1,
         ];
 
@@ -344,10 +361,22 @@ mod tests {
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
-            0x16, 0, 0, 2, // LOAD $2 into REG 0
-            0x16, 1, 0, 10, // LOAD $10 into REG 1
-            0x8, 0, 1, 0, // MUL R1 R2 R1
-            1, 0, 0, 0,
+            opcode::LOAD,
+            0,
+            0,
+            2, // LOAD $2 into REG 0
+            opcode::LOAD,
+            1,
+            0,
+            10, // LOAD $10 into REG 1
+            opcode::MUL,
+            0,
+            1,
+            0, // MUL R1 R2 R1
+            1,
+            0,
+            0,
+            0,
         ];
 
         test_vm.code(test_bytes);
@@ -362,10 +391,22 @@ mod tests {
         let mut test_vm = VM::new();
 
         let test_bytes = vec![
-            0x16, 0, 0, 5, // LOAD $2 into REG 0
-            0x16, 1, 0, 3, // LOAD $10 into REG 1
-            0x9, 0, 1, 0, // DIV R1 R2 R1
-            1, 0, 0, 0,
+            opcode::LOAD,
+            0,
+            0,
+            5, // LOAD $2 into REG 0
+            opcode::LOAD,
+            1,
+            0,
+            3, // LOAD $10 into REG 1
+            opcode::DIV,
+            0,
+            1,
+            0, // DIV R1 R2 R1
+            1,
+            0,
+            0,
+            0,
         ];
 
         test_vm.code(test_bytes);
@@ -383,10 +424,22 @@ mod tests {
         test_vm.registers[0] = 8;
 
         let test_bytes = vec![
-            0x2, 0, 0, 0, // JMP to $0
-            0x16, 1, 0, 10, // LOAD $10 into REG 0
-            0x16, 0, 0, 2, // LOAD $2 into REG 0
-            1, 0, 0, 0,
+            opcode::JMP,
+            0,
+            0,
+            0, // JMP to $0
+            opcode::LOAD,
+            1,
+            0,
+            10, // LOAD $10 into REG 0
+            opcode::LOAD,
+            0,
+            0,
+            2, // LOAD $2 into REG 0
+            1,
+            0,
+            0,
+            0,
         ];
 
         test_vm.code(test_bytes);
@@ -404,8 +457,14 @@ mod tests {
         test_vm.registers[0] = 2;
 
         let test_bytes = vec![
-            0x18, 0, 0, 0, // JMPF by 3
-            1, 0, 0, 0,
+            opcode::JMPF,
+            0,
+            0,
+            0, // JMPF by 3
+            1,
+            0,
+            0,
+            0,
         ];
 
         test_vm.code(test_bytes);
@@ -422,10 +481,22 @@ mod tests {
         test_vm.registers[0] = 5;
 
         let test_bytes = vec![
-            0x2, 0, 0, 0, // JMP to 5
-            1, 0, 0, 0, //HLT
-            0x16, 1, 0, 11, // LOAD #7 into $1
-            0x19, 1, 0, 0, // JMPB by $1(7)
+            opcode::JMP,
+            0,
+            0,
+            0, // JMP to 5
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
+            opcode::LOAD,
+            1,
+            0,
+            11, // LOAD #7 into $1
+            opcode::JMPB,
+            1,
+            0,
+            0, // JMPB by $1(7)
         ];
 
         test_vm.code(test_bytes);
@@ -444,8 +515,14 @@ mod tests {
         test_vm.registers[1] = 5;
 
         let test_bytes = vec![
-            0x14, 0, 1, 0, // EQ $1 $2
-            1, 0, 0, 0, //HLT
+            opcode::EQUAL,
+            0,
+            1,
+            0, // EQ $1 $2
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -463,8 +540,14 @@ mod tests {
         test_vm.registers[1] = 5;
 
         let test_bytes = vec![
-            0x17, 0, 1, 0, // GREATER $1 $2
-            1, 0, 0, 0, //HLT
+            opcode::LESS,
+            0,
+            1,
+            0, // LESS $1 $2
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -482,9 +565,18 @@ mod tests {
         test_vm.registers[1] = 5;
 
         let test_bytes = vec![
-            0x14, 0, 1, 0, // EQUAL $1 $2
-            0x13, 0, 0, 0, // NOT
-            1, 0, 0, 0, //HLT
+            opcode::EQUAL,
+            0,
+            1,
+            0, // EQUAL $1 $2
+            opcode::NOT,
+            0,
+            0,
+            0, // NOT
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -511,9 +603,18 @@ mod tests {
         test_vm.registers[1] = 5;
 
         let test_bytes = vec![
-            0x14, 0, 1, 0, // EQUAL $1 $2
-            0x13, 0, 0, 0, // NOT
-            1, 0, 0, 0, //HLT
+            opcode::EQUAL,
+            0,
+            1,
+            0, // EQUAL $1 $2
+            opcode::NOT,
+            0,
+            0,
+            0, // NOT
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -540,9 +641,18 @@ mod tests {
         test_vm.equal_flag = true;
 
         let test_bytes = vec![
-            0x20, 0, 0, 0, // JMPEQUAL $1
-            0x13, 0, 0, 0, // NOT
-            1, 0, 0, 0, //HLT
+            opcode::JMPEQ,
+            0,
+            0,
+            0, // JMPEQUAL $1
+            opcode::NOT,
+            0,
+            0,
+            0, // NOT
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -559,8 +669,14 @@ mod tests {
         test_vm.registers[0] = 1024;
 
         let test_bytes = vec![
-            0x23, 0, 0, 0, // ALLOC $0
-            1, 0, 0, 0, //HLT
+            opcode::ALLOC,
+            0,
+            0,
+            0, // ALLOC $0
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -578,9 +694,18 @@ mod tests {
         test_vm.registers[1] = 512;
 
         let test_bytes = vec![
-            0x23, 0, 0, 0, // ALLOC $0
-            0x24, 1, 0, 0, // FREE $1
-            1, 0, 0, 0, //HLT
+            opcode::ALLOC,
+            0,
+            0,
+            0, // ALLOC $0
+            opcode::FREE,
+            1,
+            0,
+            0, // FREE $1
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -597,8 +722,14 @@ mod tests {
         test_vm.registers[0] = 100;
 
         let test_bytes = vec![
-            0x25, 0, 0, 0, // INC $0
-            1, 0, 0, 0, //HLT
+            opcode::INC,
+            0,
+            0,
+            0, // INC $0
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -615,8 +746,14 @@ mod tests {
         test_vm.registers[0] = 100;
 
         let test_bytes = vec![
-            0x26, 0, 0, 0, // INC $0
-            1, 0, 0, 0, //HLT
+            opcode::DEC,
+            0,
+            0,
+            0, // DEC $0
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -633,8 +770,14 @@ mod tests {
         test_vm.registers[0] = 100;
 
         let test_bytes = vec![
-            0x27, 0, 0, 0, // PUSH $0
-            1, 0, 0, 0, //HLT
+            opcode::PUSH,
+            0,
+            0,
+            0, // PUSH $0
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
         ];
 
         test_vm.code(test_bytes);
@@ -652,10 +795,22 @@ mod tests {
         test_vm.registers[1] = 200;
 
         let test_bytes = vec![
-            0x27, 0, 0, 0, // PUSH $0
-            0x27, 1, 0, 0, // PUSH $1
-            0x28, 0, 0, 0,   // POP $0
-            1, 0, 0, 0,    // HLT
+            opcode::PUSH,
+            0,
+            0,
+            0, // PUSH $0
+            opcode::PUSH,
+            1,
+            0,
+            0, // PUSH $1
+            opcode::POP,
+            0,
+            0,
+            0, // POP $0
+            opcode::HLT,
+            0,
+            0,
+            0, // HLT
         ];
 
         test_vm.code(test_bytes);

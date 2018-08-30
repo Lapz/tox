@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test.tasm" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tasm" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/assembler/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/assembler/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/assembler/parsers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/assembler/parsers.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/assembler/symbols.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/assembler/symbols.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/debug.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/debug.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/opcode.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/opcode.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vm/src/vm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/vm.rs" afterDir="false" />
-    </list>
+    <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added push and pop" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,6 +12,7 @@
     <session id="-1920920413">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
+          <entry key="project.closed" value="1" />
           <entry key="project.open.time.4" value="1" />
           <entry key="project.open.time.7" value="1" />
           <entry key="project.opened" value="2" />
@@ -31,11 +23,12 @@
           <entry key="rs" value="3098" />
           <entry key="tasm" value="517" />
           <entry key="toml" value="26" />
+          <entry key="txt" value="21" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="517" />
+          <entry key="PLAIN_TEXT" value="538" />
           <entry key="Rust" value="3098" />
           <entry key="TOML file" value="26" />
         </counts>
@@ -79,7 +72,7 @@
             <state relative-caret-position="60">
               <caret line="78" selection-start-line="78" selection-end-line="78" />
               <folding>
-                <marker date="1535643118000" expanded="false" signature="6497:6663" ph="..." />
+                <marker date="1535643178000" expanded="false" signature="6499:6665" ph="..." />
               </folding>
             </state>
           </provider>
@@ -162,6 +155,11 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Lenard Pratt &lt;striderman34@gmail.com&gt;" />
+      </list>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
@@ -250,7 +248,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1535643118697" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1535643485329" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.alreadyTriedToolchainAutoDiscovery" value="true" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
@@ -380,6 +378,14 @@
       <updated>1510943299967</updated>
       <workItem from="1510943309743" duration="168000" />
     </task>
+    <task id="LOCAL-00001" summary="Added push and pop">
+      <created>1535643193060</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1535643193061</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
@@ -396,7 +402,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="497" y="23" width="943" height="827" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.001109878" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -413,9 +418,9 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32517007" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3265306" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3265306" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" order="9" weight="0.3292517" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="9" visible="true" weight="0.3292517" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -435,7 +440,10 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="VcsManagerConfiguration">
-    <option name="LAST_COMMIT_MESSAGE" value="" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="Added push and pop" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added push and pop" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main.rs" />
@@ -524,7 +532,7 @@
         <state relative-caret-position="60">
           <caret line="78" selection-start-line="78" selection-end-line="78" />
           <folding>
-            <marker date="1535643118000" expanded="false" signature="6497:6663" ph="..." />
+            <marker date="1535643178000" expanded="false" signature="6499:6665" ph="..." />
           </folding>
         </state>
       </provider>
