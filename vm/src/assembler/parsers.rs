@@ -1,29 +1,15 @@
+use assembler::token::Token;
+use assembler::{AssemblerInstruction, Program};
 use nom::types::CompleteStr;
-use nom::{alpha1, digit};
-use opcode::{self, OpCode};
+use nom::{alpha1, alphanumeric, digit, multispace};
+use opcode;
 
-pub struct Input<'a>(pub CompleteStr<'a>);
-
-#[derive(Debug, PartialEq)]
-pub enum Token {
-    Op(OpCode),
-    Register(u8),
-    Number(i32),
-    Comment,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct AssemblerInstruction {
-    opcode: Token,
-    operand1: Option<Token>,
-    operand2: Option<Token>,
-    operand3: Option<Token>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Program {
-    pub instructions: Vec<AssemblerInstruction>,
-}
+named!(operand<CompleteStr,Token>,
+    alt!(
+        integer_operand
+        | register
+    )
+);
 
 named!(opcode<CompleteStr,Token>,
     do_parse!(
@@ -57,107 +43,92 @@ named!(integer_operand<CompleteStr,Token>,
     )
 );
 
+named!(directive_declaration<CompleteStr,Token>,
+    do_parse!(
+            tag!(".") >>
+            name:alpha1 >>
+            ( Token::Directive(name.to_string()))
+    )
+);
+
+named!(label_declaration<CompleteStr,Token>,
+    ws!(
+        do_parse!(
+            name: alphanumeric >>
+            tag!(":")         >>
+            opt!(multispace) >>
+
+            ( Token::LabelDeclaration(name.to_string()))
+        )
+    )
+);
+
+named!(label_usage<CompleteStr,Token>,
+    ws!(
+        do_parse!(
+            tag!("@")          >>
+            name: alphanumeric >>
+            opt!(multispace)   >>
+            (
+                Token::LabelUsage(name.to_string())
+            )
+        )
+    )
+);
+
 /// Handles instructions of the following form:
 /// LOAD $0 #100
-named!(instruction_one<CompleteStr,AssemblerInstruction>,
+named!(instruction_combined<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        o: opcode >>
-        r: register >>
-        i : integer_operand >>
+        label:opt!(label_declaration) >>
+        opcode: opcode >>
+        operand1: opt!(operand) >>
+        operand2:  opt!(operand) >>
+        operand3: opt!(operand) >>
         (
             AssemblerInstruction {
-                opcode:o,
-                operand1:Some(r),
-                operand2:Some(i),
-                operand3:None
+                label,
+                opcode:Some(opcode),
+                operand1,
+                operand2,
+                operand3,
+                directive:None,
             }
         )
     )
 );
 
-/// Handles instructions of the following form:
-/// ADD $1 $2 $3
-named!(instruction_two<CompleteStr,AssemblerInstruction>,
-    do_parse!(
-        o: opcode >>
-        r1: register >>
-        r2: register >>
-        r3: register >>
-        (
-            AssemblerInstruction {
-                opcode:o,
-                operand1:Some(r1),
-                operand2:Some(r2),
-                operand3:Some(r3),
-            }
-        )
-    )
-);
-/// Handles instructions of the following form:
-/// HLT
-named!(instruction_three<CompleteStr,AssemblerInstruction>,
-    do_parse!(
-        o: opcode >>
-        (
-            AssemblerInstruction {
-                opcode:o,
-                operand1:None,
-                operand2:None,
-                operand3:None
-            }
+named!(directive_combined<CompleteStr,AssemblerInstruction>,
+    ws!(
+        do_parse!(
+            tag!(".") >>
+            name: directive_declaration >>
+            operand1: opt!(operand) >>
+            operand2:  opt!(operand) >>
+            operand3: opt!(operand) >>
+            (
+                AssemblerInstruction {
+                    label:None,
+                    directive:Some(name),
+                    opcode:None,
+                    operand1,
+                    operand2,
+                    operand3,
+                }
+            )
         )
     )
 );
 
-/// Handles instructions of the following form:
-/// LESS $0 $1
-named!(instruction_four<CompleteStr,AssemblerInstruction>,
+named!(directive<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        o: opcode >>
-        r1: register >>
-        r2: register >>
-        (
-            AssemblerInstruction {
-                opcode:o,
-                operand1:Some(r1),
-                operand2:Some(r2),
-                operand3:None
-            }
-        )
+        inst :directive_combined >>(inst)
     )
 );
 
-/// Handles instructions of the following form:
-/// JMPF #7
-named!(instruction_five<CompleteStr,AssemblerInstruction>,
+named!(instruction<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        o: opcode >>
-        value: integer_operand >>
-        (
-            AssemblerInstruction {
-                opcode:o,
-                operand1:Some(value),
-                operand2:None,
-                operand3:None
-            }
-        )
-    )
-);
-
-/// Handles instructions of the following form:
-/// JMPNEQ $7 JMPEQ $7
-named!(instruction_six<CompleteStr,AssemblerInstruction>,
-    do_parse!(
-        o: opcode >>
-        r: register >>
-        (
-            AssemblerInstruction {
-                opcode:o,
-                operand1:Some(r),
-                operand2:None,
-                operand3:None
-            }
-        )
+        inst:alt!(instruction_combined | directive) >> (inst)
     )
 );
 
@@ -165,22 +136,14 @@ named!(pub file<CompleteStr,Program>,
 
     do_parse!(
         instructions: ws!(
-            many1!(
-                alt!(instruction_one
-                    | instruction_two
-                    | instruction_five
-                    | instruction_four
-                    | instruction_six
-                    | instruction_three
-                )
+            many1!(alt!(instruction))
             )
-        ) >> (
+        >> (
             Program {
                 instructions
             }
         )
     )
-
 );
 
 impl Program {
@@ -192,46 +155,6 @@ impl Program {
         }
 
         program
-    }
-}
-
-impl AssemblerInstruction {
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut results = Vec::with_capacity(4);
-
-        match self.opcode {
-            Token::Op(ref code) => results.push(*code),
-            _ => {
-                panic!("Non-opcode found in opcode field");
-            }
-        }
-
-        for operand in &[&self.operand1, &self.operand2, &self.operand3] {
-            match operand {
-                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results),
-                None => (),
-            }
-        }
-
-        while results.len() < 4 {
-            results.push(0);
-        }
-
-        results
-    }
-
-    fn extract_operand(t: &Token, results: &mut Vec<u8>) {
-        match t {
-            Token::Register(ref reg) => results.push(*reg),
-            Token::Number(ref num) => {
-                let converted = *num as u16;
-                let byte2 = converted >> 8;
-
-                results.push(byte2 as u8);
-                results.push(converted as u8);
-            }
-            _ => panic!("opcode found in operand field"),
-        }
     }
 }
 
@@ -283,7 +206,6 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -296,11 +218,11 @@ mod test {
         let result = opcode(CompleteStr("LOAD"));
         assert!(result.is_ok());
 
-        let (rest, token) = result.unwrap();
+        let (_, token) = result.unwrap();
         assert_eq!(token, Token::Op(opcode::LOAD));
 
         let result = opcode(CompleteStr("aold"));
-        let (rest, token) = result.unwrap();
+        let (_, token) = result.unwrap();
         assert_eq!(token, Token::Op(opcode::IGL));
     }
 
@@ -310,7 +232,7 @@ mod test {
 
         assert!(result.is_ok());
 
-        let (rest, token) = result.unwrap();
+        let (_, token) = result.unwrap();
         assert_eq!(token, Token::Register(10));
 
         let result = register(CompleteStr("0"));
@@ -326,10 +248,39 @@ mod test {
 
         assert!(result.is_ok());
 
-        let (rest, token) = result.unwrap();
+        let (_, token) = result.unwrap();
         assert_eq!(token, Token::Number(10));
 
         let result = integer_operand(CompleteStr("10"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn parse_label_declaration() {
+        let result = label_declaration(CompleteStr("test:"));
+
+        assert!(result.is_ok());
+
+        let (_, token) = result.unwrap();
+
+        assert_eq!(token, Token::LabelDeclaration("test".into()));
+
+        let result = label_declaration(CompleteStr("test"));
+
+        assert!(result.is_err());
+    }
+    #[test]
+    fn parse_label_usage() {
+        let result = label_usage(CompleteStr("@test"));
+
+        assert!(result.is_ok());
+
+        let (_, token) = result.unwrap();
+
+        assert_eq!(token, Token::LabelUsage("test".into()));
+
+        let result = label_usage(CompleteStr("test"));
+
         assert!(result.is_err());
     }
 
@@ -339,13 +290,15 @@ mod test {
 
         assert!(result.is_ok());
 
-        let (rest, program) = result.unwrap();
+        let (_, program) = result.unwrap();
 
         let instructions = vec![AssemblerInstruction {
-            opcode: Token::Op(opcode::LOAD),
+            opcode: Some(Token::Op(opcode::LOAD)),
             operand1: Some(Token::Register(0)),
             operand2: Some(Token::Number(10)),
             operand3: None,
+            directive: None,
+            label: None,
         }];
 
         assert_eq!(program, Program { instructions });
@@ -355,13 +308,15 @@ mod test {
         assert!(result.is_ok());
 
         let instructions = vec![AssemblerInstruction {
-            opcode: Token::Op(opcode::LOAD),
+            opcode: Some(Token::Op(opcode::LOAD)),
             operand1: Some(Token::Register(0)),
             operand2: Some(Token::Number(10)),
             operand3: None,
+            directive: None,
+            label: None,
         }];
 
-        let (rest, token) = result.unwrap();
+        let (_, program) = result.unwrap();
         assert_eq!(program, Program { instructions });
     }
 }

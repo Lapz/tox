@@ -121,8 +121,6 @@ pub fn run_vm(path: String) {
     file.read_to_string(&mut contents)
         .expect("something went wrong reading the file");
 
-    let input = contents.trim();
-
     if contents.is_empty() {
         ::std::process::exit(0)
     }
@@ -137,7 +135,6 @@ pub fn run_vm(path: String) {
 
     vm.code(bytecode);
 
-    
     vm.run();
 
     vm.disassemble("test");

@@ -62,7 +62,7 @@ pub const STORE: u8 = 0x21;
 pub const JMPNEQ: u8 = 0x22;
 /// ALLOC $BYTES
 /// Extends the heap by n bytes
-pub const ALLOC:u8 = 0x23;
+pub const ALLOC: u8 = 0x23;
 /// FREE $BYTES
 /// Shrinks the heap by n bytes
-pub const FREE:u8 = 0x24;
+pub const FREE: u8 = 0x24;
