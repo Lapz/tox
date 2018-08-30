@@ -46,7 +46,7 @@ impl Assembler {
             Ok((_, program)) => {
                 self.extract_labels(&program);
 
-                unimplemented!()
+                Some(program.to_bytes(&self.symbols))
             }
 
             Err(e) => {
@@ -68,7 +68,7 @@ impl Assembler {
 }
 
 impl AssemblerInstruction {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self,symbols:&SymbolTable) -> Vec<u8> {
         let mut results = Vec::with_capacity(4);
 
         match self.opcode {
@@ -81,7 +81,7 @@ impl AssemblerInstruction {
 
         for operand in &[&self.operand1, &self.operand2, &self.operand3] {
             match operand {
-                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results),
+                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results,symbols),
                 None => (),
             }
         }
@@ -93,15 +93,25 @@ impl AssemblerInstruction {
         results
     }
 
-    fn extract_operand(t: &Token, results: &mut Vec<u8>) {
+    fn extract_operand(t: &Token, results: &mut Vec<u8>,symbols:&SymbolTable) {
         match t {
             Token::Register(ref reg) => results.push(*reg),
             Token::Number(ref num) => {
-                let converted = *num as u16;
-                let byte2 = converted >> 8;
+                let byte1 = *num as u16;
+                let byte2 = byte1 >> 8;
 
                 results.push(byte2 as u8);
-                results.push(converted as u8);
+                results.push(byte1 as u8);
+            },
+
+            Token::LabelDeclaration(ref label) => {
+                if let Some(offset) = symbols.offset(label) {
+                    let byte1 = offset;
+                    let byte2 = offset >> 8;
+                    results.push(byte2 as u8);
+                    results.push(byte1 as u8);
+                }
+
             }
             _ => panic!("opcode found in operand field"),
         }

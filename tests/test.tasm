@@ -1,14 +1,9 @@
-LOAD $0 #0
-LOAD $1 #1
-LOAD $2 #1
-LOAD $3 #1
-LOAD $4 #10
-LOAD $6 #1
-LOAD $7 #36
-LOAD $8 #26
-LESS $3 $4
-ADD $0 $1 $2
-STORE $1 $0
-STORE $2 $1
-ADD $3 $6 $3
-HLT
+load $0 #100
+load $1 #1
+load $2 #0
+test: 
+    inc $0
+    equal $0 $2
+    not
+    jmpeq @test
+hlt

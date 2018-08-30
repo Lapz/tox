@@ -8,6 +8,5 @@ mod debug;
 mod opcode;
 mod vm;
 
-pub use assembler::file;
-pub use nom::types::CompleteStr;
+pub use assembler::Assembler;
 pub use vm::VM;

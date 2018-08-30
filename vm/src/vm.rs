@@ -91,7 +91,7 @@ impl VM {
                     let size = self.heap.len() - bytes as usize;
 
                     self.heap.resize(size, 0);
-                    self.next_16_bits();
+                    self.advance(2);
                 }
 
                 opcode::ADD => {
@@ -129,7 +129,7 @@ impl VM {
                         self.equal_flag = false;
                     }
 
-                    self.next_8_bits();
+                    self.advance(1);
                 }
 
                 opcode::GREATER => {
@@ -142,7 +142,7 @@ impl VM {
                         self.equal_flag = false;
                     }
 
-                    self.next_8_bits();
+                    self.advance(1);
                 }
 
                 opcode::LESS => {
@@ -157,10 +157,9 @@ impl VM {
                 }
 
                 opcode::NOT => {
-                    self.next_8_bits();
+                    
                     self.equal_flag = !self.equal_flag;
-                    self.next_8_bits();
-                    self.next_8_bits();
+                    self.advance(3);
                 }
 
                 opcode::STORE => {
@@ -169,7 +168,17 @@ impl VM {
 
                     self.registers[dest as usize] = self.registers[src as usize];
 
-                    self.next_8_bits();
+                    self.advance(1);
+                },
+
+                opcode::INC => {
+                    self.registers[self.next_8_bits() as usize] += 1;
+                    self.advance(2);
+                },
+
+                opcode::DEC => {
+                    self.registers[self.next_8_bits() as usize] -= 1;
+                    self.advance(2);
                 }
 
                 _ => {
@@ -185,6 +194,10 @@ impl VM {
         let byte = self.code[self.ip];
         self.ip += 1;
         byte
+    }
+
+    fn advance(&mut self,n:usize) {
+        self.ip += n;
     }
 
     fn next_8_bits(&mut self) -> u8 {
@@ -528,6 +541,42 @@ mod tests {
         test_vm.run();
 
         assert_eq!(test_vm.heap.len(), 512);
+    }
+
+    #[test]
+    fn test_inc_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 100;
+
+        let test_bytes = vec![
+            0x25, 0, 0, 0, // INC $0
+            1, 0, 0, 0, //HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.registers[0], 101);
+    }
+
+    #[test]
+    fn test_dec_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 100;
+
+        let test_bytes = vec![
+            0x26, 0, 0, 0, // INC $0
+            1, 0, 0, 0, //HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.registers[0], 99);
     }
 
 }

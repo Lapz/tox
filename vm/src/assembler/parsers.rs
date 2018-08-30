@@ -1,5 +1,6 @@
 use assembler::token::Token;
 use assembler::{AssemblerInstruction, Program};
+use assembler::symbols::SymbolTable;
 use nom::types::CompleteStr;
 use nom::{alpha1, alphanumeric, digit, multispace};
 use opcode;
@@ -147,11 +148,11 @@ named!(pub file<CompleteStr,Program>,
 );
 
 impl Program {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self,symbols:&SymbolTable) -> Vec<u8> {
         let mut program = Vec::with_capacity(self.instructions.len() * 4);
 
         for inst in self.instructions.iter() {
-            program.append(&mut inst.to_bytes());
+            program.append(&mut inst.to_bytes(symbols));
         }
 
         program
@@ -183,6 +184,7 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("store") => opcode::STORE,
             CompleteStr("alloc") => opcode::ALLOC,
             CompleteStr("free") => opcode::FREE,
+            CompleteStr("inc") => opcode::INC,
             CompleteStr("LOAD") => opcode::LOAD,
             CompleteStr("ADD") => opcode::ADD,
             CompleteStr("SUB") => opcode::SUB,
@@ -201,6 +203,7 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("STORE") => opcode::STORE,
             CompleteStr("ALLOC") => opcode::ALLOC,
             CompleteStr("FREE") => opcode::FREE,
+            CompleteStr("INC") => opcode::INC,
             _ => opcode::IGL,
         }
     }
