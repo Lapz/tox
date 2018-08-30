@@ -157,7 +157,6 @@ impl VM {
                 }
 
                 opcode::NOT => {
-                    
                     self.equal_flag = !self.equal_flag;
                     self.advance(3);
                 }
@@ -169,12 +168,12 @@ impl VM {
                     self.registers[dest as usize] = self.registers[src as usize];
 
                     self.advance(1);
-                },
+                }
 
                 opcode::INC => {
                     self.registers[self.next_8_bits() as usize] += 1;
                     self.advance(2);
-                },
+                }
 
                 opcode::DEC => {
                     self.registers[self.next_8_bits() as usize] -= 1;
@@ -196,7 +195,7 @@ impl VM {
         byte
     }
 
-    fn advance(&mut self,n:usize) {
+    fn advance(&mut self, n: usize) {
         self.ip += n;
     }
 

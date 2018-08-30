@@ -4,7 +4,7 @@ mod symbols;
 mod token;
 
 pub use self::parsers::file;
-use self::symbols::{Symbol, SymbolTable,SymbolType};
+use self::symbols::{Symbol, SymbolTable, SymbolType};
 use self::token::Token;
 use nom::types::CompleteStr;
 
@@ -60,7 +60,7 @@ impl Assembler {
         for (i, instruction) in p.instructions.iter().enumerate() {
             if instruction.is_label() {
                 if let Some(name) = instruction.label_name() {
-                    self.symbols.add(name,i*4,SymbolType::Label);
+                    self.symbols.add(name, i * 4, SymbolType::Label);
                 }
             }
         }
@@ -68,7 +68,7 @@ impl Assembler {
 }
 
 impl AssemblerInstruction {
-    pub fn to_bytes(&self,symbols:&SymbolTable) -> Vec<u8> {
+    pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
         let mut results = Vec::with_capacity(4);
 
         match self.opcode {
@@ -81,7 +81,7 @@ impl AssemblerInstruction {
 
         for operand in &[&self.operand1, &self.operand2, &self.operand3] {
             match operand {
-                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results,symbols),
+                Some(ref op) => AssemblerInstruction::extract_operand(op, &mut results, symbols),
                 None => (),
             }
         }
@@ -93,7 +93,7 @@ impl AssemblerInstruction {
         results
     }
 
-    fn extract_operand(t: &Token, results: &mut Vec<u8>,symbols:&SymbolTable) {
+    fn extract_operand(t: &Token, results: &mut Vec<u8>, symbols: &SymbolTable) {
         match t {
             Token::Register(ref reg) => results.push(*reg),
             Token::Number(ref num) => {
@@ -102,7 +102,7 @@ impl AssemblerInstruction {
 
                 results.push(byte2 as u8);
                 results.push(byte1 as u8);
-            },
+            }
 
             Token::LabelDeclaration(ref label) => {
                 if let Some(offset) = symbols.offset(label) {
@@ -111,7 +111,6 @@ impl AssemblerInstruction {
                     results.push(byte2 as u8);
                     results.push(byte1 as u8);
                 }
-
             }
             _ => panic!("opcode found in operand field"),
         }
@@ -126,5 +125,17 @@ impl AssemblerInstruction {
             Some(&Token::LabelDeclaration(ref string)) => Some(string.clone()),
             _ => None,
         }
+    }
+}
+
+impl Program {
+    pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
+        let mut program = Vec::with_capacity(self.instructions.len() * 4);
+
+        for inst in self.instructions.iter() {
+            program.append(&mut inst.to_bytes(symbols));
+        }
+
+        program
     }
 }

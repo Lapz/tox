@@ -22,7 +22,7 @@ use util::emmiter::Reporter;
 use util::env::TypeEnv;
 use util::print_err;
 use util::symbol::{SymbolFactory, Table};
-use vm::{Assembler,VM};
+use vm::{Assembler, VM};
 
 fn main() {
     let opts = Cli::from_args();
@@ -125,12 +125,11 @@ pub fn run_vm(path: String) {
         ::std::process::exit(0)
     }
 
-
     let mut assembler = Assembler::new();
 
     let bytecode = match assembler.assemble(&contents) {
         Some(bytecode) => bytecode,
-        None => ::std::process::exit(0)
+        None => ::std::process::exit(0),
     };
 
     let mut vm = VM::new();

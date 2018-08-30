@@ -1,6 +1,5 @@
 use assembler::token::Token;
 use assembler::{AssemblerInstruction, Program};
-use assembler::symbols::SymbolTable;
 use nom::types::CompleteStr;
 use nom::{alpha1, alphanumeric, digit, multispace};
 use opcode;
@@ -123,7 +122,7 @@ named!(directive_combined<CompleteStr,AssemblerInstruction>,
 
 named!(directive<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        inst :directive_combined >>(inst)
+        inst : directive_combined >> (inst)
     )
 );
 
@@ -134,11 +133,8 @@ named!(instruction<CompleteStr,AssemblerInstruction>,
 );
 
 named!(pub file<CompleteStr,Program>,
-
     do_parse!(
-        instructions: ws!(
-            many1!(alt!(instruction))
-            )
+        instructions: ws!(many1!(instruction))
         >> (
             Program {
                 instructions
@@ -146,18 +142,6 @@ named!(pub file<CompleteStr,Program>,
         )
     )
 );
-
-impl Program {
-    pub fn to_bytes(&self,symbols:&SymbolTable) -> Vec<u8> {
-        let mut program = Vec::with_capacity(self.instructions.len() * 4);
-
-        for inst in self.instructions.iter() {
-            program.append(&mut inst.to_bytes(symbols));
-        }
-
-        program
-    }
-}
 
 pub trait FromInput<T> {
     fn opcode(v: T) -> Self;

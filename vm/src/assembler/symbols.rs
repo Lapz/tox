@@ -36,15 +36,13 @@ impl SymbolTable {
         self.next += 1;
     }
 
-    pub fn offset(&self,name:&str) -> Option<usize> {
-        
+    pub fn offset(&self, name: &str) -> Option<usize> {
         for (key, value) in self.mappings.iter() {
             if value == name {
-                return Some(self.symbols[key])
+                return Some(self.symbols[key]);
             }
         }
 
         None
-    
     }
 }

@@ -69,8 +69,8 @@ pub const FREE: u8 = 0x24;
 
 /// INC $REG
 /// Increase the value stored in the register by 1
-pub const INC:u8 = 0x25;
+pub const INC: u8 = 0x25;
 
 /// DEC $REG
 /// Decrease the value stored in the register by 1
-pub const DEC:u8 = 0x26;
+pub const DEC: u8 = 0x26;
