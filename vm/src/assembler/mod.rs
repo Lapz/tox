@@ -1,9 +1,22 @@
 #[macro_use]
 mod parsers;
+mod symbols;
 mod token;
 
 pub use self::parsers::file;
+use self::symbols::{Symbol, SymbolTable,SymbolType};
 use self::token::Token;
+use nom::types::CompleteStr;
+
+#[derive(Debug)]
+pub struct Assembler {
+    phase: AssemblerPhase,
+    symbols: SymbolTable,
+}
+#[derive(Debug)]
+pub enum AssemblerPhase {
+    First,
+}
 
 #[derive(Debug, PartialEq)]
 pub struct AssemblerInstruction {
@@ -19,6 +32,41 @@ pub struct AssemblerInstruction {
 pub struct Program {
     pub instructions: Vec<AssemblerInstruction>,
 }
+
+impl Assembler {
+    pub fn new() -> Assembler {
+        Assembler {
+            phase: AssemblerPhase::First,
+            symbols: SymbolTable::new(),
+        }
+    }
+
+    pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
+        match file(CompleteStr(raw)) {
+            Ok((_, program)) => {
+                self.extract_labels(&program);
+
+                unimplemented!()
+            }
+
+            Err(e) => {
+                println!("There was an error assembling the code: {:?}", e);
+                None
+            }
+        }
+    }
+
+    fn extract_labels(&mut self, p: &Program) {
+        for (i, instruction) in p.instructions.iter().enumerate() {
+            if instruction.is_label() {
+                if let Some(name) = instruction.label_name() {
+                    self.symbols.add(name,i*4,SymbolType::Label);
+                }
+            }
+        }
+    }
+}
+
 impl AssemblerInstruction {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut results = Vec::with_capacity(4);
@@ -56,6 +104,17 @@ impl AssemblerInstruction {
                 results.push(converted as u8);
             }
             _ => panic!("opcode found in operand field"),
+        }
+    }
+
+    fn is_label(&self) -> bool {
+        self.label.is_some()
+    }
+
+    fn label_name(&self) -> Option<String> {
+        match self.label.as_ref() {
+            Some(&Token::LabelDeclaration(ref string)) => Some(string.clone()),
+            _ => None,
         }
     }
 }
