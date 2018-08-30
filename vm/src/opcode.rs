@@ -74,3 +74,12 @@ pub const INC: u8 = 0x25;
 /// DEC $REG
 /// Decrease the value stored in the register by 1
 pub const DEC: u8 = 0x26;
+
+/// PUSH $REG
+/// Pushes the value onto the stack
+pub const PUSH: u8 = 0x27;
+
+/// POP $REG
+/// Popes the value off the top of stack
+pub const POP: u8 = 0x28;
+

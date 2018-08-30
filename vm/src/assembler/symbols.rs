@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 #[derive(Debug, Default)]
 pub struct SymbolTable {
-    symbols: HashMap<Symbol, usize>,
     mappings: HashMap<Symbol, String>,
     next: usize,
 }
@@ -39,7 +38,7 @@ impl SymbolTable {
     pub fn offset(&self, name: &str) -> Option<usize> {
         for (key, value) in self.mappings.iter() {
             if value == name {
-                return Some(self.symbols[key]);
+                return Some(key.offset);
             }
         }
 

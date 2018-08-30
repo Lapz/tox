@@ -1,13 +1,18 @@
 use opcode;
 
-#[derive(Debug)]
+/// The max size of the stack
+const STACK_MAX: usize = 256;
+
+
 pub struct VM {
     registers: [i32; 32],
+    stack: [i32; STACK_MAX],
     pub code: Vec<u8>,
     heap: Vec<u8>,
     ip: usize,
     remainder: u32,
     equal_flag: bool,
+    stack_top: usize,
 }
 
 impl VM {
@@ -15,16 +20,17 @@ impl VM {
         VM {
             ip: 0,
             registers: [0; 32],
+            stack: [0; STACK_MAX],
             code: Vec::new(),
             remainder: 0,
             equal_flag: false,
             heap: Vec::new(),
+            stack_top: 0,
         }
     }
 
     pub fn run(&mut self) {
         loop {
-            println!("{:?}", &self.registers[0..7]);
             if self.ip >= self.code.len() {
                 return;
             }
@@ -56,8 +62,7 @@ impl VM {
                     if self.equal_flag {
                         self.ip = location as usize;
                     } else {
-                        self.next_8_bits();
-                        self.next_8_bits();
+                        self.advance(2);
                     }
                 }
 
@@ -67,8 +72,7 @@ impl VM {
                     if !self.equal_flag {
                         self.ip = location as usize;
                     } else {
-                        self.next_8_bits();
-                        self.next_8_bits();
+                        self.advance(2);
                     }
                 }
 
@@ -180,9 +184,23 @@ impl VM {
                     self.advance(2);
                 }
 
+                opcode::PUSH => {
+                    let val = self.registers[self.next_8_bits() as usize];
+                    self.push(val);
+                    self.advance(2)
+                },
+
+                opcode::POP => {
+                    let val = self.pop();
+                    self.registers[self.next_8_bits() as usize] = val;
+                    self.advance(2)
+                }
+
                 _ => {
-                    println!("ip = {}", self.ip);
-                    println!("Unknown opcode {:x}", self.code[self.ip]);
+                    println!("{:?}", self.equal_flag);
+//                    println!("ip = {}", self.ip);
+//                    println!("Unknown opcode {}", self.code[self.ip-1]);
+//                    println!("{:?}",&self.registers[0..7]);
                     continue;
                 }
             }
@@ -214,8 +232,38 @@ impl VM {
         result
     }
 
+    fn push(&mut self, val: i32) {
+        self.stack[self.stack_top] = val;
+        self.stack_top += 1;
+    }
+
+    fn pop(&mut self) -> i32 {
+        self.stack_top -= 1;
+        self.stack[self.stack_top]
+    }
+ 
     pub fn code(&mut self, code: Vec<u8>) {
         self.code = code;
+    }
+}
+
+use std::fmt::{self, Debug};
+
+impl Debug for VM {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut debug_trait_builder = f.debug_struct("VM");
+        let _ = debug_trait_builder.field("registers", &self.registers);
+        // let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
+        let _ = debug_trait_builder.field("code", &self.code);
+        let _ = debug_trait_builder.field("heap", &self.heap);
+        let _ = debug_trait_builder.field("ip", &self.ip);
+
+        let _ = debug_trait_builder.field("remainder", &self.remainder);
+        let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
+        debug_trait_builder.finish()
+
+
+        //  f.debug_list().entries(self.stack[0..].iter()).finish()
     }
 }
 
@@ -225,7 +273,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut test_vm = VM::new();
+        let test_vm = VM::new();
         assert_eq!(test_vm.registers[0], 0)
     }
 
@@ -576,6 +624,45 @@ mod tests {
         test_vm.run();
 
         assert_eq!(test_vm.registers[0], 99);
+    }
+
+    #[test]
+    fn test_push_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 100;
+
+        let test_bytes = vec![
+            0x27, 0, 0, 0, // PUSH $0
+            1, 0, 0, 0, //HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.stack[test_vm.stack_top - 1], 100);
+    }
+
+    #[test]
+    fn test_pop_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] = 100;
+        test_vm.registers[1] = 200;
+
+        let test_bytes = vec![
+            0x27, 0, 0, 0, // PUSH $0
+            0x27, 1, 0, 0, // PUSH $1
+            0x28, 0, 0, 0,   // POP $0
+            1, 0, 0, 0,    // HLT
+        ];
+
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.registers[0], 200);
     }
 
 }

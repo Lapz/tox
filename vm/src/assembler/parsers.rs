@@ -4,10 +4,16 @@ use nom::types::CompleteStr;
 use nom::{alpha1, alphanumeric, digit, multispace};
 use opcode;
 
+
+fn not_line_end(ch: char) -> bool {
+    !(ch == '\n')
+}
+
 named!(operand<CompleteStr,Token>,
     alt!(
         integer_operand
         | register
+        | label_usage
     )
 );
 
@@ -40,6 +46,14 @@ named!(integer_operand<CompleteStr,Token>,
                 )
 
         )
+    )
+);
+
+
+named!(comment<CompleteStr,Token>,
+    do_parse!(
+        tag!("//") >>
+        take_while!(not_line_end) >> (Token::Comment)
     )
 );
 
@@ -122,19 +136,28 @@ named!(directive_combined<CompleteStr,AssemblerInstruction>,
 
 named!(directive<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        inst : directive_combined >> (inst)
+        inst : directive_combined >>
+        opt!(comment) >>
+
+        (inst)
     )
 );
 
 named!(instruction<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        inst:alt!(instruction_combined | directive) >> (inst)
+        inst:instruction_combined >>
+        opt!(comment) >>
+        (inst)
     )
 );
 
 named!(pub file<CompleteStr,Program>,
     do_parse!(
-        instructions: ws!(many1!(instruction))
+        instructions: ws!(
+                many1!(
+                    alt!(instruction | directive)
+                )
+        )
         >> (
             Program {
                 instructions
@@ -169,6 +192,8 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("alloc") => opcode::ALLOC,
             CompleteStr("free") => opcode::FREE,
             CompleteStr("inc") => opcode::INC,
+            CompleteStr("push") => opcode::PUSH,
+            CompleteStr("pop") => opcode::POP,
             CompleteStr("LOAD") => opcode::LOAD,
             CompleteStr("ADD") => opcode::ADD,
             CompleteStr("SUB") => opcode::SUB,
@@ -188,6 +213,8 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("ALLOC") => opcode::ALLOC,
             CompleteStr("FREE") => opcode::FREE,
             CompleteStr("INC") => opcode::INC,
+            CompleteStr("PUSH") => opcode::PUSH,
+            CompleteStr("POP") => opcode::POP,
             _ => opcode::IGL,
         }
     }

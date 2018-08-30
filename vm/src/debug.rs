@@ -39,6 +39,8 @@ impl VM {
             opcode::FREE => simple_instruction("OPCODE::FREE", offset),
             opcode::INC => simple_instruction("OPCODE::INC", offset),
             opcode::DEC => simple_instruction("OPCODE::DEC", offset),
+            opcode::PUSH => simple_instruction("OPCODE::PUSH", offset),
+            opcode::POP => simple_instruction("OPCODE::POP", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1

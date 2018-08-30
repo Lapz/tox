@@ -1,9 +1,14 @@
-load $0 #100
-load $1 #1
-load $2 #0
-test: 
-    inc $0
-    equal $0 $2
-    not
-    jmpeq @test
+load $0 #0  // first
+load $1 #1  // second
+load $2 #1  // next
+load $3 #1  // loop count
+load $4 #10 // n
+load $5 #24 // body
+body:
+    add $1 $0 $2 // next = first + second
+    store $1 $0 // first = second
+    store $2 $1 // second = next
+    inc $3  // i = i+1
+cond:
+    jmpl $3 $4 $5
 hlt
