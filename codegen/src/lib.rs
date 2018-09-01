@@ -1,10 +1,9 @@
 extern crate syntax;
-extern crate vm;
 extern crate util;
+extern crate vm;
 
 mod gen_bytecode;
 mod label;
-
 
 pub use gen_bytecode::Compiler;
 

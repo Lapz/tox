@@ -136,14 +136,13 @@ pub fn run_vm(path: String) {
 
     let mut vm = VM::new();
 
-    println!("{:?}", bytecode.len());
 
     vm.code(bytecode);
 
     vm.run();
 
-    vm.disassemble("test");
-
+//    vm.disassemble("test");
+//
     println!("{:?}", vm);
 }
 
@@ -253,14 +252,11 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut vm = VM::new();
 
-    println!("{:?}", bytecode.len());
-
     vm.code(bytecode);
 
     vm.run();
 
     vm.disassemble("test");
-
     println!("{:?}", vm);
 }
 

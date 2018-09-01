@@ -1,7 +1,7 @@
 //! Instruction in the VM;
 //! Each Instruction in the VM is 32 bits and the first 8 bits will
 //! contain our opcode
-//! The remainaing 24 bits will be used for the Operands
+//! The remaining 24 bits will be used for the Operands
 
 pub type OpCode = u8;
 
@@ -87,5 +87,5 @@ pub const DEC: u8 = 0x20;
 pub const PUSH: u8 = 0x21;
 
 /// POP $REG
-/// Popes the value off the top of stack
+/// Pops the value off the top of stack
 pub const POP: u8 = 0x22;

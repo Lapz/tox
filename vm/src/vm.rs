@@ -30,8 +30,12 @@ impl VM {
 
     pub fn run(&mut self) {
         loop {
-            if self.ip >= self.code.len() {
-                return;
+            {
+                if self.ip >= self.code.len() {
+                    return;
+                }
+
+                println!("{:?}", &self.stack[0..2]);
             }
 
             match self.read_byte() {

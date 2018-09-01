@@ -1,4 +1,4 @@
-use std::fmt::{Display,self};
+use std::fmt::{self, Display};
 #[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Eq, Hash)]
 pub struct Label(pub u32);
 
@@ -16,7 +16,7 @@ impl Label {
 }
 
 impl Display for Label {
-    fn fmt(&self,f:&mut fmt::Formatter) -> fmt::Result {
-        write!(f,"l{}:",self.0)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "l{}:", self.0)
     }
 }
