@@ -15,6 +15,7 @@ util = {path = "../util"}
 syntax = {path = "../syntax"}
 sem = {path = "../sem"}
 interpreter = {path ="../interpreter"}
+codegen = {path="../codegen"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}

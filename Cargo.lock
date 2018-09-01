@@ -91,6 +91,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "codegen"
+version = "0.1.0"
+dependencies = [
+ "syntax 0.1.0",
+ "util 0.1.0",
+ "vm 0.1.0",
+]
+
+[[package]]
 name = "difference"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,6 +450,7 @@ name = "tox"
 version = "0.2.0"
 dependencies = [
  "clippy 0.0.186 (registry+https://github.com/rust-lang/crates.io-index)",
+ "codegen 0.1.0",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "interpreter 0.1.0",
  "sem 0.1.0",

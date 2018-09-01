@@ -4,10 +4,12 @@ extern crate sem;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
+extern crate codegen;
 extern crate syntax;
 extern crate util;
 extern crate vm;
 
+use codegen::Compiler;
 use interpreter::interpret;
 use interpreter::Environment;
 use sem::resolver::Resolver;
@@ -239,6 +241,27 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         println!("{:#?}", tyenv);
         println!("{:#?}", env);
     }
+
+    let mut compiler = Compiler::new();
+
+    compiler.compile(&ast).expect("Couldn't compile the file");
+
+    let bytecode = match compiler.assemble() {
+        Some(bytecode) => bytecode,
+        None => ::std::process::exit(0),
+    };
+
+    let mut vm = VM::new();
+
+    println!("{:?}", bytecode.len());
+
+    vm.code(bytecode);
+
+    vm.run();
+
+    vm.disassemble("test");
+
+    println!("{:?}", vm);
 }
 
 #[derive(StructOpt, Debug)]

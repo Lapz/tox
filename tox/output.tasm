@@ -1,0 +1,5 @@
+LOAD $0 #10
+PUSH $0
+LOAD $0 #10
+POP $1
+ADD $0 $1 $0
