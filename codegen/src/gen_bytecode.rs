@@ -139,7 +139,7 @@ impl Compiler {
 
             Expression::Unary { ref expr, ref op } => {
                 self.build_expr(expr)?;
-                write!(&mut self.file, "PUSH $0")?;
+                write!(&mut self.file, "PUSH $0\n")?;
 
 
                 match op.value {
@@ -152,7 +152,7 @@ impl Compiler {
                 }
 
                 Ok(())
-            }
+            },
 
             _ => unimplemented!(),
         }
