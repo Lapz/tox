@@ -9,6 +9,8 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
+mod repl;
+
 use codegen::Compiler;
 use interpreter::interpret;
 use interpreter::Environment;
@@ -41,75 +43,9 @@ fn main() {
 }
 
 pub fn repl(ptokens: bool, pprint: bool) {
-    println!("Welcome to the lexer programming language");
+    use repl::Repl;
 
-    loop {
-        let _ = io::stdout().write(b"lexer>> ");
-        let _ = io::stdout().flush();
-        let mut input = String::new();
-
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Couldn't read input");
-
-        let reporter = Reporter::new();
-
-        let tokens = match Lexer::new(&input, reporter.clone()).lex() {
-            Ok(tokens) => {
-                if ptokens {
-                    for token in &tokens {
-                        println!("{:#?}", token);
-                    }
-                }
-                tokens
-            }
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
-
-        let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Table::new(Rc::clone(&strings));
-
-        let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-            Ok(statements) => {
-                if pprint {
-                    // for statement in &statements {
-                    //     println!("{}", statement.node.pprint(&mut symbols));
-                    // }
-                }
-                statements
-            }
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
-
-        let mut tyenv = TypeEnv::new(&strings);
-        let mut resolver = Resolver::new(reporter.clone());
-
-        resolver.resolve(&ast, &tyenv).unwrap();
-
-        match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
-            Ok(_) => (),
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
-
-        let mut env = Environment::new();
-        env.fill_env(&mut tyenv);
-        match interpret(&ast, &resolver.locals, &mut env) {
-            Ok(_) => (),
-            Err(err) => {
-                println!("{:?}", err);
-                continue;
-            }
-        };
-    }
+    Repl::new().run();
 }
 
 pub fn run_vm(path: String) {
@@ -136,13 +72,12 @@ pub fn run_vm(path: String) {
 
     let mut vm = VM::new();
 
-
     vm.code(bytecode);
 
     vm.run();
 
-//    vm.disassemble("test");
-//
+    //    vm.disassemble("test");
+    //
     println!("{:?}", vm);
 }
 

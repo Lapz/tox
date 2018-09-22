@@ -28,6 +28,10 @@ impl VM {
         }
     }
 
+    pub fn registers(&self) -> &[i32;32] {
+        &self.registers
+    }
+
     pub fn run(&mut self) {
         loop {
             {

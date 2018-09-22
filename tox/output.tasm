@@ -3,6 +3,4 @@ PUSH $0
 LOAD $0 #0
 POP $1
 SUB $0 $1 $0
-LOAD $1 #100
-ADD $0 $1 $0
 HLT
