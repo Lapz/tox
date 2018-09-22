@@ -11,8 +11,9 @@ use nom::types::CompleteStr;
 #[derive(Debug)]
 /// Responsible for parsing a raw string into bytecode for the VM.
 /// Constructing the symbol table
-/// Works in two phases
-
+/// Works in two phases:
+///     * Phase 1
+///     * Phase 2
 pub struct Assembler {
     phase: AssemblerPhase,
     symbols: SymbolTable,
@@ -60,6 +61,8 @@ impl Assembler {
         }
     }
 
+    /// Go through every instruction and look for label declarations.
+    /// When label found add it to symbol table, along with the byte we found the label at.
     fn extract_labels(&mut self, p: &Program) {
         for (i, instruction) in p.instructions.iter().enumerate() {
             if instruction.is_label() {
