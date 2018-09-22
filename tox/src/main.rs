@@ -188,10 +188,11 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     let mut vm = VM::new();
 
     vm.code(bytecode);
+    vm.disassemble("test");
 
     vm.run();
 
-    vm.disassemble("test");
+
     println!("{:?}", vm);
 }
 

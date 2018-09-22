@@ -1,6 +1,6 @@
-LOAD $0 #10
+LOAD $0 #2
 PUSH $0
-LOAD $0 #0
+LOAD $0 #3
 POP $1
-SUB $0 $1 $0
+EXPON  $1 $0 $0 
 HLT
