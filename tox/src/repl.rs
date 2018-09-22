@@ -43,7 +43,7 @@ impl Repl {
             self.commands.push(input.to_string());
 
             let commands = input.trim().split(" ").collect::<Vec<&str>>();
-            
+
             match commands[0] {
                 ".quit" => ::std::process::exit(0),
                 ".program" => {
@@ -91,7 +91,7 @@ impl Repl {
             }
         }
     }
-
+    /// Parses a tasm file,returns void on error
     fn parse_tasm(&mut self, path: &str) -> Result<(), ()> {
         let mut file = match File::open(path) {
             Ok(file) => file,
@@ -107,7 +107,7 @@ impl Repl {
 
         let bytecode = match self.assembler.assemble(&input) {
             Some(bytecode) => bytecode,
-            None => ::std::process::exit(0),
+            None => return Err(())
         };
 
         self.vm.code(bytecode);
@@ -115,6 +115,9 @@ impl Repl {
         Ok(())
     }
 
+    /// Parses the tox programming languages returns void on error due to the fact that the reporter will
+    /// report any type errors or any compilation errors.
+    /// Can result in a panic if a file cannot be read to a string
     fn parse_file(&mut self, path: &str) -> Result<(), ()> {
         let mut file = match File::open(path) {
             Ok(file) => file,
@@ -177,8 +180,3 @@ impl Repl {
         Ok(())
     }
 }
-
-/*
-
-
-*/

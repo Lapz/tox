@@ -9,6 +9,10 @@ use self::token::Token;
 use nom::types::CompleteStr;
 
 #[derive(Debug)]
+/// Responsible for parsing a raw string into bytecode for the VM.
+/// Constructing the symbol table
+/// Works in two phases
+
 pub struct Assembler {
     phase: AssemblerPhase,
     symbols: SymbolTable,
