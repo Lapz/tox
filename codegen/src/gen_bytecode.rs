@@ -141,7 +141,6 @@ impl Compiler {
                 self.build_expr(expr)?;
                 write!(&mut self.file, "PUSH $0\n")?;
 
-
                 match op.value {
                     UnaryOp::Minus => {
                         write!(&mut self.file, "LOAD $0 #0\n")?;
@@ -152,7 +151,7 @@ impl Compiler {
                 }
 
                 Ok(())
-            },
+            }
 
             _ => unimplemented!(),
         }

@@ -3,6 +3,9 @@ mod parsers;
 mod symbols;
 mod token;
 
+pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
+pub const PIE_HEADER_LENGTH: usize = 64;
+
 pub use self::parsers::file;
 use self::symbols::{SymbolTable, SymbolType};
 use self::token::Token;
@@ -12,8 +15,8 @@ use nom::types::CompleteStr;
 /// Responsible for parsing a raw string into bytecode for the VM.
 /// Constructing the symbol table
 /// Works in two phases:
-///     * Phase 1
-///     * Phase 2
+///     * Phase 1 - Label Extraction and generation of the EPIE header
+///     * Phase 2 - Generate bytecode for the body
 pub struct Assembler {
     phase: AssemblerPhase,
     symbols: SymbolTable,
@@ -49,9 +52,18 @@ impl Assembler {
     pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {
         match file(CompleteStr(raw)) {
             Ok((_, program)) => {
-                self.extract_labels(&program);
+                // FIRST PHASE
 
-                Some(program.to_bytes(&self.symbols))
+                // Get the header
+                let mut assembled_program = self.write_pie_header();
+                // Extract labels
+                self.extract_labels(&program);
+                // SECOND PHASE
+                let mut body = program.to_bytes(&self.symbols);
+                // Merge the header with body
+                assembled_program.append(&mut body);
+
+                Some(assembled_program)
             }
 
             Err(e) => {
@@ -71,6 +83,20 @@ impl Assembler {
                 }
             }
         }
+    }
+
+    fn write_pie_header(&self) -> Vec<u8> {
+        let mut header = Vec::with_capacity(PIE_HEADER_LENGTH);
+
+        for byte in &PIE_HEADER_PREFIX[0..] {
+            header.push(*byte);
+        }
+
+        while header.len() <= PIE_HEADER_LENGTH {
+            header.push(0);
+        }
+
+        header
     }
 }
 

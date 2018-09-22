@@ -107,7 +107,7 @@ impl Repl {
 
         let bytecode = match self.assembler.assemble(&input) {
             Some(bytecode) => bytecode,
-            None => return Err(())
+            None => return Err(()),
         };
 
         self.vm.code(bytecode);
