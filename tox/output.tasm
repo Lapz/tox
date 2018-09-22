@@ -1,6 +1,6 @@
-LOAD $0 #2
-PUSH $0
-LOAD $0 #3
-POP $1
-EXPON  $1 $0 $0 
+LOAD $0 #1
+EQUAL $0 $1
+JMPEQ @l1
+LOAD $0 #1
+l1:
 HLT
