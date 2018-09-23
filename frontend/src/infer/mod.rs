@@ -10,6 +10,8 @@ mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 pub use self::resolver::Resolver;
+use syntax::ast::expr::{VariableUseHandle};
+use fnv::FnvHashMap;
 
 use std::rc::Rc;
 
@@ -17,6 +19,7 @@ use std::rc::Rc;
 pub struct Infer {
     this: types::Type, // for this
     body: types::Type,
+    resolver:self::resolver::Resolver
 }
 
 impl Infer {
@@ -24,6 +27,7 @@ impl Infer {
         Self {
             this: self::types::Type::Nil,
             body: self::types::Type::Nil,
+            resolver:self::resolver::Resolver::new()
         }
     }
 
@@ -36,13 +40,13 @@ impl Infer {
     ) -> InferResult<::ast::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
 
-        let mut resolver = self::resolver::Resolver::new();
+       
 
         let mut new_program = ::ast::Program {
             statements: Vec::new(),
         };
 
-        resolver.resolve(&program, &mut ctx)?;
+        self.resolver.resolve(&program, &mut ctx)?;
 
         for statement in program {
             new_program
@@ -51,5 +55,9 @@ impl Infer {
         }
 
         Ok(new_program)
+    }
+    /// Gets the locals from  the resolver
+    pub fn locals(&self) -> &FnvHashMap<VariableUseHandle, usize> {
+        &self.resolver.locals
     }
 }

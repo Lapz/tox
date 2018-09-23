@@ -3,7 +3,7 @@ extern crate frontend;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
-extern crate codegen;
+extern crate interpreter;
 extern crate syntax;
 extern crate util;
 extern crate vm;
@@ -11,7 +11,10 @@ extern crate vm;
 mod repl;
 
 // use codegen::Compiler;
-use frontend::{Compiler, Infer};
+use frontend::{Compiler, Infer, Resolver};
+use interpreter::{interpret, Environment};
+use std::fs::File;
+use std::io::Read;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::lexer::Lexer;
@@ -26,6 +29,8 @@ fn main() {
     if let Some(file) = opts.source {
         if opts.vm {
             run_vm(file);
+        } else if opts.interpreter {
+            run_interpreter(file, opts.ptokens, opts.pprint, opts.past);
         } else {
             run(file, opts.ptokens, opts.pprint, opts.past);
         }
@@ -40,10 +45,88 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run_vm(path: String) {
+pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
 
+    let mut file = File::open(path).expect("File not found");
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
+
+    let input = contents.trim();
+
+    if contents.is_empty() {
+        ::std::process::exit(0)
+    }
+
+    let mut reporter = Reporter::new();
+
+    let tokens = match Lexer::new(input, reporter.clone()).lex() {
+        Ok(tokens) => {
+            if ptokens {
+                for token in &tokens {
+                    println!("{:#?}", token);
+                }
+            }
+            tokens
+        }
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    let strings = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(Rc::clone(&strings));
+
+    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
+        Ok(statements) => {
+            if pprint {
+                for statement in &statements {
+                    println!("{}", statement.value.pprint(&mut symbols));
+                }
+            }
+            statements
+        }
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    if past {
+        println!("{:#?}", ast);
+    }
+
+    let mut infer = Infer::new();
+
+    // resolver.resolve(&ast, )
+
+    // match infer.infer(ast.clone(), &strings, &mut reporter) {
+    //     Ok(_) => (),
+    //     Err(_) => {
+    //         reporter.emit(input);
+    //         ::std::process::exit(65)
+    //     }
+    // };
+
+    let mut env = Environment::new();
+    env.fill_env(&mut symbols);
+
+    match interpret(&ast, infer.locals(), &mut env) {
+        Ok(_) => (),
+        Err(err) => {
+            err.fmt(&symbols);
+            // println!("{:?}", err);
+            ::std::process::exit(65)
+        }
+    };
+}
+
+pub fn run_vm(path: String) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -66,14 +149,14 @@ pub fn run_vm(path: String) {
 
     vm.code(bytecode);
 
+    vm.disassemble("test");
+
     vm.run();
 
-    //    vm.disassemble("test");
-    //
     println!("{:?}", vm);
 }
 
-pub fn run(path: String, ptokens: bool, pprint: bool,past: bool) {
+pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
 
@@ -177,4 +260,7 @@ pub struct Cli {
     /// Run in vm mode
     #[structopt(long = "vm", short = "v")]
     pub vm: bool,
+    /// Run in interpreter mode
+    #[structopt(long = "interpter", short = "-i")]
+    pub interpreter: bool,
 }

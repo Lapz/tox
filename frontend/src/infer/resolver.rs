@@ -17,7 +17,7 @@ pub struct Resolver {
     scopes: Vec<FnvHashMap<Symbol, State>>,
     current_function: FunctionType,
     current_class: ClassType,
-    locals: FnvHashMap<VariableUseHandle, usize>,
+    pub locals: FnvHashMap<VariableUseHandle, usize>,
 }
 
 pub type ResolveError<T> = Result<T, ()>;

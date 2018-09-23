@@ -28,6 +28,7 @@ impl BuiltIn {
             add_builtin(env.symbol("oct"), built_in_oct),
             add_builtin(env.symbol("hex"), built_in_hex),
             add_builtin(env.symbol("to_int"), built_in_to_int),
+            add_builtin(env.symbol("trim"), built_in_trim),
             add_builtin_class(env.symbol("io"), env, vec![("readline", built_in_readline)]),
         ]
     }
