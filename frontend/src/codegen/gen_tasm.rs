@@ -1,7 +1,7 @@
 use ast::*;
 use codegen::label::Label;
 use codegen::Compiler;
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 
 impl Compiler {
     pub(crate) fn build_statement(&mut self, statement: &Statement) -> io::Result<()> {

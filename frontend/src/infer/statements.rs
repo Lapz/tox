@@ -1,5 +1,5 @@
 use ctx::CompileCtx;
-use syntax::ast::expr::{Expression, Literal, Op, UnaryOp};
+use syntax::ast::expr::{Literal};
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 
@@ -50,7 +50,9 @@ impl Infer {
                 let mut fields = Vec::new();
 
                 if let Some(sclass) = superclass {
-                    if let Some(mut entry) = ctx.look_type(sclass.value) {}
+                    if let Some(mut entry) = ctx.look_type(sclass.value) {
+                        //TODO: IMPLEMENT SUPERCLASSES
+                    }
 
                     // match sclass {
                     //     _ => ()

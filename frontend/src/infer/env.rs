@@ -2,9 +2,6 @@
 //! `Symbol` and a `Type` or an `Entry`
 
 use infer::types::Type;
-use std::rc::Rc;
-use util::symbol::{Symbol, SymbolFactory, Symbols};
-use util::Unique;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Entry {
