@@ -35,7 +35,7 @@ impl Infer {
         reporter: &mut ::util::emmiter::Reporter,
     ) -> InferResult<::ast::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
-        
+
         let mut resolver = self::resolver::Resolver::new();
 
         let mut new_program = ::ast::Program {

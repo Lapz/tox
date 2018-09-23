@@ -10,6 +10,8 @@ pub use self::parsers::file;
 use self::symbols::{SymbolTable, SymbolType};
 use self::token::Token;
 use nom::types::CompleteStr;
+use std::fs::File;
+use std::io::Read;
 
 #[derive(Debug)]
 /// Responsible for parsing a raw string into bytecode for the VM.
@@ -47,6 +49,17 @@ impl Assembler {
             phase: AssemblerPhase::First,
             symbols: SymbolTable::new(),
         }
+    }
+
+    pub fn assemble_file(&mut self, path: &str) -> Option<Vec<u8>> {
+        let mut contents = String::new();
+
+        File::open(path)
+            .expect("Couldn't open the file")
+            .read_to_string(&mut contents)
+            .expect("Coudln't read to file");
+
+        self.assemble(&contents)
     }
 
     pub fn assemble(&mut self, raw: &str) -> Option<Vec<u8>> {

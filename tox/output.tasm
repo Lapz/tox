@@ -1,6 +1,4 @@
-LOAD $0 #1
-EQUAL $0 $1
-JMPEQ @l1
-LOAD $0 #1
-l1:
+LOAD $0 #10
+PUSH $0
+NOT $0
 HLT

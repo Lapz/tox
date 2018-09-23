@@ -1,6 +1,4 @@
-use codegen::Compiler;
-use frontend::Infer;
-use frontend::Resolver;
+use frontend::{Compiler, Infer};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::rc::Rc;
@@ -154,21 +152,23 @@ impl Repl {
 
         let mut infer = Infer::new();
 
-        match infer.infer(ast, &strings, &mut reporter) {
-            Ok(_) => (),
+        let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+            Ok(ast) => ast,
             Err(_) => {
                 reporter.emit(input);
                 ::std::process::exit(65)
             }
-        }
+        };
 
         let mut compiler = Compiler::new();
 
-        compiler.compile(&ast).expect("Couldn't compile the file");
+        compiler
+            .compile(&typed_ast)
+            .expect("Couldn't compile the file");
 
-        let bytecode = match compiler.assemble() {
+        let bytecode = match Assembler::new().assemble_file("output.tasm") {
             Some(bytecode) => bytecode,
-            None => return Err(()),
+            None => ::std::process::exit(0),
         };
 
         self.vm.code(bytecode);

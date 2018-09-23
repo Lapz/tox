@@ -10,10 +10,8 @@ extern crate vm;
 
 mod repl;
 
-use codegen::Compiler;
-use frontend::Infer;
-use std::io;
-use std::io::Write;
+// use codegen::Compiler;
+use frontend::{Compiler, Infer};
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::lexer::Lexer;
@@ -29,14 +27,14 @@ fn main() {
         if opts.vm {
             run_vm(file);
         } else {
-            run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
+            run(file, opts.ptokens, opts.pprint, opts.past);
         }
     } else {
-        repl(opts.ptokens, opts.pprint)
+        repl()
     }
 }
 
-pub fn repl(ptokens: bool, pprint: bool) {
+pub fn repl() {
     use repl::Repl;
 
     Repl::new().run();
@@ -75,7 +73,7 @@ pub fn run_vm(path: String) {
     println!("{:?}", vm);
 }
 
-pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
+pub fn run(path: String, ptokens: bool, pprint: bool,past: bool) {
     use std::fs::File;
     use std::io::Read;
 
@@ -133,19 +131,21 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut infer = Infer::new();
 
-    match infer.infer(ast, &strings, &mut reporter) {
-        Ok(_) => (),
+    let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+        Ok(ast) => ast,
         Err(_) => {
             reporter.emit(input);
             ::std::process::exit(65)
         }
-    }
+    };
 
     let mut compiler = Compiler::new();
 
-    compiler.compile(&ast).expect("Couldn't compile the file");
+    compiler
+        .compile(&typed_ast)
+        .expect("Couldn't compile the file");
 
-    let bytecode = match compiler.assemble() {
+    let bytecode = match Assembler::new().assemble_file("output.tasm") {
         Some(bytecode) => bytecode,
         None => ::std::process::exit(0),
     };
@@ -168,9 +168,6 @@ pub struct Cli {
     /// Pretty Print Source Code
     #[structopt(long = "pretty_print", short = "p")]
     pub pprint: bool,
-    /// Print out the mappings in the environment
-    #[structopt(long = "env", short = "e")]
-    pub env: bool,
     /// Print out tokens
     #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,

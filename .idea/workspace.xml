@@ -1,7 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added push and pop" />
+    <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added push and pop">
+      <change afterPath="$PROJECT_DIR$/frontend/src/ast.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/ctx.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/env.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/infer/mod.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/infer/types.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/lib.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/unify.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vm/src/chunk.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vm/src/compiler.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/vm/src/op.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/resolver.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/resolver.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/test.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/test.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interpreter/src/builtins.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/builtins.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interpreter/src/interpreter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/interpreter.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/resolver.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/semant/inferexp.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/inferexp.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/semant/inferstatement.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/inferstatement.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/semant/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/sem/src/semant/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sem/src/test.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/syntax/src/ast/expr.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/ast/expr.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/syntax/src/pprint.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/pprint.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tox" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/tox/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/tox/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/src/emmiter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/emmiter.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/src/pos.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/pos.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/src/symbol.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/symbol.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/src/types.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/types.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vm/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/vm/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vm/src/vm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/vm.rs" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -12,7 +52,7 @@
     <session id="-1920920413">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="4" />
+          <entry key="project.closed" value="5" />
           <entry key="project.open.time.10" value="1" />
           <entry key="project.open.time.120" value="1" />
           <entry key="project.open.time.21" value="1" />
@@ -81,15 +121,15 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="290">
-              <caret line="992" column="12" lean-forward="true" selection-start-line="992" selection-start-column="12" selection-end-line="992" selection-end-column="12" />
+            <state relative-caret-position="193">
+              <caret line="986" column="12" selection-start-line="986" selection-start-column="12" selection-end-line="986" selection-end-column="12" />
               <folding>
-                <element signature="e#6331#6332#0" expanded="true" />
-                <element signature="e#6376#6377#0" expanded="true" />
-                <element signature="e#7070#7071#0" expanded="true" />
-                <element signature="e#7103#7104#0" expanded="true" />
-                <element signature="e#26208#26209#0" expanded="true" />
-                <element signature="e#26240#26241#0" expanded="true" />
+                <element signature="e#6342#6343#0" expanded="true" />
+                <element signature="e#6387#6388#0" expanded="true" />
+                <element signature="e#7081#7082#0" expanded="true" />
+                <element signature="e#7114#7115#0" expanded="true" />
+                <element signature="e#25953#25954#0" expanded="true" />
+                <element signature="e#25985#25986#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -99,7 +139,7 @@
         <entry file="file://$PROJECT_DIR$/syntax/src/ast/expr.rs">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1035">
-              <caret line="69" column="32" selection-start-line="68" selection-start-column="26" selection-end-line="69" selection-end-column="32" />
+              <caret line="70" column="32" selection-start-line="69" selection-start-column="26" selection-end-line="70" selection-end-column="32" />
             </state>
           </provider>
         </entry>
@@ -381,7 +421,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="9172000" />
+    <option name="totallyTimeSpent" value="10372000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -537,7 +577,7 @@
     <entry file="file://$PROJECT_DIR$/syntax/src/ast/expr.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1035">
-          <caret line="69" column="32" selection-start-line="68" selection-start-column="26" selection-end-line="69" selection-end-column="32" />
+          <caret line="70" column="32" selection-start-line="69" selection-start-column="26" selection-end-line="70" selection-end-column="32" />
         </state>
       </provider>
     </entry>
@@ -565,15 +605,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="290">
-          <caret line="992" column="12" lean-forward="true" selection-start-line="992" selection-start-column="12" selection-end-line="992" selection-end-column="12" />
+        <state relative-caret-position="193">
+          <caret line="986" column="12" selection-start-line="986" selection-start-column="12" selection-end-line="986" selection-end-column="12" />
           <folding>
-            <element signature="e#6331#6332#0" expanded="true" />
-            <element signature="e#6376#6377#0" expanded="true" />
-            <element signature="e#7070#7071#0" expanded="true" />
-            <element signature="e#7103#7104#0" expanded="true" />
-            <element signature="e#26208#26209#0" expanded="true" />
-            <element signature="e#26240#26241#0" expanded="true" />
+            <element signature="e#6342#6343#0" expanded="true" />
+            <element signature="e#6387#6388#0" expanded="true" />
+            <element signature="e#7081#7082#0" expanded="true" />
+            <element signature="e#7114#7115#0" expanded="true" />
+            <element signature="e#25953#25954#0" expanded="true" />
+            <element signature="e#25985#25986#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -1,5 +1,5 @@
 use infer::types::Type;
-use syntax::ast::expr::{AssignOperator, Literal, Op, UnaryOp};
+pub(crate) use syntax::ast::expr::{AssignOperator, Literal, Op, UnaryOp};
 use util::symbol::Symbol;
 
 #[derive(Debug)]
