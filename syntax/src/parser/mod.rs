@@ -2,7 +2,7 @@ use super::ast::expr::*;
 use super::ast::statement::*;
 use std::iter::Peekable;
 use std::vec::IntoIter;
-use symbol::{Symbol, Table};
+use symbol::{Symbol, Symbols};
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
@@ -12,7 +12,7 @@ pub struct Parser<'a> {
     tokens: Peekable<IntoIter<Spanned<Token<'a>>>>,
     reporter: Reporter,
     loop_depth: i32,
-    pub symbols: &'a mut Table<()>,
+    pub symbols: &'a mut Symbols<()>,
     parsing_cond: bool,
     variable_use_maker: VariableUseMaker,
 }
@@ -21,7 +21,7 @@ pub type ParserResult<T> = Result<T, ()>;
 
 /// Macro that is used to generate the code that parse a binary op
 macro_rules! binary {
-    ($_self:ident,$e:ident,$lhs:expr,$func:ident) => {
+    ($_self:ident, $e:ident, $lhs:expr, $func:ident) => {
         while $_self.recognise($e) {
             let op = $_self.get_binary_op()?;
 
@@ -38,7 +38,7 @@ macro_rules! binary {
         }
     };
 
-    ($_self:ident,$expr:expr, $lhs:expr,$func:ident) => {
+    ($_self:ident, $expr:expr, $lhs:expr, $func:ident) => {
         while $_self.matched($expr) {
             let op = $_self.get_binary_op()?;
 
@@ -184,7 +184,7 @@ impl<'a> Parser<'a> {
     pub fn new(
         tokens: Vec<Spanned<Token<'a>>>,
         reporter: Reporter,
-        symbols: &'a mut Table<()>,
+        symbols: &'a mut Symbols<()>,
     ) -> Self {
         Parser {
             tokens: tokens.into_iter().peekable(),
@@ -855,15 +855,9 @@ impl<'a> Parser<'a> {
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
         let ty = if self.recognise(TokenType::COLON) {
-            let close_span = self.consume_get_span(&TokenType::COLON, "Expected ':'")?;
-            return Ok(Spanned {
-                span: open_span.to(close_span),
-                value: Statement::Var {
-                    ident,
-                    ty: None,
-                    expr: None,
-                },
-            });
+            self.advance();
+
+            Some(self.parse_type()?)
         } else {
             None
         };

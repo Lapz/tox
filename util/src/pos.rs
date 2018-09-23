@@ -36,10 +36,10 @@ pub const EMPTYSPAN: Span = Span {
     },
 };
 
-#[derive(Debug, Copy, PartialOrd, Clone, PartialEq)]
+#[derive(Debug, Copy, PartialOrd, Clone, PartialEq, Eq, Ord)]
 pub struct Position {
-    pub line: i64,
-    pub column: i64,
+    pub line: u32,
+    pub column: u32,
     pub absolute: usize,
 }
 
@@ -81,10 +81,12 @@ impl Display for Span {
 }
 
 impl Span {
-    pub fn to(mut self, other: Span) -> Self {
-        self.end.line += other.end.line;
-        self.end.column += other.end.column;
-        self
+    pub fn to(self, other: Span) -> Self {
+        use std::cmp;
+        Span {
+            start: cmp::min(self.start, other.end),
+            end: cmp::max(self.end, other.end),
+        }
     }
 }
 

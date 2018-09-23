@@ -4,12 +4,11 @@ use interpreter::env::Environment;
 use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
-use std::str;
 use syntax::ast::expr::*;
 use syntax::ast::statement::Statement;
-use util::env::TypeEnv;
 use util::pos::Spanned;
 use util::symbol::Symbol;
+use util::symbol::Symbols;
 
 #[derive(Debug)]
 pub enum RuntimeError {
@@ -25,7 +24,7 @@ pub enum RuntimeError {
 }
 
 impl RuntimeError {
-    pub fn fmt(&self, env: &TypeEnv) -> String {
+    pub fn fmt(&self, symbols: &Symbols<()>) {
         match *self {
             RuntimeError::UndefinedSymbol(ref symbol) => {
                 format!("Undefined variable '{}' ", env.name(*symbol))
@@ -599,17 +598,16 @@ fn get_distance(
 pub mod env {
 
     use util::symbol::Symbol;
-    use util::Unique;
 
     use super::RuntimeError;
     use builtins::BuiltIn;
     use object::Object;
-    use util::env::TypeEnv;
 
     use std::rc::Rc;
 
     use fnv::FnvHashMap;
     use std::cell::RefCell;
+    use util::symbol::Symbols;
 
     #[derive(Debug, Clone, Default)]
     /// A Loxlocals,enviroment
@@ -617,7 +615,6 @@ pub mod env {
     /// Symbol was declared
     pub struct Environment {
         actual: Rc<RefCell<EnvironmentImpl>>,
-        unique: Unique,
     }
 
     impl PartialEq for Environment {
@@ -634,17 +631,11 @@ pub mod env {
         pub fn new_with_outer(outer: &Environment) -> Environment {
             Environment {
                 actual: Rc::new(RefCell::new(EnvironmentImpl::with_values(outer))),
-                unique: Unique::new(),
             }
         }
 
-        pub fn unique_id(&mut self) -> Symbol {
-            let next = Unique::new().0 + 3;
-            Symbol(next)
-        }
-
-        pub fn fill_env(&mut self, env: &mut TypeEnv) {
-            let built_in = BuiltIn::new().get_built_ins(env);
+        pub fn fill_env(&mut self, symbols: &mut Symbols<()>) {
+            let built_in = BuiltIn::new().get_built_ins(symbols);
 
             for (variable, run_time_value) in built_in {
                 self.define(variable, run_time_value);

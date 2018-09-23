@@ -6,7 +6,10 @@ rust:
   - nightly
 matrix:
   allow_failures:
-    - rust: nightly
+    - rust:
+      - stable
+      - beta
+      - nightly
     
 addons:
   apt:
@@ -17,7 +20,7 @@ before_script: ((cargo install cargo-travis &&  cargo install rustfmt-nightly) |
 script:
 - cargo clean
 - cargo build 
-- cargo test
+- cargo test --features=all -- --nocapture
 - cd vm && cargo test --features "debug"
 after_success: |
  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then

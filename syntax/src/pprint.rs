@@ -2,7 +2,7 @@ use ast::expr::*;
 use ast::statement::Statement;
 
 use std::str;
-use symbol::Table;
+use symbol::Symbols;
 
 impl AssignOperator {
     fn pprint(&self) -> &'static str {
@@ -17,7 +17,7 @@ impl AssignOperator {
 }
 
 impl Ty {
-    fn pprint(&self, symbols: &mut Table<()>) -> String {
+    fn pprint(&self, symbols: &mut Symbols<()>) -> String {
         match *self {
             Ty::Simple(ref s) => symbols.name(s.value),
             _ => unimplemented!(),
@@ -69,7 +69,7 @@ impl Op {
 }
 
 impl Statement {
-    pub fn pprint(&self, symbols: &mut Table<()>) -> String {
+    pub fn pprint(&self, symbols: &mut Symbols<()>) -> String {
         let mut pprinted = String::new();
 
         self.pprint_into(&mut pprinted, symbols);
@@ -77,7 +77,7 @@ impl Statement {
         pprinted
     }
 
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Symbols<()>) {
         match *self {
             Statement::Expr(ref expr) | Statement::Print(ref expr) => {
                 expr.value.pprint_into(pprint_string, symbols);
@@ -267,7 +267,7 @@ impl Statement {
 }
 
 impl Expression {
-    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Table<()>) {
+    fn pprint_into(&self, pprint_string: &mut String, symbols: &mut Symbols<()>) {
         match *self {
             Expression::Array { ref items, .. } => {
                 pprint_string.push_str("(array");
@@ -411,7 +411,7 @@ impl Expression {
 mod test {
     use lexer::Lexer;
     use parser::Parser;
-    use symbol::{SymbolFactory, Table};
+    use symbol::{SymbolFactory, Symbols};
     use util::emmiter::Reporter;
 
     #[test]
@@ -421,7 +421,7 @@ mod test {
         use std::rc::Rc;
         let tokens = Lexer::new(input, reporter.clone()).lex().unwrap();
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Table::new(strings);
+        let mut symbols = Symbols::new(strings);
         let ast = Parser::new(tokens, reporter.clone(), &mut symbols)
             .parse()
             .unwrap();

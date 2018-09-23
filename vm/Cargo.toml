@@ -9,4 +9,5 @@ nom = "^4.0"
 
 [features]
 debug = []
+stack = ["debug"]
 # default = ["debug"]

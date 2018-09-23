@@ -33,6 +33,7 @@ pub enum Expression {
         property: Spanned<Symbol>,
         handle: VariableUseHandle,
     },
+
     Grouping {
         expr: Box<Spanned<Expression>>,
     },
