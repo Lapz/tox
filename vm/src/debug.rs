@@ -10,12 +10,10 @@ impl VM {
         println!("== {} ==\n", name);
 
         if !self.verify_header() {
-            println!("An invalid header was found {:?}",&self.code[0..4]);
+            println!("An invalid header was found {:?}", &self.code[0..4]);
         }
 
         let mut i = 64;
-
-
 
         while i < self.code.len() {
             i = self.disassemble_instruction(i);
@@ -50,8 +48,8 @@ impl VM {
             opcode::DEC => simple_instruction("OPCODE::DEC", offset),
             opcode::PUSH => simple_instruction("OPCODE::PUSH", offset),
             opcode::POP => simple_instruction("OPCODE::POP", offset),
-            opcode::MOD => simple_instruction("OPCODE::MOD",offset),
-            opcode::EXPON => simple_instruction("OPCODE::EXPON",offset),
+            opcode::MOD => simple_instruction("OPCODE::MOD", offset),
+            opcode::EXPON => simple_instruction("OPCODE::EXPON", offset),
 
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);

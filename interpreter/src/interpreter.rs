@@ -27,14 +27,9 @@ impl RuntimeError {
     pub fn fmt(&self, symbols: &Symbols<()>) {
         match *self {
             RuntimeError::UndefinedSymbol(ref symbol) => {
-                format!("Undefined variable '{}' ", env.name(*symbol))
+                println!("Undefined variable '{}' ", symbols.name(*symbol));
             }
-            RuntimeError::CantParseAsInt(ref string) => format!(
-                "Cannot parse the string {:?} to an int",
-                str::from_utf8(string).unwrap()
-            ),
-
-            ref e => format!("{:?}", e),
+            _ => (),
         }
     }
 }

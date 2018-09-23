@@ -8,5 +8,5 @@ pub enum Token {
     LabelDeclaration(String),
     LabelUsage(String),
     Directive(String),
-    String(String)
+    String(String),
 }

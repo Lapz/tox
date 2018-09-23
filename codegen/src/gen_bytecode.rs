@@ -72,11 +72,11 @@ impl Compiler {
                 Literal::Int(ref int) => {
                     write!(&mut self.file, "LOAD $0 #{}\n", int)?;
                     Ok(())
-                },
+                }
                 Literal::True(_) => {
                     write!(&mut self.file, "LOAD $0 #1\n")?;
                     Ok(())
-                },
+                }
 
                 Literal::False(_) => {
                     write!(&mut self.file, "LOAD $0 #0\n")?;
@@ -90,9 +90,6 @@ impl Compiler {
                 ref op,
                 ref lhs,
             } => {
-
-
-
                 match op.value {
                     Op::Plus => {
                         self.build_expr(lhs)?;
@@ -146,7 +143,7 @@ impl Compiler {
                         write!(&mut self.file, "POP $1\n")?;
 
                         write!(&mut self.file, "MOD  $1 $0 $0 \n")?;
-                    },
+                    }
 
                     Op::Exponential => {
                         self.build_expr(lhs)?;
@@ -158,7 +155,7 @@ impl Compiler {
                         write!(&mut self.file, "POP $1\n")?;
 
                         write!(&mut self.file, "EXPON  $1 $0 $0 \n")?;
-                    },
+                    }
 
                     Op::EqualEqual => {
                         self.build_expr(lhs)?;
@@ -235,39 +232,35 @@ impl Compiler {
                         write!(&mut self.file, "LESS $0 $1 \n")?;
 
                         write!(&mut self.file, "NOT \n")?;
-                    },
+                    }
 
                     Op::And => {
                         self.build_expr(lhs)?;
 
                         write!(&mut self.file, "EQUAL $0 $1\n")?;
 
-
                         let label = Label::new();
 
-                        write!(&mut self.file,"JMPEQ @{}\n",label);
+                        write!(&mut self.file, "JMPEQ @{}\n", label);
 
                         self.build_expr(rhs)?;
 
-                        write!(&mut self.file,"{}:\n",label);
-                    },
+                        write!(&mut self.file, "{}:\n", label);
+                    }
 
                     Op::Or => {
-
                         self.build_expr(lhs)?;
 
                         write!(&mut self.file, "EQUAL $0 $1\n")?;
 
-
                         let label = Label::new();
 
-                        write!(&mut self.file,"JMPNEQ @{}\n",label);
+                        write!(&mut self.file, "JMPNEQ @{}\n", label);
 
                         self.build_expr(rhs)?;
 
-                        write!(&mut self.file,"{}:\n",label);
+                        write!(&mut self.file, "{}:\n", label);
                     }
-
                 }
 
                 Ok(())

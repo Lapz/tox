@@ -11,10 +11,7 @@ extern crate vm;
 mod repl;
 
 use codegen::Compiler;
-use interpreter::interpret;
-use interpreter::Environment;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
+use frontend::Infer;
 use std::io;
 use std::io::Write;
 use std::rc::Rc;
@@ -22,9 +19,7 @@ use structopt::StructOpt;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
-use util::env::TypeEnv;
-use util::print_err;
-use util::symbol::{SymbolFactory, Table};
+use util::symbol::{SymbolFactory, Symbols};
 use vm::{Assembler, VM};
 
 fn main() {
@@ -146,17 +141,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     }
 
-    let mut chunk = Chunk::new();
-    // let mut constant = chunk.add_constant(&[12, 0, 0, 0, 0, 0, 0, 0], 1);
-
-    // chunk.write(1, 1); //Int
-
-
-    if penv {
-        println!("{:#?}", tyenv);
-        println!("{:#?}", env);
-    }
-
     let mut compiler = Compiler::new();
 
     compiler.compile(&ast).expect("Couldn't compile the file");
@@ -172,7 +156,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
     vm.disassemble("test");
 
     vm.run();
-
 
     println!("{:?}", vm);
 }

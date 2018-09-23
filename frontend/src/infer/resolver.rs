@@ -452,8 +452,8 @@ impl Resolver {
 
 #[cfg(test)]
 mod test {
+    use super::Resolver;
     use ctx::CompileCtx;
-    use resolver::Resolver;
     use std::rc::Rc;
     use syntax::ast::statement::Statement;
     use syntax::lexer::Lexer;
@@ -551,7 +551,7 @@ mod test {
     }
 
     #[test]
-   
+
     fn this_outside_class() {
         let input = "this.name;";
         let strings = Rc::new(SymbolFactory::new());
@@ -560,8 +560,6 @@ mod test {
         let mut ctx = CompileCtx::new(&strings, &mut reporter);
 
         assert!(Resolver::new().resolve(&ast, &mut ctx).is_err())
-
-    
     }
 
 }

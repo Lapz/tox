@@ -998,7 +998,12 @@ impl<'a> Parser<'a> {
 
         binary!(
             self,
-            vec![TokenType::MINUS, TokenType::PLUS,TokenType::EXPONENTIAL,TokenType::MODULO],
+            vec![
+                TokenType::MINUS,
+                TokenType::PLUS,
+                TokenType::EXPONENTIAL,
+                TokenType::MODULO
+            ],
             lhs,
             parse_multiplication
         );

@@ -1,5 +1,5 @@
+use assembler::{PIE_HEADER_LENGTH, PIE_HEADER_PREFIX};
 use opcode;
-use assembler::{PIE_HEADER_PREFIX,PIE_HEADER_LENGTH};
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
@@ -43,11 +43,9 @@ impl VM {
     pub fn run(&mut self) {
         loop {
             {
-
                 if self.ip >= self.code.len() {
                     return;
                 }
-
             }
 
             match self.read_byte() {
@@ -89,7 +87,6 @@ impl VM {
                     } else {
                         self.advance(1);
                     }
-
                 }
 
                 opcode::LOAD => {
@@ -144,9 +141,8 @@ impl VM {
                     let lhs = self.registers[self.next_8_bits() as usize];
                     let rhs = self.registers[self.next_8_bits() as usize];
 
-
                     self.registers[self.next_8_bits() as usize] = lhs % rhs;
-                },
+                }
 
                 opcode::EXPON => {
                     let lhs = self.registers[self.next_8_bits() as usize];
@@ -226,12 +222,9 @@ impl VM {
                     let val = self.pop();
                     self.registers[self.next_8_bits() as usize] = val;
                     self.advance(2)
-                },
-
-
+                }
 
                 _ => {
-
                     continue;
                 }
             }
@@ -302,9 +295,8 @@ mod tests {
     use super::*;
     use opcode;
 
-
-    fn prepend_header(mut b:Vec<u8>) -> Vec<u8> {
-        let mut header = Vec::with_capacity(b.len()+PIE_HEADER_LENGTH);
+    fn prepend_header(mut b: Vec<u8>) -> Vec<u8> {
+        let mut header = Vec::with_capacity(b.len() + PIE_HEADER_LENGTH);
 
         for byte in &PIE_HEADER_PREFIX[0..] {
             header.push(*byte);
@@ -313,7 +305,6 @@ mod tests {
         while header.len() <= PIE_HEADER_LENGTH {
             header.push(0);
         }
-
 
         header.append(&mut b);
 
@@ -477,7 +468,7 @@ mod tests {
     fn test_jmp_opcode() {
         let mut test_vm = VM::new();
 
-        test_vm.registers[0] =72 ;
+        test_vm.registers[0] = 72;
 
         let mut test_bytes = vec![
             opcode::JMP,
@@ -504,8 +495,7 @@ mod tests {
         test_vm.run();
 
         assert_eq!(test_vm.registers[0], 2);
-        assert_eq!(test_vm.ip, 78
-        );
+        assert_eq!(test_vm.ip, 78);
     }
 
     #[test]
@@ -562,7 +552,7 @@ mod tests {
         test_vm.code(test_bytes);
 
         test_vm.run();
-//        println!("{:?}",&test_vm.registers()[0..]);
+        //        println!("{:?}",&test_vm.registers()[0..]);
         assert_eq!(test_vm.registers[1], 11);
         assert_eq!(test_vm.ip, 70);
     }

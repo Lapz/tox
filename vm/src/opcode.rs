@@ -92,8 +92,8 @@ pub const POP: u8 = 0x22;
 
 /// MOD SRC SRC DEST
 /// CALCULATES SRC1/SRC2 AND STORES IT IN DEST
-pub const MOD:u8 = 0x23;
+pub const MOD: u8 = 0x23;
 
 /// EXPON SRC SRC DEST
 /// CALCULATES SRC1^SRC2 AND STORES IT IN DEST
-pub const EXPON:u8 = 0x24;
+pub const EXPON: u8 = 0x24;

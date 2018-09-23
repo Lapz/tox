@@ -1,6 +1,6 @@
-use env::{Entry, VarEntry};
+use infer::env::{Entry, VarEntry};
+use infer::types::{Type, Unique};
 use std::rc::Rc;
-use types::{Type, Unique};
 use util::emmiter::Reporter;
 use util::pos::Span;
 use util::symbol::{Symbol, SymbolFactory, Symbols};

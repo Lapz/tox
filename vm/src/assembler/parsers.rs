@@ -50,7 +50,6 @@ named!(string_operand<CompleteStr,Token>,
     )
 );
 
-
 named!(integer_operand<CompleteStr,Token>,
     ws!(
         do_parse!(
@@ -241,29 +240,25 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
 mod test {
     use super::*;
 
-
     #[test]
 
     fn parse_string_directive() {
         let result = directive_combined(CompleteStr("test:.asciiz 'Hello'"));
 
-
-
-
         assert!(result.is_ok());
 
-        let (_,program) = result.unwrap();
+        let (_, program) = result.unwrap();
 
-        let expected =AssemblerInstruction{
-            opcode:None,
-            label:Some(Token::LabelDeclaration("test".into())),
-            directive:Some(Token::Directive("asciiz".into())),
-            operand1:Some(Token::String("Hello".into())),
-            operand2:None,
-            operand3:None,
+        let expected = AssemblerInstruction {
+            opcode: None,
+            label: Some(Token::LabelDeclaration("test".into())),
+            directive: Some(Token::Directive("asciiz".into())),
+            operand1: Some(Token::String("Hello".into())),
+            operand2: None,
+            operand3: None,
         };
 
-        assert_eq!(program,expected);
+        assert_eq!(program, expected);
     }
 
     #[test]
@@ -272,17 +267,17 @@ mod test {
 
         assert!(result.is_ok());
 
-        let (_,token) = result.unwrap();
+        let (_, token) = result.unwrap();
 
-        assert_eq!(token,Token::String("Hello World".into()));
+        assert_eq!(token, Token::String("Hello World".into()));
 
         let result = string_operand(CompleteStr("'This is a test'"));
 
         assert!(result.is_ok());
 
-        let (_,token) = result.unwrap();
+        let (_, token) = result.unwrap();
 
-        assert_eq!(token,Token::String("This is a test".into()))
+        assert_eq!(token, Token::String("This is a test".into()))
     }
 
     #[test]
@@ -361,7 +356,9 @@ mod test {
 
     #[test]
     fn parse_complete_program() {
-        let result = file(CompleteStr(".data\nhello: .asciiz 'Hello everyone!'\n.code\nhlt"));
+        let result = file(CompleteStr(
+            ".data\nhello: .asciiz 'Hello everyone!'\n.code\nhlt",
+        ));
         assert!(result.is_ok())
     }
 

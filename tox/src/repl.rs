@@ -1,14 +1,13 @@
 use codegen::Compiler;
-use sem::resolver::Resolver;
-use sem::semant::TyChecker;
+use frontend::Infer;
+use frontend::Resolver;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::rc::Rc;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
-use util::env::TypeEnv;
-use util::symbol::{SymbolFactory, Table};
+use util::symbol::{SymbolFactory, Symbols};
 use vm::{Assembler, VM};
 
 pub struct Repl {
@@ -131,7 +130,7 @@ impl Repl {
 
         let input = contents.trim();
 
-        let reporter = Reporter::new();
+        let mut reporter = Reporter::new();
 
         let tokens = match Lexer::new(&input, reporter.clone()).lex() {
             Ok(tokens) => tokens,
@@ -143,7 +142,7 @@ impl Repl {
         };
 
         let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Table::new(Rc::clone(&strings));
+        let mut symbols = Symbols::new(Rc::clone(&strings));
 
         let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
             Ok(statements) => statements,
@@ -153,18 +152,15 @@ impl Repl {
             }
         };
 
-        let mut tyenv = TypeEnv::new(&strings);
-        let mut resolver = Resolver::new(reporter.clone());
+        let mut infer = Infer::new();
 
-        resolver.resolve(&ast, &tyenv).unwrap();
-
-        match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
+        match infer.infer(ast, &strings, &mut reporter) {
             Ok(_) => (),
             Err(_) => {
-                reporter.emit(&input);
-                return Err(());
+                reporter.emit(input);
+                ::std::process::exit(65)
             }
-        };
+        }
 
         let mut compiler = Compiler::new();
 

@@ -1,6 +1,6 @@
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use types::Type;
+use infer::types::Type;
 use util::pos::Span;
 
 impl Infer {
