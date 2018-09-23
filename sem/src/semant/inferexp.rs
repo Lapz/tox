@@ -79,7 +79,11 @@ impl TyChecker {
                         Ok(left_ty)
                     }
 
-                    _ => unimplemented!(),
+                    Op::And | Op::Or => {
+                        self.check_bool(&left,lhs.span)?;
+                        self.check_bool(&right,rhs.span)?;
+                        Ok(bool_type!())
+                    },
                 }
             }
 

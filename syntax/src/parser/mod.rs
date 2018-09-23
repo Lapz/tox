@@ -404,7 +404,8 @@ impl<'a> Parser<'a> {
             STAR => Star,
             SLASH => Slash,
             EQUALEQUAL => EqualEqual,
-            MODULO => Modulo
+            MODULO => Modulo,
+            EXPONENTIAL => Exponential
         })
     }
 
@@ -962,7 +963,7 @@ impl<'a> Parser<'a> {
 
         use self::TokenType::*;
 
-        binary!(self, OR, lhs, parse_equality);
+        binary!(self, AND, lhs, parse_equality);
 
         Ok(lhs)
     }
@@ -1003,7 +1004,7 @@ impl<'a> Parser<'a> {
 
         binary!(
             self,
-            vec![TokenType::MINUS, TokenType::PLUS],
+            vec![TokenType::MINUS, TokenType::PLUS,TokenType::EXPONENTIAL,TokenType::MODULO],
             lhs,
             parse_multiplication
         );

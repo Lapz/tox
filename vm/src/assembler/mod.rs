@@ -79,7 +79,7 @@ impl Assembler {
         for (i, instruction) in p.instructions.iter().enumerate() {
             if instruction.is_label() {
                 if let Some(name) = instruction.label_name() {
-                    self.symbols.add(name, i * 4, SymbolType::Label);
+                    self.symbols.add(name, (i*4)+64, SymbolType::Label);
                 }
             }
         }
@@ -92,7 +92,7 @@ impl Assembler {
             header.push(*byte);
         }
 
-        while header.len() <= PIE_HEADER_LENGTH {
+        while header.len() < PIE_HEADER_LENGTH {
             header.push(0);
         }
 

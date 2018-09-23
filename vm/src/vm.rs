@@ -17,14 +17,14 @@ pub struct VM {
 impl VM {
     pub fn new() -> Self {
         VM {
-            ip: 65,
+            ip: 64,
             registers: [0; 32],
             stack: [0; STACK_MAX],
             code: Vec::new(),
             remainder: 0,
             equal_flag: false,
             heap: Vec::new(),
-            stack_top: 0,
+            stack_top: 1,
         }
     }
 
@@ -43,6 +43,7 @@ impl VM {
     pub fn run(&mut self) {
         loop {
             {
+
                 if self.ip >= self.code.len() {
                     return;
                 }
@@ -71,23 +72,24 @@ impl VM {
                 }
 
                 opcode::JMPEQ => {
-                    let location = self.registers[self.next_8_bits() as usize];
+                    let location = self.next_16_bits();
 
                     if self.equal_flag {
                         self.ip = location as usize;
                     } else {
-                        self.advance(2);
+                        self.advance(1);
                     }
                 }
 
                 opcode::JMPNEQ => {
-                    let location = self.registers[self.next_8_bits() as usize];
+                    let location = self.next_16_bits();
 
                     if !self.equal_flag {
                         self.ip = location as usize;
                     } else {
-                        self.advance(2);
+                        self.advance(1);
                     }
+
                 }
 
                 opcode::LOAD => {
@@ -115,6 +117,7 @@ impl VM {
                 opcode::ADD => {
                     let lhs = self.registers[self.next_8_bits() as usize];
                     let rhs = self.registers[self.next_8_bits() as usize];
+
                     self.registers[self.next_8_bits() as usize] = lhs + rhs;
                 }
 
@@ -135,6 +138,20 @@ impl VM {
                     let rhs = self.registers[self.next_8_bits() as usize];
                     self.registers[self.next_8_bits() as usize] = lhs / rhs;
                     self.remainder = (lhs % rhs) as u32;
+                }
+
+                opcode::MOD => {
+                    let lhs = self.registers[self.next_8_bits() as usize];
+                    let rhs = self.registers[self.next_8_bits() as usize];
+
+
+                    self.registers[self.next_8_bits() as usize] = lhs % rhs;
+                },
+
+                opcode::EXPON => {
+                    let lhs = self.registers[self.next_8_bits() as usize];
+                    let rhs = self.registers[self.next_8_bits() as usize];
+                    self.registers[self.next_8_bits() as usize] = lhs.pow(rhs as u32);
                 }
 
                 opcode::EQUAL => {
@@ -201,6 +218,7 @@ impl VM {
                 opcode::PUSH => {
                     let val = self.registers[self.next_8_bits() as usize];
                     self.push(val);
+
                     self.advance(2)
                 }
 
@@ -208,7 +226,9 @@ impl VM {
                     let val = self.pop();
                     self.registers[self.next_8_bits() as usize] = val;
                     self.advance(2)
-                }
+                },
+
+
 
                 _ => {
 

@@ -11,6 +11,7 @@ fn not_line_end(ch: char) -> bool {
 named!(operand<CompleteStr,Token>,
     alt!(
         integer_operand
+        | string_operand
         | register
         | label_usage
     )
@@ -35,6 +36,20 @@ named!(register<CompleteStr,Token>,
         )
     )
 );
+
+named!(string_operand<CompleteStr,Token>,
+    ws!(
+        do_parse!(
+            alt!(tag!("\'")| tag!("\"")) >>
+            string:alt!(take_until!("'") | take_until!("\"")) >>
+            alt!(tag!("\'")| tag!("\"")) >>
+            (
+                Token::String(string.to_string())
+            )
+        )
+    )
+);
+
 
 named!(integer_operand<CompleteStr,Token>,
     ws!(
@@ -113,14 +128,14 @@ named!(instruction_combined<CompleteStr,AssemblerInstruction>,
 named!(directive_combined<CompleteStr,AssemblerInstruction>,
     ws!(
         do_parse!(
-            tag!(".") >>
+            label: opt!(label_declaration) >>
             name: directive_declaration >>
             operand1: opt!(operand) >>
             operand2:  opt!(operand) >>
             operand3: opt!(operand) >>
             (
                 AssemblerInstruction {
-                    label:None,
+                    label,
                     directive:Some(name),
                     opcode:None,
                     operand1,
@@ -192,6 +207,8 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("inc") => opcode::INC,
             CompleteStr("push") => opcode::PUSH,
             CompleteStr("pop") => opcode::POP,
+            CompleteStr("mod") => opcode::MOD,
+            CompleteStr("expon") => opcode::EXPON,
             CompleteStr("LOAD") => opcode::LOAD,
             CompleteStr("ADD") => opcode::ADD,
             CompleteStr("SUB") => opcode::SUB,
@@ -213,6 +230,8 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("INC") => opcode::INC,
             CompleteStr("PUSH") => opcode::PUSH,
             CompleteStr("POP") => opcode::POP,
+            CompleteStr("MOD") => opcode::MOD,
+            CompleteStr("EXPON") => opcode::EXPON,
             _ => opcode::IGL,
         }
     }
@@ -221,6 +240,50 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
 #[cfg(test)]
 mod test {
     use super::*;
+
+
+    #[test]
+
+    fn parse_string_directive() {
+        let result = directive_combined(CompleteStr("test:.asciiz 'Hello'"));
+
+
+
+
+        assert!(result.is_ok());
+
+        let (_,program) = result.unwrap();
+
+        let expected =AssemblerInstruction{
+            opcode:None,
+            label:Some(Token::LabelDeclaration("test".into())),
+            directive:Some(Token::Directive("asciiz".into())),
+            operand1:Some(Token::String("Hello".into())),
+            operand2:None,
+            operand3:None,
+        };
+
+        assert_eq!(program,expected);
+    }
+
+    #[test]
+    fn parse_string() {
+        let result = string_operand(CompleteStr("\"Hello World\""));
+
+        assert!(result.is_ok());
+
+        let (_,token) = result.unwrap();
+
+        assert_eq!(token,Token::String("Hello World".into()));
+
+        let result = string_operand(CompleteStr("'This is a test'"));
+
+        assert!(result.is_ok());
+
+        let (_,token) = result.unwrap();
+
+        assert_eq!(token,Token::String("This is a test".into()))
+    }
 
     #[test]
     fn parse_load() {
@@ -294,6 +357,12 @@ mod test {
         let result = label_usage(CompleteStr("test"));
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn parse_complete_program() {
+        let result = file(CompleteStr(".data\nhello: .asciiz 'Hello everyone!'\n.code\nhlt"));
+        assert!(result.is_ok())
     }
 
     #[test]

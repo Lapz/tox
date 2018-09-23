@@ -17,6 +17,6 @@ impl Label {
 
 impl Display for Label {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "l{}:", self.0)
+        write!(f, "l{}", self.0)
     }
 }

@@ -72,6 +72,15 @@ impl Compiler {
                 Literal::Int(ref int) => {
                     write!(&mut self.file, "LOAD $0 #{}\n", int)?;
                     Ok(())
+                },
+                Literal::True(_) => {
+                    write!(&mut self.file, "LOAD $0 #1\n")?;
+                    Ok(())
+                },
+
+                Literal::False(_) => {
+                    write!(&mut self.file, "LOAD $0 #0\n")?;
+                    Ok(())
                 }
                 _ => unimplemented!(),
             },
@@ -81,57 +90,184 @@ impl Compiler {
                 ref op,
                 ref lhs,
             } => {
-                self.build_expr(lhs)?;
 
-                write!(&mut self.file, "PUSH $0\n")?;
 
-                self.build_expr(rhs)?;
-
-                write!(&mut self.file, "POP $1\n")?;
 
                 match op.value {
                     Op::Plus => {
-                        write!(&mut self.file, "ADD $0 $1 $0\n")?;
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+                        write!(&mut self.file, "ADD  $1 $0 $0\n")?;
                     }
                     Op::Minus => {
-                        write!(&mut self.file, "SUB $0 $1 $0\n")?;
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+                        write!(&mut self.file, "SUB  $1 $0 $0\n")?;
                     }
                     Op::Slash => {
-                        write!(&mut self.file, "DIV $0 $1 $0\n")?;
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+                        write!(&mut self.file, "DIV  $1 $0 $0\n")?;
                     }
 
                     Op::Star => {
-                        write!(&mut self.file, "STAR $0 $1 $0\n")?;
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+                        write!(&mut self.file, "STAR  $1 $0 $0\n")?;
                     }
 
+                    Op::Modulo => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
+                        write!(&mut self.file, "MOD  $1 $0 $0 \n")?;
+                    },
+
+                    Op::Exponential => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
+                        write!(&mut self.file, "EXPON  $1 $0 $0 \n")?;
+                    },
+
                     Op::EqualEqual => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
                         write!(&mut self.file, "EQUAL $0 $1 \n")?;
                     }
 
                     Op::BangEqual => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
                         write!(&mut self.file, "EQUAL $0 $1 \n")?;
                         write!(&mut self.file, "NOT \n")?;
                     }
 
                     Op::LessThan => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
                         write!(&mut self.file, "LESS $0 $1 \n")?;
                     }
 
                     Op::LessThanEqual => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
                         write!(&mut self.file, "GREATER $0 $1 \n")?;
+
                         write!(&mut self.file, "NOT \n")?;
                     }
 
                     Op::GreaterThan => {
-                        write!(&mut self.file, "GREATER $0 $1 $0 \n")?;
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
+                        write!(&mut self.file, "GREATER  $1 $0 $0 \n")?;
                     }
 
                     Op::GreaterThanEqual => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "PUSH $0\n")?;
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file, "POP $1\n")?;
+
                         write!(&mut self.file, "LESS $0 $1 \n")?;
+
                         write!(&mut self.file, "NOT \n")?;
+                    },
+
+                    Op::And => {
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "EQUAL $0 $1\n")?;
+
+
+                        let label = Label::new();
+
+                        write!(&mut self.file,"JMPEQ @{}\n",label);
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file,"{}:\n",label);
+                    },
+
+                    Op::Or => {
+
+                        self.build_expr(lhs)?;
+
+                        write!(&mut self.file, "EQUAL $0 $1\n")?;
+
+
+                        let label = Label::new();
+
+                        write!(&mut self.file,"JMPNEQ @{}\n",label);
+
+                        self.build_expr(rhs)?;
+
+                        write!(&mut self.file,"{}:\n",label);
                     }
 
-                    _ => unimplemented!(),
                 }
 
                 Ok(())
@@ -145,7 +281,7 @@ impl Compiler {
                     UnaryOp::Minus => {
                         write!(&mut self.file, "LOAD $0 #0\n")?;
                         write!(&mut self.file, "POP $1\n")?;
-                        write!(&mut self.file, "SUB $0 $1 $0\n")?;
+                        write!(&mut self.file, "SUB  $1 $0 $0\n")?;
                     }
                     UnaryOp::Bang => unimplemented!(),
                 }
