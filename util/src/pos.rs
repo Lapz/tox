@@ -10,8 +10,8 @@ pub struct CharPosition<'a> {
 }
 
 /// Represents a Span in the source file along with its value
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct Spanned<T: PartialEq> {
+#[derive(Debug, Clone)]
+pub struct Spanned<T> {
     pub span: Span,
     pub value: T,
 }
