@@ -90,7 +90,7 @@ impl Span {
     }
 }
 
-impl<T: PartialEq> Spanned<T> {
+impl<T> Spanned<T> {
     pub fn new(value: T, span: Span) -> Self {
         Spanned { span, value }
     }

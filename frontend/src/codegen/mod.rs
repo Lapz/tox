@@ -3,7 +3,7 @@ mod label;
 
 use ast::Program;
 use std::fs::File;
-use std::io::{self,Write};
+use std::io::{self, Write};
 
 pub struct Compiler {
     file: File,

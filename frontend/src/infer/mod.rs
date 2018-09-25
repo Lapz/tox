@@ -10,8 +10,8 @@ mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 pub use self::resolver::Resolver;
-use syntax::ast::expr::{VariableUseHandle};
 use fnv::FnvHashMap;
+use syntax::ast::expr::VariableUseHandle;
 
 use std::rc::Rc;
 
@@ -19,7 +19,7 @@ use std::rc::Rc;
 pub struct Infer {
     this: types::Type, // for this
     body: types::Type,
-    resolver:self::resolver::Resolver
+    resolver: self::resolver::Resolver,
 }
 
 impl Infer {
@@ -27,7 +27,7 @@ impl Infer {
         Self {
             this: self::types::Type::Nil,
             body: self::types::Type::Nil,
-            resolver:self::resolver::Resolver::new()
+            resolver: self::resolver::Resolver::new(),
         }
     }
 
@@ -39,8 +39,6 @@ impl Infer {
         reporter: &mut ::util::emmiter::Reporter,
     ) -> InferResult<::ast::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
-
-       
 
         let mut new_program = ::ast::Program {
             statements: Vec::new(),

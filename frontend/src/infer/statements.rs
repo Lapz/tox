@@ -1,5 +1,5 @@
 use ctx::CompileCtx;
-use syntax::ast::expr::{Literal};
+use syntax::ast::expr::Literal;
 use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 

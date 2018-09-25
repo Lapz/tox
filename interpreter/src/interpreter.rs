@@ -592,10 +592,10 @@ fn get_distance(
 
 pub mod env {
 
-    use util::symbol::Symbol;
     use super::RuntimeError;
     use builtins::BuiltIn;
     use object::Object;
+    use util::symbol::Symbol;
 
     use std::rc::Rc;
 

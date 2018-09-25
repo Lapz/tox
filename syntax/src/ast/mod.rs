@@ -1,38 +1,34 @@
-pub mod expr;
-pub mod statement;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
-
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct Program {
-    functions:Vec<Spanned<Function>>,
-    classes:Vec<Spanned<Class>>,
-    aliases:Vec<Spanned<TypeAlias>>
+    pub functions: Vec<Spanned<Function>>,
+    pub classes: Vec<Spanned<Class>>,
+    pub aliases: Vec<Spanned<TypeAlias>>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct Function {
-    name:Spanned<Symbol>,
-    params:Spanned<Vec<FunctionParam>>,
-    body: Spanned<Statement>,
-    returns: Option<Spanned<Type>>
+    pub name: Spanned<Symbol>,
+    pub params: Spanned<Vec<Spanned<FunctionParam>>>,
+    pub body: Spanned<Statement>,
+    pub returns: Option<Spanned<Type>>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct Class {
-    name:Spanned<Symbol>,
-    superclass:Option<Spanned<Symbol>>,
-    functions:Vec<Spanned<Statement>>,
-    fields:Vec<Spanned<Field>>,
+    pub name: Spanned<Symbol>,
+    pub superclass: Option<Spanned<Symbol>>,
+    pub methods: Vec<Spanned<Function>>,
+    pub fields: Vec<Spanned<Field>>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct TypeAlias {
-    alias: Spanned<Symbol>,
-    ty: Spanned<Type>,
+    pub alias: Spanned<Symbol>,
+    pub ty: Spanned<Type>,
 }
-
 
 #[derive(Debug, Clone)]
 pub enum Statement {
@@ -61,7 +57,7 @@ pub enum Statement {
     },
 
     VarDeclaration {
-        name: Spanned<Symbol>,
+        ident: Spanned<Symbol>,
         ty: Option<Spanned<Type>>,
         expr: Option<Spanned<Expression>>,
     },
@@ -80,7 +76,6 @@ pub struct FunctionParam {
     pub name: Spanned<Symbol>,
     pub ty: Spanned<Type>,
 }
-
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -204,4 +199,3 @@ pub enum UnaryOp {
     Bang,
     Minus,
 }
-
