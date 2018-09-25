@@ -2,7 +2,7 @@ use ast as t;
 use ctx::CompileCtx;
 use infer::types::Type;
 use infer::{Infer, InferResult};
-use syntax::ast::expr::{Expression, Literal, Op, UnaryOp};
+use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 
 impl Infer {
@@ -42,7 +42,7 @@ impl Infer {
 
                 let ty = self.infer_var(&name, ctx)?;
                 let value_ty = self.infer_expr(*value, ctx)?;
-                use syntax::ast::expr::AssignOperator::*;
+                use syntax::ast::AssignOperator::*;
                 match kind.value {
                     Equal => {
                         self.unify(&ty, &value_ty.ty, span, ctx)?;
@@ -106,6 +106,8 @@ impl Infer {
             }
             Expression::Call { .. } => self.infer_call(expr, ctx)?,
 
+            Expression::Closure(ref func) => unimplemented!(),
+
             Expression::ClassInstance { .. } => self.infer_class_instance(expr, ctx)?,
 
             Expression::Grouping { expr } => {
@@ -117,11 +119,11 @@ impl Infer {
 
             Expression::Get { .. } => self.infer_object_get(expr, ctx)?,
 
-            Expression::Index { target, index } => {
+            Expression::SubScript { target, index } => {
                 let target_span = target.span;
 
                 match target.value {
-                    Expression::Var(symbol, _) => {
+                    Expression::Var(symbol) => {
                         let target_ty = self.infer_var(&symbol, ctx)?;
 
                         let span = index.span;
@@ -179,7 +181,7 @@ impl Infer {
                 )
             }
 
-            Expression::This(_) => (t::Expression::This, self.this.clone()),
+            Expression::This => (t::Expression::This, self.this.clone()),
             Expression::Unary { expr, op } => {
                 let span = expr.span;
                 let expr = self.infer_expr(*expr, ctx)?;
@@ -201,7 +203,7 @@ impl Infer {
                 }
             }
 
-            Expression::Var(ref var, _) => {
+            Expression::Var(ref var) => {
                 let ty = self.infer_var(var, ctx)?;
 
                 (t::Expression::Var(var.value, ty.clone()), ty)
@@ -222,7 +224,7 @@ impl Infer {
         match call.value {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
-                Expression::Var(ref sym, _) => {
+                Expression::Var(ref sym) => {
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
                         match ty {

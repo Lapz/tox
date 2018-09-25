@@ -11,7 +11,7 @@ extern crate vm;
 mod repl;
 
 // use codegen::Compiler;
-use frontend::{Compiler, Infer, Resolver};
+use frontend::{Compiler, Infer};
 // use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
@@ -85,9 +85,9 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
             if pprint {
-                for statement in &statements {
-                    println!("{}", statement.value.pprint(&mut symbols));
-                }
+                // for statement in &statements {
+                //     println!("{}", statement.value.pprint(&mut symbols));
+                // }
             }
             statements
         }
@@ -196,9 +196,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
             if pprint {
-                for statement in &statements {
-                    println!("{}", statement.value.pprint(&mut symbols));
-                }
+                // for statement in &statements {
+                //     println!("{}", statement.value.pprint(&mut symbols));
+                // }
             }
             statements
         }
