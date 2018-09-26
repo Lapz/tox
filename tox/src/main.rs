@@ -3,7 +3,7 @@ extern crate frontend;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
- extern crate interpreter;
+extern crate interpreter;
 extern crate syntax;
 extern crate util;
 extern crate vm;
@@ -12,7 +12,7 @@ mod repl;
 
 // use codegen::Compiler;
 use frontend::{Compiler, Infer};
- use interpreter::{interpret, Environment};
+use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -101,29 +101,29 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
         println!("{:#?}", ast);
     }
 
-     let mut infer = Infer::new();
+    let mut infer = Infer::new();
 
-//     resolver.resolve(&ast, )
+    //     resolver.resolve(&ast, )
 
-     match infer.infer(ast.clone(), &strings, &mut reporter) {
-         Ok(_) => (),
-         Err(_) => {
-             reporter.emit(input);
-             ::std::process::exit(65)
-         }
-     };
+    match infer.infer(ast.clone(), &strings, &mut reporter) {
+        Ok(_) => (),
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
-     let mut env = Environment::new();
-     env.fill_env(&mut symbols);
+    let mut env = Environment::new();
+    env.fill_env(&mut symbols);
 
-     match interpret(&ast, &mut env) {
-         Ok(_) => (),
-         Err(err) => {
-             err.fmt(&symbols);
-             // println!("{:?}", err);
-             ::std::process::exit(65)
-         }
-     };
+    match interpret(&ast, &mut env) {
+        Ok(_) => (),
+        Err(err) => {
+            err.fmt(&symbols);
+            // println!("{:?}", err);
+            ::std::process::exit(65)
+        }
+    };
 }
 
 pub fn run_vm(path: String) {
