@@ -117,8 +117,17 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     match interpret(&ast, &mut env,infer.get_main()) {
         Ok(_) => (),
         Err(err) => {
-            err.fmt(&symbols);
-            // println!("{:?}", err);
+            if let Some(span) = err.span {
+                let msg = err.code.reason(&symbols);
+
+                reporter.run_time_error(msg,span);
+
+                reporter.emit(input);
+
+            }else {
+                println!("{:?}", err.code.reason(&symbols));
+            }
+
             ::std::process::exit(65)
         }
     };
