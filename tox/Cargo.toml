@@ -14,7 +14,7 @@ features = ["debug"]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
 frontend = {path = "../frontend"}
-# interpreter = {path ="../interpreter"}
+interpreter = {path ="../interpreter"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}
