@@ -51,6 +51,7 @@ impl<'a> CompileCtx<'a> {
             add_builtin("oct", vec![Type::Int], Type::Str);
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
             add_builtin("to_int", vec![Type::Str], Type::Int);
+            add_builtin("trim", vec![Type::Str], Type::Str);
         }
 
         {

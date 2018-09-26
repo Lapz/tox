@@ -1,4 +1,4 @@
-use super::interpreter::RuntimeError;
+use super::interpreter::{RuntimeError,ErrorCode};
 use builtins::BuiltInFunction;
 use fnv::FnvHashMap;
 use interpreter::env::Environment;
@@ -71,34 +71,34 @@ impl Object {
         }
     }
 
-    pub fn get_property(&self, name: &Symbol, env: &Environment) -> Result<Object, RuntimeError> {
+    pub fn get_property(&self, name: &Spanned<Symbol>, env: &Environment) -> Result<Object, RuntimeError> {
         match *self {
             Object::Instance {
                 ref fields,
                 ref methods,
                 ref sclassmethods,
             } => {
-                if fields.borrow().contains_key(name) {
-                    return Ok(fields.borrow().get(name).unwrap().clone());
+                if fields.borrow().contains_key(&name.value) {
+                    return Ok(fields.borrow().get(&name.value).unwrap().clone());
                 }
-                if methods.contains_key(name) {
-                    return Ok(methods.get(name).unwrap().bind(self));
+                if methods.contains_key(&name.value) {
+                    return Ok(methods.get(&name.value).unwrap().bind(self));
                 }
                 if let Some(ref smethods) = *sclassmethods {
-                    if smethods.contains_key(name) {
-                        return Ok(smethods.get(name).unwrap().bind(self));
+                    if smethods.contains_key(&name.value) {
+                        return Ok(smethods.get(&name.value).unwrap().bind(self));
                     }
                 }
-                Err(RuntimeError::UndefinedProperty)
+                Err(RuntimeError::new(ErrorCode::UndefinedProperty(name.value),name.span))
             }
 
             Object::Class(_, ref superclass, ref methods) => {
-                if methods.contains_key(name) {
-                    return Ok(methods.get(name).unwrap().bind(self));
+                if methods.contains_key(&name.value) {
+                    return Ok(methods.get(&name.value).unwrap().bind(self));
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
-                Err(RuntimeError::UndefinedProperty)
+                Err(RuntimeError::new(ErrorCode::UndefinedProperty(name.value),name.span))
             }
             _ => unreachable!(), // Type checking means no trying to access a property
                                  // that dosen't exist
@@ -132,8 +132,8 @@ impl Object {
 
                 match evaluate_statement(body, &mut local_environment) {
                     Ok(_) => (),
-                    Err(e) => match e {
-                        RuntimeError::Return(ref r) => {
+                    Err(e) => match e.code {
+                        ErrorCode::Return(ref r) => {
                             return Ok(*r.clone());
                         }
 

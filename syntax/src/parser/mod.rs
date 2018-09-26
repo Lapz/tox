@@ -902,6 +902,38 @@ impl<'a> Parser<'a> {
                         span: *span,
                     };
                     self.parse_ident(ident)
+                },
+
+                TokenType::LBRACKET => {
+                    let mut items = Vec::with_capacity(32);
+
+                    if !self.recognise(TokenType::RBRACKET) {
+                        loop {
+                            if items.len() >= 32 {
+                                break;
+                            };
+
+
+                            items.push(self.parse_expression()?);
+
+                            if self.recognise(TokenType::COMMA) {
+                                self.advance();
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+
+                    let close_span = self.consume_get_span(&TokenType::RBRACKET,"Expected a closing `]`")?;
+
+
+                    Ok(Spanned {
+                        value:Expression::Array {
+                            items
+                        },
+                        span:span.to(close_span)
+                    })
+
                 }
 
                 ref other => {

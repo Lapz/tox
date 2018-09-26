@@ -2,33 +2,76 @@ use super::object::Object;
 use fnv::FnvHashMap;
 use interpreter::env::Environment;
 use std::cell::RefCell;
-use std::mem;
 use std::rc::Rc;
 use syntax::ast::*;
-use util::pos::Spanned;
+use util::pos::{Spanned,Span,EMPTYSPAN};
 use util::symbol::Symbol;
 use util::symbol::Symbols;
 
 #[derive(Debug)]
-pub enum RuntimeError {
+pub enum ErrorCode {
     Break,
     Continue,
     IndexOutOfBound,
     InvalidIndexType,
-    NotAnIn,
-    UndefinedProperty,
+    NotAnInstance,
+    UndefinedProperty(Symbol),
     CantParseAsInt(Vec<u8>),
     UndefinedSymbol(Symbol),
     Return(Box<Object>),
 }
 
+pub struct RuntimeError {
+    pub code:ErrorCode,
+    pub span:Option<Span>
+}
+
 impl RuntimeError {
-    pub fn fmt(&self, symbols: &Symbols<()>) {
+    pub fn new(code:ErrorCode,span:Span) -> Self {
+        Self {
+            code,
+            span:Some(span)
+        }
+    }
+
+    pub fn new_without_span(code:ErrorCode) -> Self {
+        Self {
+            code,
+            span:None
+        }
+    }
+
+
+
+}
+
+impl ErrorCode {
+
+    pub fn reason(&self,symbols: &Symbols<()>) -> String {
         match *self {
-            RuntimeError::UndefinedSymbol(ref symbol) => {
-                println!("Undefined variable '{}' ", symbols.name(*symbol));
+            ErrorCode::UndefinedSymbol(ref symbol) => {
+                format!("Undefined variable '{}' ", symbols.name(*symbol))
+            },
+
+            ErrorCode::UndefinedProperty(ref symbol) => {
+                format!("Undefined property '{}' ", symbols.name(*symbol))
+            },
+
+            ErrorCode::IndexOutOfBound => {
+                format!("An invalid index was used when trying to access an item from an array")
+            },
+
+            ErrorCode::InvalidIndexType => {
+                format!("The type of an index should be an integer")
+            },
+            ErrorCode::CantParseAsInt(ref bytes) => {
+                format!("Cannot parse `{}` as an int",::std::str::from_utf8(bytes).unwrap())
+            },
+
+            ErrorCode::NotAnInstance => {
+                format!("A class instance was expected")
             }
-            _ => (),
+            _ => format!(""),
         }
     }
 }
@@ -71,8 +114,8 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Break => Err(RuntimeError::Break),
-        Statement::Continue => Err(RuntimeError::Continue),
+        Statement::Break => Err(RuntimeError::new(ErrorCode::Break,statement.span)),
+        Statement::Continue => Err(RuntimeError::new(ErrorCode::Continue,statement.span)),
 //        Statement::Class {
 //            ref name,
 //            ref body,
@@ -141,9 +184,9 @@ pub(crate) fn evaluate_statement(
             while evaluate_expression(cond,   env)?.is_truthy() {
                 match evaluate_statement(body,   env) {
                     Ok(_) => (),
-                    Err(e) => match e {
-                        RuntimeError::Break => break,
-                        RuntimeError::Continue => continue,
+                    Err(e) => match e.code {
+                        ErrorCode::Break => break,
+                        ErrorCode::Continue => continue,
                         _ => return Err(e),
                     },
                 };
@@ -164,9 +207,9 @@ pub(crate) fn evaluate_statement(
                 loop {
                     match evaluate_statement(body,   env) {
                         Ok(value) => value,
-                        Err(e) => match e {
-                            RuntimeError::Break => break,
-                            RuntimeError::Continue => continue,
+                        Err(e) => match e.code {
+                            ErrorCode::Break => break,
+                            ErrorCode::Continue => continue,
                             _ => return Err(e),
                         },
                     };
@@ -182,9 +225,9 @@ pub(crate) fn evaluate_statement(
                 while evaluate_expression(cond,   env)?.is_truthy() {
                     match evaluate_statement(body,   env) {
                         Ok(value) => value,
-                        Err(e) => match e {
-                            RuntimeError::Break => break,
-                            RuntimeError::Continue => continue,
+                        Err(e) => match e.code {
+                            ErrorCode::Break => break,
+                            ErrorCode::Continue => continue,
                             _ => return Err(e),
                         },
                     };
@@ -209,9 +252,9 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
+        Statement::Return(ref expr) => Err(RuntimeError::new(ErrorCode::Return(Box::new(evaluate_expression(
             expr,   env,
-        )?))),
+        )?)),statement.span)),
 
         Statement::If {
             ref cond,
@@ -271,7 +314,7 @@ fn evaluate_expression(
                 AssignOperator::Equal => (),
 
                 AssignOperator::PlusEqual => {
-                    let current = env.get(&name.value)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x + y),
@@ -281,7 +324,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::MinusEqual => {
-                    let current = env.get(&name.value)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x - y),
@@ -291,7 +334,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::SlashEqual => {
-                    let current = env.get(&name.value)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x / y),
@@ -301,7 +344,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::StarEqual => {
-                    let current = env.get(&name.value)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x * y),
@@ -311,7 +354,7 @@ fn evaluate_expression(
                 }
             }
 
-            env.assign(&name.value, value.clone())?;
+            env.assign(name, value.clone())?;
 
             Ok(value)
         }
@@ -371,7 +414,7 @@ fn evaluate_expression(
         Expression::ClassInstance {
             ref symbol,
             ref props,
-        } => match env.get(&symbol.value)? {
+        } => match env.get(symbol)? {
             Object::Class(_, ref superclass, ref methods) => {
                 let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
                 let mut s_class_methods = None;
@@ -420,9 +463,9 @@ fn evaluate_expression(
             let object = evaluate_expression(object,   env)?;
 
             match object {
-                instance @ Object::Instance { .. } => instance.get_property(&property.value, env),
-                class @ Object::Class(_, _, _) => class.get_property(&property.value, env),
-                _ => Err(RuntimeError::NotAnIn),
+                instance @ Object::Instance { .. } => instance.get_property(property, env),
+                class @ Object::Class(_, _, _) => class.get_property(property, env),
+                _ => Err(RuntimeError::new(ErrorCode::NotAnInstance,expression.span)),
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr,   env),
@@ -440,8 +483,8 @@ fn evaluate_expression(
                         _ => unreachable!(),
                     };
 
-                    if index > (r.len() as i64) || index < 0 {
-                        return Err(RuntimeError::IndexOutOfBound);
+                    if index >= (r.len() as i64) || index < 0 {
+                        return Err(RuntimeError::new(ErrorCode::IndexOutOfBound,expression.span));
                     }
 
                     Ok(r[index as usize].to_owned())
@@ -463,14 +506,14 @@ fn evaluate_expression(
                 mut instance @ Object::Instance { .. } => {
                     instance.set(name.value, &value);
                 }
-                _ => return Err(RuntimeError::NotAnIn),
+                _ => return Err(RuntimeError::new(ErrorCode::NotAnInstance,expression.span)),
             }
 
             Ok(value)
         }
 
         Expression::Var(ref symbol) => {
-            env.get(&symbol.value)
+            env.get(symbol)
         }
 
         Expression::Ternary {
@@ -488,7 +531,7 @@ fn evaluate_expression(
         }
 
         Expression::This => {
-            env.get(&Symbol(0))
+            env.get(&Spanned::new(Symbol(0),EMPTYSPAN))
         }
 
         Expression::Unary { ref op, ref expr } => {
@@ -575,7 +618,7 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
 
 pub mod env {
 
-    use super::RuntimeError;
+    use super::{RuntimeError,ErrorCode};
     use builtins::BuiltIn;
     use object::Object;
     use util::symbol::Symbol;
@@ -585,6 +628,7 @@ pub mod env {
     use fnv::FnvHashMap;
     use std::cell::RefCell;
     use util::symbol::Symbols;
+    use util::pos::Spanned;
 
     #[derive(Debug, Clone, Default)]
     /// A Lox enviroment
@@ -635,18 +679,18 @@ pub mod env {
         /// Returns a runtime error if the not found
         pub fn assign(
             &self,
-            name: &Symbol,
+            name: &Spanned<Symbol>,
             value: Object,
         ) -> Result<(), RuntimeError> {
             let mut actual = self.actual.borrow_mut();
 
-            if actual.values.contains_key(name) {
-                *actual.values.get_mut(name).unwrap() = value;
+            if actual.values.contains_key(&name.value) {
+                *actual.values.get_mut(&name.value).unwrap() = value;
                 Ok(())
             } else {
                 match actual.outer {
                     Some(ref outer) => outer.assign(name,value),
-                    None => Err(RuntimeError::UndefinedSymbol(*name)),
+                    None => Err(RuntimeError::new(ErrorCode::UndefinedSymbol(name.value),name.span)),
                 }
             }
         }
@@ -655,16 +699,16 @@ pub mod env {
         /// Checks if the value exists and if not,
         /// searches the outer scope and then calls itselfs.
         /// Returns a runtime error if the not found
-        pub fn get(&self, name: &Symbol) -> Result<Object, RuntimeError> {
+        pub fn get(&self, name: &Spanned<Symbol>) -> Result<Object, RuntimeError> {
             let actual = self.actual.borrow();
 
 
-                if let Some(value) = actual.values.get(name) {
+                if let Some(value) = actual.values.get(&name.value) {
                     return Ok(value.clone());
                 } else {
                     match actual.outer {
                         Some(ref outer) => outer.get(name),
-                        None => Err(RuntimeError::UndefinedSymbol(*name)),
+                        None => Err(RuntimeError::new(ErrorCode::UndefinedSymbol(name.value),name.span)),
                     }
                 }
 

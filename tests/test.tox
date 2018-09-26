@@ -5,10 +5,8 @@ fun fib(n:int) -> int {
 }
 
 fun main() {
-
-
-  print "What is your name ?";
-  var name = io.readline();
-  print "Hello "+name;
-  return nil;
+    var arr = [0,1];
+    print arr[1];
+    print arr[2];
+    return nil;
 }

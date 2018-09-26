@@ -1,5 +1,5 @@
 //! Error reporting that reports all compiler errors.
-use ansi_term::Colour::{Blue, Fixed, Red, Yellow};
+use ansi_term::Colour::{Blue, Fixed, Red, Yellow,Purple};
 use pos::Span;
 use pos::EMPTYSPAN;
 use std::cell::RefCell;
@@ -18,6 +18,7 @@ pub struct Diagnostic {
 pub enum Level {
     Warn,
     Error,
+    RunTimeError
 }
 
 impl Display for Level {
@@ -25,6 +26,7 @@ impl Display for Level {
         match *self {
             Level::Warn => write!(f, "{}", Yellow.bold().paint("warning")),
             Level::Error => write!(f, "{}", Red.bold().paint("error")),
+            Level::RunTimeError => write!(f, "{}", Purple.bold().paint("Runtime Error"))
         }
     }
 }
@@ -60,6 +62,14 @@ impl Reporter {
             msg: msg.into(),
             span,
             level: Level::Error,
+        })
+    }
+
+    pub fn run_time_error<T: Into<String>>(&self, msg: T, span: Span) {
+        self.diagnostics.borrow_mut().push(Diagnostic {
+            msg: msg.into(),
+            span,
+            level: Level::RunTimeError,
         })
     }
 
@@ -106,6 +116,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
                 Level::Error => Red.bold().paint(carets),
+                Level::RunTimeError => Purple.bold().paint(carets),
             };
 
             let whitespace = repeat_string(" ", span.start.column as usize - 1);
@@ -115,6 +126,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
                 Level::Error => Red.bold().paint(carets),
+                Level::RunTimeError => Purple.bold().paint(carets),
             };
             println!("     {}{}", prefix, carets);
         } else if line_idx > span.start.line as usize
@@ -125,6 +137,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
                 Level::Error => Red.bold().paint(carets),
+                Level::RunTimeError => Purple.bold().paint(carets),
             };
             println!("     {}{}", prefix, carets);
         }
