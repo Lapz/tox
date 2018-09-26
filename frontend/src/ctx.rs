@@ -36,9 +36,14 @@ impl<'a> CompileCtx<'a> {
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::Fun(params, Box::new(returns)),
+                        ty: Type::Fun(params.clone(), Box::new(returns.clone())),
                     },
-                )
+                );
+
+                types.enter(
+                    symbol,
+                        Type::Fun(params, Box::new(returns)),
+                );
             };
 
             add_builtin("clock", vec![], Type::Float);
@@ -64,11 +69,17 @@ impl<'a> CompileCtx<'a> {
                 let entry = VarEntry::Var(Type::Class(
                     symbol,
                     HashMap::new(),
-                    methods_ty,
+                    methods_ty.clone(),
                     Unique::new(),
                 ));
 
                 vars.enter(symbol, entry);
+                types.enter(symbol,Type::Class(
+                    symbol,
+                    HashMap::new(),
+                    methods_ty,
+                    Unique::new(),
+                ));
             };
 
             add_builtin_class(

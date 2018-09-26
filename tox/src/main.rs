@@ -103,8 +103,6 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut infer = Infer::new();
 
-    //     resolver.resolve(&ast, )
-
     match infer.infer(ast.clone(), &strings, &mut reporter) {
         Ok(_) => (),
         Err(_) => {

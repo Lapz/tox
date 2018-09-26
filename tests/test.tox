@@ -6,6 +6,9 @@ fun fib(n:int) -> int {
 
 fun main() {
 
-  print fib(10);
+
+  print "What is your name ?";
+  var name = io.readline();
+  print "Hello "+name;
   return nil;
 }
