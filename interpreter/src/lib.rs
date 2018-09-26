@@ -7,22 +7,27 @@ pub mod interpreter;
 mod object;
 
 pub use self::interpreter::env::Environment;
-use self::interpreter::{evaluate_statement, RuntimeError};
-use fnv::FnvHashMap;
+use self::interpreter::{evaluate_function,evaluate_statement, RuntimeError};
+//use fnv::FnvHashMap;
 use object::Object;
-use syntax::ast::expr::VariableUseHandle;
-use syntax::ast::statement::Statement;
-use util::pos::Spanned;
+use syntax::ast::Program;
+use util::symbol::Symbol;
 
 pub fn interpret(
-    statements: &[Spanned<Statement>],
-    locals: &FnvHashMap<VariableUseHandle, usize>,
+    program: &Program,
     env: &mut Environment,
+    main: Symbol,
 ) -> Result<Object, RuntimeError> {
     let mut result = Object::None;
 
-    for statement in statements {
-        result = evaluate_statement(statement, locals, env)?
+    for function in program.functions.iter() {
+        result=evaluate_function(&function.value, env)?;
+    }
+
+    for function in program.functions.iter() {
+        if function.value.name.value == main {
+            result = evaluate_statement(&function.value.body, env)?; // Evaluate main after everything else
+        }
     }
 
     Ok(result)

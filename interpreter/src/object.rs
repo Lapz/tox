@@ -9,8 +9,7 @@ use std::hash::{Hash, Hasher};
 use std::ops::Not;
 use std::rc::Rc;
 use std::str;
-use syntax::ast::expr::VariableUseHandle;
-use syntax::ast::statement::Statement;
+use syntax::ast::Statement;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
@@ -109,7 +108,6 @@ impl Object {
     pub fn call(
         &self,
         arguments: &[Object],
-        locals: &FnvHashMap<VariableUseHandle, usize>,
     ) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
@@ -118,13 +116,21 @@ impl Object {
 
                 let zipped = params.iter().zip(arguments.iter());
 
-                for (_, (symbol, value)) in zipped.enumerate() {
-                    local_environment.define(*symbol, value.clone());
+                for symbol in params.iter() {
+                    for arg in arguments.iter() {
+                        local_environment.define(*symbol,arg.clone());
+                    }
                 }
+
+
+//
+//                for (_, (symbol, value)) in zipped.enumerate() {
+//                    local_environment.define(*symbol, value.clone());
+//                }
 
                 use interpreter::evaluate_statement;
 
-                match evaluate_statement(body, locals, &mut local_environment) {
+                match evaluate_statement(body, &mut local_environment) {
                     Ok(_) => (),
                     Err(e) => match e {
                         RuntimeError::Return(ref r) => {

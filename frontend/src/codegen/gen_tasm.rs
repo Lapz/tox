@@ -8,7 +8,7 @@ impl Compiler {
         match statement {
             Statement::Block(ref block) => {
                 let label = Label::new();
-                write!(&mut self.file, "{}", label)?;
+                write!(&mut self.file, "{}:\n", label)?;
 
                 for statement in block {
                     self.build_statement(statement)?;

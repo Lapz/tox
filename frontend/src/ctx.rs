@@ -97,6 +97,9 @@ impl<'a> CompileCtx<'a> {
         self.reporter.warn(msg, span)
     }
 
+    pub fn global_error(&mut self,msg:&str) {
+        self.reporter.global_error(msg)
+    }
     pub fn remove_error(&mut self) {
         self.reporter.remove_error();
     }
@@ -135,4 +138,6 @@ impl<'a> CompileCtx<'a> {
     pub fn add_var(&mut self, symbol: Symbol, data: VarEntry) {
         self.vars.enter(symbol, data)
     }
+
+
 }

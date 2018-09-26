@@ -30,6 +30,7 @@ impl Infer {
                     new_statements.push(self.infer_statement(statement, ctx)?);
                 }
 
+
                 ctx.end_scope();
 
                 Ok(t::Statement::Block(new_statements))
@@ -128,7 +129,8 @@ impl Infer {
             }
 
             Statement::Print(expr) => {
-                let type_expr = self.infer_expr(expr, ctx)?;
+                let mut type_expr = self.infer_expr(expr, ctx)?;
+                type_expr.ty = Type::Nil;
 
                 Ok(t::Statement::Print(type_expr)) // Expressions are given the type of Nil to signify that they return nothing
             }

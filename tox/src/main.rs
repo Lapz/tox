@@ -116,7 +116,7 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     let mut env = Environment::new();
     env.fill_env(&mut symbols);
 
-    match interpret(&ast, &mut env) {
+    match interpret(&ast, &mut env,infer.get_main()) {
         Ok(_) => (),
         Err(err) => {
             err.fmt(&symbols);

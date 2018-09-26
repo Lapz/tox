@@ -691,13 +691,13 @@ mod tests {
     fn test_jump_equal_opcode() {
         let mut test_vm = VM::new();
 
-        test_vm.registers[0] = 73;
+        test_vm.registers[0] = 72;
         test_vm.equal_flag = true;
 
         let mut test_bytes = vec![
             opcode::JMPEQ,
             0,
-            0,
+            72,
             0, // JMPEQUAL $1
             opcode::NOT,
             0,
