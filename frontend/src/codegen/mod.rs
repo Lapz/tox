@@ -1,7 +1,7 @@
 mod gen_tasm;
 mod label;
 
-use ast::{Program,Function};
+use ast::{Function, Program};
 use std::fs::File;
 use std::io::{self, Write};
 
@@ -26,7 +26,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_function(&mut self, func:&Function) -> io::Result<()> {
+    fn compile_function(&mut self, func: &Function) -> io::Result<()> {
         self.build_statement(&func.body)
     }
 }

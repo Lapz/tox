@@ -30,7 +30,6 @@ impl Infer {
                     new_statements.push(self.infer_statement(statement, ctx)?);
                 }
 
-
                 ctx.end_scope();
 
                 Ok(t::Statement::Block(new_statements))

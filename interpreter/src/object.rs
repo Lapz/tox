@@ -1,4 +1,4 @@
-use super::interpreter::{RuntimeError,ErrorCode};
+use super::interpreter::{ErrorCode, RuntimeError};
 use builtins::BuiltInFunction;
 use fnv::FnvHashMap;
 use interpreter::env::Environment;
@@ -71,7 +71,11 @@ impl Object {
         }
     }
 
-    pub fn get_property(&self, name: &Spanned<Symbol>, env: &Environment) -> Result<Object, RuntimeError> {
+    pub fn get_property(
+        &self,
+        name: &Spanned<Symbol>,
+        env: &Environment,
+    ) -> Result<Object, RuntimeError> {
         match *self {
             Object::Instance {
                 ref fields,
@@ -89,7 +93,10 @@ impl Object {
                         return Ok(smethods.get(&name.value).unwrap().bind(self));
                     }
                 }
-                Err(RuntimeError::new(ErrorCode::UndefinedProperty(name.value),name.span))
+                Err(RuntimeError::new(
+                    ErrorCode::UndefinedProperty(name.value),
+                    name.span,
+                ))
             }
 
             Object::Class(_, ref superclass, ref methods) => {
@@ -98,17 +105,17 @@ impl Object {
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
-                Err(RuntimeError::new(ErrorCode::UndefinedProperty(name.value),name.span))
+                Err(RuntimeError::new(
+                    ErrorCode::UndefinedProperty(name.value),
+                    name.span,
+                ))
             }
             _ => unreachable!(), // Type checking means no trying to access a property
                                  // that dosen't exist
         }
     }
 
-    pub fn call(
-        &self,
-        arguments: &[Object],
-    ) -> Result<Object, RuntimeError> {
+    pub fn call(&self, arguments: &[Object]) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
             Object::Function(_, ref params, ref body, ref fenv) => {
@@ -116,17 +123,16 @@ impl Object {
 
                 let zipped = params.iter().zip(arguments.iter());
 
-                for symbol in params.iter() {
-                    for arg in arguments.iter() {
-                        local_environment.define(*symbol,arg.clone());
-                    }
-                }
-
-
-//
-//                for (_, (symbol, value)) in zipped.enumerate() {
-//                    local_environment.define(*symbol, value.clone());
+//                for symbol in params.iter() {
+//                    for arg in arguments.iter() {
+//                        local_environment.define(*symbol, arg.clone());
+//                    }
 //                }
+
+
+                                for (_, (symbol, value)) in zipped.enumerate() {
+                                    local_environment.define(*symbol, value.clone());
+                                }
 
                 use interpreter::evaluate_statement;
 

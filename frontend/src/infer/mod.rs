@@ -13,14 +13,14 @@ mod user_types;
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
 use fnv::FnvHashMap;
-use util::symbol::Symbol;
 use std::rc::Rc;
+use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Infer {
     this: types::Type, // for this
     body: types::Type,
-    main:Option<Symbol>,
+    main: Option<Symbol>,
     // resolver: self::resolver::Resolver,
 }
 
@@ -45,7 +45,7 @@ impl Infer {
 
         let mut new_program = super::ast::Program {
             functions: Vec::new(),
-            classes:Vec::new()
+            classes: Vec::new(),
         };
 
         for alias in program.aliases.iter() {
@@ -56,21 +56,22 @@ impl Infer {
             new_program.classes.push(self.infer_class(class, &mut ctx)?);
         }
 
-        for function in program.functions{
-            new_program.functions.push(self.infer_function(function,&mut ctx)?);
+        for function in program.functions {
+            new_program
+                .functions
+                .push(self.infer_function(function, &mut ctx)?);
         }
 
         if self.main.is_none() {
             ctx.global_error("Main method is missing");
-            return  Err(());
+            return Err(());
         }
 
         Ok(new_program)
     }
 
-
-    pub fn set_main(&mut self,symbol:Symbol) {
-        self.main =Some(symbol)
+    pub fn set_main(&mut self, symbol: Symbol) {
+        self.main = Some(symbol)
     }
 
     pub fn get_main(&mut self) -> Symbol {

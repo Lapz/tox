@@ -40,10 +40,7 @@ impl<'a> CompileCtx<'a> {
                     },
                 );
 
-                types.enter(
-                    symbol,
-                        Type::Fun(params, Box::new(returns)),
-                );
+                types.enter(symbol, Type::Fun(params, Box::new(returns)));
             };
 
             add_builtin("clock", vec![], Type::Float);
@@ -75,12 +72,10 @@ impl<'a> CompileCtx<'a> {
                 ));
 
                 vars.enter(symbol, entry);
-                types.enter(symbol,Type::Class(
+                types.enter(
                     symbol,
-                    HashMap::new(),
-                    methods_ty,
-                    Unique::new(),
-                ));
+                    Type::Class(symbol, HashMap::new(), methods_ty, Unique::new()),
+                );
             };
 
             add_builtin_class(
@@ -109,7 +104,7 @@ impl<'a> CompileCtx<'a> {
         self.reporter.warn(msg, span)
     }
 
-    pub fn global_error(&mut self,msg:&str) {
+    pub fn global_error(&mut self, msg: &str) {
         self.reporter.global_error(msg)
     }
     pub fn remove_error(&mut self) {
@@ -150,6 +145,4 @@ impl<'a> CompileCtx<'a> {
     pub fn add_var(&mut self, symbol: Symbol, data: VarEntry) {
         self.vars.enter(symbol, data)
     }
-
-
 }

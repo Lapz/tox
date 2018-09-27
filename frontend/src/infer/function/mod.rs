@@ -50,11 +50,9 @@ impl Infer {
         let span = function.value.body.span;
         let body = self.infer_statement(function.value.body, ctx)?;
 
-
         ctx.end_scope();
 
         self.unify(&returns, &self.body, span, ctx)?;
-
 
         if &ctx.name(function.value.name.value) == "main" {
             self.set_main(function.value.name.value)

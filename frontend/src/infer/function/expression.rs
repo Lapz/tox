@@ -389,7 +389,6 @@ impl Infer {
             } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
-
                 match ob_instance.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name) {

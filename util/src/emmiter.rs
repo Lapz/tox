@@ -1,5 +1,5 @@
 //! Error reporting that reports all compiler errors.
-use ansi_term::Colour::{Blue, Fixed, Red, Yellow,Purple};
+use ansi_term::Colour::{Blue, Fixed, Purple, Red, Yellow};
 use pos::Span;
 use pos::EMPTYSPAN;
 use std::cell::RefCell;
@@ -18,7 +18,7 @@ pub struct Diagnostic {
 pub enum Level {
     Warn,
     Error,
-    RunTimeError
+    RunTimeError,
 }
 
 impl Display for Level {
@@ -26,29 +26,41 @@ impl Display for Level {
         match *self {
             Level::Warn => write!(f, "{}", Yellow.bold().paint("warning")),
             Level::Error => write!(f, "{}", Red.bold().paint("error")),
-            Level::RunTimeError => write!(f, "{}", Purple.bold().paint("Runtime Error"))
+            Level::RunTimeError => write!(f, "{}", Purple.bold().paint("Runtime Error")),
         }
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Reporter {
     diagnostics: Rc<RefCell<Vec<Diagnostic>>>,
+    end: Span,
 }
 
 impl Reporter {
     pub fn new() -> Reporter {
-        Default::default()
+        Self {
+            diagnostics: Rc::new(RefCell::new(Vec::new())),
+            end: EMPTYSPAN,
+        }
     }
 
     pub fn has_error(&self) -> bool {
         self.diagnostics.borrow().is_empty()
     }
 
+    pub fn set_end(&mut self, span: Span) {
+        self.end = span;
+    }
+
+    pub fn end(&self) -> Span {
+        self.end
+    }
+
     pub fn global_error(&self, msg: &str) {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
-            span: EMPTYSPAN,
+            span: self.end,
             level: Level::Error,
         })
     }
@@ -111,7 +123,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             } else {
                 line.len()
             };
-            let carets = repeat_string("^", end - span.start.column as usize + 1);
+            let carets = repeat_string("^", end-span.start.column as usize+1);
 
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
@@ -119,9 +131,13 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::RunTimeError => Purple.bold().paint(carets),
             };
 
-            let whitespace = repeat_string(" ", span.start.column as usize - 1);
-            println!("     {}{}{}", prefix, whitespace, carets);
+            if span.start.column != 0 {
+                let whitespace = repeat_string(" ", span.start.column as usize -1);
+                println!("     {}{}{}", prefix, whitespace, carets);
+            }
+
         } else if line_idx == span.end.line as usize {
+            print!("b");
             let carets = repeat_string("^", span.end.column as usize);
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
@@ -133,6 +149,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             && line_idx < span.end.line as usize
             && !line.is_empty()
         {
+            print!("c");
             let carets = repeat_string("^", line.len());
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),

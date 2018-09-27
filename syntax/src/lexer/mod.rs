@@ -41,6 +41,7 @@ pub struct Lexer<'a> {
     chars: CharPosition<'a>,
     reporter: Reporter,
     lookahead: Option<(Position, char)>,
+    start:Position,
     end: Position,
 }
 
@@ -52,6 +53,7 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             end,
+            start:end,
             reporter,
             lookahead: chars.next(),
             chars,
@@ -321,11 +323,21 @@ impl<'a> Lexer<'a> {
             }
         }
 
+        tokens.push(span(TokenType::EOF, self.end));
+        tokens.retain(|t| t.value.token != TokenType::COMMENT);
+
         if errors.is_empty() {
             return Ok(tokens);
         }
 
         Err(())
+    }
+
+    pub fn end_span(&self) -> Span {
+        Span {
+            start: self.start,
+            end: self.end,
+        }
     }
 }
 

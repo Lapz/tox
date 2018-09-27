@@ -902,7 +902,7 @@ impl<'a> Parser<'a> {
                         span: *span,
                     };
                     self.parse_ident(ident)
-                },
+                }
 
                 TokenType::LBRACKET => {
                     let mut items = Vec::with_capacity(32);
@@ -912,7 +912,6 @@ impl<'a> Parser<'a> {
                             if items.len() >= 32 {
                                 break;
                             };
-
 
                             items.push(self.parse_expression()?);
 
@@ -924,16 +923,14 @@ impl<'a> Parser<'a> {
                         }
                     }
 
-                    let close_span = self.consume_get_span(&TokenType::RBRACKET,"Expected a closing `]`")?;
+                    let close_span =
+                        self.consume_get_span(&TokenType::RBRACKET, "Expected a closing `]`")?;
 
 
                     Ok(Spanned {
-                        value:Expression::Array {
-                            items
-                        },
-                        span:span.to(close_span)
+                        value: Expression::Array { items },
+                        span: span.to(close_span),
                     })
-
                 }
 
                 ref other => {
@@ -1005,7 +1002,6 @@ impl<'a> Parser<'a> {
                 let index = Box::new(self.parse_expression()?);
 
                 let close_span = self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?;
-
                 return Ok(Spanned {
                     span: open_span.to(close_span),
                     value: Expression::SubScript {
