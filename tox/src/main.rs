@@ -64,7 +64,9 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let tokens = match Lexer::new(input, reporter.clone()).lex() {
+    let mut lexer = Lexer::new(input, reporter.clone());
+
+    let tokens = match lexer.lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -78,6 +80,8 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
             ::std::process::exit(65)
         }
     };
+
+    reporter.set_end(lexer.end_span());
 
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
@@ -114,17 +118,16 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     let mut env = Environment::new();
     env.fill_env(&mut symbols);
 
-    match interpret(&ast, &mut env,infer.get_main()) {
+    match interpret(&ast, &mut env, infer.get_main()) {
         Ok(_) => (),
         Err(err) => {
             if let Some(span) = err.span {
                 let msg = err.code.reason(&symbols);
 
-                reporter.run_time_error(msg,span);
+                reporter.run_time_error(msg, span);
 
                 reporter.emit(input);
-
-            }else {
+            } else {
                 println!("{:?}", err.code.reason(&symbols));
             }
 
@@ -182,7 +185,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let tokens = match Lexer::new(input, reporter.clone()).lex() {
+    let mut lexer = Lexer::new(input, reporter.clone());
+
+    let tokens = match lexer.lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -196,6 +201,8 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
             ::std::process::exit(65)
         }
     };
+
+    reporter.set_end(lexer.end_span());
 
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));

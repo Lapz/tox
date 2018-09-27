@@ -130,14 +130,17 @@ impl Repl {
 
         let mut reporter = Reporter::new();
 
-        let tokens = match Lexer::new(&input, reporter.clone()).lex() {
-            Ok(tokens) => tokens,
+        let mut lexer = Lexer::new(input, reporter.clone());
 
+        let tokens = match lexer.lex() {
+            Ok(tokens) => tokens,
             Err(_) => {
-                reporter.emit(&input);
-                return Err(());
+                reporter.emit(input);
+                ::std::process::exit(65)
             }
         };
+
+        reporter.set_end(lexer.end_span());
 
         let strings = Rc::new(SymbolFactory::new());
         let mut symbols = Symbols::new(Rc::clone(&strings));
