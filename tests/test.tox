@@ -7,6 +7,6 @@ fun fib(n:int) -> int {
 fun main() {
     var arr = [0,1];
     print arr[1];
-    print arr[2];
+    to_int("a");
     return nil;
 }

@@ -65,6 +65,14 @@ impl Reporter {
         })
     }
 
+    pub fn global_run_time_error(&self, msg: &str) {
+        self.diagnostics.borrow_mut().push(Diagnostic {
+            msg: msg.into(),
+            span: self.end,
+            level: Level::RunTimeError
+        })
+    }
+
     pub fn remove_error(&mut self) {
         self.diagnostics.borrow_mut().pop();
     }
@@ -137,7 +145,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             }
 
         } else if line_idx == span.end.line as usize {
-            print!("b");
+
             let carets = repeat_string("^", span.end.column as usize);
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
@@ -149,7 +157,6 @@ pub fn print(input: &str, d: &Diagnostic) {
             && line_idx < span.end.line as usize
             && !line.is_empty()
         {
-            print!("c");
             let carets = repeat_string("^", line.len());
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),

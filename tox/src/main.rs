@@ -128,7 +128,9 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
 
                 reporter.emit(input);
             } else {
-                println!("{:?}", err.code.reason(&symbols));
+
+                reporter.global_run_time_error(&err.code.reason(&symbols));
+                reporter.emit(input);
             }
 
             ::std::process::exit(65)
@@ -209,11 +211,6 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
-            if pprint {
-                // for statement in &statements {
-                //     println!("{}", statement.value.pprint(&mut symbols));
-                // }
-            }
             statements
         }
         Err(_) => {
