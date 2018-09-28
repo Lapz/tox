@@ -33,6 +33,7 @@ pub enum Object {
         fields: Rc<RefCell<FnvHashMap<Symbol, Object>>>,
         sclassmethods: Option<FnvHashMap<Symbol, Object>>,
     },
+    Return(Box<Object>),
     Nil,
     None,
 }
@@ -43,7 +44,7 @@ unsafe impl Send for Object {}
 impl Object {
     pub fn is_truthy(&self) -> bool {
         match *self {
-            Object::Nil => false,
+            Object::Nil | Object::None => false,
             Object::Bool(b) => b,
             _ => true,
         }
@@ -130,8 +131,14 @@ impl Object {
 
                 use interpreter::evaluate_statement;
 
-                match evaluate_statement(body, &mut local_environment) {
-                    Ok(_) => (),
+               return match evaluate_statement(body, &mut local_environment) {
+                    Ok(value) =>{
+                        match value {
+                            Object::Return(r) => Ok(*r),
+                            _ => Ok(value)
+                        }
+
+                    },
                     Err(e) => match e.code {
                         ErrorCode::Return(ref r) => {
                             return Ok(*r.clone());
@@ -141,7 +148,7 @@ impl Object {
                     },
                 }
 
-                Ok(Object::Nil)
+
             }
             ref e => panic!("{:?} Should not be calling this method ", e),
         }
@@ -159,6 +166,7 @@ impl Object {
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
             Object::Str(ref s) => str::from_utf8(s).unwrap().into(),
+            Object::Return(ref val) => format!("return <{}>",val),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -230,7 +238,7 @@ impl fmt::Debug for Object {
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
-                write!(f, "instance")?;
+                write!(f, "class instance:\n\t")?;
 
                 let mut fmt_string = String::new();
                 fmt_string.push_str("fields ");
@@ -261,6 +269,7 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
             Object::Nil => write!(f, "nil"),
+            Object::Return(ref v) => write!(f,"return <{:?}>",v),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
@@ -305,6 +314,7 @@ impl Display for Object {
             }
             Object::Nil => write!(f, "nil"),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
+            Object::Return(ref v) => write!(f,"return <{}>",v),
         }
     }
 }

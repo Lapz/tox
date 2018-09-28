@@ -21,6 +21,7 @@ pub enum ErrorCode {
     Return(Box<Object>),
 }
 
+#[derive(Debug)]
 pub struct RuntimeError {
     pub code: ErrorCode,
     pub span: Option<Span>,
@@ -148,11 +149,24 @@ pub(crate) fn evaluate_statement(
         Statement::Block(ref statements) => {
             let mut environment = Environment::new_with_outer(env);
 
+            let mut result = Object::None;
+
+
+
+
             for statement in statements {
-                evaluate_statement(statement, &mut environment)?;
+
+                let object =evaluate_statement(statement, &mut environment);
+
+                match object {
+                    Ok(Object::Return(_)) => return object,
+                    Ok(val) => result = val,
+                    Err(_) => return object
+                }
+
             }
 
-            Ok(Object::None)
+            Ok(result)
         }
 
         Statement::Break => Err(RuntimeError::new(ErrorCode::Break, statement.span)),
@@ -160,7 +174,10 @@ pub(crate) fn evaluate_statement(
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, env)?.is_truthy() {
                 match evaluate_statement(body, env) {
-                    Ok(_) => (),
+                    Ok(value) => match value {
+                        Object::Return(_) =>return Ok(value),
+                        _ => ()
+                    },
                     Err(e) => match e.code {
                         ErrorCode::Break => break,
                         ErrorCode::Continue => continue,
@@ -183,7 +200,10 @@ pub(crate) fn evaluate_statement(
             if init.is_none() && cond.is_none() && incr.is_none() {
                 loop {
                     match evaluate_statement(body, env) {
-                        Ok(value) => value,
+                        Ok(value) => match value {
+                            Object::Return(_) =>return Ok(value),
+                            _ => value
+                        },
                         Err(e) => match e.code {
                             ErrorCode::Break => break,
                             ErrorCode::Continue => continue,
@@ -201,7 +221,10 @@ pub(crate) fn evaluate_statement(
             if let Some(ref cond) = *cond {
                 while evaluate_expression(cond, env)?.is_truthy() {
                     match evaluate_statement(body, env) {
-                        Ok(value) => value,
+                        Ok(value) => match value {
+                           Object::Return(_) =>return Ok(value),
+                            _ => value
+                        },
                         Err(e) => match e.code {
                             ErrorCode::Break => break,
                             ErrorCode::Continue => continue,
@@ -221,18 +244,15 @@ pub(crate) fn evaluate_statement(
         Statement::Print(ref expr) => {
             use std::io;
             use std::io::prelude::*;
-
             let value = evaluate_expression(expr, env)?;
+
             println!("{}", value.as_string());
             let _ = io::stdout().flush();
 
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) => Err(RuntimeError::new(
-            ErrorCode::Return(Box::new(evaluate_expression(expr, env)?)),
-            statement.span,
-        )),
+        Statement::Return(ref expr) =>Ok(Object::Return(Box::new(evaluate_expression(expr, env)?))),
 
         Statement::If {
             ref cond,
@@ -243,9 +263,11 @@ pub(crate) fn evaluate_statement(
                 evaluate_statement(then, env)
             } else if let Some(ref else_statement) = *otherwise {
                 evaluate_statement(else_statement, env)
-            } else {
+            }else{
                 Ok(Object::None)
             }
+
+
         }
 
         Statement::VarDeclaration {
@@ -256,12 +278,13 @@ pub(crate) fn evaluate_statement(
             if let Some(ref expr) = *expr {
                 let value = evaluate_expression(expr, env)?;
                 env.define(ident.value, value);
-                return Ok(Object::None);
+            } else {
+                env.define(ident.value, Object::Nil);
             }
 
-            env.define(ident.value, Object::Nil);
 
-            Ok(Object::None)
+
+            Ok(Object::Nil)
         }
     }
 }
@@ -340,7 +363,9 @@ fn evaluate_expression(
             ref op,
             ref rhs,
         } => {
+
             let left = evaluate_expression(lhs, env)?;
+            println!("{:#?}",left);
             let right = evaluate_expression(rhs, env)?;
 
             match op.value {
@@ -441,7 +466,10 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                _ => Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span)),
+                ref e=> {
+                    println!("{:?}",e);
+                    Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
+                },
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),

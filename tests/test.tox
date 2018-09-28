@@ -1,3 +1,11 @@
+fun fib(n:int) -> int {
+  if n < 2 {
+    return n;
+  } else {
+    return fib(n - 2) + fib(n - 1);
+  }
+}
+
 class Toggle {
     state:bool;
 
@@ -13,12 +21,8 @@ class Toggle {
 
 
 
-fun main() -> int{
-    var toggle  = Toggle{state:true};
-
-    print toggle.activate().value();
-
-    print toggle.activate().value();
+fun main() -> int {
+    print fib(10);
 
     return 0;
 }

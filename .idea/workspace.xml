@@ -3,16 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added push and pop">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/infer/class.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/infer/class.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/infer/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/infer/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/interpreter/src/interpreter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/interpreter.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/interpreter/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/interpreter/src/object.rs" beforeDir="false" afterPath="$PROJECT_DIR$/interpreter/src/object.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/lexer/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/lexer/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/parser/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/parser/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tox" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/tox/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/src/emmiter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/util/src/emmiter.rs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -41,35 +35,36 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="rs" value="12067" />
+          <entry key="rs" value="13164" />
           <entry key="tasm" value="558" />
           <entry key="toml" value="43" />
-          <entry key="tox" value="603" />
+          <entry key="tox" value="736" />
           <entry key="txt" value="21" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="1182" />
-          <entry key="Rust" value="12067" />
+          <entry key="PLAIN_TEXT" value="1315" />
+          <entry key="Rust" value="13164" />
           <entry key="TOML file" value="43" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="md" value="1" />
-          <entry key="rs" value="81" />
+          <entry key="rs" value="83" />
           <entry key="tasm" value="4" />
-          <entry key="toml" value="4" />
+          <entry key="toml" value="5" />
           <entry key="tox" value="10" />
+          <entry key="txt" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Markdown" value="1" />
-          <entry key="PLAIN_TEXT" value="14" />
-          <entry key="Rust" value="81" />
-          <entry key="TOML file" value="4" />
+          <entry key="PLAIN_TEXT" value="19" />
+          <entry key="Rust" value="83" />
+          <entry key="TOML file" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.spring.boot.mvc.usages" />
@@ -89,17 +84,14 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/interpreter/src/interpreter.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="132">
-              <caret line="131" selection-start-line="131" selection-end-line="131" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/interpreter/src/lib.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="525">
-              <caret line="35" selection-start-line="35" selection-end-line="35" />
+            <state relative-caret-position="335">
+              <caret line="165" selection-start-line="165" selection-end-line="165" />
+              <folding>
+                <element signature="e#19849#19850#0" expanded="true" />
+                <element signature="e#19887#19888#0" expanded="true" />
+                <element signature="e#20639#20640#0" expanded="true" />
+                <element signature="e#20707#20708#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -107,8 +99,44 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/interpreter/src/object.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="124" selection-start-line="124" selection-end-line="124" />
+            <state relative-caret-position="90">
+              <caret line="47" column="33" selection-start-line="47" selection-start-column="33" selection-end-line="47" selection-end-column="33" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tox/ast.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-7743">
+              <caret line="157" column="55" selection-start-line="157" selection-start-column="47" selection-end-line="157" selection-end-column="55" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tox/Cargo.toml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="60">
+              <caret line="4" column="10" selection-start-line="4" selection-start-column="10" selection-end-line="4" selection-end-column="10" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tox/ast2.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="157">
+              <caret line="157" column="55" selection-start-line="157" selection-start-column="47" selection-end-line="157" selection-end-column="55" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/interpreter/src/builtins.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="403">
+              <caret line="31" column="30" lean-forward="true" selection-start-line="31" selection-start-column="30" selection-end-line="31" selection-end-column="30" />
             </state>
           </provider>
         </entry>
@@ -116,8 +144,17 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tests/test.tox">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="22" column="12" selection-start-line="22" selection-start-column="12" selection-end-line="22" selection-end-column="12" />
+            <state relative-caret-position="75">
+              <caret line="5" column="3" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="90">
+              <caret line="612" column="7" selection-start-line="612" selection-start-column="7" selection-end-line="612" selection-end-column="7" />
             </state>
           </provider>
         </entry>
@@ -133,20 +170,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>$0 $1 $0</find>
-      <find>CMP</find>
-      <find>EXPONENTIAL</find>
-      <find>^</find>
-      <find>or</find>
-      <find>and</find>
-      <find>AND</find>
-      <find>, PartialEq</find>
-      <find>PartialOrd,</find>
-      <find>Ty</find>
-      <find>VAR</find>
-      <find>JMPEQ</find>
-      <find>STATEMENT::cLASS</find>
-      <find>locals,</find>
       <find>ref</find>
       <find>, distance</find>
       <find>Call</find>
@@ -163,6 +186,20 @@
       <find>RuntimeError</find>
       <find>.call(</find>
       <find>doesn't have a field</find>
+      <find>RuntimeERROR::</find>
+      <find>Return</find>
+      <find>call</find>
+      <find>Not</find>
+      <find>NotAnInstance</find>
+      <find>instance</find>
+      <find>Object::Nil</find>
+      <find>RETURN</find>
+      <find>parse_if_s</find>
+      <find>otherwise</find>
+      <find>println!</find>
+      <find>None</find>
+      <find>Grouping</find>
+      <find>Object::None</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -201,16 +238,20 @@
         <option value="$PROJECT_DIR$/frontend/src/infer/function/mod.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/function/statements.rs" />
         <option value="$PROJECT_DIR$/frontend/src/ctx.rs" />
-        <option value="$PROJECT_DIR$/interpreter/src/builtins.rs" />
         <option value="$PROJECT_DIR$/syntax/src/parser/mod.rs" />
         <option value="$PROJECT_DIR$/util/src/emmiter.rs" />
-        <option value="$PROJECT_DIR$/interpreter/src/interpreter.rs" />
         <option value="$PROJECT_DIR$/tox/src/main.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/mod.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" />
-        <option value="$PROJECT_DIR$/interpreter/src/object.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/class.rs" />
+        <option value="$PROJECT_DIR$/interpreter/src/builtins.rs" />
         <option value="$PROJECT_DIR$/interpreter/src/lib.rs" />
+        <option value="$PROJECT_DIR$/tox/ast2.txt" />
+        <option value="$PROJECT_DIR$/tox/ast.txt" />
+        <option value="$PROJECT_DIR$/tox/lhs2.txt" />
+        <option value="$PROJECT_DIR$/tox/lhs.txt" />
+        <option value="$PROJECT_DIR$/interpreter/src/object.rs" />
+        <option value="$PROJECT_DIR$/interpreter/src/interpreter.rs" />
         <option value="$PROJECT_DIR$/tests/test.tox" />
       </list>
     </option>
@@ -243,17 +284,6 @@
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="frontend" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="frontend" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
               <item name="interpreter" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -265,7 +295,25 @@
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="tests" type="462c0819:PsiDirectoryNode" />
+              <item name="syntax" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="syntax" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="syntax" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="parser" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -422,7 +470,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="17289000" />
+    <option name="totallyTimeSpent" value="21697000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -446,7 +494,7 @@
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.28337875" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -512,9 +560,6 @@
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main.rs" />
-    <entry file="file://$PROJECT_DIR$/src/lexer.rs" />
-    <entry file="file://$PROJECT_DIR$/src/token.rs" />
     <entry file="file://$PROJECT_DIR$/vm/Cargo.toml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="165">
@@ -589,13 +634,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/Cargo.toml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" selection-start-line="16" selection-end-line="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/interpreter/Cargo.toml">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -631,20 +669,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="281">
           <caret line="50" column="54" selection-start-line="50" selection-start-column="54" selection-end-line="50" selection-end-column="54" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="14940">
-          <caret line="1002" column="95" selection-start-line="1002" selection-start-column="95" selection-end-line="1002" selection-end-column="95" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/interpreter/src/builtins.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="795">
-          <caret line="57" column="41" selection-start-line="57" selection-start-column="41" selection-end-line="57" selection-end-column="41" />
         </state>
       </provider>
     </entry>
@@ -747,29 +771,84 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/interpreter/src/lib.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="525">
-          <caret line="35" selection-start-line="35" selection-end-line="35" />
+        <state relative-caret-position="249">
+          <caret line="29" selection-start-line="29" selection-end-line="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="612" column="7" selection-start-line="612" selection-start-column="7" selection-end-line="612" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/ast2.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="157">
+          <caret line="157" column="55" selection-start-line="157" selection-start-column="47" selection-end-line="157" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/interpreter/src/builtins.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="403">
+          <caret line="31" column="30" lean-forward="true" selection-start-line="31" selection-start-column="30" selection-end-line="31" selection-end-column="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="10" selection-start-line="4" selection-start-column="10" selection-end-line="4" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/lhs.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1952">
+          <caret line="30765" column="5" lean-forward="true" selection-start-line="30765" selection-start-column="5" selection-end-line="30765" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/lhs2.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="396">
+          <caret line="1098" column="1" selection-start-line="1098" selection-start-column="1" selection-end-line="1098" selection-end-column="1" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/interpreter/src/object.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="124" selection-start-line="124" selection-end-line="124" />
+        <state relative-caret-position="90">
+          <caret line="47" column="33" selection-start-line="47" selection-start-column="33" selection-end-line="47" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/ast.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7743">
+          <caret line="157" column="55" selection-start-line="157" selection-start-column="47" selection-end-line="157" selection-end-column="55" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/interpreter/src/interpreter.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="131" selection-start-line="131" selection-end-line="131" />
+        <state relative-caret-position="335">
+          <caret line="165" selection-start-line="165" selection-end-line="165" />
+          <folding>
+            <element signature="e#19849#19850#0" expanded="true" />
+            <element signature="e#19887#19888#0" expanded="true" />
+            <element signature="e#20639#20640#0" expanded="true" />
+            <element signature="e#20707#20708#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tests/test.tox">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="22" column="12" selection-start-line="22" selection-start-column="12" selection-end-line="22" selection-end-column="12" />
+        <state relative-caret-position="75">
+          <caret line="5" column="3" selection-start-line="5" selection-start-column="3" selection-end-line="5" selection-end-column="3" />
         </state>
       </provider>
     </entry>

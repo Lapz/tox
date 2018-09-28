@@ -25,14 +25,19 @@ pub fn interpret(
     }
 
     for function in program.functions.iter() {
+
         evaluate_function(&function.value, env)?;
+
     }
 
-    for function in program.functions.iter() {
+    for function in program.functions.iter() { ;
+
         if function.value.name.value == main {
             result = evaluate_statement(&function.value.body, env)?; // Evaluate main after everything else
         }
     }
+
+
 
     Ok(result)
 }
