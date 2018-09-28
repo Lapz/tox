@@ -123,16 +123,10 @@ impl Object {
 
                 let zipped = params.iter().zip(arguments.iter());
 
-//                for symbol in params.iter() {
-//                    for arg in arguments.iter() {
-//                        local_environment.define(*symbol, arg.clone());
-//                    }
-//                }
 
-
-                                for (_, (symbol, value)) in zipped.enumerate() {
-                                    local_environment.define(*symbol, value.clone());
-                                }
+                for (_, (symbol, value)) in zipped.enumerate() {
+                    local_environment.define(*symbol, value.clone());
+                }
 
                 use interpreter::evaluate_statement;
 

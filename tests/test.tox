@@ -1,12 +1,24 @@
-fun fib(n:int) -> int {
-  if (n < 2)
-    return n;
-  return fib(n - 2) + fib(n - 1);
+class Toggle {
+    state:bool;
+
+    fun value() -> bool {
+      return this.state;
+    }
+
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
+    }
 }
 
-fun main() {
-    var arr = [0,1];
-    print arr[1];
-    to_int("a");
-    return nil;
+
+
+fun main() -> int{
+    var toggle  = Toggle{state:true};
+
+    print toggle.activate().value();
+
+    print toggle.activate().value();
+
+    return 0;
 }

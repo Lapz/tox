@@ -77,9 +77,4 @@ impl Infer {
     pub fn get_main(&mut self) -> Symbol {
         self.main.take().unwrap()
     }
-    //
-    // Gets the locals from  the resolver
-    // pub fn locals(&self) -> &FnvHashMap<VariableUseHandle, usize> {
-    //     &self.resolver.locals
-    // }
 }

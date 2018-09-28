@@ -5,6 +5,7 @@ use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Class;
 use util::pos::Spanned;
+use infer::env::Entry;
 
 impl Infer {
     pub fn infer_class(
@@ -68,74 +69,13 @@ impl Infer {
         );
 
         for method in class.value.methods {
-            methods.push(self.infer_function(method, ctx)?);
-            // if let Statement::Function {
-            //     name,
-            //     body,
-            //     params,
-            //     returns,
-            // } = method.value
-            // {
-            //     let returns = if let Some(ty) = returns {
-            //         self.trans_type(&ty, ctx)?
-            //     } else {
-            //         Type::Nil
-            //     };
+            let fun = self.infer_function(method, ctx)?;
 
-            //     match self.this {
-            //         Type::This {
-            //             ref mut methods, ..
-            //         } => {
-            //             methods.insert(name.value, Entry::Ty(returns.clone())); // Allows for use of methods on this
-            //         }
-            //         _ => unreachable!(),
-            //     }
+            methods_types.insert(fun.name,Entry::Fun(
+                Type::Fun(fun.params.clone().into_iter().map(|param|param.ty).collect(),Box::new(fun.returns.clone()))
 
-            //     let mut param_types = Vec::with_capacity(params.value.len());
-            //     let mut env_types = Vec::with_capacity(params.value.len());
-
-            //     for param in &params.value {
-            //         let ty = self.trans_type(&param.value.ty, ctx)?;
-
-            //         env_types.push(ty.clone());
-            //         param_types.push(t::FunctionParam {
-            //             name: param.value.name.value,
-            //             ty,
-            //         })
-            //     }
-
-            //     ctx.begin_scope();
-
-            //     for param in param_types.iter() {
-            //         ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
-            //     }
-
-            //     let span = body.span;
-            //     let body = self.infer_statement(*body, ctx)?;
-
-            //     ctx.end_scope();
-
-            //     self.unify(&returns, &self.body, span, ctx)?;
-
-            //     methods_types.insert(
-            //         name.value,
-            //         Entry::Fun(Type::Fun(
-            //             param_types
-            //                 .clone()
-            //                 .into_iter()
-            //                 .map(|param| param.ty)
-            //                 .collect(),
-            //             Box::new(returns.clone()),
-            //         )),
-            //     );
-
-            //     methods.push(t::Statement::Function {
-            //         name: name.value,
-            //         params: param_types,
-            //         body: Box::new(body),
-            //         returns: returns,
-            //     })
-            // }
+            ));
+            methods.push(fun);
         }
 
         let ty = Type::Class(

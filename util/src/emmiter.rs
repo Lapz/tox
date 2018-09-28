@@ -69,7 +69,7 @@ impl Reporter {
         self.diagnostics.borrow_mut().push(Diagnostic {
             msg: msg.into(),
             span: self.end,
-            level: Level::RunTimeError
+            level: Level::RunTimeError,
         })
     }
 
@@ -131,7 +131,7 @@ pub fn print(input: &str, d: &Diagnostic) {
             } else {
                 line.len()
             };
-            let carets = repeat_string("^", end-span.start.column as usize+1);
+            let carets = repeat_string("^", end - span.start.column as usize + 1);
 
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),
@@ -140,12 +140,10 @@ pub fn print(input: &str, d: &Diagnostic) {
             };
 
             if span.start.column != 0 {
-                let whitespace = repeat_string(" ", span.start.column as usize -1);
+                let whitespace = repeat_string(" ", span.start.column as usize - 1);
                 println!("     {}{}{}", prefix, whitespace, carets);
             }
-
         } else if line_idx == span.end.line as usize {
-
             let carets = repeat_string("^", span.end.column as usize);
             let carets = match d.level {
                 Level::Warn => Yellow.bold().paint(carets),

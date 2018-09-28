@@ -41,7 +41,7 @@ pub struct Lexer<'a> {
     chars: CharPosition<'a>,
     reporter: Reporter,
     lookahead: Option<(Position, char)>,
-    start:Position,
+    start: Position,
     end: Position,
 }
 
@@ -53,7 +53,7 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             end,
-            start:end,
+            start: end,
             reporter,
             lookahead: chars.next(),
             chars,

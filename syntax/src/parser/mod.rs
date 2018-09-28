@@ -926,7 +926,6 @@ impl<'a> Parser<'a> {
                     let close_span =
                         self.consume_get_span(&TokenType::RBRACKET, "Expected a closing `]`")?;
 
-
                     Ok(Spanned {
                         value: Expression::Array { items },
                         span: span.to(close_span),

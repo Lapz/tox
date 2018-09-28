@@ -89,6 +89,57 @@ pub(crate) fn evaluate_function(
     Ok(Object::None)
 }
 
+pub(crate) fn evaluate_class(class: &Class, env: &mut Environment) -> Result<Object, RuntimeError> {
+    use std::mem;
+
+    env.define(class.name.value, Object::Nil);
+    let mut class_methods: FnvHashMap<Symbol, Object> = FnvHashMap::default();
+    let mut sklass = None;
+
+    let mut s = false;
+
+    let old_env = env.clone();
+
+    if let Some(ref super_class_name) = class.superclass {
+        let new_env = Environment::new_with_outer(env);
+        mem::replace(env, new_env);
+
+        s = true;
+
+        let superclass = env.get(&super_class_name)?;
+
+        sklass = Some(Box::new(env.get(&super_class_name)?));
+        env.define(Symbol(1), superclass);
+    }
+
+    for method in class.methods.iter() {
+        let mut func_params = Vec::with_capacity(method.value.params.value.len());
+
+        for param in method.value.params.value.iter() {
+            func_params.push(param.value.name.value);
+        }
+
+        class_methods.insert(
+            method.value.name.value,
+            Object::Function(
+                method.value.name.value,
+                func_params,
+                Box::new(method.value.body.clone()),
+                Box::new(env.clone()),
+            ),
+        );
+    }
+
+    if s {
+        mem::replace(env, old_env);
+    }
+
+    env.define(
+        class.name.value,
+        Object::Class(class.name.value, sklass, class_methods),
+    );
+    Ok(Object::None)
+}
 pub(crate) fn evaluate_statement(
     statement: &Spanned<Statement>,
     env: &mut Environment,
@@ -106,69 +157,6 @@ pub(crate) fn evaluate_statement(
 
         Statement::Break => Err(RuntimeError::new(ErrorCode::Break, statement.span)),
         Statement::Continue => Err(RuntimeError::new(ErrorCode::Continue, statement.span)),
-        //        Statement::Class {
-        //            ref name,
-        //            ref body,
-        //            ref superclass,
-        //        } => {
-        //            env.define(name.value, Object::Nil);
-        //
-        //            let mut class_methods: FnvHashMap<Symbol, Object> = FnvHashMap::default();
-        //
-        //            let mut sklass = None;
-        //
-        //            let mut s = false;
-        //
-        //            let old_env = env.clone();
-        //
-        //            if let Some(ref sclass) = *superclass {
-        //                let new_env = Environment::new_with_outer(env);
-        //                mem::replace(env, new_env);
-        //
-        //                s = true;
-        //
-        //                let superclass = env.get(&sclass.value, 1)?;
-        //
-        //                sklass = Some(Box::new(env.get(&sclass.value, 1).unwrap().clone()));
-        //                env.define(Symbol(1), superclass);
-        //            }
-        //
-        //            for method in &body.value.0 {
-        //                match method.value {
-        //                    Statement::Function {
-        //                        ref name,
-        //                        ref body,
-        //                        ref params,
-        //                        ..
-        //                    } => {
-        //                        let mut func_params = Vec::with_capacity(params.value.len());
-        //
-        //                        for param in &params.value {
-        //                            func_params.push(param.value.name.value);
-        //                        }
-        //
-        //                        class_methods.insert(
-        //                            name.value,
-        //                            Object::Function(
-        //                                name.value,
-        //                                func_params,
-        //                                Box::new(*body.clone()),
-        //                                Box::new(env.clone()),
-        //                            ),
-        //                        );
-        //                    }
-        //
-        //                    _ => unreachable!(),
-        //                }
-        //            }
-        //
-        //            if s {
-        //                mem::replace(env, old_env);
-        //            }
-        //
-        //            env.define(name.value, Object::Class(name.value, sklass, class_methods));
-        //            Ok(Object::None)
-        //        }
         Statement::While { ref body, ref cond } => {
             while evaluate_expression(cond, env)?.is_truthy() {
                 match evaluate_statement(body, env) {

@@ -7,7 +7,7 @@ pub mod interpreter;
 mod object;
 
 pub use self::interpreter::env::Environment;
-use self::interpreter::{evaluate_function, evaluate_statement, RuntimeError};
+use self::interpreter::{evaluate_class, evaluate_function, evaluate_statement, RuntimeError};
 //use fnv::FnvHashMap;
 use object::Object;
 use syntax::ast::Program;
@@ -20,8 +20,12 @@ pub fn interpret(
 ) -> Result<Object, RuntimeError> {
     let mut result = Object::None;
 
+    for class in program.classes.iter() {
+        evaluate_class(&class.value, env)?;
+    }
+
     for function in program.functions.iter() {
-        result = evaluate_function(&function.value, env)?;
+        evaluate_function(&function.value, env)?;
     }
 
     for function in program.functions.iter() {
