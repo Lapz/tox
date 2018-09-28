@@ -468,7 +468,7 @@ mod tests {
     fn test_jmp_opcode() {
         let mut test_vm = VM::new();
 
-        test_vm.registers[0] = 72;
+        test_vm.registers[0] = 68;
 
         let mut test_bytes = vec![
             opcode::JMP,
