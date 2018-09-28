@@ -128,7 +128,6 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
 
                 reporter.emit(input);
             } else {
-
                 reporter.global_run_time_error(&err.code.reason(&symbols));
                 reporter.emit(input);
             }
@@ -210,9 +209,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-        Ok(statements) => {
-            statements
-        }
+        Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);
             ::std::process::exit(65)
@@ -255,7 +252,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "lexer")]
+#[structopt(name = "tox")]
 pub struct Cli {
     /// The source code file
     pub source: Option<String>,
