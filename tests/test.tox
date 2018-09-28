@@ -26,6 +26,8 @@ class Toggle {
 
 
 fun main(){
-    30-10;
+    while true {
+      
+    }
       
 }

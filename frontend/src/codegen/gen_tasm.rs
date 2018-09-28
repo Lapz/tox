@@ -39,7 +39,16 @@ impl Compiler {
                 self.build_expr(expr)?;
             },
             Statement::While(ref cond,ref body) => {
-                
+                let label = Label::new();
+                self.write(TASM::LABEL(label))?;
+
+                self.build_statement(body)?;
+
+                self.build_expr(cond)?;
+
+                self.write(TASM::JMPEQ(label))?;
+
+
             }
             _ => unimplemented!(),
         }
@@ -60,8 +69,9 @@ impl Compiler {
 
                 Literal::False(_) => {
                      self.write(TASM::LOAD(Register(0),0))?;
-                }
-                _ => unimplemented!(),
+                },
+                Literal::Nil => self.write(TASM::LOAD(Register(0),-1))?,
+                ref e => unimplemented!("{:?}",e),
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => match op {

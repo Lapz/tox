@@ -1,7 +1,5 @@
 l1:
-	LOAD $0 #30
-	PUSH $0
-	LOAD $0 #10
-	POP $1
-	SUB $1 $0 $0
+	l2:
+        LOAD $0 #1
+        JMPEQ @l2
 HLT
