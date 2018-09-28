@@ -1,6 +1,5 @@
 use ctx::CompileCtx;
-use syntax::ast::expr::{Literal};
-use syntax::ast::statement::Statement;
+use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 
 use ast as t;
@@ -35,137 +34,7 @@ impl Infer {
 
                 Ok(t::Statement::Block(new_statements))
             }
-
             Statement::Break => Ok(t::Statement::Break),
-            Statement::Class {
-                name,
-                superclass,
-                body,
-            } => {
-                use std::collections::HashMap;
-
-                let mut field_types = HashMap::new();
-                let mut methods_types = HashMap::new();
-                let mut methods = Vec::new();
-                let mut fields = Vec::new();
-
-                if let Some(sclass) = superclass {
-                    if let Some(mut entry) = ctx.look_type(sclass.value) {
-                        //TODO: IMPLEMENT SUPERCLASSES
-                    }
-
-                    // match sclass {
-                    //     _ => ()
-                    // }
-                }
-
-                for field in &body.value.1 {
-                    let ty = self.trans_type(&field.value.ty, ctx)?;
-                    fields.push(t::Field {
-                        name: field.value.name.value,
-                        ty: ty.clone(),
-                    });
-                    field_types.insert(field.value.name.value, ty);
-                }
-
-                self.this = Type::This {
-                    name: name.value,
-                    fields: field_types.clone(),
-                    methods: HashMap::new(),
-                };
-
-                ctx.add_type(
-                    name.value,
-                    Type::Class(
-                        name.value,
-                        field_types.clone(),
-                        HashMap::new(),
-                        Unique::new(),
-                    ),
-                );
-
-                for method in body.value.0 {
-                    if let Statement::Function {
-                        name,
-                        body,
-                        params,
-                        returns,
-                    } = method.value
-                    {
-                        let returns = if let Some(ty) = returns {
-                            self.trans_type(&ty, ctx)?
-                        } else {
-                            Type::Nil
-                        };
-
-                        match self.this {
-                            Type::This {
-                                ref mut methods, ..
-                            } => {
-                                methods.insert(name.value, Entry::Ty(returns.clone())); // Allows for use of methods on this
-                            }
-                            _ => unreachable!(),
-                        }
-
-                        let mut param_types = Vec::with_capacity(params.value.len());
-                        let mut env_types = Vec::with_capacity(params.value.len());
-
-                        for param in &params.value {
-                            let ty = self.trans_type(&param.value.ty, ctx)?;
-
-                            env_types.push(ty.clone());
-                            param_types.push(t::FunctionParam {
-                                name: param.value.name.value,
-                                ty,
-                            })
-                        }
-
-                        ctx.begin_scope();
-
-                        for param in param_types.iter() {
-                            ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
-                        }
-
-                        let span = body.span;
-                        let body = self.infer_statement(*body, ctx)?;
-
-                        ctx.end_scope();
-
-                        self.unify(&returns, &self.body, span, ctx)?;
-
-                        methods_types.insert(
-                            name.value,
-                            Entry::Fun(Type::Fun(
-                                param_types
-                                    .clone()
-                                    .into_iter()
-                                    .map(|param| param.ty)
-                                    .collect(),
-                                Box::new(returns.clone()),
-                            )),
-                        );
-
-                        methods.push(t::Statement::Function {
-                            name: name.value,
-                            params: param_types,
-                            body: Box::new(body),
-                            returns: returns,
-                        })
-                    }
-                }
-
-                let ty = Type::Class(name.value, field_types, methods_types, Unique::new());
-
-                self.this = ty.clone();
-
-                ctx.add_type(name.value, ty);
-
-                Ok(t::Statement::Class {
-                    name: name.value,
-                    methods,
-                    fields,
-                })
-            }
             Statement::Continue => Ok(t::Statement::Continue),
             Statement::Expr(expr) => {
                 let type_expr = self.infer_expr(expr, ctx)?;
@@ -173,58 +42,6 @@ impl Infer {
                 Ok(t::Statement::Expr(type_expr)) // Expressions are given the type of Nil to signify that they return nothing
             }
 
-            Statement::Function {
-                name,
-                params,
-                body,
-                returns,
-            } => {
-                let returns = if let Some(ty) = returns {
-                    self.trans_type(&ty, ctx)?
-                } else {
-                    Type::Nil
-                };
-
-                let mut param_types = Vec::with_capacity(params.value.len());
-                let mut env_types = Vec::with_capacity(params.value.len());
-
-                for param in &params.value {
-                    let ty = self.trans_type(&param.value.ty, ctx)?;
-
-                    env_types.push(ty.clone());
-                    param_types.push(t::FunctionParam {
-                        name: param.value.name.value,
-                        ty,
-                    })
-                }
-
-                ctx.add_var(
-                    name.value,
-                    VarEntry::Fun {
-                        ty: Type::Fun(env_types.clone(), Box::new(returns.clone())),
-                    },
-                );
-
-                ctx.begin_scope();
-
-                for param in param_types.iter() {
-                    ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
-                }
-
-                let span = body.span;
-                let body = self.infer_statement(*body, ctx)?;
-
-                ctx.end_scope();
-
-                self.unify(&returns, &self.body, span, ctx)?;
-
-                Ok(t::Statement::Function {
-                    name: name.value,
-                    params: param_types,
-                    body: Box::new(body),
-                    returns: returns,
-                })
-            }
             Statement::For {
                 init,
                 cond,
@@ -311,7 +128,8 @@ impl Infer {
             }
 
             Statement::Print(expr) => {
-                let type_expr = self.infer_expr(expr, ctx)?;
+                let mut type_expr = self.infer_expr(expr, ctx)?;
+                type_expr.ty = Type::Nil;
 
                 Ok(t::Statement::Print(type_expr)) // Expressions are given the type of Nil to signify that they return nothing
             }
@@ -327,7 +145,7 @@ impl Infer {
                 ))
             }
 
-            Statement::Var { ident, ty, expr } => {
+            Statement::VarDeclaration { ident, ty, expr } => {
                 if let Some(expr) = expr {
                     let expr_tyexpr = self.infer_expr(expr, ctx)?;
 
@@ -381,8 +199,6 @@ impl Infer {
                 self.body = type_expr.ty.clone();
                 Ok(t::Statement::Return(type_expr)) // Expressions are given the type of Nil to signify that they return nothing
             }
-
-            Statement::TypeAlias { .. } => unreachable!("Should be handled by infer_tyalias"),
         }
     }
 }

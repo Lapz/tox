@@ -1,8 +1,38 @@
 fun fib(n:int) -> int {
-  if (n < 2) 
+  if n < 2 {
     return n;
-  return fib(n - 2) + fib(n - 1);
+  } else {
+    return fib(n - 2) + fib(n - 1);
+  }
+}
+
+class Toggle {
+    state:bool;
+
+    fun new(state:bool) -> Toggle {
+        return Toggle {state:state};
+    }
+
+    fun value() -> bool {
+      return this.state;
+    }
+
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
+    }
 }
 
 
-print fib(10);
+
+fun main() -> int {
+    var toggle = Toggle.new(true);
+
+    print toggle.state;
+
+    print toggle.activate().value();
+
+    print toggle.activate().value();
+
+    return 0;
+}

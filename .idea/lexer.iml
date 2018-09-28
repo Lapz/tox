@@ -2,7 +2,38 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/syntax/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/syntax/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/syntax/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/syntax/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/util/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/util/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/util/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/util/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/interpreter/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/interpreter/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/interpreter/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/interpreter/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/vm/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/vm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/vm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/vm/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/frontend/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/frontend/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/frontend/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/frontend/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tox/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tox/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tox/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/tox/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/frontend/target" />
+      <excludeFolder url="file://$MODULE_DIR$/interpreter/target" />
+      <excludeFolder url="file://$MODULE_DIR$/syntax/target" />
+      <excludeFolder url="file://$MODULE_DIR$/tox/target" />
+      <excludeFolder url="file://$MODULE_DIR$/util/target" />
+      <excludeFolder url="file://$MODULE_DIR$/vm/target" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

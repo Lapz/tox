@@ -1,38 +1,54 @@
+use infer::types;
 use infer::types::Type;
-pub(crate) use syntax::ast::expr::{AssignOperator, Literal, Op, UnaryOp};
+use std::collections::HashMap;
+pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Program {
-    pub statements: Vec<Statement>,
+    pub functions: Vec<Function>,
+    pub classes: Vec<Class>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub name: Symbol,
+    pub params: Vec<FunctionParam>,
+    pub body: Box<Statement>,
+    pub returns: Type,
+}
+#[derive(Debug, Clone)]
+pub struct Class {
+    pub name: Symbol,
+    pub fields: Vec<Field>,
+    pub methods: Vec<Function>,
+}
+#[derive(Debug, Clone)]
 pub struct Field {
     pub name: Symbol,
     pub ty: Type,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Method {
     pub name: Symbol,
     pub params: Vec<Type>,
     pub returns: Type,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct TypedExpression {
     pub expr: Box<Expression>,
     pub ty: Type,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct FunctionParam {
     pub name: Symbol,
     pub ty: Type,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Block(Vec<Statement>),
     Break,
@@ -45,13 +61,6 @@ pub enum Statement {
     Continue,
 
     Expr(TypedExpression),
-
-    Function {
-        name: Symbol,
-        params: Vec<FunctionParam>,
-        body: Box<Statement>,
-        returns: Type,
-    },
 
     If {
         cond: TypedExpression,
@@ -72,14 +81,14 @@ pub enum Statement {
     Return(TypedExpression),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     // The different type of expressions availabe
     Array(Vec<TypedExpression>),
     Assign(Symbol, AssignOperator, TypedExpression),
     Binary(TypedExpression, Op, TypedExpression),
     Call(TypedExpression, Vec<TypedExpression>),
-
+    Closure(Box<Function>),
     ClassInstance(Symbol, Vec<TypedExpression>),
     Get(Symbol, TypedExpression),
     Grouping(TypedExpression),

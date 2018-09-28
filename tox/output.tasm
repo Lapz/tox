@@ -1,4 +1,1 @@
-LOAD $0 #10
-PUSH $0
-NOT $0
-HLT
+l1:

@@ -7,8 +7,6 @@ extern crate syntax;
 extern crate util;
 
 #[macro_use]
-// mod semant;
-// mod env;
 // mod resolver;
 // mod test;
 mod ast;
@@ -17,4 +15,4 @@ mod ctx;
 mod infer;
 
 pub use codegen::Compiler;
-pub use infer::{Infer, Resolver};
+pub use infer::Infer;

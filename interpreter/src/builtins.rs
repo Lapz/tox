@@ -1,4 +1,4 @@
-use interpreter::RuntimeError;
+use interpreter::{ErrorCode, RuntimeError};
 use object::Object;
 use rand::{thread_rng, Rng};
 use std::str;
@@ -107,7 +107,9 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
     };
     match str::from_utf8(string).unwrap().parse::<i64>() {
         Ok(n) => Ok(Object::Int(n)),
-        Err(_) => Err(RuntimeError::CantParseAsInt(string.to_vec())),
+        Err(_) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
+            string.to_vec(),
+        ))),
     }
 }
 
