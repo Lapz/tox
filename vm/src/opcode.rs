@@ -7,7 +7,6 @@ pub type OpCode = u8;
 
 /// ILLEGAL INST
 pub const IGL: u8 = 00;
-
 /// HLT
 /// Stops the running of the vm
 pub const HLT: u8 = 01;

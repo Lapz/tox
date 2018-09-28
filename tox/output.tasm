@@ -1,1 +1,7 @@
 l1:
+	LOAD $0 #30
+	PUSH $0
+	LOAD $0 #10
+	POP $1
+	SUB $1 $0 $0
+HLT
