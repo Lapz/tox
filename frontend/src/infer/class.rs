@@ -5,7 +5,7 @@ use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Class;
 use util::pos::Spanned;
-use infer::env::Entry;
+use infer::env::{Entry,VarEntry};
 
 impl Infer {
     pub fn infer_class(
@@ -66,7 +66,8 @@ impl Infer {
                 methods_types.clone(),
                 Unique::new(),
             ),
-        );
+        ); // Allows for new methods by making the class name available
+
 
         for method in class.value.methods {
             let fun = self.infer_function(method, ctx)?;
@@ -87,7 +88,8 @@ impl Infer {
 
         self.this = ty.clone();
 
-        ctx.add_type(class.value.name.value, ty);
+        ctx.add_type(class.value.name.value, ty.clone());
+        ctx.add_var(class.value.name.value,VarEntry::Var(ty));
 
         Ok(t::Class {
             name: class.value.name.value,

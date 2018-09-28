@@ -34,6 +34,7 @@ impl Infer {
             })
         }
 
+
         ctx.add_var(
             function.value.name.value,
             VarEntry::Fun {

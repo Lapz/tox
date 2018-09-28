@@ -9,6 +9,10 @@ fun fib(n:int) -> int {
 class Toggle {
     state:bool;
 
+    fun new(state:bool) -> Toggle {
+        return Toggle {state:state};
+    }
+
     fun value() -> bool {
       return this.state;
     }
@@ -22,7 +26,13 @@ class Toggle {
 
 
 fun main() -> int {
-    print fib(10);
+    var toggle = Toggle.new(true);
+
+    print toggle.state;
+
+    print toggle.activate().value();
+
+    print toggle.activate().value();
 
     return 0;
 }

@@ -7,8 +7,6 @@ extern crate syntax;
 extern crate util;
 
 #[macro_use]
-// mod semant;
-// mod env;
 // mod resolver;
 // mod test;
 mod ast;

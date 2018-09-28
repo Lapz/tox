@@ -5,6 +5,7 @@ use infer::{Infer, InferResult};
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 
+use util::symbol::Symbol;
 impl Infer {
     pub(crate) fn infer_expr(
         &self,
@@ -240,8 +241,12 @@ impl Infer {
                                     callee_exprs.push(ty_expr)
                                 }
 
-                                for (arg_ty, def_ty) in arg_tys.iter().zip(targs.iter()) {
-                                    self.unify(&arg_ty.1, &def_ty, arg_ty.0, ctx)?
+                                for (span, arg_ty) in arg_tys.iter() {
+
+                                    for def_ty in targs.iter() {
+                                        self.unify(arg_ty, def_ty, *span, ctx)?;
+                                    }
+
                                 }
 
                                 Ok((
@@ -274,7 +279,11 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
+                Expression::Get { .. } =>{
+                    self.infer_object_get(*callee, ctx)
+
+
+                },
                 _ => {
                     ctx.error(" Not callable", callee.span);
                     return Err(());

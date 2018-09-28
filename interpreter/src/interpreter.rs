@@ -365,7 +365,6 @@ fn evaluate_expression(
         } => {
 
             let left = evaluate_expression(lhs, env)?;
-            println!("{:#?}",left);
             let right = evaluate_expression(rhs, env)?;
 
             match op.value {
