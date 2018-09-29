@@ -242,11 +242,9 @@ impl Infer {
                                 }
 
                                 for (span, arg_ty) in arg_tys.iter() {
-
                                     for def_ty in targs.iter() {
                                         self.unify(arg_ty, def_ty, *span, ctx)?;
                                     }
-
                                 }
 
                                 Ok((
@@ -279,11 +277,7 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } =>{
-                    self.infer_object_get(*callee, ctx)
-
-
-                },
+                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
                 _ => {
                     ctx.error(" Not callable", callee.span);
                     return Err(());

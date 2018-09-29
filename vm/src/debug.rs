@@ -50,6 +50,7 @@ impl VM {
             opcode::POP => simple_instruction("OPCODE::POP", offset),
             opcode::MOD => simple_instruction("OPCODE::MOD", offset),
             opcode::EXPON => simple_instruction("OPCODE::EXPON", offset),
+            opcode::SET => simple_instruction("OPCODE::SET", offset),
 
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);

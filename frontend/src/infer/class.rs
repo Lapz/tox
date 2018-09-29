@@ -1,11 +1,11 @@
 use ast as t;
 use ctx::CompileCtx;
+use infer::env::{Entry, VarEntry};
 use infer::types::{Type, Unique};
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Class;
 use util::pos::Spanned;
-use infer::env::{Entry,VarEntry};
 
 impl Infer {
     pub fn infer_class(
@@ -68,14 +68,20 @@ impl Infer {
             ),
         ); // Allows for new methods by making the class name available
 
-
         for method in class.value.methods {
             let fun = self.infer_function(method, ctx)?;
 
-            methods_types.insert(fun.name,Entry::Fun(
-                Type::Fun(fun.params.clone().into_iter().map(|param|param.ty).collect(),Box::new(fun.returns.clone()))
-
-            ));
+            methods_types.insert(
+                fun.name,
+                Entry::Fun(Type::Fun(
+                    fun.params
+                        .clone()
+                        .into_iter()
+                        .map(|param| param.ty)
+                        .collect(),
+                    Box::new(fun.returns.clone()),
+                )),
+            );
             methods.push(fun);
         }
 
@@ -89,7 +95,7 @@ impl Infer {
         self.this = ty.clone();
 
         ctx.add_type(class.value.name.value, ty.clone());
-        ctx.add_var(class.value.name.value,VarEntry::Var(ty));
+        ctx.add_var(class.value.name.value, VarEntry::Var(ty));
 
         Ok(t::Class {
             name: class.value.name.value,

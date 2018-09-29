@@ -7,14 +7,14 @@ use std::io::{self, Write};
 
 pub struct Compiler {
     file: File,
-    indent_level:usize,
+    indent_level: usize,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Compiler {
             file: File::create("output.tasm").expect("Couldn't create the file"),
-            indent_level:0
+            indent_level: 0,
         }
     }
 
