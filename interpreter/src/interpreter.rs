@@ -151,19 +151,14 @@ pub(crate) fn evaluate_statement(
 
             let mut result = Object::None;
 
-
-
-
             for statement in statements {
-
-                let object =evaluate_statement(statement, &mut environment);
+                let object = evaluate_statement(statement, &mut environment);
 
                 match object {
                     Ok(Object::Return(_)) => return object,
                     Ok(val) => result = val,
-                    Err(_) => return object
+                    Err(_) => return object,
                 }
-
             }
 
             Ok(result)
@@ -175,8 +170,8 @@ pub(crate) fn evaluate_statement(
             while evaluate_expression(cond, env)?.is_truthy() {
                 match evaluate_statement(body, env) {
                     Ok(value) => match value {
-                        Object::Return(_) =>return Ok(value),
-                        _ => ()
+                        Object::Return(_) => return Ok(value),
+                        _ => (),
                     },
                     Err(e) => match e.code {
                         ErrorCode::Break => break,
@@ -201,8 +196,8 @@ pub(crate) fn evaluate_statement(
                 loop {
                     match evaluate_statement(body, env) {
                         Ok(value) => match value {
-                            Object::Return(_) =>return Ok(value),
-                            _ => value
+                            Object::Return(_) => return Ok(value),
+                            _ => value,
                         },
                         Err(e) => match e.code {
                             ErrorCode::Break => break,
@@ -222,8 +217,8 @@ pub(crate) fn evaluate_statement(
                 while evaluate_expression(cond, env)?.is_truthy() {
                     match evaluate_statement(body, env) {
                         Ok(value) => match value {
-                           Object::Return(_) =>return Ok(value),
-                            _ => value
+                            Object::Return(_) => return Ok(value),
+                            _ => value,
                         },
                         Err(e) => match e.code {
                             ErrorCode::Break => break,
@@ -252,7 +247,9 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) =>Ok(Object::Return(Box::new(evaluate_expression(expr, env)?))),
+        Statement::Return(ref expr) => {
+            Ok(Object::Return(Box::new(evaluate_expression(expr, env)?)))
+        }
 
         Statement::If {
             ref cond,
@@ -263,11 +260,9 @@ pub(crate) fn evaluate_statement(
                 evaluate_statement(then, env)
             } else if let Some(ref else_statement) = *otherwise {
                 evaluate_statement(else_statement, env)
-            }else{
+            } else {
                 Ok(Object::None)
             }
-
-
         }
 
         Statement::VarDeclaration {
@@ -281,8 +276,6 @@ pub(crate) fn evaluate_statement(
             } else {
                 env.define(ident.value, Object::Nil);
             }
-
-
 
             Ok(Object::Nil)
         }
@@ -363,7 +356,6 @@ fn evaluate_expression(
             ref op,
             ref rhs,
         } => {
-
             let left = evaluate_expression(lhs, env)?;
             let right = evaluate_expression(rhs, env)?;
 
@@ -465,10 +457,10 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                ref e=> {
-                    println!("{:?}",e);
+                ref e => {
+                    println!("{:?}", e);
                     Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
-                },
+                }
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),

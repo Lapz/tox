@@ -82,8 +82,6 @@ named!(label_declaration<CompleteStr,Token>,
         do_parse!(
             name: alphanumeric >>
             tag!(":")         >>
-            opt!(multispace) >>
-
             ( Token::LabelDeclaration(name.to_string()))
         )
     )

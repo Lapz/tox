@@ -152,8 +152,11 @@ pub fn run_vm(path: String) {
     let mut assembler = Assembler::new();
 
     let bytecode = match assembler.assemble(&contents) {
-        Some(bytecode) => bytecode,
-        None => ::std::process::exit(0),
+        Ok(bytecode) => bytecode,
+        Err(e) => {
+            println!("{:?}", e);
+            ::std::process::exit(0)
+        }
     };
 
     let mut vm = VM::new();
@@ -237,8 +240,11 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         .expect("Couldn't compile the file");
 
     let bytecode = match Assembler::new().assemble_file("output.tasm") {
-        Some(bytecode) => bytecode,
-        None => ::std::process::exit(0),
+        Ok(bytecode) => bytecode,
+        Err(e) => {
+            println!("{:?}", e);
+            ::std::process::exit(0)
+        }
     };
 
     let mut vm = VM::new();

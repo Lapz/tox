@@ -1,7 +1,7 @@
-l1:
+.data
+.code
 	l2:
-	LOAD $0 #2
-	LOAD $0 #1
-	
-	JMPEQ @l2
+		LOAD $0 #1
+		SET $0
+		JMPEQ @l2
 HLT

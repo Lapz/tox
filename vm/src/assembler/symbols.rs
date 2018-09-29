@@ -44,4 +44,16 @@ impl SymbolTable {
 
         None
     }
+
+    pub fn set_symbol_offset(&mut self, s: &str, offset: usize) -> bool {
+        for (mut symbol, name) in &mut self.mappings.iter_mut() {
+            if name == s {
+                
+                    symbol.offset;
+                
+                return true;
+            }
+        }
+        false
+    }
 }

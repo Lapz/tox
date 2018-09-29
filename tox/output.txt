@@ -1,0 +1,114 @@
+Program {
+    instructions: [
+        AssemblerInstruction {
+            opcode: None,
+            label: None,
+            directive: Some(
+                Directive(
+                    "data"
+                )
+            ),
+            operand1: None,
+            operand2: None,
+            operand3: None
+        },
+        AssemblerInstruction {
+            opcode: None,
+            label: None,
+            directive: Some(
+                Directive(
+                    "code"
+                )
+            ),
+            operand1: None,
+            operand2: None,
+            operand3: None
+        },
+        AssemblerInstruction {
+            opcode: Some(
+                Op(
+                    15
+                )
+            ),
+            label: Some(
+                LabelDeclaration(
+                    "l2"
+                )
+            ),
+            directive: None,
+            operand1: Some(
+                Register(
+                    0
+                )
+            ),
+            operand2: Some(
+                Number(
+                    1
+                )
+            ),
+            operand3: None
+        },
+        AssemblerInstruction {
+            opcode: Some(
+                Op(
+                    0
+                )
+            ),
+            label: None,
+            directive: None,
+            operand1: Some(
+                Register(
+                    0
+                )
+            ),
+            operand2: None,
+            operand3: None
+        },
+        AssemblerInstruction {
+            opcode: Some(
+                Op(
+                    5
+                )
+            ),
+            label: None,
+            directive: None,
+            operand1: Some(
+                LabelUsage(
+                    "l2"
+                )
+            ),
+            operand2: None,
+            operand3: None
+        },
+        AssemblerInstruction {
+            opcode: Some(
+                Op(
+                    1
+                )
+            ),
+            label: None,
+            directive: None,
+            operand1: None,
+            operand2: None,
+            operand3: None
+        }
+    ]
+}
+== test ==
+
+0064 	UNKOWN OPCODE 0
+0065 	UNKOWN OPCODE 0
+0066 	UNKOWN OPCODE 0
+0067 	UNKOWN OPCODE 0
+0068 	UNKOWN OPCODE 0
+0069 	UNKOWN OPCODE 0
+0070 	UNKOWN OPCODE 0
+0071 	UNKOWN OPCODE 0
+0072 	OPCODE::LOAD
+0076 	UNKOWN OPCODE 0
+0077 	UNKOWN OPCODE 0
+0078 	UNKOWN OPCODE 0
+0079 	UNKOWN OPCODE 0
+0080 	OPCODE::JMPEQ
+0084 	OPCODE::HLT
+VM { registers: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], code: [45, 50, 49, 45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 1, 0, 0, 0, 0, 5, 0, 72, 0, 1, 0, 0, 0], heap: [], ip: 85, remainder: 0, equal_flag: false }

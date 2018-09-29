@@ -103,8 +103,11 @@ impl Repl {
         let input = contents.trim();
 
         let bytecode = match self.assembler.assemble(&input) {
-            Some(bytecode) => bytecode,
-            None => return Err(()),
+            Ok(bytecode) => bytecode,
+            Err(e) => {
+                println!("{:?}", e);
+                return Err(());
+            }
         };
 
         self.vm.code(bytecode);
@@ -170,8 +173,8 @@ impl Repl {
             .expect("Couldn't compile the file");
 
         let bytecode = match Assembler::new().assemble_file("output.tasm") {
-            Some(bytecode) => bytecode,
-            None => ::std::process::exit(0),
+            Ok(bytecode) => bytecode,
+           Err(_) => ::std::process::exit(0),
         };
 
         self.vm.code(bytecode);

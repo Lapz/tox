@@ -124,20 +124,16 @@ impl Object {
 
                 let zipped = params.iter().zip(arguments.iter());
 
-
                 for (_, (symbol, value)) in zipped.enumerate() {
                     local_environment.define(*symbol, value.clone());
                 }
 
                 use interpreter::evaluate_statement;
 
-               return match evaluate_statement(body, &mut local_environment) {
-                    Ok(value) =>{
-                        match value {
-                            Object::Return(r) => Ok(*r),
-                            _ => Ok(value)
-                        }
-
+                return match evaluate_statement(body, &mut local_environment) {
+                    Ok(value) => match value {
+                        Object::Return(r) => Ok(*r),
+                        _ => Ok(value),
                     },
                     Err(e) => match e.code {
                         ErrorCode::Return(ref r) => {
@@ -146,9 +142,7 @@ impl Object {
 
                         _ => return Err(e),
                     },
-                }
-
-
+                };
             }
             ref e => panic!("{:?} Should not be calling this method ", e),
         }
@@ -166,7 +160,7 @@ impl Object {
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
             Object::Str(ref s) => str::from_utf8(s).unwrap().into(),
-            Object::Return(ref val) => format!("return <{}>",val),
+            Object::Return(ref val) => format!("return <{}>", val),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -269,7 +263,7 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
             Object::Nil => write!(f, "nil"),
-            Object::Return(ref v) => write!(f,"return <{:?}>",v),
+            Object::Return(ref v) => write!(f, "return <{:?}>", v),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
@@ -314,7 +308,7 @@ impl Display for Object {
             }
             Object::Nil => write!(f, "nil"),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
-            Object::Return(ref v) => write!(f,"return <{}>",v),
+            Object::Return(ref v) => write!(f, "return <{}>", v),
         }
     }
 }
