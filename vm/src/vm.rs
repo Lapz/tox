@@ -222,6 +222,16 @@ impl VM {
                     let val = self.pop();
                     self.registers[self.next_8_bits() as usize] = val;
                     self.advance(2)
+                },
+
+                opcode::SET => {
+                    let val = self.registers[self.next_8_bits() as usize];
+
+                    if val == 1 {
+                        self.equal_flag = true;
+                    }
+
+                    self.advance(3);
                 }
 
                 _ => {

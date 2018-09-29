@@ -98,6 +98,9 @@ MOD(Register,Register,Register),
 /// EXPON SRC SRC DEST
 /// CALCULATES SRC^SRC AND STORES IT IN DEST
  EXPON(Register,Register,Register),
+
+
+  SET(Register),
 }
 
 impl Display for TASM {

@@ -1,5 +1,7 @@
 l1:
 	l2:
-        LOAD $0 #1
-        JMPEQ @l2
+	LOAD $0 #2
+	LOAD $0 #1
+	
+	JMPEQ @l2
 HLT
