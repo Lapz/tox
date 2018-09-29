@@ -229,7 +229,12 @@ impl<'a> FromInput<CompleteStr<'a>> for u8 {
             CompleteStr("POP") => opcode::POP,
             CompleteStr("MOD") => opcode::MOD,
             CompleteStr("EXPON") => opcode::EXPON,
-            _ => opcode::IGL,
+            CompleteStr("SET") => opcode::SET,
+            CompleteStr("PRNT") => opcode::PRNT,
+            ref e => {
+                println!("Unkown opcode: {:?}",e);
+                opcode::IGL
+            },
         }
     }
 }

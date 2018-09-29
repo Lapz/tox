@@ -3,11 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added push and pop">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/codegen/tasm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/codegen/tasm.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tox" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tox/output.tasm" beforeDir="false" afterPath="$PROJECT_DIR$/tox/output.tasm" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/output.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/vm/src/assembler/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/assembler/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vm/src/assembler/parsers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/assembler/parsers.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vm/src/debug.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/debug.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vm/src/opcode.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/opcode.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vm/src/vm.rs" beforeDir="false" afterPath="$PROJECT_DIR$/vm/src/vm.rs" afterDir="false" />
@@ -40,8 +39,8 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="rs" value="14771" />
-          <entry key="tasm" value="573" />
+          <entry key="rs" value="15465" />
+          <entry key="tasm" value="578" />
           <entry key="toml" value="43" />
           <entry key="tox" value="924" />
           <entry key="txt" value="21" />
@@ -49,26 +48,26 @@
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="1518" />
-          <entry key="Rust" value="14771" />
+          <entry key="PLAIN_TEXT" value="1523" />
+          <entry key="Rust" value="15465" />
           <entry key="TOML file" value="43" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="md" value="1" />
-          <entry key="rs" value="106" />
-          <entry key="tasm" value="6" />
+          <entry key="rs" value="113" />
+          <entry key="tasm" value="7" />
           <entry key="toml" value="5" />
           <entry key="tox" value="11" />
-          <entry key="txt" value="5" />
+          <entry key="txt" value="7" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Markdown" value="1" />
-          <entry key="PLAIN_TEXT" value="22" />
-          <entry key="Rust" value="106" />
+          <entry key="PLAIN_TEXT" value="25" />
+          <entry key="Rust" value="113" />
           <entry key="TOML file" value="5" />
         </counts>
       </usages-collector>
@@ -87,63 +86,40 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="953">
-              <caret line="320" column="12" selection-start-line="320" selection-start-column="12" selection-end-line="320" selection-end-column="12" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tox/output.tasm">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="14" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="424">
-              <caret line="74" column="69" selection-start-line="74" selection-start-column="69" selection-end-line="74" selection-end-column="69" />
+            <state relative-caret-position="-308">
               <folding>
-                <element signature="e#8009#8010#0" expanded="true" />
-                <element signature="e#8047#8048#0" expanded="true" />
+                <element signature="e#7874#7875#0" expanded="true" />
+                <element signature="e#7912#7913#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
+        <entry file="file://$PROJECT_DIR$/vm/Cargo.toml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="344">
-              <caret line="95" column="22" selection-start-line="95" selection-start-column="22" selection-end-line="95" selection-end-column="22" />
+            <state relative-caret-position="120">
+              <caret line="8" selection-start-line="8" selection-end-line="8" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/vm/src/assembler/mod.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="156">
+              <caret line="281" column="41" selection-start-line="281" selection-start-column="41" selection-end-line="281" selection-end-column="41" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/vm/src/assembler/mod.rs">
+        <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="185">
-              <caret line="111" column="58" selection-start-line="111" selection-start-column="58" selection-end-line="111" selection-end-column="58" />
-              <folding>
-                <element signature="e#5892#5893#0" expanded="true" />
-                <element signature="e#5927#5928#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/vm/src/assembler/parsers.rs">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="156">
-              <caret line="39" column="34" selection-start-line="39" selection-start-column="34" selection-end-line="39" selection-end-column="34" />
+            <state relative-caret-position="435">
+              <caret line="104" column="20" selection-start-line="104" selection-start-column="20" selection-end-line="104" selection-end-column="20" />
             </state>
           </provider>
         </entry>
@@ -151,35 +127,45 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/vm/src/debug.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="424">
-              <caret line="52" column="68" selection-start-line="52" selection-start-column="68" selection-end-line="52" selection-end-column="68" />
+            <state relative-caret-position="138">
+              <caret line="30" column="50" selection-start-line="30" selection-start-column="50" selection-end-line="30" selection-end-column="50" />
             </state>
           </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/vm/src/chunk.rs">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/vm/src/lib.rs">
+          <provider selected="true" editor-type-id="text-editor" />
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="434">
-              <caret line="235" selection-start-line="235" selection-end-line="235" />
+            <state relative-caret-position="405">
+              <caret line="46" column="14" selection-start-line="46" selection-start-column="14" selection-end-line="46" selection-end-column="14" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/frontend/src/codegen/tasm.rs">
+        <entry file="file://$PROJECT_DIR$/tox/output.tasm">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1484">
-              <caret line="103" column="1" selection-start-line="103" selection-start-column="1" selection-end-line="103" selection-end-column="1" />
+            <state relative-caret-position="90">
+              <caret line="6" column="3" selection-start-line="6" selection-start-column="3" selection-end-line="6" selection-end-column="3" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test.tox">
+        <entry file="file://$PROJECT_DIR$/vm/src/assembler/parsers.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="366">
-              <caret line="29" selection-start-line="29" selection-end-line="29" />
+            <state relative-caret-position="291">
+              <caret line="232" column="48" selection-start-line="232" selection-start-column="48" selection-end-line="232" selection-end-column="48" />
             </state>
           </provider>
         </entry>
@@ -195,8 +181,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>PARSE_FUN</find>
-      <find>Notan</find>
       <find>RuntimeError</find>
       <find>.call(</find>
       <find>doesn't have a field</find>
@@ -218,13 +202,15 @@
       <find>Undefined variable</find>
       <find>undefined</find>
       <find>.zi</find>
-      <find>println</find>
-      <find>println!(</find>
       <find>.zip</find>
       <find>print</find>
       <find>infer_object_get</find>
       <find>write_p</find>
       <find>string</find>
+      <find>println!(</find>
+      <find>IGL</find>
+      <find>println</find>
+      <find>mem::</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -247,7 +233,6 @@
         <option value="$PROJECT_DIR$/vm/src/assembler/symbols.rs" />
         <option value="$PROJECT_DIR$/tests/test.tasm" />
         <option value="$PROJECT_DIR$/vm/src/assembler/token.rs" />
-        <option value="$PROJECT_DIR$/vm/src/assembler/parsers.rs" />
         <option value="$PROJECT_DIR$/sem/src/semant/inferexp.rs" />
         <option value="$PROJECT_DIR$/codegen/src/label.rs" />
         <option value="$PROJECT_DIR$/codegen/src/gen_bytecode.rs" />
@@ -274,13 +259,15 @@
         <option value="$PROJECT_DIR$/frontend/src/infer/class.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" />
         <option value="$PROJECT_DIR$/frontend/src/codegen/tasm.rs" />
-        <option value="$PROJECT_DIR$/vm/src/opcode.rs" />
-        <option value="$PROJECT_DIR$/vm/src/vm.rs" />
         <option value="$PROJECT_DIR$/tests/test.tox" />
-        <option value="$PROJECT_DIR$/tox/output.tasm" />
-        <option value="$PROJECT_DIR$/vm/src/debug.rs" />
         <option value="$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" />
+        <option value="$PROJECT_DIR$/tox/output2.txt" />
+        <option value="$PROJECT_DIR$/vm/src/debug.rs" />
         <option value="$PROJECT_DIR$/vm/src/assembler/mod.rs" />
+        <option value="$PROJECT_DIR$/tox/output.tasm" />
+        <option value="$PROJECT_DIR$/vm/src/vm.rs" />
+        <option value="$PROJECT_DIR$/vm/src/assembler/parsers.rs" />
+        <option value="$PROJECT_DIR$/vm/src/opcode.rs" />
       </list>
     </option>
   </component>
@@ -290,11 +277,10 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="1131" />
-    <option name="y" value="49" />
-    <option name="width" value="1317" />
-    <option name="height" value="998" />
+  <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="y" value="23" />
+    <option name="width" value="1808" />
+    <option name="height" value="825" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -302,6 +288,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -312,13 +299,20 @@
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="interpreter" type="462c0819:PsiDirectoryNode" />
+              <item name="frontend" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="interpreter" type="462c0819:PsiDirectoryNode" />
+              <item name="frontend" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="frontend" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="codegen" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
@@ -359,13 +353,12 @@
         </subPane>
       </pane>
       <pane id="PackagesPane" />
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1537974302521" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1538243204393" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.alreadyTriedToolchainAutoDiscovery" value="true" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
@@ -512,7 +505,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="26502000" />
+    <option name="totallyTimeSpent" value="28750000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -524,13 +517,14 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1131" y="49" width="1317" height="998" extended-state="0" />
+    <frame x="722" y="0" width="718" height="900" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="Structure" order="0" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="1" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
-      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.3309804" />
+      <window_info active="true" content_ui="combo" id="Project" order="4" visible="true" weight="0.32988167" />
       <window_info id="Learn" order="5" weight="0.32840237" />
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
@@ -541,7 +535,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.324861" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="7" sideWeight="0.49972206" visible="true" weight="0.39845476" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.49972206" visible="true" weight="0.32891566" />
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.50027794" side_tool="true" weight="0.39845476" />
       <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.49924242" weight="0.32833788" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
@@ -601,23 +595,6 @@
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/syntax/src/token.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-851">
-          <caret line="34" column="51" selection-start-line="34" selection-start-column="51" selection-end-line="34" selection-end-column="51" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sem/src/semant/inferexp.rs" />
-    <entry file="file://$PROJECT_DIR$/codegen/src/label.rs" />
-    <entry file="file://$PROJECT_DIR$/codegen/src/gen_bytecode.rs" />
-    <entry file="file://$PROJECT_DIR$/.idea/workspace.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="676">
-          <caret line="86" column="41" selection-start-line="86" selection-start-column="41" selection-end-line="86" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/util/src/pos.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
@@ -819,17 +796,10 @@
     <entry file="file://$PROJECT_DIR$/vm/src/op.rs">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
-          <caret line="235" selection-start-line="235" selection-end-line="235" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tests/test.tox">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="366">
-          <caret line="29" selection-start-line="29" selection-end-line="29" />
+        <state relative-caret-position="495">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
         </state>
       </provider>
     </entry>
@@ -840,13 +810,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/vm/src/debug.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="424">
-          <caret line="52" column="68" selection-start-line="52" selection-start-column="68" selection-end-line="52" selection-end-column="68" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/frontend/src/codegen/tasm.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1484">
@@ -854,46 +817,80 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/vm/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/output.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-48" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/output2.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="296">
+          <caret line="43" column="6" selection-start-line="43" selection-start-column="6" selection-end-line="43" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/chunk.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/debug.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="138">
+          <caret line="30" column="50" selection-start-line="30" selection-start-column="50" selection-end-line="30" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tox/output.tasm">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="14" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
+        <state relative-caret-position="90">
+          <caret line="6" column="3" selection-start-line="6" selection-start-column="3" selection-end-line="6" selection-end-column="3" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="424">
-          <caret line="74" column="69" selection-start-line="74" selection-start-column="69" selection-end-line="74" selection-end-column="69" />
+        <state relative-caret-position="-308">
           <folding>
-            <element signature="e#8009#8010#0" expanded="true" />
-            <element signature="e#8047#8048#0" expanded="true" />
+            <element signature="e#7874#7875#0" expanded="true" />
+            <element signature="e#7912#7913#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="344">
-          <caret line="95" column="22" selection-start-line="95" selection-start-column="22" selection-end-line="95" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/vm/src/assembler/parsers.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="156">
-          <caret line="39" column="34" selection-start-line="39" selection-start-column="34" selection-end-line="39" selection-end-column="34" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/vm/src/assembler/mod.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="185">
-          <caret line="111" column="58" selection-start-line="111" selection-start-column="58" selection-end-line="111" selection-end-column="58" />
-          <folding>
-            <element signature="e#5892#5893#0" expanded="true" />
-            <element signature="e#5927#5928#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="156">
+          <caret line="281" column="41" selection-start-line="281" selection-start-column="41" selection-end-line="281" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="46" column="14" selection-start-line="46" selection-start-column="14" selection-end-line="46" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/assembler/parsers.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="291">
+          <caret line="232" column="48" selection-start-line="232" selection-start-column="48" selection-end-line="232" selection-end-column="48" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="435">
+          <caret line="104" column="20" selection-start-line="104" selection-start-column="20" selection-end-line="104" selection-end-column="20" />
         </state>
       </provider>
     </entry>

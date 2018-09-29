@@ -1,4 +1,5 @@
 use assembler::{PIE_HEADER_LENGTH, PIE_HEADER_PREFIX};
+use std::mem;
 use opcode;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
@@ -41,6 +42,8 @@ impl VM {
     }
 
     pub fn run(&mut self) {
+        self.ip += self.get_starting_offset();
+
         loop {
             {
                 if self.ip >= self.code.len() {
@@ -231,7 +234,7 @@ impl VM {
                         self.equal_flag = true;
                     }
 
-                    self.advance(3);
+                    self.advance(2);
                 }
 
                 _ => {
@@ -278,6 +281,15 @@ impl VM {
 
     pub fn code(&mut self, code: Vec<u8>) {
         self.code = code;
+    }
+
+    pub fn get_starting_offset(&self) -> usize {
+        unsafe {
+            let mut bytes:[u8;4] = ::std::default::Default::default();
+            bytes.copy_from_slice(&self.code[4..8]);
+            let val= mem::transmute::<[u8;4],u32>(bytes);
+            val as usize
+        }
     }
 }
 

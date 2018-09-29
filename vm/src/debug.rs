@@ -27,6 +27,7 @@ impl VM {
         let instruction = self.code[offset];
 
         match instruction {
+            opcode::IGL => simple_instruction("OPCODE::IGL",offset),
             opcode::ADD => simple_instruction("OPCODE::ADD", offset),
             opcode::SUB => simple_instruction("OPCODE::SUB", offset),
             opcode::DIV => simple_instruction("OPCODE::DIV", offset),

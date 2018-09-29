@@ -100,10 +100,8 @@ impl Assembler {
             Ok((_, program)) => {
                 // FIRST PHASE
 
-                println!("{:#?}",program);
 
-                // Get the header
-                let mut assembled_program = self.write_pie_header();
+
                 // Extract labels
                 self.process_first_phase(&program);
 
@@ -123,6 +121,10 @@ impl Assembler {
 
                 // SECOND PHASE
                 let mut body = self.process_second_phase(&program);
+
+                // Get the header
+                let mut assembled_program = self.write_pie_header();
+
                 // Merge the header with body
                 assembled_program.append(&mut body);
 
@@ -261,7 +263,7 @@ impl Assembler {
         }
 
         header.extend(unsafe {
-            transmute::<usize, [u8; 8]>(self.ro.len()).iter() // writes the length of the header section
+            transmute::<u32, [u8; 4]>(self.ro.len() as u32).iter() // writes the length of the header section
         });
 
         while header.len() < PIE_HEADER_LENGTH {
@@ -277,10 +279,18 @@ impl AssemblerInstruction {
         let mut results = Vec::with_capacity(4);
 
         match self.opcode {
-            Some(Token::Op(ref code)) => results.push(*code),
+            Some(Token::Op(ref code)) => {
+                results.push(*code)
+            },
 
             _ => {
-                // panic!("Non-opcode found in opcode field");
+
+                if self.directive.is_some() {
+                    return vec![];
+                }else {
+                    eprintln!("Non-opcode found in opcode field{:?}",self);
+                }
+
             }
         }
 
