@@ -26,8 +26,6 @@ class Toggle {
 
 
 fun main(){
-    while true {
-
-    }
-      
+    "Hello World";
+    "My Name is Lenard";
 }

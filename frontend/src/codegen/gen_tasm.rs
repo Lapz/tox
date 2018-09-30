@@ -4,19 +4,43 @@ use codegen::tasm::{Register, TASM};
 use codegen::Compiler;
 use std::io::{self, Write};
 use std::iter::repeat;
+
+use std::str;
 enum Type {
     Float,
     Int,
 }
 
-impl Compiler {
-    fn write(&mut self, inst: TASM) -> io::Result<()> {
+impl  Compiler {
+    pub(crate) fn write(&mut self, inst: TASM) -> io::Result<()> {
         write!(
             &mut self.file,
             "{}{}\n",
             repeat_string("\t", self.indent_level),
             inst
         )
+    }
+
+
+    pub fn process_strings(&mut self,statement:&Statement) -> () {
+
+        match *statement {
+            Statement::Block(ref block) => {
+                for statement in block {
+                    if let Statement::Expr(ref expr) = statement {
+                        if let Expression::Literal(Literal::Str(ref bytes)) = &*expr.expr {
+                            let label = Label::new();
+
+                            self.strings.insert(label,str::from_utf8(bytes).unwrap().to_owned());
+
+                        }
+                    }
+                }
+            },
+            _ => (),
+
+        }
+
     }
 
     pub(crate) fn build_statement(&mut self, statement: &Statement) -> io::Result<()> {
@@ -69,7 +93,9 @@ impl Compiler {
                 }
                 Literal::Nil => self.write(TASM::LOAD(Register(0), 0x2))?,
 
-                ref e => unimplemented!("{:?}", e),
+                Literal::Str(ref bytes) => (), // Strings are handled by a string preprocessing step
+                _ => unimplemented!()
+
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => match op {

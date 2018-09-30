@@ -903,4 +903,29 @@ mod tests {
         assert_eq!(test_vm.registers[0], 200);
     }
 
+    #[test]
+    fn test_set_opcode() {
+        let mut test_vm = VM::new();
+
+        test_vm.registers[0] =1;
+
+        let mut test_bytes = vec![
+            opcode::SET,
+            0,
+            0,
+            0, // PUSH $0
+            opcode::HLT,
+            0,
+            0,
+            0, //HLT
+        ];
+
+        test_bytes = prepend_header(test_bytes);
+        test_vm.code(test_bytes);
+
+        test_vm.run();
+
+        assert_eq!(test_vm.equal_flag, true);
+    }
+
 }

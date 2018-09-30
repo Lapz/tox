@@ -6,6 +6,9 @@ pub struct Register(pub u8);
 /// Enum that used to create a type safe version of tasm
 #[derive(Debug)]
 pub enum TASM {
+    STRINGDIRECTIVE(Label,String),
+    DIRECTIVE(String),
+
     LABEL(Label),
     // ILLEGAL INST
     IGL,
@@ -106,6 +109,8 @@ impl Display for TASM {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::TASM::*;
         match *self {
+            STRINGDIRECTIVE(ref label,ref string) => write!(f,"{}: .asciiz \"{}\"",label,string ),
+            DIRECTIVE(ref d) => write!(f,"{}",d),
             LABEL(ref l) => write!(f, "{}:", l),
             IGL => write!(f, "IGL"),
             HLT => write!(f, "HLT"),

@@ -1,7 +1,6 @@
 .data
+	l2: .asciiz "My Name is Lenard"
+	l1: .asciiz "Hello World"
 .code
-	l2:
-	    LOAD $0 #1
-		SET $0
-		JMPEQ @l2
+	l3:
 HLT
