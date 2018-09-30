@@ -119,6 +119,7 @@ impl Display for TASM {
             JMPF(ref label) => write!(f, "JMPF @{}", label),
             JMPB(ref label) => write!(f, "JMPB @{}", label),
             JMPEQ(ref label) => write!(f, "JMPEQ @{}", label),
+            JMPNEQ(ref label) => write!(f, "JMPNEQ @{}", label),
             ADD(ref src1, ref src2, ref dest) => write!(f, "ADD {} {} {}", src1, src2, dest),
             SUB(ref src1, ref src2, ref dest) => write!(f, "SUB {} {} {}", src1, src2, dest),
             MUL(ref src1, ref src2, ref dest) => write!(f, "MUL {} {} {}", src1, src2, dest),
@@ -136,8 +137,8 @@ impl Display for TASM {
             DEC(ref reg) => write!(f, "DEC {}", reg),
             PUSH(ref reg) => write!(f, "PUSH {}", reg),
             POP(ref reg) => write!(f, "POP {}", reg),
-
-            _ => Ok(()),
+            SET(ref reg) => write!(f, "SET {}", reg),
+            _ => unimplemented!(),
         }
     }
 }

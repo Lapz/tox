@@ -26,6 +26,9 @@ class Toggle {
 
 
 fun main(){
-    "Hello World";
-    "My Name is Lenard";
+    if (1<10) {
+        50+10;
+    }else {
+        10+10;
+    }
 }

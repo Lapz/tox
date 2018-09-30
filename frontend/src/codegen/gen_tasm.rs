@@ -6,10 +6,7 @@ use std::io::{self, Write};
 use std::iter::repeat;
 
 use std::str;
-enum Type {
-    Float,
-    Int,
-}
+
 
 impl  Compiler {
     pub(crate) fn write(&mut self, inst: TASM) -> io::Result<()> {
@@ -71,7 +68,39 @@ impl  Compiler {
                 self.write(TASM::SET(Register(0)))?;
 
                 self.write(TASM::JMPEQ(label))?;
+            },
+
+            Statement::Return(ref expr) => {},
+
+            Statement::If { ref cond, ref then, ref otherwise } => {
+                let label = Label::new();
+
+
+                if let Some(ref other) = *otherwise {
+                    // Generate the condition
+                    self.build_expr(cond)?;
+
+
+                    self.write(TASM::JMPNEQ(label))?; // jump to the label if the cond is false;
+
+                    self.build_statement(then)?; // else follow through to the body
+
+                    self.write(TASM::LABEL(label))?; // The label to jump to if the cond is false
+
+                    self.build_statement(&other)?;
+                } else {
+                    // Generate the condition
+                    self.build_expr(cond)?;
+
+                    self.write(TASM::JMPNEQ(label))?; // jump to the label if the cond is false;
+
+                    self.build_statement(then)?; // Follow through to the body
+
+                    self.write(TASM::LABEL(label))?; // The label to jump to if the cond is false
+                }
+
             }
+
             _ => unimplemented!(),
         }
 
@@ -200,7 +229,7 @@ impl  Compiler {
 
                     self.write(TASM::POP(Register(1)))?;
 
-                    self.write(TASM::LESS(Register(0), Register(1)))?;
+                    self.write(TASM::LESS(Register(1), Register(0)))?;
                 }
 
                 Op::LessThanEqual => {
@@ -272,6 +301,8 @@ impl  Compiler {
                 }
             },
 
+            Expression::Grouping(ref expr) => self.build_expr(expr)?,
+
             Expression::Unary(ref op, ref expr) => {
                 self.build_expr(expr)?;
                 self.write(TASM::PUSH(Register(0)))?;
@@ -290,7 +321,7 @@ impl  Compiler {
                 }
             }
 
-            _ => unimplemented!(),
+            ref e => unimplemented!(),
         }
 
         Ok(())

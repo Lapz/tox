@@ -52,14 +52,7 @@ pub struct FunctionParam {
 pub enum Statement {
     Block(Vec<Statement>),
     Break,
-    Class {
-        name: Symbol,
-        methods: Vec<Statement>,
-        fields: Vec<Field>,
-    },
-
     Continue,
-
     Expr(TypedExpression),
 
     If {

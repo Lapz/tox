@@ -1,6 +1,23 @@
 .data
-	l2: .asciiz "My Name is Lenard"
-	l1: .asciiz "Hello World"
 .code
-	l3:
-HLT
+	l1:
+		LOAD $0 #1
+		PUSH $0
+		LOAD $0 #10
+		POP $1
+		LESS $1 $0
+		JMPNEQ @l2
+		l3:
+			LOAD $0 #50
+			PUSH $0
+			LOAD $0 #10
+			POP $1
+			ADD $1 $0 $0
+		l2:
+		l4:
+			LOAD $0 #10
+			PUSH $0
+			LOAD $0 #10
+			POP $1
+			ADD $1 $0 $0
+	HLT

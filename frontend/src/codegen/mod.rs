@@ -29,7 +29,6 @@ impl Compiler  {
             self.process_strings(&function.body);
         }
 
-        //hello: .asciiz 'Hello everyone!'
 
         self.write(TASM::DIRECTIVE(".data".into()))?;
 
@@ -39,14 +38,17 @@ impl Compiler  {
             write!(&mut self.file,"{}{}: .asciiz \"{}\"\n",repeat_string("\t", self.indent_level),label,string)?;
         }
 
-        write!(&mut self.file, ".code\n")?;
+        self.indent_level -= 1;
+
+        self.write(TASM::DIRECTIVE(".code".into()))?;
+
+        self.indent_level += 1;
 
         for function in ast.functions.iter() {
             self.compile_function(function)?;
         }
 
-        write!(&mut self.file, "HLT")?;
-
+        self.write(TASM::HLT)?;
         Ok(())
     }
 
