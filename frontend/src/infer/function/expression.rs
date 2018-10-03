@@ -231,6 +231,17 @@ impl Infer {
                         match ty {
                             Type::Fun(ref targs, ref ret) => {
                                 use util::pos::Span;
+
+                                if args.len() != targs.len() {
+                                    let msg = format!(
+                                        "Expected `{}` args found `{}` ",
+                                        targs.len(),
+                                        args.len()
+                                    );
+                                    ctx.error(msg, call.span);
+                                    return Err(());
+                                }
+
                                 let mut arg_tys: Vec<(Span, Type)> = Vec::with_capacity(args.len());
                                 let mut callee_exprs = Vec::with_capacity(args.len());
 
@@ -277,7 +288,9 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
+                Expression::Get { .. } => {
+                    self.infer_object_get(*callee, ctx)
+                },
                 _ => {
                     ctx.error(" Not callable", callee.span);
                     return Err(());

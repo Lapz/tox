@@ -1,4 +1,4 @@
-/*fun fib(n:int) -> int {
+fun fib(n:int) -> int {
   if n < 2 {
     return n;
   } else {
@@ -21,14 +21,11 @@ class Toggle {
       this.state = !this.state;
       return this;
     }
-}*/
+}
 
 
 
 fun main(){
-    if (1<10) {
-        50+10;
-    }else {
-        10+10;
-    }
+    print Toggle.new();
+    return nil;
 }

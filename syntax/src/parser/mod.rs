@@ -994,7 +994,9 @@ impl<'a> Parser<'a> {
 
         loop {
             if self.recognise(TokenType::LPAREN) {
+                
                 expr = self.finish_call(expr)?;
+              
             } else if self.recognise(TokenType::LBRACKET) {
                 let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
 
@@ -1013,7 +1015,6 @@ impl<'a> Parser<'a> {
 
                 let (close_span, property) =
                     self.consume_get_symbol_and_span("Expected an identifier")?;
-
                 expr = Spanned {
                     span: expr.get_span().to(close_span),
                     value: Expression::Get {
@@ -1025,6 +1026,7 @@ impl<'a> Parser<'a> {
                 break;
             }
         }
+
 
         Ok(expr)
     }
