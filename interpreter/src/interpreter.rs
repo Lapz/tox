@@ -2,127 +2,180 @@ use super::object::Object;
 use fnv::FnvHashMap;
 use interpreter::env::Environment;
 use std::cell::RefCell;
-use std::mem;
 use std::rc::Rc;
-use syntax::ast::expr::*;
-use syntax::ast::statement::Statement;
-use util::pos::Spanned;
+use syntax::ast::*;
+use util::pos::{Span, Spanned, EMPTYSPAN};
 use util::symbol::Symbol;
 use util::symbol::Symbols;
 
 #[derive(Debug)]
-pub enum RuntimeError {
+pub enum ErrorCode {
     Break,
     Continue,
     IndexOutOfBound,
     InvalidIndexType,
-    NotAnIn,
-    UndefinedProperty,
+    NotAnInstance,
+    UndefinedProperty(Symbol),
     CantParseAsInt(Vec<u8>),
     UndefinedSymbol(Symbol),
     Return(Box<Object>),
 }
 
+#[derive(Debug)]
+pub struct RuntimeError {
+    pub code: ErrorCode,
+    pub span: Option<Span>,
+}
+
 impl RuntimeError {
-    pub fn fmt(&self, symbols: &Symbols<()>) {
+    pub fn new(code: ErrorCode, span: Span) -> Self {
+        Self {
+            code,
+            span: Some(span),
+        }
+    }
+
+    pub fn new_without_span(code: ErrorCode) -> Self {
+        Self { code, span: None }
+    }
+}
+
+impl ErrorCode {
+    pub fn reason(&self, symbols: &Symbols<()>) -> String {
         match *self {
-            RuntimeError::UndefinedSymbol(ref symbol) => {
-                println!("Undefined variable '{}' ", symbols.name(*symbol));
+            ErrorCode::UndefinedSymbol(ref symbol) => {
+                format!("Undefined variable '{}' ", symbols.name(*symbol))
             }
-            _ => (),
+
+            ErrorCode::UndefinedProperty(ref symbol) => {
+                format!("Undefined property '{}' ", symbols.name(*symbol))
+            }
+
+            ErrorCode::IndexOutOfBound => {
+                format!("An invalid index was used when trying to access an item from an array")
+            }
+
+            ErrorCode::InvalidIndexType => format!("The type of an index should be an integer"),
+            ErrorCode::CantParseAsInt(ref bytes) => format!(
+                "Cannot parse `{}` as an int",
+                ::std::str::from_utf8(bytes).unwrap()
+            ),
+
+            ErrorCode::NotAnInstance => format!("A class instance was expected"),
+            _ => format!(""),
         }
     }
 }
 
+pub(crate) fn evaluate_function(
+    function: &Function,
+    env: &mut Environment,
+) -> Result<Object, RuntimeError> {
+    let mut func_params = Vec::with_capacity(function.params.value.len());
+
+    for param in function.params.value.iter() {
+        func_params.push(param.value.name.value);
+    }
+
+    env.define(
+        function.name.value,
+        Object::Function(
+            function.name.value,
+            func_params,
+            Box::new(function.body.clone()),
+            Box::new(env.clone()),
+        ),
+    );
+
+    Ok(Object::None)
+}
+
+pub(crate) fn evaluate_class(class: &Class, env: &mut Environment) -> Result<Object, RuntimeError> {
+    use std::mem;
+
+    env.define(class.name.value, Object::Nil);
+    let mut class_methods: FnvHashMap<Symbol, Object> = FnvHashMap::default();
+    let mut sklass = None;
+
+    let mut s = false;
+
+    let old_env = env.clone();
+
+    if let Some(ref super_class_name) = class.superclass {
+        let new_env = Environment::new_with_outer(env);
+        mem::replace(env, new_env);
+
+        s = true;
+
+        let superclass = env.get(&super_class_name)?;
+
+        sklass = Some(Box::new(env.get(&super_class_name)?));
+        env.define(Symbol(1), superclass);
+    }
+
+    for method in class.methods.iter() {
+        let mut func_params = Vec::with_capacity(method.value.params.value.len());
+
+        for param in method.value.params.value.iter() {
+            func_params.push(param.value.name.value);
+        }
+
+        class_methods.insert(
+            method.value.name.value,
+            Object::Function(
+                method.value.name.value,
+                func_params,
+                Box::new(method.value.body.clone()),
+                Box::new(env.clone()),
+            ),
+        );
+    }
+
+    if s {
+        mem::replace(env, old_env);
+    }
+
+    env.define(
+        class.name.value,
+        Object::Class(class.name.value, sklass, class_methods),
+    );
+    Ok(Object::None)
+}
 pub(crate) fn evaluate_statement(
     statement: &Spanned<Statement>,
-    locals: &FnvHashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match statement.value {
         Statement::Block(ref statements) => {
             let mut environment = Environment::new_with_outer(env);
 
+            let mut result = Object::None;
+
             for statement in statements {
-                evaluate_statement(statement, locals, &mut environment)?;
-            }
+                let object = evaluate_statement(statement, &mut environment);
 
-            Ok(Object::None)
-        }
-
-        Statement::Break => Err(RuntimeError::Break),
-        Statement::Continue => Err(RuntimeError::Continue),
-        Statement::Class {
-            ref name,
-            ref body,
-            ref superclass,
-        } => {
-            env.define(name.value, Object::Nil);
-
-            let mut class_methods: FnvHashMap<Symbol, Object> = FnvHashMap::default();
-
-            let mut sklass = None;
-
-            let mut s = false;
-
-            let old_env = env.clone();
-
-            if let Some(ref sclass) = *superclass {
-                let new_env = Environment::new_with_outer(env);
-                mem::replace(env, new_env);
-
-                s = true;
-
-                let superclass = env.get(&sclass.value, 1)?;
-
-                sklass = Some(Box::new(env.get(&sclass.value, 1).unwrap().clone()));
-                env.define(Symbol(1), superclass);
-            }
-
-            for method in &body.value.0 {
-                match method.value {
-                    Statement::Function {
-                        ref name,
-                        ref body,
-                        ref params,
-                        ..
-                    } => {
-                        let mut func_params = Vec::with_capacity(params.value.len());
-
-                        for param in &params.value {
-                            func_params.push(param.value.name.value);
-                        }
-
-                        class_methods.insert(
-                            name.value,
-                            Object::Function(
-                                name.value,
-                                func_params,
-                                Box::new(*body.clone()),
-                                Box::new(env.clone()),
-                            ),
-                        );
-                    }
-
-                    _ => unreachable!(),
+                match object {
+                    Ok(Object::Return(_)) => return object,
+                    Ok(val) => result = val,
+                    Err(_) => return object,
                 }
             }
 
-            if s {
-                mem::replace(env, old_env);
-            }
-
-            env.define(name.value, Object::Class(name.value, sklass, class_methods));
-            Ok(Object::None)
+            Ok(result)
         }
 
+        Statement::Break => Err(RuntimeError::new(ErrorCode::Break, statement.span)),
+        Statement::Continue => Err(RuntimeError::new(ErrorCode::Continue, statement.span)),
         Statement::While { ref body, ref cond } => {
-            while evaluate_expression(cond, locals, env)?.is_truthy() {
-                match evaluate_statement(body, locals, env) {
-                    Ok(_) => (),
-                    Err(e) => match e {
-                        RuntimeError::Break => break,
-                        RuntimeError::Continue => continue,
+            while evaluate_expression(cond, env)?.is_truthy() {
+                match evaluate_statement(body, env) {
+                    Ok(value) => match value {
+                        Object::Return(_) => return Ok(value),
+                        _ => (),
+                    },
+                    Err(e) => match e.code {
+                        ErrorCode::Break => break,
+                        ErrorCode::Continue => continue,
                         _ => return Err(e),
                     },
                 };
@@ -131,7 +184,7 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Expr(ref expr) => evaluate_expression(expr, locals, env),
+        Statement::Expr(ref expr) => evaluate_expression(expr, env),
 
         Statement::For {
             ref init,
@@ -141,11 +194,14 @@ pub(crate) fn evaluate_statement(
         } => {
             if init.is_none() && cond.is_none() && incr.is_none() {
                 loop {
-                    match evaluate_statement(body, locals, env) {
-                        Ok(value) => value,
-                        Err(e) => match e {
-                            RuntimeError::Break => break,
-                            RuntimeError::Continue => continue,
+                    match evaluate_statement(body, env) {
+                        Ok(value) => match value {
+                            Object::Return(_) => return Ok(value),
+                            _ => value,
+                        },
+                        Err(e) => match e.code {
+                            ErrorCode::Break => break,
+                            ErrorCode::Continue => continue,
                             _ => return Err(e),
                         },
                     };
@@ -154,22 +210,25 @@ pub(crate) fn evaluate_statement(
             }
 
             if let Some(ref init) = *init {
-                evaluate_statement(init, locals, env)?;
+                evaluate_statement(init, env)?;
             }
 
             if let Some(ref cond) = *cond {
-                while evaluate_expression(cond, locals, env)?.is_truthy() {
-                    match evaluate_statement(body, locals, env) {
-                        Ok(value) => value,
-                        Err(e) => match e {
-                            RuntimeError::Break => break,
-                            RuntimeError::Continue => continue,
+                while evaluate_expression(cond, env)?.is_truthy() {
+                    match evaluate_statement(body, env) {
+                        Ok(value) => match value {
+                            Object::Return(_) => return Ok(value),
+                            _ => value,
+                        },
+                        Err(e) => match e.code {
+                            ErrorCode::Break => break,
+                            ErrorCode::Continue => continue,
                             _ => return Err(e),
                         },
                     };
 
                     if let Some(ref inc) = *incr {
-                        evaluate_expression(inc, locals, env)?;
+                        evaluate_expression(inc, env)?;
                     }
                 }
             }
@@ -177,90 +236,61 @@ pub(crate) fn evaluate_statement(
             Ok(Object::None)
         }
 
-        Statement::Function {
-            ref name,
-            ref body,
-            ref params,
-            ..
-        } => {
-            let mut func_params = Vec::with_capacity(params.value.len());
-
-            for param in &params.value {
-                func_params.push(param.value.name.value);
-            }
-
-            env.define(
-                name.value,
-                Object::Function(
-                    name.value,
-                    func_params,
-                    Box::new(*body.clone()),
-                    Box::new(env.clone()),
-                ),
-            );
-
-            Ok(Object::None)
-        }
-
         Statement::Print(ref expr) => {
             use std::io;
             use std::io::prelude::*;
+            let value = evaluate_expression(expr, env)?;
 
-            let value = evaluate_expression(expr, locals, env)?;
             println!("{}", value.as_string());
             let _ = io::stdout().flush();
 
             Ok(Object::None)
         }
 
-        Statement::Return(ref expr) => Err(RuntimeError::Return(Box::new(evaluate_expression(
-            expr, locals, env,
-        )?))),
+        Statement::Return(ref expr) => {
+            Ok(Object::Return(Box::new(evaluate_expression(expr, env)?)))
+        }
 
         Statement::If {
             ref cond,
             ref otherwise,
             ref then,
         } => {
-            if evaluate_expression(cond, locals, env)?.is_truthy() {
-                evaluate_statement(then, locals, env)
+            if evaluate_expression(cond, env)?.is_truthy() {
+                evaluate_statement(then, env)
             } else if let Some(ref else_statement) = *otherwise {
-                evaluate_statement(else_statement, locals, env)
+                evaluate_statement(else_statement, env)
             } else {
                 Ok(Object::None)
             }
         }
 
-        Statement::TypeAlias { .. } => Ok(Object::None),
-
-        Statement::Var {
+        Statement::VarDeclaration {
             ref ident,
             ref expr,
             ..
         } => {
             if let Some(ref expr) = *expr {
-                let value = evaluate_expression(expr, locals, env)?;
+                let value = evaluate_expression(expr, env)?;
                 env.define(ident.value, value);
-                return Ok(Object::None);
+            } else {
+                env.define(ident.value, Object::Nil);
             }
 
-            env.define(ident.value, Object::Nil);
-
-            Ok(Object::None)
+            Ok(Object::Nil)
         }
     }
 }
 
 fn evaluate_expression(
     expression: &Spanned<Expression>,
-    locals: &FnvHashMap<VariableUseHandle, usize>,
     env: &mut Environment,
 ) -> Result<Object, RuntimeError> {
     match expression.value {
         Expression::Array { ref items, .. } => {
             let mut values = Vec::with_capacity(items.len());
             for item in items {
-                values.push(evaluate_expression(item, locals, env)?)
+                values.push(evaluate_expression(item, env)?)
             }
             Ok(Object::Array(values))
         }
@@ -269,16 +299,14 @@ fn evaluate_expression(
             ref name,
             ref kind,
             ref value,
-            ref handle,
         } => {
-            let mut value = evaluate_expression(value, locals, env)?;
+            let mut value = evaluate_expression(value, env)?;
 
-            let distance = get_distance(locals, &name.value, handle)?;
             match kind.value {
                 AssignOperator::Equal => (),
 
                 AssignOperator::PlusEqual => {
-                    let current = env.get(&name.value, distance)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x + y),
@@ -288,7 +316,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::MinusEqual => {
-                    let current = env.get(&name.value, distance)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x - y),
@@ -298,7 +326,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::SlashEqual => {
-                    let current = env.get(&name.value, distance)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x / y),
@@ -308,7 +336,7 @@ fn evaluate_expression(
                 }
 
                 AssignOperator::StarEqual => {
-                    let current = env.get(&name.value, distance)?;
+                    let current = env.get(name)?;
 
                     match (current, value) {
                         (Object::Int(x), Object::Int(y)) => value = Object::Int(x * y),
@@ -318,7 +346,7 @@ fn evaluate_expression(
                 }
             }
 
-            env.assign(&name.value, value.clone(), distance)?;
+            env.assign(name, value.clone())?;
 
             Ok(value)
         }
@@ -328,8 +356,8 @@ fn evaluate_expression(
             ref op,
             ref rhs,
         } => {
-            let left = evaluate_expression(lhs, locals, env)?;
-            let right = evaluate_expression(rhs, locals, env)?;
+            let left = evaluate_expression(lhs, env)?;
+            let right = evaluate_expression(rhs, env)?;
 
             match op.value {
                 Op::BangEqual => Ok(Object::Bool(left != right)),
@@ -365,20 +393,20 @@ fn evaluate_expression(
             ref callee,
             ref args,
         } => {
-            let callee = evaluate_expression(callee, locals, env)?;
+            let callee = evaluate_expression(callee, env)?;
 
             let mut obj_arguments = Vec::with_capacity(args.len());
 
             for arg in args {
-                obj_arguments.push(evaluate_expression(arg, locals, env)?);
+                obj_arguments.push(evaluate_expression(arg, env)?);
             }
 
-            callee.call(&obj_arguments, locals)
+            callee.call(&obj_arguments)
         }
         Expression::ClassInstance {
             ref symbol,
             ref props,
-        } => match env.get(&symbol.value, 0)? {
+        } => match env.get(symbol)? {
             Object::Class(_, ref superclass, ref methods) => {
                 let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
                 let mut s_class_methods = None;
@@ -393,7 +421,7 @@ fn evaluate_expression(
                 }
 
                 for prop in props.iter() {
-                    let value = evaluate_expression(&prop.value.expr, locals, env)?;
+                    let value = evaluate_expression(&prop.value.expr, env)?;
                     instance_props.insert(prop.value.symbol.value, value);
                 }
 
@@ -416,27 +444,32 @@ fn evaluate_expression(
             _ => unimplemented!(),
         },
 
+        Expression::Closure(ref function) => evaluate_function(&function.value, env),
+
         Expression::Literal(ref lit) => evaluate_literal(lit),
         Expression::Get {
             ref object,
             ref property,
             ..
         } => {
-            let object = evaluate_expression(object, locals, env)?;
+            let object = evaluate_expression(object, env)?;
 
             match object {
-                instance @ Object::Instance { .. } => instance.get_property(&property.value, env),
-                class @ Object::Class(_, _, _) => class.get_property(&property.value, env),
-                _ => Err(RuntimeError::NotAnIn),
+                instance @ Object::Instance { .. } => instance.get_property(property, env),
+                class @ Object::Class(_, _, _) => class.get_property(property, env),
+                ref e => {
+                    println!("{:?}", e);
+                    Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
+                }
             }
         }
-        Expression::Grouping { ref expr } => evaluate_expression(expr, locals, env),
-        Expression::Index {
+        Expression::Grouping { ref expr } => evaluate_expression(expr, env),
+        Expression::SubScript {
             ref target,
             ref index,
         } => {
-            let target = evaluate_expression(target, locals, env)?;
-            let index = evaluate_expression(index, locals, env)?;
+            let target = evaluate_expression(target, env)?;
+            let index = evaluate_expression(index, env)?;
 
             match target {
                 Object::Array(r) => {
@@ -445,8 +478,11 @@ fn evaluate_expression(
                         _ => unreachable!(),
                     };
 
-                    if index > (r.len() as i64) || index < 0 {
-                        return Err(RuntimeError::IndexOutOfBound);
+                    if index >= (r.len() as i64) || index < 0 {
+                        return Err(RuntimeError::new(
+                            ErrorCode::IndexOutOfBound,
+                            expression.span,
+                        ));
                     }
 
                     Ok(r[index as usize].to_owned())
@@ -461,46 +497,39 @@ fn evaluate_expression(
             ref value,
             ..
         } => {
-            let object = evaluate_expression(object, locals, env)?;
-            let value = evaluate_expression(value, locals, env)?;
+            let object = evaluate_expression(object, env)?;
+            let value = evaluate_expression(value, env)?;
 
             match object {
                 mut instance @ Object::Instance { .. } => {
                     instance.set(name.value, &value);
                 }
-                _ => return Err(RuntimeError::NotAnIn),
+                _ => return Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span)),
             }
 
             Ok(value)
         }
 
-        Expression::Var(ref symbol, ref handle) => {
-            let distance = get_distance(locals, &symbol.value, handle)?;
-
-            env.get(&symbol.value, distance)
-        }
+        Expression::Var(ref symbol) => env.get(symbol),
 
         Expression::Ternary {
             ref condition,
             ref then_branch,
             ref else_branch,
         } => {
-            let cond = evaluate_expression(condition, locals, env)?;
+            let cond = evaluate_expression(condition, env)?;
 
             if cond.is_truthy() {
-                evaluate_expression(then_branch, locals, env)
+                evaluate_expression(then_branch, env)
             } else {
-                evaluate_expression(else_branch, locals, env)
+                evaluate_expression(else_branch, env)
             }
         }
 
-        Expression::This(ref handle) => {
-            let distance = get_distance(locals, &Symbol(0), handle)?;
-            env.get(&Symbol(0), distance)
-        }
+        Expression::This => env.get(&Spanned::new(Symbol(0), EMPTYSPAN)),
 
         Expression::Unary { ref op, ref expr } => {
-            let right = evaluate_expression(expr, locals, env)?;
+            let right = evaluate_expression(expr, env)?;
 
             match op.value {
                 UnaryOp::Minus => match right {
@@ -579,33 +608,22 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
     }
 }
 
-fn get_distance(
-    locals: &FnvHashMap<VariableUseHandle, usize>,
-    variable: &Symbol,
-    handle: &VariableUseHandle,
-) -> Result<usize, RuntimeError> {
-    match locals.get(handle) {
-        Some(distance) => Ok(*distance),
-        None => Err(RuntimeError::UndefinedSymbol(*variable)),
-    }
-}
-
 pub mod env {
 
-    use util::symbol::Symbol;
-
-    use super::RuntimeError;
+    use super::{ErrorCode, RuntimeError};
     use builtins::BuiltIn;
     use object::Object;
+    use util::symbol::Symbol;
 
     use std::rc::Rc;
 
     use fnv::FnvHashMap;
     use std::cell::RefCell;
+    use util::pos::Spanned;
     use util::symbol::Symbols;
 
     #[derive(Debug, Clone, Default)]
-    /// A Loxlocals,enviroment
+    /// A Lox enviroment
     /// which contains a map of a Symbol and value and the scope in which a
     /// Symbol was declared
     pub struct Environment {
@@ -638,7 +656,7 @@ pub mod env {
         }
 
         /// Defines a Symbol by inserting the name and
-        /// value into thelocals,environmentImpl
+        /// value into the environmentImpl
         pub fn define(&self, name: Symbol, value: Object) {
             self.actual.borrow_mut().values.insert(name, value);
         }
@@ -651,25 +669,19 @@ pub mod env {
         /// Checks if the value exsits and inserts into the actual values if not,
         /// searches the outer scope and then calls itselfs.
         /// Returns a runtime error if the not found
-        pub fn assign(
-            &self,
-            name: &Symbol,
-            value: Object,
-            distance: usize,
-        ) -> Result<(), RuntimeError> {
+        pub fn assign(&self, name: &Spanned<Symbol>, value: Object) -> Result<(), RuntimeError> {
             let mut actual = self.actual.borrow_mut();
 
-            if distance == 0 {
-                if actual.values.contains_key(name) {
-                    *actual.values.get_mut(name).unwrap() = value;
-                    Ok(())
-                } else {
-                    Err(RuntimeError::UndefinedSymbol(*name))
-                }
+            if actual.values.contains_key(&name.value) {
+                *actual.values.get_mut(&name.value).unwrap() = value;
+                Ok(())
             } else {
                 match actual.outer {
-                    Some(ref outer) => outer.assign(name, value, distance - 1),
-                    None => Err(RuntimeError::UndefinedSymbol(*name)),
+                    Some(ref outer) => outer.assign(name, value),
+                    None => Err(RuntimeError::new(
+                        ErrorCode::UndefinedSymbol(name.value),
+                        name.span,
+                    )),
                 }
             }
         }
@@ -678,19 +690,18 @@ pub mod env {
         /// Checks if the value exists and if not,
         /// searches the outer scope and then calls itselfs.
         /// Returns a runtime error if the not found
-        pub fn get(&self, name: &Symbol, distance: usize) -> Result<Object, RuntimeError> {
+        pub fn get(&self, name: &Spanned<Symbol>) -> Result<Object, RuntimeError> {
             let actual = self.actual.borrow();
 
-            if distance == 0 {
-                if let Some(value) = actual.values.get(name) {
-                    return Ok(value.clone());
-                } else {
-                    Err(RuntimeError::UndefinedSymbol(*name))
-                }
+            if let Some(value) = actual.values.get(&name.value) {
+                return Ok(value.clone());
             } else {
                 match actual.outer {
-                    Some(ref outer) => outer.get(name, distance - 1),
-                    None => Err(RuntimeError::UndefinedSymbol(*name)),
+                    Some(ref outer) => outer.get(name),
+                    None => Err(RuntimeError::new(
+                        ErrorCode::UndefinedSymbol(name.value),
+                        name.span,
+                    )),
                 }
             }
         }

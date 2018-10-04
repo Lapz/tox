@@ -23,8 +23,8 @@ impl Display for LexerError {
     }
 }
 
-impl Into<String> for LexerError {
-    fn into(self) -> String {
+impl LexerError {
+    fn to_string(self) -> String {
         match self {
             LexerError::UnclosedString => "Unclosed string".into(),
             LexerError::EOF => "Unexpected EOF".into(),
@@ -34,6 +34,7 @@ impl Into<String> for LexerError {
     }
 }
 
+
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     // A lexer instance
@@ -41,6 +42,7 @@ pub struct Lexer<'a> {
     chars: CharPosition<'a>,
     reporter: Reporter,
     lookahead: Option<(Position, char)>,
+    start: Position,
     end: Position,
 }
 
@@ -52,6 +54,7 @@ impl<'a> Lexer<'a> {
         Lexer {
             input,
             end,
+            start: end,
             reporter,
             lookahead: chars.next(),
             chars,
@@ -207,7 +210,7 @@ impl<'a> Lexer<'a> {
                 '"' => match self.string_literal(start) {
                     Ok(token) => Ok(token),
                     Err(e) => {
-                        let msg: String = e.into();
+                        let msg = e.to_string();
                         let end = self.end;
                         self.span_error(msg, start, end);
                         continue;
@@ -299,7 +302,7 @@ impl<'a> Lexer<'a> {
                 ch if is_letter_ch(ch) => Ok(self.identifier(start)),
                 ch if ch.is_whitespace() => continue,
                 ch => {
-                    let msg: String = LexerError::Unexpected(ch, start).into();
+                    let msg: String = LexerError::Unexpected(ch, start).to_string();
                     self.error(msg, start);
                     continue;
                 }
@@ -310,22 +313,39 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn lex(&mut self) -> Result<Vec<Spanned<Token<'a>>>, ()> {
+
+
         let mut tokens = vec![];
 
-        let mut errors = vec![];
+        let mut had_error = false;
 
-        while !self.lookahead.is_none() {
+        while self.lookahead.is_some() {
             match self.next() {
                 Ok(token) => tokens.push(token),
-                Err(e) => errors.push(e),
+                Err(_) => {
+                    had_error = true;
+                    continue;
+                },
             }
+        } 
+        
+        tokens.push(span(TokenType::EOF, self.end));
+        tokens.retain(|t| t.value.token != TokenType::COMMENT);
+
+        if !had_error {
+            Ok(tokens)
+        }else {
+            Err(())
         }
 
-        if errors.is_empty() {
-            return Ok(tokens);
-        }
 
-        Err(())
+    }
+
+    pub fn end_span(&self) -> Span {
+        Span {
+            start: self.start,
+            end: self.end,
+        }
     }
 }
 

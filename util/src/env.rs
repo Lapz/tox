@@ -1,10 +1,10 @@
 //! This module provides an Environment which keeps a track of the mappings between a
 //! `Symbol` and a `Type` or an `Entry`
 
-use types::Type;
 use super::symbol::{Symbol, SymbolFactory, Table};
-use std::rc::Rc;
 use super::Unique;
+use std::rc::Rc;
+use types::Type;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Hash)]
 pub enum Entry {
@@ -49,15 +49,13 @@ impl TypeEnv {
 
         env.add_builtin_class(
             "io",
-            vec![
-                (
-                    "readline",
-                    Entry::FunEntry {
-                        params: vec![],
-                        returns: Type::Str,
-                    },
-                ),
-            ],
+            vec![(
+                "readline",
+                Entry::FunEntry {
+                    params: vec![],
+                    returns: Type::Str,
+                },
+            )],
         );
 
         env

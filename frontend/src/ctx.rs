@@ -1,6 +1,6 @@
-use env::{Entry, VarEntry};
+use infer::env::{Entry, VarEntry};
+use infer::types::{Type, Unique};
 use std::rc::Rc;
-use types::{Type, Unique};
 use util::emmiter::Reporter;
 use util::pos::Span;
 use util::symbol::{Symbol, SymbolFactory, Symbols};
@@ -36,9 +36,11 @@ impl<'a> CompileCtx<'a> {
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::Fun(params, Box::new(returns)),
+                        ty: Type::Fun(params.clone(), Box::new(returns.clone())),
                     },
-                )
+                );
+
+                types.enter(symbol, Type::Fun(params, Box::new(returns)));
             };
 
             add_builtin("clock", vec![], Type::Float);
@@ -46,6 +48,7 @@ impl<'a> CompileCtx<'a> {
             add_builtin("oct", vec![Type::Int], Type::Str);
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
             add_builtin("to_int", vec![Type::Str], Type::Int);
+            add_builtin("trim", vec![Type::Str], Type::Str);
         }
 
         {
@@ -64,11 +67,15 @@ impl<'a> CompileCtx<'a> {
                 let entry = VarEntry::Var(Type::Class(
                     symbol,
                     HashMap::new(),
-                    methods_ty,
+                    methods_ty.clone(),
                     Unique::new(),
                 ));
 
                 vars.enter(symbol, entry);
+                types.enter(
+                    symbol,
+                    Type::Class(symbol, HashMap::new(), methods_ty, Unique::new()),
+                );
             };
 
             add_builtin_class(
@@ -97,6 +104,9 @@ impl<'a> CompileCtx<'a> {
         self.reporter.warn(msg, span)
     }
 
+    pub fn global_error(&mut self, msg: &str) {
+        self.reporter.global_error(msg)
+    }
     pub fn remove_error(&mut self) {
         self.reporter.remove_error();
     }

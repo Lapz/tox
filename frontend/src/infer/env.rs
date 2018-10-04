@@ -1,10 +1,7 @@
 //! This module provides an Environment which keeps a track of the mappings between a
 //! `Symbol` and a `Type` or an `Entry`
 
-use std::rc::Rc;
-use types::Type;
-use util::symbol::{Symbol, SymbolFactory, Symbols};
-use util::Unique;
+use infer::types::Type;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Entry {

@@ -3,105 +3,49 @@ extern crate frontend;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
+extern crate interpreter;
 extern crate syntax;
 extern crate util;
 extern crate vm;
 
-use frontend::Infer;
-use std::io;
-use std::io::Write;
+mod repl;
+
+// use codegen::Compiler;
+use frontend::{Compiler, Infer};
+use interpreter::{interpret, Environment};
+use std::fs::File;
+use std::io::Read;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
-use vm::{Chunk, VM};
-
+use vm::{Assembler, VM};
 
 fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        run(file, opts.ptokens, opts.pprint, opts.env, opts.past);
+        if opts.vm {
+            run_vm(file);
+        } else if opts.interpreter {
+            run_interpreter(file, opts.ptokens, opts.pprint, opts.past);
+        } else {
+            run(file, opts.ptokens, opts.pprint, opts.past);
+        }
     } else {
-        repl(opts.ptokens, opts.pprint)
+        repl()
     }
 }
 
-pub fn repl(ptokens: bool, pprint: bool) {
-    println!("Welcome to the lexer programming language");
+pub fn repl() {
+    use repl::Repl;
 
-    loop {
-        let _ = io::stdout().write(b"lexer>> ");
-        let _ = io::stdout().flush();
-        let mut input = String::new();
-
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Couldn't read input");
-
-        let reporter = Reporter::new();
-
-        let tokens = match Lexer::new(&input, reporter.clone()).lex() {
-            Ok(tokens) => {
-                if ptokens {
-                    for token in &tokens {
-                        println!("{:#?}", token);
-                    }
-                }
-                tokens
-            }
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
-
-        let strings = Rc::new(SymbolFactory::new());
-        let mut symbols = Symbols::new(Rc::clone(&strings));
-
-        let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-            Ok(statements) => {
-                if pprint {
-                    // for statement in &statements {
-                    //     println!("{}", statement.node.pprint(&mut symbols));
-                    // }
-                }
-                statements
-            }
-            Err(_) => {
-                reporter.emit(&input);
-                continue;
-            }
-        };
-
-        // let mut tyenv = TypeEnv::new(&strings);
-        // let mut resolver = Resolver::new(reporter.clone());
-
-        // resolver.resolve(&ast, &tyenv).unwrap();
-
-        // match TyChecker::new(reporter.clone()).analyse(&ast, &mut tyenv) {
-        //     Ok(_) => (),
-        //     Err(_) => {
-        //         reporter.emit(&input);
-        //         continue;
-        //     }
-        // };
-
-        // let mut env = Environment::new();
-        // env.fill_env(&mut symbols);
-        // match interpret(&ast, &resolver.locals, &mut env) {
-        //     Ok(_) => (),
-        //     Err(err) => {
-        //         println!("{:?}", err);
-        //         continue;
-        //     }
-        // };
-    }
+    Repl::new().run();
 }
 
-pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
+pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     use std::fs::File;
     use std::io::Read;
 
@@ -120,7 +64,9 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let tokens = match Lexer::new(input, reporter.clone()).lex() {
+    let mut lexer = Lexer::new(input, reporter.clone());
+
+    let tokens = match lexer.lex() {
         Ok(tokens) => {
             if ptokens {
                 for token in &tokens {
@@ -135,15 +81,17 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
         }
     };
 
+    reporter.set_end(lexer.end_span());
+
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => {
             if pprint {
-                for statement in &statements {
-                    println!("{}", statement.value.pprint(&mut symbols));
-                }
+                // for statement in &statements {
+                //     println!("{}", statement.value.pprint(&mut symbols));
+                // }
             }
             statements
         }
@@ -159,73 +107,174 @@ pub fn run(path: String, ptokens: bool, pprint: bool, penv: bool, past: bool) {
 
     let mut infer = Infer::new();
 
-    match infer.infer(ast, &strings, &mut reporter) {
+    match infer.infer(ast.clone(), &strings, &mut reporter) {
         Ok(_) => (),
         Err(_) => {
             reporter.emit(input);
             ::std::process::exit(65)
         }
+    };
+
+    let mut env = Environment::new();
+    env.fill_env(&mut symbols);
+
+    match interpret(&ast, &mut env, infer.get_main()) {
+        Ok(_) => (),
+        Err(err) => {
+            if let Some(span) = err.span {
+                let msg = err.code.reason(&symbols);
+
+                reporter.run_time_error(msg, span);
+
+                reporter.emit(input);
+            } else {
+                reporter.global_run_time_error(&err.code.reason(&symbols));
+                reporter.emit(input);
+            }
+
+            ::std::process::exit(65)
+        }
+    };
+}
+
+pub fn run_vm(path: String) {
+    let mut file = File::open(path).expect("File not found");
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
+
+    if contents.is_empty() {
+        ::std::process::exit(0)
     }
 
-    let mut chunk = Chunk::new();
-    // let mut constant = chunk.add_constant(&[12, 0, 0, 0, 0, 0, 0, 0], 1);
+    let mut assembler = Assembler::new();
 
-    // chunk.write(1, 1); //Int
+    let bytecode = match assembler.assemble(&contents) {
+        Ok(bytecode) => bytecode,
+        Err(e) => {
+            println!("{:?}", e);
+            ::std::process::exit(0)
+        }
+    };
 
+    let mut vm = VM::new();
 
-    // constant = chunk.add_constant(&[25, 0, 0, 0, 0, 0, 0, 0], 1);
+    vm.code(bytecode);
 
-    // chunk.write(1, 1); //Int
-    // chunk.write(constant as u8, 1); //index
+    vm.disassemble("test");
 
-    // chunk.write(6, 1); // Multiply
+    vm.run();
 
-    // chunk.write(0, 2); // Return
-    // chunk.write(8, 2);
+    println!("{:?}", vm);
+}
 
-    chunk.add_string(&[104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100], 1);
+pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
+    use std::fs::File;
+    use std::io::Read;
 
-    chunk.write(3, 1); // string
-    chunk.write(11, 1); // length
+    let mut file = File::open(path).expect("File not found");
 
-    let mut constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 40, 64], 1);
+    let mut contents = String::new();
 
-    chunk.write(2, 1); //Float
+    file.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
 
-    chunk.write(constant as u8, 1); //index
+    let input = contents.trim();
 
-    constant = chunk.add_constant(&[0, 0, 0, 0, 0, 0, 57, 64], 1);
+    if contents.is_empty() {
+        ::std::process::exit(0)
+    }
 
-    chunk.write(2, 1); //Float
-    chunk.write(constant as u8, 1); //index
+    let mut reporter = Reporter::new();
 
-    chunk.write(23, 2); // Add
+    let mut lexer = Lexer::new(input, reporter.clone());
 
-    chunk.write(0, 2); // Return
-    chunk.write(1, 2);
+    let tokens = match lexer.lex() {
+        Ok(tokens) => {
+            if ptokens {
+                for token in &tokens {
+                    println!("{:#?}", token);
+                }
+            }
+            tokens
+        }
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
-    println!("{:?}", chunk);
+    reporter.set_end(lexer.end_span());
 
-    let mut vm = VM::new(&mut chunk);
+    let strings = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    vm.run().expect("Err");
+    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
+        Ok(statements) => statements,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    if past {
+        println!("{:#?}", ast);
+    }
+
+    let mut infer = Infer::new();
+
+    let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+        Ok(ast) => ast,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    let mut compiler = Compiler::new();
+
+    compiler
+        .compile(&typed_ast)
+        .expect("Couldn't compile the file");
+
+    let bytecode = match Assembler::new().assemble_file("output.tasm") {
+        Ok(bytecode) => bytecode,
+        Err(e) => {
+            println!("{:?}", e);
+            ::std::process::exit(0)
+        }
+    };
+
+    let mut vm = VM::new();
+
+    vm.code(bytecode);
+    vm.disassemble("test");
+
+    vm.run();
+
+    println!("{:?}", vm);
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "lexer")]
+#[structopt(name = "tox")]
 pub struct Cli {
     /// The source code file
     pub source: Option<String>,
     /// Pretty Print Source Code
     #[structopt(long = "pretty_print", short = "p")]
     pub pprint: bool,
-    /// Print out the mappings in the environment
-    #[structopt(long = "env", short = "e")]
-    pub env: bool,
     /// Print out tokens
     #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,
     /// Print out ast debug mode
     #[structopt(long = "rawast", short = "ra")]
     pub past: bool,
+    /// Run in vm mode
+    #[structopt(long = "vm", short = "v")]
+    pub vm: bool,
+    /// Run in interpreter mode
+    #[structopt(long = "interpter", short = "-i")]
+    pub interpreter: bool,
 }
