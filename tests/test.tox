@@ -1,8 +1,37 @@
-
-fun main(){
-    if (1<10) {
-        1+1;
-    }else {
-        50+20;
+class Toggle {
+    state:bool;
+  
+    fun value() -> bool {
+      return this.state;
+    }
+  
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
     }
 }
+
+class Button < Toggle {
+    state:bool;
+  
+    fun value() -> bool {
+      return this.state;
+    }
+  
+    fun activate() -> Toggle {
+      this.state = !this.state;
+      return this;
+    }
+}
+
+fun foo() {
+    return nil;
+}
+
+foo();
+var toggle  = Toggle{state:true};
+var toggle  = Toggle{state:true};
+
+print toggle.activate().value();
+
+print toggle.activate().value();

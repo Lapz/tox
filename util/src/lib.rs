@@ -19,11 +19,10 @@ impl Unique {
     }
 }
 
-pub fn print_err(err: String) {
+
+pub fn print_err(err:String) {
     use ansi_term::Colour::{Fixed, Red};
-    println!(
-        "{}: {}",
-        Red.bold().paint("Runtime Error"),
-        Fixed(252).bold().paint(err)
-    );
+    println!("{}: {}",Red.bold().paint("Runtime Error"),
+     Fixed(252).bold().paint(err)
+   );
 }

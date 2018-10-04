@@ -1,4 +1,4 @@
-use interpreter::{ErrorCode, RuntimeError};
+use interpreter::RuntimeError;
 use object::Object;
 use rand::{thread_rng, Rng};
 use std::str;
@@ -28,7 +28,6 @@ impl BuiltIn {
             add_builtin(env.symbol("oct"), built_in_oct),
             add_builtin(env.symbol("hex"), built_in_hex),
             add_builtin(env.symbol("to_int"), built_in_to_int),
-            add_builtin(env.symbol("trim"), built_in_trim),
             add_builtin_class(env.symbol("io"), env, vec![("readline", built_in_readline)]),
         ]
     }
@@ -95,9 +94,7 @@ fn built_in_trim(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    Ok(Object::Str(
-        str::from_utf8(&string).unwrap().trim().as_bytes().to_vec(),
-    ))
+    Ok(Object::Str(str::from_utf8(&string).unwrap().trim().as_bytes().to_vec()))
 }
 
 fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
@@ -107,9 +104,7 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
     };
     match str::from_utf8(string).unwrap().parse::<i64>() {
         Ok(n) => Ok(Object::Int(n)),
-        Err(_) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
-            string.to_vec(),
-        ))),
+        Err(_) => Err(RuntimeError::CantParseAsInt(string.to_vec())),
     }
 }
 

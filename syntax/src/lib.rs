@@ -7,5 +7,5 @@ use util::symbol;
 pub mod ast;
 pub mod lexer;
 pub mod parser;
-// mod pprint;
+mod pprint;
 mod token;

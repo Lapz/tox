@@ -5,7 +5,8 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 
 [dependencies]
 util = {path = "../util"}
-nom = "^4.0"
+syntax = {path ="../syntax"}
+byteorder = "1.2.2"
 
 [features]
 debug = []

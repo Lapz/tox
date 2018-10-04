@@ -1,4 +1,4 @@
-use super::interpreter::{ErrorCode, RuntimeError};
+use super::interpreter::RuntimeError;
 use builtins::BuiltInFunction;
 use fnv::FnvHashMap;
 use interpreter::env::Environment;
@@ -9,7 +9,8 @@ use std::hash::{Hash, Hasher};
 use std::ops::Not;
 use std::rc::Rc;
 use std::str;
-use syntax::ast::Statement;
+use syntax::ast::expr::VariableUseHandle;
+use syntax::ast::statement::Statement;
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
@@ -33,7 +34,6 @@ pub enum Object {
         fields: Rc<RefCell<FnvHashMap<Symbol, Object>>>,
         sclassmethods: Option<FnvHashMap<Symbol, Object>>,
     },
-    Return(Box<Object>),
     Nil,
     None,
 }
@@ -44,7 +44,7 @@ unsafe impl Send for Object {}
 impl Object {
     pub fn is_truthy(&self) -> bool {
         match *self {
-            Object::Nil | Object::None => false,
+            Object::Nil => false,
             Object::Bool(b) => b,
             _ => true,
         }
@@ -72,51 +72,45 @@ impl Object {
         }
     }
 
-    pub fn get_property(
-        &self,
-        name: &Spanned<Symbol>,
-        env: &Environment,
-    ) -> Result<Object, RuntimeError> {
+    pub fn get_property(&self, name: &Symbol, env: &Environment) -> Result<Object, RuntimeError> {
         match *self {
             Object::Instance {
                 ref fields,
                 ref methods,
                 ref sclassmethods,
             } => {
-                if fields.borrow().contains_key(&name.value) {
-                    return Ok(fields.borrow().get(&name.value).unwrap().clone());
+                if fields.borrow().contains_key(name) {
+                    return Ok(fields.borrow().get(name).unwrap().clone());
                 }
-                if methods.contains_key(&name.value) {
-                    return Ok(methods.get(&name.value).unwrap().bind(self));
+                if methods.contains_key(name) {
+                    return Ok(methods.get(name).unwrap().bind(self));
                 }
                 if let Some(ref smethods) = *sclassmethods {
-                    if smethods.contains_key(&name.value) {
-                        return Ok(smethods.get(&name.value).unwrap().bind(self));
+                    if smethods.contains_key(name) {
+                        return Ok(smethods.get(name).unwrap().bind(self));
                     }
                 }
-                Err(RuntimeError::new(
-                    ErrorCode::UndefinedProperty(name.value),
-                    name.span,
-                ))
+                Err(RuntimeError::UndefinedProperty)
             }
 
             Object::Class(_, ref superclass, ref methods) => {
-                if methods.contains_key(&name.value) {
-                    return Ok(methods.get(&name.value).unwrap().bind(self));
+                if methods.contains_key(name) {
+                    return Ok(methods.get(name).unwrap().bind(self));
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
-                Err(RuntimeError::new(
-                    ErrorCode::UndefinedProperty(name.value),
-                    name.span,
-                ))
+                Err(RuntimeError::UndefinedProperty)
             }
             _ => unreachable!(), // Type checking means no trying to access a property
                                  // that dosen't exist
         }
     }
 
-    pub fn call(&self, arguments: &[Object]) -> Result<Object, RuntimeError> {
+    pub fn call(
+        &self,
+        arguments: &[Object],
+        locals: &FnvHashMap<VariableUseHandle, usize>,
+    ) -> Result<Object, RuntimeError> {
         match *self {
             Object::BuiltIn(_, builtin_fn) => builtin_fn(arguments),
             Object::Function(_, ref params, ref body, ref fenv) => {
@@ -130,19 +124,18 @@ impl Object {
 
                 use interpreter::evaluate_statement;
 
-                return match evaluate_statement(body, &mut local_environment) {
-                    Ok(value) => match value {
-                        Object::Return(r) => Ok(*r),
-                        _ => Ok(value),
-                    },
-                    Err(e) => match e.code {
-                        ErrorCode::Return(ref r) => {
+                match evaluate_statement(body, locals, &mut local_environment) {
+                    Ok(_) => (),
+                    Err(e) => match e {
+                        RuntimeError::Return(ref r) => {
                             return Ok(*r.clone());
                         }
 
                         _ => return Err(e),
                     },
-                };
+                }
+
+                Ok(Object::Nil)
             }
             ref e => panic!("{:?} Should not be calling this method ", e),
         }
@@ -160,7 +153,6 @@ impl Object {
             Object::Bool(b) => b.to_string(),
             Object::Nil => "nil".to_string(),
             Object::Str(ref s) => str::from_utf8(s).unwrap().into(),
-            Object::Return(ref val) => format!("return <{}>", val),
             Object::Array(ref v) => {
                 let mut fmt_string = String::new();
                 fmt_string.push_str("[");
@@ -232,7 +224,7 @@ impl fmt::Debug for Object {
             Object::Class(ref name, _, _) => write!(f, "class <{}>", name),
             Object::None => write!(f, "None"),
             Object::Instance { ref fields, .. } => {
-                write!(f, "class instance:\n\t")?;
+                write!(f, "instance")?;
 
                 let mut fmt_string = String::new();
                 fmt_string.push_str("fields ");
@@ -263,7 +255,6 @@ impl fmt::Debug for Object {
                 write!(f, "{}", fmt_string)
             }
             Object::Nil => write!(f, "nil"),
-            Object::Return(ref v) => write!(f, "return <{:?}>", v),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
         }
     }
@@ -308,7 +299,6 @@ impl Display for Object {
             }
             Object::Nil => write!(f, "nil"),
             Object::Str(ref s) => write!(f, "{}", str::from_utf8(s).unwrap()),
-            Object::Return(ref v) => write!(f, "return <{}>", v),
         }
     }
 }

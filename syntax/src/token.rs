@@ -17,7 +17,7 @@ impl<'a> Display for Token<'a> {
 impl<'a> Display for TokenType<'a> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            TokenType::EOF => write!(f, "EOF"),
+            TokenType::EOF => write!(f, "\0"),
             TokenType::IDENTIFIER(s) => write!(f, "{}", s),
             TokenType::INT(ref i) => write!(f, "{}", i),
             TokenType::FLOAT(ref float) => write!(f, "{}", float),

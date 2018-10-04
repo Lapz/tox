@@ -70,7 +70,3 @@ while (true) {
 }
 
 ```
-
-#TODO
-
-* Parse field get property and field get call differently;

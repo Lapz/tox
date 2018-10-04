@@ -1,16 +1,12 @@
-//! The VM module it contains two sub projects
-//! a ```VM``` and an ```Assembler``` for the tasm langauage
+extern crate syntax;
 
 #[macro_use]
-extern crate nom;
+mod chunk;
 
+mod op;
 #[macro_use]
-mod macros;
-mod assembler;
-#[cfg(feature = "debug")]
-mod debug;
-mod opcode;
 mod vm;
+mod compiler;
 
-pub use assembler::Assembler;
+pub use chunk::Chunk;
 pub use vm::VM;

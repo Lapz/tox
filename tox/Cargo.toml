@@ -4,7 +4,6 @@ version = "0.2.0"
 authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
-debug = []
 
 [dependencies.vm]
 path = "../vm"

@@ -1,136 +1,56 @@
-//! This module provides the types that are used throughout tox for the typeChecking
-
+use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use infer::env::Entry;
-use std::collections::HashMap;
+use syntax::ast::expr::Ty as astType;
+use types::Type;
+use util::pos::Spanned;
 use util::symbol::Symbol;
 
-static mut UNIQUE_COUNT: u32 = 0;
+impl Infer {
+    pub(crate) fn trans_type(
+        &self,
+        ty: &Spanned<astType>,
+        ctx: &mut CompileCtx,
+    ) -> InferResult<Type> {
+        match ty.value {
+            astType::Simple(ref s) => {
+                if let Some(ty) = ctx.look_type(s.value) {
+                    return Ok(ty.clone());
+                }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
-pub struct Unique(pub u32);
+                let msg = format!("Undefined Type '{}'", ctx.name(s.value));
+                ctx.error(msg, ty.span);
+                Err(())
+            }
+            astType::Nil => Ok(Type::Nil),
+            astType::Arr(ref s) => Ok(Type::Array(Box::new(self.trans_type(s, ctx)?))),
+            astType::Func(ref params, ref returns) => {
+                let mut param_tys = Vec::with_capacity(params.len());
 
-impl Unique {
-    pub fn new() -> Self {
-        let value = unsafe { UNIQUE_COUNT };
-        unsafe { UNIQUE_COUNT += 1 };
-        Unique(value)
-    }
-}
+                for e_ty in params {
+                    param_tys.push(self.trans_type(e_ty, ctx)?)
+                }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    Array(Box<Type>),
-    Alias(Symbol, Box<Type>),
-    Class(
-        Symbol,
-        HashMap<Symbol, Type>,
-        HashMap<Symbol, Entry>,
-        Unique,
-    ),
-    This {
-        name: Symbol,
-        fields: HashMap<Symbol, Type>,
-        methods: HashMap<Symbol, Entry>,
-    },
-    Fun(Vec<Type>, Box<Type>),
-    Dict(Box<Type>, Box<Type>), // Key, Value
-    Int,
-    Str,
-    Bool,
-    Nil,
-    Float,
-}
-
-impl Type {
-    pub fn is_int(&self) -> bool {
-        match *self {
-            Type::Int => true,
-            _ => false,
+                if let Some(ref ret) = *returns {
+                    Ok(Type::Fun(param_tys, Box::new(self.trans_type(ret, ctx)?)))
+                } else {
+                    Ok(Type::Fun(param_tys, Box::new(Type::Nil)))
+                }
+            }
         }
     }
-    pub fn print(&self, ctx: &CompileCtx) -> String {
-        match *self {
-            Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
-            Type::Class(ref name, ref methods, ref fields, _) => {
-                let mut fmt_string = format!("Class {} {{", ctx.name(*name));
 
-                for (i, field) in fields.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&ctx.name(*field.0))
-                    } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
-                    }
-                }
-
-                for (i, method) in methods.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
-                    } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
-                    }
-                }
-
-                fmt_string.push('}');
-
-                fmt_string
+    pub(crate) fn infer_var(
+        &self,
+        symbol: &Spanned<Symbol>,
+        ctx: &mut CompileCtx,
+    ) -> InferResult<Type> {
+        match ctx.look_var(symbol.value).cloned() {
+            Some(ty) => return Ok(ty.clone().get_ty()),
+            None => {
+                let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
+                ctx.error(msg, symbol.span);
+                Err(())
             }
-
-            Type::This {
-                ref name,
-                ref methods,
-                ref fields,
-            } => {
-                let mut fmt_string = format!("This {} {{ ", ctx.name(*name));
-
-                for (i, field) in fields.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", &ctx.name(*field.0)))
-                    } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
-                    }
-                }
-
-                fmt_string.push(',');
-
-                for (i, method) in methods.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
-                    } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
-                    }
-                }
-
-                fmt_string.push('}');
-
-                fmt_string
-            }
-            Type::Fun(ref params, ref returns) => {
-                let mut fmt_string = String::from("fn(");
-
-                for (i, param) in params.iter().enumerate() {
-                    if i + 1 == params.len() {
-                        fmt_string.push_str(&format!("{}", param.print(ctx)))
-                    } else {
-                        fmt_string.push_str(&format!("{},", param.print(ctx)))
-                    }
-                }
-
-                fmt_string.push_str(") -> ");
-
-                fmt_string.push_str(&format!("{}", returns.print(ctx)));
-
-                fmt_string
-            }
-            Type::Dict(ref key, ref value) => {
-                format!("Dictionary<{},{}>", key.print(ctx), value.print(ctx))
-            }
-            Type::Array(ref a) => format!("Array of {} ", a.print(ctx)),
-            Type::Int => format!("Int"),
-            Type::Str => format!("Str"),
-            Type::Bool => format!("Boolean"),
-            Type::Nil => format!("Nil"),
-            Type::Float => format!("Float"),
         }
     }
 }
