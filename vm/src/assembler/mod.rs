@@ -285,9 +285,9 @@ impl AssemblerInstruction {
 
             _ => {
 
-                if self.directive.is_some() {
+                if self.directive.is_some()  || self.label.is_some() {
                     return vec![];
-                }else {
+                }else{
                     eprintln!("Non-opcode found in opcode field{:?}",self);
                 }
 

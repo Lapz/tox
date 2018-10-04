@@ -231,6 +231,16 @@ impl Infer {
                         match ty {
                             Type::Fun(ref targs, ref ret) => {
                                 use util::pos::Span;
+                                if args.len() != targs.len() {
+                                    let msg = format!(
+                                        "Expected `{}` args found `{}` ",
+                                        targs.len(),
+                                        args.len()
+                                    );
+                                    ctx.error(msg, call.span);
+                                    return Err(());
+                                }
+
                                 let mut arg_tys: Vec<(Span, Type)> = Vec::with_capacity(args.len());
                                 let mut callee_exprs = Vec::with_capacity(args.len());
 
@@ -277,7 +287,9 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
+                Expression::Get { .. } => {
+                    self.infer_object_get(*callee, ctx)
+                },
                 _ => {
                     ctx.error(" Not callable", callee.span);
                     return Err(());
@@ -388,7 +400,7 @@ impl Infer {
     ) -> InferResult<(t::Expression, Type)> {
         match expr.value {
             Expression::Get {
-                object, property, ..
+                object, property,
             } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
@@ -415,7 +427,6 @@ impl Infer {
                                     for (method_name, method_ty) in methods {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
-
                                             let ty = match ty {
                                                 Type::Fun(_, ret) => *ret,
                                                 _ => unreachable!(),

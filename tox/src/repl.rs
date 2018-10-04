@@ -174,7 +174,7 @@ impl Repl {
 
         let bytecode = match Assembler::new().assemble_file("output.tasm") {
             Ok(bytecode) => bytecode,
-           Err(_) => ::std::process::exit(0),
+            Err(_) => ::std::process::exit(0),
         };
 
         self.vm.code(bytecode);

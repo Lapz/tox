@@ -104,14 +104,13 @@ named!(label_usage<CompleteStr,Token>,
 /// LOAD $0 #100
 named!(instruction_combined<CompleteStr,AssemblerInstruction>,
     do_parse!(
-        label:opt!(label_declaration) >>
         opcode: opcode >>
         operand1: opt!(operand) >>
         operand2:  opt!(operand) >>
         operand3: opt!(operand) >>
         (
             AssemblerInstruction {
-                label,
+                label:None,
                 opcode:Some(opcode),
                 operand1,
                 operand2,
@@ -148,7 +147,6 @@ named!(directive<CompleteStr,AssemblerInstruction>,
     do_parse!(
         inst : directive_combined >>
         opt!(comment) >>
-
         (inst)
     )
 );
@@ -161,11 +159,28 @@ named!(instruction<CompleteStr,AssemblerInstruction>,
     )
 );
 
+
+named!(label<CompleteStr,AssemblerInstruction>,
+    do_parse!(
+        label:label_declaration >>
+        opt!(comment) >>
+        (
+            AssemblerInstruction {
+                    label:Some(label),
+                    directive:None,
+                    opcode:None,
+                    operand1:None,
+                    operand2:None,
+                    operand3:None,
+                }
+        )
+    )
+);
 named!(pub file<CompleteStr,Program>,
     do_parse!(
         instructions: ws!(
                 many1!(
-                    alt!(instruction | directive)
+                    alt!(label|instruction | directive)
                 )
         )
         >> (
