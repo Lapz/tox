@@ -287,9 +287,7 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } => {
-                    self.infer_object_get(*callee, ctx)
-                },
+                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
                 _ => {
                     ctx.error(" Not callable", callee.span);
                     return Err(());
@@ -399,9 +397,7 @@ impl Infer {
         ctx: &mut CompileCtx,
     ) -> InferResult<(t::Expression, Type)> {
         match expr.value {
-            Expression::Get {
-                object, property,
-            } => {
+            Expression::Get { object, property } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.ty.clone() {

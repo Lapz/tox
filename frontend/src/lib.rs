@@ -5,6 +5,8 @@ extern crate fnv;
 extern crate rand;
 extern crate syntax;
 extern crate util;
+extern crate vm;
+extern crate opcode;
 
 #[macro_use]
 // mod resolver;
@@ -14,5 +16,5 @@ mod codegen;
 mod ctx;
 mod infer;
 
-pub use codegen::Compiler;
+// pub use codegen::Compiler;
 pub use infer::Infer;
