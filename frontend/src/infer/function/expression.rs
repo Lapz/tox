@@ -11,12 +11,13 @@ impl Infer {
         &self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
-    ) -> InferResult<t::TypedExpression> {
+    ) -> InferResult<Spanned<t::TypedExpression>> {
+        let whole_span = expr.span;
         let (typed, ty) = match expr.value {
             Expression::Array { mut items } => {
                 if items.is_empty() {
                     (
-                        t::Expression::Array(vec![]),
+                        Spanned::new(t::Expression::Array(vec![]), expr.span),
                         Type::Array(Box::new(Type::Nil)),
                     )
                 } else {
@@ -26,13 +27,16 @@ impl Infer {
                         let span = item.span;
                         let ty_expr = self.infer_expr(item, ctx)?;
 
-                        self.unify(&nitems[0].ty, &ty_expr.ty, span, ctx)?;
+                        self.unify(&nitems[0].value.ty, &ty_expr.value.ty, span, ctx)?;
                         nitems.push(ty_expr);
                     }
 
-                    let ret_ty = nitems[0].ty.clone();
+                    let ret_ty = nitems[0].value.ty.clone();
 
-                    (t::Expression::Array(nitems), Type::Array(Box::new(ret_ty)))
+                    (
+                        Spanned::new(t::Expression::Array(nitems), expr.span),
+                        Type::Array(Box::new(ret_ty)),
+                    )
                 }
             }
 
@@ -46,10 +50,10 @@ impl Infer {
                 use syntax::ast::AssignOperator::*;
                 match kind.value {
                     Equal => {
-                        self.unify(&ty, &value_ty.ty, span, ctx)?;
+                        self.unify(&ty, &value_ty.value.ty, span, ctx)?;
                     }
                     MinusEqual | PlusEqual | StarEqual | SlashEqual => {
-                        match self.unify(&ty, &value_ty.ty, span, ctx) {
+                        match self.unify(&ty, &value_ty.value.ty, span, ctx) {
                             Ok(()) => (),
                             Err(_) => match self.unify(&ty, &Type::Str, span, ctx) {
                                 Ok(()) => (),
@@ -62,10 +66,17 @@ impl Infer {
                     }
                 }
 
-                let ty = value_ty.ty.clone();
+                let ty = value_ty.value.ty.clone();
 
-                (t::Expression::Assign(name.value, kind.value, value_ty), ty)
+                (
+                    Spanned::new(
+                        t::Expression::Assign(name.value, kind.value, value_ty),
+                        expr.span,
+                    ),
+                    ty,
+                )
             }
+
             Expression::Binary { lhs, op, rhs } => {
                 let span = lhs.span.to(rhs.span);
 
@@ -73,9 +84,10 @@ impl Infer {
                 let rhs = self.infer_expr(*rhs, ctx)?;
 
                 match op.value {
-                    Op::BangEqual | Op::EqualEqual => {
-                        (t::Expression::Binary(lhs, op.value, rhs), Type::Bool)
-                    }
+                    Op::BangEqual | Op::EqualEqual => (
+                        Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
+                        Type::Bool,
+                    ),
 
                     Op::LessThan
                     | Op::LessThanEqual
@@ -83,14 +95,18 @@ impl Infer {
                     | Op::GreaterThanEqual
                     | Op::And
                     | Op::Or => {
-                        self.unify(&lhs.ty, &rhs.ty, span, ctx)?;
-                        (t::Expression::Binary(lhs, op.value, rhs), Type::Bool)
+                        self.unify(&lhs.value.ty, &rhs.value.ty, span, ctx)?;
+                        let ty = lhs.value.ty.clone();
+                        (
+                            Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
+                            Type::Bool,
+                        )
                     }
 
                     Op::Plus | Op::Slash | Op::Star | Op::Minus | Op::Modulo | Op::Exponential => {
-                        match self.unify(&lhs.ty, &rhs.ty, span, ctx) {
+                        match self.unify(&lhs.value.ty, &rhs.value.ty, span, ctx) {
                             Ok(()) => (),
-                            Err(_) => match self.unify(&lhs.ty, &Type::Str, span, ctx) {
+                            Err(_) => match self.unify(&lhs.value.ty, &Type::Str, span, ctx) {
                                 Ok(()) => (),
                                 Err(_) => {
                                     ctx.remove_error();
@@ -99,9 +115,12 @@ impl Infer {
                             },
                         }
 
-                        let ty = lhs.ty.clone();
+                        let ty = lhs.value.ty.clone();
 
-                        (t::Expression::Binary(lhs, op.value, rhs), ty)
+                        (
+                            Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
+                            ty,
+                        )
                     }
                 }
             }
@@ -112,10 +131,11 @@ impl Infer {
             Expression::ClassInstance { .. } => self.infer_class_instance(expr, ctx)?,
 
             Expression::Grouping { expr } => {
+                let span = expr.span;
                 let ty_expr = self.infer_expr(*expr, ctx)?;
-                let ty = ty_expr.ty.clone();
+                let ty = ty_expr.value.ty.clone();
 
-                (t::Expression::Grouping(ty_expr), ty)
+                (Spanned::new(t::Expression::Grouping(ty_expr), span), ty)
             }
 
             Expression::Get { .. } => self.infer_object_get(expr, ctx)?,
@@ -131,13 +151,17 @@ impl Infer {
 
                         let index_ty = self.infer_expr(*index, ctx)?;
 
-                        self.unify(&index_ty.ty, &Type::Int, span, ctx)?;
+                        self.unify(&index_ty.value.ty, &Type::Int, span, ctx)?;
 
                         match target_ty {
-                            Type::Array(ref ty) => {
-                                (t::Expression::Index(symbol.value, index_ty), *ty.clone())
-                            }
-                            Type::Str => (t::Expression::Index(symbol.value, index_ty), Type::Str),
+                            Type::Array(ref ty) => (
+                                Spanned::new(t::Expression::Index(symbol.value, index_ty), span),
+                                *ty.clone(),
+                            ),
+                            Type::Str => (
+                                Spanned::new(t::Expression::Index(symbol.value, index_ty), span),
+                                Type::Str,
+                            ),
 
                             _ => {
                                 let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
@@ -152,9 +176,11 @@ impl Infer {
                     }
                 }
             }
+
             Expression::Literal(literal) => {
+                
                 let ty = self.infer_literal(&literal);
-                (t::Expression::Literal(literal), ty)
+                (Spanned::new(t::Expression::Literal(literal), expr.span), ty)
             }
 
             Expression::Set { .. } => self.infer_object_set(expr, ctx)?,
@@ -167,39 +193,55 @@ impl Infer {
                 let span = condition.span;
                 let cond_tyexpr = self.infer_expr(*condition, ctx)?;
 
-                self.unify(&Type::Bool, &cond_tyexpr.ty, span, ctx)?;
+                self.unify(&Type::Bool, &cond_tyexpr.value.ty, span, ctx)?;
 
                 let span = then_branch.span.to(else_branch.span);
                 let then_tyexpr = self.infer_expr(*then_branch, ctx)?;
                 let else_tyexpr = self.infer_expr(*else_branch, ctx)?;
 
-                self.unify(&then_tyexpr.ty, &else_tyexpr.ty, span, ctx)?;
-                let ty = then_tyexpr.ty.clone();
+                self.unify(&then_tyexpr.value.ty, &else_tyexpr.value.ty, span, ctx)?;
+                let ty = then_tyexpr.value.ty.clone();
 
                 (
-                    t::Expression::Ternary(cond_tyexpr, then_tyexpr, else_tyexpr),
+                    Spanned::new(
+                        t::Expression::Ternary(cond_tyexpr, then_tyexpr, else_tyexpr),
+                        expr.span,
+                    ),
                     ty,
                 )
             }
 
-            Expression::This => (t::Expression::This, self.this.clone()),
-            Expression::Unary { expr, op } => {
-                let span = expr.span;
+            Expression::This => (
+                Spanned::new(t::Expression::This, expr.span),
+                self.this.clone(),
+            ),
+            Expression::Unary { expr: operand, op } => {
+                let whole_span = expr.span;
+                let span = operand.span;
+                let expr = operand;
                 let expr = self.infer_expr(*expr, ctx)?;
 
                 match op.value {
-                    UnaryOp::Bang => (t::Expression::Unary(op.value, expr), Type::Bool),
+                    UnaryOp::Bang => (
+                        Spanned::new(t::Expression::Unary(op.value, expr), span),
+                        Type::Bool,
+                    ),
                     UnaryOp::Minus => {
-                        if !expr.ty.is_int() {
-                            let msg =
-                                format!("Cannot use `-` operator on type `{}`", expr.ty.print(ctx));
+                        if !expr.value.ty.is_int() {
+                            let msg = format!(
+                                "Cannot use `-` operator on type `{}`",
+                                expr.value.ty.print(ctx)
+                            );
 
                             ctx.error(msg, span);
                             return Err(());
                         }
 
-                        let ty = expr.ty.clone();
-                        (t::Expression::Unary(op.value, expr), ty)
+                        let ty = expr.value.ty.clone();
+                        (
+                            Spanned::new(t::Expression::Unary(op.value, expr), whole_span),
+                            ty,
+                        )
                     }
                 }
             }
@@ -207,21 +249,27 @@ impl Infer {
             Expression::Var(ref var) => {
                 let ty = self.infer_var(var, ctx)?;
 
-                (t::Expression::Var(var.value, ty.clone()), ty)
+                (
+                    Spanned::new(t::Expression::Var(var.value, ty.clone()), expr.span),
+                    ty,
+                )
             }
         };
 
-        Ok(t::TypedExpression {
-            expr: Box::new(typed),
-            ty,
-        })
+        Ok(Spanned::new(
+            t::TypedExpression {
+                expr: Box::new(typed),
+                ty,
+            },
+            whole_span,
+        ))
     }
 
     fn infer_call(
         &self,
         call: Spanned<Expression>,
         ctx: &mut CompileCtx,
-    ) -> InferResult<(t::Expression, Type)> {
+    ) -> InferResult<(Spanned<t::Expression>, Type)> {
         match call.value {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
@@ -247,7 +295,7 @@ impl Infer {
                                 for arg in args {
                                     let span = arg.span;
                                     let ty_expr = self.infer_expr(arg, ctx)?;
-                                    arg_tys.push((span, ty_expr.ty.clone()));
+                                    arg_tys.push((span, ty_expr.value.ty.clone()));
                                     callee_exprs.push(ty_expr)
                                 }
 
@@ -258,15 +306,21 @@ impl Infer {
                                 }
 
                                 Ok((
-                                    t::Expression::Call(
-                                        t::TypedExpression {
-                                            expr: Box::new(t::Expression::Var(
-                                                sym.value,
-                                                ty.clone(),
-                                            )),
-                                            ty: ty.clone(),
-                                        },
-                                        callee_exprs,
+                                    Spanned::new(
+                                        t::Expression::Call(
+                                            Spanned::new(
+                                                t::TypedExpression {
+                                                    expr: Box::new(Spanned::new(
+                                                        t::Expression::Var(sym.value, ty.clone()),
+                                                        sym.span,
+                                                    )),
+                                                    ty: ty.clone(),
+                                                },
+                                                call.span,
+                                            ),
+                                            callee_exprs,
+                                        ),
+                                        call.span,
                                     ),
                                     *ret.clone(),
                                 ))
@@ -319,7 +373,7 @@ impl Infer {
         &self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
-    ) -> InferResult<(t::Expression, Type)> {
+    ) -> InferResult<(Spanned<t::Expression>, Type)> {
         match expr.value {
             Expression::ClassInstance { symbol, props } => {
                 let class = if let Some(ty) = ctx.look_type(symbol.value).cloned() {
@@ -343,7 +397,7 @@ impl Infer {
 
                                 let ty = self.infer_expr(prop.value.expr, ctx)?;
 
-                                self.unify(&prop_ty.1, &ty.ty, span, ctx)?;
+                                self.unify(&prop_ty.1, &ty.value.ty, span, ctx)?;
 
                                 instance_exprs.push(ty);
                             } else {
@@ -374,7 +428,10 @@ impl Infer {
                         }
 
                         Ok((
-                            t::Expression::ClassInstance(symbol.value, instance_exprs),
+                            Spanned::new(
+                                t::Expression::ClassInstance(symbol.value, instance_exprs),
+                                expr.span,
+                            ),
                             class.clone(),
                         ))
                     }
@@ -395,12 +452,12 @@ impl Infer {
         &self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
-    ) -> InferResult<(t::Expression, Type)> {
+    ) -> InferResult<(Spanned<t::Expression>, Type)> {
         match expr.value {
             Expression::Get { object, property } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
-                match ob_instance.ty.clone() {
+                match ob_instance.value.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name) {
                             // Look at the conical type
@@ -414,7 +471,10 @@ impl Infer {
                                     for (field_name, field_ty) in fields {
                                         if field_name == &property.value {
                                             return Ok((
-                                                t::Expression::Get(property.value, ob_instance),
+                                                Spanned::new(
+                                                    t::Expression::Get(property.value, ob_instance),
+                                                    expr.span,
+                                                ),
                                                 field_ty.clone(),
                                             ));
                                         }
@@ -429,7 +489,10 @@ impl Infer {
                                             };
 
                                             return Ok((
-                                                t::Expression::Get(property.value, ob_instance),
+                                                Spanned::new(
+                                                    t::Expression::Get(property.value, ob_instance),
+                                                    expr.span,
+                                                ),
                                                 ty, // Change to return the return type
                                             ));
                                         }
@@ -471,7 +534,7 @@ impl Infer {
         &self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
-    ) -> InferResult<(t::Expression, Type)> {
+    ) -> InferResult<(Spanned<t::Expression>, Type)> {
         match expr.value {
             Expression::Set {
                 object,
@@ -481,7 +544,7 @@ impl Infer {
             } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
-                match ob_instance.ty.clone() {
+                match ob_instance.value.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name).cloned() {
                             match ty {
@@ -496,12 +559,20 @@ impl Infer {
 
                                     for (field_name, field_ty) in fields {
                                         if field_name == &property.value {
-                                            self.unify(&value_ty.ty, field_ty, value_span, ctx)?;
+                                            self.unify(
+                                                &value_ty.value.ty,
+                                                field_ty,
+                                                value_span,
+                                                ctx,
+                                            )?;
                                             return Ok((
-                                                t::Expression::Set(
-                                                    property.value,
-                                                    ob_instance,
-                                                    value_ty,
+                                                Spanned::new(
+                                                    t::Expression::Set(
+                                                        property.value,
+                                                        ob_instance,
+                                                        value_ty,
+                                                    ),
+                                                    expr.span,
                                                 ),
                                                 field_ty.clone(),
                                             ));
@@ -512,12 +583,15 @@ impl Infer {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
 
-                                            self.unify(&value_ty.ty, &ty, value_span, ctx)?;
+                                            self.unify(&value_ty.value.ty, &ty, value_span, ctx)?;
                                             return Ok((
-                                                t::Expression::Set(
-                                                    property.value,
-                                                    ob_instance,
-                                                    value_ty,
+                                                Spanned::new(
+                                                    t::Expression::Set(
+                                                        property.value,
+                                                        ob_instance,
+                                                        value_ty,
+                                                    ),
+                                                    expr.span,
                                                 ),
                                                 ty,
                                             ));

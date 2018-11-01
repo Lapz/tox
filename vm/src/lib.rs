@@ -4,13 +4,23 @@
 #[macro_use]
 extern crate nom;
 
+extern crate opcode;
+
+extern crate util;
+
 #[macro_use]
 mod macros;
-mod assembler;
+mod chunk;
 #[cfg(feature = "debug")]
 mod debug;
-mod opcode;
+mod value;
 mod vm;
-
-pub use assembler::Assembler;
+pub use chunk::Chunk;
+pub use value::Value;
 pub use vm::VM;
+
+#[derive(Debug)]
+pub struct Function {
+    pub name: ::util::symbol::Symbol,
+    pub body: Chunk,
+}

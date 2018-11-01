@@ -6,8 +6,9 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [dependencies]
 util = {path = "../util"}
 nom = "^4.0"
+opcode = {path="../opcode"}
 
 [features]
 debug = []
 stack = ["debug"]
-# default = ["debug"]
+default = ["debug"]

@@ -11,7 +11,7 @@ extern crate vm;
 mod repl;
 
 // use codegen::Compiler;
-use frontend::{Compiler, Infer};
+use frontend::{Infer,compile};
 use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
@@ -21,7 +21,7 @@ use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
-use vm::{Assembler, VM};
+use vm::VM;
 
 fn main() {
     let opts = Cli::from_args();
@@ -42,7 +42,7 @@ fn main() {
 pub fn repl() {
     use repl::Repl;
 
-    Repl::new().run();
+    // Repl::new().run();
 }
 
 pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
@@ -149,25 +149,25 @@ pub fn run_vm(path: String) {
         ::std::process::exit(0)
     }
 
-    let mut assembler = Assembler::new();
+    // let mut assembler = Assembler::new();
 
-    let bytecode = match assembler.assemble(&contents) {
-        Ok(bytecode) => bytecode,
-        Err(e) => {
-            println!("{:?}", e);
-            ::std::process::exit(0)
-        }
-    };
+    // let bytecode = match assembler.assemble(&contents) {
+    //     Ok(bytecode) => bytecode,
+    //     Err(e) => {
+    //         println!("{:?}", e);
+    //         ::std::process::exit(0)
+    //     }
+    // };
 
-    let mut vm = VM::new();
+    // let mut vm = VM::new();
 
-    vm.code(bytecode);
+    // vm.code(bytecode);
 
-    vm.disassemble("test");
+    // vm.disassemble("test");
 
-    vm.run();
+    // vm.run();
 
-    println!("{:?}", vm);
+    // println!("{:?}", vm);
 }
 
 pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
@@ -233,28 +233,15 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         }
     };
 
-    let mut compiler = Compiler::new();
+    let functions = compile(&typed_ast, &mut reporter).unwrap();
+   
 
-    compiler
-        .compile(&typed_ast)
-        .expect("Couldn't compile the file");
-
-    let bytecode = match Assembler::new().assemble_file("output.tasm") {
-        Ok(bytecode) => bytecode,
-        Err(e) => {
-            println!("{:?}", e);
-            ::std::process::exit(0)
-        }
-    };
-
-    let mut vm = VM::new();
-
-    vm.code(bytecode);
-    vm.disassemble("test");
-
+    let mut vm = VM::new(functions);
     vm.run();
 
-    println!("{:?}", vm);
+    #[cfg(feature="debug")]
+    vm.disassemble("Test")
+    
 }
 
 #[derive(StructOpt, Debug)]

@@ -1,52 +1,42 @@
-use assembler::{PIE_HEADER_LENGTH, PIE_HEADER_PREFIX};
-use std::mem;
+use chunk::Chunk;
 use opcode;
+use std::mem;
+use value::Value;
+use super::Function;
+
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
 pub struct VM {
-    registers: [i32; 32],
-    stack: [i32; STACK_MAX],
-    pub code: Vec<u8>,
+    stack: [Value; STACK_MAX],
+    functions: Vec<Function>,
+    code: Vec<u8>,
     heap: Vec<u8>,
     ip: usize,
-    remainder: u32,
     equal_flag: bool,
     stack_top: usize,
 }
 
 impl VM {
-    pub fn new() -> Self {
+    pub fn new(functions:Vec<Function>) -> Self {
         VM {
-            ip: 64,
-            registers: [0; 32],
-            stack: [0; STACK_MAX],
+            ip: 0,
+            stack: [Value::nil(); STACK_MAX],
             code: Vec::new(),
-            remainder: 0,
+            functions,
             equal_flag: false,
             heap: Vec::new(),
             stack_top: 1,
         }
     }
 
-    pub fn registers(&self) -> &[i32; 32] {
-        &self.registers
-    }
-
-    pub fn verify_header(&self) -> bool {
-        if self.code[0..4] != PIE_HEADER_PREFIX {
-            false
-        } else {
-            true
-        }
-    }
-
     pub fn run(&mut self) {
-        self.ip += self.get_starting_offset();
+
+        
 
         loop {
             {
-                if self.ip >= self.code.len() {
+                if self.ip >= self.functions[0].body.code.len() {
                     return;
                 }
             }
@@ -56,186 +46,58 @@ impl VM {
                     break;
                 }
 
-                opcode::JMP => {
-                    let location = self.registers[self.next_8_bits() as usize];
+                opcode::RETURN => {
+                    let value = self.pop();
 
-                    self.ip = location as usize;
+                    // println!("{}", value);
                 }
 
-                opcode::JMPF => {
-                    let value = self.registers[self.next_8_bits() as usize];
-                    self.ip += value as usize;
+                opcode::CONSTANT => {
+                    let constant = self.read_constant();
+                    self.push(constant);
+                },
+
+                opcode::PRINT => {
+                    let value = self.pop();
+
+                    println!("{}", value);
                 }
 
-                opcode::JMPB => {
-                    let value = self.registers[self.next_8_bits() as usize];
-                    self.ip -= value as usize;
+                opcode::NEGATE => {
+                    let val = Value::int(-self.pop().as_int());
+                    self.push(val)
                 }
 
-                opcode::JMPEQ => {
-                    let location = self.next_16_bits();
-
-                    if self.equal_flag {
-                        self.ip = location as usize;
-                    } else {
-                        self.advance(1);
-                    }
+                opcode::NEGATEF => {
+                    let val = Value::float(-self.pop().as_float());
+                    self.push(val)
                 }
 
-                opcode::JMPNEQ => {
-                    let location = self.next_16_bits();
-
-                    if !self.equal_flag {
-                        self.ip = location as usize;
-                    } else {
-                        self.advance(1);
-                    }
-                }
-
-                opcode::LOAD => {
-                    let register = self.next_8_bits() as usize;
-                    let number = self.next_16_bits() as u16;
-                    self.registers[register] = number as i32;
-                }
-
-                opcode::ALLOC => {
-                    let bytes = self.registers[self.next_8_bits() as usize];
-                    let size = self.heap.len() + bytes as usize;
-
-                    self.heap.resize(size, 0);
-                    self.next_16_bits();
-                }
-
-                opcode::FREE => {
-                    let bytes = self.registers[self.next_8_bits() as usize];
-                    let size = self.heap.len() - bytes as usize;
-
-                    self.heap.resize(size, 0);
-                    self.advance(2);
-                }
-
-                opcode::ADD => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    self.registers[self.next_8_bits() as usize] = lhs + rhs;
-                }
-
-                opcode::SUB => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs - rhs;
-                }
-
-                opcode::MUL => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs * rhs;
-                }
-
-                opcode::DIV => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs / rhs;
-                    self.remainder = (lhs % rhs) as u32;
-                }
-
-                opcode::MOD => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    self.registers[self.next_8_bits() as usize] = lhs % rhs;
-                }
-
-                opcode::EXPON => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs.pow(rhs as u32);
-                }
-
-                opcode::EQUAL => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs == rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-
-                    self.advance(1);
-                }
-
-                opcode::GREATER => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs > rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-
-                    self.advance(1);
-                }
-
-                opcode::LESS => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs < rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-                }
-
+                opcode::NIL => self.push(Value::nil()),
+                opcode::TRUE => self.push(Value::bool(true)),
+                opcode::FALSE => self.push(Value::bool(false)),
                 opcode::NOT => {
-                    self.equal_flag = !self.equal_flag;
-                    self.advance(3);
+                    let val = Value::bool(!self.pop().as_bool());
+                    self.push(val)
+                }
+                opcode::EQUAL => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push(Value::bool(a == b));
                 }
 
-                opcode::STORE => {
-                    let src = self.registers[self.next_8_bits() as usize];
-                    let dest = self.registers[self.next_8_bits() as usize];
-
-                    self.registers[dest as usize] = self.registers[src as usize];
-
-                    self.advance(1);
-                }
-
-                opcode::INC => {
-                    self.registers[self.next_8_bits() as usize] += 1;
-                    self.advance(2);
-                }
-
-                opcode::DEC => {
-                    self.registers[self.next_8_bits() as usize] -= 1;
-                    self.advance(2);
-                }
-
-                opcode::PUSH => {
-                    let val = self.registers[self.next_8_bits() as usize];
-                    self.push(val);
-
-                    self.advance(2)
-                }
-
-                opcode::POP => {
-                    let val = self.pop();
-                    self.registers[self.next_8_bits() as usize] = val;
-                    self.advance(2)
-                }
-
-                opcode::SET => {
-                    let val = self.registers[self.next_8_bits() as usize];
-
-                    if val == 1 {
-                        self.equal_flag = true;
-                    }
-
-                    self.advance(2);
-                }
+                opcode::LESS => binary_op!(<,as_int,bool,self),
+                opcode::LESSF => binary_op!(<,as_float,bool,self),
+                opcode::GREATER => binary_op!(>,as_int,bool,self),
+                opcode::GREATERF => binary_op!(>,as_float,bool,self),
+                opcode::ADD => binary_op!(+,as_int,int,self),
+                opcode::ADDF => binary_op!(+,as_float,float,self),
+                opcode::SUB => binary_op!(-,as_int,int,self),
+                opcode::SUBF => binary_op!(-,as_float,float,self),
+                opcode::MUL => binary_op!(*,as_int,int,self),
+                opcode::MULF => binary_op!(*,as_float,float,self),
+                opcode::DIV => binary_op!(/,as_int,int,self),
+                opcode::DIVF => binary_op!(/,as_float,float,self),
 
                 _ => {
                     continue;
@@ -244,52 +106,47 @@ impl VM {
         }
     }
 
+    fn read_constant(&mut self) -> Value {
+        let index = self.read_byte() as usize;
+        self.functions[0].body.constants[index]
+        
+    }
+
     fn read_byte(&mut self) -> u8 {
-        let byte = self.code[self.ip];
+        let byte = self.functions[0].body.code[self.ip];
         self.ip += 1;
         byte
     }
 
-    fn advance(&mut self, n: usize) {
-        self.ip += n;
-    }
-
-    fn next_8_bits(&mut self) -> u8 {
-        let result = self.code[self.ip];
-        self.ip += 1;
-
-        result
-    }
-
-    fn next_16_bits(&mut self) -> u16 {
-        let result = ((self.code[self.ip] as u16) << 8) | self.code[self.ip + 1] as u16;
-        // Shifts the instruction by 8 to the right and or all the 1's and 0's
-        self.ip += 2;
-
-        result
-    }
-
-    fn push(&mut self, val: i32) {
+    fn push(&mut self, val: Value) {
         self.stack[self.stack_top] = val;
         self.stack_top += 1;
     }
 
-    fn pop(&mut self) -> i32 {
+    fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]
     }
 
-    pub fn code(&mut self, code: Vec<u8>) {
-        self.code = code;
-    }
+   
+}
 
-    pub fn get_starting_offset(&self) -> usize {
-        unsafe {
-            let mut bytes:[u8;4] = ::std::default::Default::default();
-            bytes.copy_from_slice(&self.code[4..8]);
-            let val= mem::transmute::<[u8;4],u32>(bytes);
-            val as usize
+#[cfg(feature = "debug")]
+impl VM {
+    #[cfg(feature = "debug")]
+    pub fn disassemble(&self, name: &str) {
+        println!("== {} ==\n", name);
+        
+
+
+        for function in self.functions.iter() {
+            let mut i = 0;
+             
+            function.body.disassemble(&format!("{}",function.name));
+
         }
+
+       
     }
 }
 
@@ -298,13 +155,12 @@ use std::fmt::{self, Debug};
 impl Debug for VM {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut debug_trait_builder = f.debug_struct("VM");
-        let _ = debug_trait_builder.field("registers", &self.registers);
-        // let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
+
+        let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
         let _ = debug_trait_builder.field("code", &self.code);
         let _ = debug_trait_builder.field("heap", &self.heap);
         let _ = debug_trait_builder.field("ip", &self.ip);
 
-        let _ = debug_trait_builder.field("remainder", &self.remainder);
         let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()
 
@@ -907,7 +763,7 @@ mod tests {
     fn test_set_opcode() {
         let mut test_vm = VM::new();
 
-        test_vm.registers[0] =1;
+        test_vm.registers[0] = 1;
 
         let mut test_bytes = vec![
             opcode::SET,

@@ -115,10 +115,12 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "opcode 0.1.0",
  "pretty_assertions 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntax 0.1.0",
  "util 0.1.0",
+ "vm 0.1.0",
 ]
 
 [[package]]
@@ -221,6 +223,13 @@ dependencies = [
 name = "num-traits"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "opcode"
+version = "0.1.0"
+dependencies = [
+ "util 0.1.0",
+]
 
 [[package]]
 name = "percent-encoding"
@@ -515,6 +524,7 @@ name = "vm"
 version = "0.1.0"
 dependencies = [
  "nom 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "opcode 0.1.0",
  "util 0.1.0",
 ]
 

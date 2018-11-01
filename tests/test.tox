@@ -1,8 +1,4 @@
 
-fun main(){
-    if (1<10) {
-        1+1;
-    }else {
-        50+20;
-    }
+fun main() {
+    print 10.0 + 10.0;
 }

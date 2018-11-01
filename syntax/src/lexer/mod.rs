@@ -34,7 +34,6 @@ impl LexerError {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     // A lexer instance
@@ -313,8 +312,6 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn lex(&mut self) -> Result<Vec<Spanned<Token<'a>>>, ()> {
-
-
         let mut tokens = vec![];
 
         let mut had_error = false;
@@ -325,20 +322,18 @@ impl<'a> Lexer<'a> {
                 Err(_) => {
                     had_error = true;
                     continue;
-                },
+                }
             }
-        } 
-        
+        }
+
         tokens.push(span(TokenType::EOF, self.end));
         tokens.retain(|t| t.value.token != TokenType::COMMENT);
 
         if !had_error {
             Ok(tokens)
-        }else {
+        } else {
             Err(())
         }
-
-
     }
 
     pub fn end_span(&self) -> Span {

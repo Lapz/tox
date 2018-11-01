@@ -4,5 +4,6 @@ members = [
     "frontend",
     "interpreter",
     "util",
+    "opcode",
     "tox",
 ]

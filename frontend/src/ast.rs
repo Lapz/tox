@@ -2,8 +2,8 @@ use infer::types;
 use infer::types::Type;
 use std::collections::HashMap;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
-use util::symbol::Symbol;
 use util::pos::Spanned;
+use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Program {
@@ -54,17 +54,17 @@ pub enum Statement {
     Block(Vec<Spanned<Statement>>),
     Break,
     Continue,
-    Expr(TypedExpression),
+    Expr(Spanned<TypedExpression>),
 
     If {
-        cond:Spanned<TypedExpression>,
-        then: Box<Statement>,
+        cond: Spanned<TypedExpression>,
+        then: Box<Spanned<Statement>>,
         otherwise: Option<Box<Spanned<Statement>>>,
     },
 
-    Print(TypedExpression),
+    Print(Spanned<TypedExpression>),
 
-    While(TypedExpression, Box<Spanned<Statement>>),
+    While(Spanned<TypedExpression>, Box<Spanned<Statement>>),
 
     Var {
         ident: Symbol,
@@ -79,22 +79,26 @@ pub enum Statement {
 pub enum Expression {
     // The different type of expressions availabe
     Array(Vec<Spanned<TypedExpression>>),
-    Assign(Symbol, AssignOperator,Spanned<TypedExpression>),
-    Binary(Spanned<TypedExpression>, Op,Spanned<TypedExpression>),
+    Assign(Symbol, AssignOperator, Spanned<TypedExpression>),
+    Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Spanned<TypedExpression>, Vec<Spanned<TypedExpression>>),
     Closure(Box<Function>),
     ClassInstance(Symbol, Vec<Spanned<TypedExpression>>),
-    Get(Symbol,Spanned<TypedExpression>),
+    Get(Symbol, Spanned<TypedExpression>),
     Grouping(Spanned<TypedExpression>),
 
-    Index(Symbol,Spanned<TypedExpression>),
+    Index(Symbol, Spanned<TypedExpression>),
 
     Literal(Literal),
     /// Name, Object, Value
-    Set(Symbol,Spanned<TypedExpression>,Spanned<TypedExpression>),
+    Set(Symbol, Spanned<TypedExpression>, Spanned<TypedExpression>),
 
-    Ternary(Spanned<TypedExpression>,Spanned<TypedExpression>,Spanned<TypedExpression>),
-    Unary(UnaryOp,Spanned<TypedExpression>),
+    Ternary(
+        Spanned<TypedExpression>,
+        Spanned<TypedExpression>,
+        Spanned<TypedExpression>,
+    ),
+    Unary(UnaryOp, Spanned<TypedExpression>),
 
     This,
     Var(Symbol, Type),
