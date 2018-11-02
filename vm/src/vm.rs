@@ -1,42 +1,68 @@
+use super::Function;
 use chunk::Chunk;
 use opcode;
 use std::mem;
+use util::symbol::Symbol;
 use value::Value;
-use super::Function;
 
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
-pub struct VM {
-    stack: [Value; STACK_MAX],
-    functions: Vec<Function>,
-    code: Vec<u8>,
-    heap: Vec<u8>,
+pub struct StackFrame<'a> {
     ip: usize,
+    function: &'a Function,
+}
+pub struct VM<'a> {
+    stack: [Value; STACK_MAX],
+    frames: Vec<StackFrame<'a>>,
+    current_frame: StackFrame<'a>,
+    functions: &'a [Function],
+    heap: Vec<u8>,
     equal_flag: bool,
     stack_top: usize,
 }
 
-impl VM {
-    pub fn new(functions:Vec<Function>) -> Self {
-        VM {
+#[derive(Debug)]
+pub enum Error {
+    NoMain,
+}
+
+impl<'a> VM<'a> {
+    pub fn new(main: Symbol, functions: &'a [Function]) -> Result<Self, Error> {
+        let mut main_funciton = None;
+
+        {
+            for func in functions.iter() {
+                if func.name == main {
+                    main_funciton = Some(func);
+                }
+            }
+        }
+
+        if main_funciton.is_none() {
+            return Err(Error::NoMain);
+        }
+
+        let current_frame = StackFrame {
             ip: 0,
+            function: main_funciton.unwrap(),
+        };
+
+        Ok(VM {
             stack: [Value::nil(); STACK_MAX],
-            code: Vec::new(),
+            current_frame,
             functions,
+            frames: Vec::new(),
             equal_flag: false,
             heap: Vec::new(),
             stack_top: 1,
-        }
+        })
     }
 
     pub fn run(&mut self) {
-
-        
-
         loop {
             {
-                if self.ip >= self.functions[0].body.code.len() {
+                if self.current_frame.ip >= self.current_frame.function.body.code.len() {
                     return;
                 }
             }
@@ -55,7 +81,7 @@ impl VM {
                 opcode::CONSTANT => {
                     let constant = self.read_constant();
                     self.push(constant);
-                },
+                }
 
                 opcode::PRINT => {
                     let value = self.pop();
@@ -108,13 +134,12 @@ impl VM {
 
     fn read_constant(&mut self) -> Value {
         let index = self.read_byte() as usize;
-        self.functions[0].body.constants[index]
-        
+        self.current_frame.function.body.constants[index]
     }
 
     fn read_byte(&mut self) -> u8 {
-        let byte = self.functions[0].body.code[self.ip];
-        self.ip += 1;
+        let byte = self.current_frame.function.body.code[self.current_frame.ip];
+        self.current_frame.ip += 1;
         byte
     }
 
@@ -127,39 +152,33 @@ impl VM {
         self.stack_top -= 1;
         self.stack[self.stack_top]
     }
-
-   
 }
 
-#[cfg(feature = "debug")]
-impl VM {
-    #[cfg(feature = "debug")]
-    pub fn disassemble(&self, name: &str) {
-        println!("== {} ==\n", name);
-        
+// #[cfg(feature = "debug")]
+// impl <'a> VM<'a> {
+//     #[cfg(feature = "debug")]
+//     pub fn disassemble(&self, name: &str) {
+//         println!("== {} ==\n", name);
 
+//         for function in self.functions.iter() {
+//             let mut i = 0;
 
-        for function in self.functions.iter() {
-            let mut i = 0;
-             
-            function.body.disassemble(&format!("{}",function.name));
+//             function.body.disassemble(&format!("{}",function.name));
 
-        }
+//         }
 
-       
-    }
-}
+//     }
+// }
 
 use std::fmt::{self, Debug};
 
-impl Debug for VM {
+impl<'a> Debug for VM<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut debug_trait_builder = f.debug_struct("VM");
 
         let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
-        let _ = debug_trait_builder.field("code", &self.code);
         let _ = debug_trait_builder.field("heap", &self.heap);
-        let _ = debug_trait_builder.field("ip", &self.ip);
+        let _ = debug_trait_builder.field("ip", &self.current_frame.ip);
 
         let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()

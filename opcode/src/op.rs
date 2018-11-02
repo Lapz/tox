@@ -10,7 +10,7 @@ pub mod opcode {
     ///CONSTANT
     /// CAN BE A STR FLOAT OR INT
     pub const CONSTANT: u8 = 03;
-    pub const PRINT:u8 = 04;
+    pub const PRINT: u8 = 04;
     pub const NEGATEF: u8 = 05;
     pub const NEGATE: u8 = 06;
     pub const NIL: u8 = 07;

@@ -49,6 +49,14 @@ impl Type {
             _ => false,
         }
     }
+
+    pub fn is_float(&self) -> bool {
+        match *self {
+            Type::Float => true,
+            _ => false,
+        }
+    }
+
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
             Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),

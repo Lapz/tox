@@ -17,5 +17,5 @@ mod ctx;
 mod infer;
 
 // pub use codegen::Compiler;
-pub use infer::Infer;
 pub use codegen::compile;
+pub use infer::Infer;

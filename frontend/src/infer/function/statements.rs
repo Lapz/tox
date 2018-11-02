@@ -159,7 +159,6 @@ impl Infer {
 
             Statement::Print(expr) => {
                 let mut type_expr = self.infer_expr(expr, ctx)?;
-                
 
                 Ok(Spanned::new(t::Statement::Print(type_expr), statement.span)) // Expressions are given the type of Nil to signify that they return nothing
             }

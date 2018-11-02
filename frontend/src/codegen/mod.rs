@@ -54,7 +54,7 @@ impl<'a> Builder<'a> {
         let index = self.chunk.add_constant(value);
 
         if index > 256 {
-            self.reporter.error("oo many constants in one chunk", span);
+            self.reporter.error("too many constants in one chunk", span);
             Err(())
         } else {
             Ok(index as u8)
@@ -69,6 +69,7 @@ impl<'a> Builder<'a> {
 
     pub fn compile_statement(&mut self, statement: &Spanned<ast::Statement>) -> ParseResult<()> {
         use ast::Statement;
+        self.set_span(statement.span);
         match statement.value {
             Statement::Block(ref statements) => {
                 for statement in statements {
@@ -81,18 +82,17 @@ impl<'a> Builder<'a> {
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
                 Ok(())
-            },
+            }
             Statement::Return(ref expr) => {
-                println!(" return {:#?}",expr);
+                println!(" return {:#?}", expr);
                 self.compile_expression(expr)?;
 
                 self.emit_byte(opcode::RETURN);
 
                 Ok(())
-            },
+            }
 
             Statement::Print(ref expr) => {
-                
                 self.compile_expression(expr)?;
 
                 self.emit_byte(opcode::PRINT);
@@ -106,6 +106,8 @@ impl<'a> Builder<'a> {
 
     pub fn compile_expression(&mut self, expr: &Spanned<ast::TypedExpression>) -> ParseResult<()> {
         use ast::{Expression, Literal, Op};
+        self.set_span(expr.span);
+
         match expr.value.expr.value {
             Expression::Literal(ref literal) => match *literal {
                 Literal::False(_) => {
@@ -144,25 +146,50 @@ impl<'a> Builder<'a> {
                     (Type::Float, Op::Star) => self.emit_byte(opcode::MULF),
 
                     (Type::Int, Op::LessThan) => self.emit_byte(opcode::LESS),
-                    (Type::Float,Op::LessThan) =>self.emit_byte(opcode::LESSF),
+                    (Type::Float, Op::LessThan) => self.emit_byte(opcode::LESSF),
 
-                    (Type::Int, Op::LessThanEqual) => self.emit_bytes(opcode::LESS,opcode::NOT),
-                    (Type::Float, Op::LessThanEqual) => self.emit_bytes(opcode::LESSF,opcode::NOT),
+                    (Type::Int, Op::LessThanEqual) => self.emit_bytes(opcode::LESS, opcode::NOT),
+                    (Type::Float, Op::LessThanEqual) => self.emit_bytes(opcode::LESSF, opcode::NOT),
 
                     (Type::Int, Op::GreaterThan) => self.emit_byte(opcode::GREATER),
                     (Type::Float, Op::GreaterThan) => self.emit_byte(opcode::GREATERF),
 
-                    (Type::Int, Op::GreaterThanEqual) => self.emit_bytes(opcode::GREATER,opcode::NOT),
-                    (Type::Float, Op::GreaterThanEqual) => self.emit_bytes(opcode::GREATERF,opcode::NOT),
+                    (Type::Int, Op::GreaterThanEqual) => {
+                        self.emit_bytes(opcode::GREATER, opcode::NOT)
+                    }
+                    (Type::Float, Op::GreaterThanEqual) => {
+                        self.emit_bytes(opcode::GREATERF, opcode::NOT)
+                    }
 
                     (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                     (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
 
-                    (ref ty,ref op) => unimplemented!(" ty {:?} op {:?}",ty,op),
+                    (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
                 }
-            },
+            }
+
             Expression::Grouping(ref expr) => {
                 self.compile_expression(expr)?;
+            }
+
+            Expression::Ternary(ref cond, ref if_true, ref if_false) => {}
+
+            Expression::Unary(ref op, ref expr) => {
+                use ast::UnaryOp;
+
+                self.compile_expression(expr)?;
+
+                match *op {
+                    UnaryOp::Bang => {
+                        self.emit_byte(opcode::NOT);
+                    }
+
+                    UnaryOp::Minus => match &expr.value.ty {
+                        Type::Int => self.emit_byte(opcode::NEGATE),
+                        Type::Float => self.emit_byte(opcode::NEGATEF),
+                        _ => unimplemented!(),
+                    },
+                }
             }
 
             _ => unimplemented!(),

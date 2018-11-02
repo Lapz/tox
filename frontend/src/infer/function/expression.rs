@@ -178,7 +178,6 @@ impl Infer {
             }
 
             Expression::Literal(literal) => {
-                
                 let ty = self.infer_literal(&literal);
                 (Spanned::new(t::Expression::Literal(literal), expr.span), ty)
             }
@@ -227,7 +226,7 @@ impl Infer {
                         Type::Bool,
                     ),
                     UnaryOp::Minus => {
-                        if !expr.value.ty.is_int() {
+                        if !expr.value.ty.is_int() && !expr.value.ty.is_float() {
                             let msg = format!(
                                 "Cannot use `-` operator on type `{}`",
                                 expr.value.ty.print(ctx)

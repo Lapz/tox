@@ -107,21 +107,17 @@ impl Debug for Value {
 
 impl Display for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        
         unsafe {
-            if self.ty == ValueType::Int
-            {
+            if self.ty == ValueType::Int {
                 write!(fmt, "{}", self.val.int)?;
-            } else if self.ty == ValueType::Nil 
-            {
+            } else if self.ty == ValueType::Nil {
                 write!(fmt, "nil")?;
-            }else if self.ty == ValueType::Float {
+            } else if self.ty == ValueType::Float {
                 write!(fmt, "{}", self.val.float)?;
             } else if self.ty == ValueType::Bool {
                 write!(fmt, "{}", self.val.boolean)?;
             }
         }
-        
 
         Ok(())
     }

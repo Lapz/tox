@@ -3,8 +3,6 @@ use opcode;
 #[cfg(feature = "debug")]
 use vm::VM;
 
-
-
 //     #[cfg(feature = "debug")]
 //     pub fn disassemble_instruction(&self, offset: usize) -> usize {
 //         print!("{:04} \t", offset);

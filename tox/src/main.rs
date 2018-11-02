@@ -11,7 +11,7 @@ extern crate vm;
 mod repl;
 
 // use codegen::Compiler;
-use frontend::{Infer,compile};
+use frontend::{compile, Infer};
 use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
@@ -233,15 +233,19 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         }
     };
 
-    let functions = compile(&typed_ast, &mut reporter).unwrap();
-   
+    let functions = match compile(&typed_ast, &mut reporter) {
+        Ok(functions) => functions,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
-    let mut vm = VM::new(functions);
+    let mut vm = VM::new(symbols.symbol("main"), &functions).unwrap();
     vm.run();
 
-    #[cfg(feature="debug")]
+    #[cfg(feature = "debug")]
     vm.disassemble("Test")
-    
 }
 
 #[derive(StructOpt, Debug)]
