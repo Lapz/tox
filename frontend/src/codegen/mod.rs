@@ -1,7 +1,3 @@
-mod gen_tasm;
-mod label;
-mod tasm;
-
 use ast;
 use infer::types::Type;
 use opcode;
