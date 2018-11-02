@@ -245,7 +245,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
     vm.run();
 
     #[cfg(feature = "debug")]
-    vm.disassemble("Test")
+    println!("{:?}",vm);
 }
 
 #[derive(StructOpt, Debug)]

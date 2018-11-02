@@ -40,6 +40,12 @@ pub mod opcode {
     pub const DIV: u8 = 022;
     /// DIV Float
     pub const DIVF: u8 = 023;
+
+    pub const JUMP: u8 = 024;
+
+    pub const GETLOCAL:u8 = 025;
+
+    // pub const STORELOCAL:u8
 }
 
 // /// JMP Dest

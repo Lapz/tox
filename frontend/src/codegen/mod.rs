@@ -1,26 +1,31 @@
 mod gen_tasm;
 mod label;
 mod tasm;
+
 use ast;
-use codegen::label::Label;
-use codegen::tasm::TASM;
 use infer::types::Type;
 use opcode;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{self, Write};
-use std::iter::repeat;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
+use std::collections::HashMap;
 use vm::{Chunk, Function, Value};
 type ParseResult<T> = Result<T, ()>;
 
+#[derive(Debug,Clone,Copy)]
+struct LoopDescription {
+    /// The index of the start label
+    start: i32,
+    /// The index of the end label
+    end: i32,
+}
 pub struct Builder<'a> {
     /// The current chunk
     chunk: Chunk,
     /// All local variables
     locals: HashMap<Symbol, u8>,
+
+    current_loop: Option<LoopDescription>,
     reporter: &'a mut Reporter,
     line: u32,
 }
@@ -31,6 +36,7 @@ impl<'a> Builder<'a> {
             chunk: Chunk::new(),
             locals: HashMap::new(),
             line: 0,
+            current_loop: None,
             reporter,
         }
     }
@@ -79,18 +85,26 @@ impl<'a> Builder<'a> {
                 Ok(())
             }
 
+            Statement::Break => {
+                let description = self.current_loop.expect("Using break outside a loop");
+
+                self.emit_bytes(opcode::JUMP, description.end as u8);
+
+                Ok(())
+            }
+
+            Statement::Continue => {
+                let description = self.current_loop.expect("Using break outside a loop");
+
+                self.emit_bytes(opcode::JUMP, description.start as u8);
+                Ok(())
+            },
+
+
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
                 Ok(())
-            }
-            Statement::Return(ref expr) => {
-                println!(" return {:#?}", expr);
-                self.compile_expression(expr)?;
-
-                self.emit_byte(opcode::RETURN);
-
-                Ok(())
-            }
+            },
 
             Statement::Print(ref expr) => {
                 self.compile_expression(expr)?;
@@ -99,6 +113,45 @@ impl<'a> Builder<'a> {
 
                 Ok(())
             }
+            
+            Statement::Return(ref expr) => {
+                self.compile_expression(expr)?;
+
+                self.emit_byte(opcode::RETURN);
+
+                Ok(())
+            }
+
+            // Statement::If {ref cond,ref other,..}=> {
+                
+            // },
+
+            Statement::Var { ref ident,ref ty,ref expr} => {
+                
+                if let Some(ref expr) = *expr {
+                    self.compile_expression(expr)?;
+                }else {
+                    self.emit_constant(Value::nil(), statement.span)?;
+                }
+                println!("{}",self.chunk.code.len()-1);
+                let pos = (self.chunk.code.len()-1) as u8;// The position at which the variable is stored in the code
+            
+                self.locals.insert(*ident, pos);
+                
+                Ok(())
+            },
+
+
+
+            // Statement::While(ref cond,ref body) => {
+
+            //     self.compile_expression(cond)?;
+
+            //     let start_index = self.chunk.code.len() -1;
+
+
+            //     Ok(())
+            // }
 
             _ => unimplemented!(),
         }
@@ -125,7 +178,9 @@ impl<'a> Builder<'a> {
                 Literal::Float(ref f) => {
                     self.emit_constant(Value::float(*f), expr.value.expr.span)?;
                 }
-                Literal::Str(ref bytes) => {}
+                Literal::Str(ref bytes) => {
+                    unimplemented!("String are not implemented")
+                }
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => {
@@ -187,20 +242,26 @@ impl<'a> Builder<'a> {
                     UnaryOp::Minus => match &expr.value.ty {
                         Type::Int => self.emit_byte(opcode::NEGATE),
                         Type::Float => self.emit_byte(opcode::NEGATEF),
-                        _ => unimplemented!(),
+                        _ => unreachable!(),
                     },
                 }
+            },
+
+            Expression::Var(ref ident,_) => {
+
+                if let Some(pos) = self.locals.get(ident) {
+                    self.emit_bytes(opcode::GETLOCAL, *pos);
+                } else {
+                    unimplemented!("Params ");
+                }
+
             }
 
-            _ => unimplemented!(),
+            ref e => unimplemented!("{:?}", e),
         }
 
         Ok(())
     }
-}
-
-fn repeat_string(s: &str, count: usize) -> String {
-    repeat(s).take(count).collect()
 }
 
 fn compile_function(func: &ast::Function, reporter: &mut Reporter) -> ParseResult<Function> {
@@ -210,6 +271,7 @@ fn compile_function(func: &ast::Function, reporter: &mut Reporter) -> ParseResul
 
     Ok(Function {
         name: func.name,
+        locals: builder.locals,
         body: builder.chunk,
     })
 }
