@@ -1,6 +1,6 @@
 
 fun main() -> int {
-    var a  = 10+20;
-    print a;
+    var a  = 10+20+30;
+    print a-500;
     return 0;
 }

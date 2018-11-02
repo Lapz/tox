@@ -133,7 +133,7 @@ impl<'a> Builder<'a> {
                 }else {
                     self.emit_constant(Value::nil(), statement.span)?;
                 }
-                println!("{}",self.chunk.code.len()-1);
+            
                 let pos = (self.chunk.code.len()-1) as u8;// The position at which the variable is stored in the code
             
                 self.locals.insert(*ident, pos);
@@ -184,8 +184,8 @@ impl<'a> Builder<'a> {
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => {
-                self.compile_expression(rhs)?;
                 self.compile_expression(lhs)?;
+                self.compile_expression(rhs)?;
 
                 match (&expr.value.ty, op) {
                     (Type::Int, Op::Plus) => self.emit_byte(opcode::ADD),
@@ -250,7 +250,7 @@ impl<'a> Builder<'a> {
             Expression::Var(ref ident,_) => {
 
                 if let Some(pos) = self.locals.get(ident) {
-                    self.emit_bytes(opcode::GETLOCAL, *pos);
+                    self.emit_bytes(opcode::GETLOCAL, self.chunk.code.len() as u8 - *pos);
                 } else {
                     unimplemented!("Params ");
                 }
