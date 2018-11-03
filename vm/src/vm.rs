@@ -85,7 +85,7 @@ impl<'a> VM<'a> {
                         }
 
                         None => {
-                            println!("Tryed to return from a top level proc");
+                            continue; // Were are return from a top level function main
                         }
                     }
 
@@ -159,11 +159,39 @@ impl<'a> VM<'a> {
 
                 },
 
+                opcode::CALL => {
+                    let symbol = self.read_byte();
+                    let symbol = Symbol(symbol as u64);
+
+                    
+            
+                    let mut function = None;
+
+                    {
+                        for func in self.functions.iter() {
+                            if func.name == symbol {
+                                function = Some(func);
+                            }
+                        }
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function.unwrap(),
+                    };
+
+                    self.frames.push(::std::mem::replace(&mut self.current_frame, call_frame)); 
+                    // swaps the current frame with the one we are one and then 
+
+
+                }
+
                 
 
                 #[cfg(not(feature="debug"))] 
                 _ => {
-                    break;
+                    panic!("Unknown opcode found");
                 },
                 #[cfg(feature="debug")] 
                 ref e => {

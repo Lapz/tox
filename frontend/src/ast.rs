@@ -81,7 +81,7 @@ pub enum Expression {
     Array(Vec<Spanned<TypedExpression>>),
     Assign(Symbol, AssignOperator, Spanned<TypedExpression>),
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
-    Call(Spanned<TypedExpression>, Vec<Spanned<TypedExpression>>),
+    Call(Symbol, Vec<Spanned<TypedExpression>>),
     Closure(Box<Function>),
     ClassInstance(Symbol, Vec<Spanned<TypedExpression>>),
     Get(Symbol, Spanned<TypedExpression>),

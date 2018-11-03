@@ -307,16 +307,7 @@ impl Infer {
                                 Ok((
                                     Spanned::new(
                                         t::Expression::Call(
-                                            Spanned::new(
-                                                t::TypedExpression {
-                                                    expr: Box::new(Spanned::new(
-                                                        t::Expression::Var(sym.value, ty.clone()),
-                                                        sym.span,
-                                                    )),
-                                                    ty: ty.clone(),
-                                                },
-                                                call.span,
-                                            ),
+                                            sym.value,
                                             callee_exprs,
                                         ),
                                         call.span,

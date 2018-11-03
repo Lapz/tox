@@ -23,6 +23,7 @@ pub struct Builder<'a> {
     locals_count: usize,
     locals:HashMap<Symbol,usize>,
     current_loop: Option<LoopDescription>,
+    params:HashMap<Symbol,usize>,
     reporter: &'a mut Reporter,
     line: u32,
 }
@@ -34,6 +35,7 @@ impl<'a> Builder<'a> {
             locals_count:0,
             locals:HashMap::new(),
             line: 0,
+            params:HashMap::new(),
             current_loop: None,
             reporter,
         }
@@ -254,6 +256,22 @@ impl<'a> Builder<'a> {
 
                     (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
                 }
+            },
+
+            Expression::Call(ref callee,ref args) => {
+
+                if args.is_empty() {
+                    self.emit_bytes(opcode::CALL,callee.0 as u8);
+                    return Ok(());
+                }
+
+                for arg in args {
+                    self.compile_expression(arg)?;
+                }
+
+                self.emit_bytes(opcode::CALL,callee.0 as u8);
+
+                
             }
 
             Expression::Grouping(ref expr) => {

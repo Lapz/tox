@@ -229,6 +229,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         Ok(ast) => ast,
         Err(_) => {
             reporter.emit(input);
+            
             ::std::process::exit(65)
         }
     };

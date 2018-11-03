@@ -1,8 +1,12 @@
+fun ten() -> int {
+    return 10;
+}
 
 fun main() -> int {
     var a  = 10+20+30;
     print a-500;
-    a = 20;
-    print a;
+    a = ten();
+    print a+10;
     return 0;
 }
+
