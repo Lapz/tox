@@ -45,6 +45,8 @@ pub mod opcode {
 
     pub const GETLOCAL:u8 = 025;
 
+    pub const SETLOCAL:u8 = 026;
+
     // pub const STORELOCAL:u8
 }
 

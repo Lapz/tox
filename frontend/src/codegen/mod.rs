@@ -18,9 +18,10 @@ struct LoopDescription {
 pub struct Builder<'a> {
     /// The current chunk
     chunk: Chunk,
-    /// All local variables
-    locals: HashMap<Symbol, u8>,
-
+    /// A count of all local vars
+    /// The number is the postion of the local on the local stack
+    locals_count: usize,
+    locals:HashMap<Symbol,usize>,
     current_loop: Option<LoopDescription>,
     reporter: &'a mut Reporter,
     line: u32,
@@ -30,7 +31,8 @@ impl<'a> Builder<'a> {
     pub fn new(reporter: &'a mut Reporter) -> Self {
         Builder {
             chunk: Chunk::new(),
-            locals: HashMap::new(),
+            locals_count:0,
+            locals:HashMap::new(),
             line: 0,
             current_loop: None,
             reporter,
@@ -129,10 +131,12 @@ impl<'a> Builder<'a> {
                 }else {
                     self.emit_constant(Value::nil(), statement.span)?;
                 }
-            
-                let pos = (self.chunk.code.len()-1) as u8;// The position at which the variable is stored in the code
-            
-                self.locals.insert(*ident, pos);
+
+                
+                self.locals.insert(*ident, self.locals_count);
+                self.emit_bytes(opcode::SETLOCAL,self.locals_count as u8);
+                self.locals_count += 1 ;// A new local so locals must be increased
+                
                 
                 Ok(())
             },
@@ -154,10 +158,43 @@ impl<'a> Builder<'a> {
     }
 
     pub fn compile_expression(&mut self, expr: &Spanned<ast::TypedExpression>) -> ParseResult<()> {
-        use ast::{Expression, Literal, Op};
+        use ast::{Expression, Literal, Op,AssignOperator};
         self.set_span(expr.span);
 
         match expr.value.expr.value {
+
+            Expression::Assign(ref ident,ref op,ref expr) => {
+
+                let pos = if let Some(pos) = self.locals.get(ident) {
+                    *pos 
+                }else {
+                    panic!("Params unimplemented");
+                };
+
+                match *op {
+                    AssignOperator::Equal => {
+                        self.compile_expression(expr)?;
+                        self.emit_bytes(opcode::SETLOCAL,pos as u8);
+                    },
+                    AssignOperator::MinusEqual => {
+
+                    },
+
+                    AssignOperator::PlusEqual => {
+
+                    },
+
+                    AssignOperator::SlashEqual => {
+
+                    },
+
+                    AssignOperator::StarEqual => {
+                        
+                    }
+                }
+                
+            },
+
             Expression::Literal(ref literal) => match *literal {
                 Literal::False(_) => {
                     self.emit_byte(opcode::FALSE);
@@ -246,12 +283,14 @@ impl<'a> Builder<'a> {
             Expression::Var(ref ident,_) => {
 
                 if let Some(pos) = self.locals.get(ident) {
-                    self.emit_bytes(opcode::GETLOCAL, self.chunk.code.len() as u8 - *pos);
+                    self.emit_bytes(opcode::GETLOCAL, *pos as u8);
                 } else {
                     unimplemented!("Params ");
                 }
 
-            }
+            },
+
+            
 
             ref e => unimplemented!("{:?}", e),
         }

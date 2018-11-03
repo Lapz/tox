@@ -4,12 +4,13 @@ use opcode;
 use std::mem;
 use util::symbol::Symbol;
 use value::Value;
-
+use std::collections::HashMap;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
 pub struct StackFrame<'a> {
     ip: usize,
+    locals:HashMap<u8,Value>,
     function: &'a Function,
 }
 pub struct VM<'a> {
@@ -25,6 +26,7 @@ pub struct VM<'a> {
 #[derive(Debug)]
 pub enum Error {
     NoMain,
+    UnknownOpcode
 }
 
 impl<'a> VM<'a> {
@@ -45,6 +47,7 @@ impl<'a> VM<'a> {
 
         let current_frame = StackFrame {
             ip: 0,
+            locals: HashMap::new(),
             function: main_funciton.unwrap(),
         };
 
@@ -141,17 +144,32 @@ impl<'a> VM<'a> {
                 },
                 opcode::GETLOCAL => {
                     let addres = self.read_byte();
-                    println!("{}",addres);
-
-                    let val = self.stack[addres as usize];
+                    
+                    let val = self.current_frame.locals[&addres];
 
                     self.push(val);
                 },
 
+                opcode::SETLOCAL => {
+                    let ident = self.read_byte();
+
+                    let val = self.pop(); // do it manually because don't modify the stack
+
+                    self.current_frame.locals.insert(ident,val);
+
+                },
+
+                
+
+                #[cfg(not(feature="debug"))] 
                 _ => {
-                    #[cfg(feature="debug")] 
+                    break;
+                },
+                #[cfg(feature="debug")] 
+                ref e => {
+                    
                     {
-                        println!("unknown opcode found");
+                        println!("unknown opcode found :{}",e);
                     }
                     continue;
                 }
@@ -181,21 +199,21 @@ impl<'a> VM<'a> {
     }
 }
 
-// #[cfg(feature = "debug")]
-// impl <'a> VM<'a> {
-//     #[cfg(feature = "debug")]
-//     pub fn disassemble(&self, name: &str) {
-//         println!("== {} ==\n", name);
+#[cfg(feature = "debug")]
+impl <'a> VM<'a> {
+    #[cfg(feature = "debug")]
+    pub fn disassemble(&self) {
+        
 
-//         for function in self.functions.iter() {
-//             let mut i = 0;
+        for function in self.functions.iter() {
+           
 
-//             function.body.disassemble(&format!("{}",function.name));
+            function.body.disassemble(&format!("{}",function.name));
 
-//         }
+        }
 
-//     }
-// }
+    }
+}
 
 use std::fmt::{self, Debug};
 

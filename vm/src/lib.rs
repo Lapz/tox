@@ -11,8 +11,6 @@ extern crate util;
 #[macro_use]
 mod macros;
 mod chunk;
-#[cfg(feature = "debug")]
-mod debug;
 mod value;
 mod vm;
 pub use chunk::Chunk;
@@ -23,5 +21,5 @@ pub use vm::VM;
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,
-    pub locals: ::std::collections::HashMap<::util::symbol::Symbol,u8>
+    pub locals: ::std::collections::HashMap<::util::symbol::Symbol,usize>
 }
