@@ -96,7 +96,7 @@ impl Infer {
                     | Op::And
                     | Op::Or => {
                         self.unify(&lhs.value.ty, &rhs.value.ty, span, ctx)?;
-                        let ty = lhs.value.ty.clone();
+                        
                         (
                             Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
                             Type::Bool,

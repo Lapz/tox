@@ -142,6 +142,18 @@ impl<'a> VM<'a> {
                     let addres = self.read_byte();
                     self.current_frame.ip = addres as usize;
                 },
+                opcode::JUMPNOT => {
+                    let address = self.read_16_bits();
+
+
+                    // println!("{:?}",&self.stack[0..]);
+
+                    if !self.stack[self.stack_top-1].as_bool() {
+                        self.current_frame.ip += address as usize;
+                    }
+
+
+                }
                 opcode::GETLOCAL => {
                     let addres = self.read_byte();
                     
@@ -208,6 +220,14 @@ impl<'a> VM<'a> {
     fn read_constant(&mut self) -> Value {
         let index = self.read_byte() as usize;
         self.current_frame.function.body.constants[index]
+    }
+
+    fn read_16_bits(&mut self) -> u16 {
+        let result = ((self.current_frame.function.body.code[self.current_frame.ip] as u16) << 8) | self.current_frame.function.body.code[self.current_frame.ip + 1] as u16;
+        // Shifts the instruction by 8 to the right and or all the 1's and 0's
+        self.current_frame.ip += 2;
+
+        result
     }
 
     fn read_byte(&mut self) -> u8 {

@@ -3,10 +3,11 @@ fun ten() -> int {
 }
 
 fun main() -> int {
-    var a  = 10+20+30;
-    print a-500;
-    a = ten();
-    print a+10;
+   
+    if (1<10) {
+        print(true);
+    }
+    
     return 0;
 }
 

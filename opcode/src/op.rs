@@ -49,6 +49,11 @@ pub mod opcode {
 
     pub const CALL:u8 = 027;
 
+    /// Jump to a location if true
+    pub const JUMPIF:u8 = 028;
+    /// jumps to a location if false
+    pub const JUMPNOT:u8 = 029;
+
     // pub const STORELOCAL:u8
 }
 

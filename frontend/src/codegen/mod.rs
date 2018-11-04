@@ -45,6 +45,20 @@ impl<'a> Builder<'a> {
         self.chunk.write(byte, self.line)
     }
 
+    pub fn patch_jump(&mut self,offset:usize) {
+        // -2 to adjust for the bytecode for the jump offset itself.
+        let jump = self.chunk.code.len() - offset - 2;
+
+        self.chunk.code[offset] = ((jump >> 8) & 0xff) as u8;
+        self.chunk.code[offset+1] = (jump & 0xff) as u8;
+    }
+
+    pub fn emit_jump(&mut self,byte:u8) -> usize {
+        self.emit_byte(byte);
+        self.emit_bytes(0, 0);
+        self.chunk.code.len() -1
+    }
+
     pub fn emit_bytes(&mut self, byte1: u8, byte2: u8) {
         self.emit_byte(byte1);
         self.emit_byte(byte2);
@@ -120,6 +134,28 @@ impl<'a> Builder<'a> {
                 self.emit_byte(opcode::RETURN);
 
                 Ok(())
+            }
+
+            Statement::If {
+                ref cond,
+                ref then,
+                otherwise:None
+            } => {
+                
+
+                self.compile_expression(cond)?;
+
+                let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.compile_statement(then)?;
+
+                self.patch_jump(false_label);
+
+            
+
+
+                Ok(())
+
             }
 
             // Statement::If {ref cond,ref other,..}=> {
@@ -235,24 +271,45 @@ impl<'a> Builder<'a> {
                     (Type::Int, Op::Star) => self.emit_byte(opcode::MUL),
                     (Type::Float, Op::Star) => self.emit_byte(opcode::MULF),
 
-                    (Type::Int, Op::LessThan) => self.emit_byte(opcode::LESS),
-                    (Type::Float, Op::LessThan) => self.emit_byte(opcode::LESSF),
 
-                    (Type::Int, Op::LessThanEqual) => self.emit_bytes(opcode::LESS, opcode::NOT),
-                    (Type::Float, Op::LessThanEqual) => self.emit_bytes(opcode::LESSF, opcode::NOT),
+                    // For comparisson the lhs and the rhs should be the same so only 
+                    // check the type of the lhs 
+                    (Type::Bool, Op::LessThan) => {
+                        if lhs.value.ty == Type::Int {
+                            self.emit_byte(opcode::LESS)
+                        }else {
+                            self.emit_byte(opcode::LESSF)
+                        }
+                    },
 
-                    (Type::Int, Op::GreaterThan) => self.emit_byte(opcode::GREATER),
-                    (Type::Float, Op::GreaterThan) => self.emit_byte(opcode::GREATERF),
-
-                    (Type::Int, Op::GreaterThanEqual) => {
-                        self.emit_bytes(opcode::GREATER, opcode::NOT)
+                    (Type::Bool,Op::LessThanEqual) => {
+                        if lhs.value.ty == Type::Int {
+                            self.emit_bytes(opcode::LESS, opcode::NOT)
+                        }else {
+                            self.emit_bytes(opcode::LESSF, opcode::NOT)
+                        }
                     }
-                    (Type::Float, Op::GreaterThanEqual) => {
-                        self.emit_bytes(opcode::GREATERF, opcode::NOT)
-                    }
 
+                    (Type::Bool, Op::GreaterThan) => {
+                        if lhs.value.ty == Type::Int {
+                            self.emit_byte(opcode::GREATER)
+                        }else {
+                            self.emit_byte(opcode::GREATERF)
+                        }
+                    },
+
+                    (Type::Bool,Op::GreaterThanEqual) => {
+                        if lhs.value.ty == Type::Int {
+                            self.emit_bytes(opcode::GREATER, opcode::NOT)
+                        }else {
+                            self.emit_bytes(opcode::GREATERF, opcode::NOT)
+                        }
+                    }
+                    
                     (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                     (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
+
+                    // (Type::Bool,O)
 
                     (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
                 }
