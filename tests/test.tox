@@ -4,10 +4,14 @@ fun ten() -> int {
 
 fun main() -> int {
    
-    if (1<10) {
-        print(true);
+    var i =0;
+
+    while (i <10) {
+        
+        print i;
+        i = i+1;
     }
-    
+
     return 0;
 }
 

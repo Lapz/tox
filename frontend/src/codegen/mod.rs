@@ -55,8 +55,8 @@ impl<'a> Builder<'a> {
 
     pub fn emit_jump(&mut self,byte:u8) -> usize {
         self.emit_byte(byte);
-        self.emit_bytes(0, 0);
-        self.chunk.code.len() -1
+        self.emit_bytes(0xff, 0xff);
+        self.chunk.code.len() - 2
     }
 
     pub fn emit_bytes(&mut self, byte1: u8, byte2: u8) {
@@ -151,16 +151,24 @@ impl<'a> Builder<'a> {
 
                 self.patch_jump(false_label);
 
-            
-
-
                 Ok(())
 
             }
 
-            // Statement::If {ref cond,ref other,..}=> {
-                
-            // },
+            Statement::If {ref cond,ref then,otherwise:Some(ref otherwise)} => {
+
+                self.compile_expression(cond)?;
+
+                let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.compile_statement(then)?;
+
+                self.patch_jump(false_label);
+
+                self.compile_statement(otherwise)?;
+
+                Ok(())
+            },
 
             Statement::Var { ref ident,ref ty,ref expr} => {
                 
@@ -181,17 +189,24 @@ impl<'a> Builder<'a> {
 
 
 
-            // Statement::While(ref cond,ref body) => {
+            Statement::While(ref cond,ref body) => {
+                let start = self.chunk.code.len();
+               
 
-            //     self.compile_expression(cond)?;
+                self.compile_expression(cond)?;
 
-            //     let start_index = self.chunk.code.len() -1;
+                let out = self.emit_jump(opcode::JUMPIF);
+
+                self.compile_statement(body)?;
+
+                self.patch_jump(out);
 
 
-            //     Ok(())
-            // }
 
-            _ => unimplemented!(),
+                Ok(())
+            }
+
+            // _ => unimplemented!(),
         }
     }
 
@@ -305,12 +320,17 @@ impl<'a> Builder<'a> {
                             self.emit_bytes(opcode::GREATERF, opcode::NOT)
                         }
                     }
-                    
+
                     (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                     (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
 
-                    // (Type::Bool,O)
+                    #[cfg(not(feature="debug"))]
+                    _ => unsafe {
+                        ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
+                    }
 
+                   
+                    #[cfg(feature="debug")]
                     (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
                 }
             },
