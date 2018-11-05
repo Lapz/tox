@@ -300,7 +300,14 @@ impl<'a> Builder<'a> {
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => {
-                self.compile_expression(lhs)?;
+
+                if *op == Op::And {
+                    self.compile_and(lhs,rhs)?;
+                    
+                }else if *op == Op::Or {
+                    self.compile_or(lhs,rhs)?;
+                }else {
+                    self.compile_expression(lhs)?;
                 self.compile_expression(rhs)?;
 
                 match (&expr.value.ty, op) {
@@ -354,15 +361,17 @@ impl<'a> Builder<'a> {
                     (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                     (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
 
-                    #[cfg(not(feature="debug"))]
-                    _ => unsafe {
-                        ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
-                    }
+                    // #[cfg(not(feature="debug"))]
+                    // _ => unsafe {
+                    //     ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
+                    // }
 
                    
-                    #[cfg(feature="debug")]
+                    // #[cfg(feature="debug")]
                     (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
+                    }
                 }
+                
             },
 
             Expression::Call(ref callee,ref args) => {
@@ -434,6 +443,35 @@ impl<'a> Builder<'a> {
 
             ref e => unimplemented!("{:?}", e),
         }
+
+        Ok(())
+    }
+
+
+    fn compile_and(&mut self, lhs:&Spanned<ast::TypedExpression>,rhs:&Spanned<ast::TypedExpression>) -> ParseResult<()> {
+        
+        self.compile_expression(lhs)?;
+
+        let false_label = self.emit_jump(opcode::JUMPNOT);
+
+        self.compile_expression(rhs)?;
+
+        self.patch_jump(false_label);
+
+        Ok(())
+    }
+
+    fn compile_or(&mut self, lhs:&Spanned<ast::TypedExpression>,rhs:&Spanned<ast::TypedExpression>) -> ParseResult<()> {
+        
+        self.compile_expression(lhs)?;
+
+        let else_label = self.emit_jump(opcode::JUMPIF);
+
+        self.compile_expression(rhs)?;
+
+        self.patch_jump(else_label);
+
+        // self.emit_byte(opcode::POP);
 
         Ok(())
     }

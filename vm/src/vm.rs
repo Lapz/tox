@@ -168,6 +168,14 @@ impl<'a> VM<'a> {
                     let address = self.read_16_bits();
                     self.current_frame.ip += address as usize;
                 },
+
+                opcode::JUMPIF => {
+                    let address = self.read_16_bits();
+
+                     if self.stack[self.stack_top-1].as_bool() {
+                        self.current_frame.ip += address as usize;
+                    }
+                }
                 opcode::JUMPNOT => {
                     let address = self.read_16_bits();
 

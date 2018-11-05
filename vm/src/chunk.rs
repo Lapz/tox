@@ -40,6 +40,8 @@ impl Chunk {
         while i < self.code.len() {
             i = self.disassemble_instruction(i);
         }
+
+        println!("{:?}",self.code);
     }
 
     #[cfg(feature = "debug")]

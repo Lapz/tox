@@ -6,12 +6,14 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 default = []
 debug = [] # Enable debug statements within the vm
 
-[dependencies.vm.'cfg(feature = "debug")']
-features = ["debug","stack"]
-path = "../vm"
+# [dependencies.vm.'cfg(feature = "debug")']
+# features = ["debug","stack"]
+# path = "../vm"
 
 [dependencies.vm]
 path = "../vm"
+# features = ["debug","stack"]
+
 
 [dependencies]
 util = {path = "../util"}

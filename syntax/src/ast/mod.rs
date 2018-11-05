@@ -165,7 +165,7 @@ pub enum Literal {
     Nil,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,PartialEq)]
 pub enum Op {
     // The possible operators for the binary and unary expression
     BangEqual,
