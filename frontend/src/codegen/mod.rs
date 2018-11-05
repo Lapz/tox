@@ -203,7 +203,8 @@ impl<'a> Builder<'a> {
 
                 
                 self.locals.insert(*ident, self.locals_count);
-                self.emit_bytes(opcode::SETLOCAL,self.locals_count as u8);
+                let count = self.locals_count as u8;
+                self.emit_bytes(opcode::SETLOCAL,count);
                 self.locals_count += 1 ;// A new local so locals must be increased
                 
                 
@@ -421,8 +422,8 @@ impl<'a> Builder<'a> {
 
             Expression::Var(ref ident,_) => {
 
-                if let Some(pos) = self.locals.get(ident) {
-                    self.emit_bytes(opcode::GETLOCAL, *pos as u8);
+                if let Some(pos) = self.locals.get(ident).cloned() {
+                    self.emit_bytes(opcode::GETLOCAL, pos as u8);
                 } else {
                     unimplemented!("Params ");
                 }
