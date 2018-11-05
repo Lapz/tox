@@ -179,13 +179,9 @@ impl<'a> VM<'a> {
                 opcode::JUMPNOT => {
                     let address = self.read_16_bits();
 
-
-                    // println!("{:?}",&self.stack[0..]);
-
                     if !self.stack[self.stack_top-1].as_bool() {
                         self.current_frame.ip += address as usize;
                     }
-
 
                 }
                 opcode::GETLOCAL => {

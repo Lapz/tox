@@ -60,7 +60,7 @@ impl Chunk {
             opcode::IGL => simple_instruction("OPCODE::IGL", offset),
             opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             opcode::RETURN => simple_instruction("OPCODE::RETURN", offset),
-            opcode::CONSTANT => simple_instruction("OPCODE::CONSTANT", offset),
+            opcode::CONSTANT => self.constant_instruction("OPCODE::CONSTANT", offset),
             opcode::PRINT => simple_instruction("OPCODE::PRINT",offset),
             
             opcode::NEGATE => simple_instruction("OPCODE::NEGATE", offset),
