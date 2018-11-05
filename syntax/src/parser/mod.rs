@@ -754,25 +754,23 @@ impl<'a> Parser<'a> {
         let mut expr = self.parse_or()?;
 
         if self.recognise(TokenType::QUESTION) {
-                self.advance();
+            self.advance();
 
-                let if_true = self.parse_expression()?;
+            let if_true = self.parse_expression()?;
 
-                self.consume(&TokenType::COLON, "Expected ':'")?;
+            self.consume(&TokenType::COLON, "Expected ':'")?;
 
-                let if_false = self.parse_expression()?;
+            let if_false = self.parse_expression()?;
 
-                expr = Spanned {
-                    span:expr.get_span().to(if_false.get_span()),
-                    value: Expression::Ternary {
-                        condition:Box::new(expr),
-                        then_branch:Box::new(if_true),
-                        else_branch:Box::new(if_false),
-                    }
-                }
-
-            };
-
+            expr = Spanned {
+                span: expr.get_span().to(if_false.get_span()),
+                value: Expression::Ternary {
+                    condition: Box::new(expr),
+                    then_branch: Box::new(if_true),
+                    else_branch: Box::new(if_false),
+                },
+            }
+        };
 
         Ok(expr)
     }
@@ -1049,9 +1047,7 @@ impl<'a> Parser<'a> {
                         property,
                     },
                 }
-            } 
-            
-             else {
+            } else {
                 break;
             }
         }

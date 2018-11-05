@@ -41,7 +41,7 @@ impl Chunk {
             i = self.disassemble_instruction(i);
         }
 
-        println!("{:?}",self.code);
+        println!("{:?}", self.code);
     }
 
     #[cfg(feature = "debug")]
@@ -61,8 +61,8 @@ impl Chunk {
             opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             opcode::RETURN => simple_instruction("OPCODE::RETURN", offset),
             opcode::CONSTANT => self.constant_instruction("OPCODE::CONSTANT", offset),
-            opcode::PRINT => simple_instruction("OPCODE::PRINT",offset),
-            
+            opcode::PRINT => simple_instruction("OPCODE::PRINT", offset),
+
             opcode::NEGATE => simple_instruction("OPCODE::NEGATE", offset),
             opcode::NEGATEF => simple_instruction("OPCODE::NEGATEF", offset),
             opcode::NIL => simple_instruction("OPCODE::NIL", offset),
@@ -82,16 +82,15 @@ impl Chunk {
             opcode::MULF => simple_instruction("OPCODE::MULF", offset),
             opcode::DIV => simple_instruction("OPCODE::DIV", offset),
             opcode::DIVF => simple_instruction("OPCODE::DIVF", offset),
-            opcode::JUMP => simple_instruction("OPCODE::JUMP",offset),
-            opcode::GETLOCAL => self.local_instruction("OPCODE::GETLOCAL",offset),
-            opcode::SETLOCAL => self.local_instruction("OPCODE::SETLOCAL",offset),
-            opcode::CALL => simple_instruction("OPCODE::CALL",offset),
-            opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF",offset),
-            opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT",offset),
-            opcode::LOOP => self.jump_instruction("OPCODE::LOOP",offset),
-            opcode::POP => simple_instruction("OPCODE::POP",offset),
-            
-            
+            opcode::JUMP => simple_instruction("OPCODE::JUMP", offset),
+            opcode::GETLOCAL => self.local_instruction("OPCODE::GETLOCAL", offset),
+            opcode::SETLOCAL => self.local_instruction("OPCODE::SETLOCAL", offset),
+            opcode::CALL => simple_instruction("OPCODE::CALL", offset),
+            opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF", offset),
+            opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT", offset),
+            opcode::LOOP => self.jump_instruction("OPCODE::LOOP", offset),
+            opcode::POP => simple_instruction("OPCODE::POP", offset),
+
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1
@@ -109,26 +108,20 @@ impl Chunk {
         offset + 2
     }
 
-    pub fn jump_instruction(&self,name:&str,offset:usize) -> usize {
-        let dest = (self.code[offset+1] as u16) << 8 | self.code[offset+2] as u16;
-        
-        println!(
-            "{:16}{:4}",
-            name, dest,
-        );
+    pub fn jump_instruction(&self, name: &str, offset: usize) -> usize {
+        let dest = (self.code[offset + 1] as u16) << 8 | self.code[offset + 2] as u16;
 
-        offset+3
+        println!("{:16}{:4}", name, dest,);
+
+        offset + 3
     }
 
-    pub fn local_instruction(&self,name:&str,offset:usize) -> usize {
-        let symbol = self.code[offset+1];
-        
-        println!(
-            "{:16}  '{}'",
-            name, symbol,
-        );
+    pub fn local_instruction(&self, name: &str, offset: usize) -> usize {
+        let symbol = self.code[offset + 1];
 
-        offset+2
+        println!("{:16}  '{}'", name, symbol,);
+
+        offset + 2
     }
 }
 

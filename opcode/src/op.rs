@@ -43,21 +43,20 @@ pub mod opcode {
 
     pub const JUMP: u8 = 024;
 
-    pub const GETLOCAL:u8 = 025;
+    pub const GETLOCAL: u8 = 025;
 
-    pub const SETLOCAL:u8 = 026;
+    pub const SETLOCAL: u8 = 026;
 
-    pub const CALL:u8 = 027;
+    pub const CALL: u8 = 027;
 
     /// Jump to a location if true
-    pub const JUMPIF:u8 = 028;
+    pub const JUMPIF: u8 = 028;
     /// jumps to a location if false
-    pub const JUMPNOT:u8 = 029;
+    pub const JUMPNOT: u8 = 029;
 
-    pub const LOOP:u8 = 030;
+    pub const LOOP: u8 = 030;
 
-
-    pub const POP:u8 = 031;
+    pub const POP: u8 = 031;
 
     // pub const STORELOCAL:u8
 }

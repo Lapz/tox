@@ -11,8 +11,6 @@ impl Infer {
         span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<()> {
-
-       
         match (lhs, rhs) {
             (
                 &Type::Class(ref name1, ref f1, ref m1, ref unique1),

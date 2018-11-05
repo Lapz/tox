@@ -3,9 +3,9 @@ macro_rules! binary_op {
 
 
             let b = $_self.pop().$into();
-          
+
             let a = $_self.pop().$into();
-            
+
             $_self.push(Value::$return_ty(a $op b))
 
     }};

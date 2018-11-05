@@ -96,7 +96,7 @@ impl Infer {
                     | Op::And
                     | Op::Or => {
                         self.unify(&lhs.value.ty, &rhs.value.ty, span, ctx)?;
-                        
+
                         (
                             Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
                             Type::Bool,
@@ -306,10 +306,7 @@ impl Infer {
 
                                 Ok((
                                     Spanned::new(
-                                        t::Expression::Call(
-                                            sym.value,
-                                            callee_exprs,
-                                        ),
+                                        t::Expression::Call(sym.value, callee_exprs),
                                         call.span,
                                     ),
                                     *ret.clone(),

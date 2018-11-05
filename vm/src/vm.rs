@@ -1,16 +1,16 @@
 use super::Function;
 use chunk::Chunk;
 use opcode;
+use std::collections::HashMap;
 use std::mem;
 use util::symbol::Symbol;
 use value::Value;
-use std::collections::HashMap;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
 pub struct StackFrame<'a> {
     ip: usize,
-    locals:HashMap<u8,Value>,
+    locals: HashMap<u8, Value>,
     function: &'a Function,
 }
 pub struct VM<'a> {
@@ -26,7 +26,7 @@ pub struct VM<'a> {
 #[derive(Debug)]
 pub enum Error {
     NoMain,
-    UnknownOpcode
+    UnknownOpcode,
 }
 
 impl<'a> VM<'a> {
@@ -63,8 +63,7 @@ impl<'a> VM<'a> {
     }
 
     pub fn run(&mut self) {
-
-        #[cfg(feature="debug")]
+        #[cfg(feature = "debug")]
         {
             for func in self.functions {
                 func.body.disassemble("DEBUG")
@@ -74,22 +73,20 @@ impl<'a> VM<'a> {
         // return;
 
         loop {
-            
-                if self.current_frame.ip >= self.current_frame.function.body.code.len() {
-                    return;
+            if self.current_frame.ip >= self.current_frame.function.body.code.len() {
+                return;
+            }
+
+            #[cfg(feature = "stack")]
+            {
+                print!("[");
+
+                for val in &self.stack[0..self.stack_top] {
+                    print!("{},", val);
                 }
 
-                #[cfg(feature="stack")]
-                {
-                    print!("[");
-                    
-                    for val in &self.stack[0..self.stack_top] {
-                        print!("{},",val);
-                    }
-
-                    print!("]\n")
-                }
-            
+                print!("]\n")
+            }
 
             match self.read_byte() {
                 opcode::HLT => {
@@ -167,46 +164,42 @@ impl<'a> VM<'a> {
                 opcode::JUMP => {
                     let address = self.read_16_bits();
                     self.current_frame.ip += address as usize;
-                },
+                }
 
                 opcode::JUMPIF => {
                     let address = self.read_16_bits();
 
-                     if self.stack[self.stack_top-1].as_bool() {
+                    if self.stack[self.stack_top - 1].as_bool() {
                         self.current_frame.ip += address as usize;
                     }
                 }
                 opcode::JUMPNOT => {
                     let address = self.read_16_bits();
 
-                    if !self.stack[self.stack_top-1].as_bool() {
+                    if !self.stack[self.stack_top - 1].as_bool() {
                         self.current_frame.ip += address as usize;
                     }
-
                 }
                 opcode::GETLOCAL => {
                     let addres = self.read_byte();
-                    
+
                     let val = self.current_frame.locals[&addres];
 
                     self.push(val);
-                },
+                }
 
                 opcode::SETLOCAL => {
                     let ident = self.read_byte();
 
-                    let val = self.stack[self.stack_top-1]; // do it manually because don't modify the stack
+                    let val = self.stack[self.stack_top - 1]; // do it manually because don't modify the stack
 
-                    self.current_frame.locals.insert(ident,val);
-
-                },
+                    self.current_frame.locals.insert(ident, val);
+                }
 
                 opcode::CALL => {
                     let symbol = self.read_byte();
                     let symbol = Symbol(symbol as u64);
 
-                    
-            
                     let mut function = None;
 
                     {
@@ -223,28 +216,23 @@ impl<'a> VM<'a> {
                         function: function.unwrap(),
                     };
 
-                    self.frames.push(::std::mem::replace(&mut self.current_frame, call_frame)); 
-                    // swaps the current frame with the one we are one and then 
-
-
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                    // swaps the current frame with the one we are one and then
                 }
-
 
                 opcode::POP => {
                     self.pop();
                 }
 
-                
-
-                #[cfg(not(feature="debug"))] 
+                #[cfg(not(feature = "debug"))]
                 _ => {
                     panic!("Unknown opcode found");
-                },
-                #[cfg(feature="debug")] 
+                }
+                #[cfg(feature = "debug")]
                 ref e => {
-                    
                     {
-                        println!("unknown opcode found :{}",e);
+                        println!("unknown opcode found :{}", e);
                     }
                     continue;
                 }
@@ -258,7 +246,8 @@ impl<'a> VM<'a> {
     }
 
     fn read_16_bits(&mut self) -> u16 {
-        let result = ((self.current_frame.function.body.code[self.current_frame.ip] as u16) << 8) | self.current_frame.function.body.code[self.current_frame.ip + 1] as u16;
+        let result = ((self.current_frame.function.body.code[self.current_frame.ip] as u16) << 8)
+            | self.current_frame.function.body.code[self.current_frame.ip + 1] as u16;
         // Shifts the instruction by 8 to the right and or all the 1's and 0's
         self.current_frame.ip += 2;
 
@@ -281,8 +270,6 @@ impl<'a> VM<'a> {
         self.stack[self.stack_top]
     }
 }
-
-
 
 use std::fmt::{self, Debug};
 
