@@ -54,6 +54,8 @@ pub mod opcode {
     /// jumps to a location if false
     pub const JUMPNOT:u8 = 029;
 
+    pub const LOOP:u8 = 030;
+
     // pub const STORELOCAL:u8
 }
 

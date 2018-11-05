@@ -59,7 +59,8 @@ impl Chunk {
             opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             opcode::RETURN => simple_instruction("OPCODE::RETURN", offset),
             opcode::CONSTANT => simple_instruction("OPCODE::CONSTANT", offset),
-
+            opcode::PRINT => simple_instruction("OPCODE::PRINT",offset),
+            
             opcode::NEGATE => simple_instruction("OPCODE::NEGATE", offset),
             opcode::NEGATEF => simple_instruction("OPCODE::NEGATEF", offset),
             opcode::NIL => simple_instruction("OPCODE::NIL", offset),
@@ -75,10 +76,19 @@ impl Chunk {
             opcode::ADDF => simple_instruction("OPCODE::ADDF", offset),
             opcode::SUB => simple_instruction("OPCODE::SUB", offset),
             opcode::SUBF => simple_instruction("OPCODE::SUBF", offset),
-            opcode::DIV => simple_instruction("OPCODE::DIV", offset),
-            opcode::DIVF => simple_instruction("OPCODE::DIVF", offset),
             opcode::MUL => simple_instruction("OPCODE::MUL", offset),
             opcode::MULF => simple_instruction("OPCODE::MULF", offset),
+            opcode::DIV => simple_instruction("OPCODE::DIV", offset),
+            opcode::DIVF => simple_instruction("OPCODE::DIVF", offset),
+            opcode::JUMP => simple_instruction("OPCODE::JUMP",offset),
+            opcode::GETLOCAL => simple_instruction("OPCODE::GETLOCAL",offset),
+            opcode::SETLOCAL => simple_instruction("OPCODE::SETLOCAL",offset),
+            opcode::CALL => simple_instruction("OPCODE::CALL",offset),
+            opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF",offset),
+            opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT",offset),
+            opcode::LOOP => self.jump_instruction("OPCODE::LOOP",offset),
+            
+            
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1
@@ -94,6 +104,17 @@ impl Chunk {
             name, constant, self.constants[constant as usize]
         );
         offset + 2
+    }
+
+    pub fn jump_instruction(&self,name:&str,offset:usize) -> usize {
+        let dest = (self.code[offset+1] as u16) << 8 | self.code[offset+2] as u16;
+        
+        println!(
+            "{:16}{:4}",
+            name, dest,
+        );
+
+        offset+3
     }
 }
 

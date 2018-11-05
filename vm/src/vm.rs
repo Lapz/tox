@@ -63,12 +63,31 @@ impl<'a> VM<'a> {
     }
 
     pub fn run(&mut self) {
+
+        #[cfg(feature="debug")]
+        {
+            for func in self.functions {
+                func.body.disassemble("DEBUG")
+            }
+        }
+
         loop {
-            {
+            
                 if self.current_frame.ip >= self.current_frame.function.body.code.len() {
                     return;
                 }
-            }
+
+                #[cfg(feature="debug")]
+                {
+                    print!("[");
+                    
+                    for val in &self.stack[0..self.stack_top] {
+                        print!("{},",val);
+                    }
+
+                    print!("]\n")
+                }
+            
 
             match self.read_byte() {
                 opcode::HLT => {
@@ -138,9 +157,14 @@ impl<'a> VM<'a> {
                 opcode::MULF => binary_op!(*,as_float,float,self),
                 opcode::DIV => binary_op!(/,as_int,int,self),
                 opcode::DIVF => binary_op!(/,as_float,float,self),
+                opcode::LOOP => {
+                    let address = self.read_16_bits();
+
+                    self.current_frame.ip = address as usize
+                }
                 opcode::JUMP => {
-                    let addres = self.read_byte();
-                    self.current_frame.ip = addres as usize;
+                    let address = self.read_16_bits();
+                    self.current_frame.ip += address as usize;
                 },
                 opcode::JUMPNOT => {
                     let address = self.read_16_bits();

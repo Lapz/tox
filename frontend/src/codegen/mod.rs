@@ -59,6 +59,15 @@ impl<'a> Builder<'a> {
         self.chunk.code.len() - 2
     }
 
+
+    pub fn emit_loop(&mut self,loop_start:usize) {
+        self.emit_byte(opcode::LOOP);
+
+        let offset = self.chunk.code.len() - loop_start + 2;
+
+        self.emit_bytes(((offset >> 8) & 0xff) as u8, (offset & 0xff) as u8)
+    }
+
     pub fn emit_bytes(&mut self, byte1: u8, byte2: u8) {
         self.emit_byte(byte1);
         self.emit_byte(byte2);
@@ -190,18 +199,19 @@ impl<'a> Builder<'a> {
 
 
             Statement::While(ref cond,ref body) => {
-                let start = self.chunk.code.len();
+                let start_label = self.chunk.code.len();
                
 
                 self.compile_expression(cond)?;
 
-                let out = self.emit_jump(opcode::JUMPIF);
+                let out = self.emit_jump(opcode::JUMPNOT);
 
                 self.compile_statement(body)?;
 
-                self.patch_jump(out);
+                self.emit_loop(start_label); // Jumps back to the start
 
 
+                self.patch_jump(out); // the outer label
 
                 Ok(())
             }
