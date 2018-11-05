@@ -1,11 +1,13 @@
 use std::fmt::{self, Debug, Display};
 
 #[derive(Clone, Copy)]
+/// A value within the VM
 pub struct Value {
     val: As,
     ty: ValueType,
 }
 
+/// The possible types of values
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ValueType {
     Int,
@@ -13,6 +15,8 @@ pub enum ValueType {
     Nil,
     Bool,
 }
+
+/// A union of the values
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub union As {

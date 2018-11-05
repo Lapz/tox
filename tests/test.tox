@@ -4,20 +4,11 @@ fun ten() -> int {
 
 fun main() -> int {
    
-    if true or false {
-        print 1;
-    }
+    var i =0;
 
-    if false or true {
-        print 1;
-    }
-
-    if true or true {
-        print 1;
-    }
-
-    if false or false {
-        print 0;
+    while (i<10) {
+        print i;
+        i= i+1;
     }
 
   

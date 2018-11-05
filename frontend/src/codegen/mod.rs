@@ -62,7 +62,7 @@ impl<'a> Builder<'a> {
     pub fn emit_loop(&mut self, loop_start: usize) {
         self.emit_byte(opcode::LOOP);
 
-        let offset = (self.chunk.code.len() - loop_start);
+        let offset = self.chunk.code.len() - loop_start + 2;
 
         self.emit_bytes(((offset >> 8) & 0xff) as u8, (offset & 0xff) as u8)
     }

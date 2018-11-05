@@ -1,8 +1,6 @@
-//! The VM module it contains two sub projects
+//! The VM module it contains the vm.
+//! The opcodes for the vm can be found in the opcode module
 //! a ```VM``` and an ```Assembler``` for the tasm langauage
-
-#[macro_use]
-extern crate nom;
 
 extern crate opcode;
 
