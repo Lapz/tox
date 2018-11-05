@@ -384,7 +384,22 @@ impl<'a> Builder<'a> {
                 self.compile_expression(expr)?;
             }
 
-            Expression::Ternary(ref cond, ref if_true, ref if_false) => {}
+            Expression::Ternary(ref cond, ref if_true, ref if_false) => {
+                self.compile_expression(cond)?;
+
+                let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.compile_expression(if_true)?;
+
+                let end_label = self.emit_jump(opcode::JUMP);
+
+                self.patch_jump(false_label);
+
+                self.compile_expression(if_false)?;
+
+                self.patch_jump(end_label);
+                
+            }
 
             Expression::Unary(ref op, ref expr) => {
                 use ast::UnaryOp;

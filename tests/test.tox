@@ -4,12 +4,9 @@ fun ten() -> int {
 
 fun main() -> int {
    
-    var i =0;
+    var i = 1<10 ? true : false;
 
-    while i <10 {
-        print i;
-        i=i+1;
-    }
+  
 
     print i;
     return 0;

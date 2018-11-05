@@ -695,7 +695,7 @@ impl<'a> Parser<'a> {
     }
 
     fn assignment(&mut self) -> ParserResult<Spanned<Expression>> {
-        let expr = self.parse_or()?;
+        let expr = self.parse_ternary()?;
 
         if self.matched(vec![
             TokenType::ASSIGN,
@@ -746,6 +746,33 @@ impl<'a> Parser<'a> {
                 }
             }
         }
+
+        Ok(expr)
+    }
+
+    fn parse_ternary(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut expr = self.parse_or()?;
+
+        if self.recognise(TokenType::QUESTION) {
+                self.advance();
+
+                let if_true = self.parse_expression()?;
+
+                self.consume(&TokenType::COLON, "Expected ':'")?;
+
+                let if_false = self.parse_expression()?;
+
+                expr = Spanned {
+                    span:expr.get_span().to(if_false.get_span()),
+                    value: Expression::Ternary {
+                        condition:Box::new(expr),
+                        then_branch:Box::new(if_true),
+                        else_branch:Box::new(if_false),
+                    }
+                }
+
+            };
+
 
         Ok(expr)
     }
@@ -1022,7 +1049,9 @@ impl<'a> Parser<'a> {
                         property,
                     },
                 }
-            } else {
+            } 
+            
+             else {
                 break;
             }
         }

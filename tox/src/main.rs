@@ -259,7 +259,7 @@ pub struct Cli {
     #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,
     /// Print out ast debug mode
-    #[structopt(long = "rawast", short = "ra")]
+    #[structopt(long = "rawast", short = "a")]
     pub past: bool,
     /// Run in vm mode
     #[structopt(long = "vm", short = "v")]
