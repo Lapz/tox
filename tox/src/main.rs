@@ -244,9 +244,7 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut vm = VM::new(symbols.symbol("main"), &functions).unwrap();
     vm.run();
-
-    #[cfg(feature = "debug")]
-    println!("{:?}",vm);
+    
 }
 
 #[derive(StructOpt, Debug)]

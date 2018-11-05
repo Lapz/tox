@@ -58,7 +58,7 @@ impl<'a> VM<'a> {
             frames: Vec::new(),
             equal_flag: false,
             heap: Vec::new(),
-            stack_top: 1,
+            stack_top: 4,
         })
     }
 
@@ -71,13 +71,15 @@ impl<'a> VM<'a> {
             }
         }
 
+        // return;
+
         loop {
             
                 if self.current_frame.ip >= self.current_frame.function.body.code.len() {
                     return;
                 }
 
-                #[cfg(feature="debug")]
+                #[cfg(feature="stack")]
                 {
                     print!("[");
                     
@@ -189,7 +191,7 @@ impl<'a> VM<'a> {
                 opcode::SETLOCAL => {
                     let ident = self.read_byte();
 
-                    let val = self.pop(); // do it manually because don't modify the stack
+                    let val = self.stack[self.stack_top-1]; // do it manually because don't modify the stack
 
                     self.current_frame.locals.insert(ident,val);
 
@@ -221,6 +223,11 @@ impl<'a> VM<'a> {
                     // swaps the current frame with the one we are one and then 
 
 
+                }
+
+
+                opcode::POP => {
+                    self.pop();
                 }
 
                 
@@ -271,21 +278,7 @@ impl<'a> VM<'a> {
     }
 }
 
-#[cfg(feature = "debug")]
-impl <'a> VM<'a> {
-    #[cfg(feature = "debug")]
-    pub fn disassemble(&self) {
-        
 
-        for function in self.functions.iter() {
-           
-
-            function.body.disassemble(&format!("{}",function.name));
-
-        }
-
-    }
-}
 
 use std::fmt::{self, Debug};
 

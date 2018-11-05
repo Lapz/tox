@@ -81,12 +81,13 @@ impl Chunk {
             opcode::DIV => simple_instruction("OPCODE::DIV", offset),
             opcode::DIVF => simple_instruction("OPCODE::DIVF", offset),
             opcode::JUMP => simple_instruction("OPCODE::JUMP",offset),
-            opcode::GETLOCAL => simple_instruction("OPCODE::GETLOCAL",offset),
-            opcode::SETLOCAL => simple_instruction("OPCODE::SETLOCAL",offset),
+            opcode::GETLOCAL => self.local_instruction("OPCODE::GETLOCAL",offset),
+            opcode::SETLOCAL => self.local_instruction("OPCODE::SETLOCAL",offset),
             opcode::CALL => simple_instruction("OPCODE::CALL",offset),
             opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF",offset),
             opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT",offset),
             opcode::LOOP => self.jump_instruction("OPCODE::LOOP",offset),
+            opcode::POP => simple_instruction("OPCODE::POP",offset),
             
             
             _ => {
@@ -115,6 +116,17 @@ impl Chunk {
         );
 
         offset+3
+    }
+
+    pub fn local_instruction(&self,name:&str,offset:usize) -> usize {
+        let symbol = self.code[offset+1];
+        
+        println!(
+            "{:16}  '{}'",
+            name, symbol,
+        );
+
+        offset+2
     }
 }
 

@@ -63,7 +63,7 @@ impl<'a> Builder<'a> {
     pub fn emit_loop(&mut self,loop_start:usize) {
         self.emit_byte(opcode::LOOP);
 
-        let offset = self.chunk.code.len() - loop_start + 2;
+        let offset = (self.chunk.code.len() - loop_start);
 
         self.emit_bytes(((offset >> 8) & 0xff) as u8, (offset & 0xff) as u8)
     }
@@ -154,11 +154,17 @@ impl<'a> Builder<'a> {
 
                 self.compile_expression(cond)?;
 
+                
+
                 let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.emit_byte(opcode::POP);
 
                 self.compile_statement(then)?;
 
                 self.patch_jump(false_label);
+
+                self.emit_byte(opcode::POP);
 
                 Ok(())
 
@@ -170,11 +176,19 @@ impl<'a> Builder<'a> {
 
                 let false_label = self.emit_jump(opcode::JUMPNOT);
 
+                 self.emit_byte(opcode::POP);
+
                 self.compile_statement(then)?;
+
+                let end_label = self.emit_jump(opcode::JUMP);
 
                 self.patch_jump(false_label);
 
+                self.emit_byte(opcode::POP);
+
                 self.compile_statement(otherwise)?;
+
+                self.patch_jump(end_label);
 
                 Ok(())
             },
@@ -206,12 +220,17 @@ impl<'a> Builder<'a> {
 
                 let out = self.emit_jump(opcode::JUMPNOT);
 
+                self.emit_byte(opcode::POP);
+
                 self.compile_statement(body)?;
 
                 self.emit_loop(start_label); // Jumps back to the start
 
 
                 self.patch_jump(out); // the outer label
+
+                self.emit_byte(opcode::POP); //removes cond from stack
+
 
                 Ok(())
             }

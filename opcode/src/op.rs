@@ -56,6 +56,9 @@ pub mod opcode {
 
     pub const LOOP:u8 = 030;
 
+
+    pub const POP:u8 = 031;
+
     // pub const STORELOCAL:u8
 }
 
