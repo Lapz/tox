@@ -159,7 +159,7 @@ impl<'a> VM<'a> {
                 opcode::LOOP => {
                     let address = self.read_16_bits();
 
-                    self.current_frame.ip = address as usize
+                    self.current_frame.ip -= address as usize
                 }
                 opcode::JUMP => {
                     let address = self.read_16_bits();
@@ -232,7 +232,7 @@ impl<'a> VM<'a> {
                 #[cfg(feature = "debug")]
                 ref e => {
                     {
-                        println!("unknown opcode found :{}", e);
+                        // println!("unknown opcode found :{}", e);
                     }
                     continue;
                 }
