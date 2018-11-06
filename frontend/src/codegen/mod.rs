@@ -189,7 +189,7 @@ impl<'a> Builder<'a> {
                 Ok(())
             },
 
-            Statement::Var { ref ident,ref ty,ref expr} => {
+            Statement::Var { ref ident,ref expr,..} => {
 
                 if let Some(ref expr) = *expr {
                     self.compile_expression(expr)?;

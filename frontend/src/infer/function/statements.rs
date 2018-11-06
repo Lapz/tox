@@ -1,11 +1,10 @@
+use ast as t;
 use ctx::CompileCtx;
+use infer::env::VarEntry;
+use infer::types::Type;
+use infer::{Infer, InferResult};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
-
-use ast as t;
-use infer::env::{Entry, VarEntry};
-use infer::types::{Type, Unique};
-use infer::{Infer, InferResult};
 
 impl Infer {
     pub fn infer_statement(

@@ -5,7 +5,6 @@ use infer::{Infer, InferResult};
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 
-use util::symbol::Symbol;
 impl Infer {
     pub(crate) fn infer_expr(
         &self,

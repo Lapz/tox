@@ -1,184 +1,117 @@
-use frontend::Infer;
-use std::fs::File;
-use std::io::{self, Read, Write};
+use frontend::{compile, Infer};
+use std::io::{self, Write};
 use std::rc::Rc;
+use syntax::ast::{Function, Program};
 use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
+use util::pos::Spanned;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
 
 pub struct Repl {
-    // commands: Vec<String>,
-// vm: VM,
+    // vm: VM,
 // assembler: Assembler,
 }
 
 impl Repl {
-    // pub fn new() -> Self {
-    //     Repl {
-    //         vm: VM::new(),
-    //         commands: Vec::with_capacity(10),
-    //         assembler: Assembler::new(),
-    //     }
-    // }
+    pub fn new() -> Self {
+        Repl {}
+    }
 
-    // pub fn run(&mut self) {
-    //     println!("Welcome to the tox programming language");
-    //     let mut input = String::with_capacity(1024);
+    pub fn run(&mut self) {
+        println!("Welcome to the tox programming language");
 
-    //     loop {
-    //         let _ = io::stdout().write(b"lexer>> ");
-    //         let _ = io::stdout().flush();
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    //         input.clear();
+        loop {
+            let mut input = String::with_capacity(1024);
 
-    //         io::stdin()
-    //             .read_line(&mut input)
-    //             .expect("Couldn't read input");
+            let _ = io::stdout().write(b"lexer>> ");
+            let _ = io::stdout().flush();
 
-    //         self.commands.push(input.to_string());
+            input.clear();
 
-    //         let commands = input.trim().split(" ").collect::<Vec<&str>>();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Couldn't read input");
 
-    //         match commands[0] {
-    //             ".quit" => ::std::process::exit(0),
-    //             // ".program" => {
-    //             //     self.vm.disassemble("Program");
-    //             // }
-    //             // ".registers" => {
-    //             //     println!("Listing registers and all contents:");
-    //             //     println!("{:#?}", self.vm.registers());
-    //             //     println!("End of Register Listing")
-    //             // }
-    //             ".load_file" => match commands.get(1) {
-    //                 Some(path) => {
-    //                     if let Err(_) = self.parse_file(path) {
-    //                         println!("An error occured");
-    //                         continue;
-    //                     };
+            if input.is_empty() {
+                continue;
+            }
 
-    //                     self.vm.run();
-    //                 }
-    //                 None => {
-    //                     println!(".load_file expects an argument",);
-    //                     continue;
-    //                 }
-    //             },
-    //             ".load_tasm" => match commands.get(1) {
-    //                 Some(path) => {
-    //                     if let Err(_) = self.parse_tasm(path) {
-    //                         println!("An error occured");
-    //                         continue;
-    //                     };
+            match input.as_ref() {
+                ".quit\n" => break,
+                ".next\n" => continue,
+                ".history\n" => unimplemented!(),
+                _ => (),
+            }
 
-    //                     self.vm.run();
-    //                 }
-    //                 None => {
-    //                     println!(".load_tasm expects an argument",);
-    //                     continue;
-    //                 }
-    //             },
-    //             ".history" => {
-    //                 for command in self.commands.iter() {
-    //                     println!("{}", command);
-    //                 }
-    //             }
-    //             _ => println!("Unkown command \"{}\"", commands[0]),
-    //         }
-    //     }
-    // }
-    // /// Parses a tasm file,returns void on error
-    // fn parse_tasm(&mut self, path: &str) -> Result<(), ()> {
-    //     let mut file = match File::open(path) {
-    //         Ok(file) => file,
-    //         Err(_) => return Err(()),
-    //     };
+            let mut reporter = Reporter::new();
 
-    //     let mut contents = String::new();
+            let mut lexer = Lexer::new(&input, reporter.clone());
 
-    //     file.read_to_string(&mut contents)
-    //         .expect("something went wrong reading the file");
+            let tokens = match lexer.lex() {
+                Ok(tokens) => tokens,
+                Err(_) => {
+                    reporter.emit(&input);
+                    continue;
+                }
+            };
 
-    //     let input = contents.trim();
+            reporter.set_end(lexer.end_span());
 
-    //     let bytecode = match self.assembler.assemble(&input) {
-    //         Ok(bytecode) => bytecode,
-    //         Err(e) => {
-    //             println!("{:?}", e);
-    //             return Err(());
-    //         }
-    //     };
+            let expr = match Parser::new(tokens, reporter.clone(), &mut symbols).parse_statement() {
+                Ok(expression) => expression,
+                Err(_) => {
+                    reporter.emit(&input);
+                    continue;
+                }
+            };
 
-    //     self.vm.code(bytecode);
+            let pusedo_main_symbol = symbols.symbol("main");
 
-    //     Ok(())
-    // }
+            let pusedo_main_span = expr.get_span();
 
-    // /// Parses the tox programming languages returns void on error due to the fact that the reporter will
-    // /// report any type errors or any compilation errors.
-    // /// Can result in a panic if a file cannot be read to a string
-    // fn parse_file(&mut self, path: &str) -> Result<(), ()> {
-    //     let mut file = match File::open(path) {
-    //         Ok(file) => file,
-    //         Err(_) => return Err(()),
-    //     };
+            let pusedo_main = Spanned::new(
+                Function {
+                    name: Spanned::new(pusedo_main_symbol, pusedo_main_span),
+                    params: Spanned::new(vec![], pusedo_main_span),
+                    returns: None,
+                    body: expr,
+                },
+                pusedo_main_span,
+            );
 
-    //     let mut contents = String::new();
+            let ast = Program {
+                functions: vec![pusedo_main],
+                classes: vec![],
+                aliases: vec![],
+            };
 
-    //     file.read_to_string(&mut contents)
-    //         .expect("something went wrong reading the file");
+            let mut infer = Infer::new();
 
-    //     let input = contents.trim();
+            let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+                Ok(ast) => ast,
+                Err(_) => {
+                    reporter.emit(&input);
 
-    //     let mut reporter = Reporter::new();
+                    continue;
+                }
+            };
 
-    //     let mut lexer = Lexer::new(input, reporter.clone());
+            let functions = match compile(&typed_ast, &mut reporter) {
+                Ok(functions) => functions,
+                Err(_) => {
+                    reporter.emit(&input);
+                    continue;
+                }
+            };
 
-    //     let tokens = match lexer.lex() {
-    //         Ok(tokens) => tokens,
-    //         Err(_) => {
-    //             reporter.emit(input);
-    //             ::std::process::exit(65)
-    //         }
-    //     };
+            let mut vm = VM::new(symbols.symbol("main"), &functions).unwrap();
 
-    //     reporter.set_end(lexer.end_span());
-
-    //     let strings = Rc::new(SymbolFactory::new());
-    //     let mut symbols = Symbols::new(Rc::clone(&strings));
-
-    //     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-    //         Ok(statements) => statements,
-    //         Err(_) => {
-    //             reporter.emit(&input);
-    //             return Err(());
-    //         }
-    //     };
-
-    //     let mut infer = Infer::new();
-
-    //     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
-    //         Ok(ast) => ast,
-    //         Err(_) => {
-    //             reporter.emit(input);
-    //             ::std::process::exit(65)
-    //         }
-    //     };
-
-    //     let mut compiler = Compiler::new();
-
-    //     compiler
-    //         .compile(&typed_ast)
-    //         .expect("Couldn't compile the file");
-
-    //     let bytecode = match Assembler::new().assemble_file("output.tasm") {
-    //         Ok(bytecode) => bytecode,
-    //         Err(_) => ::std::process::exit(0),
-    //     };
-
-    //     self.vm.code(bytecode);
-
-    //     Ok(())
-    // }
+            vm.run()
+        }
+    }
 }

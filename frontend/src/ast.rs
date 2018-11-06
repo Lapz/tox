@@ -1,6 +1,4 @@
-use infer::types;
 use infer::types::Type;
-use std::collections::HashMap;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;

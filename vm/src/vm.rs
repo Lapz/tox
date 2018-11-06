@@ -1,5 +1,4 @@
 use super::Function;
-use chunk::Chunk;
 use opcode;
 use std::collections::HashMap;
 use std::mem;

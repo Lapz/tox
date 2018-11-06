@@ -27,12 +27,10 @@ fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        if opts.vm {
-            run_vm(file);
-        } else if opts.interpreter {
-            run_interpreter(file, opts.ptokens, opts.pprint, opts.past);
+        if opts.interpreter {
+            run_interpreter(file, opts.ptokens, opts.past);
         } else {
-            run(file, opts.ptokens, opts.pprint, opts.past);
+            run(file, opts.ptokens, opts.past);
         }
     } else {
         repl()
@@ -42,13 +40,10 @@ fn main() {
 pub fn repl() {
     use repl::Repl;
 
-    // Repl::new().run();
+    Repl::new().run();
 }
 
-pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
-    use std::fs::File;
-    use std::io::Read;
-
+pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -87,14 +82,7 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
     let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-        Ok(statements) => {
-            if pprint {
-                // for statement in &statements {
-                //     println!("{}", statement.value.pprint(&mut symbols));
-                // }
-            }
-            statements
-        }
+        Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);
             ::std::process::exit(65)
@@ -137,43 +125,7 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     };
 }
 
-pub fn run_vm(path: String) {
-    let mut file = File::open(path).expect("File not found");
-
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents)
-        .expect("something went wrong reading the file");
-
-    if contents.is_empty() {
-        ::std::process::exit(0)
-    }
-
-    // let mut assembler = Assembler::new();
-
-    // let bytecode = match assembler.assemble(&contents) {
-    //     Ok(bytecode) => bytecode,
-    //     Err(e) => {
-    //         println!("{:?}", e);
-    //         ::std::process::exit(0)
-    //     }
-    // };
-
-    // let mut vm = VM::new();
-
-    // vm.code(bytecode);
-
-    // vm.disassemble("test");
-
-    // vm.run();
-
-    // println!("{:?}", vm);
-}
-
-pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
-    use std::fs::File;
-    use std::io::Read;
-
+pub fn run(path: String, ptokens: bool, past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -260,9 +212,6 @@ pub struct Cli {
     /// Print out ast debug mode
     #[structopt(long = "rawast", short = "a")]
     pub past: bool,
-    /// Run in vm mode
-    #[structopt(long = "vm", short = "v")]
-    pub vm: bool,
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,

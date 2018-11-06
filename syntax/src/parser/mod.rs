@@ -442,7 +442,7 @@ impl<'a> Parser<'a> {
      * STATEMENT PARSERS
      *
      * ***************** */
-    fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+    pub fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         if self.recognise(TokenType::LBRACE) {
             self.block()
         } else if self.recognise(TokenType::VAR) {
@@ -530,7 +530,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_expression_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+    pub fn parse_expression_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         let expr = self.parse_expression()?;
 
         Ok(Spanned {

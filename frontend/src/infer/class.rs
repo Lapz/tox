@@ -13,8 +13,6 @@ impl Infer {
         class: Spanned<Class>,
         ctx: &mut CompileCtx,
     ) -> InferResult<t::Class> {
-        use std::collections::HashMap;
-
         let mut field_types = HashMap::new();
         let mut methods_types = HashMap::new();
         let mut methods = Vec::new();
@@ -23,7 +21,7 @@ impl Infer {
         if let Some(sclass) = class.value.superclass {
             if let Some(mut entry) = ctx.look_type(sclass.value).cloned() {
                 match entry {
-                    Type::Class(ref name, ref fields, ref methods, ref u) => {
+                    Type::Class(_, ref fields, ref methods, _) => {
                         field_types.extend(fields.clone().into_iter());
                         methods_types.extend(methods.clone().into_iter());
                     }
