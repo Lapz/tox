@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use vm::{Chunk, Function, Value};
+use vm::{Chunk, Function, RawObject, StringObject, Value};
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -24,12 +24,15 @@ pub struct Builder<'a> {
     locals: HashMap<Symbol, usize>,
     current_loop: Option<LoopDescription>,
     params: HashMap<Symbol, usize>,
+    ///  A linked list of all the objects allocated. This
+    /// is passed to the vm so runtime collection can be done
+    pub objects: RawObject,
     reporter: &'a mut Reporter,
     line: u32,
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(reporter: &'a mut Reporter) -> Self {
+    pub fn new(reporter: &'a mut Reporter, objects: RawObject) -> Self {
         Builder {
             chunk: Chunk::new(),
             locals_count: 0,
@@ -37,6 +40,7 @@ impl<'a> Builder<'a> {
             line: 0,
             params: HashMap::new(),
             current_loop: None,
+            objects,
             reporter,
         }
     }
@@ -279,7 +283,12 @@ impl<'a> Builder<'a> {
                 Literal::Float(ref f) => {
                     self.emit_constant(Value::float(*f), expr.value.expr.span)?;
                 }
-                Literal::Str(ref bytes) => unimplemented!("String are not implemented"),
+                Literal::Str(ref string) => {
+                    let object =
+                        StringObject::new(string, ::std::ptr::null::<RawObject>() as RawObject);
+
+                    self.emit_constant(Value::object(object), expr.value.expr.span)?;
+                }
             },
 
             Expression::Binary(ref lhs, ref op, ref rhs) => {
@@ -338,15 +347,17 @@ impl<'a> Builder<'a> {
                             }
                         }
 
+                        (Type::Str, Op::Plus) => self.emit_byte(opcode::CONCAT),
+
                         (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                         (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
 
-                        #[cfg(not(feature = "debug"))]
-                        _ => unsafe {
-                            ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
-                        },
+                        // #[cfg(not(feature = "debug"))]
+                        // _ => unsafe {
+                        //     ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
+                        // },
 
-                        #[cfg(feature = "debug")]
+                        // #[cfg(feature = "debug")]
                         (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
                     }
                 }
@@ -452,8 +463,12 @@ impl<'a> Builder<'a> {
     }
 }
 
-fn compile_function(func: &ast::Function, reporter: &mut Reporter) -> ParseResult<Function> {
-    let mut builder = Builder::new(reporter);
+fn compile_function(
+    func: &ast::Function,
+    reporter: &mut Reporter,
+    objects: RawObject,
+) -> ParseResult<Function> {
+    let mut builder = Builder::new(reporter, objects);
 
     builder.compile_statement(&func.body)?;
 
@@ -464,12 +479,17 @@ fn compile_function(func: &ast::Function, reporter: &mut Reporter) -> ParseResul
     })
 }
 
-pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<Vec<Function>> {
+pub fn compile(
+    ast: &ast::Program,
+    reporter: &mut Reporter,
+) -> ParseResult<(Vec<Function>, RawObject)> {
     let mut funcs = Vec::new();
 
+    let objects = ::std::ptr::null::<RawObject>() as RawObject;
+
     for function in ast.functions.iter() {
-        funcs.push(compile_function(function, reporter)?);
+        funcs.push(compile_function(function, reporter, objects)?);
     }
 
-    Ok(funcs)
+    Ok((funcs, objects))
 }

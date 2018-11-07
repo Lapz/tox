@@ -602,7 +602,7 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
     match *expression {
         Literal::Float(i) => Ok(Object::Float(i)),
         Literal::Int(i) => Ok(Object::Int(i)),
-        Literal::Str(ref s) => Ok(Object::Str(s.clone())),
+        Literal::Str(ref s) => Ok(Object::Str(s.clone().as_bytes().to_vec())),
         Literal::Nil => Ok(Object::Nil),
         Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
     }

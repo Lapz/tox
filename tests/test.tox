@@ -4,12 +4,7 @@ fun ten() -> int {
 
 fun main() -> int {
    
-    for(var i = 1; i <10;i = i+1) {
-        print i;
-    }
-
-  
-
+    print "a"+"b";
     
     return 0;
 }

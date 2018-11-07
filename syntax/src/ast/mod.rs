@@ -159,7 +159,7 @@ pub enum Literal {
     // The raw values available
     Float(f64),
     Int(i64),
-    Str(Vec<u8>),
+    Str(String),
     True(bool),
     False(bool),
     Nil,

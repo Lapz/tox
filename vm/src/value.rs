@@ -1,5 +1,6 @@
+use object::{Object, ObjectType, RawObject, StringObject};
 use std::fmt::{self, Debug, Display};
-
+use std::mem;
 #[derive(Clone, Copy)]
 /// A value within the VM
 pub struct Value {
@@ -14,6 +15,7 @@ pub enum ValueType {
     Float,
     Nil,
     Bool,
+    Object,
 }
 
 /// A union of the values
@@ -23,6 +25,8 @@ pub union As {
     boolean: bool,
     float: f64,
     int: i64,
+    /// A values whos state is stored on the heap
+    object: RawObject,
 }
 
 impl Value {
@@ -54,6 +58,13 @@ impl Value {
         }
     }
 
+    pub fn object(object: RawObject) -> Value {
+        Value {
+            val: As { object },
+            ty: ValueType::Object,
+        }
+    }
+
     pub fn as_bool(&self) -> bool {
         debug_assert_eq!(
             self.ty,
@@ -76,6 +87,24 @@ impl Value {
         );
 
         unsafe { self.val.int }
+    }
+
+    pub fn as_object(&self) -> RawObject {
+        debug_assert_eq!(
+            self.ty,
+            ValueType::Object,
+            "Value is type `{:?}` instead of {:?}",
+            self.ty,
+            ValueType::Object
+        );
+
+        unsafe { self.val.object }
+    }
+
+    pub fn as_string<'a>(&self) -> &StringObject<'a> {
+        let ptr = self.as_object();
+
+        unsafe { mem::transmute(ptr) }
     }
 
     pub fn as_float(&self) -> f64 {
@@ -120,6 +149,12 @@ impl Display for Value {
                 write!(fmt, "{}", self.val.float)?;
             } else if self.ty == ValueType::Bool {
                 write!(fmt, "{}", self.val.boolean)?;
+            } else if self.ty == ValueType::Object {
+                let obj: &Object = mem::transmute(self.as_object());
+
+                match obj.ty {
+                    ObjectType::String => write!(fmt, "{}", self.as_string())?,
+                }
             }
         }
 
@@ -137,6 +172,7 @@ impl PartialEq for Value {
                 ValueType::Nil => false,
                 ValueType::Int => self.as_int() == other.as_int(),
                 ValueType::Float => self.as_float() == other.as_float(),
+                ValueType::Object => unimplemented!(),
             }
         }
     }

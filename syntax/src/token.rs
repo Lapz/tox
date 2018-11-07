@@ -83,7 +83,7 @@ pub enum TokenType<'a> {
     IDENTIFIER(&'a str),
     INT(i64),
     FLOAT(f64),
-    STRING(Vec<u8>),
+    STRING(String),
 
     // Assignment
     ASSIGN,      // =

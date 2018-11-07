@@ -9,9 +9,12 @@ extern crate util;
 #[macro_use]
 mod macros;
 mod chunk;
+mod object;
 mod value;
 mod vm;
+
 pub use chunk::Chunk;
+pub use object::{RawObject, StringObject};
 pub use value::Value;
 pub use vm::VM;
 

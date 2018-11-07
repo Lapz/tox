@@ -140,11 +140,9 @@ impl<'a> Lexer<'a> {
                 '"' => {
                     let end = next.shift(ch);
 
-                    return Ok(spans(
-                        TokenType::STRING(string.as_bytes().to_vec()),
-                        start,
-                        end,
-                    ));
+                    string.push('\0');
+
+                    return Ok(spans(TokenType::STRING(string), start, end));
                 }
 
                 ch => string.push(ch),

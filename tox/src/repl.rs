@@ -101,7 +101,7 @@ impl Repl {
                 }
             };
 
-            let functions = match compile(&typed_ast, &mut reporter) {
+            let (functions, objects) = match compile(&typed_ast, &mut reporter) {
                 Ok(functions) => functions,
                 Err(_) => {
                     reporter.emit(&input);
@@ -109,7 +109,7 @@ impl Repl {
                 }
             };
 
-            let mut vm = VM::new(symbols.symbol("main"), &functions).unwrap();
+            let mut vm = VM::new(symbols.symbol("main"), &functions, objects).unwrap();
 
             vm.run()
         }

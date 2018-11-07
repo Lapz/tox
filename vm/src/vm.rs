@@ -1,4 +1,5 @@
 use super::Function;
+use object::{RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
 use std::mem;
@@ -17,6 +18,7 @@ pub struct VM<'a> {
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
     functions: &'a [Function],
+    objects: RawObject,
     heap: Vec<u8>,
     equal_flag: bool,
     stack_top: usize,
@@ -29,7 +31,7 @@ pub enum Error {
 }
 
 impl<'a> VM<'a> {
-    pub fn new(main: Symbol, functions: &'a [Function]) -> Result<Self, Error> {
+    pub fn new(main: Symbol, functions: &'a [Function], objects: RawObject) -> Result<Self, Error> {
         let mut main_funciton = None;
 
         {
@@ -58,6 +60,7 @@ impl<'a> VM<'a> {
             equal_flag: false,
             heap: Vec::new(),
             stack_top: 4,
+            objects,
         })
     }
 
@@ -224,6 +227,8 @@ impl<'a> VM<'a> {
                     self.pop();
                 }
 
+                opcode::CONCAT => self.concat(),
+
                 #[cfg(not(feature = "debug"))]
                 _ => {
                     panic!("Unknown opcode found");
@@ -237,6 +242,30 @@ impl<'a> VM<'a> {
                 }
             }
         }
+    }
+
+    fn concat(&mut self) {
+        let b = self.pop();
+        let b = b.as_string();
+        let a = self.pop();
+        let a = a.as_string();
+
+        let length = a.chars.string().len() + b.chars.string().len();
+
+        let mut new = String::with_capacity(length);
+
+        new.push_str(a.chars.string());
+        new.push_str(b.chars.string());
+
+        #[cfg(feature = "debug")]
+        {
+            println!("{:?}", a.chars);
+            println!("{:?}", b.chars);
+        }
+
+        let result = StringObject::from_owned(new, self.objects);
+
+        self.push(Value::object(result));
     }
 
     fn read_constant(&mut self) -> Value {

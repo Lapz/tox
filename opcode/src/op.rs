@@ -58,6 +58,8 @@ pub mod opcode {
 
     pub const POP: u8 = 031;
 
+    pub const CONCAT: u8 = 032;
+
     // pub const STORELOCAL:u8
 }
 
