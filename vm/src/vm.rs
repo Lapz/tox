@@ -32,24 +32,24 @@ pub enum Error {
 
 impl<'a> VM<'a> {
     pub fn new(main: Symbol, functions: &'a [Function], objects: RawObject) -> Result<Self, Error> {
-        let mut main_funciton = None;
+        let mut main_function = None;
 
         {
             for func in functions.iter() {
                 if func.name == main {
-                    main_funciton = Some(func);
+                    main_function = Some(func);
                 }
             }
         }
 
-        if main_funciton.is_none() {
+        if main_function.is_none() {
             return Err(Error::NoMain);
         }
 
         let current_frame = StackFrame {
             ip: 0,
             locals: HashMap::new(),
-            function: main_funciton.unwrap(),
+            function: main_function.unwrap(),
         };
 
         Ok(VM {
@@ -205,12 +205,21 @@ impl<'a> VM<'a> {
                     let mut function = None;
 
                     {
-                        for func in self.functions.iter() {
+                        for func in self.functions.iter() { 
                             if func.name == symbol {
                                 function = Some(func);
                             }
                         }
                     }
+
+                    // let mut locals = HashMap::new();
+
+                    //  {
+                    //      for (_,_) in self.current_frame.function.locals.iter() {
+                    //          let val = self.pop();
+
+                    //      }
+                    //  }
 
                     let call_frame = StackFrame {
                         ip: 0,

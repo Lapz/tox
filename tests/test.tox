@@ -1,10 +1,14 @@
-fun ten() -> int {
-    return 10;
+fun add(a:int,b:int) -> int {
+    return a+b;
 }
 
 fun main() -> int {
-   
-    print "a"+"b";
+    var foo = 10;
+    foo -= 5;
+    foo += 5;
+    foo *= 3;
+    foo /= 5;
+    print add(10,10);
     
     return 0;
 }
