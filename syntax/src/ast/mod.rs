@@ -93,7 +93,7 @@ pub enum Expression {
         rhs: Box<Spanned<Expression>>,
     },
 
-    Closure(Spanned<Box<Function>>),
+    Closure(Box<Spanned<Function>>),
     Call {
         callee: Box<Spanned<Expression>>,
         args: Vec<Spanned<Expression>>,

@@ -178,10 +178,7 @@ impl Infer {
                         span,
                     ),
                     fn_signature,
-                );
-                // let ty = func.returns;
-
-                unimplemented!()
+                )
             }
 
             Expression::ClassInstance { .. } => self.infer_class_instance(expr, ctx)?,

@@ -8,6 +8,7 @@ use symbol::{Symbol, Symbols};
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
+use rand::{self, Rng};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -251,6 +252,15 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn random_ident(&mut self) -> Symbol {
+        let mut rng = rand::thread_rng();
+        let letter: char = rng.gen_range(b'A', b'Z') as char;
+        let number: u32 = rng.gen_range(0, 999999);
+        let s = format!("{}{:06}", letter, number);
+
+        self.symbols.symbol(&s)
+    }
+
     fn get_unary_op(&mut self) -> ParserResult<Spanned<UnaryOp>> {
         get_unary_op!(self,{
             BANG => Bang,
@@ -374,6 +384,7 @@ impl<'a> Parser<'a> {
 */
 
 impl<'a> Parser<'a> {
+
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
 
@@ -381,10 +392,38 @@ impl<'a> Parser<'a> {
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
-        let mut params = Vec::with_capacity(32);
+        let params = self.parse_params(param_span,"function")?;
         let mut returns = None;
 
-        if !self.recognise(TokenType::RPAREN) {
+        let rparen_span =
+            self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
+
+        if self.recognise(TokenType::FRETURN) {
+            self.advance();
+
+            returns = Some(self.parse_type()?);
+        }
+
+        let body = self.parse_block()?;
+
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Function {
+                name,
+                body,
+                params: Spanned {
+                    span: param_span.to(rparen_span),
+                    value: params,
+                },
+                returns,
+            },
+        })
+    }
+
+    fn parse_params(&mut self,open_span:Span,kind:&str) -> ParserResult<Vec<Spanned<FunctionParam>>> {
+        let mut params = Vec::with_capacity(32);
+
+        if !self.recognise(TokenType::RPAREN) && !self.recognise(TokenType::BAR) {
             loop {
                 if params.len() >= 32 {
                     self.error("Too many params", open_span);
@@ -412,29 +451,8 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let rparen_span =
-            self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
+        Ok(params)
 
-        if self.recognise(TokenType::FRETURN) {
-            self.advance();
-
-            returns = Some(self.parse_type()?);
-        }
-
-        let body = self.block()?;
-
-        Ok(Spanned {
-            span: open_span.to(body.get_span()),
-            value: Function {
-                name,
-                body,
-                params: Spanned {
-                    span: param_span.to(rparen_span),
-                    value: params,
-                },
-                returns,
-            },
-        })
     }
 
     /* ******************
@@ -444,7 +462,7 @@ impl<'a> Parser<'a> {
      * ***************** */
     pub fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         if self.recognise(TokenType::LBRACE) {
-            self.block()
+            self.parse_block()
         } else if self.recognise(TokenType::VAR) {
             self.parse_var_declaration()
         } else if self.recognise(TokenType::BREAK) {
@@ -497,7 +515,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn block(&mut self) -> ParserResult<Spanned<Statement>> {
+    fn parse_block(&mut self) -> ParserResult<Spanned<Statement>> {
         let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected a '{' ")?;
 
         let mut statements = vec![];
@@ -928,6 +946,17 @@ impl<'a> Parser<'a> {
                         span: *span,
                     };
                     self.parse_ident(ident)
+                },
+
+
+                TokenType::BAR => {
+
+                    let closure = self.parse_closure(*span)?;
+
+                   Ok(Spanned {
+                        span: closure.get_span(),
+                        value: Expression::Closure(Box::new(closure)),
+                    })
                 }
 
                 TokenType::LBRACKET => {
@@ -968,6 +997,40 @@ impl<'a> Parser<'a> {
             },
             None => Err(()), // TODO: ADD an error?
         }
+    }
+
+
+    fn parse_closure(&mut self,open_span:Span) -> ParserResult<Spanned<Function>>  {
+        let params = self.parse_params(open_span,"closure")?;
+
+        let params_span = self.consume_get_span(&TokenType::BAR, "Expected `|` ")?;
+
+        let returns = if self.recognise(TokenType::FRETURN) {
+            self.advance(); // skip the ->
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+
+        let body = self.parse_block()?;
+
+        Ok(Spanned {
+            span:open_span.to(body.get_span()),
+            value: Function {
+                name:Spanned {
+                    span:open_span.to(body.get_span()),
+                    value:self.random_ident(),
+                },
+                params:Spanned {
+                    span:open_span.to(params_span),
+                    value:params,
+                },
+                body,
+                returns
+            }
+        })
+
+        
     }
 
     fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {

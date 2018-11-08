@@ -202,6 +202,7 @@ impl<'a> Lexer<'a> {
                 ')' => Ok(span(TokenType::RPAREN, start)),
                 ',' => Ok(span(TokenType::COMMA, start)),
                 ':' => Ok(span(TokenType::COLON, start)),
+                '|' => Ok(span(TokenType::BAR, start)),
                 '^' => Ok(span(TokenType::EXPONENTIAL, start)),
                 '%' => Ok(span(TokenType::MODULO, start)),
                 '"' => match self.string_literal(start) {
