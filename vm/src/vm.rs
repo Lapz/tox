@@ -12,7 +12,7 @@ pub struct StackFrame<'a> {
     ip: usize,
     locals: HashMap<u8, Value>,
     function: &'a Function,
-    params: HashMap<u8,Value>,
+    params: HashMap<u8, Value>,
 }
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
@@ -51,7 +51,7 @@ impl<'a> VM<'a> {
             ip: 0,
             locals: HashMap::new(),
             function: main_function.unwrap(),
-            params:HashMap::new(),
+            params: HashMap::new(),
         };
 
         Ok(VM {
@@ -217,7 +217,7 @@ impl<'a> VM<'a> {
                     let mut function = None;
 
                     {
-                        for func in self.functions.iter() { 
+                        for func in self.functions.iter() {
                             if func.name == symbol {
                                 function = Some(func);
                             }
@@ -227,15 +227,14 @@ impl<'a> VM<'a> {
                     let mut params = HashMap::new();
 
                     for i in 0..arg_count {
-                        params.insert(i,self.pop());
+                        params.insert(i, self.pop());
                     }
-                   
 
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
                         function: function.unwrap(),
-                        params
+                        params,
                     };
 
                     self.frames

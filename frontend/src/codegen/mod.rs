@@ -22,7 +22,7 @@ pub struct Builder<'a> {
     /// The number is the postion of the local on the local stack
     locals: HashMap<Symbol, usize>,
 
-    params:HashMap<Symbol,usize>,
+    params: HashMap<Symbol, usize>,
     current_loop: Option<LoopDescription>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
@@ -32,10 +32,14 @@ pub struct Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(reporter: &'a mut Reporter, objects: RawObject,params:HashMap<Symbol,usize>) -> Self {
+    pub fn new(
+        reporter: &'a mut Reporter,
+        objects: RawObject,
+        params: HashMap<Symbol, usize>,
+    ) -> Self {
         Builder {
             chunk: Chunk::new(),
-            locals:HashMap::new(),
+            locals: HashMap::new(),
             line: 0,
             current_loop: None,
             params,
@@ -202,10 +206,9 @@ impl<'a> Builder<'a> {
                 } // Compile the expression
 
                 self.locals.insert(*ident, ident.0 as usize);
+
                 self.emit_bytes(opcode::SETLOCAL,ident.0 as u8); // Write the symbol id
-                
-              
-                
+
                 Ok(())
             },
 
@@ -247,7 +250,7 @@ impl<'a> Builder<'a> {
                 //     *offset
                 // }
                 } else {
-                   unreachable!(); // Params are treated as locals so it should be present
+                    unreachable!(); // Params are treated as locals so it should be present
                 };
 
                 match *op {
@@ -256,66 +259,66 @@ impl<'a> Builder<'a> {
                         self.emit_bytes(opcode::SETLOCAL, pos as u8);
                     }
                     AssignOperator::MinusEqual => {
-                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var 
+                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
 
-                        let opcode =  match expr.value.ty {
+                        let opcode = match expr.value.ty {
                             Type::Int => opcode::SUB,
                             Type::Float => opcode::SUBF,
-                            _ => unreachable!() // type checker should prevent this
+                            _ => unreachable!(), // type checker should prevent this
                         };
 
                         self.compile_expression(expr)?; // get the expr
 
                         self.emit_byte(opcode);
-                        
+
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
 
                     AssignOperator::PlusEqual => {
-                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var 
+                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
 
-                        let opcode =  match expr.value.ty {
+                        let opcode = match expr.value.ty {
                             Type::Int => opcode::ADD,
                             Type::Float => opcode::ADDF,
-                            _ => unreachable!() // type checker should prevent this
+                            _ => unreachable!(), // type checker should prevent this
                         };
 
                         self.compile_expression(expr)?; // get the expr
 
                         self.emit_byte(opcode);
-                        
+
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
 
                     AssignOperator::SlashEqual => {
-                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var 
+                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
 
-                        let opcode =  match expr.value.ty {
+                        let opcode = match expr.value.ty {
                             Type::Int => opcode::DIV,
                             Type::Float => opcode::DIVF,
-                            _ => unreachable!() // type checker should prevent this
+                            _ => unreachable!(), // type checker should prevent this
                         };
 
                         self.compile_expression(expr)?; // get the expr
 
                         self.emit_byte(opcode);
-                        
+
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
 
                     AssignOperator::StarEqual => {
-                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var 
+                        self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
 
-                        let opcode =  match expr.value.ty {
+                        let opcode = match expr.value.ty {
                             Type::Int => opcode::MUL,
                             Type::Float => opcode::MULF,
-                            _ => unreachable!() // type checker should prevent this
+                            _ => unreachable!(), // type checker should prevent this
                         };
 
                         self.compile_expression(expr)?; // get the expr
 
                         self.emit_byte(opcode);
-                        
+
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
                 }
@@ -473,8 +476,8 @@ impl<'a> Builder<'a> {
                 if let Some(pos) = self.locals.get(ident).cloned() {
                     self.emit_bytes(opcode::GETLOCAL, pos as u8);
                 } else if let Some(offset) = self.params.get(ident).cloned() {
-                    self.emit_bytes(opcode::GETPARAM,offset as u8); 
-                }else {
+                    self.emit_bytes(opcode::GETPARAM, offset as u8);
+                } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 }
             }
@@ -527,11 +530,11 @@ fn compile_function(
 ) -> ParseResult<Function> {
     let mut params = HashMap::new();
 
-    for (i,param) in func.params.iter().enumerate() {
+    for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);
     } // treat params as locals
 
-    let mut builder = Builder::new(reporter, objects,params);
+    let mut builder = Builder::new(reporter, objects, params);
 
     builder.compile_statement(&func.body)?;
 
@@ -539,7 +542,7 @@ fn compile_function(
         name: func.name,
         locals: builder.locals,
         body: builder.chunk,
-        params:builder.params
+        params: builder.params,
     })
 }
 

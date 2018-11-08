@@ -90,6 +90,9 @@ impl Chunk {
             opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT", offset),
             opcode::LOOP => self.jump_instruction("OPCODE::LOOP", offset),
             opcode::POP => simple_instruction("OPCODE::POP", offset),
+            opcode::CONCAT => simple_instruction("OPCODE::CONCAT", offset),
+            opcode::GETPARAM => self.local_instruction("OPCODE::GETPARAM", offset),
+            opcode::SETPARAM => self.local_instruction("OPCODE::SETPARAM", offset),
 
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);

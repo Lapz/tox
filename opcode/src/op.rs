@@ -60,7 +60,7 @@ pub mod opcode {
 
     pub const CONCAT: u8 = 032;
 
-     pub const GETPARAM: u8 = 033;
+    pub const GETPARAM: u8 = 033;
 
     pub const SETPARAM: u8 = 034;
 

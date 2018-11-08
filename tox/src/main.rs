@@ -196,7 +196,6 @@ pub fn run(path: String, ptokens: bool, past: bool) {
 
     let mut vm = VM::new(symbols.symbol("main"), &functions, objects).unwrap();
     vm.run();
-    
 }
 
 #[derive(StructOpt, Debug)]
