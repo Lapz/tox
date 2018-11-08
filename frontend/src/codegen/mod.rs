@@ -21,6 +21,8 @@ pub struct Builder<'a> {
     /// A count of all local vars
     /// The number is the postion of the local on the local stack
     locals: HashMap<Symbol, usize>,
+
+    params:HashMap<Symbol,usize>,
     current_loop: Option<LoopDescription>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
@@ -30,12 +32,13 @@ pub struct Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(reporter: &'a mut Reporter, objects: RawObject,locals:HashMap<Symbol,usize>) -> Self {
+    pub fn new(reporter: &'a mut Reporter, objects: RawObject,params:HashMap<Symbol,usize>) -> Self {
         Builder {
             chunk: Chunk::new(),
-            locals,
+            locals:HashMap::new(),
             line: 0,
             current_loop: None,
+            params,
             objects,
             reporter,
         }
@@ -240,6 +243,9 @@ impl<'a> Builder<'a> {
             Expression::Assign(ref ident, ref op, ref expr) => {
                 let pos = if let Some(pos) = self.locals.get(ident) {
                     *pos
+                // } else if let Some(offset) = self.params.get(ident) {
+                //     *offset
+                // }
                 } else {
                    unreachable!(); // Params are treated as locals so it should be present
                 };
@@ -422,6 +428,7 @@ impl<'a> Builder<'a> {
                 }
 
                 self.emit_bytes(opcode::CALL, callee.0 as u8);
+                self.emit_byte(args.len() as u8);
             }
 
             Expression::Grouping(ref expr) => {
@@ -465,8 +472,10 @@ impl<'a> Builder<'a> {
             Expression::Var(ref ident, _) => {
                 if let Some(pos) = self.locals.get(ident).cloned() {
                     self.emit_bytes(opcode::GETLOCAL, pos as u8);
-                } else {
-                   unreachable!(); // Params are treated as locals so it should be present
+                } else if let Some(offset) = self.params.get(ident).cloned() {
+                    self.emit_bytes(opcode::GETPARAM,offset as u8); 
+                }else {
+                    unreachable!(); // Params are treated as locals so it should be present
                 }
             }
 
@@ -518,9 +527,9 @@ fn compile_function(
 ) -> ParseResult<Function> {
     let mut params = HashMap::new();
 
-    for param in func.params.iter() {
-        params.insert(param.name, param.name.0 as usize);
-    }
+    for (i,param) in func.params.iter().enumerate() {
+        params.insert(param.name, i);
+    } // treat params as locals
 
     let mut builder = Builder::new(reporter, objects,params);
 
@@ -530,6 +539,7 @@ fn compile_function(
         name: func.name,
         locals: builder.locals,
         body: builder.chunk,
+        params:builder.params
     })
 }
 

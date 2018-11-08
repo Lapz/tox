@@ -11,4 +11,4 @@ opcode = {path="../opcode"}
 [features]
 debug = []
 stack = ["debug"]
-default = []
+default = ["debug"]

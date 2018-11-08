@@ -12,6 +12,7 @@ pub struct StackFrame<'a> {
     ip: usize,
     locals: HashMap<u8, Value>,
     function: &'a Function,
+    params: HashMap<u8,Value>,
 }
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
@@ -50,6 +51,7 @@ impl<'a> VM<'a> {
             ip: 0,
             locals: HashMap::new(),
             function: main_function.unwrap(),
+            params:HashMap::new(),
         };
 
         Ok(VM {
@@ -183,9 +185,9 @@ impl<'a> VM<'a> {
                     }
                 }
                 opcode::GETLOCAL => {
-                    let addres = self.read_byte();
+                    let local = self.read_byte();
 
-                    let val = self.current_frame.locals[&addres];
+                    let val = self.current_frame.locals[&local];
 
                     self.push(val);
                 }
@@ -193,13 +195,23 @@ impl<'a> VM<'a> {
                 opcode::SETLOCAL => {
                     let ident = self.read_byte();
 
-                    let val = self.stack[self.stack_top - 1]; // do it manually because don't modify the stack
+                    let val = self.stack[self.stack_top - 1]; // do it manually because we don't  want to modify the stack
 
                     self.current_frame.locals.insert(ident, val);
                 }
 
+                opcode::GETPARAM => {
+                    let param = self.read_byte();
+
+                    let val = self.current_frame.params[&param];
+
+                    self.push(val);
+                }
+
                 opcode::CALL => {
                     let symbol = self.read_byte();
+                    let arg_count = self.read_byte();
+
                     let symbol = Symbol(symbol as u64);
 
                     let mut function = None;
@@ -212,19 +224,18 @@ impl<'a> VM<'a> {
                         }
                     }
 
-                    // let mut locals = HashMap::new();
+                    let mut params = HashMap::new();
 
-                    //  {
-                    //      for (_,_) in self.current_frame.function.locals.iter() {
-                    //          let val = self.pop();
-
-                    //      }
-                    //  }
+                    for i in 0..arg_count {
+                        params.insert(i,self.pop());
+                    }
+                   
 
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
                         function: function.unwrap(),
+                        params
                     };
 
                     self.frames
