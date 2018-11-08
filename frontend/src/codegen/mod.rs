@@ -28,6 +28,7 @@ pub struct Builder<'a> {
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
     reporter: &'a mut Reporter,
+    closures:Vec<Function>,
     line: u32,
 }
 
@@ -45,6 +46,7 @@ impl<'a> Builder<'a> {
             params,
             objects,
             reporter,
+            closures:Vec::new(),
         }
     }
 
@@ -480,6 +482,12 @@ impl<'a> Builder<'a> {
                 } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 }
+            },
+
+            Expression::Closure(ref func) => {
+                let closure = compile_function(func, self.reporter, self.objects)?;
+
+                self.closures.extend(closure);
             }
 
             ref e => unimplemented!("{:?}", e),
@@ -527,8 +535,9 @@ fn compile_function(
     func: &ast::Function,
     reporter: &mut Reporter,
     objects: RawObject,
-) -> ParseResult<Function> {
+) -> ParseResult<Vec<Function>> {
     let mut params = HashMap::new();
+    let mut functions =Vec::new();
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);
@@ -538,12 +547,15 @@ fn compile_function(
 
     builder.compile_statement(&func.body)?;
 
-    Ok(Function {
+    functions.extend(builder.closures);
+    functions.push(Function {
         name: func.name,
         locals: builder.locals,
         body: builder.chunk,
         params: builder.params,
-    })
+    });
+
+    Ok(functions)
 }
 
 pub fn compile(
@@ -555,7 +567,7 @@ pub fn compile(
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
     for function in ast.functions.iter() {
-        funcs.push(compile_function(function, reporter, objects)?);
+        funcs.extend(compile_function(function, reporter, objects)?);
     }
 
     Ok((funcs, objects))

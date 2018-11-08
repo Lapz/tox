@@ -13,7 +13,7 @@ fun main() -> int {
     var add = |a:int,b:int| -> int {
       return a+b;
     };
-    print fib(30);
+    print add(30);
     return 0;
 }
 
