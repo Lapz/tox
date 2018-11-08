@@ -28,7 +28,7 @@ pub struct Builder<'a> {
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
     reporter: &'a mut Reporter,
-    closures:Vec<Function>,
+    closures: Vec<Function>,
     line: u32,
 }
 
@@ -46,7 +46,7 @@ impl<'a> Builder<'a> {
             params,
             objects,
             reporter,
-            closures:Vec::new(),
+            closures: Vec::new(),
         }
     }
 
@@ -482,7 +482,7 @@ impl<'a> Builder<'a> {
                 } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 }
-            },
+            }
 
             Expression::Closure(ref func) => {
                 let closure = compile_function(func, self.reporter, self.objects)?;
@@ -537,7 +537,7 @@ fn compile_function(
     objects: RawObject,
 ) -> ParseResult<Vec<Function>> {
     let mut params = HashMap::new();
-    let mut functions =Vec::new();
+    let mut functions = Vec::new();
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);

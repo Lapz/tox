@@ -1,8 +1,8 @@
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
-extern crate util;
 extern crate rand;
+extern crate util;
 use util::symbol;
 
 pub mod ast;

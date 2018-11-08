@@ -2,13 +2,13 @@
 mod macros;
 
 use ast::*;
+use rand::{self, Rng};
 use std::iter::Peekable;
 use std::vec::IntoIter;
 use symbol::{Symbol, Symbols};
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
-use rand::{self, Rng};
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -384,7 +384,6 @@ impl<'a> Parser<'a> {
 */
 
 impl<'a> Parser<'a> {
-
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
 
@@ -392,7 +391,7 @@ impl<'a> Parser<'a> {
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
-        let params = self.parse_params(param_span,"function")?;
+        let params = self.parse_params(param_span, "function")?;
         let mut returns = None;
 
         let rparen_span =
@@ -420,7 +419,11 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_params(&mut self,open_span:Span,kind:&str) -> ParserResult<Vec<Spanned<FunctionParam>>> {
+    fn parse_params(
+        &mut self,
+        open_span: Span,
+        kind: &str,
+    ) -> ParserResult<Vec<Spanned<FunctionParam>>> {
         let mut params = Vec::with_capacity(32);
 
         if !self.recognise(TokenType::RPAREN) && !self.recognise(TokenType::BAR) {
@@ -452,7 +455,6 @@ impl<'a> Parser<'a> {
         }
 
         Ok(params)
-
     }
 
     /* ******************
@@ -946,14 +948,12 @@ impl<'a> Parser<'a> {
                         span: *span,
                     };
                     self.parse_ident(ident)
-                },
-
+                }
 
                 TokenType::BAR => {
-
                     let closure = self.parse_closure(*span)?;
 
-                   Ok(Spanned {
+                    Ok(Spanned {
                         span: closure.get_span(),
                         value: Expression::Closure(Box::new(closure)),
                     })
@@ -999,9 +999,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-
-    fn parse_closure(&mut self,open_span:Span) -> ParserResult<Spanned<Function>>  {
-        let params = self.parse_params(open_span,"closure")?;
+    fn parse_closure(&mut self, open_span: Span) -> ParserResult<Spanned<Function>> {
+        let params = self.parse_params(open_span, "closure")?;
 
         let params_span = self.consume_get_span(&TokenType::BAR, "Expected `|` ")?;
 
@@ -1015,22 +1014,20 @@ impl<'a> Parser<'a> {
         let body = self.parse_block()?;
 
         Ok(Spanned {
-            span:open_span.to(body.get_span()),
+            span: open_span.to(body.get_span()),
             value: Function {
-                name:Spanned {
-                    span:open_span.to(body.get_span()),
-                    value:self.random_ident(),
+                name: Spanned {
+                    span: open_span.to(body.get_span()),
+                    value: self.random_ident(),
                 },
-                params:Spanned {
-                    span:open_span.to(params_span),
-                    value:params,
+                params: Spanned {
+                    span: open_span.to(params_span),
+                    value: params,
                 },
                 body,
-                returns
-            }
+                returns,
+            },
         })
-
-        
     }
 
     fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {

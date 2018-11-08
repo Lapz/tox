@@ -215,7 +215,10 @@ impl<'a> VM<'a> {
 
                     let mut function = None;
 
+                    println!("{:#?}", symbol);
+
                     {
+                        println!("{:#?}", self.functions);
                         for func in self.functions.iter() {
                             if func.name == symbol {
                                 function = Some(func);
