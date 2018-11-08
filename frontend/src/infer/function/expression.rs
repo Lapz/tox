@@ -1,5 +1,6 @@
 use ast as t;
 use ctx::CompileCtx;
+use infer::env::VarEntry;
 use infer::types::Type;
 use infer::{Infer, InferResult};
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
@@ -7,7 +8,7 @@ use util::pos::Spanned;
 
 impl Infer {
     pub(crate) fn infer_expr(
-        &self,
+        &mut self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
@@ -125,7 +126,63 @@ impl Infer {
             }
             Expression::Call { .. } => self.infer_call(expr, ctx)?,
 
-            Expression::Closure(ref func) => unimplemented!(),
+            Expression::Closure(function) => {
+                let returns = if let Some(ref ty) = function.value.returns {
+                    self.trans_type(&ty, ctx)?
+                } else {
+                    Type::Nil
+                };
+
+                let mut param_types = Vec::with_capacity(function.value.params.value.len());
+                let mut env_types = Vec::with_capacity(function.value.params.value.len());
+
+                for param in function.value.params.value.iter() {
+                    let ty = self.trans_type(&param.value.ty, ctx)?;
+
+                    env_types.push(ty.clone());
+                    param_types.push(t::FunctionParam {
+                        name: param.value.name.value,
+                        ty,
+                    })
+                }
+
+                let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()));
+
+                ctx.add_var(
+                    function.value.name.value,
+                    VarEntry::Fun {
+                        ty: fn_signature.clone(),
+                    },
+                );
+
+                ctx.begin_scope();
+
+                for param in param_types.iter() {
+                    ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
+                }
+
+                let span = function.value.body.span;
+                let name = function.value.name.value;
+                let body = self.infer_statement(function.value.body, ctx)?;
+
+                ctx.end_scope();
+
+                (
+                    Spanned::new(
+                        t::Expression::Closure(Box::new(t::Function {
+                            name,
+                            params: param_types,
+                            body: Box::new(body),
+                            returns: returns.clone(),
+                        })),
+                        span,
+                    ),
+                    fn_signature,
+                );
+                // let ty = func.returns;
+
+                unimplemented!()
+            }
 
             Expression::ClassInstance { .. } => self.infer_class_instance(expr, ctx)?,
 
@@ -264,7 +321,7 @@ impl Infer {
     }
 
     fn infer_call(
-        &self,
+        &mut self,
         call: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {
@@ -341,7 +398,7 @@ impl Infer {
         }
     }
 
-    fn infer_literal(&self, literal: &Literal) -> Type {
+    fn infer_literal(&mut self, literal: &Literal) -> Type {
         match *literal {
             Literal::Float(_) => Type::Float,
 
@@ -356,7 +413,7 @@ impl Infer {
     }
 
     fn infer_class_instance(
-        &self,
+        &mut self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {
@@ -435,7 +492,7 @@ impl Infer {
     }
 
     fn infer_object_get(
-        &self,
+        &mut self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {
@@ -517,7 +574,7 @@ impl Infer {
     }
 
     fn infer_object_set(
-        &self,
+        &mut self,
         expr: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {

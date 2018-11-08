@@ -2,7 +2,6 @@ use super::Function;
 use object::{RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
-use std::mem;
 use util::symbol::Symbol;
 use value::Value;
 /// The max size of the stack
@@ -255,7 +254,7 @@ impl<'a> VM<'a> {
                 #[cfg(feature = "debug")]
                 ref e => {
                     {
-                        // println!("unknown opcode found :{}", e);
+                        println!("unknown opcode found :{}", e);
                     }
                     continue;
                 }

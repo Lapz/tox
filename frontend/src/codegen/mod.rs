@@ -532,7 +532,7 @@ fn compile_function(
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);
-    } // treat params as locals
+    } // store param id and the index in the vec
 
     let mut builder = Builder::new(reporter, objects, params);
 
