@@ -5,9 +5,7 @@ fun main() -> int {
     };
 
     print add(50,30);
-
-  
-    
+        
     return 0;
 }
 

@@ -1,23 +1,27 @@
-var f;
+fun main() -> int {
 
-fun f1() {
+  var f:fun() -> nil;
+
+var f1= || {
   var a = "a";
-  fun f2() {
+  var f2 = || {
     var b = "b";
-    fun f3() {
+    var f3 =  || {
       var c = "c";
-      fun f4() {
+      var f4 = || {
         print(a);
         print(b);
         print(c);
-      }
+      };
       f = f4;
-    }
+    };
     f3();
-  }
+  };
   f2();
-}
+};
 f1();
 
 f();
+  return 0;
+}
 // expect: a expect: b expect: c

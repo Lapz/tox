@@ -501,11 +501,12 @@ impl<'a> Parser<'a> {
             None
         };
 
-        self.consume(&TokenType::ASSIGN, "Expected '='")?;
 
         let expr = if self.recognise(TokenType::SEMICOLON) {
             None
         } else {
+
+            self.consume(&TokenType::ASSIGN, "Expected '='")?;
             Some(self.parse_expression()?)
         };
 
