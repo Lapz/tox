@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use vm::{Chunk, Function, RawObject, StringObject, Value};
+use vm::{Chunk, Function, FunctionObject, RawObject, StringObject, Value};
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -134,6 +134,7 @@ impl<'a> Builder<'a> {
 
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
+                self.emit_byte(opcode::POP);
                 Ok(())
             },
 
@@ -487,7 +488,10 @@ impl<'a> Builder<'a> {
             Expression::Closure(ref func) => {
                 let closure = compile_function(func, self.reporter, self.objects)?;
 
-                self.closures.extend(closure);
+                let func = FunctionObject::new(closure.params.len(), closure, self.objects);
+
+                self.emit_constant(Value::object(func), expr.span)?;
+
             }
 
             ref e => unimplemented!("{:?}", e),
@@ -535,9 +539,8 @@ fn compile_function(
     func: &ast::Function,
     reporter: &mut Reporter,
     objects: RawObject,
-) -> ParseResult<Vec<Function>> {
+) -> ParseResult<Function> {
     let mut params = HashMap::new();
-    let mut functions = Vec::new();
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);
@@ -547,15 +550,12 @@ fn compile_function(
 
     builder.compile_statement(&func.body)?;
 
-    functions.extend(builder.closures);
-    functions.push(Function {
+    Ok(Function {
         name: func.name,
         locals: builder.locals,
         body: builder.chunk,
         params: builder.params,
-    });
-
-    Ok(functions)
+    })
 }
 
 pub fn compile(
@@ -567,7 +567,7 @@ pub fn compile(
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
     for function in ast.functions.iter() {
-        funcs.extend(compile_function(function, reporter, objects)?);
+        funcs.push(compile_function(function, reporter, objects)?);
     }
 
     Ok((funcs, objects))

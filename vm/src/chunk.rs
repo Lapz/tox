@@ -4,7 +4,7 @@ use value::Value;
 
 type Line = u32;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// A wrapper around an array of bytes
 pub struct Chunk {
     pub code: Vec<u8>,

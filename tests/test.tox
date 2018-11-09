@@ -1,10 +1,33 @@
+
 fun main() -> int {
 
-    var add = |a:int,b:int| -> int {
-      return a+b;
-    };
+    
+  print "Guess the number!";
 
-    print add(50,30);
+
+  while (true) {
+    var secret_number = random(1,101);
+    print "Please input your guess.";
+
+    var guess = trim(io.readline());
+
+    var int_guess = to_int(guess);
+
+    print "You guessed: " + guess;
+
+    if (int_guess < secret_number) {
+      print "Too small!";
+    }
+
+    if (int_guess > secret_number) {
+      print "Too big!";
+    }
+
+    if (int_guess == secret_number) {
+      print "You win!";
+      break;
+    }
+  }
         
     return 0;
 }

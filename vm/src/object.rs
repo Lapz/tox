@@ -1,3 +1,4 @@
+use chunk::Chunk;
 use std::fmt::{self, Debug, Display};
 use std::mem;
 use std::ops::Deref;
@@ -8,6 +9,7 @@ pub type RawObject = *mut Object;
 #[repr(C)]
 pub enum ObjectType {
     String,
+    Func,
 }
 
 #[derive(Debug, Clone)]
@@ -22,6 +24,14 @@ pub struct Object {
 pub struct StringObject<'a> {
     pub obj: Object,
     pub chars: ObjectValue<'a>,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct FunctionObject {
+    pub obj: Object,
+    pub arity: usize,
+    pub function: super::Function,
 }
 
 #[derive(Clone)]
@@ -40,6 +50,17 @@ impl Object {
     }
 }
 
+impl FunctionObject {
+    pub fn new(arity: usize, function: super::Function, next: RawObject) -> RawObject {
+        let func = FunctionObject {
+            obj: Object::new(ObjectType::Func, next),
+            function,
+            arity,
+        };
+
+        Box::into_raw(Box::new(func)) as RawObject
+    }
+}
 impl<'a> StringObject<'a> {
     /// Create a new string Object that dosen't take ownership of the string passed in
     /// Conserveatly copies the string from the pointer
@@ -88,6 +109,8 @@ impl Drop for Object {
 
                 mem::drop(string);
             },
+
+            ObjectType::Func => (),
         }
     }
 }

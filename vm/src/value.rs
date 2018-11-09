@@ -1,4 +1,4 @@
-use object::{Object, ObjectType, RawObject, StringObject};
+use object::{FunctionObject, Object, ObjectType, RawObject, StringObject};
 use std::fmt::{self, Debug, Display};
 use std::mem;
 #[derive(Clone, Copy)]
@@ -89,6 +89,18 @@ impl Value {
         unsafe { self.val.int }
     }
 
+     pub fn as_float(&self) -> f64 {
+        debug_assert_eq!(
+            self.ty,
+            ValueType::Float,
+            "Value is type `{:?}` instead of {:?}",
+            self.ty,
+            ValueType::Float
+        );
+
+        unsafe { self.val.float }
+    }
+
     pub fn as_object(&self) -> RawObject {
         debug_assert_eq!(
             self.ty,
@@ -107,17 +119,13 @@ impl Value {
         unsafe { mem::transmute(ptr) }
     }
 
-    pub fn as_float(&self) -> f64 {
-        debug_assert_eq!(
-            self.ty,
-            ValueType::Float,
-            "Value is type `{:?}` instead of {:?}",
-            self.ty,
-            ValueType::Float
-        );
+    pub fn as_function<'a>(&self) -> &'a FunctionObject {
+        let ptr = self.as_object();
 
-        unsafe { self.val.float }
+        unsafe { mem::transmute(ptr) }
     }
+
+   
 }
 
 impl Debug for Value {
@@ -128,8 +136,10 @@ impl Debug for Value {
                 write!(fmt, "val:{:?},", self.val.int)?;
             } else if self.ty == ValueType::Float {
                 write!(fmt, "val:{:?},", self.val.float)?;
-            } else {
+            } else if self.ty == ValueType::Bool {
                 write!(fmt, "val:{:?},", self.val.boolean)?;
+            }else {
+                write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&Object,>(self.val.object))?;
             }
         }
         write!(fmt, " ty:{:?}", self.ty)?;
@@ -154,6 +164,7 @@ impl Display for Value {
 
                 match obj.ty {
                     ObjectType::String => write!(fmt, "{}", self.as_string())?,
+                    ObjectType::Func => write!(fmt, " fun")?,
                 }
             }
         }

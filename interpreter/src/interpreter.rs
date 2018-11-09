@@ -88,11 +88,11 @@ pub(crate) fn evaluate_function(
     );
 
     Ok(Object::Function(
-            function.name.value,
-            func_params,
-            Box::new(function.body.clone()),
-            Box::new(env.clone()),
-        ))
+        function.name.value,
+        func_params,
+        Box::new(function.body.clone()),
+        Box::new(env.clone()),
+    ))
 }
 
 pub(crate) fn evaluate_class(class: &Class, env: &mut Environment) -> Result<Object, RuntimeError> {

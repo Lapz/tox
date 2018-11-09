@@ -14,11 +14,11 @@ mod value;
 mod vm;
 
 pub use chunk::Chunk;
-pub use object::{RawObject, StringObject};
+pub use object::{FunctionObject, RawObject, StringObject};
 pub use value::Value;
 pub use vm::VM;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,

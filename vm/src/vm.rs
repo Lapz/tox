@@ -215,10 +215,11 @@ impl<'a> VM<'a> {
 
                     let mut function = None;
 
-                    println!("{:#?}", symbol);
+                    
+
 
                     {
-                        println!("{:#?}", self.functions);
+                        
                         for func in self.functions.iter() {
                             if func.name == symbol {
                                 function = Some(func);
@@ -226,10 +227,19 @@ impl<'a> VM<'a> {
                         }
                     }
 
+        
                     let mut params = HashMap::new();
-
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
+                    }
+
+                    if function.is_none() {
+                        // Assume a closure
+                        // println!("{:?}",&self.stack[0..self.stack_top+2]);
+                        let closure = self.stack[self.stack_top];
+                        let closure = &closure.as_function().function;
+                        function = Some(closure);
+                        
                     }
 
                     let call_frame = StackFrame {
