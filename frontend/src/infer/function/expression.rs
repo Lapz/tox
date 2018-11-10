@@ -367,7 +367,7 @@ impl Infer {
                                         t::Expression::Call(sym.value, callee_exprs),
                                         call.span,
                                     ),
-                                    *ret.clone(),
+                                    ty.clone(),
                                 ))
                             }
 

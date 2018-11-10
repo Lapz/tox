@@ -97,11 +97,11 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::RETURN => {
+                    
                     let value = self.pop();
 
                     match self.frames.pop() {
                         Some(frame) => {
-                            println!("{:?}",self.current_frame.locals);
                             self.current_frame = frame;
                             self.push(value);
                         }
@@ -212,16 +212,17 @@ impl<'a> VM<'a> {
 
                     let arg_count = self.read_byte();
 
-                    let closure =self.stack[self.stack_top-1];
-                        
-                    let closure = &closure.as_function().function;
-
                     let mut params = HashMap::new();
                     
                     
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
                     }
+
+                    let closure = self.pop();
+
+                        
+                    let closure = &closure.as_function().function;
 
                         
                     let call_frame = StackFrame {

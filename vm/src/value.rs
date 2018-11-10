@@ -159,14 +159,14 @@ impl Debug for Value {
 
                 ValueType::Object => {
                     if self.is_string() {
-
-                    }else {
-                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&Object,>(self.val.object))?;
+                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&StringObject,>(self.val.object))?;
+                    } else {
+                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&FunctionObject,>(self.val.object))?;
                     }
                 }
             }
         }
-        
+
         write!(fmt, " ty:{:?}", self.ty)?;
         write!(fmt, "}}")?;
         Ok(())

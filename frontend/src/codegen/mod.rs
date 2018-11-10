@@ -134,7 +134,7 @@ impl<'a> Builder<'a> {
 
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
-                
+
                 Ok(())
             },
 
@@ -246,6 +246,8 @@ impl<'a> Builder<'a> {
         use ast::{AssignOperator, Expression, Literal, Op};
         self.set_span(expr.span);
 
+       
+
         match expr.value.expr.value {
             Expression::Assign(ref ident, ref op, ref expr) => {
                 let pos = if let Some(pos) = self.locals.get(ident) {
@@ -346,7 +348,7 @@ impl<'a> Builder<'a> {
                 }
                 Literal::Str(ref string) => {
                     let object =
-                        StringObject::new(string, ::std::ptr::null::<RawObject>() as RawObject);
+                        StringObject::new(string, self.objects);
 
                     self.emit_constant(Value::object(object), expr.value.expr.span)?;
                 }
@@ -433,22 +435,23 @@ impl<'a> Builder<'a> {
                 }
 
                 
-
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
 
                 match expr.value.ty {
                     Type::Fun(_,_,true) => {
+                       
                         self.emit_byte(opcode::CALLCLOSURE);
                         self.emit_byte(args.len() as u8);
                     },
 
                     Type::Fun(_,_,false) => {
+
                         self.emit_bytes(opcode::CALL, callee.0 as u8);
                         self.emit_byte(args.len() as u8);
                     },
-                    _ => ()
+                    ref other=> println!("{:?}",other),
                 }
 
                 
