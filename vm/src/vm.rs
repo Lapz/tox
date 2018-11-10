@@ -101,6 +101,7 @@ impl<'a> VM<'a> {
 
                     match self.frames.pop() {
                         Some(frame) => {
+                            println!("{:?}",self.current_frame.locals);
                             self.current_frame = frame;
                             self.push(value);
                         }
@@ -207,6 +208,33 @@ impl<'a> VM<'a> {
                     self.push(val);
                 }
 
+                opcode::CALLCLOSURE => {
+
+                    let arg_count = self.read_byte();
+
+                    let closure =self.stack[self.stack_top-1];
+                        
+                    let closure = &closure.as_function().function;
+
+                    let mut params = HashMap::new();
+                    
+                    
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                        
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: closure,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+
                 opcode::CALL => {
                     let symbol = self.read_byte();
                     let arg_count = self.read_byte();
@@ -214,9 +242,6 @@ impl<'a> VM<'a> {
                     let symbol = Symbol(symbol as u64);
 
                     let mut function = None;
-
-                    
-
 
                     {
                         
@@ -229,17 +254,10 @@ impl<'a> VM<'a> {
 
         
                     let mut params = HashMap::new();
+                    
+                    
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
-                    }
-
-                    if function.is_none() {
-                        // Assume a closure
-                        // println!("{:?}",&self.stack[0..self.stack_top+2]);
-                        let closure = self.stack[self.stack_top];
-                        let closure = &closure.as_function().function;
-                        function = Some(closure);
-                        
                     }
 
                     let call_frame = StackFrame {
@@ -252,7 +270,9 @@ impl<'a> VM<'a> {
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
                     // swaps the current frame with the one we are one and then
-                }
+                },
+
+                
 
                 opcode::POP => {
                     self.pop();

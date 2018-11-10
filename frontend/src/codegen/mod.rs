@@ -134,7 +134,7 @@ impl<'a> Builder<'a> {
 
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
-                self.emit_byte(opcode::POP);
+                
                 Ok(())
             },
 
@@ -142,6 +142,7 @@ impl<'a> Builder<'a> {
                 self.compile_expression(expr)?;
 
                 self.emit_byte(opcode::PRINT);
+                
 
                 Ok(())
             }
@@ -424,17 +425,33 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Call(ref callee, ref args) => {
+                
                 if args.is_empty() {
                     self.emit_bytes(opcode::CALL, callee.0 as u8);
+                    self.emit_byte(0);
                     return Ok(());
                 }
+
+                
 
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
 
-                self.emit_bytes(opcode::CALL, callee.0 as u8);
-                self.emit_byte(args.len() as u8);
+                match expr.value.ty {
+                    Type::Fun(_,_,true) => {
+                        self.emit_byte(opcode::CALLCLOSURE);
+                        self.emit_byte(args.len() as u8);
+                    },
+
+                    Type::Fun(_,_,false) => {
+                        self.emit_bytes(opcode::CALL, callee.0 as u8);
+                        self.emit_byte(args.len() as u8);
+                    },
+                    _ => ()
+                }
+
+                
             }
 
             Expression::Grouping(ref expr) => {
@@ -491,7 +508,7 @@ impl<'a> Builder<'a> {
                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
 
                 self.emit_constant(Value::object(func), expr.span)?;
-
+            
             }
 
             ref e => unimplemented!("{:?}", e),

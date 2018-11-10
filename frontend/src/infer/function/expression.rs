@@ -146,7 +146,7 @@ impl Infer {
                     })
                 }
 
-                let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()));
+                let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()),true);
 
                 ctx.add_var(
                     function.value.name.value,
@@ -322,14 +322,19 @@ impl Infer {
         call: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {
+
+        
+        
         match call.value {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
                 Expression::Var(ref sym) => {
+                    
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
+                        
                         match ty {
-                            Type::Fun(ref targs, ref ret) => {
+                            Type::Fun(ref targs, ref ret,_) => {
                                 use util::pos::Span;
                                 if args.len() != targs.len() {
                                     let msg = format!(
@@ -402,7 +407,7 @@ impl Infer {
                         })
                     }
 
-                    let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()));
+                    let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()),true);
 
                     ctx.add_var(
                         function.value.name.value,
@@ -578,7 +583,7 @@ impl Infer {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
                                             let ty = match ty {
-                                                Type::Fun(_, ret) => *ret,
+                                                Type::Fun(_, ret,_) => *ret,
                                                 _ => unreachable!(),
                                             };
 

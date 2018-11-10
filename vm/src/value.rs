@@ -124,6 +124,17 @@ impl Value {
 
         unsafe { mem::transmute(ptr) }
     }
+    #[inline]
+    pub fn is_object(&self) -> bool {
+        self.ty == ValueType::Object
+    }
+
+    pub fn is_string(&self) -> bool {
+        unsafe {
+            self.is_object()
+                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
+        }
+    }
 
    
 }
@@ -132,16 +143,30 @@ impl Debug for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "Value {{")?;
         unsafe {
-            if self.ty == ValueType::Int || self.ty == ValueType::Nil {
-                write!(fmt, "val:{:?},", self.val.int)?;
-            } else if self.ty == ValueType::Float {
-                write!(fmt, "val:{:?},", self.val.float)?;
-            } else if self.ty == ValueType::Bool {
-                write!(fmt, "val:{:?},", self.val.boolean)?;
-            }else {
-                write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&Object,>(self.val.object))?;
+
+            match self.ty {
+                ValueType::Int | ValueType::Nil => {
+                    write!(fmt, "val:{:?},", self.val.int)?
+                },
+
+                ValueType::Float => {
+                    write!(fmt, "val:{:?},", self.val.float)?;
+                },
+
+                ValueType::Bool => {
+                    write!(fmt, "val:{:?},", self.val.boolean)?;
+                },
+
+                ValueType::Object => {
+                    if self.is_string() {
+
+                    }else {
+                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&Object,>(self.val.object))?;
+                    }
+                }
             }
         }
+        
         write!(fmt, " ty:{:?}", self.ty)?;
         write!(fmt, "}}")?;
         Ok(())

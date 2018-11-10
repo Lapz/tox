@@ -64,6 +64,8 @@ pub mod opcode {
 
     pub const SETPARAM: u8 = 034;
 
+    pub const CALLCLOSURE:u8 = 035;
+
     // pub const STORELOCAL:u8
 }
 

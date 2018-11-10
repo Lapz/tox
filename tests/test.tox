@@ -1,34 +1,15 @@
-
 fun main() -> int {
+  var mul = |a:float,b:float| -> float {
+    return a*b;
+  };
 
-    
-  print "Guess the number!";
+  var add = |a:int,b:int| -> int {
+    return a+b;
+  };
 
+  print add(12,3);
+  print mul(1.9,2.3);
+  
 
-  while (true) {
-    var secret_number = random(1,101);
-    print "Please input your guess.";
-
-    var guess = trim(io.readline());
-
-    var int_guess = to_int(guess);
-
-    print "You guessed: " + guess;
-
-    if (int_guess < secret_number) {
-      print "Too small!";
-    }
-
-    if (int_guess > secret_number) {
-      print "Too big!";
-    }
-
-    if (int_guess == secret_number) {
-      print "You win!";
-      break;
-    }
-  }
-        
-    return 0;
+  return 0;
 }
-

@@ -86,6 +86,7 @@ impl Chunk {
             opcode::GETLOCAL => self.local_instruction("OPCODE::GETLOCAL", offset),
             opcode::SETLOCAL => self.local_instruction("OPCODE::SETLOCAL", offset),
             opcode::CALL => simple_instruction("OPCODE::CALL", offset),
+            opcode::CALLCLOSURE => simple_instruction("OPCODE::CALLCLOSURE", offset),
             opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF", offset),
             opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT", offset),
             opcode::LOOP => self.jump_instruction("OPCODE::LOOP", offset),
