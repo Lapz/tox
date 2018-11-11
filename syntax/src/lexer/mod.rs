@@ -378,8 +378,8 @@ fn look_up_identifier(id: &str) -> TokenType {
         "this" => TokenType::THIS,
         "type" => TokenType::TYPE,
         // Functions and vars
-        "fun" => TokenType::FUNCTION,
-        "var" => TokenType::VAR,
+        "fn" => TokenType::FUNCTION,
+        "let" => TokenType::LET,
         // Control Flow
         "if" => TokenType::IF,
         "else" => TokenType::ELSE,

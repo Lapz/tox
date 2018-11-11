@@ -1,12 +1,12 @@
-fun f() -> fun() -> nil {
+fn f() -> fn() -> nil {
   while (true) {
-    var i = "i";
-    fun g() -> str {
+    let i = "i";
+    fn g() -> str {
       print(i);
     }
     return g;
   }
 }
 
-var h = f();
+let h = f();
 h(); // expect: i

@@ -1,6 +1,6 @@
 {
   class Foo {
-  fun returnSelf() -> Foo {
+  fn returnSelf() -> Foo {
     return Foo;
   }
 }

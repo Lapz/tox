@@ -1,14 +1,18 @@
-fun main() -> int {
-  var mul = |a:float,b:float| -> float {
+fn main() -> int {
+  let mul = |a:float,b:float| -> float {
     return a*b;
   };
 
-  var add = |a:int,b:int| -> int {
+  let add = |a:int,b:int| -> int {
     return a+b;
   };
 
   print add(12,3);
   print mul(1.9,2.3);
+
+  let x = 20;
+
+  print add(x,2);
   
 
   return 0;

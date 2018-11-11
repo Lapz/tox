@@ -6,6 +6,6 @@ class Foo {
   }
 }
 
-var foo = Foo(1, 2, 3, 4);
+let foo = Foo(1, 2, 3, 4);
 print(foo.a); // expect: 1
 print(foo.b); // expect: 2

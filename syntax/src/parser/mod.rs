@@ -465,7 +465,7 @@ impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         if self.recognise(TokenType::LBRACE) {
             self.parse_block()
-        } else if self.recognise(TokenType::VAR) {
+        } else if self.recognise(TokenType::LET) {
             self.parse_var_declaration()
         } else if self.recognise(TokenType::BREAK) {
             self.parse_break_statement()
@@ -489,7 +489,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_var_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
-        let open_span = self.consume_get_span(&TokenType::VAR, "Expected 'var' ")?;
+        let open_span = self.consume_get_span(&TokenType::LET, "Expected 'var' ")?;
 
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
@@ -668,7 +668,7 @@ impl<'a> Parser<'a> {
 
         if self.recognise(TokenType::SEMICOLON) {
             self.advance();
-        } else if self.recognise(TokenType::VAR) {
+        } else if self.recognise(TokenType::LET) {
             init = Some(Box::new(self.parse_var_declaration()?));
         } else {
             init = Some(Box::new(self.parse_expression_statement()?));

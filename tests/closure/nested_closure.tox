@@ -1,14 +1,14 @@
-fun main() -> int {
+fn main() -> int {
 
-  var f:fun() -> nil;
+  let f:fn() -> nil;
 
-var f1= || {
-  var a = "a";
-  var f2 = || {
-    var b = "b";
-    var f3 =  || {
-      var c = "c";
-      var f4 = || {
+let f1= || {
+  let a = "a";
+  let f2 = || {
+    let b = "b";
+    let f3 =  || {
+      let c = "c";
+      let f4 = || {
         print(a);
         print(b);
         print(c);
