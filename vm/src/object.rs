@@ -1,8 +1,10 @@
-use chunk::Chunk;
+use super::Function;
 use std::fmt::{self, Debug, Display};
 use std::mem;
 use std::ops::Deref;
 use value::Value;
+use util::symbol::Symbol;
+use std::collections::HashMap;
 
 pub type RawObject = *mut Object;
 
@@ -12,6 +14,8 @@ pub enum ObjectType {
     String,
     Func,
     Array,
+    Class,
+    Instance,
 }
 
 #[derive(Debug, Clone)]
@@ -33,6 +37,21 @@ pub struct StringObject<'a> {
 pub struct ArrayObject {
     pub obj: Object,
     pub items: Vec<Value>,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct ClassObject {
+    pub obj: Object,
+    pub methods: HashMap<Symbol,FunctionObject>,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct InstanceObject {
+    pub obj: Object,
+    pub properties:HashMap<Symbol,Value>,
+    pub methods: HashMap<Symbol,Function>,
 }
 
 #[derive(Debug, Clone)]
@@ -81,6 +100,19 @@ impl ArrayObject {
         Box::into_raw(Box::new(array)) as RawObject
     }
 }
+
+impl InstanceObject {
+    pub fn new(methods: HashMap<Symbol,Function>,properties:HashMap<Symbol,Value>,next: RawObject) -> RawObject {
+        let array = InstanceObject {
+            obj: Object::new(ObjectType::Instance, next),
+            methods,
+            properties,
+        };
+
+        Box::into_raw(Box::new(array)) as RawObject
+    }
+}
+
 impl<'a> StringObject<'a> {
     /// Create a new string Object that dosen't take ownership of the string passed in
     /// Conserveatly copies the string from the pointer
@@ -132,6 +164,8 @@ impl Drop for Object {
 
             ObjectType::Func => (),
             ObjectType::Array => (),
+            ObjectType::Class => (),
+            ObjectType::Instance => (),
         }
     }
 }

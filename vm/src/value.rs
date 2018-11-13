@@ -1,4 +1,4 @@
-use object::{ArrayObject, FunctionObject, Object, ObjectType, RawObject, StringObject};
+use object::{ArrayObject, FunctionObject, Object, ObjectType, RawObject, StringObject,InstanceObject};
 use std::fmt::{self, Debug, Display};
 use std::mem;
 #[derive(Clone, Copy)]
@@ -130,6 +130,13 @@ impl Value {
 
         unsafe { mem::transmute(ptr) }
     }
+
+    pub fn as_instance<'a>(&self) -> &'a InstanceObject {
+        let ptr = self.as_object();
+
+        unsafe { mem::transmute(ptr) }
+    }
+
     #[inline]
     pub fn is_object(&self) -> bool {
         self.ty == ValueType::Object
@@ -200,6 +207,8 @@ impl Display for Value {
                     ObjectType::String => write!(fmt, "{}", self.as_string())?,
                     ObjectType::Func => write!(fmt, " fun")?,
                     ObjectType::Array => write!(fmt, "array")?,
+                    ObjectType::Class => write!(fmt,"class")?,
+                    ObjectType::Instance => write!(fmt,"instance")?
                 }
             }
         }

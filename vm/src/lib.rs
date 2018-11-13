@@ -25,3 +25,10 @@ pub struct Function {
     pub locals: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
     pub params: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
 }
+
+#[derive(Debug, Clone)]
+pub struct Class {
+    pub name: ::util::symbol::Symbol,
+    pub methods:  ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+}
+

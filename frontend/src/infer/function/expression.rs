@@ -5,6 +5,7 @@ use infer::types::Type;
 use infer::{Infer, InferResult};
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
+use std::collections::HashMap;
 
 impl Infer {
     pub(crate) fn infer_expr(
@@ -537,7 +538,7 @@ impl Infer {
 
                 match class {
                     Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
-                        let mut instance_exprs = Vec::new();
+                        let mut instance_exprs = HashMap::new();
                         let mut found = false;
 
                         for (prop, prop_ty) in props.into_iter().zip(fields.iter()) {
@@ -545,12 +546,13 @@ impl Infer {
                                 found = true;
 
                                 let span = prop.span;
+                                let ident = prop.value.symbol.value;
 
                                 let ty = self.infer_expr(prop.value.expr, ctx)?;
 
                                 self.unify(&prop_ty.1, &ty.value.ty, span, ctx)?;
 
-                                instance_exprs.push(ty);
+                                instance_exprs.insert(ident,ty);
                             } else {
                                 found = false;
 

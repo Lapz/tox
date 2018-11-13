@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use vm::{Chunk, Function, FunctionObject, RawObject, StringObject, Value};
+use vm::{Chunk, Function, FunctionObject, RawObject, StringObject, Value,Class};
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -242,6 +242,9 @@ impl<'a> Builder<'a> {
         }
     }
 
+
+   
+
     pub fn compile_expression(&mut self, expr: &Spanned<ast::TypedExpression>) -> ParseResult<()> {
         use ast::{AssignOperator, Expression, Literal, Op};
         self.set_span(expr.span);
@@ -470,6 +473,23 @@ impl<'a> Builder<'a> {
                         self.emit_byte(args.len() as u8);
                     }
                 }
+            },
+
+            Expression::ClassInstance(ref symbol,ref properties) => {
+                
+                self.emit_bytes(opcode::CLASSINSTANCE,symbol.0 as u8);
+                self.emit_byte(properties.len() as u8);
+
+                for (ident,_) in properties.iter() { 
+                    self.emit_byte(ident.0 as u8);
+                }
+                
+                for (_,expr) in properties.iter() { //rev because poped of stack
+                    self.compile_expression(expr)?;
+                    
+                }
+
+                
             }
 
             Expression::Grouping(ref expr) => {
@@ -518,7 +538,15 @@ impl<'a> Builder<'a> {
                 } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 }
-            }
+            },
+            
+            Expression::Get(ref property,ref object) => {
+                self.compile_expression(object)?;
+
+                self.emit_byte(opcode::GETPROPERTY);
+                self.emit_byte(property.0 as u8);
+               
+            },
 
             Expression::Closure(ref func) => {
                 let closure = compile_function(func, self.reporter, self.objects)?;
@@ -567,7 +595,24 @@ impl<'a> Builder<'a> {
 
         Ok(())
     }
+
 }
+
+
+fn compile_class(class:&ast::Class,reporter:&mut Reporter,objects:RawObject) -> ParseResult<Class> {
+    
+    let mut methods = HashMap::new();
+
+    for method in class.methods.iter() {
+        methods.insert(method.name, compile_function(method,reporter, objects)?);
+    }
+
+    Ok(Class {
+        name:class.name,
+        methods
+    })
+}
+
 
 fn compile_function(
     func: &ast::Function,
@@ -595,8 +640,9 @@ fn compile_function(
 pub fn compile(
     ast: &ast::Program,
     reporter: &mut Reporter,
-) -> ParseResult<(Vec<Function>, RawObject)> {
+) -> ParseResult<(Vec<Function>,Vec<Class>,RawObject)> {
     let mut funcs = Vec::new();
+    let mut classes = Vec::new();
 
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
@@ -604,5 +650,9 @@ pub fn compile(
         funcs.push(compile_function(function, reporter, objects)?);
     }
 
-    Ok((funcs, objects))
+    for class in ast.classes.iter() {
+        classes.push(compile_class(class,reporter,objects)?);
+    }
+
+    Ok((funcs, classes,objects))
 }

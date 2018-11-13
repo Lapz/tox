@@ -1,5 +1,5 @@
-use super::Function;
-use object::{ArrayObject, RawObject, StringObject};
+use super::{Function,Class};
+use object::{ArrayObject, RawObject, StringObject,InstanceObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -18,6 +18,7 @@ pub struct VM<'a> {
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
     functions: &'a [Function],
+    classes: &'a [Class],
     objects: RawObject,
     heap: Vec<u8>,
     equal_flag: bool,
@@ -31,7 +32,7 @@ pub enum Error {
 }
 
 impl<'a> VM<'a> {
-    pub fn new(main: Symbol, functions: &'a [Function], objects: RawObject) -> Result<Self, Error> {
+    pub fn new(main: Symbol, functions: &'a [Function],classes:&'a [Class],objects: RawObject) -> Result<Self, Error> {
         let mut main_function = None;
 
         {
@@ -57,6 +58,7 @@ impl<'a> VM<'a> {
             stack: [Value::nil(); STACK_MAX],
             current_frame,
             functions,
+            classes,
             frames: Vec::new(),
             equal_flag: false,
             heap: Vec::new(),
@@ -298,6 +300,41 @@ impl<'a> VM<'a> {
                     let result = StringObject::new(slice, self.objects);
 
                     self.push(Value::object(result))
+                },
+
+                opcode::CLASSINSTANCE => {
+                    let symbol = self.read_byte();
+                    let num_properties = self.read_byte();
+
+                    
+                    let symbol = Symbol(symbol as u64);
+
+
+                    let mut class = None;
+
+                    {
+                        for klass in self.classes.iter() {
+                            if klass.name == symbol {
+                                class = Some(klass);
+                            }
+                        }
+                    }
+
+                    let class = class.unwrap();
+
+                    let methods = class.methods.clone();
+                    let mut properties = HashMap::new();
+
+                    for _ in 0..num_properties {
+                        properties.insert(Symbol(self.read_byte() as u64), self.pop());
+                    }
+
+                    
+
+                    let instance = InstanceObject::new(methods,properties,self.objects);
+
+                    self.push(Value::object(instance));
+
                 }
 
                 opcode::CONCAT => self.concat(),

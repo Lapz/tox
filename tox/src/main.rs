@@ -186,7 +186,7 @@ pub fn run(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    let (functions, objects) = match compile(&typed_ast, &mut reporter) {
+    let (functions,classes, objects) = match compile(&typed_ast, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);
@@ -194,7 +194,7 @@ pub fn run(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    let mut vm = VM::new(symbols.symbol("main"), &functions, objects).unwrap();
+    let mut vm = VM::new(symbols.symbol("main"), &functions,&classes,objects).unwrap();
     vm.run();
 }
 
