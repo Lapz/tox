@@ -66,6 +66,10 @@ pub mod opcode {
 
     pub const CALLCLOSURE:u8 = 035;
 
+    pub const ARRAY:u8 = 036;
+
+    pub const INDEX:u8 = 037;
+
     // pub const STORELOCAL:u8
 }
 

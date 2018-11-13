@@ -208,13 +208,17 @@ impl Infer {
 
                         match target_ty {
                             Type::Array(ref ty) => (
-                                Spanned::new(t::Expression::Index(symbol.value, index_ty), span),
+                                Spanned::new(t::Expression::Index(Expression::Var(symbol,index_ty.clone()), index_ty), span),
                                 *ty.clone(),
                             ),
-                            Type::Str => (
-                                Spanned::new(t::Expression::Index(symbol.value, index_ty), span),
-                                Type::Str,
-                            ),
+                            Type::Str => {
+                                let var = Spanned::new(t::Expression::Var(symbol.value,index_ty.value.ty.clone()), target_span);
+
+                                 (
+                                    Spanned::new(t::Expression::Index(var,index_ty), span),
+                                    Type::Str,
+                                )
+                            },
 
                             _ => {
                                 let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
@@ -224,9 +228,21 @@ impl Infer {
                         }
                     }
                     _ => {
-                        ctx.error("Invalid index target", target.span);
-                        return Err(());
+                        let expr = self.infer_expr(*target,ctx)?;
+
+                        match expr.value.ty {
+                            Type::Array(ref ty) => {
+                                unimplemented!()
+                            },
+
+                            _ => {
+                                 ctx.error("Invalid index target",target_span);
+                                 return Err(());
+                    
+                            }
+                        }
                     }
+                       
                 }
             }
 
@@ -334,7 +350,7 @@ impl Infer {
                         let ty = ty.get_ty();
                         
                         match ty {
-                            Type::Fun(ref targs, ref ret,_) => {
+                            Type::Fun(ref targs, ref ret,ref is_closure) => {
                                 use util::pos::Span;
                                 if args.len() != targs.len() {
                                     let msg = format!(
@@ -367,7 +383,11 @@ impl Infer {
                                         t::Expression::Call(sym.value, callee_exprs),
                                         call.span,
                                     ),
-                                    ty.clone(),
+                                    if *is_closure {
+                                        ty.clone()
+                                    }else {
+                                        *ret.clone()
+                                    }
                                 ))
                             }
 

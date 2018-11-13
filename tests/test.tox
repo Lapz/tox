@@ -1,18 +1,35 @@
-fn main() -> int {
-  let mul = |a:float,b:float| -> float {
-    return a*b;
-  };
+fn fib(n:float) -> float {
+   if (n < 2.0) {
+     return n;
+   } else {
+      return fib(n - 2.0) + fib(n - 1.0);
+   }
+}
 
+
+fn factorial(n:int) -> int {
+    if(n == 1){
+      return 1;
+    }            
+    return n * factorial(n-1);
+}
+
+
+fn main() -> int {
   let add = |a:int,b:int| -> int {
     return a+b;
   };
 
-  print add(12,3);
-  print mul(1.9,2.3);
+  let mul = [0,1,2,3][0];
 
-  let x = 20;
 
-  print add(x,2);
+  
+  print fib(30.0);
+  print factorial(10);
+  let foo = add(1,2);
+  let bar = mul(10,2);
+  print foo;
+  print bar;
   
 
   return 0;

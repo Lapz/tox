@@ -1,5 +1,5 @@
 use super::Function;
-use object::{RawObject, StringObject};
+use object::{RawObject, StringObject,ArrayObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -148,6 +148,17 @@ impl<'a> VM<'a> {
                     self.push(Value::bool(a == b));
                 }
 
+                opcode::ARRAY => {
+                    let len = self.read_byte();
+
+                    let items:Vec<Value> = (0..len).map(|_| self.pop()).collect();
+
+                    let array = ArrayObject::new(items,self.objects);
+
+                    self.push(Value::object(array));
+                    
+                }
+
                 opcode::LESS => binary_op!(<,as_int,bool,self),
                 opcode::LESSF => binary_op!(<,as_float,bool,self),
                 opcode::GREATER => binary_op!(>,as_int,bool,self),
@@ -237,6 +248,7 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
+                  
                     let symbol = self.read_byte();
                     let arg_count = self.read_byte();
 

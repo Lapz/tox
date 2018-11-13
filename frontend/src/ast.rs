@@ -85,7 +85,7 @@ pub enum Expression {
     Get(Symbol, Spanned<TypedExpression>),
     Grouping(Spanned<TypedExpression>),
 
-    Index(Symbol, Spanned<TypedExpression>),
+    Index(Spanned<TypedExpression>, Spanned<TypedExpression>),
 
     Literal(Literal),
     /// Name, Object, Value

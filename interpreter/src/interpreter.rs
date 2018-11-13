@@ -565,7 +565,7 @@ fn times(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l * r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l * r)),
-        _ => unreachable!(),
+        (lhs,rhs) => unreachable!("{:?} {:?}",lhs,rhs),
     }
 }
 

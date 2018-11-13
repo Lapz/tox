@@ -252,9 +252,6 @@ impl<'a> Builder<'a> {
             Expression::Assign(ref ident, ref op, ref expr) => {
                 let pos = if let Some(pos) = self.locals.get(ident) {
                     *pos
-                // } else if let Some(offset) = self.params.get(ident) {
-                //     *offset
-                // }
                 } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 };
@@ -328,6 +325,19 @@ impl<'a> Builder<'a> {
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
                 }
+            },
+
+            Expression::Array(ref exprs) => {
+                
+                for expr in exprs {
+                    self.compile_expression(expr)?;
+                }
+
+                self.emit_bytes(opcode::ARRAY,exprs.len() as u8);
+            },
+
+            Expression::Index(ref ident,ref expr) => {
+                
             }
 
             Expression::Literal(ref literal) => match *literal {
@@ -439,19 +449,18 @@ impl<'a> Builder<'a> {
                     self.compile_expression(arg)?;
                 }
 
+
                 match expr.value.ty {
                     Type::Fun(_,_,true) => {
+                     
                        
                         self.emit_byte(opcode::CALLCLOSURE);
                         self.emit_byte(args.len() as u8);
                     },
-
-                    Type::Fun(_,_,false) => {
-
-                        self.emit_bytes(opcode::CALL, callee.0 as u8);
-                        self.emit_byte(args.len() as u8);
+                    _ => {
+                            self.emit_bytes(opcode::CALL, callee.0 as u8);
+                            self.emit_byte(args.len() as u8);
                     },
-                    ref other=> println!("{:?}",other),
                 }
 
                 

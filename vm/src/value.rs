@@ -65,6 +65,8 @@ impl Value {
         }
     }
 
+
+
     pub fn as_bool(&self) -> bool {
         debug_assert_eq!(
             self.ty,
@@ -190,6 +192,7 @@ impl Display for Value {
                 match obj.ty {
                     ObjectType::String => write!(fmt, "{}", self.as_string())?,
                     ObjectType::Func => write!(fmt, " fun")?,
+                    ObjectType::Array => write!(fmt, "array")?,
                 }
             }
         }

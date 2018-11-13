@@ -2,6 +2,7 @@ use chunk::Chunk;
 use std::fmt::{self, Debug, Display};
 use std::mem;
 use std::ops::Deref;
+use value::Value;
 
 pub type RawObject = *mut Object;
 
@@ -10,6 +11,7 @@ pub type RawObject = *mut Object;
 pub enum ObjectType {
     String,
     Func,
+    Array,
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +26,13 @@ pub struct Object {
 pub struct StringObject<'a> {
     pub obj: Object,
     pub chars: ObjectValue<'a>,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct ArrayObject {
+    pub obj: Object,
+    pub items: Vec<Value>
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +68,17 @@ impl FunctionObject {
         };
 
         Box::into_raw(Box::new(func)) as RawObject
+    }
+}
+
+impl ArrayObject {
+     pub fn new(items: Vec<Value>,next: RawObject) -> RawObject {
+        let array = ArrayObject {
+            obj: Object::new(ObjectType::Array, next),
+            items,
+        };
+
+        Box::into_raw(Box::new(array)) as RawObject
     }
 }
 impl<'a> StringObject<'a> {
@@ -111,6 +131,9 @@ impl Drop for Object {
             },
 
             ObjectType::Func => (),
+            ObjectType::Array => {
+                ()
+            }
         }
     }
 }
