@@ -64,11 +64,13 @@ pub mod opcode {
 
     pub const SETPARAM: u8 = 034;
 
-    pub const CALLCLOSURE:u8 = 035;
+    pub const CALLCLOSURE: u8 = 035;
 
-    pub const ARRAY:u8 = 036;
+    pub const ARRAY: u8 = 036;
 
-    pub const INDEX:u8 = 037;
+    pub const INDEXARRAY: u8 = 037;
+
+    pub const INDEXSTRING: u8 = 038;
 
     // pub const STORELOCAL:u8
 }

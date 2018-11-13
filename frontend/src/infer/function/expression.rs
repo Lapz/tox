@@ -23,7 +23,7 @@ impl Infer {
                 } else {
                     let mut nitems = vec![self.infer_expr(items.remove(0), ctx)?];
 
-                    for item in items.into_iter().skip(1) {
+                    for item in items.into_iter() {
                         let span = item.span;
                         let ty_expr = self.infer_expr(item, ctx)?;
 
@@ -146,7 +146,7 @@ impl Infer {
                     })
                 }
 
-                let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()),true);
+                let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()), true);
 
                 ctx.add_var(
                     function.value.name.value,
@@ -195,6 +195,7 @@ impl Infer {
 
             Expression::SubScript { target, index } => {
                 let target_span = target.span;
+                let expr_span = expr.span;
 
                 match target.value {
                     Expression::Var(symbol) => {
@@ -207,18 +208,46 @@ impl Infer {
                         self.unify(&index_ty.value.ty, &Type::Int, span, ctx)?;
 
                         match target_ty {
-                            Type::Array(ref ty) => (
-                                Spanned::new(t::Expression::Index(Expression::Var(symbol,index_ty.clone()), index_ty), span),
-                                *ty.clone(),
-                            ),
-                            Type::Str => {
-                                let var = Spanned::new(t::Expression::Var(symbol.value,index_ty.value.ty.clone()), target_span);
+                            Type::Array(ref ty) => {
+                                let var = Spanned::new(
+                                    t::TypedExpression {
+                                        expr: Box::new(Spanned::new(
+                                            t::Expression::Var(
+                                                symbol.value,
+                                                index_ty.value.ty.clone(),
+                                            ),
+                                            target_span,
+                                        )),
+                                        ty: index_ty.value.ty.clone(),
+                                    },
+                                    target_span,
+                                );
 
-                                 (
-                                    Spanned::new(t::Expression::Index(var,index_ty), span),
+                                (
+                                    Spanned::new(t::Expression::Index(var, index_ty), span),
+                                    *ty.clone(),
+                                )
+                            }
+                            Type::Str => {
+                                let var = Spanned::new(
+                                    t::TypedExpression {
+                                        expr: Box::new(Spanned::new(
+                                            t::Expression::Var(
+                                                symbol.value,
+                                                index_ty.value.ty.clone(),
+                                            ),
+                                            target_span,
+                                        )),
+                                        ty: index_ty.value.ty.clone(),
+                                    },
+                                    target_span,
+                                );
+
+                                (
+                                    Spanned::new(t::Expression::Index(var, index_ty), span),
                                     Type::Str,
                                 )
-                            },
+                            }
 
                             _ => {
                                 let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
@@ -227,22 +256,28 @@ impl Infer {
                             }
                         }
                     }
-                    _ => {
-                        let expr = self.infer_expr(*target,ctx)?;
 
-                        match expr.value.ty {
+                    _ => {
+                        //array expression or things that evalu to an array
+                        let expr = self.infer_expr(*target, ctx)?;
+
+                        match expr.value.ty.clone() {
                             Type::Array(ref ty) => {
-                                unimplemented!()
-                            },
+                                let index_ty = self.infer_expr(*index, ctx)?;
+
+                                (
+                                    Spanned::new(t::Expression::Index(expr, index_ty), expr_span),
+                                    *ty.clone(),
+                                )
+                                // unimplemented!()
+                            }
 
                             _ => {
-                                 ctx.error("Invalid index target",target_span);
-                                 return Err(());
-                    
+                                ctx.error("Invalid index target", target_span);
+                                return Err(());
                             }
                         }
                     }
-                       
                 }
             }
 
@@ -338,19 +373,15 @@ impl Infer {
         call: Spanned<Expression>,
         ctx: &mut CompileCtx,
     ) -> InferResult<(Spanned<t::Expression>, Type)> {
-
-        
-        
         match call.value {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
                 Expression::Var(ref sym) => {
-                    
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
-                        
+
                         match ty {
-                            Type::Fun(ref targs, ref ret,ref is_closure) => {
+                            Type::Fun(ref targs, ref ret, ref is_closure) => {
                                 use util::pos::Span;
                                 if args.len() != targs.len() {
                                     let msg = format!(
@@ -385,9 +416,9 @@ impl Infer {
                                     ),
                                     if *is_closure {
                                         ty.clone()
-                                    }else {
+                                    } else {
                                         *ret.clone()
-                                    }
+                                    },
                                 ))
                             }
 
@@ -427,7 +458,8 @@ impl Infer {
                         })
                     }
 
-                    let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()),true);
+                    let fn_signature =
+                        Type::Fun(env_types.clone(), Box::new(returns.clone()), true);
 
                     ctx.add_var(
                         function.value.name.value,
@@ -603,7 +635,7 @@ impl Infer {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
                                             let ty = match ty {
-                                                Type::Fun(_, ret,_) => *ret,
+                                                Type::Fun(_, ret, _) => *ret,
                                                 _ => unreachable!(),
                                             };
 

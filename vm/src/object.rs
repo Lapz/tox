@@ -32,7 +32,7 @@ pub struct StringObject<'a> {
 #[repr(C)]
 pub struct ArrayObject {
     pub obj: Object,
-    pub items: Vec<Value>
+    pub items: Vec<Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -72,7 +72,7 @@ impl FunctionObject {
 }
 
 impl ArrayObject {
-     pub fn new(items: Vec<Value>,next: RawObject) -> RawObject {
+    pub fn new(items: Vec<Value>, next: RawObject) -> RawObject {
         let array = ArrayObject {
             obj: Object::new(ObjectType::Array, next),
             items,
@@ -131,9 +131,7 @@ impl Drop for Object {
             },
 
             ObjectType::Func => (),
-            ObjectType::Array => {
-                ()
-            }
+            ObjectType::Array => (),
         }
     }
 }

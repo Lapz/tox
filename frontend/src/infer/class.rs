@@ -78,7 +78,7 @@ impl Infer {
                         .map(|param| param.ty)
                         .collect(),
                     Box::new(fun.returns.clone()),
-                    false
+                    false,
                 )),
             );
             methods.push(fun);

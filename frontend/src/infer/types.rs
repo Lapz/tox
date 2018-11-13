@@ -33,8 +33,8 @@ pub enum Type {
         fields: HashMap<Symbol, Type>,
         methods: HashMap<Symbol, Entry>,
     },
-    Fun(Vec<Type>, Box<Type>,bool), //params return and if closure
-    Dict(Box<Type>, Box<Type>), // Key, Value
+    Fun(Vec<Type>, Box<Type>, bool), //params return and if closure
+    Dict(Box<Type>, Box<Type>),      // Key, Value
     Int,
     Str,
     Bool,
@@ -113,7 +113,7 @@ impl Type {
 
                 fmt_string
             }
-            Type::Fun(ref params, ref returns,_) => {
+            Type::Fun(ref params, ref returns, _) => {
                 let mut fmt_string = String::from("fn(");
 
                 for (i, param) in params.iter().enumerate() {

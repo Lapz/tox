@@ -47,12 +47,12 @@ impl Infer {
                     Err(())
                 }
             }
-            (&Type::Fun(_, ref ret,_), ref o) => {
+            (&Type::Fun(_, ref ret, _), ref o) => {
                 self.unify(ret, o, span, ctx)?;
                 Ok(())
             }
 
-            (ref o, &Type::Fun(_, ref ret,_)) => {
+            (ref o, &Type::Fun(_, ref ret, _)) => {
                 self.unify(ret, o, span, ctx)?;
                 Ok(())
             }

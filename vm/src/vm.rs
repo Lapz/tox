@@ -1,5 +1,5 @@
 use super::Function;
-use object::{RawObject, StringObject,ArrayObject};
+use object::{ArrayObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -97,7 +97,6 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::RETURN => {
-                    
                     let value = self.pop();
 
                     match self.frames.pop() {
@@ -151,12 +150,11 @@ impl<'a> VM<'a> {
                 opcode::ARRAY => {
                     let len = self.read_byte();
 
-                    let items:Vec<Value> = (0..len).map(|_| self.pop()).collect();
+                    let items: Vec<Value> = (0..len).map(|_| self.pop()).collect();
 
-                    let array = ArrayObject::new(items,self.objects);
+                    let array = ArrayObject::new(items, self.objects);
 
                     self.push(Value::object(array));
-                    
                 }
 
                 opcode::LESS => binary_op!(<,as_int,bool,self),
@@ -220,22 +218,18 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALLCLOSURE => {
-
                     let arg_count = self.read_byte();
 
                     let mut params = HashMap::new();
-                    
-                    
+
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
                     }
 
                     let closure = self.pop();
 
-                        
                     let closure = &closure.as_function().function;
 
-                        
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
@@ -248,7 +242,6 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                  
                     let symbol = self.read_byte();
                     let arg_count = self.read_byte();
 
@@ -257,7 +250,6 @@ impl<'a> VM<'a> {
                     let mut function = None;
 
                     {
-                        
                         for func in self.functions.iter() {
                             if func.name == symbol {
                                 function = Some(func);
@@ -265,10 +257,8 @@ impl<'a> VM<'a> {
                         }
                     }
 
-        
                     let mut params = HashMap::new();
-                    
-                    
+
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
                     }
@@ -283,12 +273,31 @@ impl<'a> VM<'a> {
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
                     // swaps the current frame with the one we are one and then
-                },
-
-                
+                }
 
                 opcode::POP => {
                     self.pop();
+                }
+
+                opcode::INDEXARRAY => {
+                    let index = self.pop().as_int() as usize;
+
+                    let array = self.pop();
+                    let array = array.as_array();
+
+                    self.push(array.items[index]);
+                }
+
+                opcode::INDEXSTRING => {
+                    let index = self.pop().as_int() as usize;
+
+                    let string = self.pop();
+                    let string = string.as_string();
+
+                    let slice = &string.chars.string()[index..index+1];
+                    let result = StringObject::new(slice, self.objects);
+
+                    self.push(Value::object(result))
                 }
 
                 opcode::CONCAT => self.concat(),

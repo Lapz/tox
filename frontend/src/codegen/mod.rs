@@ -246,8 +246,6 @@ impl<'a> Builder<'a> {
         use ast::{AssignOperator, Expression, Literal, Op};
         self.set_span(expr.span);
 
-       
-
         match expr.value.expr.value {
             Expression::Assign(ref ident, ref op, ref expr) => {
                 let pos = if let Some(pos) = self.locals.get(ident) {
@@ -325,19 +323,35 @@ impl<'a> Builder<'a> {
                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
                     }
                 }
-            },
+            }
 
             Expression::Array(ref exprs) => {
-                
-                for expr in exprs {
+                for expr in exprs.iter().rev() {
+                    // reverse because items how items are popped off the stack
                     self.compile_expression(expr)?;
                 }
 
-                self.emit_bytes(opcode::ARRAY,exprs.len() as u8);
-            },
+                self.emit_bytes(opcode::ARRAY, exprs.len() as u8);
+            }
 
-            Expression::Index(ref ident,ref expr) => {
+            Expression::Index(ref target, ref index) => {
                 
+                match expr.value.ty {
+                    Type::Str => {
+                        self.compile_expression(target)?;
+                        self.compile_expression(index)?;
+
+                        self.emit_byte(opcode::INDEXSTRING);
+                    }
+                    Type::Array(_) => {
+                        self.compile_expression(target)?;
+                        self.compile_expression(index)?;
+
+                        self.emit_byte(opcode::INDEXARRAY);
+                    },
+
+                    _ => unimplemented!() // 
+                }
             }
 
             Expression::Literal(ref literal) => match *literal {
@@ -357,8 +371,7 @@ impl<'a> Builder<'a> {
                     self.emit_constant(Value::float(*f), expr.value.expr.span)?;
                 }
                 Literal::Str(ref string) => {
-                    let object =
-                        StringObject::new(string, self.objects);
+                    let object = StringObject::new(string, self.objects);
 
                     self.emit_constant(Value::object(object), expr.value.expr.span)?;
                 }
@@ -437,33 +450,26 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Call(ref callee, ref args) => {
-                
                 if args.is_empty() {
                     self.emit_bytes(opcode::CALL, callee.0 as u8);
                     self.emit_byte(0);
                     return Ok(());
                 }
 
-                
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
 
-
                 match expr.value.ty {
-                    Type::Fun(_,_,true) => {
-                     
-                       
+                    Type::Fun(_, _, true) => {
                         self.emit_byte(opcode::CALLCLOSURE);
                         self.emit_byte(args.len() as u8);
-                    },
+                    }
                     _ => {
-                            self.emit_bytes(opcode::CALL, callee.0 as u8);
-                            self.emit_byte(args.len() as u8);
-                    },
+                        self.emit_bytes(opcode::CALL, callee.0 as u8);
+                        self.emit_byte(args.len() as u8);
+                    }
                 }
-
-                
             }
 
             Expression::Grouping(ref expr) => {
@@ -520,7 +526,6 @@ impl<'a> Builder<'a> {
                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
 
                 self.emit_constant(Value::object(func), expr.span)?;
-            
             }
 
             ref e => unimplemented!("{:?}", e),

@@ -36,11 +36,11 @@ impl<'a> CompileCtx<'a> {
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::Fun(params.clone(), Box::new(returns.clone()),false ),
+                        ty: Type::Fun(params.clone(), Box::new(returns.clone()), false),
                     },
                 );
 
-                types.enter(symbol, Type::Fun(params, Box::new(returns),false));
+                types.enter(symbol, Type::Fun(params, Box::new(returns), false));
             };
 
             add_builtin("clock", vec![], Type::Float);
@@ -82,7 +82,7 @@ impl<'a> CompileCtx<'a> {
                 "io",
                 vec![(
                     "readline",
-                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str),false)),
+                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str), false)),
                 )],
             );
         }

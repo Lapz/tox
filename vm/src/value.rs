@@ -1,4 +1,4 @@
-use object::{FunctionObject, Object, ObjectType, RawObject, StringObject};
+use object::{ArrayObject, FunctionObject, Object, ObjectType, RawObject, StringObject};
 use std::fmt::{self, Debug, Display};
 use std::mem;
 #[derive(Clone, Copy)]
@@ -65,8 +65,6 @@ impl Value {
         }
     }
 
-
-
     pub fn as_bool(&self) -> bool {
         debug_assert_eq!(
             self.ty,
@@ -91,7 +89,7 @@ impl Value {
         unsafe { self.val.int }
     }
 
-     pub fn as_float(&self) -> f64 {
+    pub fn as_float(&self) -> f64 {
         debug_assert_eq!(
             self.ty,
             ValueType::Float,
@@ -121,6 +119,12 @@ impl Value {
         unsafe { mem::transmute(ptr) }
     }
 
+    pub fn as_array<'a>(&self) -> &'a ArrayObject {
+        let ptr = self.as_object();
+
+        unsafe { mem::transmute(ptr) }
+    }
+
     pub fn as_function<'a>(&self) -> &'a FunctionObject {
         let ptr = self.as_object();
 
@@ -137,33 +141,36 @@ impl Value {
                 && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
         }
     }
-
-   
 }
 
 impl Debug for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "Value {{")?;
         unsafe {
-
             match self.ty {
-                ValueType::Int | ValueType::Nil => {
-                    write!(fmt, "val:{:?},", self.val.int)?
-                },
+                ValueType::Int | ValueType::Nil => write!(fmt, "val:{:?},", self.val.int)?,
 
                 ValueType::Float => {
                     write!(fmt, "val:{:?},", self.val.float)?;
-                },
+                }
 
                 ValueType::Bool => {
                     write!(fmt, "val:{:?},", self.val.boolean)?;
-                },
+                }
 
                 ValueType::Object => {
                     if self.is_string() {
-                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&StringObject,>(self.val.object))?;
+                        write!(
+                            fmt,
+                            "val:{:?}",
+                            ::std::mem::transmute::<RawObject, &StringObject>(self.val.object)
+                        )?;
                     } else {
-                        write!(fmt, "val:{:?}",::std::mem::transmute::<RawObject,&FunctionObject,>(self.val.object))?;
+                        write!(
+                            fmt,
+                            "val:{:?}",
+                            ::std::mem::transmute::<RawObject, &FunctionObject>(self.val.object)
+                        )?;
                     }
                 }
             }

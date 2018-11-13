@@ -1,35 +1,10 @@
-fn fib(n:float) -> float {
-   if (n < 2.0) {
-     return n;
-   } else {
-      return fib(n - 2.0) + fib(n - 1.0);
-   }
-}
-
-
-fn factorial(n:int) -> int {
-    if(n == 1){
-      return 1;
-    }            
-    return n * factorial(n-1);
-}
-
-
 fn main() -> int {
-  let add = |a:int,b:int| -> int {
-    return a+b;
-  };
-
-  let mul = [0,1,2,3][0];
+  
+  let mul = "hello";
 
 
   
-  print fib(30.0);
-  print factorial(10);
-  let foo = add(1,2);
-  let bar = mul(10,2);
-  print foo;
-  print bar;
+  print mul[0];
   
 
   return 0;
