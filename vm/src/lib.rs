@@ -29,6 +29,5 @@ pub struct Function {
 #[derive(Debug, Clone)]
 pub struct Class {
     pub name: ::util::symbol::Symbol,
-    pub methods:  ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+    pub methods: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
 }
-

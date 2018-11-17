@@ -6,14 +6,15 @@ class Math {
 }
 
 fn main() -> int {
-  
-  let mul = "hello";
-
   let foo = Math {foo:10};
-
-
+  let mul = "hello";
   
-  print foo;
+  
+  print foo.foo;
+
+  foo.foo = 20;
+
+  print foo.foo;
   
 
   return 0;

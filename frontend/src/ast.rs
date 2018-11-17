@@ -1,8 +1,8 @@
 use infer::types::Type;
+use std::collections::HashMap;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
-use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Program {
@@ -82,7 +82,7 @@ pub enum Expression {
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Symbol, Vec<Spanned<TypedExpression>>),
     Closure(Box<Function>),
-    ClassInstance(Symbol, HashMap<Symbol,Spanned<TypedExpression>>),
+    ClassInstance(Symbol, HashMap<Symbol, Spanned<TypedExpression>>),
     Get(Symbol, Spanned<TypedExpression>),
     Grouping(Spanned<TypedExpression>),
 

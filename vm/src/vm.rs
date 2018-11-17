@@ -1,5 +1,5 @@
-use super::{Function,Class};
-use object::{ArrayObject, RawObject, StringObject,InstanceObject};
+use super::{Class, Function};
+use object::{ArrayObject, InstanceObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -32,7 +32,12 @@ pub enum Error {
 }
 
 impl<'a> VM<'a> {
-    pub fn new(main: Symbol, functions: &'a [Function],classes:&'a [Class],objects: RawObject) -> Result<Self, Error> {
+    pub fn new(
+        main: Symbol,
+        functions: &'a [Function],
+        classes: &'a [Class],
+        objects: RawObject,
+    ) -> Result<Self, Error> {
         let mut main_function = None;
 
         {
@@ -122,7 +127,6 @@ impl<'a> VM<'a> {
 
                 opcode::PRINT => {
                     let value = self.pop();
-
                     println!("{}", value);
                 }
 
@@ -217,6 +221,28 @@ impl<'a> VM<'a> {
                     let val = self.current_frame.params[&param];
 
                     self.push(val);
+                },
+
+
+                opcode::GETPROPERTY => {
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
+
+                    let property = Symbol(self.read_byte() as u64);
+
+
+                    self.push(instance.properties[&property]);
+                }
+
+                opcode::SETPROPERTY => {
+                    let instance = self.pop();
+                    let instance = instance.as_mut_instance();
+
+                    let value = self.pop();
+
+                    let property = Symbol(self.read_byte() as u64);
+
+                    instance.properties.insert(property,value);
                 }
 
                 opcode::CALLCLOSURE => {
@@ -296,18 +322,17 @@ impl<'a> VM<'a> {
                     let string = self.pop();
                     let string = string.as_string();
 
-                    let slice = &string.chars.string()[index..index+1];
+                    let slice = &string.chars.string()[index..index + 1];
                     let result = StringObject::new(slice, self.objects);
 
                     self.push(Value::object(result))
-                },
+                }
 
                 opcode::CLASSINSTANCE => {
-                    
                     let symbol = self.read_byte();
-                    
-                    let symbol = Symbol(symbol as u64);
+                    let num_properties = self.read_byte() as usize;
 
+                    let symbol = Symbol(symbol as u64);
 
                     let mut class = None;
 
@@ -324,29 +349,25 @@ impl<'a> VM<'a> {
                     let methods = class.methods.clone();
                     let mut properties = HashMap::new();
 
-                    // for _ in 0..num_properties {
-                    //     properties.insert(Symbol(self.read_byte() as u64), self.pop());
-                    // }
+                    for i in 0..num_properties {
+                        properties.insert(Symbol(self.read_byte() as u64), self.pop());
+                    }
 
-                    // println!("{:?}",properties);
-
-                    let instance = InstanceObject::new(methods,properties,self.objects);
+                    let instance = InstanceObject::new(methods, properties, self.objects);
 
                     self.push(Value::object(instance));
-
-                },
+                }
 
                 opcode::SETPROPERTY => {
                     let property = Symbol(self.read_byte() as u64);
-           
-                    let instance = self.stack[self.stack_top-1];
+
+                    let instance = self.stack[self.stack_top - 1];
                     let value = self.stack[self.stack_top];
-                    
+
                     let mut instance = instance.as_mut_instance();
 
-                    
                     instance.properties.insert(property, value);
-                },
+                }
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]
@@ -416,6 +437,10 @@ impl<'a> VM<'a> {
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]
+    }
+
+    fn peek(&mut self, distance: usize) -> Value {
+        self.stack[self.stack_top - distance]
     }
 }
 

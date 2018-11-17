@@ -1,4 +1,7 @@
-use object::{ArrayObject, FunctionObject, Object, ObjectType, RawObject, StringObject,InstanceObject};
+use object::{
+    ArrayObject, ClassObject, FunctionObject, InstanceObject, Object, ObjectType, RawObject,
+    StringObject,
+};
 use std::fmt::{self, Debug, Display};
 use std::mem;
 #[derive(Clone, Copy)]
@@ -140,9 +143,7 @@ impl Value {
     pub fn as_mut_instance<'a>(&self) -> &'a mut InstanceObject {
         let ptr = self.as_object();
 
-        unsafe {
-            mem::transmute(ptr)
-        }
+        unsafe { mem::transmute(ptr) }
     }
 
     #[inline]
@@ -174,18 +175,34 @@ impl Debug for Value {
                 }
 
                 ValueType::Object => {
-                    if self.is_string() {
-                        write!(
+                    let obj: &Object = mem::transmute(self.as_object());
+
+                    match obj.ty {
+                        ObjectType::String => write!(
                             fmt,
-                            "val:{:?}",
+                            "{:#?}",
                             ::std::mem::transmute::<RawObject, &StringObject>(self.val.object)
-                        )?;
-                    } else {
-                        write!(
+                        )?,
+                        ObjectType::Func => write!(
                             fmt,
-                            "val:{:?}",
+                            "{:#?}",
                             ::std::mem::transmute::<RawObject, &FunctionObject>(self.val.object)
-                        )?;
+                        )?,
+                        ObjectType::Array => write!(
+                            fmt,
+                            "{:#?}",
+                            ::std::mem::transmute::<RawObject, &ArrayObject>(self.val.object)
+                        )?,
+                        ObjectType::Class => write!(
+                            fmt,
+                            "{:#?}",
+                            ::std::mem::transmute::<RawObject, &ClassObject>(self.val.object)
+                        )?,
+                        ObjectType::Instance => write!(
+                            fmt,
+                            "{:#?}",
+                            ::std::mem::transmute::<RawObject, &InstanceObject>(self.val.object)
+                        )?,
                     }
                 }
             }
@@ -215,8 +232,8 @@ impl Display for Value {
                     ObjectType::String => write!(fmt, "{}", self.as_string())?,
                     ObjectType::Func => write!(fmt, " fun")?,
                     ObjectType::Array => write!(fmt, "array")?,
-                    ObjectType::Class => write!(fmt,"class")?,
-                    ObjectType::Instance => write!(fmt,"instance")?
+                    ObjectType::Class => write!(fmt, "class")?,
+                    ObjectType::Instance => write!(fmt, "instance")?,
                 }
             }
         }

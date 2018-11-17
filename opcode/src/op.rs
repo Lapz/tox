@@ -72,11 +72,11 @@ pub mod opcode {
 
     pub const INDEXSTRING: u8 = 038;
 
-    pub const GETPROPERTY:u8 = 039;
+    pub const GETPROPERTY: u8 = 039;
 
-    pub const CLASSINSTANCE:u8 = 040;
+    pub const CLASSINSTANCE: u8 = 040;
 
-    pub const SETPROPERTY:u8 =041;
+    pub const SETPROPERTY: u8 = 041;
 
     // pub const STORELOCAL:u8
 }

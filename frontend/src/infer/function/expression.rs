@@ -3,9 +3,9 @@ use ctx::CompileCtx;
 use infer::env::VarEntry;
 use infer::types::Type;
 use infer::{Infer, InferResult};
+use std::collections::HashMap;
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
-use std::collections::HashMap;
 
 impl Infer {
     pub(crate) fn infer_expr(
@@ -552,7 +552,7 @@ impl Infer {
 
                                 self.unify(&prop_ty.1, &ty.value.ty, span, ctx)?;
 
-                                instance_exprs.insert(ident,ty);
+                                instance_exprs.insert(ident, ty);
                             } else {
                                 found = false;
 
