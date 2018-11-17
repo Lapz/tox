@@ -219,7 +219,10 @@ impl PartialEq for Object {
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
             (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
-            _ => false,
+            (ref s,ref o) => {
+                println!("{:?} vs {:?}",s,o);
+                false
+            },
         }
     }
 }

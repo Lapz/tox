@@ -1,5 +1,5 @@
 use super::{Class, Function};
-use object::{ArrayObject, InstanceObject, RawObject, StringObject};
+use object::{ArrayObject, InstanceObject, RawObject, StringObject,FunctionObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -230,8 +230,16 @@ impl<'a> VM<'a> {
 
                     let property = Symbol(self.read_byte() as u64);
 
+                    let value = if let Some(value) = instance.properties.get(&property) {
+                        *value
+                    }else if let Some(function) = instance.methods.get(&property) {
+                       Value::object(FunctionObject::new(function.params.len(), function.clone(), self.objects))
+                    } else {
+                        unreachable!("Undefined field or property");
+                    };
 
-                    self.push(instance.properties[&property]);
+
+                    self.push(value);
                 }
 
                 opcode::SETPROPERTY => {

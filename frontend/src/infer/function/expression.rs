@@ -404,11 +404,11 @@ impl Infer {
                                     callee_exprs.push(ty_expr)
                                 }
 
-                                for (span, arg_ty) in arg_tys.iter() {
-                                    for def_ty in targs.iter() {
-                                        self.unify(arg_ty, def_ty, *span, ctx)?;
-                                    }
-                                }
+                                // for (span, arg_ty) in arg_tys.iter() {
+                                //     for def_ty in targs.iter() {
+                                //         self.unify(arg_ty, def_ty, *span, ctx)?;
+                                //     }
+                                // }
 
                                 Ok((
                                     Spanned::new(
@@ -636,10 +636,7 @@ impl Infer {
                                     for (method_name, method_ty) in methods {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
-                                            let ty = match ty {
-                                                Type::Fun(_, ret, _) => *ret,
-                                                _ => unreachable!(),
-                                            };
+                                          
 
                                             return Ok((
                                                 Spanned::new(
@@ -649,8 +646,8 @@ impl Infer {
                                                 ty, // Change to return the return type
                                             ));
                                         }
-                                    }
-                                }
+                                    }  // change to use a hashmap.get
+                                }                       
 
                                 _ => unreachable!(),
                             }

@@ -263,11 +263,14 @@ pub(crate) fn evaluate_statement(
         } => {
             if evaluate_expression(cond, env)?.is_truthy() {
                 evaluate_statement(then, env)
-            } else if let Some(ref else_statement) = *otherwise {
-                evaluate_statement(else_statement, env)
             } else {
+                if let Some(ref else_statement) = *otherwise {
+                evaluate_statement(else_statement, env)
+                }else {
                 Ok(Object::None)
             }
+            } 
+            
         }
 
         Statement::VarDeclaration {

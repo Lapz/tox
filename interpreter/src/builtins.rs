@@ -29,6 +29,8 @@ impl BuiltIn {
             add_builtin(env.symbol("hex"), built_in_hex),
             add_builtin(env.symbol("to_int"), built_in_to_int),
             add_builtin(env.symbol("trim"), built_in_trim),
+            add_builtin(env.symbol("char_at"), built_in_char_at),
+            add_builtin(env.symbol("is_digit"), built_in_is_digit),
             add_builtin_class(env.symbol("io"), env, vec![("readline", built_in_readline)]),
         ]
     }
@@ -67,6 +69,33 @@ fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {
     Ok(Object::Str(format!("{:#X}", number).as_bytes().to_vec()))
 }
 
+fn built_in_char_at(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let mut arguments = arguments.into_iter();
+    let input = match arguments.next() {
+        Some(&Object::Str(ref a)) => a,
+        _ => unreachable!(),
+    };
+
+    let pos = match arguments.next() {
+        Some(&Object::Int(a)) => a,
+        _ => unreachable!(),
+    };
+
+    Ok(Object::Str(vec![input[pos as usize], b'\0']))
+}
+
+
+fn built_in_is_digit(arguments: &[Object]) -> Result<Object, RuntimeError> {
+    let mut arguments = arguments.into_iter();
+    let input = match arguments.next() {
+        Some(&Object::Str(ref a)) => a,
+        _ => unreachable!(),
+    };
+
+    
+    Ok(Object::Bool( (input[0] as char).is_numeric() ))
+    
+}
 fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
     let number = match arguments.iter().next() {
         Some(&Object::Int(a)) => a,
@@ -105,11 +134,15 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
         Some(&Object::Str(ref s)) => s,
         _ => unreachable!(),
     };
-    match str::from_utf8(string).unwrap().parse::<i64>() {
+   
+
+    match str::from_utf8(string).unwrap().trim_matches(char::from(0)).parse::<i64>() {
         Ok(n) => Ok(Object::Int(n)),
-        Err(_) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
+        Err(e) => {
+            Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
             string.to_vec(),
-        ))),
+        )))
+        },
     }
 }
 

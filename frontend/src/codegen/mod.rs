@@ -496,9 +496,7 @@ impl<'a> Builder<'a> {
 
             Expression::Get(ref property,ref instance) => {
                 self.compile_expression(instance)?;
-
                 self.emit_bytes(opcode::GETPROPERTY,property.0 as u8);
-
             }
 
             Expression::Grouping(ref expr) => {

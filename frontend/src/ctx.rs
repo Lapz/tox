@@ -49,6 +49,9 @@ impl<'a> CompileCtx<'a> {
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
             add_builtin("to_int", vec![Type::Str], Type::Int);
             add_builtin("trim", vec![Type::Str], Type::Str);
+            add_builtin("is_digit", vec![Type::Str], Type::Bool);
+            add_builtin("char_at",vec![Type::Str,Type::Int],Type::Str);
+            
         }
 
         {
