@@ -137,6 +137,14 @@ impl Value {
         unsafe { mem::transmute(ptr) }
     }
 
+    pub fn as_mut_instance<'a>(&self) -> &'a mut InstanceObject {
+        let ptr = self.as_object();
+
+        unsafe {
+            mem::transmute(ptr)
+        }
+    }
+
     #[inline]
     pub fn is_object(&self) -> bool {
         self.ty == ValueType::Object

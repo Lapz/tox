@@ -479,15 +479,14 @@ impl<'a> Builder<'a> {
                 
                 self.emit_bytes(opcode::CLASSINSTANCE,symbol.0 as u8);
                 self.emit_byte(properties.len() as u8);
-
-                for (ident,_) in properties.iter() { 
-                    self.emit_byte(ident.0 as u8);
+                
+                for (ident,expr) in properties.iter() { //rev because poped of stack            
+                    self.compile_expression(expr)?;
+                    self.emit_bytes(opcode::SETPROPERTY,ident.0 as u8);
                 }
                 
-                for (_,expr) in properties.iter() { //rev because poped of stack
-                    self.compile_expression(expr)?;
-                    
-                }
+                
+                
 
                 
             }

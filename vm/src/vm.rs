@@ -303,9 +303,8 @@ impl<'a> VM<'a> {
                 },
 
                 opcode::CLASSINSTANCE => {
+                    
                     let symbol = self.read_byte();
-                    let num_properties = self.read_byte();
-
                     
                     let symbol = Symbol(symbol as u64);
 
@@ -325,18 +324,29 @@ impl<'a> VM<'a> {
                     let methods = class.methods.clone();
                     let mut properties = HashMap::new();
 
-                    for _ in 0..num_properties {
-                        properties.insert(Symbol(self.read_byte() as u64), self.pop());
-                    }
+                    // for _ in 0..num_properties {
+                    //     properties.insert(Symbol(self.read_byte() as u64), self.pop());
+                    // }
 
-                    
+                    // println!("{:?}",properties);
 
                     let instance = InstanceObject::new(methods,properties,self.objects);
 
                     self.push(Value::object(instance));
 
-                }
+                },
 
+                opcode::SETPROPERTY => {
+                    let property = Symbol(self.read_byte() as u64);
+           
+                    let instance = self.stack[self.stack_top-1];
+                    let value = self.stack[self.stack_top];
+                    
+                    let mut instance = instance.as_mut_instance();
+
+                    
+                    instance.properties.insert(property, value);
+                },
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]
