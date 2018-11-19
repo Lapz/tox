@@ -539,32 +539,34 @@ impl Infer {
                 match class {
                     Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
                         let mut instance_exprs = HashMap::new();
-                        let mut found = false;
-
-                        for (prop, prop_ty) in props.into_iter().zip(fields.iter()) {
-                            if &prop.value.symbol.value == prop_ty.0 {
-                                found = true;
-
+                        let mut unkown = false;
+                        
+                        for prop in props.into_iter() {
+                           
+                           if let Some(def_prop_ty) = fields.get(&prop.value.symbol.value) {
                                 let span = prop.span;
                                 let ident = prop.value.symbol.value;
 
                                 let ty = self.infer_expr(prop.value.expr, ctx)?;
 
-                                self.unify(&prop_ty.1, &ty.value.ty, span, ctx)?;
+                                self.unify(&def_prop_ty, &ty.value.ty, span, ctx)?;
 
                                 instance_exprs.insert(ident, ty);
-                            } else {
-                                found = false;
-
-                                let msg = format!(
+                           }else {
+                               unkown = true;
+                               let msg = format!(
                                     "`{}` is not a member of `{}` ",
                                     ctx.name(prop.value.symbol.value),
-                                    ctx.name(*prop_ty.0)
+                                    ctx.name(symbol.value)
                                 );
-
                                 ctx.error(msg, prop.span)
-                            }
+                           }
                         }
+
+
+                     
+                      
+                       
 
                         if fields.len() > instance_exprs.len() {
                             let msg =
@@ -576,7 +578,7 @@ impl Infer {
                                 format!("class `{}` has too many fields", ctx.name(symbol.value));
                             ctx.error(msg, expr.span);
                             return Err(());
-                        } else if !found {
+                        }else if unkown { // encountered an unkown field
                             return Err(());
                         }
 

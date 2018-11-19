@@ -291,12 +291,23 @@ impl<'a> VM<'a> {
                                 function = Some(func);
                             }
                         }
+
+
                     }
 
                     let mut params = HashMap::new();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
+                    }
+
+
+                    if self.peek(1).is_class() {
+                        let class = self.stack[self.stack_top-1];
+
+                        if let Some(method) = class.as_class().methods.get(&symbol) {
+                            function = Some(&method.function);
+                        };
                     }
 
                     let call_frame = StackFrame {
