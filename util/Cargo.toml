@@ -7,3 +7,4 @@ authors = ["rowlandsonpratt <striderman34@gmail.com>"]
 [dependencies]
 ansi_term = "0.10"
 fnv = "1.0.3"
+itertools = "0.7"

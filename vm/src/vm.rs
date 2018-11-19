@@ -1,5 +1,5 @@
 use super::{Class, Function};
-use object::{ArrayObject, InstanceObject, RawObject, StringObject,FunctionObject};
+use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -221,8 +221,7 @@ impl<'a> VM<'a> {
                     let val = self.current_frame.params[&param];
 
                     self.push(val);
-                },
-
+                }
 
                 opcode::GETPROPERTY => {
                     let instance = self.pop();
@@ -232,12 +231,15 @@ impl<'a> VM<'a> {
 
                     let value = if let Some(value) = instance.properties.get(&property) {
                         *value
-                    }else if let Some(function) = instance.methods.get(&property) {
-                       Value::object(FunctionObject::new(function.params.len(), function.clone(), self.objects))
+                    } else if let Some(function) = instance.methods.get(&property) {
+                        Value::object(FunctionObject::new(
+                            function.params.len(),
+                            function.clone(),
+                            self.objects,
+                        ))
                     } else {
                         unreachable!("Undefined field or property");
                     };
-
 
                     self.push(value);
                 }
@@ -250,7 +252,7 @@ impl<'a> VM<'a> {
 
                     let property = Symbol(self.read_byte() as u64);
 
-                    instance.properties.insert(property,value);
+                    instance.properties.insert(property, value);
                 }
 
                 opcode::CALLCLOSURE => {
@@ -291,8 +293,6 @@ impl<'a> VM<'a> {
                                 function = Some(func);
                             }
                         }
-
-
                     }
 
                     let mut params = HashMap::new();
@@ -301,9 +301,8 @@ impl<'a> VM<'a> {
                         params.insert(i, self.pop());
                     }
 
-
                     if self.peek(1).is_class() {
-                        let class = self.stack[self.stack_top-1];
+                        let class = self.stack[self.stack_top - 1];
 
                         if let Some(method) = class.as_class().methods.get(&symbol) {
                             function = Some(&method.function);

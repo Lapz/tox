@@ -476,7 +476,6 @@ impl<'a> Builder<'a> {
             }
 
             Expression::ClassInstance(ref symbol, ref properties) => {
-
                 for (_, expr) in properties.iter() {
                     //rev because poped of stack
                     self.compile_expression(expr)?;
@@ -489,14 +488,11 @@ impl<'a> Builder<'a> {
                     //rev because poped of stack
                     self.emit_byte(ident.0 as u8);
                 }
-
-                
             }
 
-
-            Expression::Get(ref property,ref instance) => {
+            Expression::Get(ref property, ref instance) => {
                 self.compile_expression(instance)?;
-                self.emit_bytes(opcode::GETPROPERTY,property.0 as u8);
+                self.emit_bytes(opcode::GETPROPERTY, property.0 as u8);
             }
 
             Expression::Grouping(ref expr) => {
@@ -553,15 +549,12 @@ impl<'a> Builder<'a> {
                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
 
                 self.emit_constant(Value::object(func), expr.span)?;
-            },
+            }
 
-            Expression::Set(ref property,ref instance,ref value) => {
+            Expression::Set(ref property, ref instance, ref value) => {
                 self.compile_expression(value)?;
                 self.compile_expression(instance)?;
-                self.emit_bytes(opcode::SETPROPERTY,property.0 as u8);
-
-
-                
+                self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
 
             ref e => unimplemented!("{:?}", e),

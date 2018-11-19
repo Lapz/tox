@@ -540,10 +540,9 @@ impl Infer {
                     Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
                         let mut instance_exprs = HashMap::new();
                         let mut unkown = false;
-                        
+
                         for prop in props.into_iter() {
-                           
-                           if let Some(def_prop_ty) = fields.get(&prop.value.symbol.value) {
+                            if let Some(def_prop_ty) = fields.get(&prop.value.symbol.value) {
                                 let span = prop.span;
                                 let ident = prop.value.symbol.value;
 
@@ -552,21 +551,16 @@ impl Infer {
                                 self.unify(&def_prop_ty, &ty.value.ty, span, ctx)?;
 
                                 instance_exprs.insert(ident, ty);
-                           }else {
-                               unkown = true;
-                               let msg = format!(
+                            } else {
+                                unkown = true;
+                                let msg = format!(
                                     "`{}` is not a member of `{}` ",
                                     ctx.name(prop.value.symbol.value),
                                     ctx.name(symbol.value)
                                 );
                                 ctx.error(msg, prop.span)
-                           }
+                            }
                         }
-
-
-                     
-                      
-                       
 
                         if fields.len() > instance_exprs.len() {
                             let msg =
@@ -578,7 +572,8 @@ impl Infer {
                                 format!("class `{}` has too many fields", ctx.name(symbol.value));
                             ctx.error(msg, expr.span);
                             return Err(());
-                        }else if unkown { // encountered an unkown field
+                        } else if unkown {
+                            // encountered an unkown field
                             return Err(());
                         }
 
@@ -638,7 +633,6 @@ impl Infer {
                                     for (method_name, method_ty) in methods {
                                         if method_name == &property.value {
                                             let ty = method_ty.clone().get_ty();
-                                          
 
                                             return Ok((
                                                 Spanned::new(
@@ -648,8 +642,8 @@ impl Infer {
                                                 ty, // Change to return the return type
                                             ));
                                         }
-                                    }  // change to use a hashmap.get
-                                }                       
+                                    } // change to use a hashmap.get
+                                }
 
                                 _ => unreachable!(),
                             }
