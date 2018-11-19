@@ -6,39 +6,59 @@ pub mod opcode {
     /// HLT
     /// Stops the running of the vm
     pub const HLT: u8 = 01;
+    /// RETURN
+    /// Returns the value on the top of the stack
     pub const RETURN: u8 = 02;
-    ///CONSTANT
-    /// CAN BE A STR FLOAT OR INT
+    /// CONSTANT
+    /// Allocates a constant into the constant pool
     pub const CONSTANT: u8 = 03;
+    /// PRINT
+    /// Prints the value on the top of the stack
     pub const PRINT: u8 = 04;
+    /// NEGATEF $x
+    /// Returns -$x .FLOATS ONLY
     pub const NEGATEF: u8 = 05;
+    /// NEGATE $x
+    /// Returns -$x
     pub const NEGATE: u8 = 06;
+    /// NIL
+    /// Places nil onto the stack
     pub const NIL: u8 = 07;
+    /// TRUE
+    /// Places true onto the stack
     pub const TRUE: u8 = 08;
+    /// FALSE
+    /// Places false onto the stack
     pub const FALSE: u8 = 09;
+    /// NOT $x
+    /// Returns !$x
     pub const NOT: u8 = 010;
+    /// EQUAl $x $y
+    /// Returns $x == $y
     pub const EQUAL: u8 = 011;
-
+    /// GREATER $x $y
+    /// Returns $x > $y
     pub const GREATER: u8 = 012;
     pub const GREATERF: u8 = 013;
+    /// LESS $x $y
+    /// Returns $x < $y
     pub const LESS: u8 = 014;
     pub const LESSF: u8 = 015;
-    /// ADD
+    /// ADD $x $y
     pub const ADD: u8 = 016;
     /// ADD Float
     pub const ADDF: u8 = 017;
-    /// SUB
+    /// SUB $x $y
     pub const SUB: u8 = 018;
     /// SUB Float
     pub const SUBF: u8 = 019;
-
-    /// MUL
+    /// MUL $x $y
     pub const MUL: u8 = 020;
-    /// MUL Float
+    /// MUL Float $x $y
     pub const MULF: u8 = 021;
-    /// DIV
+    /// DIV $x $y
     pub const DIV: u8 = 022;
-    /// DIV Float
+    /// DIV Float $x $y
     pub const DIVF: u8 = 023;
 
     pub const JUMP: u8 = 024;

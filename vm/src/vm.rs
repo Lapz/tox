@@ -365,17 +365,6 @@ impl<'a> VM<'a> {
 
                     self.push(Value::object(instance));
                 }
-
-                opcode::SETPROPERTY => {
-                    let property = Symbol(self.read_byte() as u64);
-
-                    let instance = self.stack[self.stack_top - 1];
-                    let value = self.stack[self.stack_top];
-
-                    let mut instance = instance.as_mut_instance();
-
-                    instance.properties.insert(property, value);
-                }
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]
