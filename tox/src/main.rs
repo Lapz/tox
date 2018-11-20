@@ -152,8 +152,6 @@ pub fn run(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    
-
     if past {
         println!("{:#?}", ast);
     }

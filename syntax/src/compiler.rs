@@ -17,8 +17,6 @@ pub struct Parser<'a> {
     symbols: &'a mut Symbols<()>,
     /// The character ahead
     lookahead: Option<(Position, char)>,
-    /// the last token
-    last_token: Option<Spanned<Token<'a>>>,
     /// The very first character
     start: Position,
     /// The last charact
@@ -31,24 +29,17 @@ impl<'a> Parser<'a> {
     pub fn new(input: &'a str, reporter: Reporter, symbols: &'a mut Symbols<()>) -> Self {
         let mut chars = CharPosition::new(input);
         let end = chars.pos;
-        let mut parser = Self {
+        Self {
             input,
             end,
             start: end,
             reporter,
             lookahead: chars.next(),
-            last_token: None,
+
             chars,
             symbols,
             parsing_cond: false,
-        };
-
-        let token = parser.next();
-
-        parser.last_token = Some(token.unwrap());
-
-        parser
-
+        }
 
     }
 
@@ -243,6 +234,7 @@ impl<'a> Parser<'a> {
     fn advance(&mut self) -> Option<(Position, char)> {
         match self.lookahead {
             Some((pos, ch)) => {
+                self.start = pos;
                 self.end = self.end.shift(ch);
                 self.lookahead = self.chars.next();
                 Some((pos, ch))
@@ -550,8 +542,39 @@ impl<'a> Parser<'a> {
     
 
     fn recognise(&mut self, token: TokenType) -> ParserResult<bool> {
-        if let Som
-        Ok(self.last_token.as_ref().map_or(false, |t|  &t.value.token == &token))
+
+        match self.lookahead {
+            Some((start,'f')) => {
+
+                match self.chars.chars.peek() {
+                    Some('a') => Ok(self.check_keyword(start, 4, "alse")),
+                    Some('o') =>Ok(self.check_keyword(start, 2, "or")),
+                    Some('n') => Ok(self.check_keyword(start, 3, "alse")),
+                    Some(ch) => Ok(false),
+                    None => Err(())
+                }
+              
+            },
+            Some((_,ch)) => {
+                 println!("{:?}",self.chars.chars.peek());
+                Ok(false)
+            },
+            None => Err(()),
+        }
+
+      
+        // Ok(self.next()?.value.token == token)
+    }
+
+    fn check_keyword(&self,start:Position,length:usize,rest:&str) -> bool {
+        if start.absolute + length > self.input.len() {
+            return false
+        }else{
+            let mut end = start.clone();
+            end.absolute += length;
+
+            self.slice(start,end) == rest
+        }
     }
 
     fn get_unary_op(&mut self) -> ParserResult<Spanned<UnaryOp>> {
