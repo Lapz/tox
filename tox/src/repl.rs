@@ -2,17 +2,14 @@ use frontend::{compile, Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, Program};
-// use syntax::lexer::Lexer;
+
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::pos::Spanned;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
 
-pub struct Repl {
-    // vm: VM,
-// assembler: Assembler,
-}
+pub struct Repl {}
 
 impl Repl {
     pub fn new() -> Self {

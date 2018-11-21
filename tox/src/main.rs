@@ -10,7 +10,6 @@ extern crate vm;
 
 mod repl;
 
-// use codegen::Compiler;
 use frontend::{compile, Infer};
 use interpreter::{interpret, Environment};
 use std::fs::File;
@@ -18,7 +17,6 @@ use std::io::Read;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syntax::parser::Parser;
-
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
@@ -61,7 +59,7 @@ pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
 
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
-    
+
     let ast = match Parser::new(input, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => statements,
         Err(_) => {

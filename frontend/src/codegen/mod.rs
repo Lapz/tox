@@ -146,8 +146,6 @@ impl<'a> Builder<'a> {
                 self.compile_expression(expr)?;
 
                 self.emit_byte(opcode::PRINT);
-                
-
                 Ok(())
             }
 
