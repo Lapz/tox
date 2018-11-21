@@ -44,88 +44,6 @@ pub fn repl() {
 }
 
 pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
-    // let mut file = File::open(path).expect("File not found");
-
-    // let mut contents = String::new();
-
-    // file.read_to_string(&mut contents)
-    //     .expect("something went wrong reading the file");
-
-    // let input = contents.trim();
-
-    // if contents.is_empty() {
-    //     ::std::process::exit(0)
-    // }
-
-    // let mut reporter = Reporter::new();
-
-    // let mut lexer = Lexer::new(input, reporter.clone());
-
-    // let tokens = match lexer.lex() {
-    //     Ok(tokens) => {
-    //         if ptokens {
-    //             for token in &tokens {
-    //                 println!("{:#?}", token);
-    //             }
-    //         }
-    //         tokens
-    //     }
-    //     Err(_) => {
-    //         reporter.emit(input);
-    //         ::std::process::exit(65)
-    //     }
-    // };
-
-    // reporter.set_end(lexer.end_span());
-
-    // let strings = Rc::new(SymbolFactory::new());
-    // let mut symbols = Symbols::new(Rc::clone(&strings));
-
-    // // let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-    // //     Ok(statements) => statements,
-    // //     Err(_) => {
-    // //         reporter.emit(input);
-    // //         ::std::process::exit(65)
-    // //     }
-    // // };
-
-    // if past {
-    //     println!("{:#?}", ast);
-    // }
-
-    // let mut infer = Infer::new();
-
-    // match infer.infer(ast.clone(), &strings, &mut reporter) {
-    //     Ok(_) => (),
-    //     Err(_) => {
-    //         reporter.emit(input);
-    //         ::std::process::exit(65)
-    //     }
-    // };
-
-    // let mut env = Environment::new();
-    // env.fill_env(&mut symbols);
-
-    // match interpret(&ast, &mut env, infer.get_main()) {
-    //     Ok(_) => (),
-    //     Err(err) => {
-    //         if let Some(span) = err.span {
-    //             let msg = err.code.reason(&symbols);
-
-    //             reporter.run_time_error(msg, span);
-
-    //             reporter.emit(input);
-    //         } else {
-    //             reporter.global_run_time_error(&err.code.reason(&symbols));
-    //             reporter.emit(input);
-    //         }
-
-    //         ::std::process::exit(65)
-    //     }
-    // };
-}
-
-pub fn run(path: String, ptokens: bool, past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -152,9 +70,73 @@ pub fn run(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    if past {
-        println!("{:#?}", ast);
+    // if past {
+    println!("{:#?}", ast);
+    // }
+
+    let mut infer = Infer::new();
+
+    match infer.infer(ast.clone(), &strings, &mut reporter) {
+        Ok(_) => (),
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    let mut env = Environment::new();
+    env.fill_env(&mut symbols);
+
+    match interpret(&ast, &mut env, infer.get_main()) {
+        Ok(_) => (),
+        Err(err) => {
+            if let Some(span) = err.span {
+                let msg = err.code.reason(&symbols);
+
+                reporter.run_time_error(msg, span);
+
+                reporter.emit(input);
+            } else {
+                reporter.global_run_time_error(&err.code.reason(&symbols));
+                reporter.emit(input);
+            }
+
+            ::std::process::exit(65)
+        }
+    };
+}
+
+pub fn run(path: String, ptokens: bool, past: bool) {
+    let mut file = File::open(path).expect("File not found");
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
+
+    let input = contents.trim();
+
+    if contents.is_empty() {
+        ::std::process::exit(0)
     }
+
+    let mut reporter = Reporter::new();
+
+    let strings = Rc::new(SymbolFactory::new());
+    let mut symbols = Symbols::new(Rc::clone(&strings));
+
+    let ast = match ::syntax::compiler::Parser::new(input, reporter.clone(), &mut symbols).parse() {
+        Ok(statements) => statements,
+        Err(_) => {
+            // panic!("");
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    // if past {
+    println!("{:#?}", ast);
+    // }
 
     let mut infer = Infer::new();
 

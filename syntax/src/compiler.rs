@@ -40,7 +40,6 @@ impl<'a> Parser<'a> {
             symbols,
             parsing_cond: false,
         }
-
     }
 
     pub fn parse(&mut self) -> ParserResult<Program> {
@@ -52,19 +51,17 @@ impl<'a> Parser<'a> {
 
         let mut had_error = false;
 
-        
-
         while self.peek(|token| token != '\0') {
-            if self.recognise(TokenType::FUNCTION)? {
+            if self.recognise(TokenType::FUNCTION) {
                 match self.parse_function("function") {
                     Ok(function) => program.functions.push(function),
                     Err(_) => {
                         had_error = true;
-                       
+
                         self.synchronize();
                     }
                 }
-            } else if self.recognise(TokenType::CLASS)? {
+            } else if self.recognise(TokenType::CLASS) {
                 match self.parse_class_declaration() {
                     Ok(class) => program.classes.push(class),
                     Err(_) => {
@@ -72,7 +69,7 @@ impl<'a> Parser<'a> {
                         self.synchronize();
                     }
                 }
-            } else if self.recognise(TokenType::TYPE)? {
+            } else if self.recognise(TokenType::TYPE) {
                 match self.parse_type_alias() {
                     Ok(alias) => program.aliases.push(alias),
                     Err(_) => {
@@ -81,6 +78,7 @@ impl<'a> Parser<'a> {
                     }
                 }
             } else {
+                // panic!("{:?}",self.lookahead);
                 self.synchronize();
                 had_error = true;
             }
@@ -94,7 +92,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn synchronize(&mut self) {
-        self.advance();
+        self.next();
 
         while self.peek(|token| token == '\0') {
             match self.next().map(|span| span.value.token) {
@@ -405,16 +403,16 @@ impl<'a> Parser<'a> {
 
 impl<'a> Parser<'a> {
     /// Checks if any one of the given tokens is the next token
-    fn matched(&mut self, tokens: Vec<TokenType>) -> ParserResult<bool> {
+    fn matched(&mut self, tokens: Vec<TokenType>) -> bool {
         let mut found = false;
 
         for token in tokens {
-            if self.recognise(token)? {
+            if self.recognise(token) {
                 found = true;
             }
         }
 
-        Ok(found)
+        found
     }
 
     // check if the input matches everything
@@ -422,10 +420,12 @@ impl<'a> Parser<'a> {
         let mut matches = false;
 
         for ch in chars {
-            self.chars.chars.peek().map(|c| if *c == ch { matches = true});
+            self.chars.chars.peek().map(|c| {
+                if *c == ch {
+                    matches = true
+                }
+            });
         }
-
-        
 
         matches
     }
@@ -539,41 +539,50 @@ impl<'a> Parser<'a> {
         self.symbols.symbol(&s)
     }
 
-    
-
-    fn recognise(&mut self, token: TokenType) -> ParserResult<bool> {
-
+    fn recognise(&mut self, token: TokenType) -> bool {
         match self.lookahead {
-            Some((start,'f')) => {
+            Some((start, 'c')) => match self.chars.chars.peek() {
+                Some('a') => self.check_keyword(start.shift('a'), 3, "ass"),
+                Some('o') => self.check_keyword(start.shift('o'), 7, "ontinue"),
+                Some(_) | None => false,
+            },
+            Some((start, 'p')) => self.check_keyword(start, 4, "rint"),
+            Some((start, 't')) => match self.chars.chars.peek() {
+                Some('h') => self.check_keyword(start.shift('h'), 4, "his"),
+                Some('y') => self.check_keyword(start.shift('y'), 2, "ype"),
+                Some('r') => self.check_keyword(start.shift('r'), 3, "rue"),
+                Some(_) | None => false,
+            },
+            Some((start, 'f')) => match self.chars.chars.peek() {
+                Some('a') => self.check_keyword(start.shift('a'), 4, "alse"),
+                Some('o') => self.check_keyword(start.shift('o'), 2, "or"),
+                Some('n') => self.check_keyword(start.shift('n'), 1, "n"),
+                Some(_) | None => false,
+            },
 
-                match self.chars.chars.peek() {
-                    Some('a') => Ok(self.check_keyword(start, 4, "alse")),
-                    Some('o') =>Ok(self.check_keyword(start, 2, "or")),
-                    Some('n') => Ok(self.check_keyword(start, 3, "alse")),
-                    Some(ch) => Ok(false),
-                    None => Err(())
-                }
-              
-            },
-            Some((_,ch)) => {
-                 println!("{:?}",self.chars.chars.peek());
-                Ok(false)
-            },
-            None => Err(()),
+            Some((start, 'l')) => self.check_keyword(start.shift('l'), 2, "et"),
+            Some((start, 'i')) => self.check_keyword(start.shift('i'), 1, "f"),
+            Some((start, 'e')) => self.check_keyword(start.shift('e'), 3, "lse"),
+            Some((start, 'w')) => self.check_keyword(start.shift('w'), 4, "hile"),
+            Some((start, 'r')) => self.check_keyword(start.shift('r'), 4, "eturn"),
+            Some((start, 'b')) => self.check_keyword(start.shift('b'), 4, "reak"),
+            Some((start, 'd')) => self.check_keyword(start.shift('d'), 1, "o"),
+            Some((start, 'o')) => self.check_keyword(start.shift('o'), 1, "r"),
+            Some((start, 'a')) => self.check_keyword(start.shift('a'), 2, "nd"),
+            Some((start, 'n')) => self.check_keyword(start.shift('n'), 2, "il"),
+            Some(_) | None => false,
         }
 
-      
         // Ok(self.next()?.value.token == token)
     }
 
-    fn check_keyword(&self,start:Position,length:usize,rest:&str) -> bool {
+    fn check_keyword(&self, start: Position, length: usize, rest: &str) -> bool {
         if start.absolute + length > self.input.len() {
-            return false
-        }else{
+            return false;
+        } else {
             let mut end = start.clone();
             end.absolute += length;
-
-            self.slice(start,end) == rest
+            self.slice(start, end) == rest
         }
     }
 
@@ -638,7 +647,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type(&mut self) -> ParserResult<Spanned<Type>> {
-        if self.recognise(TokenType::NIL)? {
+        if self.recognise(TokenType::NIL) {
             Ok(Spanned {
                 value: Type::Nil,
                 span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
@@ -650,7 +659,7 @@ impl<'a> Parser<'a> {
                 value: Type::Arr(Box::new(ty)),
                 span: self.consume_get_span(&TokenType::RBRACKET, "Expected ']' ")?,
             })
-        } else if self.recognise(TokenType::FUNCTION)? {
+        } else if self.recognise(TokenType::FUNCTION) {
             let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'fun' ")?;
 
             self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
@@ -670,7 +679,7 @@ impl<'a> Parser<'a> {
 
             let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
 
-            if self.recognise(TokenType::FRETURN)? {
+            if self.recognise(TokenType::FRETURN) {
                 self.advance();
                 let ty = self.parse_type()?;
                 Ok(Spanned {
@@ -700,8 +709,9 @@ impl<'a> Parser<'a> {
 */
 impl<'a> Parser<'a> {
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
+        
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
-
+        
         let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
@@ -712,7 +722,7 @@ impl<'a> Parser<'a> {
         let rparen_span =
             self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
 
-        if self.recognise(TokenType::FRETURN)? {
+        if self.recognise(TokenType::FRETURN) {
             self.advance();
 
             returns = Some(self.parse_type()?);
@@ -780,23 +790,23 @@ impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         if self.peek(|ch| ch == '{') {
             self.parse_block()
-        } else if self.recognise(TokenType::LET)? {
+        } else if self.recognise(TokenType::LET) {
             self.parse_var_declaration()
-        } else if self.recognise(TokenType::BREAK)? {
+        } else if self.recognise(TokenType::BREAK) {
             self.parse_break_statement()
-        } else if self.recognise(TokenType::CONTINUE)? {
+        } else if self.recognise(TokenType::CONTINUE) {
             self.parse_continue_statement()
-        } else if self.recognise(TokenType::RETURN)? {
+        } else if self.recognise(TokenType::RETURN) {
             self.parse_return_statement()
-        } else if self.recognise(TokenType::IF)? {
+        } else if self.recognise(TokenType::IF) {
             self.parse_if_statement()
-        } else if self.recognise(TokenType::DO)? {
+        } else if self.recognise(TokenType::DO) {
             self.parse_do_statement()
-        } else if self.recognise(TokenType::WHILE)? {
+        } else if self.recognise(TokenType::WHILE) {
             self.parse_while_statement()
-        } else if self.recognise(TokenType::FOR)? {
+        } else if self.recognise(TokenType::FOR) {
             self.parse_for_statement()
-        } else if self.recognise(TokenType::PRINT)? {
+        } else if self.recognise(TokenType::PRINT) {
             self.parse_print_statement()
         } else {
             self.parse_expression_statement()
@@ -954,7 +964,7 @@ impl<'a> Parser<'a> {
 
         let then = Box::new(self.parse_statement()?);
 
-        let (close_span, otherwise) = if self.recognise(TokenType::ELSE)? {
+        let (close_span, otherwise) = if self.recognise(TokenType::ELSE) {
             self.advance();
 
             let otherwise = self.parse_statement()?;
@@ -983,7 +993,7 @@ impl<'a> Parser<'a> {
 
         if self.peek(|ch| ch == ';') {
             self.advance();
-        } else if self.recognise(TokenType::LET)? {
+        } else if self.recognise(TokenType::LET) {
             init = Some(Box::new(self.parse_var_declaration()?));
         } else {
             init = Some(Box::new(self.parse_expression_statement()?));
@@ -1317,7 +1327,7 @@ impl<'a> Parser<'a> {
 
         let params_span = self.consume_get_span(&TokenType::BAR, "Expected `|` ")?;
 
-        let returns = if self.recognise(TokenType::FRETURN)? {
+        let returns = if self.recognise(TokenType::FRETURN) {
             self.advance(); // skip the ->
             Some(self.parse_type()?)
         } else {
@@ -1480,7 +1490,7 @@ impl<'a> Parser<'a> {
         self.consume(&TokenType::LBRACE, "Expected a '{' after class name")?;
 
         while !self.peek(|ch| ch == '}') {
-            if !self.recognise(TokenType::FUNCTION)? {
+            if !self.recognise(TokenType::FUNCTION) {
                 loop {
                     let (open_span, name) =
                         self.consume_get_symbol_and_span("Expected a property name")?;
