@@ -1,3 +1,60 @@
+fn factorial(n:int) -> int {
+  if(n == 1)
+  {
+    return 1;
+  }               
+  return n * factorial(n-1);
+}
+
+fn digit(input:str,counter:int) -> int {
+   if(is_digit(char_at(input,counter)))  {
+
+    if to_int(char_at(input,counter)) == 1 {
+              return 1;
+    }else if to_int(char_at(input,counter)) == 2 {
+              return 2;
+    }else if to_int(char_at(input,counter)) == 3 {
+              return 3;
+    }else if to_int(char_at(input,counter)) == 4 {
+              return 4;
+    }else if to_int(char_at(input,counter)) == 5 {
+              return 5;
+    }else if to_int(char_at(input,counter)) == 6 {
+              return 6;
+    }else if to_int(char_at(input,counter)) == 7 {
+              return 7;
+    }else if to_int(char_at(input,counter)) == 8 {
+              return 8;
+    }else if to_int(char_at(input,counter)) == 9 {
+              return 9;
+    }else if to_int(char_at(input,counter)) == 0 {
+              return 0;
+    }else {
+          return -1;
+    }
+   }else {
+     return -5;
+   }
+}
+
+fn expression(input:str,counter:int) -> int {
+    let result = 0;
+    if(char_at(input,counter) == "!") { 
+        counter = counter+1; // eat the operator 
+        result = factorial(expression(input,counter));
+    }else if(char_at(input,counter) == "*") {
+        counter +=1; // eat the operator 
+        result = expression(input,counter) * expression(input,counter+1);
+    }else if(char_at(input,counter) == "+") {
+        counter +=1; // eat the operator 
+        result = expression(input,counter) + expression(input,counter+1);
+    }else {
+        result = digit(input,counter);
+    }
+    return result;
+}
+
+
 fn main() -> int {
 
   let counter = 0;

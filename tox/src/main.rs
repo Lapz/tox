@@ -70,9 +70,9 @@ pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    // if past {
+    if past {
     println!("{:#?}", ast);
-    // }
+    }
 
     let mut infer = Infer::new();
 
@@ -128,15 +128,15 @@ pub fn run(path: String, ptokens: bool, past: bool) {
     let ast = match ::syntax::compiler::Parser::new(input, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => statements,
         Err(_) => {
-            // panic!("");
+            
             reporter.emit(input);
             ::std::process::exit(65)
         }
     };
 
-    // if past {
-    println!("{:#?}", ast);
-    // }
+    if past {
+        println!("{:#?}", ast);
+    }
 
     let mut infer = Infer::new();
 

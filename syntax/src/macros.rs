@@ -18,7 +18,7 @@ macro_rules! binary {
     };
 
     ($_self:ident, $expr:expr, $lhs:expr, $func:ident) => {
-        while $_self.matched($expr){
+        while $_self.matches($expr){
             let op = $_self.get_binary_op()?;
 
             let rhs = Box::new($_self.$func()?);
@@ -38,7 +38,7 @@ macro_rules! binary {
 macro_rules! get_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.next() {
+            match $_self.nxt() {
                  $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
@@ -80,7 +80,7 @@ macro_rules! get_op {
 macro_rules! get_unary_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.next() {
+            match $_self.nxt() {
                  $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
@@ -121,7 +121,7 @@ macro_rules! get_unary_op {
 macro_rules! get_assign_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.next() {
+            match $_self.nxt() {
                  $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
