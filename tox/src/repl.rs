@@ -2,8 +2,8 @@ use frontend::{compile, Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, Program};
-use syntax::lexer::Lexer;
-// use syntax::parser::Parser;
+// use syntax::lexer::Lexer;
+use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::pos::Spanned;
 use util::symbol::{SymbolFactory, Symbols};
@@ -22,8 +22,8 @@ impl Repl {
     pub fn run(&mut self) {
         println!("Welcome to the tox programming language");
 
-        // let strings = Rc::new(SymbolFactory::new());
-        // let mut symbols = Symbols::new(Rc::clone(&strings));
+        let strings = Rc::new(SymbolFactory::new());
+        let mut symbols = Symbols::new(Rc::clone(&strings));
 
         loop {
             let mut input = String::with_capacity(1024);
@@ -48,70 +48,58 @@ impl Repl {
                 _ => (),
             }
 
-            // let mut reporter = Reporter::new();
+            let mut reporter = Reporter::new();
 
-            // let mut lexer = Lexer::new(&input, reporter.clone());
+            let expr = match Parser::new(&input, reporter.clone(), &mut symbols).parse_statement() {
+                Ok(statements) => statements,
+                Err(_) => {
+                    reporter.emit(&input);
+                    ::std::process::exit(65)
+                }
+            };
 
-            // let tokens = match lexer.lex() {
-            //     Ok(tokens) => tokens,
-            //     Err(_) => {
-            //         reporter.emit(&input);
-            //         continue;
-            //     }
-            // };
+            let pusedo_main_symbol = symbols.symbol("main");
 
-            // reporter.set_end(lexer.end_span());
+            let pusedo_main_span = expr.get_span();
 
-            // let expr = match Parser::new(tokens, reporter.clone(), &mut symbols).parse_statement() {
-            //     Ok(expression) => expression,
-            //     Err(_) => {
-            //         reporter.emit(&input);
-            //         continue;
-            //     }
-            // };
+            let pusedo_main = Spanned::new(
+                Function {
+                    name: Spanned::new(pusedo_main_symbol, pusedo_main_span),
+                    params: Spanned::new(vec![], pusedo_main_span),
+                    returns: None,
+                    body: expr,
+                },
+                pusedo_main_span,
+            );
 
-            // let pusedo_main_symbol = symbols.symbol("main");
+            let ast = Program {
+                functions: vec![pusedo_main],
+                classes: vec![],
+                aliases: vec![],
+            };
 
-            // let pusedo_main_span = expr.get_span();
+            let mut infer = Infer::new();
 
-            // let pusedo_main = Spanned::new(
-            //     Function {
-            //         name: Spanned::new(pusedo_main_symbol, pusedo_main_span),
-            //         params: Spanned::new(vec![], pusedo_main_span),
-            //         returns: None,
-            //         body: expr,
-            //     },
-            //     pusedo_main_span,
-            // );
+            let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+                Ok(ast) => ast,
+                Err(_) => {
+                    reporter.emit(&input);
 
-            // let ast = Program {
-            //     functions: vec![pusedo_main],
-            //     classes: vec![],
-            //     aliases: vec![],
-            // };
+                    continue;
+                }
+            };
 
-            // let mut infer = Infer::new();
+            let (functions, classes, objects) = match compile(&typed_ast, &mut reporter) {
+                Ok(functions) => functions,
+                Err(_) => {
+                    reporter.emit(&input);
+                    continue;
+                }
+            };
 
-            // let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
-            //     Ok(ast) => ast,
-            //     Err(_) => {
-            //         reporter.emit(&input);
+            let mut vm = VM::new(symbols.symbol("main"), &functions, &classes, objects).unwrap();
 
-            //         continue;
-            //     }
-            // };
-
-            // let (functions, classes, objects) = match compile(&typed_ast, &mut reporter) {
-            //     Ok(functions) => functions,
-            //     Err(_) => {
-            //         reporter.emit(&input);
-            //         continue;
-            //     }
-            // };
-
-            // let mut vm = VM::new(symbols.symbol("main"), &functions, &classes, objects).unwrap();
-
-            // vm.run()
+            vm.run()
         }
     }
 }

@@ -1,12 +1,14 @@
+mod lexer;
+
 use ast::*;
 use rand::{self, Rng};
+use std::collections::VecDeque;
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
 use util::pos::{CharPosition, Position, Span, Spanned};
 use util::symbol::{Symbol, Symbols};
-use std::collections::VecDeque;
 
-type ParserResult<T> = Result<T, ()>;
+pub type ParserResult<T> = Result<T, ()>;
 
 pub struct Parser<'a> {
     /// The input string
@@ -19,7 +21,7 @@ pub struct Parser<'a> {
     /// The character ahead
     lookahead: Option<(Position, char)>,
 
-    past_tokens:VecDeque<Spanned<Token<'a>>>,
+    past_tokens: VecDeque<Spanned<Token<'a>>>,
     /// The very first character
     start: Position,
     /// The last charact
@@ -27,7 +29,7 @@ pub struct Parser<'a> {
     /// Flag that manages whetere we are in a cond or class instance
     parsing_cond: bool,
 }
-// The lexing and get tokens is handled here
+
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str, reporter: Reporter, symbols: &'a mut Symbols<()>) -> Self {
         let mut chars = CharPosition::new(input);
@@ -40,7 +42,7 @@ impl<'a> Parser<'a> {
             start: end,
             reporter,
             lookahead: chars.next(),
-            past_tokens:VecDeque::new(),
+            past_tokens: VecDeque::new(),
             chars,
             symbols,
             parsing_cond: false,
@@ -68,7 +70,7 @@ impl<'a> Parser<'a> {
                     Err(_) => {
                         had_error = true;
 
-                        self.synchronize();
+                        self.synchronize()?;
                     }
                 }
             } else if self.recognise(TokenType::CLASS) {
@@ -76,7 +78,7 @@ impl<'a> Parser<'a> {
                     Ok(class) => program.classes.push(class),
                     Err(_) => {
                         had_error = true;
-                        self.synchronize();
+                        self.synchronize()?;
                     }
                 }
             } else if self.recognise(TokenType::TYPE) {
@@ -84,11 +86,11 @@ impl<'a> Parser<'a> {
                     Ok(alias) => program.aliases.push(alias),
                     Err(_) => {
                         had_error = true;
-                        self.synchronize();
+                        self.synchronize()?;
                     }
                 }
             } else {
-                self.synchronize();
+                self.synchronize()?;
                 had_error = true;
             }
         }
@@ -100,11 +102,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn synchronize(&mut self) {
-        self.nxt();
+    pub fn synchronize(&mut self) -> ParserResult<()> {
+        self.next()?;
 
         while self.peek(|token| token == '\0') {
-            match self.nxt().map(|span| span.value.token) {
+            match self.next().map(|span| span.value.token) {
                 Ok(TokenType::CLASS)
                 | Ok(TokenType::FUNCTION)
                 | Ok(TokenType::IDENTIFIER(_))
@@ -114,315 +116,13 @@ impl<'a> Parser<'a> {
                 | Ok(TokenType::LBRACE)
                 | Ok(TokenType::RETURN) => break,
                 Err(_) => unreachable!(),
-                Ok(_) => self.advance(),
-            };
-        }
-    }
-
-
-    fn nxt(&mut self) -> ParserResult<Spanned<Token<'a>>> {
-        let token = self.next()?;
-        self.past_tokens.push_back(token);
-
-
-        match self.past_tokens.pop_front() {
-            Some(token) => Ok(token),
-            None => Err(())
-        }
-    }
-
-    fn next(&mut self) -> ParserResult<Spanned<Token<'a>>> {
-        while let Some((start, ch)) = self.advance() {
-            return match ch {
-                '.' => Ok(span(TokenType::DOT, start)),
-                '?' => Ok(span(TokenType::QUESTION, start)),
-                ';' => Ok(span(TokenType::SEMICOLON, start)),
-                '{' => Ok(span(TokenType::LBRACE, start)),
-                '}' => Ok(span(TokenType::RBRACE, start)),
-                '[' => Ok(span(TokenType::LBRACKET, start)),
-                ']' => Ok(span(TokenType::RBRACKET, start)),
-                '(' => Ok(span(TokenType::LPAREN, start)),
-                ')' => Ok(span(TokenType::RPAREN, start)),
-                ',' => Ok(span(TokenType::COMMA, start)),
-                ':' => Ok(span(TokenType::COLON, start)),
-                '|' => Ok(span(TokenType::BAR, start)),
-                '^' => Ok(span(TokenType::EXPONENTIAL, start)),
-                '%' => Ok(span(TokenType::MODULO, start)),
-                '!' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::BANGEQUAL, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::BANG, start))
-                    }
-                }
-                '>' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::GREATERTHANEQUAL, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::GREATERTHAN, start))
-                    }
-                }
-                '<' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::LESSTHANEQUAL, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::LESSTHAN, start))
-                    }
-                }
-
-                '=' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::EQUALEQUAL, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::ASSIGN, start))
-                    }
-                }
-
-                '+' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::PLUSASSIGN, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::PLUS, start))
-                    }
-                }
-
-                '-' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::MINUSASSIGN, start, start.shift('=')))
-                    } else if self.peek(|ch| ch == '>') {
-                        self.advance();
-                        Ok(spans(TokenType::FRETURN, start, start.shift('>')))
-                    } else {
-                        Ok(span(TokenType::MINUS, start))
-                    }
-                }
-
-                '*' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::STARASSIGN, start, start.shift('=')))
-                    } else {
-                        Ok(span(TokenType::STAR, start))
-                    }
-                }
-
-                '"' => match self.string_literal(start) {
-                    Ok(token) => Ok(token),
-                    Err(e) => {
-                        continue; // error is reported in the function
-                    }
-                },
-
-                '/' => {
-                    if self.peek(|ch| ch == '=') {
-                        self.advance();
-                        Ok(spans(TokenType::SLASHASSIGN, start, start.shift('=')))
-                    } else if self.peek(|ch| ch == '/') {
-                        self.advance();
-                        self.line_comment(start);
-                        continue;
-                    } else if self.peek(|ch| ch == '*') {
-                        self.block_comment()?;
-                        continue;
-                    } else {
-                        Ok(span(TokenType::SLASH, start))
-                    }
-                }
-
-                ch if ch.is_numeric() => self.number(start),
-                ch if is_letter_ch(ch) => Ok(self.identifier(start)),
-                ch if ch.is_whitespace() => continue,
-                ch => {
-                    let msg = format!("Unexpected char {} on {}", ch, start);
-                    self.error(msg, start);
-                    continue;
-                }
+                Ok(_) => self.next()?,
             };
         }
 
-        Ok(spans(TokenType::EOF, self.end, self.end))
+        Ok(())
     }
 
-    /// Advances the input return the current postion and the char we are at
-    fn advance(&mut self) -> Option<(Position, char)> {
-        match self.lookahead {
-            Some((pos, ch)) => {
-                self.start = pos;
-                self.end = self.end.shift(ch);
-                self.lookahead = self.chars.next();
-                Some((pos, ch))
-            }
-
-            None => None,
-        }
-    }
-
-    /// Slice the input return the string contained
-    /// between the supplied postion
-    fn slice(&self, start: Position, end: Position) -> &'a str {
-        &self.input[start.absolute..end.absolute]
-    }
-
-    /// Advance the input whilst the given function evaluates
-    /// to true
-    fn take_whilst<F>(&mut self, start: Position, mut terminate: F) -> (Position, &'a str)
-    where
-        F: FnMut(char) -> bool,
-    {
-        while let Some((end, ch)) = self.lookahead {
-            if !terminate(ch) {
-                return (end, self.slice(start, end));
-            }
-            self.advance();
-        }
-
-        (self.end, self.slice(start, self.end))
-    }
-
-    /// Lookahead at the input
-    fn peek<F>(&mut self, mut check: F) -> bool
-    where
-        F: FnMut(char) -> bool,
-    {
-        self.lookahead.map_or(false, |(_, ch)| check(ch))
-    }
-
-    /// Reporter an error at the given character
-    fn error<T: Into<String>>(&mut self, msg: T, pos: Position) {
-        self.reporter.error(
-            msg.into(),
-            Span {
-                start: pos,
-                end: pos,
-            },
-        )
-    }
-
-    /// Reporter an error that spans the given positions
-    fn spanned_error<T: Into<String>>(&mut self, msg: T, start: Position, end: Position) {
-        self.reporter.error(msg.into(), Span { start, end })
-    }
-
-    /// Reporter an error with the given span
-    fn span_error<T: Into<String>>(&mut self, msg: T, span: Span) {
-        self.reporter.error(msg.into(), span)
-    }
-
-    /// Method that handles a line comment
-    fn line_comment(&mut self, start: Position) {
-        let (_, _) = self.take_whilst(start, |ch| ch != '\n');
-    }
-
-    /// Method that handles a block comment
-    fn block_comment(&mut self) -> ParserResult<()> {
-        self.advance(); // Eats the '*'
-
-        let mut last = None;
-        loop {
-            self.advance(); // Eats the '*'
-
-            match self.lookahead {
-                Some((_, '/')) => {
-                    self.advance();
-                    return Ok(());
-                }
-                Some((pos, _)) => {
-                    last = Some(pos);
-                    continue;
-                }
-
-                None => {
-                    self.error("Unclosed block comment", last.unwrap());
-                    return Err(());
-                }
-            }
-        }
-    }
-
-    /// Handles a string.
-    fn string_literal(&mut self, start: Position) -> ParserResult<Spanned<Token<'a>>> {
-        let mut string = String::new();
-        let mut last = None; // placement value
-
-        while let Some((next, ch)) = self.advance() {
-            match ch {
-                '"' => {
-                    let end = next.shift(ch);
-
-                    string.push('\0');
-
-                    return Ok(spans(TokenType::STRING(string), start, end));
-                }
-
-                ch => {
-                    last = Some(next); // the last thing in the string
-                    string.push(ch)
-                }
-            }
-        }
-
-        let msg = format!("Unclosed string");
-
-        self.error(msg, last.unwrap()); // has to be the end as we keep on adding to our string till we reach the end
-
-        Err(())
-    }
-
-    /// Handles number,both ints and floats
-    fn number(&mut self, start: Position) -> ParserResult<Spanned<Token<'a>>> {
-        let (end, int) = self.take_whilst(start, |c| c.is_numeric());
-
-        let (token, start, end) = match self.lookahead {
-            Some((_, '.')) => {
-                self.advance();
-
-                let (end, float) = self.take_whilst(start, |c| c.is_numeric());
-
-                match self.lookahead {
-                    Some((pos, ch)) if ch.is_alphabetic() => {
-                        let msg = format!("Unexpected char {}", ch);
-                        self.error(msg, pos);
-                        return Err(()); // Rejects floats like 10.k
-                    }
-
-                    _ => (TokenType::FLOAT(float.parse().unwrap()), start, end),
-                }
-            }
-
-            Some((pos, ch)) if ch.is_alphabetic() => {
-                let msg = format!("Unexpected char {}", ch);
-                self.error(msg, pos);
-                return Err(()); // Rejects number like 1k
-            }
-            None | Some(_) => {
-                if let Ok(val) = int.parse() {
-                    (TokenType::INT(val), start, end)
-                } else {
-                    let msg = format!("`{}` cannot fit into a int.", int);
-                    self.spanned_error(msg, start, end);
-                    return Err(());
-                }
-            }
-        };
-
-        Ok(spans(token, start, end))
-    }
-
-    /// Handles any identifier.
-    // Newkeywords should be added to the look_up_identifier function
-    fn identifier(&mut self, start: Position) -> Spanned<Token<'a>> {
-        let (end, ident) = self.take_whilst(start, is_letter_ch);
-        spans(look_up_identifier(ident), start, end)
-    }
-}
-
-impl<'a> Parser<'a> {
     /// Checks if any one of the given tokens is the next token
     fn matches(&mut self, tokens: Vec<TokenType>) -> bool {
         let mut found = false;
@@ -436,10 +136,8 @@ impl<'a> Parser<'a> {
         found
     }
 
-    
-
     pub fn consume(&mut self, token_to_check: &TokenType<'a>, msg: &str) -> ParserResult<()> {
-        match self.nxt() {
+        match self.next() {
             Ok(Spanned {
                 ref span,
                 value: Token { ref token },
@@ -464,7 +162,7 @@ impl<'a> Parser<'a> {
         token_to_check: &TokenType<'a>,
         msg: &str,
     ) -> ParserResult<Span> {
-        match self.nxt() {
+        match self.next() {
             Ok(Spanned {
                 value: Token { ref token },
                 ref span,
@@ -484,7 +182,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn consume_get_symbol(&mut self, msg: &str) -> ParserResult<Spanned<Symbol>> {
-        match self.nxt() {
+        match self.next() {
             Ok(Spanned {
                 value:
                     Token {
@@ -510,7 +208,7 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_get_symbol_and_span(&mut self, msg: &str) -> ParserResult<(Span, Spanned<Symbol>)> {
-        match self.nxt() {
+        match self.next() {
             Ok(Spanned {
                 value:
                     Token {
@@ -548,22 +246,11 @@ impl<'a> Parser<'a> {
     }
 
     fn recognise(&mut self, expected: TokenType) -> bool {
-        
         match self.past_tokens.back() {
             Some(token) => token.value.token == expected,
-            None => false
+            None => false,
         }
-        // Ok(self.nxt()?.value.token == token)
-    }
-
-    fn check_keyword(&self, start: Position, length: usize, rest: &str) -> bool {
-        if start.absolute + length > self.input.len() {
-            return false;
-        } else {
-            let mut end = start.clone();
-            end.absolute += length;
-            self.slice(start, end) == rest
-        }
+        // Ok(self.next()?.value.token == token)
     }
 
     fn get_unary_op(&mut self) -> ParserResult<Spanned<UnaryOp>> {
@@ -633,7 +320,7 @@ impl<'a> Parser<'a> {
                 span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
             })
         } else if self.recognise(TokenType::RPAREN) {
-            self.nxt()?;
+            self.next()?;
             let ty = self.parse_type()?;
             Ok(Spanned {
                 value: Type::Arr(Box::new(ty)),
@@ -650,7 +337,7 @@ impl<'a> Parser<'a> {
                     param_ty.push(self.parse_type()?);
 
                     if self.recognise(TokenType::COMMA) {
-                        self.nxt()?;
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -660,7 +347,7 @@ impl<'a> Parser<'a> {
             let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
 
             if self.recognise(TokenType::FRETURN) {
-                self.nxt()?;
+                self.next()?;
                 let ty = self.parse_type()?;
                 Ok(Spanned {
                     span: open_span.to(ty.get_span()),
@@ -689,11 +376,8 @@ impl<'a> Parser<'a> {
 */
 impl<'a> Parser<'a> {
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
-        
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
 
-        
-        
         let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
@@ -705,7 +389,7 @@ impl<'a> Parser<'a> {
             self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
 
         if self.recognise(TokenType::FRETURN) {
-            self.nxt()?;
+            self.next()?;
 
             returns = Some(self.parse_type()?);
         }
@@ -754,7 +438,7 @@ impl<'a> Parser<'a> {
                 });
 
                 if self.recognise(TokenType::COMMA) {
-                    self.nxt()?;
+                    self.next()?;
                 } else {
                     break;
                 }
@@ -801,7 +485,7 @@ impl<'a> Parser<'a> {
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
         let ty = if self.recognise(TokenType::COLON) {
-            self.nxt()?;
+            self.next()?;
 
             Some(self.parse_type()?)
         } else {
@@ -947,7 +631,7 @@ impl<'a> Parser<'a> {
         let then = Box::new(self.parse_statement()?);
 
         let (close_span, otherwise) = if self.recognise(TokenType::ELSE) {
-            self.nxt()?;
+            self.next()?;
 
             let otherwise = self.parse_statement()?;
 
@@ -974,7 +658,7 @@ impl<'a> Parser<'a> {
         let mut init = None;
 
         if self.recognise(TokenType::SEMICOLON) {
-            self.nxt();
+            self.next()?;
         } else if self.recognise(TokenType::LET) {
             init = Some(Box::new(self.parse_var_declaration()?));
         } else {
@@ -1029,8 +713,7 @@ impl<'a> Parser<'a> {
             TokenType::MINUSASSIGN,
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
-])
-        {
+        ]) {
             let kind = self.get_assign_op()?;
 
             let value = self.assignment()?;
@@ -1081,7 +764,7 @@ impl<'a> Parser<'a> {
         let mut expr = self.parse_or()?;
 
         if self.recognise(TokenType::QUESTION) {
-            self.nxt()?;
+            self.next()?;
 
             let if_true = self.parse_expression()?;
 
@@ -1203,7 +886,7 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> ParserResult<Spanned<Expression>> {
-        match self.nxt() {
+        match self.next() {
             Ok(Spanned {
                 ref span,
                 ref value,
@@ -1278,7 +961,7 @@ impl<'a> Parser<'a> {
                             items.push(self.parse_expression()?);
 
                             if self.recognise(TokenType::COMMA) {
-                                self.nxt()?;
+                                self.next()?;
                             } else {
                                 break;
                             }
@@ -1312,7 +995,7 @@ impl<'a> Parser<'a> {
         let params_span = self.consume_get_span(&TokenType::BAR, "Expected `|` ")?;
 
         let returns = if self.recognise(TokenType::FRETURN) {
-            self.nxt()?; // skip the ->
+            self.next()?; // skip the ->
             Some(self.parse_type()?)
         } else {
             None
@@ -1339,7 +1022,7 @@ impl<'a> Parser<'a> {
 
     fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
         if self.recognise(TokenType::LBRACE) {
-            self.nxt()?;
+            self.next()?;
 
             let mut props = vec![];
 
@@ -1358,7 +1041,7 @@ impl<'a> Parser<'a> {
                     });
 
                     if self.recognise(TokenType::COMMA) {
-                        self.nxt()?;
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -1388,7 +1071,7 @@ impl<'a> Parser<'a> {
         loop {
             if self.recognise(TokenType::LPAREN) {
                 expr = self.finish_call(expr)?;
-            } else if self.recognise(TokenType::LBRACKET){
+            } else if self.recognise(TokenType::LBRACKET) {
                 let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
 
                 let index = Box::new(self.parse_expression()?);
@@ -1402,7 +1085,7 @@ impl<'a> Parser<'a> {
                     },
                 });
             } else if self.recognise(TokenType::DOT) {
-                self.nxt();
+                self.next()?;
 
                 let (close_span, property) =
                     self.consume_get_symbol_and_span("Expected an identifier")?;
@@ -1432,7 +1115,7 @@ impl<'a> Parser<'a> {
                 args.push(self.parse_expression()?);
 
                 if self.recognise(TokenType::COMMA) {
-                    self.nxt();
+                    self.next()?;
                 } else {
                     break;
                 }
@@ -1462,7 +1145,7 @@ impl<'a> Parser<'a> {
         let name = self.consume_get_symbol("Expected a class name")?;
 
         let superclass = if self.recognise(TokenType::LESSTHAN) {
-            self.nxt();
+            self.next()?;
             Some(self.consume_get_symbol("Expected a superclass name")?)
         } else {
             None
@@ -1489,7 +1172,7 @@ impl<'a> Parser<'a> {
                     });
 
                     if self.recognise(TokenType::COMMA) {
-                        self.nxt();
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -1519,61 +1202,5 @@ impl<'a> Parser<'a> {
                 fields: properties,
             },
         })
-    }
-}
-
-#[inline]
-fn token_with_info(token: TokenType) -> Token {
-    Token { token }
-}
-
-#[inline]
-fn span(token: TokenType, start: Position) -> Spanned<Token> {
-    Spanned {
-        value: token_with_info(token),
-        span: Span { start, end: start },
-    }
-}
-
-#[inline]
-fn spans(token: TokenType, start: Position, end: Position) -> Spanned<Token> {
-    Spanned {
-        value: token_with_info(token),
-        span: Span { start, end },
-    }
-}
-
-#[inline]
-fn is_letter_ch(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_'
-}
-
-#[inline]
-fn look_up_identifier(id: &str) -> TokenType {
-    match id {
-        // Class
-        "class" => TokenType::CLASS,
-        "print" => TokenType::PRINT,
-        "this" => TokenType::THIS,
-        "type" => TokenType::TYPE,
-        // Functions and vars
-        "fn" => TokenType::FUNCTION,
-        "let" => TokenType::LET,
-        // Control Flow
-        "if" => TokenType::IF,
-        "else" => TokenType::ELSE,
-        "for" => TokenType::FOR,
-        "while" => TokenType::WHILE,
-        "return" => TokenType::RETURN,
-        "break" => TokenType::BREAK,
-        "continue" => TokenType::CONTINUE,
-        "do" => TokenType::DO,
-        // Booleans
-        "true" => TokenType::TRUE(true),
-        "false" => TokenType::FALSE(false),
-        "or" => TokenType::OR,
-        "and" => TokenType::AND,
-        "nil" => TokenType::NIL,
-        _ => TokenType::IDENTIFIER(id),
     }
 }

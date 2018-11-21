@@ -138,7 +138,7 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
         .parse::<i64>()
     {
         Ok(n) => Ok(Object::Int(n)),
-        Err(e) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
+        Err(_) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
             string.to_vec(),
         ))),
     }
