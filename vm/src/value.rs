@@ -128,7 +128,7 @@ impl Value {
         unsafe { mem::transmute(ptr) }
     }
 
-     pub fn as_class<'a>(&self) -> &'a ClassObject {
+    pub fn as_class<'a>(&self) -> &'a ClassObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
@@ -157,7 +157,7 @@ impl Value {
         self.ty == ValueType::Object
     }
 
-     #[inline]
+    #[inline]
     pub fn is_class(&self) -> bool {
         unsafe {
             self.is_object()

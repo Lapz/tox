@@ -18,7 +18,7 @@ macro_rules! binary {
     };
 
     ($_self:ident, $expr:expr, $lhs:expr, $func:ident) => {
-        while $_self.matched($expr) {
+        while $_self.matches($expr) {
             let op = $_self.get_binary_op()?;
 
             let rhs = Box::new($_self.$func()?);
@@ -38,8 +38,8 @@ macro_rules! binary {
 macro_rules! get_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.advance() {
-                 $(Some(Spanned{
+            match $_self.next() {
+                 $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
                     },
@@ -51,7 +51,7 @@ macro_rules! get_op {
                     })
                 },)+
 
-                Some(Spanned {
+                Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
@@ -60,14 +60,14 @@ macro_rules! get_op {
                     token
                 );
 
-                $_self.error(msg, *span);
+                $_self.span_error(msg, *span);
 
                 Err(())
             }
 
 
-            None => {
-                $_self.reporter.global_error("Unexpected EOF");
+            Err(_) => {
+
                     Err(())
                 }
             }
@@ -80,8 +80,8 @@ macro_rules! get_op {
 macro_rules! get_unary_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.advance() {
-                 $(Some(Spanned{
+            match $_self.next() {
+                 $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
                     },
@@ -93,7 +93,7 @@ macro_rules! get_unary_op {
                     })
                 },)+
 
-                Some(Spanned {
+                Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
@@ -102,14 +102,14 @@ macro_rules! get_unary_op {
                     token
                 );
 
-                $_self.error(msg, *span);
+                $_self.span_error(msg, *span);
 
                 Err(())
             }
 
 
-            None => {
-                $_self.reporter.global_error("Unexpected EOF");
+            Err(_) => {
+
                     Err(())
                 }
             }
@@ -121,8 +121,8 @@ macro_rules! get_unary_op {
 macro_rules! get_assign_op {
     ($_self:ident,{ $($p:ident => $t:ident),*}) => {
         {
-            match $_self.advance() {
-                 $(Some(Spanned{
+            match $_self.next() {
+                 $(Ok(Spanned{
                     value: Token {
                         token:TokenType::$p,
                     },
@@ -134,7 +134,7 @@ macro_rules! get_assign_op {
                     })
                 },)+
 
-                Some(Spanned {
+                Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
@@ -143,14 +143,14 @@ macro_rules! get_assign_op {
                     token
                 );
 
-                $_self.error(msg, *span);
+                $_self.span_error(msg, *span);
 
                 Err(())
             }
 
 
-            None => {
-                $_self.reporter.global_error("Unexpected EOF");
+            Err(_) => {
+
                     Err(())
                 }
             }

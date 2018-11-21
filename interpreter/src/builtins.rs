@@ -84,7 +84,6 @@ fn built_in_char_at(arguments: &[Object]) -> Result<Object, RuntimeError> {
     Ok(Object::Str(vec![input[pos as usize], b'\0']))
 }
 
-
 fn built_in_is_digit(arguments: &[Object]) -> Result<Object, RuntimeError> {
     let mut arguments = arguments.into_iter();
     let input = match arguments.next() {
@@ -92,9 +91,7 @@ fn built_in_is_digit(arguments: &[Object]) -> Result<Object, RuntimeError> {
         _ => unreachable!(),
     };
 
-    
-    Ok(Object::Bool( (input[0] as char).is_numeric() ))
-    
+    Ok(Object::Bool((input[0] as char).is_numeric()))
 }
 fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
     let number = match arguments.iter().next() {
@@ -134,15 +131,16 @@ fn built_in_to_int(arguments: &[Object]) -> Result<Object, RuntimeError> {
         Some(&Object::Str(ref s)) => s,
         _ => unreachable!(),
     };
-   
 
-    match str::from_utf8(string).unwrap().trim_matches(char::from(0)).parse::<i64>() {
+    match str::from_utf8(string)
+        .unwrap()
+        .trim_matches(char::from(0))
+        .parse::<i64>()
+    {
         Ok(n) => Ok(Object::Int(n)),
-        Err(e) => {
-            Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
+        Err(_) => Err(RuntimeError::new_without_span(ErrorCode::CantParseAsInt(
             string.to_vec(),
-        )))
-        },
+        ))),
     }
 }
 

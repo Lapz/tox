@@ -10,14 +10,12 @@ extern crate vm;
 
 mod repl;
 
-// use codegen::Compiler;
 use frontend::{compile, Infer};
 use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
 use structopt::StructOpt;
-use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
@@ -59,29 +57,10 @@ pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let mut lexer = Lexer::new(input, reporter.clone());
-
-    let tokens = match lexer.lex() {
-        Ok(tokens) => {
-            if ptokens {
-                for token in &tokens {
-                    println!("{:#?}", token);
-                }
-            }
-            tokens
-        }
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
-
-    reporter.set_end(lexer.end_span());
-
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
+    let ast = match Parser::new(input, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);
@@ -141,29 +120,10 @@ pub fn run(path: String, ptokens: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let mut lexer = Lexer::new(input, reporter.clone());
-
-    let tokens = match lexer.lex() {
-        Ok(tokens) => {
-            if ptokens {
-                for token in &tokens {
-                    println!("{:#?}", token);
-                }
-            }
-            tokens
-        }
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
-
-    reporter.set_end(lexer.end_span());
-
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
+    let ast = match Parser::new(input, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);

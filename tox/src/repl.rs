@@ -2,17 +2,14 @@ use frontend::{compile, Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, Program};
-use syntax::lexer::Lexer;
+
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::pos::Spanned;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
 
-pub struct Repl {
-    // vm: VM,
-// assembler: Assembler,
-}
+pub struct Repl {}
 
 impl Repl {
     pub fn new() -> Self {
@@ -50,23 +47,11 @@ impl Repl {
 
             let mut reporter = Reporter::new();
 
-            let mut lexer = Lexer::new(&input, reporter.clone());
-
-            let tokens = match lexer.lex() {
-                Ok(tokens) => tokens,
+            let expr = match Parser::new(&input, reporter.clone(), &mut symbols).parse_statement() {
+                Ok(statements) => statements,
                 Err(_) => {
                     reporter.emit(&input);
-                    continue;
-                }
-            };
-
-            reporter.set_end(lexer.end_span());
-
-            let expr = match Parser::new(tokens, reporter.clone(), &mut symbols).parse_statement() {
-                Ok(expression) => expression,
-                Err(_) => {
-                    reporter.emit(&input);
-                    continue;
+                    ::std::process::exit(65)
                 }
             };
 
