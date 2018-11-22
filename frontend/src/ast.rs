@@ -81,6 +81,11 @@ pub enum Expression {
     Assign(Symbol, AssignOperator, Spanned<TypedExpression>),
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Symbol, Vec<Spanned<TypedExpression>>),
+    ClassMethodCall {
+        class_name:Symbol,
+        method_name:Symbol,
+        params:Vec<Spanned<TypedExpression>>
+    },
     Closure(Box<Function>),
     ClassInstance(Symbol, HashMap<Symbol, Spanned<TypedExpression>>),
     Get(Symbol, Spanned<TypedExpression>),

@@ -388,6 +388,7 @@ impl<'a> Builder<'a> {
                     self.compile_expression(rhs)?;
 
                     match (&expr.value.ty, op) {
+                        
                         (Type::Int, Op::Plus) => self.emit_byte(opcode::ADD),
                         (Type::Float, Op::Plus) => self.emit_byte(opcode::ADDF),
 

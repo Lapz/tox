@@ -409,11 +409,7 @@ impl Infer {
                                     callee_exprs.push(ty_expr)
                                 }
 
-                                // for (span, arg_ty) in arg_tys.iter() {
-                                //     for def_ty in targs.iter() {
-                                //         self.unify(arg_ty, def_ty, *span, ctx)?;
-                                //     }
-                                // }
+                              
 
                                 Ok((
                                     Spanned::new(
