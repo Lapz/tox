@@ -90,12 +90,17 @@ impl Infer {
                         Type::Bool,
                     ),
 
-                    Op::LessThan
-                    | Op::LessThanEqual
-                    | Op::GreaterThan
-                    | Op::GreaterThanEqual
-                    | Op::And
-                    | Op::Or => {
+                    Op::And | Op::Or => {
+                        self.unify(&lhs.value.ty, &Type::Bool, span, ctx)?;
+                        self.unify(&rhs.value.ty, &Type::Bool, span, ctx)?;
+
+                        (
+                            Spanned::new(t::Expression::Binary(lhs, op.value, rhs), expr.span),
+                            Type::Bool,
+                        )
+                    }
+
+                    Op::LessThan | Op::LessThanEqual | Op::GreaterThan | Op::GreaterThanEqual => {
                         self.unify(&lhs.value.ty, &rhs.value.ty, span, ctx)?;
 
                         (
