@@ -383,6 +383,7 @@ impl Infer {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
                 Expression::Var(ref sym) => {
+                    println!("{:?}",ctx.name(sym.value) );
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
 
@@ -409,6 +410,7 @@ impl Infer {
                                     callee_exprs.push(ty_expr)
                                 }
 
+                               
                               
 
                                 Ok((
@@ -607,6 +609,9 @@ impl Infer {
         match expr.value {
             Expression::Get { object, property } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
+
+
+                println!("{:?}",ob_instance);
 
                 match ob_instance.value.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {

@@ -92,6 +92,11 @@ pub enum Expression {
     Grouping(Spanned<TypedExpression>),
 
     Index(Spanned<TypedExpression>, Spanned<TypedExpression>),
+    InstanceMethodCall {
+        class_name:Symbol,
+        method_name:Symbol,
+        params:Vec<Spanned<TypedExpression>>
+    },
 
     Literal(Literal),
     /// Name, Object, Value
