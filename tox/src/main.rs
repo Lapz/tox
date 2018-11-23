@@ -42,7 +42,7 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
+pub fn run_interpreter(path: String, _ptokens: bool, past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -105,7 +105,7 @@ pub fn run_interpreter(path: String, ptokens: bool, past: bool) {
     };
 }
 
-pub fn run(path: String, ptokens: bool, past: bool) {
+pub fn run(path: String, _ptokens: bool, _past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();

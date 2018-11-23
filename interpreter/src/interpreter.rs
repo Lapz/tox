@@ -4,7 +4,7 @@ use interpreter::env::Environment;
 use std::cell::RefCell;
 use std::rc::Rc;
 use syntax::ast::*;
-use util::pos::{Span, Spanned, EMPTYSPAN};
+use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 use util::symbol::Symbols;
 

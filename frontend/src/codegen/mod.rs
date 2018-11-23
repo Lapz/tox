@@ -238,7 +238,7 @@ impl<'a> Builder<'a> {
                 Ok(())
             }
 
-            // _ => unimplemented!(),
+            
         }
     }
 
@@ -336,12 +336,14 @@ impl<'a> Builder<'a> {
 
             Expression::Index(ref target, ref index) => {
                 match expr.value.ty {
+                    
                     Type::Str => {
                         self.compile_expression(target)?;
                         self.compile_expression(index)?;
 
                         self.emit_byte(opcode::INDEXSTRING);
                     }
+
                     Type::Array(_) => {
                         self.compile_expression(target)?;
                         self.compile_expression(index)?;
@@ -349,7 +351,7 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::INDEXARRAY);
                     }
 
-                    _ => unimplemented!(), //
+                    _ => unreachable!(), // Type checking should prevent this being reached
                 }
             }
 
@@ -586,7 +588,7 @@ impl<'a> Builder<'a> {
                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
 
-            // ref e => unimplemented!("{:?}", e),
+            
         }
 
         Ok(())
