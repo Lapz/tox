@@ -396,8 +396,11 @@ impl Infer {
 
                                 let mut callee_exprs = Vec::with_capacity(args.len());
 
-                                for arg in args {
+                                for (arg, param_type) in args.into_iter().zip(targs) {
+                                    let span = arg.span;
                                     let ty_expr = self.infer_expr(arg, ctx)?;
+
+                                    self.unify(param_type, &ty_expr.value.ty, span, ctx)?;
 
                                     callee_exprs.push(ty_expr)
                                 }
@@ -432,7 +435,6 @@ impl Infer {
 
                 Expression::Get { .. } => {
                     let (callee, ty) = self.infer_object_get(*callee, ctx)?;
-
                     match ty {
                         Type::Fun(ref param_types, ref returns, _) => {
                             if args.len() != param_types.len() {
@@ -447,8 +449,11 @@ impl Infer {
 
                             let mut callee_exprs = Vec::with_capacity(args.len());
 
-                            for arg in args {
+                            for (arg, param_type) in args.into_iter().zip(param_types) {
+                                let span = arg.span;
                                 let ty_expr = self.infer_expr(arg, ctx)?;
+
+                                self.unify(param_type, &ty_expr.value.ty, span, ctx)?;
 
                                 callee_exprs.push(ty_expr)
                             }

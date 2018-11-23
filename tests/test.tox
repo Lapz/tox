@@ -17,7 +17,7 @@ class Person {
 fn main() -> int {
   let me = Person {name:"Lenard",surname:"Pratt"};
   
-  me.hello(me);
+    Math.add(1,2);
  
   return 0;
 }

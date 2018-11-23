@@ -107,8 +107,6 @@ impl<'a> Builder<'a> {
         self.set_span(statement.span);
         match statement.value {
             Statement::Block(ref statements) => {
-
-
                 for statement in statements {
                     self.compile_statement(statement)?;
                 }
@@ -129,8 +127,7 @@ impl<'a> Builder<'a> {
 
                 self.emit_bytes(opcode::JUMP, description.start as u8);
                 Ok(())
-            },
-
+            }
 
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
@@ -138,7 +135,7 @@ impl<'a> Builder<'a> {
                 self.emit_byte(opcode::POP);
 
                 Ok(())
-            },
+            }
 
             Statement::Print(ref expr) => {
                 self.compile_expression(expr)?;
@@ -158,9 +155,8 @@ impl<'a> Builder<'a> {
             Statement::If {
                 ref cond,
                 ref then,
-                otherwise:None
+                otherwise: None,
             } => {
-
                 self.compile_expression(cond)?;
 
                 let false_label = self.emit_jump(opcode::JUMPNOT);
@@ -174,16 +170,18 @@ impl<'a> Builder<'a> {
                 self.emit_byte(opcode::POP);
 
                 Ok(())
-
             }
 
-            Statement::If {ref cond,ref then,otherwise:Some(ref otherwise)} => {
-
+            Statement::If {
+                ref cond,
+                ref then,
+                otherwise: Some(ref otherwise),
+            } => {
                 self.compile_expression(cond)?;
 
                 let false_label = self.emit_jump(opcode::JUMPNOT);
 
-                 self.emit_byte(opcode::POP);
+                self.emit_byte(opcode::POP);
 
                 self.compile_statement(then)?;
 
@@ -198,25 +196,28 @@ impl<'a> Builder<'a> {
                 self.patch_jump(end_label);
 
                 Ok(())
-            },
+            }
 
-            Statement::Var { ref ident,ref expr,..} => {
-
+            Statement::Var {
+                ref ident,
+                ref expr,
+                ..
+            } => {
                 //
                 if let Some(ref expr) = *expr {
                     self.compile_expression(expr)?;
-                }else {
+                } else {
                     self.emit_constant(Value::nil(), statement.span)?;
                 } // Compile the expression
 
                 self.locals.insert(*ident, ident.0 as usize);
 
-                self.emit_bytes(opcode::SETLOCAL,ident.0 as u8); // Write the symbol id
+                self.emit_bytes(opcode::SETLOCAL, ident.0 as u8); // Write the symbol id
 
                 Ok(())
-            },
+            }
 
-            Statement::While(ref cond,ref body) => {
+            Statement::While(ref cond, ref body) => {
                 let start_label = self.chunk.code.len();
 
                 self.compile_expression(cond)?;
@@ -229,16 +230,12 @@ impl<'a> Builder<'a> {
 
                 self.emit_loop(start_label); // Jumps back to the start
 
-
                 self.patch_jump(out); // the outer label
 
                 self.emit_byte(opcode::POP); //removes cond from stack
 
-
                 Ok(())
             }
-
-            
         }
     }
 
@@ -336,7 +333,6 @@ impl<'a> Builder<'a> {
 
             Expression::Index(ref target, ref index) => {
                 match expr.value.ty {
-                    
                     Type::Str => {
                         self.compile_expression(target)?;
                         self.compile_expression(index)?;
@@ -587,8 +583,6 @@ impl<'a> Builder<'a> {
                 self.compile_expression(instance)?;
                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
-
-            
         }
 
         Ok(())
