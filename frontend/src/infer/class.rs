@@ -50,12 +50,6 @@ impl Infer {
             field_types.insert(field.value.name.value, ty);
         }
 
-        self.this = Type::This {
-            name: class.value.name.value,
-            fields: field_types.clone(),
-            methods: HashMap::new(),
-        };
-
         ctx.add_type(
             class.value.name.value,
             Type::Class(
@@ -90,8 +84,6 @@ impl Infer {
             methods_types,
             Unique::new(),
         );
-
-        self.this = ty.clone();
 
         ctx.add_type(class.value.name.value, ty.clone());
         ctx.add_var(class.value.name.value, VarEntry::Var(ty));

@@ -136,7 +136,6 @@ pub enum Expression {
         expr: Box<Spanned<Expression>>,
     },
 
-    This,
     Var(Spanned<Symbol>),
 }
 

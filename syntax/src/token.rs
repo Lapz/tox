@@ -67,7 +67,6 @@ impl<'a> Display for TokenType<'a> {
             TokenType::RETURN => write!(f, "return"),
             TokenType::TRUE(_) => write!(f, "true"),
             TokenType::FALSE(_) => write!(f, "false"),
-            TokenType::THIS => write!(f, "this"),
             TokenType::CLASS => write!(f, "class"),
             TokenType::FOR => write!(f, "for"),
             TokenType::WHILE => write!(f, "while"),
@@ -136,7 +135,6 @@ pub enum TokenType<'a> {
     TRUE(bool),
     FALSE(bool),
     PRINT,
-    THIS,
     CLASS,
 
     FOR,

@@ -1,5 +1,5 @@
 use infer::types::Type;
-use std::collections::HashMap;
+
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -82,7 +82,6 @@ pub enum Expression {
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Symbol, Vec<Spanned<TypedExpression>>),
     ClassMethodCall {
-        class_name: Symbol,
         method_name: Symbol,
         instance: Spanned<TypedExpression>,
         params: Vec<Spanned<TypedExpression>>,
@@ -91,12 +90,10 @@ pub enum Expression {
     ClassInstance(Symbol, Vec<(Symbol, Spanned<TypedExpression>)>),
     Get(Symbol, Spanned<TypedExpression>),
     GetProperty {
-        class_name: Symbol,
         property_name: Symbol,
         property: Spanned<TypedExpression>,
     },
     GetMethod {
-        class_name: Symbol,
         method_name: Symbol,
         method: Spanned<TypedExpression>,
     },
@@ -104,11 +101,6 @@ pub enum Expression {
     Grouping(Spanned<TypedExpression>),
 
     Index(Spanned<TypedExpression>, Spanned<TypedExpression>),
-    InstanceMethodCall {
-        class_name: Symbol,
-        method_name: Symbol,
-        params: Vec<Spanned<TypedExpression>>,
-    },
 
     Literal(Literal),
     /// Name, Object, Value
@@ -120,7 +112,5 @@ pub enum Expression {
         Spanned<TypedExpression>,
     ),
     Unary(UnaryOp, Spanned<TypedExpression>),
-
-    This,
     Var(Symbol, Type),
 }

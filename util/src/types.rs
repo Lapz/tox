@@ -33,7 +33,7 @@ pub enum Type {
         methods: HashMap<Symbol, Entry>,
         fields: HashMap<Symbol, Type>,
     },
-    This(Symbol, HashMap<Symbol, Type>, HashMap<Symbol, Type>),
+   
     Func(Vec<Type>, Box<Type>),
     Dict(Box<Type>, Box<Type>), // Key, Value
     Array(Box<Type>),
@@ -58,11 +58,7 @@ impl Display for Type {
                 name, fields, methods
             ),
 
-            Type::This(ref name, ref methods, ref fields) => write!(
-                f,
-                "'This {}' has the fields {:?} and methods {:?}",
-                name, methods, fields
-            ),
+          
             Type::Func(ref params, ref returns) => write!(
                 f,
                 "Func with param Types {:?} returns {:?}",
@@ -148,7 +144,7 @@ impl<'a> PartialEq for Type {
                     methods: ref omethods,
                 },
             ) => name == oname && methods == omethods && fields == ofields,
-            (&Type::This(ref n, _, _), &Type::This(ref oname, _, _)) => n == oname,
+           
             (&Type::Func(ref params, ref returns), &Type::Func(ref oparams, ref oreturns)) => {
                 params == oparams && returns == oreturns
             }
@@ -181,7 +177,6 @@ impl<'a> PartialOrd for Type {
                     name: ref oname, ..
                 },
             )
-            | (&Type::This(ref name, _, _), &Type::This(ref oname, _, _))
             | (&Type::Name(ref name, _), &Type::Name(ref oname, _)) => name.partial_cmp(oname),
             (s @ &Type::Dict(_, _), o @ &Type::Dict(_, _))
             | (s @ &Type::Func(_, _), o @ &Type::Func(_, _))
@@ -199,7 +194,7 @@ impl<'a> PartialOrd for Type {
 impl Hash for Type {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match *self {
-            Type::Class { ref name, .. } | Type::This(ref name, _, _) => name.hash(state),
+            Type::Class { ref name, .. } => name.hash(state),
             Type::Func(ref params, ref returns) => {
                 params.hash(state);
                 returns.hash(state)

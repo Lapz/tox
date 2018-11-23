@@ -17,7 +17,7 @@ class Person {
 fn main() -> int {
   let me = Person {name:"Lenard",surname:"Pratt"};
   
-  print me.hello(me);
-  print Person.add(10,2);
+  me.hello(me);
+ 
   return 0;
 }

@@ -3,7 +3,7 @@ use ctx::CompileCtx;
 use infer::env::VarEntry;
 use infer::types::Type;
 use infer::{Infer, InferResult};
-use std::collections::HashMap;
+
 use syntax::ast::{Expression, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 
@@ -320,10 +320,6 @@ impl Infer {
                 )
             }
 
-            Expression::This => (
-                Spanned::new(t::Expression::This, expr.span),
-                self.this.clone(),
-            ),
             Expression::Unary { expr: operand, op } => {
                 let whole_span = expr.span;
                 let span = operand.span;
@@ -459,13 +455,11 @@ impl Infer {
 
                             match callee.value {
                                 t::Expression::GetMethod {
-                                    class_name,
                                     method_name,
                                     method,
                                 } => Ok((
                                     Spanned::new(
                                         t::Expression::ClassMethodCall {
-                                            class_name,
                                             method_name,
                                             instance: method,
                                             params: callee_exprs,
@@ -584,7 +578,7 @@ impl Infer {
                 };
 
                 match class {
-                    Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
+                    Type::Class(_, ref fields, _, _) => {
                         let mut instance_exprs = Vec::new();
                         let mut unkown = false;
 
@@ -655,23 +649,17 @@ impl Infer {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.value.ty.clone() {
-                    Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
+                    Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name).cloned() {
                             // Look at the conical type
 
                             match ty {
-                                Type::This {
-                                    ref methods,
-                                    ref fields,
-                                    ref name,
-                                }
-                                | Type::Class(ref name, ref fields, ref methods, _) => {
+                                Type::Class(_, ref fields, ref methods, _) => {
                                     for (field_name, field_ty) in fields {
                                         if field_name == &property.value {
                                             return Ok((
                                                 Spanned::new(
                                                     t::Expression::GetProperty {
-                                                        class_name: *name,
                                                         property_name: property.value,
                                                         property: ob_instance,
                                                     },
@@ -689,7 +677,6 @@ impl Infer {
                                             return Ok((
                                                 Spanned::new(
                                                     t::Expression::GetMethod {
-                                                        class_name: *name,
                                                         method_name: property.value,
                                                         method: ob_instance,
                                                     },
@@ -747,15 +734,10 @@ impl Infer {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
                 match ob_instance.value.ty.clone() {
-                    Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
+                    Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name).cloned() {
                             match ty {
-                                Type::This {
-                                    ref methods,
-                                    ref fields,
-                                    ..
-                                }
-                                | Type::Class(_, ref fields, ref methods, _) => {
+                                Type::Class(_, ref fields, ref methods, _) => {
                                     let value_span = value.span;
                                     let value_ty = self.infer_expr(*value, ctx)?;
 

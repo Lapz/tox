@@ -347,7 +347,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         // Class
         "class" => TokenType::CLASS,
         "print" => TokenType::PRINT,
-        "this" => TokenType::THIS,
+
         "type" => TokenType::TYPE,
         // Functions and vars
         "fn" => TokenType::FUNCTION,

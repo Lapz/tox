@@ -28,7 +28,6 @@ pub struct Builder<'a> {
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
     reporter: &'a mut Reporter,
-    closures: Vec<Function>,
     line: u32,
 }
 
@@ -46,7 +45,6 @@ impl<'a> Builder<'a> {
             params,
             objects,
             reporter,
-            closures: Vec::new(),
         }
     }
 
@@ -489,12 +487,10 @@ impl<'a> Builder<'a> {
             }
 
             Expression::ClassMethodCall {
-                ref class_name,
                 ref method_name,
                 ref instance,
                 ref params,
             } => {
-                
                 for param in params {
                     self.compile_expression(param)?;
                 }
@@ -502,7 +498,7 @@ impl<'a> Builder<'a> {
                 self.compile_expression(instance)?;
 
                 self.emit_byte(opcode::CALLMETHOD);
-                self.emit_bytes(method_name.0 as u8,params.len() as u8);
+                self.emit_bytes(method_name.0 as u8, params.len() as u8);
             }
 
             Expression::Get(ref property, ref instance) => {
@@ -590,7 +586,7 @@ impl<'a> Builder<'a> {
                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
 
-            ref e => unimplemented!("{:?}", e),
+            // ref e => unimplemented!("{:?}", e),
         }
 
         Ok(())

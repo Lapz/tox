@@ -533,8 +533,6 @@ fn evaluate_expression(
             }
         }
 
-        Expression::This => env.get(&Spanned::new(Symbol(0), EMPTYSPAN)),
-
         Expression::Unary { ref op, ref expr } => {
             let right = evaluate_expression(expr, env)?;
 

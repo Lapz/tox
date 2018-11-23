@@ -916,11 +916,6 @@ impl<'a> Parser<'a> {
                     value: Expression::Literal(Literal::Float(n)),
                 }),
 
-                TokenType::THIS => Ok(Spanned {
-                    span: *span,
-                    value: Expression::This,
-                }),
-
                 TokenType::LPAREN => {
                     let expr = Box::new(self.parse_expression()?);
 
