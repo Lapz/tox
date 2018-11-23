@@ -706,7 +706,7 @@ impl Infer {
                         }
 
                         let msg = format!(
-                            "class `{}` doesn't have a field named `{}`",
+                            "class `{}` doesn't have a field/method named `{}`",
                             ctx.name(*name),
                             ctx.name(property.value)
                         );
@@ -805,7 +805,7 @@ impl Infer {
                         }
 
                         let msg = format!(
-                            "class `{}` doesn't have a field named `{}`",
+                            "class `{}` doesn't have a field/method named `{}`",
                             ctx.name(*name),
                             ctx.name(property.value)
                         );

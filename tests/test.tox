@@ -12,15 +12,12 @@ class Person {
     return;
   }
 
-  fn add(a:int,b:int) -> int {
-    return a+b;
-  }
 }
 
 fn main() -> int {
   let me = Person {name:"Lenard",surname:"Pratt"};
   
   print me.hello(me);
-  // print Math.move();
+  print Person.add(10,2);
   return 0;
 }
