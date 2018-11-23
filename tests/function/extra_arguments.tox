@@ -1,4 +1,4 @@
-fun f(a, b) {
+fn f(a, b) {
   print(a); // expect: 1
   print(b); // expect: 2
 }

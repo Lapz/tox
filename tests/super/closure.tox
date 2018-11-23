@@ -6,7 +6,7 @@ class Base {
 
 class Derived < Base {
   getClosure() {
-    fun closure() {
+    fn closure() {
       return super.toString();
     }
     return closure;
@@ -17,5 +17,5 @@ class Derived < Base {
   }
 }
 
-var closure = Derived().getClosure();
+let closure = Derived().getClosure();
 print(closure()); // expect: Base

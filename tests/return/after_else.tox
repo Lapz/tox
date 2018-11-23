@@ -1,4 +1,4 @@
-fun f() -> str {
+fn f() -> str {
   if (false) 
     "no";
   else 

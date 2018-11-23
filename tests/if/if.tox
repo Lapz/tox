@@ -10,6 +10,6 @@ if (true) {
 } // expect: block
 
 // Assignment in if condition.
-var a = false;
+let a = false;
 if (a = true) 
     print(a); // expect: true

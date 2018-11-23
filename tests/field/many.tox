@@ -1,6 +1,6 @@
 class Foo {}
 
-var foo = Foo();
+let foo = Foo();
 foo.bilberry = "bilberry";
 foo.lime = "lime";
 foo.elderberry = "elderberry";

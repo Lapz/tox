@@ -1,22 +1,22 @@
 class Foo {
-  fun inFoo() {
+  fn inFoo() {
     print("in foo");
   }
 }
 
 class Bar < Foo {
-  fun inBar() {
+  fn inBar() {
     print("in bar");
   }
 }
 
 class Baz < Bar {
-  fun inBaz() {
+  fn inBaz() {
     print("in baz");
   }
 }
 
-var baz = Baz();
+let baz = Baz();
 baz.inFoo(); // expect:in foo
 baz.inBar(); // expect:in bar
 baz.inBaz(); // expect:in baz

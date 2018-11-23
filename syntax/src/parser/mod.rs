@@ -1,38 +1,57 @@
-#[macro_use]
-mod macros;
+mod lexer;
 
 use ast::*;
-use std::iter::Peekable;
-use std::vec::IntoIter;
-use symbol::{Symbol, Symbols};
+use rand::{self, Rng};
+use std::collections::VecDeque;
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
-use util::pos::{Span, Spanned};
-
-#[derive(Debug)]
-pub struct Parser<'a> {
-    tokens: Peekable<IntoIter<Spanned<Token<'a>>>>,
-    reporter: Reporter,
-    symbols: &'a mut Symbols<()>,
-    /// Used to prevent parsing if (cond) { as a
-    /// wrong statement
-    parsing_cond: bool,
-}
+use util::pos::{CharPosition, Position, Span, Spanned};
+use util::symbol::{Symbol, Symbols};
 
 pub type ParserResult<T> = Result<T, ()>;
 
+pub struct Parser<'a> {
+    /// The input string
+    input: &'a str,
+    chars: CharPosition<'a>,
+    /// The reporter that collects all the erros
+    reporter: Reporter,
+    /// The symbols table that will be built up during parsing
+    symbols: &'a mut Symbols<()>,
+    /// The character ahead
+    lookahead: Option<(Position, char)>,
+
+    past_tokens: VecDeque<Spanned<Token<'a>>>,
+    /// The very first character
+    start: Position,
+    /// The last charact
+    end: Position,
+    /// Flag that manages whetere we are in a cond or class instance
+    parsing_cond: bool,
+}
+
 impl<'a> Parser<'a> {
-    pub fn new(
-        tokens: Vec<Spanned<Token<'a>>>,
-        reporter: Reporter,
-        symbols: &'a mut Symbols<()>,
-    ) -> Self {
-        Parser {
-            tokens: tokens.into_iter().peekable(),
+    pub fn new(input: &'a str, reporter: Reporter, symbols: &'a mut Symbols<()>) -> Self {
+        let mut chars = CharPosition::new(input);
+        let end = chars.pos;
+        let mut past_tokens = VecDeque::new();
+
+        let mut parser = Self {
+            input,
+            end,
+            start: end,
+            reporter,
+            lookahead: chars.next(),
+            past_tokens: VecDeque::new(),
+            chars,
             symbols,
             parsing_cond: false,
-            reporter,
-        }
+        };
+
+        past_tokens.push_back(parser.next().unwrap());
+        parser.past_tokens = past_tokens;
+
+        parser
     }
 
     pub fn parse(&mut self) -> ParserResult<Program> {
@@ -44,13 +63,14 @@ impl<'a> Parser<'a> {
 
         let mut had_error = false;
 
-        while self.peek(|token| token != &TokenType::EOF) {
+        while self.peek(|token| token != '\0') {
             if self.recognise(TokenType::FUNCTION) {
                 match self.parse_function("function") {
                     Ok(function) => program.functions.push(function),
                     Err(_) => {
                         had_error = true;
-                        self.synchronize();
+
+                        self.synchronize()?;
                     }
                 }
             } else if self.recognise(TokenType::CLASS) {
@@ -58,7 +78,7 @@ impl<'a> Parser<'a> {
                     Ok(class) => program.classes.push(class),
                     Err(_) => {
                         had_error = true;
-                        self.synchronize();
+                        self.synchronize()?;
                     }
                 }
             } else if self.recognise(TokenType::TYPE) {
@@ -66,11 +86,11 @@ impl<'a> Parser<'a> {
                     Ok(alias) => program.aliases.push(alias),
                     Err(_) => {
                         had_error = true;
-                        self.synchronize();
+                        self.synchronize()?;
                     }
                 }
             } else {
-                self.synchronize();
+                self.synchronize()?;
                 had_error = true;
             }
         }
@@ -82,52 +102,33 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn synchronize(&mut self) {
-        self.advance();
+    pub fn synchronize(&mut self) -> ParserResult<()> {
+        self.next()?;
 
-        while self.peek(|token| token == &TokenType::EOF) {
-            match self.advance().map(|span| span.value.token) {
-                Some(TokenType::CLASS)
-                | Some(TokenType::FUNCTION)
-                | Some(TokenType::IDENTIFIER(_))
-                | Some(TokenType::FOR)
-                | Some(TokenType::IF)
-                | Some(TokenType::WHILE)
-                | Some(TokenType::LBRACE)
-                | Some(TokenType::RETURN) => break,
-                None => unreachable!(),
-                _ => self.advance(),
+        while self.peek(|token| token == '\0') {
+            match self.next().map(|span| span.value.token) {
+                Ok(TokenType::CLASS)
+                | Ok(TokenType::FUNCTION)
+                | Ok(TokenType::IDENTIFIER(_))
+                | Ok(TokenType::FOR)
+                | Ok(TokenType::IF)
+                | Ok(TokenType::WHILE)
+                | Ok(TokenType::LBRACE)
+                | Ok(TokenType::RETURN) => break,
+                Err(_) => unreachable!(),
+                Ok(_) => self.next()?,
             };
         }
-    }
 
-    fn error<T: Into<String>>(&mut self, msg: T, span: Span) {
-        self.reporter.error(msg, span)
-    }
-
-    fn peek<F>(&mut self, mut check: F) -> bool
-    where
-        F: FnMut(&TokenType<'a>) -> bool,
-    {
-        self.tokens
-            .peek()
-            .map_or(false, |span| check(&span.value.token))
-    }
-    /// Checks if the next token is the expected token without
-    /// advancing the token stream
-    fn recognise(&mut self, token: TokenType<'a>) -> bool {
-        if self.peek(|peeked| peeked == &token) {
-            return true;
-        }
-        false
+        Ok(())
     }
 
     /// Checks if any one of the given tokens is the next token
-    fn matched(&mut self, tokens: Vec<TokenType<'a>>) -> bool {
+    fn matches(&mut self, tokens: Vec<TokenType>) -> bool {
         let mut found = false;
 
         for token in tokens {
-            if self.peek(|peeked| peeked == &token) {
+            if self.recognise(token) {
                 found = true;
             }
         }
@@ -135,14 +136,9 @@ impl<'a> Parser<'a> {
         found
     }
 
-    /// Advances the token stream
-    fn advance(&mut self) -> Option<Spanned<Token<'a>>> {
-        self.tokens.next()
-    }
-
     pub fn consume(&mut self, token_to_check: &TokenType<'a>, msg: &str) -> ParserResult<()> {
-        match self.advance() {
-            Some(Spanned {
+        match self.next() {
+            Ok(Spanned {
                 ref span,
                 value: Token { ref token },
             }) => {
@@ -150,16 +146,14 @@ impl<'a> Parser<'a> {
                     return Ok(());
                 }
 
-                let msg = format!("{} but instead found {}", msg, token);
+                let msg = format!("{} but instead found `{}`", msg, token);
 
-                self.error(msg, *span);
+                self.span_error(msg, *span);
 
                 Err(())
             }
-            None => {
-                self.reporter.global_error("Unexpected EOF");
-                Err(())
-            }
+
+            Err(_) => Err(()),
         }
     }
 
@@ -168,8 +162,8 @@ impl<'a> Parser<'a> {
         token_to_check: &TokenType<'a>,
         msg: &str,
     ) -> ParserResult<Span> {
-        match self.advance() {
-            Some(Spanned {
+        match self.next() {
+            Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
@@ -177,22 +171,19 @@ impl<'a> Parser<'a> {
                     return Ok(*span);
                 }
 
-                let msg = format!("{} but instead found {}", msg, token);
+                let msg = format!("{} but instead found `{}`", msg, token);
 
-                self.error(msg, *span);
+                self.span_error(msg, *span);
 
                 Err(())
             }
-            None => {
-                self.reporter.global_error("Unexpected EOF");
-                Err(())
-            }
+            Err(_) => Err(()),
         }
     }
 
     pub fn consume_get_symbol(&mut self, msg: &str) -> ParserResult<Spanned<Symbol>> {
-        match self.advance() {
-            Some(Spanned {
+        match self.next() {
+            Ok(Spanned {
                 value:
                     Token {
                         token: TokenType::IDENTIFIER(ident),
@@ -202,26 +193,23 @@ impl<'a> Parser<'a> {
                 span: *span,
                 value: self.symbols.symbol(ident),
             }),
-            Some(Spanned {
+            Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
-                let msg = format!("{} but instead found {}", msg, token);
+                let msg = format!("{} but instead found `{}`", msg, token);
 
-                self.error(msg, *span);
+                self.span_error(msg, *span);
 
                 Err(())
             }
-            None => {
-                self.reporter.global_error("Unexpected EOF");
-                Err(())
-            }
+            Err(_) => Err(()),
         }
     }
 
     fn consume_get_symbol_and_span(&mut self, msg: &str) -> ParserResult<(Span, Spanned<Symbol>)> {
-        match self.advance() {
-            Some(Spanned {
+        match self.next() {
+            Ok(Spanned {
                 value:
                     Token {
                         token: TokenType::IDENTIFIER(ident),
@@ -234,21 +222,35 @@ impl<'a> Parser<'a> {
                     value: self.symbols.symbol(ident),
                 },
             )),
-            Some(Spanned {
+            Ok(Spanned {
                 value: Token { ref token },
                 ref span,
             }) => {
-                let msg = format!("{} but instead found {}", msg, token);
+                let msg = format!("{} but instead found `{}`", msg, token);
 
-                self.error(msg, *span);
+                self.span_error(msg, *span);
 
                 Err(())
             }
-            None => {
-                self.reporter.global_error("Unexpected EOF");
-                Err(())
-            }
+            Err(()) => Err(()),
         }
+    }
+
+    fn random_ident(&mut self) -> Symbol {
+        let mut rng = rand::thread_rng();
+        let letter: char = rng.gen_range(b'A', b'Z') as char;
+        let number: u32 = rng.gen_range(0, 999999);
+        let s = format!("{}{:06}", letter, number);
+
+        self.symbols.symbol(&s)
+    }
+
+    fn recognise(&mut self, expected: TokenType) -> bool {
+        match self.past_tokens.back() {
+            Some(token) => token.value.token == expected,
+            None => false,
+        }
+        // Ok(self.next()?.value.token == token)
     }
 
     fn get_unary_op(&mut self) -> ParserResult<Spanned<UnaryOp>> {
@@ -272,7 +274,8 @@ impl<'a> Parser<'a> {
             SLASH => Slash,
             EQUALEQUAL => EqualEqual,
             MODULO => Modulo,
-            EXPONENTIAL => Exponential
+            EXPONENTIAL => Exponential,
+            BANGEQUAL => BangEqual
         })
     }
 
@@ -316,8 +319,8 @@ impl<'a> Parser<'a> {
                 value: Type::Nil,
                 span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
             })
-        } else if self.recognise(TokenType::LBRACKET) {
-            self.advance();
+        } else if self.recognise(TokenType::RPAREN) {
+            self.next()?;
             let ty = self.parse_type()?;
             Ok(Spanned {
                 value: Type::Arr(Box::new(ty)),
@@ -334,7 +337,7 @@ impl<'a> Parser<'a> {
                     param_ty.push(self.parse_type()?);
 
                     if self.recognise(TokenType::COMMA) {
-                        self.advance();
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -344,7 +347,7 @@ impl<'a> Parser<'a> {
             let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
 
             if self.recognise(TokenType::FRETURN) {
-                self.advance();
+                self.next()?;
                 let ty = self.parse_type()?;
                 Ok(Spanned {
                     span: open_span.to(ty.get_span()),
@@ -371,7 +374,6 @@ impl<'a> Parser<'a> {
 *  Functions
 *  ***********************
 */
-
 impl<'a> Parser<'a> {
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
@@ -380,47 +382,19 @@ impl<'a> Parser<'a> {
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
-        let mut params = Vec::with_capacity(32);
+        let params = self.parse_params(param_span, "function")?;
         let mut returns = None;
-
-        if !self.recognise(TokenType::RPAREN) {
-            loop {
-                if params.len() >= 32 {
-                    self.error("Too many params", open_span);
-                    break;
-                };
-
-                let msg = format!("Expected a {} name", kind);
-
-                let (open_span, name) = self.consume_get_symbol_and_span(&msg)?;
-
-                self.consume(&TokenType::COLON, "Expected a colon")?;
-
-                let ty = self.parse_type()?;
-
-                params.push(Spanned {
-                    span: open_span.to(ty.get_span()),
-                    value: FunctionParam { name, ty },
-                });
-
-                if self.recognise(TokenType::COMMA) {
-                    self.advance();
-                } else {
-                    break;
-                }
-            }
-        }
 
         let rparen_span =
             self.consume_get_span(&TokenType::RPAREN, "Expected a ')' after function params")?;
 
         if self.recognise(TokenType::FRETURN) {
-            self.advance();
+            self.next()?;
 
             returns = Some(self.parse_type()?);
         }
 
-        let body = self.block()?;
+        let body = self.parse_block()?;
 
         Ok(Spanned {
             span: open_span.to(body.get_span()),
@@ -436,15 +410,53 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_params(
+        &mut self,
+        open_span: Span,
+        kind: &str,
+    ) -> ParserResult<Vec<Spanned<FunctionParam>>> {
+        let mut params = Vec::with_capacity(32);
+
+        if !self.recognise(TokenType::RPAREN) && !self.recognise(TokenType::BAR) {
+            loop {
+                if params.len() >= 32 {
+                    self.span_error("Too many params", open_span);
+                    break;
+                };
+
+                let msg = format!("Expected a {} type name", kind);
+
+                let (open_span, name) = self.consume_get_symbol_and_span(&msg)?;
+
+                self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                let ty = self.parse_type()?;
+
+                params.push(Spanned {
+                    span: open_span.to(ty.get_span()),
+                    value: FunctionParam { name, ty },
+                });
+
+                if self.recognise(TokenType::COMMA) {
+                    self.next()?;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        Ok(params)
+    }
+
     /* ******************
      *
      * STATEMENT PARSERS
      *
      * ***************** */
-    fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+    pub fn parse_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         if self.recognise(TokenType::LBRACE) {
-            self.block()
-        } else if self.recognise(TokenType::VAR) {
+            self.parse_block()
+        } else if self.recognise(TokenType::LET) {
             self.parse_var_declaration()
         } else if self.recognise(TokenType::BREAK) {
             self.parse_break_statement()
@@ -468,23 +480,22 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_var_declaration(&mut self) -> ParserResult<Spanned<Statement>> {
-        let open_span = self.consume_get_span(&TokenType::VAR, "Expected 'var' ")?;
+        let open_span = self.consume_get_span(&TokenType::LET, "Expected 'var' ")?;
 
         let ident = self.consume_get_symbol("Expected an IDENTIFIER after a 'var' ")?;
 
         let ty = if self.recognise(TokenType::COLON) {
-            self.advance();
+            self.next()?;
 
             Some(self.parse_type()?)
         } else {
             None
         };
 
-        self.consume(&TokenType::ASSIGN, "Expected '='")?;
-
         let expr = if self.recognise(TokenType::SEMICOLON) {
             None
         } else {
+            self.consume(&TokenType::ASSIGN, "Expected '='")?;
             Some(self.parse_expression()?)
         };
 
@@ -496,7 +507,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn block(&mut self) -> ParserResult<Spanned<Statement>> {
+    fn parse_block(&mut self) -> ParserResult<Spanned<Statement>> {
         let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected a '{' ")?;
 
         let mut statements = vec![];
@@ -529,7 +540,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_expression_statement(&mut self) -> ParserResult<Spanned<Statement>> {
+    pub fn parse_expression_statement(&mut self) -> ParserResult<Spanned<Statement>> {
         let expr = self.parse_expression()?;
 
         Ok(Spanned {
@@ -620,7 +631,7 @@ impl<'a> Parser<'a> {
         let then = Box::new(self.parse_statement()?);
 
         let (close_span, otherwise) = if self.recognise(TokenType::ELSE) {
-            self.advance();
+            self.next()?;
 
             let otherwise = self.parse_statement()?;
 
@@ -647,8 +658,8 @@ impl<'a> Parser<'a> {
         let mut init = None;
 
         if self.recognise(TokenType::SEMICOLON) {
-            self.advance();
-        } else if self.recognise(TokenType::VAR) {
+            self.next()?;
+        } else if self.recognise(TokenType::LET) {
             init = Some(Box::new(self.parse_var_declaration()?));
         } else {
             init = Some(Box::new(self.parse_expression_statement()?));
@@ -694,9 +705,9 @@ impl<'a> Parser<'a> {
     }
 
     fn assignment(&mut self) -> ParserResult<Spanned<Expression>> {
-        let expr = self.parse_or()?;
+        let expr = self.parse_ternary()?;
 
-        if self.matched(vec![
+        if self.matches(vec![
             TokenType::ASSIGN,
             TokenType::PLUSASSIGN,
             TokenType::MINUSASSIGN,
@@ -740,11 +751,36 @@ impl<'a> Parser<'a> {
                 }
 
                 Spanned { ref span, .. } => {
-                    self.error("Not a valid assingment target", *span);
+                    self.span_error("Not a valid assingment target", *span);
                     return Err(());
                 }
             }
         }
+
+        Ok(expr)
+    }
+
+    fn parse_ternary(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut expr = self.parse_or()?;
+
+        if self.recognise(TokenType::QUESTION) {
+            self.next()?;
+
+            let if_true = self.parse_expression()?;
+
+            self.consume(&TokenType::COLON, "Expected ':'")?;
+
+            let if_false = self.parse_expression()?;
+
+            expr = Spanned {
+                span: expr.get_span().to(if_false.get_span()),
+                value: Expression::Ternary {
+                    condition: Box::new(expr),
+                    then_branch: Box::new(if_true),
+                    else_branch: Box::new(if_false),
+                },
+            }
+        };
 
         Ok(expr)
     }
@@ -806,8 +842,8 @@ impl<'a> Parser<'a> {
         binary!(
             self,
             vec![
-                TokenType::MINUS,
                 TokenType::PLUS,
+                TokenType::MINUS,
                 TokenType::EXPONENTIAL,
                 TokenType::MODULO
             ],
@@ -832,7 +868,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_unary(&mut self) -> ParserResult<Spanned<Expression>> {
-        if self.matched(vec![TokenType::BANG, TokenType::MINUS]) {
+        if self.recognise(TokenType::BANG) || self.recognise(TokenType::MINUS) {
             let op = self.get_unary_op()?;
 
             let right = self.parse_unary()?;
@@ -850,8 +886,8 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> ParserResult<Spanned<Expression>> {
-        match self.advance() {
-            Some(Spanned {
+        match self.next() {
+            Ok(Spanned {
                 ref span,
                 ref value,
             }) => match value.token {
@@ -880,11 +916,6 @@ impl<'a> Parser<'a> {
                     value: Expression::Literal(Literal::Float(n)),
                 }),
 
-                TokenType::THIS => Ok(Spanned {
-                    span: *span,
-                    value: Expression::This,
-                }),
-
                 TokenType::LPAREN => {
                     let expr = Box::new(self.parse_expression()?);
 
@@ -904,6 +935,15 @@ impl<'a> Parser<'a> {
                     self.parse_ident(ident)
                 }
 
+                TokenType::BAR => {
+                    let closure = self.parse_closure(*span)?;
+
+                    Ok(Spanned {
+                        span: closure.get_span(),
+                        value: Expression::Closure(Box::new(closure)),
+                    })
+                }
+
                 TokenType::LBRACKET => {
                     let mut items = Vec::with_capacity(32);
 
@@ -916,7 +956,7 @@ impl<'a> Parser<'a> {
                             items.push(self.parse_expression()?);
 
                             if self.recognise(TokenType::COMMA) {
-                                self.advance();
+                                self.next()?;
                             } else {
                                 break;
                             }
@@ -935,18 +975,49 @@ impl<'a> Parser<'a> {
                 ref other => {
                     let msg = format!("No rules expected '{}' ", other);
 
-                    self.error(msg, *span);
+                    self.span_error(msg, *span);
 
                     Err(())
                 }
             },
-            None => Err(()), // TODO: ADD an error?
+            Err(_) => Err(()), // TODO: ADD an error?
         }
+    }
+
+    fn parse_closure(&mut self, open_span: Span) -> ParserResult<Spanned<Function>> {
+        let params = self.parse_params(open_span, "closure")?;
+
+        let params_span = self.consume_get_span(&TokenType::BAR, "Expected `|` ")?;
+
+        let returns = if self.recognise(TokenType::FRETURN) {
+            self.next()?; // skip the ->
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+
+        let body = self.parse_block()?;
+
+        Ok(Spanned {
+            span: open_span.to(body.get_span()),
+            value: Function {
+                name: Spanned {
+                    span: open_span.to(body.get_span()),
+                    value: self.random_ident(),
+                },
+                params: Spanned {
+                    span: open_span.to(params_span),
+                    value: params,
+                },
+                body,
+                returns,
+            },
+        })
     }
 
     fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
         if self.recognise(TokenType::LBRACE) {
-            self.advance();
+            self.next()?;
 
             let mut props = vec![];
 
@@ -965,7 +1036,7 @@ impl<'a> Parser<'a> {
                     });
 
                     if self.recognise(TokenType::COMMA) {
-                        self.advance();
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -994,9 +1065,7 @@ impl<'a> Parser<'a> {
 
         loop {
             if self.recognise(TokenType::LPAREN) {
-                
                 expr = self.finish_call(expr)?;
-              
             } else if self.recognise(TokenType::LBRACKET) {
                 let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
 
@@ -1011,25 +1080,22 @@ impl<'a> Parser<'a> {
                     },
                 });
             } else if self.recognise(TokenType::DOT) {
-                self.advance();
+                self.next()?;
 
                 let (close_span, property) =
                     self.consume_get_symbol_and_span("Expected an identifier")?;
-                    
-                    expr = Spanned {
-                            span: expr.get_span().to(close_span),
-                            value: Expression::Get {
-                                object: Box::new(expr),
-                                property,
-                            },
-                    }
 
-                
+                expr = Spanned {
+                    span: expr.get_span().to(close_span),
+                    value: Expression::Get {
+                        object: Box::new(expr),
+                        property,
+                    },
+                }
             } else {
                 break;
             }
         }
-
 
         Ok(expr)
     }
@@ -1044,7 +1110,7 @@ impl<'a> Parser<'a> {
                 args.push(self.parse_expression()?);
 
                 if self.recognise(TokenType::COMMA) {
-                    self.advance();
+                    self.next()?;
                 } else {
                     break;
                 }
@@ -1074,7 +1140,7 @@ impl<'a> Parser<'a> {
         let name = self.consume_get_symbol("Expected a class name")?;
 
         let superclass = if self.recognise(TokenType::LESSTHAN) {
-            self.advance();
+            self.next()?;
             Some(self.consume_get_symbol("Expected a superclass name")?)
         } else {
             None
@@ -1101,7 +1167,7 @@ impl<'a> Parser<'a> {
                     });
 
                     if self.recognise(TokenType::COMMA) {
-                        self.advance();
+                        self.next()?;
                     } else {
                         break;
                     }
@@ -1133,7 +1199,3 @@ impl<'a> Parser<'a> {
         })
     }
 }
-
-// impl<'a> Parser<'a> {
-
-// }

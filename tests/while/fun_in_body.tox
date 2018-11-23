@@ -1,2 +1,2 @@
-// expect: No rules expected 'fun'
-while (true) fun foo() {}
+// expect: No rules expected 'fn'
+while (true) fn foo() {}

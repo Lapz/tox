@@ -73,4 +73,8 @@ while (true) {
 
 #TODO
 
-* Parse field get property and field get call differently;
+* ~~Parse field get property and field get call differently;~~
+* ~~Implement `and` or `or`~~
+* Implement classes
+* Implement SETPARAM
+

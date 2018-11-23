@@ -1,8 +1,23 @@
+class Math {
+  fn add(a:int,b:int) -> int {
+      return a+b;
+  }
+}
 
-fun main(){
-    if (1<10) {
-        1+1;
-    }else {
-        50+20;
-    }
+class Person {
+  name:str,surname:str;
+  
+  fn hello(self:Person) {
+    print "Hello" + " " + self.name + " "+ self.surname;
+    return;
+  }
+
+}
+
+fn main() -> int {
+  let me = Person {name:"Lenard",surname:"Pratt"};
+  
+    Math.add(1,2);
+ 
+  return 0;
 }

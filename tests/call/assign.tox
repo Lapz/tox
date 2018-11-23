@@ -1,2 +1,2 @@
-var foo = true;
+let foo = true;
 foo() // expect:Type 'Boolean' is not callable

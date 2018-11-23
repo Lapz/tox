@@ -4,17 +4,23 @@ version = "0.2.0"
 authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
-debug = []
+debug = [] # Enable debug statements within the vm
+
+# [dependencies.vm.'cfg(feature = "debug")']
+# features = ["debug","stack"]
+# path = "../vm"
 
 [dependencies.vm]
 path = "../vm"
-features = ["debug"]
+# features = ["debug","stack"]
+
 
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
 frontend = {path = "../frontend"}
 interpreter = {path ="../interpreter"}
+# vm = {path ="../vm",features = ["debug","stack"]}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}

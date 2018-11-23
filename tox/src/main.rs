@@ -10,29 +10,26 @@ extern crate vm;
 
 mod repl;
 
-// use codegen::Compiler;
-use frontend::{Compiler, Infer};
+use frontend::{compile, Infer};
 use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
 use structopt::StructOpt;
-use syntax::lexer::Lexer;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
-use vm::{Assembler, VM};
+use vm::VM;
 
 fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        if opts.vm {
-            run_vm(file);
-        } else if opts.interpreter {
-            run_interpreter(file, opts.ptokens, opts.pprint, opts.past);
+        if opts.interpreter {
+            run_interpreter(file, opts.ptokens, opts.past);
         } else {
-            run(file, opts.ptokens, opts.pprint, opts.past);
+            println!("{}", opts.past);
+            run(file, opts.ptokens, opts.past);
         }
     } else {
         repl()
@@ -45,10 +42,7 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
-    use std::fs::File;
-    use std::io::Read;
-
+pub fn run_interpreter(path: String, _ptokens: bool, past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -64,37 +58,11 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let mut lexer = Lexer::new(input, reporter.clone());
-
-    let tokens = match lexer.lex() {
-        Ok(tokens) => {
-            if ptokens {
-                for token in &tokens {
-                    println!("{:#?}", token);
-                }
-            }
-            tokens
-        }
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
-
-    reporter.set_end(lexer.end_span());
-
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
-        Ok(statements) => {
-            if pprint {
-                // for statement in &statements {
-                //     println!("{}", statement.value.pprint(&mut symbols));
-                // }
-            }
-            statements
-        }
+    let ast = match Parser::new(input, reporter.clone(), &mut symbols).parse() {
+        Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);
             ::std::process::exit(65)
@@ -137,43 +105,7 @@ pub fn run_interpreter(path: String, ptokens: bool, pprint: bool, past: bool) {
     };
 }
 
-pub fn run_vm(path: String) {
-    let mut file = File::open(path).expect("File not found");
-
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents)
-        .expect("something went wrong reading the file");
-
-    if contents.is_empty() {
-        ::std::process::exit(0)
-    }
-
-    let mut assembler = Assembler::new();
-
-    let bytecode = match assembler.assemble(&contents) {
-        Ok(bytecode) => bytecode,
-        Err(e) => {
-            println!("{:?}", e);
-            ::std::process::exit(0)
-        }
-    };
-
-    let mut vm = VM::new();
-
-    vm.code(bytecode);
-
-    vm.disassemble("test");
-
-    vm.run();
-
-    println!("{:?}", vm);
-}
-
-pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
-    use std::fs::File;
-    use std::io::Read;
-
+pub fn run(path: String, _ptokens: bool, _past: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -189,29 +121,10 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
 
     let mut reporter = Reporter::new();
 
-    let mut lexer = Lexer::new(input, reporter.clone());
-
-    let tokens = match lexer.lex() {
-        Ok(tokens) => {
-            if ptokens {
-                for token in &tokens {
-                    println!("{:#?}", token);
-                }
-            }
-            tokens
-        }
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
-
-    reporter.set_end(lexer.end_span());
-
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
 
-    let ast = match Parser::new(tokens, reporter.clone(), &mut symbols).parse() {
+    let ast = match Parser::new(input, reporter.clone(), &mut symbols).parse() {
         Ok(statements) => statements,
         Err(_) => {
             reporter.emit(input);
@@ -219,9 +132,12 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         }
     };
 
-    if past {
-        println!("{:#?}", ast);
-    }
+    // use syntax::pprint::PrettyPrint;
+    // let mut file = File::create("ast.txt").unwrap_or(File::open("ast.txt").unwrap());
+
+    // for statment in ast.functions.iter() {
+    //     statment.value.body.value.print_with_symbols(&mut file,&symbols).unwrap();
+    // }
 
     let mut infer = Infer::new();
 
@@ -229,32 +145,21 @@ pub fn run(path: String, ptokens: bool, pprint: bool, past: bool) {
         Ok(ast) => ast,
         Err(_) => {
             reporter.emit(input);
+
             ::std::process::exit(65)
         }
     };
 
-    let mut compiler = Compiler::new();
-
-    compiler
-        .compile(&typed_ast)
-        .expect("Couldn't compile the file");
-
-    let bytecode = match Assembler::new().assemble_file("output.tasm") {
-        Ok(bytecode) => bytecode,
-        Err(e) => {
-            println!("{:?}", e);
-            ::std::process::exit(0)
+    let (functions, classes, objects) = match compile(&typed_ast, &mut reporter) {
+        Ok(functions) => functions,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
         }
     };
 
-    let mut vm = VM::new();
-
-    vm.code(bytecode);
-    vm.disassemble("test");
-
+    let mut vm = VM::new(symbols.symbol("main"), &functions, &classes, objects).unwrap();
     vm.run();
-
-    println!("{:?}", vm);
 }
 
 #[derive(StructOpt, Debug)]
@@ -263,17 +168,14 @@ pub struct Cli {
     /// The source code file
     pub source: Option<String>,
     /// Pretty Print Source Code
-    #[structopt(long = "pretty_print", short = "p")]
+    #[structopt(long = "print", short = "p")]
     pub pprint: bool,
     /// Print out tokens
     #[structopt(long = "tokens", short = "t")]
     pub ptokens: bool,
     /// Print out ast debug mode
-    #[structopt(long = "rawast", short = "ra")]
+    #[structopt(long = "rawast", short = "a")]
     pub past: bool,
-    /// Run in vm mode
-    #[structopt(long = "vm", short = "v")]
-    pub vm: bool,
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,

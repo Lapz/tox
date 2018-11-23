@@ -1,7 +1,7 @@
-use infer::types;
 use infer::types::Type;
-use std::collections::HashMap;
+
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
+use util::pos::Spanned;
 use util::symbol::Symbol;
 
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub struct Program {
 pub struct Function {
     pub name: Symbol,
     pub params: Vec<FunctionParam>,
-    pub body: Box<Statement>,
+    pub body: Box<Spanned<Statement>>,
     pub returns: Type,
 }
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ pub struct Method {
 
 #[derive(Debug, Clone)]
 pub struct TypedExpression {
-    pub expr: Box<Expression>,
+    pub expr: Box<Spanned<Expression>>,
     pub ty: Type,
 }
 
@@ -50,51 +50,67 @@ pub struct FunctionParam {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
-    Block(Vec<Statement>),
+    Block(Vec<Spanned<Statement>>),
     Break,
     Continue,
-    Expr(TypedExpression),
+    Expr(Spanned<TypedExpression>),
 
     If {
-        cond: TypedExpression,
-        then: Box<Statement>,
-        otherwise: Option<Box<Statement>>,
+        cond: Spanned<TypedExpression>,
+        then: Box<Spanned<Statement>>,
+        otherwise: Option<Box<Spanned<Statement>>>,
     },
 
-    Print(TypedExpression),
+    Print(Spanned<TypedExpression>),
 
-    While(TypedExpression, Box<Statement>),
+    While(Spanned<TypedExpression>, Box<Spanned<Statement>>),
 
     Var {
         ident: Symbol,
         ty: Type,
-        expr: Option<TypedExpression>,
+        expr: Option<Spanned<TypedExpression>>,
     },
 
-    Return(TypedExpression),
+    Return(Spanned<TypedExpression>),
 }
 
 #[derive(Debug, Clone)]
 pub enum Expression {
     // The different type of expressions availabe
-    Array(Vec<TypedExpression>),
-    Assign(Symbol, AssignOperator, TypedExpression),
-    Binary(TypedExpression, Op, TypedExpression),
-    Call(TypedExpression, Vec<TypedExpression>),
+    Array(Vec<Spanned<TypedExpression>>),
+    Assign(Symbol, AssignOperator, Spanned<TypedExpression>),
+    Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
+    Call(Symbol, Vec<Spanned<TypedExpression>>),
+    ClassMethodCall {
+        method_name: Symbol,
+        instance: Spanned<TypedExpression>,
+        params: Vec<Spanned<TypedExpression>>,
+    },
     Closure(Box<Function>),
-    ClassInstance(Symbol, Vec<TypedExpression>),
-    Get(Symbol, TypedExpression),
-    Grouping(TypedExpression),
+    ClassInstance(Symbol, Vec<(Symbol, Spanned<TypedExpression>)>),
+    Get(Symbol, Spanned<TypedExpression>),
+    GetProperty {
+        property_name: Symbol,
+        property: Spanned<TypedExpression>,
+    },
+    GetMethod {
+        method_name: Symbol,
+        method: Spanned<TypedExpression>,
+    },
 
-    Index(Symbol, TypedExpression),
+    Grouping(Spanned<TypedExpression>),
+
+    Index(Spanned<TypedExpression>, Spanned<TypedExpression>),
 
     Literal(Literal),
     /// Name, Object, Value
-    Set(Symbol, TypedExpression, TypedExpression),
+    Set(Symbol, Spanned<TypedExpression>, Spanned<TypedExpression>),
 
-    Ternary(TypedExpression, TypedExpression, TypedExpression),
-    Unary(UnaryOp, TypedExpression),
-
-    This,
+    Ternary(
+        Spanned<TypedExpression>,
+        Spanned<TypedExpression>,
+        Spanned<TypedExpression>,
+    ),
+    Unary(UnaryOp, Spanned<TypedExpression>),
     Var(Symbol, Type),
 }
