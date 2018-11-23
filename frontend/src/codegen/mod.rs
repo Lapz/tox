@@ -488,6 +488,23 @@ impl<'a> Builder<'a> {
                 }
             }
 
+            Expression::ClassMethodCall {
+                ref class_name,
+                ref method_name,
+                ref instance,
+                ref params,
+            } => {
+                
+                for param in params {
+                    self.compile_expression(param)?;
+                }
+
+                self.compile_expression(instance)?;
+
+                self.emit_byte(opcode::CALLMETHOD);
+                self.emit_bytes(method_name.0 as u8,params.len() as u8);
+            }
+
             Expression::Get(ref property, ref instance) => {
                 self.compile_expression(instance)?;
                 self.emit_bytes(opcode::GETPROPERTY, property.0 as u8);

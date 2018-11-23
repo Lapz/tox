@@ -326,6 +326,34 @@ impl<'a> VM<'a> {
                     // swaps the current frame with the one we are one and then
                 }
 
+                opcode::CALLMETHOD => {
+                    let method_name = self.read_byte();
+                    let arg_count = self.read_byte();
+
+                    let method_name = Symbol(method_name as u64);
+
+                    let mut instance = self.pop();
+                    let mut instance = instance.as_instance();
+
+                    let function = &instance.methods.get(&method_name).unwrap();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+
                 opcode::POP => {
                     self.pop();
                 }

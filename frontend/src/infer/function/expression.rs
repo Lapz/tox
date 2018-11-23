@@ -383,13 +383,11 @@ impl Infer {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
                 Expression::Var(ref sym) => {
-                    println!("{:?}", ctx.name(sym.value));
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
 
                         match ty {
                             Type::Fun(ref targs, ref ret, ref is_closure) => {
-                                use util::pos::Span;
                                 if args.len() != targs.len() {
                                     let msg = format!(
                                         "Expected `{}` args found `{}` ",
@@ -400,13 +398,11 @@ impl Infer {
                                     return Err(());
                                 }
 
-                                let mut arg_tys: Vec<(Span, Type)> = Vec::with_capacity(args.len());
                                 let mut callee_exprs = Vec::with_capacity(args.len());
 
                                 for arg in args {
-                                    let span = arg.span;
                                     let ty_expr = self.infer_expr(arg, ctx)?;
-                                    arg_tys.push((span, ty_expr.value.ty.clone()));
+
                                     callee_exprs.push(ty_expr)
                                 }
 
@@ -439,13 +435,57 @@ impl Infer {
                 }
 
                 Expression::Get { .. } => {
-                    let fun = self.infer_object_get(*callee, ctx)?;
+                    let (callee, ty) = self.infer_object_get(*callee, ctx)?;
 
-                    println!("{:?}",fun.1);
+                    match ty {
+                        Type::Fun(ref param_types, ref returns, _) => {
+                            if args.len() != param_types.len() {
+                                let msg = format!(
+                                    "Expected `{}` args found `{}` ",
+                                    param_types.len(),
+                                    args.len()
+                                );
+                                ctx.error(msg, call.span);
+                                return Err(());
+                            }
 
-                    
-                    Ok(fun)
-                },
+                            let mut callee_exprs = Vec::with_capacity(args.len());
+
+                            for arg in args {
+                                let ty_expr = self.infer_expr(arg, ctx)?;
+
+                                callee_exprs.push(ty_expr)
+                            }
+
+                            match callee.value {
+                                t::Expression::GetMethod {
+                                    class_name,
+                                    method_name,
+                                    method,
+                                } => Ok((
+                                    Spanned::new(
+                                        t::Expression::ClassMethodCall {
+                                            class_name,
+                                            method_name,
+                                            instance: method,
+                                            params: callee_exprs,
+                                        },
+                                        call.span,
+                                    ),
+                                    *returns.clone(),
+                                )),
+
+                                _ => unreachable!(),
+                            }
+                        }
+
+                        _ => {
+                            let msg = format!("Type {} is not callable", ty.print(ctx));
+                            ctx.error(msg, callee.span);
+                            return Err(());
+                        }
+                    }
+                }
                 Expression::Closure(function) => {
                     let returns = if let Some(ref ty) = function.value.returns {
                         self.trans_type(&ty, ctx)?
@@ -614,12 +654,11 @@ impl Infer {
             Expression::Get { object, property } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
-               
-
                 match ob_instance.value.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
                         if let Some(ty) = ctx.look_type(*name).cloned() {
                             // Look at the conical type
+
                             match ty {
                                 Type::This {
                                     ref methods,
@@ -627,8 +666,6 @@ impl Infer {
                                     ref name,
                                 }
                                 | Type::Class(ref name, ref fields, ref methods, _) => {
-
-            
                                     for (field_name, field_ty) in fields {
                                         if field_name == &property.value {
                                             return Ok((

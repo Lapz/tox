@@ -84,6 +84,7 @@ pub enum Expression {
     ClassMethodCall {
         class_name: Symbol,
         method_name: Symbol,
+        instance: Spanned<TypedExpression>,
         params: Vec<Spanned<TypedExpression>>,
     },
     Closure(Box<Function>),

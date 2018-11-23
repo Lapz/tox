@@ -24,6 +24,7 @@ pub enum Type {
     Alias(Symbol, Box<Type>),
     Class(
         Symbol,
+        ///properties
         HashMap<Symbol, Type>,
         HashMap<Symbol, Entry>,
         Unique,

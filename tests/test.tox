@@ -11,6 +11,10 @@ class Person {
     print "Hello" + " " + self.name + " "+ self.surname;
     return;
   }
+
+  fn add(a:int,b:int) -> int {
+    return a+b;
+  }
 }
 
 fn main() -> int {

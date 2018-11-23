@@ -100,6 +100,8 @@ pub mod opcode {
 
     pub const SETPROPERTY: u8 = 042;
 
+    pub const CALLMETHOD: u8 = 043;
+
     // pub const STORELOCAL:u8
 }
 

@@ -28,6 +28,7 @@ fn main() {
         if opts.interpreter {
             run_interpreter(file, opts.ptokens, opts.past);
         } else {
+            println!("{}", opts.past);
             run(file, opts.ptokens, opts.past);
         }
     } else {
@@ -131,9 +132,12 @@ pub fn run(path: String, ptokens: bool, past: bool) {
         }
     };
 
-    if past {
-        println!("{:#?}", ast);
-    }
+    // use syntax::pprint::PrettyPrint;
+    // let mut file = File::create("ast.txt").unwrap_or(File::open("ast.txt").unwrap());
+
+    // for statment in ast.functions.iter() {
+    //     statment.value.body.value.print_with_symbols(&mut file,&symbols).unwrap();
+    // }
 
     let mut infer = Infer::new();
 
@@ -164,7 +168,7 @@ pub struct Cli {
     /// The source code file
     pub source: Option<String>,
     /// Pretty Print Source Code
-    #[structopt(long = "pretty_print", short = "p")]
+    #[structopt(long = "print", short = "p")]
     pub pprint: bool,
     /// Print out tokens
     #[structopt(long = "tokens", short = "t")]
