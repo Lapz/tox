@@ -388,7 +388,6 @@ impl<'a> Builder<'a> {
                     self.compile_expression(rhs)?;
 
                     match (&expr.value.ty, op) {
-                        
                         (Type::Int, Op::Plus) => self.emit_byte(opcode::ADD),
                         (Type::Float, Op::Plus) => self.emit_byte(opcode::ADDF),
 
@@ -475,7 +474,7 @@ impl<'a> Builder<'a> {
             }
 
             Expression::ClassInstance(ref symbol, ref properties) => {
-                for (_, expr) in properties.iter() {
+                for (_, expr) in properties.iter().rev() {
                     //rev because poped of stack
                     self.compile_expression(expr)?;
                 }
@@ -492,6 +491,24 @@ impl<'a> Builder<'a> {
             Expression::Get(ref property, ref instance) => {
                 self.compile_expression(instance)?;
                 self.emit_bytes(opcode::GETPROPERTY, property.0 as u8);
+            }
+
+            Expression::GetProperty {
+                ref property_name,
+                ref property,
+                ..
+            } => {
+                self.compile_expression(property)?;
+                self.emit_bytes(opcode::GETPROPERTY, property_name.0 as u8)
+            }
+
+            Expression::GetMethod {
+                ref method_name,
+                ref method,
+                ..
+            } => {
+                self.compile_expression(method)?;
+                self.emit_bytes(opcode::GETMETHOD, method_name.0 as u8)
             }
 
             Expression::Grouping(ref expr) => {

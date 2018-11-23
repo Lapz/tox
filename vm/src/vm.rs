@@ -228,20 +228,25 @@ impl<'a> VM<'a> {
                     let instance = instance.as_instance();
 
                     let property = Symbol(self.read_byte() as u64);
-
-                    let value = if let Some(value) = instance.properties.get(&property) {
-                        *value
-                    } else if let Some(function) = instance.methods.get(&property) {
-                        Value::object(FunctionObject::new(
-                            function.params.len(),
-                            function.clone(),
-                            self.objects,
-                        ))
-                    } else {
-                        unreachable!("Undefined field or property");
-                    };
+                    let value = *instance.properties.get(&property).unwrap();
 
                     self.push(value);
+                }
+
+                opcode::GETMETHOD => {
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
+
+                    let method_name = Symbol(self.read_byte() as u64);
+
+                    let method = instance.methods.get(&method_name).unwrap();
+                    let value = Value::object(FunctionObject::new(
+                        method.params.len(),
+                        method.clone(),
+                        self.objects,
+                    ));
+
+                    self.push(value)
                 }
 
                 opcode::SETPROPERTY => {
@@ -367,7 +372,7 @@ impl<'a> VM<'a> {
                     let methods = class.methods.clone();
                     let mut properties = HashMap::new();
 
-                    for i in 0..num_properties {
+                    for _ in 0..num_properties {
                         properties.insert(Symbol(self.read_byte() as u64), self.pop());
                     }
 

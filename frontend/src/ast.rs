@@ -82,20 +82,31 @@ pub enum Expression {
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Symbol, Vec<Spanned<TypedExpression>>),
     ClassMethodCall {
-        class_name:Symbol,
-        method_name:Symbol,
-        params:Vec<Spanned<TypedExpression>>
+        class_name: Symbol,
+        method_name: Symbol,
+        params: Vec<Spanned<TypedExpression>>,
     },
     Closure(Box<Function>),
-    ClassInstance(Symbol, HashMap<Symbol, Spanned<TypedExpression>>),
+    ClassInstance(Symbol, Vec<(Symbol, Spanned<TypedExpression>)>),
     Get(Symbol, Spanned<TypedExpression>),
+    GetProperty {
+        class_name: Symbol,
+        property_name: Symbol,
+        property: Spanned<TypedExpression>,
+    },
+    GetMethod {
+        class_name: Symbol,
+        method_name: Symbol,
+        method: Spanned<TypedExpression>,
+    },
+
     Grouping(Spanned<TypedExpression>),
 
     Index(Spanned<TypedExpression>, Spanned<TypedExpression>),
     InstanceMethodCall {
-        class_name:Symbol,
-        method_name:Symbol,
-        params:Vec<Spanned<TypedExpression>>
+        class_name: Symbol,
+        method_name: Symbol,
+        params: Vec<Spanned<TypedExpression>>,
     },
 
     Literal(Literal),

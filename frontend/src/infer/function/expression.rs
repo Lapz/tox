@@ -383,7 +383,7 @@ impl Infer {
             Expression::Call { callee, args } => match callee.value {
                 Expression::Call { .. } => return self.infer_call(*callee, ctx),
                 Expression::Var(ref sym) => {
-                    println!("{:?}",ctx.name(sym.value) );
+                    println!("{:?}", ctx.name(sym.value));
                     if let Some(ty) = ctx.look_var(sym.value).cloned() {
                         let ty = ty.get_ty();
 
@@ -409,9 +409,6 @@ impl Infer {
                                     arg_tys.push((span, ty_expr.value.ty.clone()));
                                     callee_exprs.push(ty_expr)
                                 }
-
-                               
-                              
 
                                 Ok((
                                     Spanned::new(
@@ -441,7 +438,14 @@ impl Infer {
                     }
                 }
 
-                Expression::Get { .. } => self.infer_object_get(*callee, ctx),
+                Expression::Get { .. } => {
+                    let fun = self.infer_object_get(*callee, ctx)?;
+
+                    println!("{:?}",fun.1);
+
+                    
+                    Ok(fun)
+                },
                 Expression::Closure(function) => {
                     let returns = if let Some(ref ty) = function.value.returns {
                         self.trans_type(&ty, ctx)?
@@ -541,7 +545,7 @@ impl Infer {
 
                 match class {
                     Type::This { ref fields, .. } | Type::Class(_, ref fields, _, _) => {
-                        let mut instance_exprs = HashMap::new();
+                        let mut instance_exprs = Vec::new();
                         let mut unkown = false;
 
                         for prop in props.into_iter() {
@@ -553,7 +557,7 @@ impl Infer {
 
                                 self.unify(&def_prop_ty, &ty.value.ty, span, ctx)?;
 
-                                instance_exprs.insert(ident, ty);
+                                instance_exprs.push((ident, ty));
                             } else {
                                 unkown = true;
                                 let msg = format!(
@@ -610,25 +614,30 @@ impl Infer {
             Expression::Get { object, property } => {
                 let ob_instance = self.infer_expr(*object, ctx)?;
 
-
-                println!("{:?}",ob_instance);
+               
 
                 match ob_instance.value.ty.clone() {
                     Type::This { ref name, .. } | Type::Class(ref name, _, _, _) => {
-                        if let Some(ty) = ctx.look_type(*name) {
+                        if let Some(ty) = ctx.look_type(*name).cloned() {
                             // Look at the conical type
-                            match *ty {
+                            match ty {
                                 Type::This {
                                     ref methods,
                                     ref fields,
-                                    ..
+                                    ref name,
                                 }
-                                | Type::Class(_, ref fields, ref methods, _) => {
+                                | Type::Class(ref name, ref fields, ref methods, _) => {
+
+            
                                     for (field_name, field_ty) in fields {
                                         if field_name == &property.value {
                                             return Ok((
                                                 Spanned::new(
-                                                    t::Expression::Get(property.value, ob_instance),
+                                                    t::Expression::GetProperty {
+                                                        class_name: *name,
+                                                        property_name: property.value,
+                                                        property: ob_instance,
+                                                    },
                                                     expr.span,
                                                 ),
                                                 field_ty.clone(),
@@ -642,7 +651,11 @@ impl Infer {
 
                                             return Ok((
                                                 Spanned::new(
-                                                    t::Expression::Get(property.value, ob_instance),
+                                                    t::Expression::GetMethod {
+                                                        class_name: *name,
+                                                        method_name: property.value,
+                                                        method: ob_instance,
+                                                    },
                                                     expr.span,
                                                 ),
                                                 ty, // Change to return the return type

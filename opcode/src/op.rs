@@ -94,9 +94,11 @@ pub mod opcode {
 
     pub const GETPROPERTY: u8 = 039;
 
-    pub const CLASSINSTANCE: u8 = 040;
+    pub const GETMETHOD: u8 = 040;
 
-    pub const SETPROPERTY: u8 = 041;
+    pub const CLASSINSTANCE: u8 = 041;
+
+    pub const SETPROPERTY: u8 = 042;
 
     // pub const STORELOCAL:u8
 }

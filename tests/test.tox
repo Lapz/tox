@@ -4,7 +4,19 @@ class Math {
   }
 }
 
+class Person {
+  name:str,surname:str;
+  
+  fn hello(self:Person) {
+    print "Hello" + " " + self.name + " "+ self.surname;
+    return;
+  }
+}
+
 fn main() -> int {
-  print Math.add(1,2)+add(3,4);
+  let me = Person {name:"Lenard",surname:"Pratt"};
+  
+  print me.hello(me);
+  // print Math.move();
   return 0;
 }
