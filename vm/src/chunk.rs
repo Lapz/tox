@@ -4,7 +4,7 @@ use value::Value;
 
 type Line = u32;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,Default)]
 /// A wrapper around an array of bytes
 pub struct Chunk {
     pub code: Vec<u8>,
@@ -14,11 +14,7 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new() -> Self {
-        Chunk {
-            code: Vec::new(),
-            constants: Vec::new(),
-            lines: Vec::new(),
-        }
+        Self::default()
     }
 
     pub fn add_constant(&mut self, value: Value) -> usize {

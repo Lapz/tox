@@ -1049,7 +1049,7 @@ impl<'a> Parser<'a> {
                 span: symbol.get_span().to(close_span),
                 value: Expression::ClassInstance {
                     symbol,
-                    props: props,
+                    props,
                 },
             })
         } else {

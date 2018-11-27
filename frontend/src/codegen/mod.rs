@@ -11,9 +11,9 @@ type ParseResult<T> = Result<T, ()>;
 #[derive(Debug, Clone, Copy)]
 struct LoopDescription {
     /// The index of the start label
-    start: i32,
+    start: usize,
     /// The index of the end label
-    end: i32,
+    end: usize,
 }
 pub struct Builder<'a> {
     /// The current chunk
@@ -219,10 +219,16 @@ impl<'a> Builder<'a> {
 
             Statement::While(ref cond, ref body) => {
                 let start_label = self.chunk.code.len();
+            
 
                 self.compile_expression(cond)?;
 
                 let out = self.emit_jump(opcode::JUMPNOT);
+
+                self.current_loop = Some(LoopDescription {
+                   start:start_label,
+                   end: out
+                });
 
                 self.emit_byte(opcode::POP);
 
@@ -484,7 +490,7 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            Expression::ClassMethodCall {
+            Expression::InstanceMethodCall {
                 ref method_name,
                 ref instance,
                 ref params,
@@ -497,6 +503,20 @@ impl<'a> Builder<'a> {
 
                 self.emit_byte(opcode::CALLMETHOD);
                 self.emit_bytes(method_name.0 as u8, params.len() as u8);
+            },
+
+            Expression::StaticMethodCall {
+                ref class_name,
+                ref method_name,
+                ref params
+            } => {
+                for param in params {
+                    self.compile_expression(param)?;
+                }
+
+                self.emit_byte(opcode::CALLSTATICMETHOD);
+                self.emit_bytes(class_name.0 as u8, method_name.0 as u8);
+                self.emit_byte(params.len() as u8);
             }
 
             Expression::Get(ref property, ref instance) => {

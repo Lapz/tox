@@ -70,7 +70,7 @@ fn built_in_hex(arguments: &[Object]) -> Result<Object, RuntimeError> {
 }
 
 fn built_in_char_at(arguments: &[Object]) -> Result<Object, RuntimeError> {
-    let mut arguments = arguments.into_iter();
+    let mut arguments = arguments.iter();
     let input = match arguments.next() {
         Some(&Object::Str(ref a)) => a,
         _ => unreachable!(),
@@ -85,7 +85,7 @@ fn built_in_char_at(arguments: &[Object]) -> Result<Object, RuntimeError> {
 }
 
 fn built_in_is_digit(arguments: &[Object]) -> Result<Object, RuntimeError> {
-    let mut arguments = arguments.into_iter();
+    let mut arguments = arguments.iter();
     let input = match arguments.next() {
         Some(&Object::Str(ref a)) => a,
         _ => unreachable!(),
@@ -102,7 +102,7 @@ fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
 }
 
 fn built_in_rand(arguments: &[Object]) -> Result<Object, RuntimeError> {
-    let mut arguments = arguments.into_iter();
+    let mut arguments = arguments.iter();
     let min = match arguments.next() {
         Some(&Object::Int(n)) => n,
         _ => unreachable!(),

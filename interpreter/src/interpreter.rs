@@ -52,7 +52,7 @@ impl ErrorCode {
             }
 
             ErrorCode::IndexOutOfBound => {
-                format!("An invalid index was used when trying to access an item from an array")
+                "An invalid index was used when trying to access an item from an array".into()
             }
 
             ErrorCode::InvalidIndexType => format!("The type of an index should be an integer"),
@@ -61,7 +61,7 @@ impl ErrorCode {
                 ::std::str::from_utf8(bytes).unwrap()
             ),
 
-            ErrorCode::NotAnInstance => format!("A class instance was expected"),
+            ErrorCode::NotAnInstance => "A class instance was expected".into(),
             _ => format!(""),
         }
     }

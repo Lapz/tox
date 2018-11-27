@@ -102,6 +102,8 @@ pub mod opcode {
 
     pub const CALLMETHOD: u8 = 043;
 
+    pub const CALLSTATICMETHOD:u8 = 044;
+
     // pub const STORELOCAL:u8
 }
 

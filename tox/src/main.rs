@@ -28,7 +28,6 @@ fn main() {
         if opts.interpreter {
             run_interpreter(file, opts.ptokens, opts.past);
         } else {
-            println!("{}", opts.past);
             run(file, opts.ptokens, opts.past);
         }
     } else {

@@ -228,7 +228,7 @@ impl<'a> VM<'a> {
                     let instance = instance.as_instance();
 
                     let property = Symbol(self.read_byte() as u64);
-                    let value = *instance.properties.get(&property).unwrap();
+                    let value = instance.properties[&property];
 
                     self.push(value);
                 }
@@ -306,14 +306,6 @@ impl<'a> VM<'a> {
                         params.insert(i, self.pop());
                     }
 
-                    if self.peek(1).is_class() {
-                        let class = self.stack[self.stack_top - 1];
-
-                        if let Some(method) = class.as_class().methods.get(&symbol) {
-                            function = Some(&method.function);
-                        };
-                    }
-
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
@@ -327,11 +319,10 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALLMETHOD => {
-                    let method_name = self.read_byte();
+                    let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let method_name = Symbol(method_name as u64);
-
+            
                     let mut instance = self.pop();
                     let mut instance = instance.as_instance();
 
@@ -347,6 +338,37 @@ impl<'a> VM<'a> {
                         ip: 0,
                         locals: HashMap::new(),
                         function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                },
+
+                opcode::CALLSTATICMETHOD => {
+                    let class_name = Symbol(self.read_byte() as u64);
+                    let method_name = Symbol(self.read_byte() as u64);
+                    let arg_count = self.read_byte();
+                    let mut function = None;
+
+
+                    for klass in self.classes.iter() {
+                        if klass.name == class_name {
+                            function = Some(klass.methods.get(&method_name).unwrap());
+                        }
+                    }
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function.unwrap(),
                         params,
                     };
 
@@ -479,9 +501,6 @@ impl<'a> VM<'a> {
         self.stack[self.stack_top]
     }
 
-    fn peek(&mut self, distance: usize) -> Value {
-        self.stack[self.stack_top - distance]
-    }
 }
 
 use std::fmt::{self, Debug};

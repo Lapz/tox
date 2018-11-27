@@ -1,4 +1,5 @@
 class Math {
+  foo:int;
   fn add(a:int,b:int) -> int {
       return a+b;
   }
@@ -15,9 +16,18 @@ class Person {
 }
 
 fn main() -> int {
-  let me = Person {name:"Lenard",surname:"Pratt"};
   
-    Math.add(1,2);
+  let i =0 ;
+
+  while(i<10) {
+    print i;
+
+    if i==5 {
+      break;
+    }
+
+    i+=1;
+  }
  
   return 0;
 }
