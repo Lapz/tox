@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use vm::{Chunk, Class, Function, FunctionObject, RawObject, StringObject, Value};
+use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -219,15 +219,14 @@ impl<'a> Builder<'a> {
 
             Statement::While(ref cond, ref body) => {
                 let start_label = self.chunk.code.len();
-            
 
                 self.compile_expression(cond)?;
 
                 let out = self.emit_jump(opcode::JUMPNOT);
 
                 self.current_loop = Some(LoopDescription {
-                   start:start_label,
-                   end: out
+                    start: start_label,
+                    end: out,
                 });
 
                 self.emit_byte(opcode::POP);
@@ -503,12 +502,12 @@ impl<'a> Builder<'a> {
 
                 self.emit_byte(opcode::CALLMETHOD);
                 self.emit_bytes(method_name.0 as u8, params.len() as u8);
-            },
+            }
 
             Expression::StaticMethodCall {
                 ref class_name,
                 ref method_name,
-                ref params
+                ref params,
             } => {
                 for param in params {
                     self.compile_expression(param)?;
@@ -683,22 +682,28 @@ fn compile_function(
     })
 }
 
-pub fn compile(
-    ast: &ast::Program,
-    reporter: &mut Reporter,
-) -> ParseResult<(Vec<Function>, Vec<Class>, RawObject)> {
-    let mut funcs = Vec::new();
-    let mut classes = Vec::new();
+pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
+    let mut funcs = HashMap::new();
+    let mut classes = HashMap::new();
 
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
     for function in ast.functions.iter() {
-        funcs.push(compile_function(function, reporter, objects)?);
+        funcs.insert(
+            function.name,
+            compile_function(function, reporter, objects)?,
+        );
     }
 
     for class in ast.classes.iter() {
-        classes.push(compile_class(class, reporter, objects)?);
+        classes.insert(class.name, compile_class(class, reporter, objects)?);
     }
 
-    Ok((funcs, classes, objects))
+    Ok((
+        Program {
+            functions: funcs,
+            classes,
+        },
+        objects,
+    ))
 }

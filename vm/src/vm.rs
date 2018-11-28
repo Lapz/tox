@@ -1,4 +1,4 @@
-use super::{Class, Function};
+use super::{Function,Program};
 use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
@@ -13,15 +13,13 @@ pub struct StackFrame<'a> {
     function: &'a Function,
     params: HashMap<u8, Value>,
 }
+
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
-    functions: &'a [Function],
-    classes: &'a [Class],
+    program: &'a Program,
     objects: RawObject,
-    heap: Vec<u8>,
-    equal_flag: bool,
     stack_top: usize,
 }
 
@@ -34,20 +32,12 @@ pub enum Error {
 impl<'a> VM<'a> {
     pub fn new(
         main: Symbol,
-        functions: &'a [Function],
-        classes: &'a [Class],
+        program: &'a Program,
         objects: RawObject,
     ) -> Result<Self, Error> {
-        let mut main_function = None;
+        let main_function = program.functions.get(&main);
 
-        {
-            for func in functions.iter() {
-                if func.name == main {
-                    main_function = Some(func);
-                }
-            }
-        }
-
+       
         if main_function.is_none() {
             return Err(Error::NoMain);
         }
@@ -62,11 +52,8 @@ impl<'a> VM<'a> {
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
             current_frame,
-            functions,
-            classes,
+            program,
             frames: Vec::new(),
-            equal_flag: false,
-            heap: Vec::new(),
             stack_top: 4,
             objects,
         })
@@ -283,20 +270,10 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                    let symbol = self.read_byte();
+                    let function_name = Symbol( self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let symbol = Symbol(symbol as u64);
-
-                    let mut function = None;
-
-                    {
-                        for func in self.functions.iter() {
-                            if func.name == symbol {
-                                function = Some(func);
-                            }
-                        }
-                    }
+                    let mut function = self.program.functions.get(&function_name).unwrap();
 
                     let mut params = HashMap::new();
 
@@ -307,7 +284,7 @@ impl<'a> VM<'a> {
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
-                        function: function.unwrap(),
+                        function: function,
                         params,
                     };
 
@@ -320,7 +297,6 @@ impl<'a> VM<'a> {
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-            
                     let mut instance = self.pop();
                     let mut instance = instance.as_instance();
 
@@ -341,32 +317,25 @@ impl<'a> VM<'a> {
 
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
-                },
+                }
 
                 opcode::CALLSTATICMETHOD => {
                     let class_name = Symbol(self.read_byte() as u64);
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
-                    let mut function = None;
+                    let mut function = self.program.classes.get(&class_name).unwrap().methods.get(&method_name).unwrap();
 
-
-                    for klass in self.classes.iter() {
-                        if klass.name == class_name {
-                            function = Some(klass.methods.get(&method_name).unwrap());
-                        }
-                    }
-
+                    
                     let mut params = HashMap::new();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
                     }
 
-
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
-                        function: function.unwrap(),
+                        function: function,
                         params,
                     };
 
@@ -400,23 +369,14 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CLASSINSTANCE => {
-                    let symbol = self.read_byte();
+                    let class_name = Symbol(self.read_byte() as u64);
+                
                     let num_properties = self.read_byte() as usize;
 
-                    let symbol = Symbol(symbol as u64);
+                    
 
-                    let mut class = None;
-
-                    {
-                        for klass in self.classes.iter() {
-                            if klass.name == symbol {
-                                class = Some(klass);
-                            }
-                        }
-                    }
-
-                    let class = class.unwrap();
-
+                    let mut class = self.program.classes.get(&class_name).unwrap();
+                  
                     let methods = class.methods.clone();
                     let mut properties = HashMap::new();
 
@@ -498,7 +458,6 @@ impl<'a> VM<'a> {
         self.stack_top -= 1;
         self.stack[self.stack_top]
     }
-
 }
 
 use std::fmt::{self, Debug};
@@ -508,11 +467,7 @@ impl<'a> Debug for VM<'a> {
         let mut debug_trait_builder = f.debug_struct("VM");
 
         let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
-        let _ = debug_trait_builder.field("heap", &self.heap);
         let _ = debug_trait_builder.field("ip", &self.current_frame.ip);
-
-        let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()
-
     }
 }

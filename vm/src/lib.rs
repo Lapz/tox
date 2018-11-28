@@ -31,3 +31,9 @@ pub struct Class {
     pub name: ::util::symbol::Symbol,
     pub methods: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
 }
+
+#[derive(Debug, Clone)]
+pub struct Program {
+    pub functions: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+    pub classes: ::std::collections::HashMap<::util::symbol::Symbol, Class>,
+}

@@ -260,7 +260,6 @@ impl<'a> Parser<'a> {
             }
         }
 
-
         self.error("Unclosed string", last.unwrap()); // has to be the end as we keep on adding to our string till we reach the end
 
         Err(())

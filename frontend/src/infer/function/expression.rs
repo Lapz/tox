@@ -463,21 +463,20 @@ impl Infer {
                                     method_name,
                                     method,
                                 } => match method.value.expr.value {
-                                    t::Expression::Var(ref symbol, _) => { // type inference returns the type of the main classs
+                                    t::Expression::Var(ref symbol, _) => {
+                                        // type inference returns the type of the main classs
                                         Ok((
                                             Spanned::new(
                                                 t::Expression::StaticMethodCall {
-                                                    class_name:*symbol,
+                                                    class_name: *symbol,
                                                     method_name,
-                                                    params:callee_exprs,
+                                                    params: callee_exprs,
                                                 },
                                                 call.span,
                                             ),
-
-                                            *returns.clone()
+                                            *returns.clone(),
                                         ))
-                                        
-                                    },
+                                    }
 
                                     _ => Ok((
                                         Spanned::new(
