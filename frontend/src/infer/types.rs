@@ -61,26 +61,8 @@ impl Type {
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
             Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
-            Type::Class(ref name, ref methods, ref fields, _) => {
-                let mut fmt_string = format!("Class {} {{", ctx.name(*name));
-
-                for (i, field) in fields.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&ctx.name(*field.0))
-                    } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
-                    }
-                }
-
-                for (i, method) in methods.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
-                    } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
-                    }
-                }
-
-                fmt_string.push('}');
+            Type::Class(ref name, _,_, _) => {
+                let fmt_string = format!("Class {}", ctx.name(*name));
 
                 fmt_string
             }

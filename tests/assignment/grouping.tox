@@ -1,2 +1,4 @@
-let a = "a";
-(a) = "value"; // Error at '=': Invalid assignment target.
+fn main() {
+    let a = "a";
+    (a) = "value"; // error: Not a valid assingment target
+}

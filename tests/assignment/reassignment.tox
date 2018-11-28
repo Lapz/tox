@@ -1,2 +1,4 @@
-let a = 10;
-a = "a"; // expect:Expected type 'Int' but instead got 'Str' on line 2,column 3
+fn main() {
+    let a = 10;
+    a = "a"; // expect:Expected type 'Int' but instead got 'Str' on line 2,column 3
+}

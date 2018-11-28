@@ -1,3 +1,5 @@
-let a = "a";
-let b = "b";
-a + b = "value"; //expect: Error at '=': Invalid assignment target.
+fn main() {
+    let a = "a";
+    let b = "b";
+    a + b = "value"; //error: Not a valid assingment target
+}
