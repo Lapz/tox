@@ -1,7 +1,6 @@
 use super::Function;
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
-use std::mem;
 use std::ops::Deref;
 use util::symbol::Symbol;
 use value::Value;

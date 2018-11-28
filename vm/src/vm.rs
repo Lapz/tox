@@ -116,8 +116,6 @@ impl<'a> VM<'a> {
                             continue; // Were are return from a top level function main
                         }
                     }
-
-                    // println!("{}", value);
                 }
 
                 opcode::CONSTANT => {
@@ -516,13 +514,5 @@ impl<'a> Debug for VM<'a> {
         let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()
 
-        //  f.debug_list().entries(self.stack[0..].iter()).finish()
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use opcode;
-
 }

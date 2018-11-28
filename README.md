@@ -9,7 +9,7 @@ Tox is a statically typed version of [lox](http://www.craftinginterpreters.com) 
 # Example Program
 
 ```ts 
-fun fib(n:int) -> int {
+fn fib(n:int) -> int {
     if (n < 2) 
       return n;
     return fib(n - 2) + fib(n - 1);
@@ -18,63 +18,26 @@ fun fib(n:int) -> int {
 
 A simple example that makes of uses of the classes
 
-```ts
+```rust
 class Toggle {
     state:bool;
   
-    fun value() -> bool {
+    fn value() -> bool {
       return this.state;
     }
   
-    fun activate() -> Toggle {
+    fn activate() -> Toggle {
       this.state = !this.state;
       return this;
     }
 }
   
-var toggle  = Toggle{state:true};
+fn main() {
+  var toggle  = Toggle{state:true};
 
-print toggle.activate().value();
+  print toggle.activate().value();
 
-print toggle.activate().value();
-```
-
-A guessing game example 
-
-```ts
-
-print "Guess the number!";
-
-
-while (true) {
-  var secret_number = random(1,101);
-  print "Please input your guess.";
-
-  var guess = io.readline();
-
-  print "You guessed: " + guess;
-
-  if (to_int(guess) > secret_number) {
-    print "Too small!";
-  }
-
-  if (to_int(guess) < secret_number) {
-    print "Too big!";
-  }
-
-
-  if (to_int(guess) == secret_number) {
-    print "You win!";
-    break;
-  }
+  print toggle.activate().value();
 }
-
 ```
-
-#TODO
-
-* ~~Parse field get property and field get call differently;~~
-* ~~Implement `and` or `or`~~
-* Implement classes
-* Implement SETPARAM
 
