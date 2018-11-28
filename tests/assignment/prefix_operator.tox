@@ -1,4 +1,0 @@
-fn main() {
-    let a = "a";
-    !a = "value"; //expect: Error at '=': Invalid assignment target.
-}

@@ -19,7 +19,7 @@ fn main() {
     let mut fail = 0i32;
     let mut failed = Vec::new();
 
-    for entry in WalkDir::new("../tests/assignment") {
+    for entry in WalkDir::new("../tests/bool") {
         let entry = entry.unwrap();
 
         if entry.path().is_dir() {

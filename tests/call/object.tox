@@ -1,4 +1,0 @@
-class Foo {}
-
-let foo = Foo{};
-foo(); // Can only call functions and classes.

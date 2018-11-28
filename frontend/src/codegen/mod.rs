@@ -585,7 +585,8 @@ impl<'a> Builder<'a> {
                 } else if let Some(offset) = self.params.get(ident).cloned() {
                     self.emit_bytes(opcode::GETPARAM, offset as u8);
                 } else {
-                    unreachable!(); // Params are treated as locals so it should be present
+                    self.reporter.error("Undefined variable", expr.span);
+                    return Err(()); // Params are treated as locals so it should be present
                 }
             }
 

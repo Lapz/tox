@@ -1,0 +1,4 @@
+fn main() {
+    let foo = true;
+    foo(); //error: `foo` is not callable
+}
