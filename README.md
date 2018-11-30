@@ -6,6 +6,23 @@
 
 Tox is a statically typed version of [lox](http://www.craftinginterpreters.com) that is written in rust.
 
+
+# Usage
+
+```
+USAGE:
+    tox [FLAGS] [source]
+
+FLAGS:
+    -h, --help         Prints help information
+    -i, --interpter    Run in interpreter mode
+    -V, --version      Prints version information
+
+ARGS:
+    <source>    The source code file
+```
+
+
 # Example Program
 
 ```ts 
@@ -41,3 +58,30 @@ fn main() {
 }
 ```
 
+
+# TODO
+
+[] Implement nested for loops
+[] Improve documentation
+[] Fix variable scopes
+ 
+
+
+
+# Resources
+* [rust](https://github.com/rust-lang/rust)
+* [plank](https://github.com/jDomantas/plank)
+* [lox](http://www.craftinginterpreters.com)
+* [menhir-lang](https://github.com/GeorgeKT/menhir-lang)
+* [minicom](https://github.com/agatan/minicom)
+* [tiger-rs](https://github.com/antoyo/tiger-rs)
+* [Kaleidoscope](https://llvm.org/docs/tutorial/index.html)
+* [kaleidoscope-rs](https://github.com/BookOwl/kaleidoscope-rs)
+* [inko](https://gitlab.com/yorickpeterse/inko)
+* [NovaLang](https://github.com/boomshroom/NovaLang)
+* [gluon](https://github.com/gluon-lang/gluon)
+* [dora](https://github.com/dinfuehr/dora)
+* Modern Compiler Implementation in [ML](http://www.cs.princeton.edu/~appel/modern/ml/), [java](http://www.cs.princeton.edu/~appel/modern/java/) and [C](https://www.cs.princeton.edu/~appel/modern/c/)
+ * [Developing Statically Typed Programming Language](http://blog.mgechev.com/2017/08/05/typed-lambda-calculus-create-type-checker-transpiler-compiler-javascript/)
+* [/r/ProgrammingLanguages](https://www.reddit.com/r/ProgrammingLanguages/)
+* [awesome-compilers](https://github.com/aalhour/awesome-compilers)
