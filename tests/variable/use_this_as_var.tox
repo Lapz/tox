@@ -1,2 +1,0 @@
-// expect:Expected an IDENTIFIER after a 'let'  but instead found this
-let this = "value";

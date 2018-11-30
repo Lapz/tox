@@ -1,6 +1,0 @@
-class Foo {
-
-}
-
-let foo = Foo{};
-foo.bar = "not fn"; // Undefined method/property 'bar' on line 6,column 9

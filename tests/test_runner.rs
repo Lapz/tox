@@ -19,7 +19,7 @@ fn main() {
     let mut fail = 0i32;
     let mut failed = Vec::new();
 
-    for entry in WalkDir::new("../tests/bool") {
+    for entry in WalkDir::new("../tests/pass") {
         let entry = entry.unwrap();
 
         if entry.path().is_dir() {
@@ -89,52 +89,53 @@ fn main() {
 
     assert!(fail == 0);
 
-    // for entry in WalkDir::new("../tests/fail") {
-    //     let mut undisclosedc = Command::new("cargo");
-    //     let entry = entry.unwrap();
+    let mut pass = 0;
 
-    //     if entry.path().is_dir() {
-    //         continue;
-    //     }
+    for entry in WalkDir::new("../tests/fail") {
+        let mut undisclosedc = Command::new("cargo");
+        let entry = entry.unwrap();
 
-    //     let mut source = String::new();
+        if entry.path().is_dir() {
+            continue;
+        }
 
-    //     let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
+        let mut source = String::new();
 
-    //     file.read_to_string(&mut source)
-    //         .expect("something went wrong reading the file");
+        let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
 
-    //     undisclosedc.args(&["run", "--", entry.path().to_str().unwrap()]);
+        file.read_to_string(&mut source)
+            .expect("something went wrong reading the file");
 
-    //     let mut expected = Vec::new();
+        undisclosedc.args(&["run", entry.path().to_str().unwrap()]);
 
-    //     let pattern = "//expect:";
+        let mut expected = Vec::new();
 
-    //     for line in source.lines() {
-    //         if let Some((index, _)) = line.match_indices(&pattern).next() {
-    //             let from = index + pattern.len();
-    //             let expects = line[from..].to_string();
-    //             expected.push(expects);
-    //         }
-    //     }
+        let pattern = "//error:";
 
-    //     let output = undisclosedc.output().expect("failed to execute process");
+        for line in source.lines() {
+            if let Some((index, _)) = line.match_indices(&pattern).next() {
+                let from = index + pattern.len();
+                let expects = line[from..].to_string();
+                expected.push(expects);
+            }
+        }
 
-    //     let output = String::from_utf8_lossy(&output.stdout);
-    //     for expects in expected {
-    //         if !output.contains(&expects) {
-    //             panic!("Expected: {}", expects)
-    //         } else {
+        let output = undisclosedc.output().expect("failed to execute process");
 
-    //         }
-    //     }
+        let output = String::from_utf8_lossy(&output.stdout);
+        
+        let mut got = 0;
 
-    //     assert!(
-    //         undisclosedc
-    //             .status()
-    //             .expect("failed to execute process")
-    //             .success()
-    //             != true
-    //     );
-    // }
+        for expects in expected.iter() {
+            if output.contains(expects) {
+                got += 1;
+            } 
+        }
+
+        if got == expected.len() {
+            fail +=1
+        }
+    }
+
+    
 }
