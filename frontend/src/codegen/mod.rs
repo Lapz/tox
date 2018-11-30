@@ -483,7 +483,7 @@ impl<'a> Builder<'a> {
                 self.emit_bytes(opcode::CLASSINSTANCE, symbol.0 as u8);
                 self.emit_byte(properties.len() as u8);
 
-                for (ident, _) in properties.iter() {
+                for (ident, _) in properties.iter().rev() {
                     //rev because poped of stack
                     self.emit_byte(ident.0 as u8);
                 }

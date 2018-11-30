@@ -1,33 +1,13 @@
-class Math {
-  foo:int;
-  fn add(a:int,b:int) -> int {
-      return a+b;
+class Foo {
+  a:int,b:int;
+  fn init(a:int, b:int) -> Foo {
+    print("init"); // expect:init
+    return Foo {a:a,b:b};
   }
 }
 
-class Person {
-  name:str,surname:str;
-  
-  fn hello(self:Person) {
-    print "Hello" + " " + self.name + " "+ self.surname;
-    return;
-  }
-
-}
-
-fn main() -> int {
-  
-  let i =0 ;
-
-  while(i<10) {
-    print i;
-
-    if i==5 {
-      break;
-    }
-
-    i+=1;
-  }
- 
-  return 0;
+fn main() {
+  let foo = Foo.init(1,2);
+  print(foo.a); // expect:1
+  print(foo.b); // expect:2
 }
