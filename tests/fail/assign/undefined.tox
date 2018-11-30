@@ -1,0 +1,3 @@
+fn main() {
+    unknown = "what"; //error: Undefined variable 'unknown'
+}

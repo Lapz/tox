@@ -1,0 +1,9 @@
+class Foo {
+  fn Foo(this:Foo) {
+    this = "value"; //error: Cannot unify `Class Foo` vs `Str`
+  }
+}
+
+fn main() {
+  Foo();
+}

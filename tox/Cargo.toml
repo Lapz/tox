@@ -16,3 +16,15 @@ structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}
 fnv = "*"
+
+
+[[test]]
+name ="test_runner"
+path ="../tests/test_runner.rs"
+harness = false
+
+
+[dev-dependencies]
+walkdir = "2"
+ansi_term = "0.10"
+tempfile = "3"
