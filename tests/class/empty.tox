@@ -1,5 +1,0 @@
-class Foo {}
-
-fn main() {
-    print(Foo); //error: Undefined variable
-}

@@ -6,6 +6,8 @@ class Foo {
   }
 }
 
-let foo = Foo.init(1,2);
-print(foo.a); // expect:1
-print(foo.b); // expect:2
+fn main() {
+  let foo = Foo.init(1,2);
+  print(foo.a); // expect:1
+  print(foo.b); // expect:2
+}
