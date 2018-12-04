@@ -1,7 +1,7 @@
 class Foo {
   a:int,b:int;
   fn init(a:int, b:int) -> Foo{
-    print("init"); // expect: init
+    print("init"); // expect:init
     return Foo {a:a,b:b};
   }
 }

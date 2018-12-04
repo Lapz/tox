@@ -22,7 +22,6 @@ pub use vm::VM;
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,
-    pub locals: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
     pub params: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
 }
 

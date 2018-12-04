@@ -6,6 +6,7 @@ use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
+use std::hash::Hash;
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -15,19 +16,63 @@ struct LoopDescription {
     /// The index of the end label
     end: usize,
 }
+
+#[derive(Debug,Clone)]
+pub struct StackedMap<K:Hash+Eq,V:Clone> {
+    table:HashMap<K,Vec<V>>,
+    scopes:Vec<Option<K>>,
+}
+
+impl <K:Hash+Eq+Copy,V:Clone> StackedMap<K,V> {
+    pub fn new() -> Self {
+        StackedMap {
+            table:HashMap::new(),
+            scopes: vec![]
+        }
+    }
+
+
+    pub fn begin_scope(&mut self) {
+        self.scopes.push(None);
+    }
+
+    pub fn end_scope(&mut self) {
+        while let Some(Some(value)) = self.scopes.pop() {
+            let mapping = self.table.get_mut(&value).expect("Symbol not in Symbols");
+            mapping.pop();
+        }
+    }
+
+    /// Enters a peice of data into the current scope
+    pub fn insert(&mut self,key:K,value:V) {
+        let mapping = self.table.entry(key).or_insert_with(Vec::new);
+        mapping.push(value);
+
+        self.scopes.push(Some(key));
+    }
+
+    pub fn get(&self, key:&K) -> Option<&V> {
+        self.table.get(key).and_then(|vec| vec.last())
+    }
+
+}
 pub struct Builder<'a> {
     /// The current chunk
     chunk: Chunk,
     /// A count of all local vars
     /// The number is the postion of the local on the local stack
-    locals: HashMap<Symbol, usize>,
+    locals: StackedMap<Symbol,usize>,
 
     params: HashMap<Symbol, usize>,
     current_loop: Option<LoopDescription>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
+    /// The reporter used to reporter any errors
     reporter: &'a mut Reporter,
+    /// The slot of the variable
+    slots:u32,
+    ///
     line: u32,
 }
 
@@ -39,8 +84,9 @@ impl<'a> Builder<'a> {
     ) -> Self {
         Builder {
             chunk: Chunk::new(),
-            locals: HashMap::new(),
+            locals: StackedMap::new(),
             line: 0,
+            slots:0,
             current_loop: None,
             params,
             objects,
@@ -50,6 +96,12 @@ impl<'a> Builder<'a> {
 
     pub fn emit_byte(&mut self, byte: u8) {
         self.chunk.write(byte, self.line)
+    }
+
+    pub fn new_slot(&mut self) -> u32 {
+        let slot = self.slots;
+        self.slots += 1;
+        slot
     }
 
     pub fn patch_jump(&mut self, offset: usize) {
@@ -107,9 +159,12 @@ impl<'a> Builder<'a> {
         self.set_span(statement.span);
         match statement.value {
             Statement::Block(ref statements) => {
+                self.locals.begin_scope();
+
                 for statement in statements {
                     self.compile_statement(statement)?;
                 }
+                self.locals.end_scope();
 
                 Ok(())
             }
@@ -210,9 +265,11 @@ impl<'a> Builder<'a> {
                     self.emit_constant(Value::nil(), statement.span)?;
                 } // Compile the expression
 
-                self.locals.insert(*ident, ident.0 as usize);
+                let slot = self.new_slot();
 
-                self.emit_bytes(opcode::SETLOCAL, ident.0 as u8); // Write the symbol id
+                self.locals.insert(*ident, slot as usize);
+
+                self.emit_bytes(opcode::SETLOCAL, slot as u8); // Write the symbol id
 
                 Ok(())
             }
@@ -677,7 +734,7 @@ fn compile_function(
 
     Ok(Function {
         name: func.name,
-        locals: builder.locals,
+        // locals: builder.locals,
         body: builder.chunk,
         params: builder.params,
     })

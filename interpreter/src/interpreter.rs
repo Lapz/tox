@@ -464,7 +464,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                ref e => {
+                _ => {
                     
                     Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
                 }
