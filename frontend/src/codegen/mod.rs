@@ -712,8 +712,6 @@ pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Prog
         classes.insert(class.name, compiled_class);
     }
 
-    println!("{:#?}",classes);
-
     Ok((
         Program {
             functions: funcs,
