@@ -685,7 +685,7 @@ fn compile_function(
 
 pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
     let mut funcs = HashMap::new();
-    let mut classes = HashMap::new();
+    let mut classes:HashMap<Symbol,Class> = HashMap::new();
 
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
@@ -697,8 +697,22 @@ pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Prog
     }
 
     for class in ast.classes.iter() {
-        classes.insert(class.name, compile_class(class, reporter, objects)?);
+        
+        let mut compiled_class = compile_class(class, reporter, objects)?;
+        
+
+        if let Some(ref superclass) = class.superclass {
+            let superclass = classes.get(&superclass.value).unwrap();
+
+            for (ident,func) in superclass.methods.iter() {
+                compiled_class.methods.insert(*ident,func.clone());
+            }
+        }
+
+        classes.insert(class.name, compiled_class);
     }
+
+    println!("{:#?}",classes);
 
     Ok((
         Program {

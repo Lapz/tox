@@ -64,6 +64,8 @@ impl Infer {
             return Err(());
         }
 
+        println!("{:?}",ctx.name(Symbol(16)));
+
         Ok(new_program)
     }
 

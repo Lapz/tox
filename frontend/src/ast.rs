@@ -20,6 +20,7 @@ pub struct Function {
 #[derive(Debug, Clone)]
 pub struct Class {
     pub name: Symbol,
+    pub superclass:Option<Spanned<Symbol>>,
     pub fields: Vec<Field>,
     pub methods: Vec<Function>,
 }

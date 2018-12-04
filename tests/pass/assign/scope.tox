@@ -3,8 +3,8 @@ fn main() {
 
   {
     let a = "inner";
-    print(a); // expect:inner
+    print(a); //expect:inner
   }
 
-  print(a); // expect:outer
+  print(a); //expect:outer
 }
