@@ -762,13 +762,17 @@ pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Prog
             let superclass = classes.get(&superclass.value).unwrap();
 
             for (ident,func) in superclass.methods.iter() {
+                
                 compiled_class.methods.insert(*ident,func.clone());
             }
         }
 
+       
+
         classes.insert(class.name, compiled_class);
     }
 
+    // p
     Ok((
         Program {
             functions: funcs,

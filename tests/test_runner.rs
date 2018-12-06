@@ -70,7 +70,8 @@ fn main() {
             pass +=1
         }else {
             fail += 1;
-            failed.push(entry.path().to_str().unwrap().to_string());
+            
+            failed.push(::std::fs::canonicalize(entry.path()).unwrap().to_str().unwrap().to_string());
         }
     }
 
