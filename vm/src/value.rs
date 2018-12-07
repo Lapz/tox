@@ -1,6 +1,6 @@
 use object::{
-    ArrayObject, ClassObject, FunctionObject, InstanceObject, Object, ObjectType, RawObject,
-    StringObject,
+    ArrayObject, ClassObject, FunctionObject, InstanceObject, NativeObject, Object, ObjectType,
+    RawObject, StringObject,
 };
 use std::fmt::{self, Debug, Display};
 use std::mem;
@@ -140,6 +140,12 @@ impl Value {
         unsafe { mem::transmute(ptr) }
     }
 
+    pub fn as_native<'a>(&self) -> &'a NativeObject {
+        let ptr = self.as_object();
+
+        unsafe { mem::transmute(ptr) }
+    }
+
     pub fn as_instance<'a>(&self) -> &'a InstanceObject {
         let ptr = self.as_object();
 
@@ -169,6 +175,13 @@ impl Value {
         unsafe {
             self.is_object()
                 && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
+        }
+    }
+
+    pub fn is_native(&self) -> bool {
+        unsafe {
+            self.is_object()
+                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::Native
         }
     }
 }
@@ -217,6 +230,12 @@ impl Debug for Value {
                             "{:#?}",
                             ::std::mem::transmute::<RawObject, &InstanceObject>(self.val.object)
                         )?,
+
+                        ObjectType::Native => write!(
+                            fmt,
+                            "{:#?}",
+                            ::std::mem::transmute::<RawObject, &NativeObject>(self.val.object)
+                        )?,
                     }
                 }
             }
@@ -248,6 +267,7 @@ impl Display for Value {
                     ObjectType::Array => write!(fmt, "array")?,
                     ObjectType::Class => write!(fmt, "class")?,
                     ObjectType::Instance => write!(fmt, "instance")?,
+                    ObjectType::Native => write!(fmt, "native")?,
                 }
             }
         }
