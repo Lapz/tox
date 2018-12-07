@@ -1,0 +1,29 @@
+class Foo {
+  fn inFoo() {
+    print("in foo");
+  }
+}
+
+class Bar < Foo {
+  fn inBar() {
+    print("in bar");
+    
+  }
+}
+
+class Baz < Bar {
+  fn init() -> Baz {
+    return Baz {};
+  }
+  fn inBaz() {
+    print("in baz");
+    
+  }
+}
+
+fn main() {
+  let baz = Baz.init();
+  baz.inFoo(); // expect:in foo
+  baz.inBar(); // expect:in bar
+  baz.inBaz(); // expect:in baz
+}

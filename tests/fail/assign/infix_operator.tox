@@ -1,0 +1,5 @@
+fn main() {
+    let a = "a";
+    let b = "b";
+    a + b = "value"; //error: Not a valid assingment target
+}

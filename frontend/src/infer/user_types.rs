@@ -31,9 +31,13 @@ impl Infer {
                 }
 
                 if let Some(ref ret) = *returns {
-                    Ok(Type::Fun(param_tys, Box::new(self.trans_type(ret, ctx)?)))
+                    Ok(Type::Fun(
+                        param_tys,
+                        Box::new(self.trans_type(ret, ctx)?),
+                        false,
+                    ))
                 } else {
-                    Ok(Type::Fun(param_tys, Box::new(Type::Nil)))
+                    Ok(Type::Fun(param_tys, Box::new(Type::Nil), false))
                 }
             }
         }

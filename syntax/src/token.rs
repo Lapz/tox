@@ -53,20 +53,20 @@ impl<'a> Display for TokenType<'a> {
             TokenType::LBRACE => write!(f, "{{"),   // {
             TokenType::RBRACE => write!(f, "}}"),   // }
             TokenType::FRETURN => write!(f, "->"),
+            TokenType::BAR => write!(f, "|"),
             // Keywords,
             TokenType::FUNCTION => write!(f, "fun"),
             TokenType::PRINT => write!(f, "print"),
             TokenType::TYPE => write!(f, "type"),
             TokenType::BREAK => write!(f, "break"),
             TokenType::CONTINUE => write!(f, "continue"),
-            TokenType::VAR => write!(f, "var"),
+            TokenType::LET => write!(f, "var"),
             TokenType::IF => write!(f, "if"),
             TokenType::DO => write!(f, "do"),
             TokenType::ELSE => write!(f, "else"),
             TokenType::RETURN => write!(f, "return"),
             TokenType::TRUE(_) => write!(f, "true"),
             TokenType::FALSE(_) => write!(f, "false"),
-            TokenType::THIS => write!(f, "this"),
             TokenType::CLASS => write!(f, "class"),
             TokenType::FOR => write!(f, "for"),
             TokenType::WHILE => write!(f, "while"),
@@ -83,7 +83,7 @@ pub enum TokenType<'a> {
     IDENTIFIER(&'a str),
     INT(i64),
     FLOAT(f64),
-    STRING(Vec<u8>),
+    STRING(String),
 
     // Assignment
     ASSIGN,      // =
@@ -114,6 +114,7 @@ pub enum TokenType<'a> {
     RBRACKET,  // ]
     LBRACE,    // {
     RBRACE,    // }
+    BAR,       // |
 
     // Comparison
     LESSTHAN,         // <
@@ -126,7 +127,7 @@ pub enum TokenType<'a> {
     FUNCTION,
     BREAK,
     CONTINUE,
-    VAR,
+    LET,
     IF,
     DO,
     ELSE,
@@ -134,7 +135,6 @@ pub enum TokenType<'a> {
     TRUE(bool),
     FALSE(bool),
     PRINT,
-    THIS,
     CLASS,
 
     FOR,

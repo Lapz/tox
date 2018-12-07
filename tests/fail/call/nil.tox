@@ -1,0 +1,3 @@
+fn main() {
+    nil(); //error:  Not callable
+}

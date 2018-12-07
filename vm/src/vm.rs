@@ -1,54 +1,90 @@
-use assembler::{PIE_HEADER_LENGTH, PIE_HEADER_PREFIX};
-use std::mem;
+use super::{Function, Program};
+use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
 use opcode;
+use std::collections::HashMap;
+use util::symbol::Symbol;
+use value::Value;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
-pub struct VM {
-    registers: [i32; 32],
-    stack: [i32; STACK_MAX],
-    pub code: Vec<u8>,
-    heap: Vec<u8>,
+#[derive(Debug)]
+pub struct StackFrame<'a> {
     ip: usize,
-    remainder: u32,
-    equal_flag: bool,
+    locals: HashMap<u8, Value>,
+    function: &'a Function,
+    params: HashMap<u8, Value>,
+}
+
+pub struct VM<'a> {
+    stack: [Value; STACK_MAX],
+    frames: Vec<StackFrame<'a>>,
+    current_frame: StackFrame<'a>,
+    program: &'a Program,
+    objects: RawObject,
     stack_top: usize,
 }
 
-impl VM {
-    pub fn new() -> Self {
-        VM {
-            ip: 64,
-            registers: [0; 32],
-            stack: [0; STACK_MAX],
-            code: Vec::new(),
-            remainder: 0,
-            equal_flag: false,
-            heap: Vec::new(),
-            stack_top: 1,
-        }
-    }
+#[derive(Debug)]
+pub enum Error {
+    NoMain,
+    UnknownOpcode,
+}
 
-    pub fn registers(&self) -> &[i32; 32] {
-        &self.registers
-    }
+impl<'a> VM<'a> {
+    pub fn new(main: Symbol, program: &'a Program, objects: RawObject) -> Result<Self, Error> {
+        let main_function = program.functions.get(&main);
 
-    pub fn verify_header(&self) -> bool {
-        if self.code[0..4] != PIE_HEADER_PREFIX {
-            false
-        } else {
-            true
+        if main_function.is_none() {
+            return Err(Error::NoMain);
         }
+
+        let current_frame = StackFrame {
+            ip: 0,
+            locals: HashMap::new(),
+            function: main_function.unwrap(),
+            params: HashMap::new(),
+        };
+
+        Ok(VM {
+            stack: [Value::nil(); STACK_MAX],
+            current_frame,
+            program,
+            frames: Vec::new(),
+            stack_top: 4,
+            objects,
+        })
     }
 
     pub fn run(&mut self) {
-        self.ip += self.get_starting_offset();
+        #[cfg(feature = "debug")]
+        {
+            for (_, func) in self.program.functions.iter() {
+                func.body.disassemble(&format!("{}", func.name))
+            }
+
+            for (_, class) in self.program.classes.iter() {
+                let _: Vec<()> = class
+                    .methods
+                    .iter()
+                    .map(|(_, func)| func.body.disassemble(&format!("{}", func.name)))
+                    .collect();
+            }
+        }
 
         loop {
+            if self.current_frame.ip >= self.current_frame.function.body.code.len() {
+                return;
+            }
+
+            #[cfg(feature = "stack")]
             {
-                if self.ip >= self.code.len() {
-                    return;
+                print!("[");
+
+                for val in &self.stack[0..self.stack_top] {
+                    print!("{},", val);
                 }
+
+                print!("]\n")
             }
 
             match self.read_byte() {
@@ -56,876 +92,390 @@ impl VM {
                     break;
                 }
 
-                opcode::JMP => {
-                    let location = self.registers[self.next_8_bits() as usize];
+                opcode::RETURN => {
+                    let value = self.pop();
 
-                    self.ip = location as usize;
-                }
+                    match self.frames.pop() {
+                        Some(frame) => {
+                            self.current_frame = frame;
+                            self.push(value);
+                        }
 
-                opcode::JMPF => {
-                    let value = self.registers[self.next_8_bits() as usize];
-                    self.ip += value as usize;
-                }
-
-                opcode::JMPB => {
-                    let value = self.registers[self.next_8_bits() as usize];
-                    self.ip -= value as usize;
-                }
-
-                opcode::JMPEQ => {
-                    let location = self.next_16_bits();
-
-                    if self.equal_flag {
-                        self.ip = location as usize;
-                    } else {
-                        self.advance(1);
+                        None => {
+                            continue; // Were are return from a top level function main
+                        }
                     }
                 }
 
-                opcode::JMPNEQ => {
-                    let location = self.next_16_bits();
-
-                    if !self.equal_flag {
-                        self.ip = location as usize;
-                    } else {
-                        self.advance(1);
-                    }
+                opcode::CONSTANT => {
+                    let constant = self.read_constant();
+                    self.push(constant);
                 }
 
-                opcode::LOAD => {
-                    let register = self.next_8_bits() as usize;
-                    let number = self.next_16_bits() as u16;
-                    self.registers[register] = number as i32;
+                opcode::PRINT => {
+                    let value = self.pop();
+                    println!("{}", value);
                 }
 
-                opcode::ALLOC => {
-                    let bytes = self.registers[self.next_8_bits() as usize];
-                    let size = self.heap.len() + bytes as usize;
-
-                    self.heap.resize(size, 0);
-                    self.next_16_bits();
+                opcode::NEGATE => {
+                    let val = Value::int(-self.pop().as_int());
+                    self.push(val)
                 }
 
-                opcode::FREE => {
-                    let bytes = self.registers[self.next_8_bits() as usize];
-                    let size = self.heap.len() - bytes as usize;
-
-                    self.heap.resize(size, 0);
-                    self.advance(2);
+                opcode::NEGATEF => {
+                    let val = Value::float(-self.pop().as_float());
+                    self.push(val)
                 }
 
-                opcode::ADD => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    self.registers[self.next_8_bits() as usize] = lhs + rhs;
-                }
-
-                opcode::SUB => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs - rhs;
-                }
-
-                opcode::MUL => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs * rhs;
-                }
-
-                opcode::DIV => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs / rhs;
-                    self.remainder = (lhs % rhs) as u32;
-                }
-
-                opcode::MOD => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    self.registers[self.next_8_bits() as usize] = lhs % rhs;
-                }
-
-                opcode::EXPON => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-                    self.registers[self.next_8_bits() as usize] = lhs.pow(rhs as u32);
-                }
-
-                opcode::EQUAL => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs == rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-
-                    self.advance(1);
-                }
-
-                opcode::GREATER => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs > rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-
-                    self.advance(1);
-                }
-
-                opcode::LESS => {
-                    let lhs = self.registers[self.next_8_bits() as usize];
-                    let rhs = self.registers[self.next_8_bits() as usize];
-
-                    if lhs < rhs {
-                        self.equal_flag = true;
-                    } else {
-                        self.equal_flag = false;
-                    }
-                }
-
+                opcode::NIL => self.push(Value::nil()),
+                opcode::TRUE => self.push(Value::bool(true)),
+                opcode::FALSE => self.push(Value::bool(false)),
                 opcode::NOT => {
-                    self.equal_flag = !self.equal_flag;
-                    self.advance(3);
+                    let val = Value::bool(!self.pop().as_bool());
+                    self.push(val)
+                }
+                opcode::EQUAL => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push(Value::bool(a == b));
                 }
 
-                opcode::STORE => {
-                    let src = self.registers[self.next_8_bits() as usize];
-                    let dest = self.registers[self.next_8_bits() as usize];
+                opcode::ARRAY => {
+                    let len = self.read_byte();
 
-                    self.registers[dest as usize] = self.registers[src as usize];
+                    let items: Vec<Value> = (0..len).map(|_| self.pop()).collect();
 
-                    self.advance(1);
+                    let array = ArrayObject::new(items, self.objects);
+
+                    self.push(Value::object(array));
                 }
 
-                opcode::INC => {
-                    self.registers[self.next_8_bits() as usize] += 1;
-                    self.advance(2);
+                opcode::LESS => binary_op!(<,as_int,bool,self),
+                opcode::LESSF => binary_op!(<,as_float,bool,self),
+                opcode::GREATER => binary_op!(>,as_int,bool,self),
+                opcode::GREATERF => binary_op!(>,as_float,bool,self),
+                opcode::ADD => binary_op!(+,as_int,int,self),
+                opcode::ADDF => binary_op!(+,as_float,float,self),
+                opcode::SUB => binary_op!(-,as_int,int,self),
+                opcode::SUBF => binary_op!(-,as_float,float,self),
+                opcode::MUL => binary_op!(*,as_int,int,self),
+                opcode::MULF => binary_op!(*,as_float,float,self),
+                opcode::DIV => binary_op!(/,as_int,int,self),
+                opcode::DIVF => binary_op!(/,as_float,float,self),
+                opcode::LOOP => {
+                    let address = self.read_16_bits();
+
+                    self.current_frame.ip -= address as usize
+                }
+                opcode::JUMP => {
+                    let address = self.read_16_bits();
+                    self.current_frame.ip += address as usize;
                 }
 
-                opcode::DEC => {
-                    self.registers[self.next_8_bits() as usize] -= 1;
-                    self.advance(2);
-                }
+                opcode::JUMPIF => {
+                    let address = self.read_16_bits();
 
-                opcode::PUSH => {
-                    let val = self.registers[self.next_8_bits() as usize];
+                    if self.stack[self.stack_top - 1].as_bool() {
+                        self.current_frame.ip += address as usize;
+                    }
+                }
+                opcode::JUMPNOT => {
+                    let address = self.read_16_bits();
+
+                    if !self.stack[self.stack_top - 1].as_bool() {
+                        self.current_frame.ip += address as usize;
+                    }
+                }
+                opcode::GETLOCAL => {
+                    let local = self.read_byte();
+
+                    let val = self.current_frame.locals[&local];
+
                     self.push(val);
+                }
 
-                    self.advance(2)
+                opcode::SETLOCAL => {
+                    let ident = self.read_byte();
+
+                    let val = self.stack[self.stack_top - 1]; // do it manually because we don't  want to modify the stack
+
+                    self.current_frame.locals.insert(ident, val);
+                }
+
+                opcode::GETPARAM => {
+                    let param = self.read_byte();
+
+                    let val = self.current_frame.params[&param];
+
+                    self.push(val);
+                }
+
+                opcode::GETPROPERTY => {
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
+
+                    let property = Symbol(self.read_byte() as u64);
+                    let value = instance.properties[&property];
+
+                    self.push(value);
+                }
+
+                opcode::GETMETHOD => {
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
+
+                    let method_name = Symbol(self.read_byte() as u64);
+
+                    let method = instance.methods.get(&method_name).unwrap();
+                    let value = Value::object(FunctionObject::new(
+                        method.params.len(),
+                        method.clone(),
+                        self.objects,
+                    ));
+
+                    self.push(value)
+                }
+
+                opcode::SETPROPERTY => {
+                    let instance = self.pop();
+                    let instance = instance.as_mut_instance();
+
+                    let value = self.pop();
+
+                    let property = Symbol(self.read_byte() as u64);
+
+                    instance.properties.insert(property, value);
+                }
+
+                opcode::CALLCLOSURE => {
+                    let arg_count = self.read_byte();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let closure = self.pop();
+
+                    let closure = &closure.as_function().function;
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: closure,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+
+                opcode::CALL => {
+                    let function_name = Symbol(self.read_byte() as u64);
+                    let arg_count = self.read_byte();
+
+                    let mut function = self.program.functions.get(&function_name).unwrap();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                    // swaps the current frame with the one we are one and then
+                }
+
+                opcode::CALLINSTANCEMETHOD => {
+                    let method_name = Symbol(self.read_byte() as u64);
+                    let arg_count = self.read_byte();
+
+                    let mut instance = self.pop();
+                    let mut instance = instance.as_instance();
+
+                    let function = &instance.methods.get(&method_name).unwrap();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+
+                opcode::CALLSTATICMETHOD => {
+                    let class_name = Symbol(self.read_byte() as u64);
+                    let method_name = Symbol(self.read_byte() as u64);
+                    let arg_count = self.read_byte();
+                    let mut function = self
+                        .program
+                        .classes
+                        .get(&class_name)
+                        .unwrap()
+                        .methods
+                        .get(&method_name)
+                        .unwrap();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
                 }
 
                 opcode::POP => {
-                    let val = self.pop();
-                    self.registers[self.next_8_bits() as usize] = val;
-                    self.advance(2)
+                    self.pop();
                 }
 
-                opcode::SET => {
-                    let val = self.registers[self.next_8_bits() as usize];
+                opcode::INDEXARRAY => {
+                    let index = self.pop().as_int() as usize;
 
-                    if val == 1 {
-                        self.equal_flag = true;
+                    let array = self.pop();
+                    let array = array.as_array();
+
+                    self.push(array.items[index]);
+                }
+
+                opcode::INDEXSTRING => {
+                    let index = self.pop().as_int() as usize;
+
+                    let string = self.pop();
+                    let string = string.as_string();
+
+                    let slice = &string.chars.string()[index..index + 1];
+                    let result = StringObject::new(slice, self.objects);
+
+                    self.push(Value::object(result))
+                }
+
+                opcode::CLASSINSTANCE => {
+                    let class_name = Symbol(self.read_byte() as u64);
+
+                    let num_properties = self.read_byte() as usize;
+
+                    let mut class = self.program.classes.get(&class_name).unwrap();
+
+                    let methods = class.methods.clone();
+
+                    let mut properties = HashMap::new();
+
+                    for _ in 0..num_properties {
+                        properties.insert(Symbol(self.read_byte() as u64), self.pop());
                     }
 
-                    self.advance(2);
+                    let instance = InstanceObject::new(methods, properties, self.objects);
+
+                    self.push(Value::object(instance));
                 }
 
+                opcode::CONCAT => self.concat(),
+
+                #[cfg(not(feature = "debug"))]
                 _ => {
+                    panic!("Unknown opcode found");
+                }
+                #[cfg(feature = "debug")]
+                ref e => {
+                    {
+                        println!("unknown opcode found :{}", e);
+                    }
                     continue;
                 }
             }
         }
     }
 
+    fn concat(&mut self) {
+        let b = self.pop();
+        let b = b.as_string();
+        let a = self.pop();
+        let a = a.as_string();
+
+        let length = a.chars.string().len() + b.chars.string().len();
+
+        let mut new = String::with_capacity(length);
+
+        new.push_str(a.chars.string());
+        new.push_str(b.chars.string());
+
+        #[cfg(feature = "debug")]
+        {
+            println!("{:?}", a.chars);
+            println!("{:?}", b.chars);
+        }
+
+        let result = StringObject::from_owned(new, self.objects);
+
+        self.push(Value::object(result));
+    }
+
+    fn read_constant(&mut self) -> Value {
+        let index = self.read_byte() as usize;
+        self.current_frame.function.body.constants[index]
+    }
+
+    fn read_16_bits(&mut self) -> u16 {
+        let result = ((self.current_frame.function.body.code[self.current_frame.ip] as u16) << 8)
+            | self.current_frame.function.body.code[self.current_frame.ip + 1] as u16;
+        // Shifts the instruction by 8 to the right and or all the 1's and 0's
+        self.current_frame.ip += 2;
+
+        result
+    }
+
     fn read_byte(&mut self) -> u8 {
-        let byte = self.code[self.ip];
-        self.ip += 1;
+        let byte = self.current_frame.function.body.code[self.current_frame.ip];
+        self.current_frame.ip += 1;
         byte
     }
 
-    fn advance(&mut self, n: usize) {
-        self.ip += n;
-    }
-
-    fn next_8_bits(&mut self) -> u8 {
-        let result = self.code[self.ip];
-        self.ip += 1;
-
-        result
-    }
-
-    fn next_16_bits(&mut self) -> u16 {
-        let result = ((self.code[self.ip] as u16) << 8) | self.code[self.ip + 1] as u16;
-        // Shifts the instruction by 8 to the right and or all the 1's and 0's
-        self.ip += 2;
-
-        result
-    }
-
-    fn push(&mut self, val: i32) {
+    fn push(&mut self, val: Value) {
         self.stack[self.stack_top] = val;
         self.stack_top += 1;
     }
 
-    fn pop(&mut self) -> i32 {
+    fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]
-    }
-
-    pub fn code(&mut self, code: Vec<u8>) {
-        self.code = code;
-    }
-
-    pub fn get_starting_offset(&self) -> usize {
-        unsafe {
-            let mut bytes:[u8;4] = ::std::default::Default::default();
-            bytes.copy_from_slice(&self.code[4..8]);
-            let val= mem::transmute::<[u8;4],u32>(bytes);
-            val as usize
-        }
     }
 }
 
 use std::fmt::{self, Debug};
 
-impl Debug for VM {
+impl<'a> Debug for VM<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut debug_trait_builder = f.debug_struct("VM");
-        let _ = debug_trait_builder.field("registers", &self.registers);
-        // let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
-        let _ = debug_trait_builder.field("code", &self.code);
-        let _ = debug_trait_builder.field("heap", &self.heap);
-        let _ = debug_trait_builder.field("ip", &self.ip);
 
-        let _ = debug_trait_builder.field("remainder", &self.remainder);
-        let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
+        let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
+        let _ = debug_trait_builder.field("ip", &self.current_frame.ip);
         debug_trait_builder.finish()
-
-        //  f.debug_list().entries(self.stack[0..].iter()).finish()
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use opcode;
-
-    fn prepend_header(mut b: Vec<u8>) -> Vec<u8> {
-        let mut header = Vec::with_capacity(b.len() + PIE_HEADER_LENGTH);
-
-        for byte in &PIE_HEADER_PREFIX[0..] {
-            header.push(*byte);
-        }
-
-        while header.len() <= PIE_HEADER_LENGTH {
-            header.push(0);
-        }
-
-        header.append(&mut b);
-
-        header
-    }
-
-    #[test]
-    fn it_works() {
-        let test_vm = VM::new();
-        assert_eq!(test_vm.registers[0], 0)
-    }
-
-    #[test]
-
-    fn test_hlt_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![opcode::HLT, 0, 0, 0];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.ip, 66);
-    }
-    #[test]
-    fn test_load_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![opcode::LOAD, 0, 1, 244, 1];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 500);
-    }
-
-    #[test]
-    fn test_add_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![
-            opcode::LOAD,
-            0,
-            1,
-            244, // LOAD $500 into REG 0
-            opcode::LOAD,
-            1,
-            1,
-            250, // LOAD $506 into REG 1
-            opcode::ADD,
-            0,
-            1,
-            0, // ADD R1 R2 R1
-            1,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 1006);
-    }
-
-    #[test]
-    fn test_sub_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![
-            opcode::LOAD,
-            0,
-            1,
-            250, // LOAD $500 into REG 0
-            opcode::LOAD,
-            1,
-            1,
-            244, // LOAD $506 into REG 1
-            opcode::SUB,
-            0,
-            1,
-            0, // SUB R1 R2 R1
-            1,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 6);
-    }
-
-    #[test]
-    fn test_mul_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![
-            opcode::LOAD,
-            0,
-            0,
-            2, // LOAD $2 into REG 0
-            opcode::LOAD,
-            1,
-            0,
-            10, // LOAD $10 into REG 1
-            opcode::MUL,
-            0,
-            1,
-            0, // MUL R1 R2 R1
-            1,
-            0,
-            0,
-            0,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 20);
-    }
-
-    #[test]
-    fn test_div_opcode() {
-        let mut test_vm = VM::new();
-
-        let mut test_bytes = vec![
-            opcode::LOAD,
-            0,
-            0,
-            5, // LOAD $2 into REG 0
-            opcode::LOAD,
-            1,
-            0,
-            3, // LOAD $10 into REG 1
-            opcode::DIV,
-            0,
-            1,
-            0, // DIV R1 R2 R1
-            1,
-            0,
-            0,
-            0,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 1);
-        assert_eq!(test_vm.remainder, 2);
-    }
-
-    #[test]
-    fn test_jmp_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 68;
-
-        let mut test_bytes = vec![
-            opcode::JMP,
-            0,
-            0,
-            0, // JMP to $0
-            opcode::LOAD,
-            1,
-            0,
-            10, // LOAD $10 into REG 0
-            opcode::LOAD,
-            0,
-            0,
-            2, // LOAD $2 into REG 0
-            1,
-            0,
-            0,
-            0,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 2);
-        assert_eq!(test_vm.ip, 78);
-    }
-
-    #[test]
-    fn test_jmpf_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 2;
-
-        let mut test_bytes = vec![
-            opcode::JMPF,
-            0,
-            0,
-            0, // JMPF by 3
-            1,
-            0,
-            0,
-            0,
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.ip, 70);
-    }
-
-    #[test]
-    fn test_jmpb_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 70;
-
-        let mut test_bytes = vec![
-            opcode::JMP,
-            0,
-            0,
-            0, // JMP to 5
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-            opcode::LOAD,
-            1,
-            0,
-            11, // LOAD #11 into $1
-            opcode::JMPB,
-            1,
-            0,
-            0, // JMPB by $1(7)
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-        //        println!("{:?}",&test_vm.registers()[0..]);
-        assert_eq!(test_vm.registers[1], 11);
-        assert_eq!(test_vm.ip, 70);
-    }
-
-    #[test]
-    fn test_eq_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 5;
-        test_vm.registers[1] = 5;
-
-        let mut test_bytes = vec![
-            opcode::EQUAL,
-            0,
-            1,
-            0, // EQ $1 $2
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
-    #[test]
-    fn test_less_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 1;
-        test_vm.registers[1] = 5;
-
-        let mut test_bytes = vec![
-            opcode::LESS,
-            0,
-            1,
-            0, // LESS $1 $2
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
-    #[test]
-    fn test_not_equal_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 5;
-        test_vm.registers[1] = 5;
-
-        let mut test_bytes = vec![
-            opcode::EQUAL,
-            0,
-            1,
-            0, // EQUAL $1 $2
-            opcode::NOT,
-            0,
-            0,
-            0, // NOT
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, false);
-
-        test_vm.ip = 0;
-
-        test_vm.registers[0] = 4;
-        test_vm.registers[1] = 5;
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
-    #[test]
-    fn test_less_equal_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 5;
-        test_vm.registers[1] = 5;
-
-        let mut test_bytes = vec![
-            opcode::EQUAL,
-            0,
-            1,
-            0, // EQUAL $1 $2
-            opcode::NOT,
-            0,
-            0,
-            0, // NOT
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, false);
-
-        test_vm.ip = 0;
-
-        test_vm.registers[0] = 4;
-        test_vm.registers[1] = 5;
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
-    #[test]
-    fn test_jump_equal_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 72;
-        test_vm.equal_flag = true;
-
-        let mut test_bytes = vec![
-            opcode::JMPEQ,
-            0,
-            72,
-            0, // JMPEQUAL $1
-            opcode::NOT,
-            0,
-            0,
-            0, // NOT
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
-    #[test]
-    fn test_alloc_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 1024;
-
-        let mut test_bytes = vec![
-            opcode::ALLOC,
-            0,
-            0,
-            0, // ALLOC $0
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.heap.len(), 1024);
-    }
-
-    #[test]
-    fn test_free_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 1024;
-        test_vm.registers[1] = 512;
-
-        let mut test_bytes = vec![
-            opcode::ALLOC,
-            0,
-            0,
-            0, // ALLOC $0
-            opcode::FREE,
-            1,
-            0,
-            0, // FREE $1
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.heap.len(), 512);
-    }
-
-    #[test]
-    fn test_inc_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 100;
-
-        let mut test_bytes = vec![
-            opcode::INC,
-            0,
-            0,
-            0, // INC $0
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 101);
-    }
-
-    #[test]
-    fn test_dec_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 100;
-
-        let mut test_bytes = vec![
-            opcode::DEC,
-            0,
-            0,
-            0, // DEC $0
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 99);
-    }
-
-    #[test]
-    fn test_push_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 100;
-
-        let mut test_bytes = vec![
-            opcode::PUSH,
-            0,
-            0,
-            0, // PUSH $0
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.stack[test_vm.stack_top - 1], 100);
-    }
-
-    #[test]
-    fn test_pop_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] = 100;
-        test_vm.registers[1] = 200;
-
-        let mut test_bytes = vec![
-            opcode::PUSH,
-            0,
-            0,
-            0, // PUSH $0
-            opcode::PUSH,
-            1,
-            0,
-            0, // PUSH $1
-            opcode::POP,
-            0,
-            0,
-            0, // POP $0
-            opcode::HLT,
-            0,
-            0,
-            0, // HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.registers[0], 200);
-    }
-
-    #[test]
-    fn test_set_opcode() {
-        let mut test_vm = VM::new();
-
-        test_vm.registers[0] =1;
-
-        let mut test_bytes = vec![
-            opcode::SET,
-            0,
-            0,
-            0, // PUSH $0
-            opcode::HLT,
-            0,
-            0,
-            0, //HLT
-        ];
-
-        test_bytes = prepend_header(test_bytes);
-        test_vm.code(test_bytes);
-
-        test_vm.run();
-
-        assert_eq!(test_vm.equal_flag, true);
-    }
-
 }

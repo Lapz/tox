@@ -38,33 +38,3 @@ impl VarEntry {
         }
     }
 }
-// #[derive(Debug, Clone)]
-// pub struct TypeEnv {
-//     pub types: Symbols<Type>,
-//     pub vars: Symbols<Entry>,
-//     pub unique: Unique,
-// }
-
-// impl TypeEnv {
-//     pub fn new(strings: &Rc<SymbolFactory>) -> Self {
-
-//         let mut env = TypeEnv {
-//             types,
-//             vars: Symbols::new(Rc::clone(strings)),
-//             unique: Unique::new(),
-//         };
-
-//
-
-//
-
-//         env
-//     }
-
-//     fn add_builtin_class(&mut self, name: &str, methods: Vec<(&str, Entry)>) {
-//         let symbol = self.vars.symbol(name);
-
-//     }
-
-//
-// }

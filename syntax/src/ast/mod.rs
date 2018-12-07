@@ -93,7 +93,7 @@ pub enum Expression {
         rhs: Box<Spanned<Expression>>,
     },
 
-    Closure(Spanned<Box<Function>>),
+    Closure(Box<Spanned<Function>>),
     Call {
         callee: Box<Spanned<Expression>>,
         args: Vec<Spanned<Expression>>,
@@ -136,7 +136,6 @@ pub enum Expression {
         expr: Box<Spanned<Expression>>,
     },
 
-    This,
     Var(Spanned<Symbol>),
 }
 
@@ -159,13 +158,13 @@ pub enum Literal {
     // The raw values available
     Float(f64),
     Int(i64),
-    Str(Vec<u8>),
+    Str(String),
     True(bool),
     False(bool),
     Nil,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Op {
     // The possible operators for the binary and unary expression
     BangEqual,

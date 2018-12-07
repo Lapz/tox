@@ -1,0 +1,9 @@
+class Foo {
+  fn returnSelf() -> Foo {
+    return Foo {};
+  }
+}
+
+fn main() {
+  print(Foo{}.returnSelf()); // expect:instance
+}

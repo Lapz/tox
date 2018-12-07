@@ -94,7 +94,6 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
 impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = FnvHashMap::default();
-        map.insert(Symbol(0), "this".into());
         map.insert(Symbol(1), "super".into());
         map.insert(Symbol(2), "clock".into());
         map.insert(Symbol(3), "hex".into());

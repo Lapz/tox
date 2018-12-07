@@ -31,7 +31,7 @@ pub enum Object {
     Instance {
         methods: FnvHashMap<Symbol, Object>,
         fields: Rc<RefCell<FnvHashMap<Symbol, Object>>>,
-        sclassmethods: Option<FnvHashMap<Symbol, Object>>,
+        sclassmethods: FnvHashMap<Symbol, Object>,
     },
     Return(Box<Object>),
     Nil,
@@ -89,10 +89,8 @@ impl Object {
                 if methods.contains_key(&name.value) {
                     return Ok(methods.get(&name.value).unwrap().bind(self));
                 }
-                if let Some(ref smethods) = *sclassmethods {
-                    if smethods.contains_key(&name.value) {
-                        return Ok(smethods.get(&name.value).unwrap().bind(self));
-                    }
+                if sclassmethods.contains_key(&name.value) {
+                    return Ok(sclassmethods.get(&name.value).unwrap().bind(self));
                 }
                 Err(RuntimeError::new(
                     ErrorCode::UndefinedProperty(name.value),
@@ -106,6 +104,7 @@ impl Object {
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
+
                 Err(RuntimeError::new(
                     ErrorCode::UndefinedProperty(name.value),
                     name.span,
@@ -219,7 +218,10 @@ impl PartialEq for Object {
             (&Object::Int(ref x), &Object::Int(ref y)) => x == y,
             (&Object::Float(ref x), &Object::Float(ref y)) => x == y,
             (&Object::Str(ref x), &Object::Str(ref y)) => x == y,
-            _ => false,
+            (ref s, ref o) => {
+                println!("{:?} vs {:?}", s, o);
+                false
+            }
         }
     }
 }

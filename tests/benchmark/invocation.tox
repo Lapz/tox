@@ -1,41 +1,41 @@
 // This benchmark stresses just method invocation.
 
 class Foo {
-  fun method0() {}
-  fun method1() {}
-  fun method2() {}
-  fun method3() {}
-  fun method4() {}
-  fun method5() {}
-  fun method6() {}
-  fun method7() {}
-  fun method8() {}
-  fun method9() {}
-  fun method10() {}
-  fun method11() {}
-  fun method12() {}
-  fun method13() {}
-  fun method14() {}
-  fun method15() {}
-  fun method16() {}
-  fun method17() {}
-  fun method18() {}
-  fun method19() {}
-  fun method20() {}
-  fun method21() {}
-  fun method22() {}
-  fun method23() {}
-  fun method24() {}
-  fun method25() {}
-  fun method26() {}
-  fun method27() {}
-  fun method28() {}
-  fun method29() {}
+  fn method0() {}
+  fn method1() {}
+  fn method2() {}
+  fn method3() {}
+  fn method4() {}
+  fn method5() {}
+  fn method6() {}
+  fn method7() {}
+  fn method8() {}
+  fn method9() {}
+  fn method10() {}
+  fn method11() {}
+  fn method12() {}
+  fn method13() {}
+  fn method14() {}
+  fn method15() {}
+  fn method16() {}
+  fn method17() {}
+  fn method18() {}
+  fn method19() {}
+  fn method20() {}
+  fn method21() {}
+  fn method22() {}
+  fn method23() {}
+  fn method24() {}
+  fn method25() {}
+  fn method26() {}
+  fn method27() {}
+  fn method28() {}
+  fn method29() {}
 }
 
-var foo = Foo{};
-var start = clock();
-var i = 0;
+let foo = Foo{};
+let start = clock();
+let i = 0;
 while (i < 500000) {
   foo.method0();
   foo.method1();
