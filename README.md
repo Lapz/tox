@@ -61,9 +61,9 @@ fn main() {
 
 # TODO
 
-[] Implement nested for loops
-[] Improve documentation
-[] Fix variable scopes
+[] Implement nested ~~for~~ while loops
+[x] Improve documentation
+[x] Fix variable scopes
  
 
 
