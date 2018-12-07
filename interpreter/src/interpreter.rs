@@ -416,12 +416,12 @@ fn evaluate_expression(
         } => match env.get(symbol)? {
             Object::Class(_, ref superclass, ref methods) => {
                 let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
-                let mut s_class_methods = None;
+                let mut s_class_methods = FnvHashMap::default();
 
                 if let Some(ref sklass) = *superclass {
                     match **sklass {
-                        Object::Class(_, _, ref methods_) => {
-                            s_class_methods = Some(methods_.clone());
+                        Object::Class(_, _, ref methods) => {
+                            s_class_methods.extend(methods.clone().into_iter());
                         }
                         _ => unimplemented!(),
                     }
@@ -437,7 +437,7 @@ fn evaluate_expression(
                     Object::Instance {
                         methods: methods.clone(),
                         fields: Rc::new(RefCell::new(instance_props.clone())),
-                        sclassmethods: s_class_methods.clone(),
+                        sclassmethods: s_class_methods.clone()
                     },
                 );
 

@@ -85,7 +85,6 @@ pub enum Expression {
 
     Closure(Box<Function>),
     ClassInstance(Symbol, Vec<(Symbol, Spanned<TypedExpression>)>),
-    Get(Symbol, Spanned<TypedExpression>),
     GetProperty {
         property_name: Symbol,
         property: Spanned<TypedExpression>,

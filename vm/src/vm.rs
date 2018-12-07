@@ -62,12 +62,11 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) {
         #[cfg(feature = "debug")]
         {
-            for func in self.functions {
+            for (_,func) in self.program.functions.iter()
+            {
                 func.body.disassemble("DEBUG")
             }
         }
-
-        // return;
 
         loop {
             if self.current_frame.ip >= self.current_frame.function.body.code.len() {
@@ -293,7 +292,7 @@ impl<'a> VM<'a> {
                     // swaps the current frame with the one we are one and then
                 }
 
-                opcode::CALLMETHOD => {
+                opcode::CALLINSTANCEMETHOD => {
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
