@@ -68,8 +68,6 @@ pub fn run_interpreter(path: String) {
         }
     };
 
-   
-
     let mut infer = Infer::new();
 
     match infer.infer(ast.clone(), &strings, &mut reporter) {

@@ -463,7 +463,7 @@ impl Infer {
                                     method_name,
                                     method,
                                 } => match method.value.expr.value {
-                                    t::Expression::Var(_, Type::Class(klass_name,_,_,_)) => {
+                                    t::Expression::Var(_, Type::Class(klass_name, _, _, _)) => {
                                         // type inference returns the type of the main classs
                                         Ok((
                                             Spanned::new(

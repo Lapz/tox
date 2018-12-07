@@ -87,14 +87,16 @@ impl Chunk {
             opcode::CONCAT => simple_instruction("OPCODE::CONCAT", offset),
             opcode::GETPARAM => self.local_instruction("OPCODE::GETPARAM", offset),
             opcode::SETPARAM => self.local_instruction("OPCODE::SETPARAM", offset),
-            opcode::ARRAY => simple_instruction("OPCODE::ARRAY",offset),
-            opcode::INDEXARRAY => simple_instruction("OPCODE::INDEXARRAY",offset),
-            opcode::INDEXSTRING => simple_instruction("OPCODE::INDEXSTRING",offset),
-            opcode::GETPROPERTY => self.local_instruction("OPCODE::GETPROPERTY",offset),
-            opcode::SETPROPERTY => self.local_instruction("OPCODE::SETPROPERTY",offset),
-            opcode::GETMETHOD => self.local_instruction("OPCODE::GETMETHOD",offset),
-            opcode::CALLINSTANCEMETHOD => self.call_instruction("OPCODE::CALLINSTANCEMETHOD",offset),
-            opcode::CALLSTATICMETHOD => self.call_instruction("OPCODE::CALLSTATICMETHOD",offset),
+            opcode::ARRAY => simple_instruction("OPCODE::ARRAY", offset),
+            opcode::INDEXARRAY => simple_instruction("OPCODE::INDEXARRAY", offset),
+            opcode::INDEXSTRING => simple_instruction("OPCODE::INDEXSTRING", offset),
+            opcode::GETPROPERTY => self.local_instruction("OPCODE::GETPROPERTY", offset),
+            opcode::SETPROPERTY => self.local_instruction("OPCODE::SETPROPERTY", offset),
+            opcode::GETMETHOD => self.local_instruction("OPCODE::GETMETHOD", offset),
+            opcode::CALLINSTANCEMETHOD => {
+                self.call_instruction("OPCODE::CALLINSTANCEMETHOD", offset)
+            }
+            opcode::CALLSTATICMETHOD => self.call_instruction("OPCODE::CALLSTATICMETHOD", offset),
             opcode::CLASSINSTANCE => self.call_instruction("OPCODE::CLASSINSTANCE", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);

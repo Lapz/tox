@@ -1,4 +1,4 @@
-use super::{Function,Program};
+use super::{Function, Program};
 use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
@@ -31,14 +31,9 @@ pub enum Error {
 }
 
 impl<'a> VM<'a> {
-    pub fn new(
-        main: Symbol,
-        program: &'a Program,
-        objects: RawObject,
-    ) -> Result<Self, Error> {
+    pub fn new(main: Symbol, program: &'a Program, objects: RawObject) -> Result<Self, Error> {
         let main_function = program.functions.get(&main);
 
-       
         if main_function.is_none() {
             return Err(Error::NoMain);
         }
@@ -63,19 +58,20 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) {
         #[cfg(feature = "debug")]
         {
-            for (_,func) in self.program.functions.iter()
-            {
-                func.body.disassemble(&format!("{}",func.name))
+            for (_, func) in self.program.functions.iter() {
+                func.body.disassemble(&format!("{}", func.name))
             }
 
-
-            for(_,class) in self.program.classes.iter() {
-                let _:Vec<()>=class.methods.iter().map(|(_,func)| func.body.disassemble(&format!("{}",func.name))).collect();
+            for (_, class) in self.program.classes.iter() {
+                let _: Vec<()> = class
+                    .methods
+                    .iter()
+                    .map(|(_, func)| func.body.disassemble(&format!("{}", func.name)))
+                    .collect();
             }
         }
 
         loop {
-            
             if self.current_frame.ip >= self.current_frame.function.body.code.len() {
                 return;
             }
@@ -276,7 +272,7 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                    let function_name = Symbol( self.read_byte() as u64);
+                    let function_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
                     let mut function = self.program.functions.get(&function_name).unwrap();
@@ -329,9 +325,15 @@ impl<'a> VM<'a> {
                     let class_name = Symbol(self.read_byte() as u64);
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
-                    let mut function = self.program.classes.get(&class_name).unwrap().methods.get(&method_name).unwrap();
+                    let mut function = self
+                        .program
+                        .classes
+                        .get(&class_name)
+                        .unwrap()
+                        .methods
+                        .get(&method_name)
+                        .unwrap();
 
-                    
                     let mut params = HashMap::new();
 
                     for i in 0..arg_count {
@@ -344,8 +346,6 @@ impl<'a> VM<'a> {
                         function: function,
                         params,
                     };
-
-
 
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
@@ -378,13 +378,13 @@ impl<'a> VM<'a> {
 
                 opcode::CLASSINSTANCE => {
                     let class_name = Symbol(self.read_byte() as u64);
-                
+
                     let num_properties = self.read_byte() as usize;
 
                     let mut class = self.program.classes.get(&class_name).unwrap();
-                  
+
                     let methods = class.methods.clone();
-                    
+
                     let mut properties = HashMap::new();
 
                     for _ in 0..num_properties {
@@ -395,7 +395,7 @@ impl<'a> VM<'a> {
 
                     self.push(Value::object(instance));
                 }
-                
+
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]

@@ -2,11 +2,11 @@ use ast;
 use infer::types::Type;
 use opcode;
 use std::collections::HashMap;
+use std::hash::Hash;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
-use std::hash::Hash;
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -17,20 +17,19 @@ struct LoopDescription {
     end: usize,
 }
 
-#[derive(Debug,Clone)]
-pub struct StackedMap<K:Hash+Eq,V:Clone> {
-    table:HashMap<K,Vec<V>>,
-    scopes:Vec<Option<K>>,
+#[derive(Debug, Clone)]
+pub struct StackedMap<K: Hash + Eq, V: Clone> {
+    table: HashMap<K, Vec<V>>,
+    scopes: Vec<Option<K>>,
 }
 
-impl <K:Hash+Eq+Copy,V:Clone> StackedMap<K,V> {
+impl<K: Hash + Eq + Copy, V: Clone> StackedMap<K, V> {
     pub fn new() -> Self {
         StackedMap {
-            table:HashMap::new(),
-            scopes: vec![]
+            table: HashMap::new(),
+            scopes: vec![],
         }
     }
-
 
     pub fn begin_scope(&mut self) {
         self.scopes.push(None);
@@ -44,24 +43,23 @@ impl <K:Hash+Eq+Copy,V:Clone> StackedMap<K,V> {
     }
 
     /// Enters a peice of data into the current scope
-    pub fn insert(&mut self,key:K,value:V) {
+    pub fn insert(&mut self, key: K, value: V) {
         let mapping = self.table.entry(key).or_insert_with(Vec::new);
         mapping.push(value);
 
         self.scopes.push(Some(key));
     }
 
-    pub fn get(&self, key:&K) -> Option<&V> {
+    pub fn get(&self, key: &K) -> Option<&V> {
         self.table.get(key).and_then(|vec| vec.last())
     }
-
 }
 pub struct Builder<'a> {
     /// The current chunk
     chunk: Chunk,
     /// A count of all local vars
     /// The number is the postion of the local on the local stack
-    locals: StackedMap<Symbol,usize>,
+    locals: StackedMap<Symbol, usize>,
 
     params: HashMap<Symbol, usize>,
     current_loop: Option<LoopDescription>,
@@ -71,7 +69,7 @@ pub struct Builder<'a> {
     /// The reporter used to reporter any errors
     reporter: &'a mut Reporter,
     /// The slot of the variable
-    slots:u32,
+    slots: u32,
     ///
     line: u32,
 }
@@ -86,7 +84,7 @@ impl<'a> Builder<'a> {
             chunk: Chunk::new(),
             locals: StackedMap::new(),
             line: 0,
-            slots:0,
+            slots: 0,
             current_loop: None,
             params,
             objects,
@@ -575,8 +573,6 @@ impl<'a> Builder<'a> {
                 self.emit_byte(params.len() as u8);
             }
 
-            
-
             Expression::GetProperty {
                 ref property_name,
                 ref property,
@@ -739,7 +735,7 @@ fn compile_function(
 
 pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
     let mut funcs = HashMap::new();
-    let mut classes:HashMap<Symbol,Class> = HashMap::new();
+    let mut classes: HashMap<Symbol, Class> = HashMap::new();
 
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
@@ -751,14 +747,14 @@ pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Prog
     }
 
     for class in ast.classes.iter() {
-        
         let mut compiled_class = compile_class(class, reporter, objects)?;
-    
+
         if let Some(ref superclass) = class.superclass {
             let superclass = classes.get(&superclass.value).unwrap();
 
-            compiled_class.methods.extend(superclass.methods.clone().into_iter());
-           
+            compiled_class
+                .methods
+                .extend(superclass.methods.clone().into_iter());
         }
 
         classes.insert(class.name, compiled_class);

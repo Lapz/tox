@@ -90,10 +90,9 @@ impl Infer {
 
         Ok(t::Class {
             name: class.value.name.value,
-            superclass:class.value.superclass,
+            superclass: class.value.superclass,
             methods,
             fields,
         })
-    
     }
 }

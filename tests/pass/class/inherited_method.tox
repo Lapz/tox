@@ -1,14 +1,13 @@
 class Foo {
   fn inFoo() {
     print("in foo");
-    return;
   }
 }
 
 class Bar < Foo {
   fn inBar() {
     print("in bar");
-    return;
+    
   }
 }
 
@@ -18,7 +17,7 @@ class Baz < Bar {
   }
   fn inBaz() {
     print("in baz");
-    return;
+    
   }
 }
 

@@ -61,7 +61,7 @@ impl Type {
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
             Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
-            Type::Class(ref name, _,_, _) => {
+            Type::Class(ref name, _, _, _) => {
                 let fmt_string = format!("Class {}", ctx.name(*name));
 
                 fmt_string

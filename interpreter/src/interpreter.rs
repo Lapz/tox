@@ -437,7 +437,7 @@ fn evaluate_expression(
                     Object::Instance {
                         methods: methods.clone(),
                         fields: Rc::new(RefCell::new(instance_props.clone())),
-                        sclassmethods: s_class_methods.clone()
+                        sclassmethods: s_class_methods.clone(),
                     },
                 );
 
@@ -464,10 +464,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                _ => {
-                    
-                    Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
-                }
+                _ => Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span)),
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),

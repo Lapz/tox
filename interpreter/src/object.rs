@@ -90,7 +90,7 @@ impl Object {
                     return Ok(methods.get(&name.value).unwrap().bind(self));
                 }
                 if sclassmethods.contains_key(&name.value) {
-                        return Ok(sclassmethods.get(&name.value).unwrap().bind(self));
+                    return Ok(sclassmethods.get(&name.value).unwrap().bind(self));
                 }
                 Err(RuntimeError::new(
                     ErrorCode::UndefinedProperty(name.value),
@@ -104,7 +104,7 @@ impl Object {
                 } else if superclass.is_some() {
                     return superclass.clone().unwrap().get_property(name, env);
                 }
-                
+
                 Err(RuntimeError::new(
                     ErrorCode::UndefinedProperty(name.value),
                     name.span,

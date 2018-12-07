@@ -89,7 +89,7 @@ pub mod opcode {
     /// ARRAY
     /// Create an array object and put it on the stack
     pub const ARRAY: u8 = 036;
-    /// INDEXARRAY 
+    /// INDEXARRAY
     /// Index an array
     pub const INDEXARRAY: u8 = 037;
     /// INDEXSTRING
@@ -105,14 +105,13 @@ pub mod opcode {
     /// Get the class method with the id of $id
     pub const GETMETHOD: u8 = 041;
     /// CLASSINSTANCE $id $num_properties
-    /// Create a new ClassInstance object with the methods 
+    /// Create a new ClassInstance object with the methods
     /// from the class $id and $num_properties
     pub const CLASSINSTANCE: u8 = 042;
-    /// CALLINSTANCEMETHOD $id $arg_count 
-    /// Call the functions $id which takes $arg_count 
+    /// CALLINSTANCEMETHOD $id $arg_count
+    /// Call the functions $id which takes $arg_count
     pub const CALLINSTANCEMETHOD: u8 = 043;
     /// CALLSTATICMETHOD $id $arg_count
-    /// Call the static class methods $id which takes $arg_count 
+    /// Call the static class methods $id which takes $arg_count
     pub const CALLSTATICMETHOD: u8 = 044;
 }
-

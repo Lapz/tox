@@ -5,7 +5,7 @@ extern crate ansi_term;
 extern crate tempfile;
 extern crate walkdir;
 
-use ansi_term::Colour::{Green, Red,Yellow};
+use ansi_term::Colour::{Green, Red, Yellow};
 use std::env;
 use std::fs::remove_file;
 use std::fs::File;
@@ -34,8 +34,6 @@ fn main() {
 
         let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
 
-       
-
         file.read_to_string(&mut source)
             .expect("something went wrong reading the file");
 
@@ -48,10 +46,8 @@ fn main() {
                 let expects = line[from..].to_string();
                 expected.push(expects);
             }
-           
         }
 
-      
         undisclosedc.args(&["run", entry.path().to_str().unwrap()]);
 
         let output = undisclosedc.output().expect("failed to execute process");
@@ -63,15 +59,21 @@ fn main() {
         for expects in expected.iter() {
             if output.contains(expects) {
                 got += 1;
-            } 
+            }
         }
 
         if got == expected.len() {
-            pass +=1
-        }else {
+            pass += 1
+        } else {
             fail += 1;
-            
-            failed.push(::std::fs::canonicalize(entry.path()).unwrap().to_str().unwrap().to_string());
+
+            failed.push(
+                ::std::fs::canonicalize(entry.path())
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            );
         }
     }
 
@@ -81,10 +83,9 @@ fn main() {
         Red.bold().paint(fail.to_string())
     );
 
-
     if !failed.is_empty() {
         for test in failed {
-            println!("Test {} failed ",Yellow.bold().paint(test));
+            println!("Test {} failed ", Yellow.bold().paint(test));
         }
     }
 
@@ -124,19 +125,17 @@ fn main() {
         let output = undisclosedc.output().expect("failed to execute process");
 
         let output = String::from_utf8_lossy(&output.stdout);
-        
+
         let mut got = 0;
 
         for expects in expected.iter() {
             if output.contains(expects) {
                 got += 1;
-            } 
+            }
         }
 
         if got == expected.len() {
-            fail +=1
+            fail += 1
         }
     }
-
-    
 }

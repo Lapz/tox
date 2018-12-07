@@ -730,7 +730,7 @@ impl<'a> Parser<'a> {
                             value: Box::new(value),
                             kind,
                         },
-                    })
+                    });
                 }
 
                 Spanned {
@@ -747,7 +747,7 @@ impl<'a> Parser<'a> {
                             name: property,
                             value: Box::new(value),
                         },
-                    })
+                    });
                 }
 
                 Spanned { ref span, .. } => {
