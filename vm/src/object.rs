@@ -6,6 +6,7 @@ use util::symbol::Symbol;
 use value::Value;
 
 pub type RawObject = *mut Object;
+pub type NativeFn = fn(u8,*mut [Value]) -> Value;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
@@ -15,6 +16,14 @@ pub enum ObjectType {
     Array,
     Class,
     Instance,
+    Native,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct NativeObject {
+    pub obj: Object,
+    pub funciton: NativeFn,
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +83,12 @@ pub enum ObjectValue<'a> {
 impl Object {
     pub fn new(ty: ObjectType, next: RawObject) -> Self {
         Object { ty, next }
+    }
+}
+
+impl NativeObject {
+    pub fn new(arity: usize, function: NativeFn, next: RawObject) -> RawObject {
+        unimplemented!()
     }
 }
 

@@ -679,6 +679,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "vm"
 version = "0.1.0"
 dependencies = [
+ "libc 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "opcode 0.1.0",
  "util 0.1.0",
