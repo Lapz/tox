@@ -753,22 +753,17 @@ pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Prog
     for class in ast.classes.iter() {
         
         let mut compiled_class = compile_class(class, reporter, objects)?;
-        
-
+    
         if let Some(ref superclass) = class.superclass {
             let superclass = classes.get(&superclass.value).unwrap();
 
             compiled_class.methods.extend(superclass.methods.clone().into_iter());
            
         }
-    
 
         classes.insert(class.name, compiled_class);
     }
 
-    
-
-    // p
     Ok((
         Program {
             functions: funcs,

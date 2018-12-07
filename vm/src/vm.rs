@@ -7,6 +7,7 @@ use value::Value;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
+#[derive(Debug)]
 pub struct StackFrame<'a> {
     ip: usize,
     locals: HashMap<u8, Value>,
@@ -64,11 +65,17 @@ impl<'a> VM<'a> {
         {
             for (_,func) in self.program.functions.iter()
             {
-                func.body.disassemble("DEBUG")
+                func.body.disassemble(&format!("{}",func.name))
+            }
+
+
+            for(_,class) in self.program.classes.iter() {
+                let _:Vec<()>=class.methods.iter().map(|(_,func)| func.body.disassemble(&format!("{}",func.name))).collect();
             }
         }
 
         loop {
+            
             if self.current_frame.ip >= self.current_frame.function.body.code.len() {
                 return;
             }
@@ -338,6 +345,8 @@ impl<'a> VM<'a> {
                         params,
                     };
 
+
+
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
                 }
@@ -372,11 +381,10 @@ impl<'a> VM<'a> {
                 
                     let num_properties = self.read_byte() as usize;
 
-                    
-
                     let mut class = self.program.classes.get(&class_name).unwrap();
                   
                     let methods = class.methods.clone();
+                    
                     let mut properties = HashMap::new();
 
                     for _ in 0..num_properties {
@@ -387,6 +395,7 @@ impl<'a> VM<'a> {
 
                     self.push(Value::object(instance));
                 }
+                
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]

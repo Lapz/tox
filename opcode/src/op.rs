@@ -100,14 +100,14 @@ pub mod opcode {
     pub const GETPROPERTY: u8 = 039;
     /// SETPROPERTY $id
     /// Set the property of class with $id
-    pub const SETPROPERTY: u8 = 042;
+    pub const SETPROPERTY: u8 = 040;
     /// GETMETHOD $id
     /// Get the class method with the id of $id
-    pub const GETMETHOD: u8 = 040;
+    pub const GETMETHOD: u8 = 041;
     /// CLASSINSTANCE $id $num_properties
     /// Create a new ClassInstance object with the methods 
     /// from the class $id and $num_properties
-    pub const CLASSINSTANCE: u8 = 041;
+    pub const CLASSINSTANCE: u8 = 042;
     /// CALLINSTANCEMETHOD $id $arg_count 
     /// Call the functions $id which takes $arg_count 
     pub const CALLINSTANCEMETHOD: u8 = 043;
