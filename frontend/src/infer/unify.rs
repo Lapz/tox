@@ -37,22 +37,12 @@ impl Infer {
 
                 Ok(())
             }
-
-            (&Type::Class(ref name1, _, _, _), &Type::This { ref name, .. }) => {
-                if name == name1 {
-                    Ok(())
-                } else {
-                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
-                    ctx.error(msg, span);
-                    Err(())
-                }
-            }
-            (&Type::Fun(_, ref ret), ref o) => {
+            (&Type::Fun(_, ref ret, _), ref o) => {
                 self.unify(ret, o, span, ctx)?;
                 Ok(())
             }
 
-            (ref o, &Type::Fun(_, ref ret)) => {
+            (ref o, &Type::Fun(_, ref ret, _)) => {
                 self.unify(ret, o, span, ctx)?;
                 Ok(())
             }

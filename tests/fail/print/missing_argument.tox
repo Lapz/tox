@@ -1,0 +1,3 @@
+fn main() {
+    print;//error: No rules expected ';'
+}

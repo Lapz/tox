@@ -13,17 +13,15 @@ impl Infer {
         class: Spanned<Class>,
         ctx: &mut CompileCtx,
     ) -> InferResult<t::Class> {
-        use std::collections::HashMap;
-
         let mut field_types = HashMap::new();
         let mut methods_types = HashMap::new();
         let mut methods = Vec::new();
         let mut fields = Vec::new();
 
-        if let Some(sclass) = class.value.superclass {
+        if let Some(ref sclass) = class.value.superclass {
             if let Some(mut entry) = ctx.look_type(sclass.value).cloned() {
                 match entry {
-                    Type::Class(ref name, ref fields, ref methods, ref u) => {
+                    Type::Class(_, ref fields, ref methods, _) => {
                         field_types.extend(fields.clone().into_iter());
                         methods_types.extend(methods.clone().into_iter());
                     }
@@ -52,12 +50,6 @@ impl Infer {
             field_types.insert(field.value.name.value, ty);
         }
 
-        self.this = Type::This {
-            name: class.value.name.value,
-            fields: field_types.clone(),
-            methods: HashMap::new(),
-        };
-
         ctx.add_type(
             class.value.name.value,
             Type::Class(
@@ -80,6 +72,7 @@ impl Infer {
                         .map(|param| param.ty)
                         .collect(),
                     Box::new(fun.returns.clone()),
+                    false,
                 )),
             );
             methods.push(fun);
@@ -92,16 +85,14 @@ impl Infer {
             Unique::new(),
         );
 
-        self.this = ty.clone();
-
         ctx.add_type(class.value.name.value, ty.clone());
         ctx.add_var(class.value.name.value, VarEntry::Var(ty));
 
         Ok(t::Class {
             name: class.value.name.value,
+            superclass: class.value.superclass,
             methods,
             fields,
         })
-        // Ok(())
     }
 }

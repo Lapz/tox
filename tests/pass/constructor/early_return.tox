@@ -1,0 +1,12 @@
+class Foo {
+  fn init() -> Foo {
+    print("init");
+    return Foo{};
+    print("nope");
+  }
+}
+
+fn main() {
+  let foo = Foo.init(); // expect:init
+  print(foo); // expect:instance
+}

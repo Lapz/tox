@@ -36,11 +36,11 @@ impl<'a> CompileCtx<'a> {
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::Fun(params.clone(), Box::new(returns.clone())),
+                        ty: Type::Fun(params.clone(), Box::new(returns.clone()), false),
                     },
                 );
 
-                types.enter(symbol, Type::Fun(params, Box::new(returns)));
+                types.enter(symbol, Type::Fun(params, Box::new(returns), false));
             };
 
             add_builtin("clock", vec![], Type::Float);
@@ -49,6 +49,8 @@ impl<'a> CompileCtx<'a> {
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
             add_builtin("to_int", vec![Type::Str], Type::Int);
             add_builtin("trim", vec![Type::Str], Type::Str);
+            add_builtin("is_digit", vec![Type::Str], Type::Bool);
+            add_builtin("char_at", vec![Type::Str, Type::Int], Type::Str);
         }
 
         {
@@ -82,7 +84,7 @@ impl<'a> CompileCtx<'a> {
                 "io",
                 vec![(
                     "readline",
-                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str))),
+                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str), false)),
                 )],
             );
         }

@@ -37,7 +37,7 @@ impl Infer {
         ctx.add_var(
             function.value.name.value,
             VarEntry::Fun {
-                ty: Type::Fun(env_types.clone(), Box::new(returns.clone())),
+                ty: Type::Fun(env_types.clone(), Box::new(returns.clone()), false),
             },
         );
 
@@ -47,8 +47,8 @@ impl Infer {
             ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
         }
 
-        let span = function.value.body.span;
-        let body = self.infer_statement(function.value.body, ctx)?;
+        let mut span = function.value.body.span;
+        let mut body = self.infer_statement(function.value.body, ctx)?;
 
         ctx.end_scope();
 
@@ -57,6 +57,38 @@ impl Infer {
         if &ctx.name(function.value.name.value) == "main" {
             self.set_main(function.value.name.value)
         }
+
+        if Type::Nil == returns {
+            match &mut body.value {
+                t::Statement::Block(ref mut statements) => {
+                    let mut add_return = false;
+
+                    if let Some(statement) = statements.last() {
+                        match statement.value {
+                            t::Statement::Return(_) => (),
+                            _ => {
+                                add_return = true;
+                                span = statement.span;
+                            }
+                        }
+                    }
+
+                    if add_return {
+                        statements.push(Spanned::new(
+                            t::Statement::Return(Spanned::new(
+                                t::TypedExpression {
+                                    expr: Box::new(Spanned::new(t::Expression::Literal(t::Literal::Nil), span)),
+                                    ty: Type::Nil,
+                                },
+                                span,
+                            )),
+                            span,
+                        ))
+                    }
+                }
+                _ => (),
+            }
+        } // AUTO INSERT RETURN
 
         Ok(t::Function {
             name: function.value.name.value,

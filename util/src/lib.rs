@@ -1,6 +1,7 @@
 //! This library provides common items that are used throughout the tox project
 extern crate ansi_term;
 extern crate fnv;
+extern crate itertools;
 pub mod emmiter;
 pub mod macros;
 pub mod pos;

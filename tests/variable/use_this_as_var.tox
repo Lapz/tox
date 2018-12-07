@@ -1,2 +1,0 @@
-// expect:Expected an IDENTIFIER after a 'var'  but instead found this
-var this = "value";

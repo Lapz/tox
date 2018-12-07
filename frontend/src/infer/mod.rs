@@ -12,13 +12,11 @@ mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
-use fnv::FnvHashMap;
 use std::rc::Rc;
 use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Infer {
-    this: types::Type, // for this
     body: types::Type,
     main: Option<Symbol>,
     // resolver: self::resolver::Resolver,
@@ -27,7 +25,6 @@ pub struct Infer {
 impl Infer {
     pub fn new() -> Self {
         Self {
-            this: self::types::Type::Nil,
             body: self::types::Type::Nil,
             main: None,
             // resolver: self::resolver::Resolver::new(),

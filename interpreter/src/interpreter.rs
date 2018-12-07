@@ -4,7 +4,7 @@ use interpreter::env::Environment;
 use std::cell::RefCell;
 use std::rc::Rc;
 use syntax::ast::*;
-use util::pos::{Span, Spanned, EMPTYSPAN};
+use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 use util::symbol::Symbols;
 
@@ -52,7 +52,7 @@ impl ErrorCode {
             }
 
             ErrorCode::IndexOutOfBound => {
-                format!("An invalid index was used when trying to access an item from an array")
+                "An invalid index was used when trying to access an item from an array".into()
             }
 
             ErrorCode::InvalidIndexType => format!("The type of an index should be an integer"),
@@ -61,7 +61,7 @@ impl ErrorCode {
                 ::std::str::from_utf8(bytes).unwrap()
             ),
 
-            ErrorCode::NotAnInstance => format!("A class instance was expected"),
+            ErrorCode::NotAnInstance => "A class instance was expected".into(),
             _ => format!(""),
         }
     }
@@ -81,13 +81,18 @@ pub(crate) fn evaluate_function(
         function.name.value,
         Object::Function(
             function.name.value,
-            func_params,
+            func_params.clone(),
             Box::new(function.body.clone()),
             Box::new(env.clone()),
         ),
     );
 
-    Ok(Object::None)
+    Ok(Object::Function(
+        function.name.value,
+        func_params,
+        Box::new(function.body.clone()),
+        Box::new(env.clone()),
+    ))
 }
 
 pub(crate) fn evaluate_class(class: &Class, env: &mut Environment) -> Result<Object, RuntimeError> {
@@ -258,10 +263,12 @@ pub(crate) fn evaluate_statement(
         } => {
             if evaluate_expression(cond, env)?.is_truthy() {
                 evaluate_statement(then, env)
-            } else if let Some(ref else_statement) = *otherwise {
-                evaluate_statement(else_statement, env)
             } else {
-                Ok(Object::None)
+                if let Some(ref else_statement) = *otherwise {
+                    evaluate_statement(else_statement, env)
+                } else {
+                    Ok(Object::None)
+                }
             }
         }
 
@@ -409,12 +416,12 @@ fn evaluate_expression(
         } => match env.get(symbol)? {
             Object::Class(_, ref superclass, ref methods) => {
                 let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
-                let mut s_class_methods = None;
+                let mut s_class_methods = FnvHashMap::default();
 
                 if let Some(ref sklass) = *superclass {
                     match **sklass {
-                        Object::Class(_, _, ref methods_) => {
-                            s_class_methods = Some(methods_.clone());
+                        Object::Class(_, _, ref methods) => {
+                            s_class_methods.extend(methods.clone().into_iter());
                         }
                         _ => unimplemented!(),
                     }
@@ -457,10 +464,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                ref e => {
-                    println!("{:?}", e);
-                    Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
-                }
+                _ => Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span)),
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),
@@ -526,8 +530,6 @@ fn evaluate_expression(
             }
         }
 
-        Expression::This => env.get(&Spanned::new(Symbol(0), EMPTYSPAN)),
-
         Expression::Unary { ref op, ref expr } => {
             let right = evaluate_expression(expr, env)?;
 
@@ -560,7 +562,7 @@ fn times(lhs: Object, rhs: Object) -> Result<Object, RuntimeError> {
     match (lhs, rhs) {
         (Object::Float(l), Object::Float(r)) => Ok(Object::Float(l * r)),
         (Object::Int(l), Object::Int(r)) => Ok(Object::Int(l * r)),
-        _ => unreachable!(),
+        (lhs, rhs) => unreachable!("{:?} {:?}", lhs, rhs),
     }
 }
 
@@ -602,7 +604,7 @@ fn evaluate_literal(expression: &Literal) -> Result<Object, RuntimeError> {
     match *expression {
         Literal::Float(i) => Ok(Object::Float(i)),
         Literal::Int(i) => Ok(Object::Int(i)),
-        Literal::Str(ref s) => Ok(Object::Str(s.clone())),
+        Literal::Str(ref s) => Ok(Object::Str(s.clone().as_bytes().to_vec())),
         Literal::Nil => Ok(Object::Nil),
         Literal::True(ref b) | Literal::False(ref b) => Ok(Object::Bool(*b)),
     }

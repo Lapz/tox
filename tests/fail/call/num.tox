@@ -1,0 +1,3 @@
+fn main() {
+    123 (); //Can only call functions and classes.
+}

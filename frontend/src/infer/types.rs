@@ -24,6 +24,7 @@ pub enum Type {
     Alias(Symbol, Box<Type>),
     Class(
         Symbol,
+        ///properties
         HashMap<Symbol, Type>,
         HashMap<Symbol, Entry>,
         Unique,
@@ -33,8 +34,8 @@ pub enum Type {
         fields: HashMap<Symbol, Type>,
         methods: HashMap<Symbol, Entry>,
     },
-    Fun(Vec<Type>, Box<Type>),
-    Dict(Box<Type>, Box<Type>), // Key, Value
+    Fun(Vec<Type>, Box<Type>, bool), //params return and if closure
+    Dict(Box<Type>, Box<Type>),      // Key, Value
     Int,
     Str,
     Bool,
@@ -49,29 +50,19 @@ impl Type {
             _ => false,
         }
     }
+
+    pub fn is_float(&self) -> bool {
+        match *self {
+            Type::Float => true,
+            _ => false,
+        }
+    }
+
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
             Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
-            Type::Class(ref name, ref methods, ref fields, _) => {
-                let mut fmt_string = format!("Class {} {{", ctx.name(*name));
-
-                for (i, field) in fields.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&ctx.name(*field.0))
-                    } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
-                    }
-                }
-
-                for (i, method) in methods.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
-                    } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
-                    }
-                }
-
-                fmt_string.push('}');
+            Type::Class(ref name, _, _, _) => {
+                let fmt_string = format!("Class {}", ctx.name(*name));
 
                 fmt_string
             }
@@ -105,7 +96,7 @@ impl Type {
 
                 fmt_string
             }
-            Type::Fun(ref params, ref returns) => {
+            Type::Fun(ref params, ref returns, _) => {
                 let mut fmt_string = String::from("fn(");
 
                 for (i, param) in params.iter().enumerate() {
