@@ -1,2 +1,0 @@
-// Error:Unexpected char | on line 3,column 7
-foo(a | b);

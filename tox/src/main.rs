@@ -26,10 +26,9 @@ fn main() {
 
     if let Some(file) = opts.source {
         if opts.interpreter {
-            run_interpreter(file, opts.ptokens, opts.past);
+            run_interpreter(file);
         } else {
-            println!("{}", opts.past);
-            run(file, opts.ptokens, opts.past);
+            run(file);
         }
     } else {
         repl()
@@ -42,7 +41,7 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run_interpreter(path: String, _ptokens: bool, past: bool) {
+pub fn run_interpreter(path: String) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -68,10 +67,6 @@ pub fn run_interpreter(path: String, _ptokens: bool, past: bool) {
             ::std::process::exit(65)
         }
     };
-
-    if past {
-        println!("{:#?}", ast);
-    }
 
     let mut infer = Infer::new();
 
@@ -105,7 +100,7 @@ pub fn run_interpreter(path: String, _ptokens: bool, past: bool) {
     };
 }
 
-pub fn run(path: String, _ptokens: bool, _past: bool) {
+pub fn run(path: String) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -132,13 +127,6 @@ pub fn run(path: String, _ptokens: bool, _past: bool) {
         }
     };
 
-    // use syntax::pprint::PrettyPrint;
-    // let mut file = File::create("ast.txt").unwrap_or(File::open("ast.txt").unwrap());
-
-    // for statment in ast.functions.iter() {
-    //     statment.value.body.value.print_with_symbols(&mut file,&symbols).unwrap();
-    // }
-
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
@@ -150,7 +138,7 @@ pub fn run(path: String, _ptokens: bool, _past: bool) {
         }
     };
 
-    let (functions, classes, objects) = match compile(&typed_ast, &mut reporter) {
+    let (program, objects) = match compile(&typed_ast, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);
@@ -158,7 +146,7 @@ pub fn run(path: String, _ptokens: bool, _past: bool) {
         }
     };
 
-    let mut vm = VM::new(symbols.symbol("main"), &functions, &classes, objects).unwrap();
+    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
     vm.run();
 }
 
@@ -167,15 +155,6 @@ pub fn run(path: String, _ptokens: bool, _past: bool) {
 pub struct Cli {
     /// The source code file
     pub source: Option<String>,
-    /// Pretty Print Source Code
-    #[structopt(long = "print", short = "p")]
-    pub pprint: bool,
-    /// Print out tokens
-    #[structopt(long = "tokens", short = "t")]
-    pub ptokens: bool,
-    /// Print out ast debug mode
-    #[structopt(long = "rawast", short = "a")]
-    pub past: bool,
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,

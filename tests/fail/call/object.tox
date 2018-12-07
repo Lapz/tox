@@ -1,0 +1,6 @@
+class Foo {}
+
+fn main() {
+    let foo = Foo{};
+    foo(); //error: `foo` is not callable
+}

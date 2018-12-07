@@ -275,7 +275,6 @@ impl Infer {
                                     Spanned::new(t::Expression::Index(expr, index_ty), expr_span),
                                     *ty.clone(),
                                 )
-                                // unimplemented!()
                             }
 
                             _ => {
@@ -435,6 +434,7 @@ impl Infer {
 
                 Expression::Get { .. } => {
                     let (callee, ty) = self.infer_object_get(*callee, ctx)?;
+
                     match ty {
                         Type::Fun(ref param_types, ref returns, _) => {
                             if args.len() != param_types.len() {
@@ -462,17 +462,34 @@ impl Infer {
                                 t::Expression::GetMethod {
                                     method_name,
                                     method,
-                                } => Ok((
-                                    Spanned::new(
-                                        t::Expression::ClassMethodCall {
-                                            method_name,
-                                            instance: method,
-                                            params: callee_exprs,
-                                        },
-                                        call.span,
-                                    ),
-                                    *returns.clone(),
-                                )),
+                                } => match method.value.expr.value {
+                                    t::Expression::Var(_, Type::Class(klass_name, _, _, _)) => {
+                                        // type inference returns the type of the main classs
+                                        Ok((
+                                            Spanned::new(
+                                                t::Expression::StaticMethodCall {
+                                                    class_name: klass_name,
+                                                    method_name,
+                                                    params: callee_exprs,
+                                                },
+                                                call.span,
+                                            ),
+                                            *returns.clone(),
+                                        ))
+                                    }
+
+                                    _ => Ok((
+                                        Spanned::new(
+                                            t::Expression::InstanceMethodCall {
+                                                method_name,
+                                                instance: method,
+                                                params: callee_exprs,
+                                            },
+                                            call.span,
+                                        ),
+                                        *returns.clone(),
+                                    )),
+                                },
 
                                 _ => unreachable!(),
                             }

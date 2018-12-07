@@ -52,7 +52,7 @@ impl ErrorCode {
             }
 
             ErrorCode::IndexOutOfBound => {
-                format!("An invalid index was used when trying to access an item from an array")
+                "An invalid index was used when trying to access an item from an array".into()
             }
 
             ErrorCode::InvalidIndexType => format!("The type of an index should be an integer"),
@@ -61,7 +61,7 @@ impl ErrorCode {
                 ::std::str::from_utf8(bytes).unwrap()
             ),
 
-            ErrorCode::NotAnInstance => format!("A class instance was expected"),
+            ErrorCode::NotAnInstance => "A class instance was expected".into(),
             _ => format!(""),
         }
     }
@@ -416,12 +416,12 @@ fn evaluate_expression(
         } => match env.get(symbol)? {
             Object::Class(_, ref superclass, ref methods) => {
                 let mut instance_props: FnvHashMap<Symbol, Object> = FnvHashMap::default();
-                let mut s_class_methods = None;
+                let mut s_class_methods = FnvHashMap::default();
 
                 if let Some(ref sklass) = *superclass {
                     match **sklass {
-                        Object::Class(_, _, ref methods_) => {
-                            s_class_methods = Some(methods_.clone());
+                        Object::Class(_, _, ref methods) => {
+                            s_class_methods.extend(methods.clone().into_iter());
                         }
                         _ => unimplemented!(),
                     }
@@ -464,10 +464,7 @@ fn evaluate_expression(
             match object {
                 instance @ Object::Instance { .. } => instance.get_property(property, env),
                 class @ Object::Class(_, _, _) => class.get_property(property, env),
-                ref e => {
-                    println!("{:?}", e);
-                    Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span))
-                }
+                _ => Err(RuntimeError::new(ErrorCode::NotAnInstance, expression.span)),
             }
         }
         Expression::Grouping { ref expr } => evaluate_expression(expr, env),

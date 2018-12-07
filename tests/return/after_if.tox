@@ -1,6 +1,0 @@
-fn f() {
-  if (true) 
-    return "ok";
-  }
-
-print(f()); // expect: ok

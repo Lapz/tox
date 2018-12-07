@@ -1,7 +1,6 @@
 use super::Function;
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
-use std::mem;
 use std::ops::Deref;
 use util::symbol::Symbol;
 use value::Value;
@@ -154,32 +153,6 @@ impl<'a> Deref for StringObject<'a> {
 
     fn deref(&self) -> &Self::Target {
         &self.obj
-    }
-}
-
-impl Drop for Object {
-    fn drop(&mut self) {
-        match self.ty {
-            ObjectType::String => unsafe {
-                let string: &StringObject = mem::transmute(self);
-
-                mem::drop(string);
-            },
-
-            ObjectType::Func => (),
-            ObjectType::Array => (),
-            ObjectType::Class => (),
-            ObjectType::Instance => (),
-        }
-    }
-}
-
-impl<'a> Drop for StringObject<'a> {
-    fn drop(&mut self) {
-        match &self.chars {
-            ObjectValue::String(string) => mem::drop(string),
-            _ => (),
-        }
     }
 }
 

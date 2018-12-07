@@ -1,5 +1,0 @@
-fn foo(a:int) {
-  let a = 10;
-
-  return 10;
-}

@@ -1,2 +1,0 @@
-// expect: No rules expected 'class'
-while (true) class Foo {}

@@ -1,3 +1,0 @@
-// expect:No rules expected 'let'
-while (true) 
-    let foo;

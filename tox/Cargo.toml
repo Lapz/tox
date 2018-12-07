@@ -4,24 +4,27 @@ version = "0.2.0"
 authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
-debug = [] # Enable debug statements within the vm
-
-# [dependencies.vm.'cfg(feature = "debug")']
-# features = ["debug","stack"]
-# path = "../vm"
-
-[dependencies.vm]
-path = "../vm"
-# features = ["debug","stack"]
-
+debug = ["vm/debug"] # Enable debug statements within the vm
 
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
 frontend = {path = "../frontend"}
 interpreter = {path ="../interpreter"}
-# vm = {path ="../vm",features = ["debug","stack"]}
+vm = {path="../vm"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}
 fnv = "*"
+
+
+[[test]]
+name ="test_runner"
+path ="../tests/test_runner.rs"
+harness = false
+
+
+[dev-dependencies]
+walkdir = "2"
+ansi_term = "0.10"
+tempfile = "3"

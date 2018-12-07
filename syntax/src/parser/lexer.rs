@@ -260,9 +260,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let msg = format!("Unclosed string");
-
-        self.error(msg, last.unwrap()); // has to be the end as we keep on adding to our string till we reach the end
+        self.error("Unclosed string", last.unwrap()); // has to be the end as we keep on adding to our string till we reach the end
 
         Err(())
     }

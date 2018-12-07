@@ -4,7 +4,7 @@ use value::Value;
 
 type Line = u32;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 /// A wrapper around an array of bytes
 pub struct Chunk {
     pub code: Vec<u8>,
@@ -14,11 +14,7 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new() -> Self {
-        Chunk {
-            code: Vec::new(),
-            constants: Vec::new(),
-            lines: Vec::new(),
-        }
+        Self::default()
     }
 
     pub fn add_constant(&mut self, value: Value) -> usize {
@@ -40,8 +36,6 @@ impl Chunk {
         while i < self.code.len() {
             i = self.disassemble_instruction(i);
         }
-
-        println!("{:?}", self.code);
     }
 
     #[cfg(feature = "debug")]
@@ -62,7 +56,6 @@ impl Chunk {
             opcode::RETURN => simple_instruction("OPCODE::RETURN", offset),
             opcode::CONSTANT => self.constant_instruction("OPCODE::CONSTANT", offset),
             opcode::PRINT => simple_instruction("OPCODE::PRINT", offset),
-
             opcode::NEGATE => simple_instruction("OPCODE::NEGATE", offset),
             opcode::NEGATEF => simple_instruction("OPCODE::NEGATEF", offset),
             opcode::NIL => simple_instruction("OPCODE::NIL", offset),
@@ -85,7 +78,7 @@ impl Chunk {
             opcode::JUMP => simple_instruction("OPCODE::JUMP", offset),
             opcode::GETLOCAL => self.local_instruction("OPCODE::GETLOCAL", offset),
             opcode::SETLOCAL => self.local_instruction("OPCODE::SETLOCAL", offset),
-            opcode::CALL => simple_instruction("OPCODE::CALL", offset),
+            opcode::CALL => self.call_instruction("OPCODE::CALL", offset),
             opcode::CALLCLOSURE => simple_instruction("OPCODE::CALLCLOSURE", offset),
             opcode::JUMPIF => self.jump_instruction("OPCODE::JUMPIF", offset),
             opcode::JUMPNOT => self.jump_instruction("OPCODE::JUMPNOT", offset),
@@ -94,7 +87,17 @@ impl Chunk {
             opcode::CONCAT => simple_instruction("OPCODE::CONCAT", offset),
             opcode::GETPARAM => self.local_instruction("OPCODE::GETPARAM", offset),
             opcode::SETPARAM => self.local_instruction("OPCODE::SETPARAM", offset),
-
+            opcode::ARRAY => simple_instruction("OPCODE::ARRAY", offset),
+            opcode::INDEXARRAY => simple_instruction("OPCODE::INDEXARRAY", offset),
+            opcode::INDEXSTRING => simple_instruction("OPCODE::INDEXSTRING", offset),
+            opcode::GETPROPERTY => self.local_instruction("OPCODE::GETPROPERTY", offset),
+            opcode::SETPROPERTY => self.local_instruction("OPCODE::SETPROPERTY", offset),
+            opcode::GETMETHOD => self.local_instruction("OPCODE::GETMETHOD", offset),
+            opcode::CALLINSTANCEMETHOD => {
+                self.call_instruction("OPCODE::CALLINSTANCEMETHOD", offset)
+            }
+            opcode::CALLSTATICMETHOD => self.call_instruction("OPCODE::CALLSTATICMETHOD", offset),
+            opcode::CLASSINSTANCE => self.call_instruction("OPCODE::CLASSINSTANCE", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1
@@ -126,6 +129,12 @@ impl Chunk {
         println!("{:16}  '{}'", name, symbol,);
 
         offset + 2
+    }
+
+    pub fn call_instruction(&self, name: &str, offset: usize) -> usize {
+        let symbol = self.code[offset + 1];
+        println!("{:16}  '{}' ", name, symbol);
+        offset + 4
     }
 }
 

@@ -1,4 +1,4 @@
-use super::{Class, Function};
+use super::{Function, Program};
 use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
@@ -7,21 +7,20 @@ use value::Value;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
+#[derive(Debug)]
 pub struct StackFrame<'a> {
     ip: usize,
     locals: HashMap<u8, Value>,
     function: &'a Function,
     params: HashMap<u8, Value>,
 }
+
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
-    functions: &'a [Function],
-    classes: &'a [Class],
+    program: &'a Program,
     objects: RawObject,
-    heap: Vec<u8>,
-    equal_flag: bool,
     stack_top: usize,
 }
 
@@ -32,21 +31,8 @@ pub enum Error {
 }
 
 impl<'a> VM<'a> {
-    pub fn new(
-        main: Symbol,
-        functions: &'a [Function],
-        classes: &'a [Class],
-        objects: RawObject,
-    ) -> Result<Self, Error> {
-        let mut main_function = None;
-
-        {
-            for func in functions.iter() {
-                if func.name == main {
-                    main_function = Some(func);
-                }
-            }
-        }
+    pub fn new(main: Symbol, program: &'a Program, objects: RawObject) -> Result<Self, Error> {
+        let main_function = program.functions.get(&main);
 
         if main_function.is_none() {
             return Err(Error::NoMain);
@@ -62,11 +48,8 @@ impl<'a> VM<'a> {
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
             current_frame,
-            functions,
-            classes,
+            program,
             frames: Vec::new(),
-            equal_flag: false,
-            heap: Vec::new(),
             stack_top: 4,
             objects,
         })
@@ -75,12 +58,18 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) {
         #[cfg(feature = "debug")]
         {
-            for func in self.functions {
-                func.body.disassemble("DEBUG")
+            for (_, func) in self.program.functions.iter() {
+                func.body.disassemble(&format!("{}", func.name))
+            }
+
+            for (_, class) in self.program.classes.iter() {
+                let _: Vec<()> = class
+                    .methods
+                    .iter()
+                    .map(|(_, func)| func.body.disassemble(&format!("{}", func.name)))
+                    .collect();
             }
         }
-
-        // return;
 
         loop {
             if self.current_frame.ip >= self.current_frame.function.body.code.len() {
@@ -116,8 +105,6 @@ impl<'a> VM<'a> {
                             continue; // Were are return from a top level function main
                         }
                     }
-
-                    // println!("{}", value);
                 }
 
                 opcode::CONSTANT => {
@@ -228,7 +215,7 @@ impl<'a> VM<'a> {
                     let instance = instance.as_instance();
 
                     let property = Symbol(self.read_byte() as u64);
-                    let value = *instance.properties.get(&property).unwrap();
+                    let value = instance.properties[&property];
 
                     self.push(value);
                 }
@@ -285,20 +272,10 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                    let symbol = self.read_byte();
+                    let function_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let symbol = Symbol(symbol as u64);
-
-                    let mut function = None;
-
-                    {
-                        for func in self.functions.iter() {
-                            if func.name == symbol {
-                                function = Some(func);
-                            }
-                        }
-                    }
+                    let mut function = self.program.functions.get(&function_name).unwrap();
 
                     let mut params = HashMap::new();
 
@@ -306,18 +283,10 @@ impl<'a> VM<'a> {
                         params.insert(i, self.pop());
                     }
 
-                    if self.peek(1).is_class() {
-                        let class = self.stack[self.stack_top - 1];
-
-                        if let Some(method) = class.as_class().methods.get(&symbol) {
-                            function = Some(&method.function);
-                        };
-                    }
-
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: HashMap::new(),
-                        function: function.unwrap(),
+                        function: function,
                         params,
                     };
 
@@ -326,16 +295,44 @@ impl<'a> VM<'a> {
                     // swaps the current frame with the one we are one and then
                 }
 
-                opcode::CALLMETHOD => {
-                    let method_name = self.read_byte();
+                opcode::CALLINSTANCEMETHOD => {
+                    let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
-
-                    let method_name = Symbol(method_name as u64);
 
                     let mut instance = self.pop();
                     let mut instance = instance.as_instance();
 
                     let function = &instance.methods.get(&method_name).unwrap();
+
+                    let mut params = HashMap::new();
+
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
+
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::new(),
+                        function: function,
+                        params,
+                    };
+
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+
+                opcode::CALLSTATICMETHOD => {
+                    let class_name = Symbol(self.read_byte() as u64);
+                    let method_name = Symbol(self.read_byte() as u64);
+                    let arg_count = self.read_byte();
+                    let mut function = self
+                        .program
+                        .classes
+                        .get(&class_name)
+                        .unwrap()
+                        .methods
+                        .get(&method_name)
+                        .unwrap();
 
                     let mut params = HashMap::new();
 
@@ -380,24 +377,14 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CLASSINSTANCE => {
-                    let symbol = self.read_byte();
+                    let class_name = Symbol(self.read_byte() as u64);
+
                     let num_properties = self.read_byte() as usize;
 
-                    let symbol = Symbol(symbol as u64);
-
-                    let mut class = None;
-
-                    {
-                        for klass in self.classes.iter() {
-                            if klass.name == symbol {
-                                class = Some(klass);
-                            }
-                        }
-                    }
-
-                    let class = class.unwrap();
+                    let mut class = self.program.classes.get(&class_name).unwrap();
 
                     let methods = class.methods.clone();
+
                     let mut properties = HashMap::new();
 
                     for _ in 0..num_properties {
@@ -408,6 +395,7 @@ impl<'a> VM<'a> {
 
                     self.push(Value::object(instance));
                 }
+
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]
@@ -478,10 +466,6 @@ impl<'a> VM<'a> {
         self.stack_top -= 1;
         self.stack[self.stack_top]
     }
-
-    fn peek(&mut self, distance: usize) -> Value {
-        self.stack[self.stack_top - distance]
-    }
 }
 
 use std::fmt::{self, Debug};
@@ -491,19 +475,7 @@ impl<'a> Debug for VM<'a> {
         let mut debug_trait_builder = f.debug_struct("VM");
 
         let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());
-        let _ = debug_trait_builder.field("heap", &self.heap);
         let _ = debug_trait_builder.field("ip", &self.current_frame.ip);
-
-        let _ = debug_trait_builder.field("equal_flag", &self.equal_flag);
         debug_trait_builder.finish()
-
-        //  f.debug_list().entries(self.stack[0..].iter()).finish()
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use opcode;
-
 }

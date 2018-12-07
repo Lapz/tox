@@ -730,7 +730,7 @@ impl<'a> Parser<'a> {
                             value: Box::new(value),
                             kind,
                         },
-                    })
+                    });
                 }
 
                 Spanned {
@@ -747,7 +747,7 @@ impl<'a> Parser<'a> {
                             name: property,
                             value: Box::new(value),
                         },
-                    })
+                    });
                 }
 
                 Spanned { ref span, .. } => {
@@ -1047,10 +1047,7 @@ impl<'a> Parser<'a> {
 
             Ok(Spanned {
                 span: symbol.get_span().to(close_span),
-                value: Expression::ClassInstance {
-                    symbol,
-                    props: props,
-                },
+                value: Expression::ClassInstance { symbol, props },
             })
         } else {
             Ok(Spanned {

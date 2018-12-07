@@ -1,3 +1,0 @@
-fn foo(a:int) {
-  let a; // Error at 'a': Variable with this name already declared in this scope.
-}

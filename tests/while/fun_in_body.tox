@@ -1,2 +1,0 @@
-// expect: No rules expected 'fn'
-while (true) fn foo() {}

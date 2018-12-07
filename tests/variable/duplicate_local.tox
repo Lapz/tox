@@ -1,4 +1,0 @@
-{
-  let a = "value";
-  let a = "other"; // Error at 'a': Variable with this name already declared in this scope.
-}

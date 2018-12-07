@@ -22,7 +22,6 @@ pub use vm::VM;
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,
-    pub locals: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
     pub params: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
 }
 
@@ -30,4 +29,10 @@ pub struct Function {
 pub struct Class {
     pub name: ::util::symbol::Symbol,
     pub methods: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Program {
+    pub functions: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+    pub classes: ::std::collections::HashMap<::util::symbol::Symbol, Class>,
 }

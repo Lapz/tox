@@ -18,7 +18,7 @@ impl Infer {
         let mut methods = Vec::new();
         let mut fields = Vec::new();
 
-        if let Some(sclass) = class.value.superclass {
+        if let Some(ref sclass) = class.value.superclass {
             if let Some(mut entry) = ctx.look_type(sclass.value).cloned() {
                 match entry {
                     Type::Class(_, ref fields, ref methods, _) => {
@@ -90,9 +90,9 @@ impl Infer {
 
         Ok(t::Class {
             name: class.value.name.value,
+            superclass: class.value.superclass,
             methods,
             fields,
         })
-        // Ok(())
     }
 }

@@ -60,66 +60,58 @@ pub mod opcode {
     pub const DIV: u8 = 022;
     /// DIV Float $x $y
     pub const DIVF: u8 = 023;
-
+    /// JUMP $LOC
     pub const JUMP: u8 = 024;
-
+    /// GETLOCAL $slot
     pub const GETLOCAL: u8 = 025;
-
+    /// SETLOCAL $slot
     pub const SETLOCAL: u8 = 026;
-
+    /// CALL $func $num_args
     pub const CALL: u8 = 027;
-
     /// Jump to a location if true
     pub const JUMPIF: u8 = 028;
     /// jumps to a location if false
     pub const JUMPNOT: u8 = 029;
-
+    /// LOOP $offset:u16
+    /// decrease the ip by offset
     pub const LOOP: u8 = 030;
-
+    /// POP
+    /// Remove the value from the stack
     pub const POP: u8 = 031;
-
+    /// CONCAT $x:str, $y:str
     pub const CONCAT: u8 = 032;
-
+    /// GETPARAM $slot
     pub const GETPARAM: u8 = 033;
-
+    /// SETPARAM $slot
     pub const SETPARAM: u8 = 034;
-
+    /// CALLCLOSURE $args
     pub const CALLCLOSURE: u8 = 035;
-
+    /// ARRAY
+    /// Create an array object and put it on the stack
     pub const ARRAY: u8 = 036;
-
+    /// INDEXARRAY
+    /// Index an array
     pub const INDEXARRAY: u8 = 037;
-
+    /// INDEXSTRING
+    /// index a string
     pub const INDEXSTRING: u8 = 038;
-
+    /// GETPROPERTY $id
+    /// Get the property of class with $id
     pub const GETPROPERTY: u8 = 039;
-
-    pub const GETMETHOD: u8 = 040;
-
-    pub const CLASSINSTANCE: u8 = 041;
-
-    pub const SETPROPERTY: u8 = 042;
-
-    pub const CALLMETHOD: u8 = 043;
-
-    // pub const STORELOCAL:u8
+    /// SETPROPERTY $id
+    /// Set the property of class with $id
+    pub const SETPROPERTY: u8 = 040;
+    /// GETMETHOD $id
+    /// Get the class method with the id of $id
+    pub const GETMETHOD: u8 = 041;
+    /// CLASSINSTANCE $id $num_properties
+    /// Create a new ClassInstance object with the methods
+    /// from the class $id and $num_properties
+    pub const CLASSINSTANCE: u8 = 042;
+    /// CALLINSTANCEMETHOD $id $arg_count
+    /// Call the functions $id which takes $arg_count
+    pub const CALLINSTANCEMETHOD: u8 = 043;
+    /// CALLSTATICMETHOD $id $arg_count
+    /// Call the static class methods $id which takes $arg_count
+    pub const CALLSTATICMETHOD: u8 = 044;
 }
-
-// /// JMP Dest
-//     /// Changes the ip to the value in the register
-//     /// Allows for jumping forward or backwards
-//     pub const JMP: u8 = 02;
-
-//     /// JMPF DEST
-//     /// increments the `ip` by the value stored in DEST
-//     pub const JMPF: u8 = 03;
-
-//     /// JMPB DEST
-//     /// decrements the `ip` by the value stored in DEST
-//     pub const JMPB: u8 = 04;
-
-//     /// JMPS if the equal flag is set;
-//     pub const JMPEQ: u8 = 05;
-
-//     /// JMPS if the equal flag is not set;
-//     pub const JMPNEQ: u8 = 06;
