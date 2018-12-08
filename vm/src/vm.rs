@@ -62,6 +62,11 @@ impl<'a> VM<'a> {
             Symbol(3),
             Value::object(NativeObject::new(0, native::read, objects)),
         );
+
+        native_functions.insert(
+            Symbol(4),
+            Value::object(NativeObject::new(1, native::fopen, objects)),
+        );
         
 
         Ok(VM {

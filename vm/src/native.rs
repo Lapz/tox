@@ -26,3 +26,20 @@ pub fn read(_:*const Value) -> Value {
 
         Value::object(StringObject::from_owned(input, ::std::ptr::null::<RawObject>() as RawObject))
 }
+
+/// Open a file and returns the contents
+pub fn fopen(args:*const Value) -> Value {
+        let path = unsafe {
+                (*args.add(0)).as_string().value().trim_end_matches('\0')
+        };
+
+        let mut input = String::new();
+
+        use std::io::{Read};
+
+        println!("{:?}",path);
+
+        ::std::fs::File::open(path).unwrap().read_to_string(&mut input).unwrap();
+
+        Value::object(StringObject::from_owned(input, ::std::ptr::null::<RawObject>() as RawObject))
+}

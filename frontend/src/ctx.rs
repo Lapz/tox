@@ -17,7 +17,6 @@ pub struct CompileCtx<'a> {
 impl<'a> CompileCtx<'a> {
     pub fn new(strings: &Rc<SymbolFactory>, reporter: &'a mut Reporter) -> Self {
         let mut types = Symbols::new(Rc::clone(strings));
-
         let string_symbol = types.symbol("str");
         let int_symbol = types.symbol("int");
         let float_symbol = types.symbol("float");
