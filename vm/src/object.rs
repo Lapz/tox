@@ -87,7 +87,7 @@ impl Object {
 }
 
 impl NativeObject {
-    pub fn new(arity: usize, function: NativeFn, next: RawObject) -> RawObject {
+    pub fn new(_arity: usize, _function: NativeFn, _next: RawObject) -> RawObject {
         unimplemented!()
     }
 }

@@ -38,7 +38,7 @@ fn main() {
             .expect("something went wrong reading the file");
 
         let expect_pattern = "// expect:";
-        let error_pattern = "// error:";
+        let _error_pattern = "// error:";
 
         for line in source.lines() {
             if let Some((index, _)) = line.match_indices(&expect_pattern).next() {
@@ -91,7 +91,7 @@ fn main() {
 
     assert!(fail == 0);
 
-    let mut pass = 0;
+    let _pass = 0;
 
     for entry in WalkDir::new("../tests/fail") {
         let mut undisclosedc = Command::new("cargo");

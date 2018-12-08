@@ -507,10 +507,20 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Call(ref callee, ref args) => {
-                if args.is_empty() {
-                    self.emit_bytes(opcode::CALL, callee.0 as u8);
-                    self.emit_byte(0);
-                    return Ok(());
+                // if args.is_empty() {
+                //     self.emit_bytes(opcode::CALL, callee.0 as u8);
+                //     self.emit_byte(0);
+                //     return Ok(());
+                // }
+
+                match callee {
+                    Symbol(2) => {
+                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8);
+
+                       
+                        return Ok(());
+                    }
+                    _ => println!("{}",callee)
                 }
 
                 for arg in args {

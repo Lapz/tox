@@ -114,4 +114,6 @@ pub mod opcode {
     /// CALLSTATICMETHOD $id $arg_count
     /// Call the static class methods $id which takes $arg_count
     pub const CALLSTATICMETHOD: u8 = 044;
+
+    pub const CALLNATIVE: u8 = 045;
 }

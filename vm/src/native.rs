@@ -1,7 +1,7 @@
 use value::Value;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub fn clock(arg_count:u8,args:*mut [Value]) -> Value {
+pub fn clock(_arg_count:u8,_args:*mut [Value]) -> Value {
    unsafe {
        let time =SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
        
