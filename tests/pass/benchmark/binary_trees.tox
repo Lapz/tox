@@ -1,5 +1,6 @@
 class Tree {
-  init(item, depth) {
+  item:T,depth:int;
+  fn init(item, depth) -> Tree {
     this.item = item;
     this.depth = depth;
     if (depth > 0) {
@@ -13,7 +14,7 @@ class Tree {
     }
   }
 
-  check() {
+  fn check(this:Tree) {
     if (this.left == nil) {
       return this.item;
     }

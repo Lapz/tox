@@ -513,16 +513,6 @@ impl<'a> Builder<'a> {
                 //     return Ok(());
                 // }
 
-                match callee {
-                    Symbol(2) => {
-                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8);
-
-                       
-                        return Ok(());
-                    }
-                    _ => ()
-                }
-
                 for arg in args {
                     self.compile_expression(arg)?;
                 }

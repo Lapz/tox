@@ -6,15 +6,15 @@ extern crate opcode;
 
 extern crate util;
 
-extern crate libc;
+extern crate rand;
 
 #[macro_use]
 mod macros;
 mod chunk;
+mod native;
 mod object;
 mod value;
 mod vm;
-mod native;
 
 pub use chunk::Chunk;
 pub use object::{FunctionObject, RawObject, StringObject};
