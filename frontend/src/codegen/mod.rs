@@ -523,7 +523,7 @@ impl<'a> Builder<'a> {
                         self.emit_byte(args.len() as u8);
                     }
                     _ => match callee {
-                        Symbol(3) | Symbol(2) | Symbol(1) => {
+                        Symbol(4) | Symbol(3) | Symbol(2) | Symbol(1) => {
                             self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8);
                         }
                         _ => {

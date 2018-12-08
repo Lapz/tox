@@ -159,6 +159,10 @@ impl<'a> StringObject<'a> {
 
         Box::into_raw(Box::new(s)) as RawObject
     }
+
+    pub fn value(&self) -> &str {
+        self.chars.string()
+    }
 }
 
 impl<'a> ObjectValue<'a> {

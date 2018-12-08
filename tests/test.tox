@@ -1,15 +1,7 @@
-fn fib(n:int) -> int {
-  if (n < 2) {
-    return n;
-  }else {
-    return fib(n - 2) + fib(n - 1);
-  }
-}
-  
 
 fn main() {
   print "Hello what's your name";
-  let string = "Hello"+" "+read();
-  print string;
+  let input = fopen("/Users/rowlandsonpratt/Lenard/Rust/tox/tests/test_runner.rs");
+  print input;
   return;
 }
