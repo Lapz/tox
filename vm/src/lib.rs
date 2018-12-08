@@ -1,7 +1,7 @@
 //! The VM module it contains the vm.
 //! The opcodes for the vm can be found in the opcode module
 //! a ```VM``` and an ```Assembler``` for the tasm langauage
-
+#![feature(nll)]
 extern crate opcode;
 
 extern crate util;

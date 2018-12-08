@@ -520,7 +520,7 @@ impl<'a> Builder<'a> {
                        
                         return Ok(());
                     }
-                    _ => println!("{}",callee)
+                    _ => ()
                 }
 
                 for arg in args {
