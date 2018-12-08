@@ -9,8 +9,7 @@ fn fib(n:int) -> int {
 
 fn main() {
   print "Hello what's your name";
-  let start = clock();
-  print (random(0,10));
-  print (random(5,100));
-    return;
+  let string = "Hello"+" "+read();
+  print string;
+  return;
 }

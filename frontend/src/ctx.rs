@@ -44,13 +44,8 @@ impl<'a> CompileCtx<'a> {
             };
 
             add_builtin("clock", vec![], Type::Float);
-            add_builtin("hex", vec![Type::Int], Type::Str);
-            add_builtin("oct", vec![Type::Int], Type::Str);
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
-            add_builtin("to_int", vec![Type::Str], Type::Int);
-            add_builtin("trim", vec![Type::Str], Type::Str);
-            add_builtin("is_digit", vec![Type::Str], Type::Bool);
-            add_builtin("char_at", vec![Type::Str, Type::Int], Type::Str);
+            add_builtin("read",vec![],Type::Str);
         }
 
         {

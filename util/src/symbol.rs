@@ -96,14 +96,11 @@ impl SymbolFactory {
         let mut map = FnvHashMap::default();
         map.insert(Symbol(1), "random".into());
         map.insert(Symbol(2), "clock".into());
-        map.insert(Symbol(3), "hex".into());
-        map.insert(Symbol(4), "oct".into());
-        map.insert(Symbol(6), "to_int".into());
-        map.insert(Symbol(7), "readline".into());
-        map.insert(Symbol(8), "io".into());
+        map.insert(Symbol(3), "read".into());
+       
 
         SymbolFactory {
-            next: RefCell::new(9),
+            next: RefCell::new(4),
             mappings: RefCell::new(map),
         }
     }
