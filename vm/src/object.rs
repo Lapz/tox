@@ -6,7 +6,7 @@ use util::symbol::Symbol;
 use value::Value;
 
 pub type RawObject = *mut Object;
-pub type NativeFn = fn(u8,*mut [Value]) -> Value;
+pub type NativeFn = fn(u8, *const Value) -> Value;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
@@ -23,7 +23,8 @@ pub enum ObjectType {
 #[repr(C)]
 pub struct NativeObject {
     pub obj: Object,
-    pub funciton: NativeFn,
+    pub arity: u8,
+    pub function: NativeFn,
 }
 
 #[derive(Debug, Clone)]
@@ -87,8 +88,14 @@ impl Object {
 }
 
 impl NativeObject {
-    pub fn new(_arity: usize, _function: NativeFn, _next: RawObject) -> RawObject {
-        unimplemented!()
+    pub fn new(arity: u8, function: NativeFn, next: RawObject) -> RawObject {
+        let func = NativeObject {
+            obj: Object::new(ObjectType::Native, next),
+            function,
+            arity,
+        };
+
+        Box::into_raw(Box::new(func)) as RawObject
     }
 }
 

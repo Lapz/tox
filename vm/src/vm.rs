@@ -1,5 +1,6 @@
 use super::{Function, Program};
-use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
+use native;
+use object::{ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject};
 use opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
@@ -19,6 +20,7 @@ pub struct VM<'a> {
     stack: [Value; STACK_MAX],
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
+    native_functions: HashMap<Symbol, Value>,
     program: &'a Program,
     objects: RawObject,
     stack_top: usize,
@@ -45,12 +47,19 @@ impl<'a> VM<'a> {
             params: HashMap::new(),
         };
 
+        let mut native_functions = HashMap::new();
+        native_functions.insert(
+            Symbol(2),
+            Value::object(NativeObject::new(0, native::clock, objects)),
+        );
+
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
             current_frame,
             program,
             frames: Vec::new(),
             stack_top: 4,
+            native_functions,
             objects,
         })
     }
@@ -293,6 +302,23 @@ impl<'a> VM<'a> {
                     self.frames
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
                     // swaps the current frame with the one we are one and then
+                }
+
+                opcode::CALLNATIVE => {
+                    let function_name = Symbol(self.read_byte() as u64);
+                    let function = self.native_functions.get(&function_name).unwrap();
+                    let function = function.as_native();
+
+                    let arg_count = function.arity;
+
+                    let result = (function.function)(
+                        arg_count,
+                        self.stack[self.stack_top..self.stack_top-arg_count as usize].as_ptr(),
+                    );
+                    self.stack_top -= arg_count as usize;
+                    {
+                        self.push(result);
+                    }
                 }
 
                 opcode::CALLINSTANCEMETHOD => {
