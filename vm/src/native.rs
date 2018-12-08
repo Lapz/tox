@@ -17,3 +17,12 @@ pub fn random(args: *const Value) -> Value {
     let mut rng = thread_rng();
     Value::int(rng.gen_range(min, max))
 }
+
+/// Reads input from stdin until the user presses enter
+pub fn read(_:*const Value) -> Value {
+        let mut input = String::new();
+        use std::io;
+        io::stdin().read_line(&mut input).expect("Unable to read input from stdin");
+
+        Value::object(StringObject::from_owned(input, ::std::ptr::null::<RawObject>() as RawObject))
+}
