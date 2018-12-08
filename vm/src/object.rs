@@ -6,7 +6,7 @@ use util::symbol::Symbol;
 use value::Value;
 
 pub type RawObject = *mut Object;
-pub type NativeFn = fn(u8, *const Value) -> Value;
+pub type NativeFn = fn(*const Value) -> Value;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]

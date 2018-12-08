@@ -7,7 +7,8 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 util = {path = "../util"}
 nom = "^4.0"
 opcode = {path="../opcode"}
-libc = "*"
+rand = "*"
+
 [features]
 debug = []
 stack = ["debug"]

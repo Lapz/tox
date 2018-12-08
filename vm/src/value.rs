@@ -68,6 +68,7 @@ impl Value {
         }
     }
 
+    #[inline]
     pub fn as_bool(&self) -> bool {
         debug_assert_eq!(
             self.ty,
@@ -80,6 +81,7 @@ impl Value {
         unsafe { self.val.boolean }
     }
 
+    #[inline]
     pub fn as_int(&self) -> i64 {
         debug_assert_eq!(
             self.ty,
@@ -92,6 +94,7 @@ impl Value {
         unsafe { self.val.int }
     }
 
+    #[inline]
     pub fn as_float(&self) -> f64 {
         debug_assert_eq!(
             self.ty,
@@ -104,6 +107,7 @@ impl Value {
         unsafe { self.val.float }
     }
 
+    #[inline]
     pub fn as_object(&self) -> RawObject {
         debug_assert_eq!(
             self.ty,
@@ -116,42 +120,49 @@ impl Value {
         unsafe { self.val.object }
     }
 
+    #[inline]
     pub fn as_string<'a>(&self) -> &StringObject<'a> {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_array<'a>(&self) -> &'a ArrayObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_class<'a>(&self) -> &'a ClassObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_function<'a>(&self) -> &'a FunctionObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_native<'a>(&self) -> &'a NativeObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_instance<'a>(&self) -> &'a InstanceObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_mut_instance<'a>(&self) -> &'a mut InstanceObject {
         let ptr = self.as_object();
 
@@ -171,13 +182,14 @@ impl Value {
         }
     }
 
+    #[inline]
     pub fn is_string(&self) -> bool {
         unsafe {
             self.is_object()
                 && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
         }
     }
-
+    #[inline]
     pub fn is_native(&self) -> bool {
         unsafe {
             self.is_object()
@@ -286,7 +298,7 @@ impl PartialEq for Value {
                 ValueType::Nil => false,
                 ValueType::Int => self.as_int() == other.as_int(),
                 ValueType::Float => self.as_float() == other.as_float(),
-                ValueType::Object => unimplemented!(),
+                ValueType::Object => self.as_object() == other.as_object(),
             }
         }
     }

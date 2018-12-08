@@ -4,13 +4,12 @@ fn fib(n:int) -> int {
   }else {
     return fib(n - 2) + fib(n - 1);
   }
-}
   
+}
 
 fn main() {
-  print "Hello what's your name";
   let start = clock();
-  print (random(0,10));
-  print (random(5,100));
-    return;
+  print(fib(30) == 832040); //expect:true
+  print(clock() - start);
+  return;
 }

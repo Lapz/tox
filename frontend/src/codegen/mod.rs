@@ -513,16 +513,6 @@ impl<'a> Builder<'a> {
                 //     return Ok(());
                 // }
 
-                match callee {
-                    Symbol(2) => {
-                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8);
-
-                       
-                        return Ok(());
-                    }
-                    _ => ()
-                }
-
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
@@ -532,10 +522,15 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::CALLCLOSURE);
                         self.emit_byte(args.len() as u8);
                     }
-                    _ => {
-                        self.emit_bytes(opcode::CALL, callee.0 as u8);
-                        self.emit_byte(args.len() as u8);
-                    }
+                    _ => match callee {
+                        Symbol(2) | Symbol(1) => {
+                            self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8);
+                        }
+                        _ => {
+                            self.emit_bytes(opcode::CALL, callee.0 as u8);
+                            self.emit_byte(args.len() as u8);
+                        }
+                    },
                 }
             }
 

@@ -49,9 +49,15 @@ impl<'a> VM<'a> {
 
         let mut native_functions = HashMap::new();
         native_functions.insert(
+            Symbol(1),
+            Value::object(NativeObject::new(2, native::random, objects)),
+        );
+
+        native_functions.insert(
             Symbol(2),
             Value::object(NativeObject::new(0, native::clock, objects)),
         );
+        
 
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
@@ -284,7 +290,7 @@ impl<'a> VM<'a> {
                     let function_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let mut function = self.program.functions.get(&function_name).unwrap();
+                    let function = self.program.functions.get(&function_name).unwrap();
 
                     let mut params = HashMap::new();
 
@@ -310,11 +316,10 @@ impl<'a> VM<'a> {
                     let function = function.as_native();
 
                     let arg_count = function.arity;
-
                     let result = (function.function)(
-                        arg_count,
-                        self.stack[self.stack_top..self.stack_top-arg_count as usize].as_ptr(),
+                        self.stack[self.stack_top-arg_count as usize..self.stack_top].as_ptr(),
                     );
+
                     self.stack_top -= arg_count as usize;
                     {
                         self.push(result);
@@ -325,8 +330,8 @@ impl<'a> VM<'a> {
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let mut instance = self.pop();
-                    let mut instance = instance.as_instance();
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
 
                     let function = &instance.methods.get(&method_name).unwrap();
 
@@ -351,7 +356,7 @@ impl<'a> VM<'a> {
                     let class_name = Symbol(self.read_byte() as u64);
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
-                    let mut function = self
+                    let function = self
                         .program
                         .classes
                         .get(&class_name)
@@ -407,7 +412,7 @@ impl<'a> VM<'a> {
 
                     let num_properties = self.read_byte() as usize;
 
-                    let mut class = self.program.classes.get(&class_name).unwrap();
+                    let class = self.program.classes.get(&class_name).unwrap();
 
                     let methods = class.methods.clone();
 
@@ -426,7 +431,10 @@ impl<'a> VM<'a> {
 
                 #[cfg(not(feature = "debug"))]
                 _ => {
-                    panic!("Unknown opcode found");
+                    unsafe {
+                        use std::hint::unreachable_unchecked;
+                        unreachable_unchecked()
+                    }
                 }
                 #[cfg(feature = "debug")]
                 ref e => {
@@ -488,6 +496,7 @@ impl<'a> VM<'a> {
         self.stack_top += 1;
     }
 
+    
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]

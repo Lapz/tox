@@ -94,11 +94,10 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
 impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = FnvHashMap::default();
-        map.insert(Symbol(1), "super".into());
+        map.insert(Symbol(1), "random".into());
         map.insert(Symbol(2), "clock".into());
         map.insert(Symbol(3), "hex".into());
         map.insert(Symbol(4), "oct".into());
-        map.insert(Symbol(5), "rand".into());
         map.insert(Symbol(6), "to_int".into());
         map.insert(Symbol(7), "readline".into());
         map.insert(Symbol(8), "io".into());
