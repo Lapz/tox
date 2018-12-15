@@ -1,7 +1,7 @@
 use crate::value::Value;
 use rand::{thread_rng, Rng};
 use std::time::{SystemTime, UNIX_EPOCH};
-use object::{StringObject,RawObject};
+use crate::object::{StringObject,RawObject};
 /// Calculate the number of seconds since the UNIX_EPOCH
 pub fn clock(_: *const Value) -> Value {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();

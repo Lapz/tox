@@ -3,6 +3,9 @@ name = "vm"
 version = "0.1.0"
 authors = ["Lenard Pratt <striderman34@gmail.com>"]
 
+
+edition='2018'
+
 [dependencies]
 util = {path = "../util"}
 nom = "^4.0"
@@ -13,3 +16,4 @@ rand = "*"
 debug = []
 stack = ["debug"]
 default = []
+
