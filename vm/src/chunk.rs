@@ -1,6 +1,6 @@
 #[cfg(feature = "debug")]
 use opcode;
-use value::Value;
+use crate::value::Value;
 
 type Line = u32;
 

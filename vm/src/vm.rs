@@ -1,10 +1,10 @@
 use super::{Function, Program};
-use native;
-use object::{ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject};
-use opcode;
+use crate::native;
+use crate::object::{ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject};
+use crate::opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
-use value::Value;
+use crate::value::Value;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
@@ -516,7 +516,7 @@ impl<'a> VM<'a> {
 use std::fmt::{self, Debug};
 
 impl<'a> Debug for VM<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_trait_builder = f.debug_struct("VM");
 
         let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());

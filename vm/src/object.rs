@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 use util::symbol::Symbol;
-use value::Value;
+use crate::value::Value;
 
 pub type RawObject = *mut Object;
 pub type NativeFn = fn(*const Value) -> Value;
@@ -183,7 +183,7 @@ impl<'a> Deref for StringObject<'a> {
 }
 
 impl<'a> Display for ObjectValue<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ObjectValue::Str(ref string) => write!(f, "{}", string)?,
             ObjectValue::String(ref string) => write!(f, "{}", string)?,
@@ -193,7 +193,7 @@ impl<'a> Display for ObjectValue<'a> {
 }
 
 impl<'a> Debug for ObjectValue<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ObjectValue::Str(ref string) => write!(f, "static: {:?}", string)?,
             ObjectValue::String(ref string) => write!(f, "new: {:?}", string)?,
@@ -203,7 +203,7 @@ impl<'a> Debug for ObjectValue<'a> {
 }
 
 impl<'a> Display for StringObject<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.chars)?;
 
         Ok(())

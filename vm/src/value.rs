@@ -1,4 +1,4 @@
-use object::{
+use crate::object::{
     ArrayObject, ClassObject, FunctionObject, InstanceObject, NativeObject, Object, ObjectType,
     RawObject, StringObject,
 };
@@ -199,7 +199,7 @@ impl Value {
 }
 
 impl Debug for Value {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(fmt, "Value {{")?;
         unsafe {
             match self.ty {
@@ -260,7 +260,7 @@ impl Debug for Value {
 }
 
 impl Display for Value {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         unsafe {
             if self.ty == ValueType::Int {
                 write!(fmt, "{}", self.val.int)?;
