@@ -129,6 +129,6 @@ mod test {
         assert_eq!(Some(&"c".into()), map.look(Symbol(2)));
         map.end_scope();
         assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
-        assert_eq!(map.symbol("c".into()), Symbol(9));
+        assert_eq!(map.symbol("c".into()), Symbol(5));
     }
 }

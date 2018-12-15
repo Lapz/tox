@@ -1,4 +1,4 @@
-// This benchmark stresses both field and method lookup.
+//skip
 
 class Foo {
   init() {
