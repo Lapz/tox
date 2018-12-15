@@ -19,7 +19,7 @@ fn main() {
     let mut fail = 0i32;
     let mut failed = Vec::new();
 
-    for entry in WalkDir::new("../tests/pass") {
+    'outer: for entry in WalkDir::new("../tests/pass") {
         let entry = entry.unwrap();
 
         if entry.path().is_dir() {
@@ -34,18 +34,27 @@ fn main() {
 
         let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
 
+
+        println!("{}",entry.path().to_str().unwrap());
         file.read_to_string(&mut source)
             .expect("something went wrong reading the file");
 
         let expect_pattern = "// expect:";
-        let _error_pattern = "// error:";
+        let skip_pattern = "//skip";
 
         for line in source.lines() {
+
+            match line.match_indices(&skip_pattern).next() {
+                Some((_,_)) => continue 'outer,
+                None => ()
+            }
+
             if let Some((index, _)) = line.match_indices(&expect_pattern).next() {
                 let from = index + expect_pattern.len();
                 let expects = line[from..].to_string();
                 expected.push(expects);
             }
+            
         }
 
         undisclosedc.args(&["run", entry.path().to_str().unwrap()]);
