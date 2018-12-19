@@ -9,8 +9,14 @@ pub struct Program {
 }
 
 #[derive(Debug, Clone)]
-pub struct Function {
+pub struct ItemName {
     pub name: Spanned<Symbol>,
+    pub type_params: Vec<Spanned<Symbol>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub name: Spanned<ItemName>,
     pub params: Spanned<Vec<Spanned<FunctionParam>>>,
     pub body: Spanned<Statement>,
     pub returns: Option<Spanned<Type>>,
@@ -18,7 +24,7 @@ pub struct Function {
 
 #[derive(Debug, Clone)]
 pub struct Class {
-    pub name: Spanned<Symbol>,
+    pub name: Spanned<ItemName>,
     pub superclass: Option<Spanned<Symbol>>,
     pub methods: Vec<Spanned<Function>>,
     pub fields: Vec<Spanned<Field>>,
@@ -26,7 +32,7 @@ pub struct Class {
 
 #[derive(Debug, Clone)]
 pub struct TypeAlias {
-    pub alias: Spanned<Symbol>,
+    pub alias: Spanned<ItemName>,
     pub ty: Spanned<Type>,
 }
 
@@ -147,10 +153,17 @@ pub struct InstanceField {
 
 #[derive(Debug, Clone)]
 pub enum Type {
+    /// Type that is an identifier i.e bool,int,float
     Simple(Spanned<Symbol>),
+    /// Type that is an array i.e [int]
     Arr(Box<Spanned<Type>>),
+    /// Type that is a function i.e fn(int,int) -> int;
     Func(Vec<Spanned<Type>>, Option<Box<Spanned<Type>>>),
+    /// Type that is nill
+    /// TODO remove and rely on Simple
     Nil,
+    /// Type of a generic type i.e List<i32> Foo<List<List<i32>>>
+    Generic(Spanned<Symbol>,Vec<Spanned<Type>>)
 }
 
 #[derive(Debug, Clone)]

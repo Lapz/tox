@@ -77,7 +77,10 @@ impl Infer {
                         statements.push(Spanned::new(
                             t::Statement::Return(Spanned::new(
                                 t::TypedExpression {
-                                    expr: Box::new(Spanned::new(t::Expression::Literal(t::Literal::Nil), span)),
+                                    expr: Box::new(Spanned::new(
+                                        t::Expression::Literal(t::Literal::Nil),
+                                        span,
+                                    )),
                                     ty: Type::Nil,
                                 },
                                 span,

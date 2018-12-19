@@ -288,6 +288,51 @@ impl<'a> Parser<'a> {
             SLASHASSIGN => SlashEqual
         })
     }
+
+    /// Parse an item name
+    /// i.e.
+    /// `Symbol <Vec<Symbol>>`
+    /// fn Foo<T> | class Foo<T>
+    fn parse_item_name(&mut self) -> ParserResult<Spanned<ItemName>> {
+        let (open_span, name) = self.consume_get_symbol_and_span("Expected an identifier")?;
+
+        let (type_params, end_span) = self.parse_generic_params()?;
+
+        Ok(Spanned {
+            span: open_span.to(end_span.unwrap_or(open_span)),
+            value: ItemName { name, type_params },
+        })
+    }
+
+    /// Parse generic params
+    /// i.e.
+    /// <T,T>
+    /// <K,V>
+    fn parse_generic_params(&mut self) -> ParserResult<(Vec<Spanned<Symbol>>, Option<Span>)> {
+        if self.recognise(TokenType::LESSTHAN) {
+            let open_span = self.consume_get_span(&TokenType::LESSTHAN, "Expected a '<' ")?;
+            let mut generic_param = Vec::new();
+
+            loop {
+                generic_param.push(self.consume_get_symbol("Expected an identifier")?);
+
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+
+            let close_span = self.consume_get_span(
+                &TokenType::GREATERTHAN,
+                "Expected a '>' to close generic params",
+            )?;
+
+            Ok((generic_param, Some(open_span.to(close_span))))
+        } else {
+            Ok((vec![], None))
+        }
+    }
 }
 
 /* ***********************
@@ -299,7 +344,7 @@ impl<'a> Parser<'a> {
     fn parse_type_alias(&mut self) -> ParserResult<Spanned<TypeAlias>> {
         let open_span = self.consume_get_span(&TokenType::TYPE, "Expected 'type' ")?;
 
-        let alias = self.consume_get_symbol("Expected an identifier")?;
+        let alias = self.parse_item_name()?;
 
         self.consume(&TokenType::ASSIGN, "Expected '=' ")?;
 
@@ -360,12 +405,36 @@ impl<'a> Parser<'a> {
                 })
             }
         } else {
-            let ty = self.consume_get_symbol("Expected a type param")?;
+            let symbol = self.consume_get_symbol("Expected a type param")?;
 
-            Ok(Spanned {
-                span: ty.get_span().to(ty.get_span()),
-                value: Type::Simple(ty),
-            })
+            let mut  types = vec![];
+
+            if self.recognise(TokenType::LESSTHAN) {
+                 self.consume(&TokenType::LESSTHAN, "Expected '<' ")?;
+
+                loop {
+                    types.push(self.parse_type()?);
+                    if self.recognise(TokenType::COMMA) {
+                        self.next()?;
+                    } else {
+                        break;
+                    }
+                }
+
+                Ok(Spanned {
+                    span: symbol
+                        .get_span()
+                        .to(self.consume_get_span(&TokenType::GREATERTHAN, "Expected '>' ")?),
+                    value: Type::Generic(symbol, types),
+                })
+            }else {
+                Ok(Spanned {
+                    span: symbol.get_span(),
+                    value: Type::Simple(symbol),
+                })
+            }
+
+            
         }
     }
 }
@@ -378,7 +447,7 @@ impl<'a> Parser<'a> {
     fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
 
-        let name = self.consume_get_symbol(&format!("Expected a {} name", kind))?;
+        let name = self.parse_item_name()?;
 
         let param_span = self.consume_get_span(&TokenType::LPAREN, "Expected '(' ")?;
 
@@ -1003,7 +1072,14 @@ impl<'a> Parser<'a> {
             value: Function {
                 name: Spanned {
                     span: open_span.to(body.get_span()),
-                    value: self.random_ident(),
+                    value: ItemName {
+                            name:Spanned {
+                                span:params_span,
+                                value:self.random_ident()
+                            },
+                            type_params:vec![]
+                        }
+                    
                 },
                 params: Spanned {
                     span: open_span.to(params_span),
@@ -1134,7 +1210,7 @@ impl<'a> Parser<'a> {
     fn parse_class_declaration(&mut self) -> ParserResult<Spanned<Class>> {
         let open_span = self.consume_get_span(&TokenType::CLASS, "Expected 'class' ")?;
 
-        let name = self.consume_get_symbol("Expected a class name")?;
+        let name = self.parse_item_name()?;
 
         let superclass = if self.recognise(TokenType::LESSTHAN) {
             self.next()?;
