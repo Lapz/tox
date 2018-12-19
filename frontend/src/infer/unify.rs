@@ -29,7 +29,7 @@ impl Infer {
                 }
 
                 for (method1, method2) in m1.iter().zip(m2) {
-                    self.unify(&method1, &method2, span, ctx)?;
+                    self.unify(&method1.ty, &method2.ty, span, ctx)?;
                 }
 
                 for (property1, property2) in p1.iter().zip(p2) {

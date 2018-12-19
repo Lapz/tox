@@ -1,5 +1,5 @@
 use ast;
-use infer::types::{Type,TypeCon};
+use infer::types::{Type, TypeCon};
 use opcode;
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -320,8 +320,8 @@ impl<'a> Builder<'a> {
                         self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
 
                         let opcode = match expr.value.ty {
-                            Type::App(TypeCon::Int,_) => opcode::SUB,
-                             Type::App(TypeCon::Float,_) => opcode::SUBF,
+                            Type::App(TypeCon::Int, _) => opcode::SUB,
+                            Type::App(TypeCon::Float, _) => opcode::SUBF,
                             _ => unreachable!(), // type checker should prevent this
                         };
 
@@ -393,14 +393,14 @@ impl<'a> Builder<'a> {
 
             Expression::Index(ref target, ref index) => {
                 match expr.value.ty {
-                    Type::App(TypeCon::Str,_) => {
+                    Type::App(TypeCon::Str, _) => {
                         self.compile_expression(target)?;
                         self.compile_expression(index)?;
 
                         self.emit_byte(opcode::INDEXSTRING);
                     }
 
-                    Type::App(TypeCon::Array(_),_) => {
+                    Type::App(TypeCon::Array(_), _) => {
                         self.compile_expression(target)?;
                         self.compile_expression(index)?;
 
@@ -458,48 +458,39 @@ impl<'a> Builder<'a> {
 
                         // For comparisson the lhs and the rhs should be the same so only
                         // check the type of the lhs
-                        (Type::App(TypeCon::Bool, _), Op::LessThan) => {
+                        (Type::App(TypeCon::Bool, _), Op::LessThan) => match lhs.value.ty {
+                            Type::App(TypeCon::Int, _) => self.emit_byte(opcode::LESS),
+                            Type::App(TypeCon::Float, _) => self.emit_byte(opcode::LESSF),
+                            _ => unreachable!(),
+                        },
 
-                            match lhs.value.ty {
-                                Type::App(TypeCon::Int, _) => self.emit_byte(opcode::LESS),
-                                Type::App(TypeCon::Float, _)  => self.emit_byte(opcode::LESSF),
-                                _ => unreachable!()
+                        (Type::App(TypeCon::Bool, _), Op::LessThanEqual) => match lhs.value.ty {
+                            Type::App(TypeCon::Int, _) => {
+                                self.emit_bytes(opcode::LESS, opcode::NOT)
                             }
-                           
-                        }
-
-                        (Type::App(TypeCon::Bool, _), Op::LessThanEqual) => {
-
-
-                            match lhs.value.ty {
-                                Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::LESS, opcode::NOT),
-                                Type::App(TypeCon::Float, _)  => self.emit_bytes(opcode::LESSF, opcode::NOT),
-                                _ => unreachable!()
+                            Type::App(TypeCon::Float, _) => {
+                                self.emit_bytes(opcode::LESSF, opcode::NOT)
                             }
-                            
-                        }
+                            _ => unreachable!(),
+                        },
 
-                        (Type::App(TypeCon::Bool, _), Op::GreaterThan) => {
+                        (Type::App(TypeCon::Bool, _), Op::GreaterThan) => match lhs.value.ty {
+                            Type::App(TypeCon::Int, _) => self.emit_byte(opcode::GREATER),
+                            Type::App(TypeCon::Float, _) => self.emit_byte(opcode::GREATERF),
+                            _ => unreachable!(),
+                        },
 
-                            match lhs.value.ty {
-                                Type::App(TypeCon::Int, _) => self.emit_byte(opcode::GREATER),
-                                Type::App(TypeCon::Float, _)  => self.emit_byte(opcode::GREATERF),
-                                _ => unreachable!()
+                        (Type::App(TypeCon::Bool, _), Op::GreaterThanEqual) => match lhs.value.ty {
+                            Type::App(TypeCon::Int, _) => {
+                                self.emit_bytes(opcode::GREATER, opcode::NOT)
                             }
-                           
-                        }
-
-                        (Type::App(TypeCon::Bool, _), Op::GreaterThanEqual) => {
-
-                            match lhs.value.ty {
-                                Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::GREATER, opcode::NOT),
-                                Type::App(TypeCon::Float, _)  => self.emit_bytes(opcode::GREATERF, opcode::NOT),
-                                _ => unreachable!()
+                            Type::App(TypeCon::Float, _) => {
+                                self.emit_bytes(opcode::GREATERF, opcode::NOT)
                             }
-                          
-                        }
+                            _ => unreachable!(),
+                        },
 
-                        (Type::App(TypeCon::Str,_), Op::Plus) => self.emit_byte(opcode::CONCAT),
+                        (Type::App(TypeCon::Str, _), Op::Plus) => self.emit_byte(opcode::CONCAT),
 
                         (_, Op::EqualEqual) => self.emit_byte(opcode::EQUAL),
                         (_, Op::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),

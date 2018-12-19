@@ -18,7 +18,7 @@ impl Infer {
     ) -> InferResult<Spanned<t::TypedExpression>> {
         let span = name.span.to(value.span);
 
-        let ty = self.infer_var(&name, ctx)?;
+        let ty = self.infer_symbol_type(&name, ctx)?;
         let value_ty = self.infer_expr(*value, ctx)?;
         use syntax::ast::AssignOperator::*;
         match kind.value {

@@ -47,7 +47,7 @@ impl Infer {
         }
     }
 
-    pub(crate) fn infer_var(
+    pub(crate) fn infer_symbol_type(
         &self,
         symbol: &Spanned<Symbol>,
         ctx: &mut CompileCtx,

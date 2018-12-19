@@ -1,4 +1,4 @@
-use super::types::{Property, Type, TypeVar};
+use super::types::{Method, Property, Type, TypeVar};
 use super::Infer;
 use std::collections::HashMap;
 
@@ -23,7 +23,10 @@ impl Infer {
                 }
 
                 for method in methods {
-                    new_methods.push(self.subst(&self.subst(method, substions), substions))
+                    new_methods.push(Method {
+                        name: method.name,
+                        ty: self.subst(&self.subst(&method.ty, substions), substions),
+                    })
                 }
 
                 Type::Class(*name, new_fields, new_methods, *unique)

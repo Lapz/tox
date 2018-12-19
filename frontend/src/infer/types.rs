@@ -31,7 +31,7 @@ pub enum TypeCon {
 pub enum Type {
     // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
     App(TypeCon, Vec<Type>),
-    Class(Symbol, Vec<Property>, Vec<Type>, Unique), // Name, Properties, Methods,Unique
+    Class(Symbol, Vec<Property>, Vec<Method>, Unique), // Name, Properties, Methods,Unique
     Generic(Vec<TypeVar>, Box<Type>),
     Nil,
     Var(TypeVar),
@@ -39,6 +39,12 @@ pub enum Type {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Property {
+    pub name: Symbol,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Method {
     pub name: Symbol,
     pub ty: Type,
 }

@@ -11,7 +11,7 @@ impl Infer {
     pub(crate) fn infer_subscript(
         &mut self,
         target: Spanned<Expression>,
-        index:Spanned<Expression>,
+        index: Spanned<Expression>,
         whole_span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
@@ -20,16 +20,12 @@ impl Infer {
 
         let index_ty = self.infer_expr(index, ctx)?;
 
-
         // we can index string i.e "abc"[0]
         // or we can index var i.e a[10];
         // thats why we check for vars
         match target.value {
             Expression::Var(symbol) => {
-                let target_ty = self.infer_var(&symbol, ctx)?;
-
-               
-
+                let target_ty = self.infer_symbol_type(&symbol, ctx)?;
 
                 self.unify(
                     &index_ty.value.ty,
@@ -43,10 +39,10 @@ impl Infer {
                         let var = Spanned::new(
                             t::TypedExpression {
                                 expr: Box::new(Spanned::new(
-                                    t::Expression::Var(symbol.value,target_ty.clone()),
+                                    t::Expression::Var(symbol.value, target_ty.clone()),
                                     target_span,
                                 )),
-                                ty: target_ty
+                                ty: target_ty,
                             },
                             target_span,
                         ); // the type of the target manually construted to be a type Expression
@@ -69,7 +65,7 @@ impl Infer {
                         );
 
                         (
-                            Spanned::new(t::Expression::Index(var, index_ty),whole_span),
+                            Spanned::new(t::Expression::Index(var, index_ty), whole_span),
                             Type::App(TypeCon::Str, vec![]),
                         )
                     }
@@ -82,17 +78,16 @@ impl Infer {
                 }
             }
 
-            _ => {// array expression or things that evalu to an array
-                
+            _ => {
+                // array expression or things that evalu to an array
+
                 let expr = self.infer_expr(target, ctx)?;
 
                 match &expr.value.ty {
-                    Type::App(TypeCon::Array(ref ty), _) => {
-                        (
-                            Spanned::new(t::Expression::Index(expr, index_ty), whole_span),
-                            *ty.clone(),
-                        )
-                    }
+                    Type::App(TypeCon::Array(ref ty), _) => (
+                        Spanned::new(t::Expression::Index(expr, index_ty), whole_span),
+                        *ty.clone(),
+                    ),
 
                     _ => {
                         ctx.error("Invalid index target", target_span);
