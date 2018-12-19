@@ -163,7 +163,7 @@ pub enum Type {
     /// TODO remove and rely on Simple
     Nil,
     /// Type of a generic type i.e List<i32> Foo<List<List<i32>>>
-    Generic(Spanned<Symbol>,Vec<Spanned<Type>>)
+    Generic(Spanned<Symbol>, Vec<Spanned<Type>>),
 }
 
 #[derive(Debug, Clone)]

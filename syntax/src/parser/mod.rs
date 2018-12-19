@@ -407,10 +407,10 @@ impl<'a> Parser<'a> {
         } else {
             let symbol = self.consume_get_symbol("Expected a type param")?;
 
-            let mut  types = vec![];
+            let mut types = vec![];
 
             if self.recognise(TokenType::LESSTHAN) {
-                 self.consume(&TokenType::LESSTHAN, "Expected '<' ")?;
+                self.consume(&TokenType::LESSTHAN, "Expected '<' ")?;
 
                 loop {
                     types.push(self.parse_type()?);
@@ -427,14 +427,12 @@ impl<'a> Parser<'a> {
                         .to(self.consume_get_span(&TokenType::GREATERTHAN, "Expected '>' ")?),
                     value: Type::Generic(symbol, types),
                 })
-            }else {
+            } else {
                 Ok(Spanned {
                     span: symbol.get_span(),
                     value: Type::Simple(symbol),
                 })
             }
-
-            
         }
     }
 }
@@ -1073,13 +1071,12 @@ impl<'a> Parser<'a> {
                 name: Spanned {
                     span: open_span.to(body.get_span()),
                     value: ItemName {
-                            name:Spanned {
-                                span:params_span,
-                                value:self.random_ident()
-                            },
-                            type_params:vec![]
-                        }
-                    
+                        name: Spanned {
+                            span: params_span,
+                            value: self.random_ident(),
+                        },
+                        type_params: vec![],
+                    },
                 },
                 params: Spanned {
                     span: open_span.to(params_span),

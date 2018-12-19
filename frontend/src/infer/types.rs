@@ -4,11 +4,48 @@ use ctx::CompileCtx;
 use infer::env::Entry;
 use std::collections::HashMap;
 use util::symbol::Symbol;
+use std::fmt::{self,Display};
+
+
+static mut TYPEVAR_COUNT: u32 = 0;
 
 static mut UNIQUE_COUNT: u32 = 0;
 
+/// A type var represent a variable that could be a type
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TypeVar(pub u32);
+
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Unique(pub u32);
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypeCon {
+    Arrow,
+    Array(Box<Type>),
+    Bool,
+    Float,
+    Int,
+    Str,
+    Void
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+    
+    App(TypeCon,Vec<Type>),
+    Class(Symbol,Vec<Property>,Vec<Type>,Unique), // Name, Properties, Methods,Unique
+    Generic(Vec<TypeVar>,Box<Type>),
+    Nil,
+    Var(TypeVar),
+    
+    
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Property {
+    pub name: Symbol,
+    pub ty: Type,
+}
 
 impl Unique {
     pub fn new() -> Self {
@@ -18,110 +55,203 @@ impl Unique {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    Array(Box<Type>),
-    Alias(Symbol, Box<Type>),
-    Class(
-        Symbol,
-        ///properties
-        HashMap<Symbol, Type>,
-        HashMap<Symbol, Entry>,
-        Unique,
-    ),
-    This {
-        name: Symbol,
-        fields: HashMap<Symbol, Type>,
-        methods: HashMap<Symbol, Entry>,
-    },
-    Fun(Vec<Type>, Box<Type>, bool), //params return and if closure
-    Dict(Box<Type>, Box<Type>),      // Key, Value
-    Int,
-    Str,
-    Bool,
-    Nil,
-    Float,
+impl TypeVar {
+    pub fn new() -> Self {
+        let value = unsafe { TYPEVAR_COUNT };
+        unsafe { TYPEVAR_COUNT += 1 };
+        TypeVar(value)
+    }
 }
+
 
 impl Type {
     pub fn is_int(&self) -> bool {
         match *self {
-            Type::Int => true,
+            Type::App(TypeCon::Int,_) => true,
             _ => false,
         }
     }
 
     pub fn is_float(&self) -> bool {
         match *self {
-            Type::Float => true,
+            Type::App(TypeCon::Float,_) => true,
             _ => false,
         }
     }
+}
+
+impl Type {
 
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
-            Type::Alias(ref name, ref ty) => format!("Type alias {} = {}", name, ty.print(ctx)),
-            Type::Class(ref name, _, _, _) => {
-                let fmt_string = format!("Class {}", ctx.name(*name));
+
+            Type::App(ref tycon, ref types) => {
+                let mut fmt_string = String::new();
+
+                if let TypeCon::Arrow = *tycon {
+                    fmt_string.push_str("fn(");
+
+                    for i in 0..types.len() - 1 {
+                        if i + 1 == types.len() - 1 {
+                            fmt_string.push_str(&format!("{}", types[i].print(ctx)));
+                        } else {
+                            fmt_string.push_str(&format!("{},", types[i].print(ctx)));
+                        }
+                    }
+
+                    fmt_string.push_str(") -> ");
+
+                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(ctx)));
+
+                    return fmt_string;
+                }
+
+                fmt_string.push_str(&format!("{}", tycon));
+
+                for (i, ty) in types.iter().enumerate() {
+                    if i + 1 == types.len() {
+                        fmt_string.push_str(&ty.print(ctx))
+                    } else {
+                        fmt_string.push_str(&format!("{},", ty.print(ctx)))
+                    }
+                }
 
                 fmt_string
             }
 
-            Type::This {
-                ref name,
-                ref methods,
-                ref fields,
-            } => {
-                let mut fmt_string = format!("This {} {{ ", ctx.name(*name));
+            Type::Class(ref name, ref properties, _, _) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str(&format!("{}<", ctx.name(*name)));
+
+                for (i, field) in properties.iter().enumerate() {
+                    if i + 1 == properties.len() {
+                        fmt_string.push_str(&format!("{}", field.ty.print(ctx)));
+                    } else {
+                        fmt_string.push_str(&format!("{},", field.ty.print(ctx)));
+                    }
+                }
+
+                fmt_string.push('>');
+
+                fmt_string
+            }
+
+            Type::Generic(ref vars, ref ret) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str("poly<");
+
+                for (i, var) in vars.iter().enumerate() {
+                    if i + 1 == vars.len() {
+                        fmt_string.push(var.0 as u8 as char);
+                    } else {
+                        fmt_string.push_str(&format!("{},", var.0 as u8 as char));
+                    }
+                }
+
+                fmt_string.push('>');
+
+                fmt_string.push_str(&ret.print(ctx));
+
+                fmt_string
+            }
+
+            Type::Nil => "nil".into(),
+
+            Type::Var(ref v) => {
+                "{{integer}}".into()
+            }
+        }
+    }
+}
+
+
+impl Display for TypeCon {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TypeCon::Arrow => write!(f, "->"),
+            TypeCon::Array(ref inner) => write!(f, "{}",inner),
+            TypeCon::Bool => write!(f, "bool"),
+            TypeCon::Float => write!(f, "float"),
+            TypeCon::Int=> write!(f, "int"),
+            TypeCon::Str => write!(f, "str"),
+            TypeCon::Void => write!(f, "nil"),
+        }
+    }
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+        
+            Type::App(ref tycon, ref types) => {
+                if let TypeCon::Arrow = *tycon {
+                    write!(f, "fn (")?;
+
+                    for i in 0..types.len() - 1 {
+                        if i + 1 == types.len() - 1 {
+                            write!(f, "{}", types[i])?;
+                        } else {
+                            write!(f, "{},", types[i])?;
+                        }
+                    }
+
+                    write!(f, ") -> ")?;
+
+                    write!(f, "{}", types.last().unwrap())?;
+                }
+
+                write!(f, "{}", tycon)?;
+
+                for (i, ty) in types.iter().enumerate() {
+                    if i + 1 == types.len() {
+                        write!(f, "{}", ty)?;
+                    } else {
+                        write!(f, "{},", ty)?;
+                    }
+                }
+
+                write!(f, "")
+            }
+
+            Type::Class(ref name, ref fields,_, _) => {
+                write!(f, "{}<", name)?;
 
                 for (i, field) in fields.iter().enumerate() {
                     if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", &ctx.name(*field.0)))
+                        write!(f, "{}", field.ty)?;
                     } else {
-                        fmt_string.push_str(&format!("{},", ctx.name(*field.0)))
+                        write!(f, "{},", field.ty)?;
                     }
                 }
 
-                fmt_string.push(',');
+                write!(f, ">")
+            }
+            
+            Type::Generic(ref vars, ref ret) => {
+                write!(f, "poly <")?;
 
-                for (i, method) in methods.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        fmt_string.push_str(&format!("{}", ctx.name(*method.0)))
+                for (i, var) in vars.iter().enumerate() {
+                    if i + 1 == vars.len() {
+                        write!(f, "{}", var)?;
                     } else {
-                        fmt_string.push_str(&format!(",{}", ctx.name(*method.0)))
+                        write!(f, "{},", var)?;
                     }
                 }
 
-                fmt_string.push('}');
+                write!(f, ">")?;
 
-                fmt_string
+                write!(f, " {}", ret)
             }
-            Type::Fun(ref params, ref returns, _) => {
-                let mut fmt_string = String::from("fn(");
 
-                for (i, param) in params.iter().enumerate() {
-                    if i + 1 == params.len() {
-                        fmt_string.push_str(&format!("{}", param.print(ctx)))
-                    } else {
-                        fmt_string.push_str(&format!("{},", param.print(ctx)))
-                    }
-                }
-
-                fmt_string.push_str(") -> ");
-
-                fmt_string.push_str(&format!("{}", returns.print(ctx)));
-
-                fmt_string
-            }
-            Type::Dict(ref key, ref value) => {
-                format!("Dictionary<{},{}>", key.print(ctx), value.print(ctx))
-            }
-            Type::Array(ref a) => format!("Array of {} ", a.print(ctx)),
-            Type::Int => format!("Int"),
-            Type::Str => format!("Str"),
-            Type::Bool => format!("Boolean"),
-            Type::Nil => format!("Nil"),
-            Type::Float => format!("Float"),
+            Type::Nil => write!(f, "nil"),
+            Type::Var(ref v) => write!(f, "{}", v),
+            
         }
+    }
+}
+
+impl Display for TypeVar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tv{}", self.0)
     }
 }
