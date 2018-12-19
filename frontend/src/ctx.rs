@@ -15,7 +15,6 @@ pub struct CompileCtx<'a> {
 impl<'a> CompileCtx<'a> {
     pub fn new(strings: &Rc<SymbolFactory>, reporter: &'a mut Reporter) -> Self {
         let mut types = Symbols::new(Rc::clone(strings));
-
         let string_symbol = types.symbol("str");
         let int_symbol = types.symbol("int");
         let float_symbol = types.symbol("float");
@@ -44,50 +43,13 @@ impl<'a> CompileCtx<'a> {
             };
 
             add_builtin("clock", vec![], Type::Float);
-            add_builtin("hex", vec![Type::Int], Type::Str);
-            add_builtin("oct", vec![Type::Int], Type::Str);
             add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
-            add_builtin("to_int", vec![Type::Str], Type::Int);
-            add_builtin("trim", vec![Type::Str], Type::Str);
-            add_builtin("is_digit", vec![Type::Str], Type::Bool);
-            add_builtin("char_at", vec![Type::Str, Type::Int], Type::Str);
+            add_builtin("read",vec![],Type::Str);
+            add_builtin("fopen",vec![Type::Str],Type::Str);
         }
 
-        {
-            let mut add_builtin_class = |name: &str, methods: Vec<(&str, Entry)>| {
-                let symbol = vars.symbol(name);
-
-                use std::collections::HashMap;
-
-                let mut methods_ty = HashMap::new();
-
-                for method in methods {
-                    let name = vars.symbol(method.0);
-                    methods_ty.insert(name, method.1);
-                }
-
-                let entry = VarEntry::Var(Type::Class(
-                    symbol,
-                    HashMap::new(),
-                    methods_ty.clone(),
-                    Unique::new(),
-                ));
-
-                vars.enter(symbol, entry);
-                types.enter(
-                    symbol,
-                    Type::Class(symbol, HashMap::new(), methods_ty, Unique::new()),
-                );
-            };
-
-            add_builtin_class(
-                "io",
-                vec![(
-                    "readline",
-                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str), false)),
-                )],
-            );
-        }
+        
+        
 
         CompileCtx {
             symbols: Symbols::new(Rc::clone(strings)),

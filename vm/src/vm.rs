@@ -1,9 +1,10 @@
 use super::{Function, Program};
-use object::{ArrayObject, FunctionObject, InstanceObject, RawObject, StringObject};
-use opcode;
+use crate::native;
+use crate::object::{ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject};
+use crate::opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
-use value::Value;
+use crate::value::Value;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
@@ -19,6 +20,7 @@ pub struct VM<'a> {
     stack: [Value; STACK_MAX],
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
+    native_functions: HashMap<Symbol, Value>,
     program: &'a Program,
     objects: RawObject,
     stack_top: usize,
@@ -45,12 +47,35 @@ impl<'a> VM<'a> {
             params: HashMap::new(),
         };
 
+        let mut native_functions = HashMap::new();
+        native_functions.insert(
+            Symbol(1),
+            Value::object(NativeObject::new(2, native::random, objects)),
+        );
+
+        native_functions.insert(
+            Symbol(2),
+            Value::object(NativeObject::new(0, native::clock, objects)),
+        );
+
+        native_functions.insert(
+            Symbol(3),
+            Value::object(NativeObject::new(0, native::read, objects)),
+        );
+
+        native_functions.insert(
+            Symbol(4),
+            Value::object(NativeObject::new(1, native::fopen, objects)),
+        );
+        
+
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
             current_frame,
             program,
             frames: Vec::new(),
             stack_top: 4,
+            native_functions,
             objects,
         })
     }
@@ -275,7 +300,7 @@ impl<'a> VM<'a> {
                     let function_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let mut function = self.program.functions.get(&function_name).unwrap();
+                    let function = self.program.functions.get(&function_name).unwrap();
 
                     let mut params = HashMap::new();
 
@@ -295,12 +320,28 @@ impl<'a> VM<'a> {
                     // swaps the current frame with the one we are one and then
                 }
 
+                opcode::CALLNATIVE => {
+                    let function_name = Symbol(self.read_byte() as u64);
+                    let function = self.native_functions.get(&function_name).unwrap();
+                    let function = function.as_native();
+
+                    let arg_count = function.arity;
+                    let result = (function.function)(
+                        self.stack[self.stack_top-arg_count as usize..self.stack_top].as_ptr(),
+                    );
+
+                    self.stack_top -= arg_count as usize;
+                    {
+                        self.push(result);
+                    }
+                }
+
                 opcode::CALLINSTANCEMETHOD => {
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
 
-                    let mut instance = self.pop();
-                    let mut instance = instance.as_instance();
+                    let instance = self.pop();
+                    let instance = instance.as_instance();
 
                     let function = &instance.methods.get(&method_name).unwrap();
 
@@ -325,7 +366,7 @@ impl<'a> VM<'a> {
                     let class_name = Symbol(self.read_byte() as u64);
                     let method_name = Symbol(self.read_byte() as u64);
                     let arg_count = self.read_byte();
-                    let mut function = self
+                    let function = self
                         .program
                         .classes
                         .get(&class_name)
@@ -381,7 +422,7 @@ impl<'a> VM<'a> {
 
                     let num_properties = self.read_byte() as usize;
 
-                    let mut class = self.program.classes.get(&class_name).unwrap();
+                    let class = self.program.classes.get(&class_name).unwrap();
 
                     let methods = class.methods.clone();
 
@@ -400,7 +441,10 @@ impl<'a> VM<'a> {
 
                 #[cfg(not(feature = "debug"))]
                 _ => {
-                    panic!("Unknown opcode found");
+                    unsafe {
+                        use std::hint::unreachable_unchecked;
+                        unreachable_unchecked()
+                    }
                 }
                 #[cfg(feature = "debug")]
                 ref e => {
@@ -462,6 +506,7 @@ impl<'a> VM<'a> {
         self.stack_top += 1;
     }
 
+    
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]
@@ -471,7 +516,7 @@ impl<'a> VM<'a> {
 use std::fmt::{self, Debug};
 
 impl<'a> Debug for VM<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_trait_builder = f.debug_struct("VM");
 
         let _ = debug_trait_builder.field("stack", &self.stack[0..].iter());

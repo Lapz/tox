@@ -1,22 +1,24 @@
 //! The VM module it contains the vm.
 //! The opcodes for the vm can be found in the opcode module
 //! a ```VM``` and an ```Assembler``` for the tasm langauage
+use opcode;
 
-extern crate opcode;
 
-extern crate util;
+
+
 
 #[macro_use]
 mod macros;
 mod chunk;
+mod native;
 mod object;
 mod value;
 mod vm;
 
-pub use chunk::Chunk;
-pub use object::{FunctionObject, RawObject, StringObject};
-pub use value::Value;
-pub use vm::VM;
+pub use crate::chunk::Chunk;
+pub use crate::object::{FunctionObject, RawObject, StringObject};
+pub use crate::value::Value;
+pub use crate::vm::VM;
 
 #[derive(Debug, Clone)]
 pub struct Function {

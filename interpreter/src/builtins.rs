@@ -93,6 +93,7 @@ fn built_in_is_digit(arguments: &[Object]) -> Result<Object, RuntimeError> {
 
     Ok(Object::Bool((input[0] as char).is_numeric()))
 }
+
 fn built_in_oct(arguments: &[Object]) -> Result<Object, RuntimeError> {
     let number = match arguments.iter().next() {
         Some(&Object::Int(a)) => a,

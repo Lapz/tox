@@ -75,6 +75,7 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
                 return *key;
             }
         }
+        
         let symbol = Symbol(*self.strings.next.borrow());
         self.strings
             .mappings
@@ -94,17 +95,14 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
 impl SymbolFactory {
     pub fn new() -> Self {
         let mut map = FnvHashMap::default();
-        map.insert(Symbol(1), "super".into());
+        map.insert(Symbol(1), "random".into());
         map.insert(Symbol(2), "clock".into());
-        map.insert(Symbol(3), "hex".into());
-        map.insert(Symbol(4), "oct".into());
-        map.insert(Symbol(5), "rand".into());
-        map.insert(Symbol(6), "to_int".into());
-        map.insert(Symbol(7), "readline".into());
-        map.insert(Symbol(8), "io".into());
+        map.insert(Symbol(3), "read".into());
+        map.insert(Symbol(4), "fopen".into());
+       
 
         SymbolFactory {
-            next: RefCell::new(9),
+            next: RefCell::new(5),
             mappings: RefCell::new(map),
         }
     }
@@ -131,6 +129,6 @@ mod test {
         assert_eq!(Some(&"c".into()), map.look(Symbol(2)));
         map.end_scope();
         assert_eq!(Some(&"a".into()), map.look(Symbol(0)));
-        assert_eq!(map.symbol("c".into()), Symbol(9));
+        assert_eq!(map.symbol("c".into()), Symbol(5));
     }
 }

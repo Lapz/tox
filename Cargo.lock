@@ -681,6 +681,7 @@ version = "0.1.0"
 dependencies = [
  "nom 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "opcode 0.1.0",
+ "rand 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "util 0.1.0",
 ]
 

@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 use util::symbol::Symbol;
-use value::Value;
+use crate::value::Value;
 
 pub type RawObject = *mut Object;
+pub type NativeFn = fn(*const Value) -> Value;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
@@ -15,6 +16,15 @@ pub enum ObjectType {
     Array,
     Class,
     Instance,
+    Native,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct NativeObject {
+    pub obj: Object,
+    pub arity: u8,
+    pub function: NativeFn,
 }
 
 #[derive(Debug, Clone)]
@@ -74,6 +84,18 @@ pub enum ObjectValue<'a> {
 impl Object {
     pub fn new(ty: ObjectType, next: RawObject) -> Self {
         Object { ty, next }
+    }
+}
+
+impl NativeObject {
+    pub fn new(arity: u8, function: NativeFn, next: RawObject) -> RawObject {
+        let func = NativeObject {
+            obj: Object::new(ObjectType::Native, next),
+            function,
+            arity,
+        };
+
+        Box::into_raw(Box::new(func)) as RawObject
     }
 }
 
@@ -137,6 +159,10 @@ impl<'a> StringObject<'a> {
 
         Box::into_raw(Box::new(s)) as RawObject
     }
+
+    pub fn value(&self) -> &str {
+        self.chars.string()
+    }
 }
 
 impl<'a> ObjectValue<'a> {
@@ -157,7 +183,7 @@ impl<'a> Deref for StringObject<'a> {
 }
 
 impl<'a> Display for ObjectValue<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ObjectValue::Str(ref string) => write!(f, "{}", string)?,
             ObjectValue::String(ref string) => write!(f, "{}", string)?,
@@ -167,7 +193,7 @@ impl<'a> Display for ObjectValue<'a> {
 }
 
 impl<'a> Debug for ObjectValue<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ObjectValue::Str(ref string) => write!(f, "static: {:?}", string)?,
             ObjectValue::String(ref string) => write!(f, "new: {:?}", string)?,
@@ -177,7 +203,7 @@ impl<'a> Debug for ObjectValue<'a> {
 }
 
 impl<'a> Display for StringObject<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.chars)?;
 
         Ok(())

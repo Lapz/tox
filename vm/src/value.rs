@@ -1,6 +1,6 @@
-use object::{
-    ArrayObject, ClassObject, FunctionObject, InstanceObject, Object, ObjectType, RawObject,
-    StringObject,
+use crate::object::{
+    ArrayObject, ClassObject, FunctionObject, InstanceObject, NativeObject, Object, ObjectType,
+    RawObject, StringObject,
 };
 use std::fmt::{self, Debug, Display};
 use std::mem;
@@ -68,6 +68,7 @@ impl Value {
         }
     }
 
+    #[inline]
     pub fn as_bool(&self) -> bool {
         debug_assert_eq!(
             self.ty,
@@ -80,6 +81,7 @@ impl Value {
         unsafe { self.val.boolean }
     }
 
+    #[inline]
     pub fn as_int(&self) -> i64 {
         debug_assert_eq!(
             self.ty,
@@ -92,6 +94,7 @@ impl Value {
         unsafe { self.val.int }
     }
 
+    #[inline]
     pub fn as_float(&self) -> f64 {
         debug_assert_eq!(
             self.ty,
@@ -104,6 +107,7 @@ impl Value {
         unsafe { self.val.float }
     }
 
+    #[inline]
     pub fn as_object(&self) -> RawObject {
         debug_assert_eq!(
             self.ty,
@@ -116,36 +120,49 @@ impl Value {
         unsafe { self.val.object }
     }
 
+    #[inline]
     pub fn as_string<'a>(&self) -> &StringObject<'a> {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_array<'a>(&self) -> &'a ArrayObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_class<'a>(&self) -> &'a ClassObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_function<'a>(&self) -> &'a FunctionObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
+    pub fn as_native<'a>(&self) -> &'a NativeObject {
+        let ptr = self.as_object();
+
+        unsafe { mem::transmute(ptr) }
+    }
+
+    #[inline]
     pub fn as_instance<'a>(&self) -> &'a InstanceObject {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
     }
 
+    #[inline]
     pub fn as_mut_instance<'a>(&self) -> &'a mut InstanceObject {
         let ptr = self.as_object();
 
@@ -165,16 +182,24 @@ impl Value {
         }
     }
 
+    #[inline]
     pub fn is_string(&self) -> bool {
         unsafe {
             self.is_object()
                 && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
         }
     }
+    #[inline]
+    pub fn is_native(&self) -> bool {
+        unsafe {
+            self.is_object()
+                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::Native
+        }
+    }
 }
 
 impl Debug for Value {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(fmt, "Value {{")?;
         unsafe {
             match self.ty {
@@ -217,6 +242,12 @@ impl Debug for Value {
                             "{:#?}",
                             ::std::mem::transmute::<RawObject, &InstanceObject>(self.val.object)
                         )?,
+
+                        ObjectType::Native => write!(
+                            fmt,
+                            "{:#?}",
+                            ::std::mem::transmute::<RawObject, &NativeObject>(self.val.object)
+                        )?,
                     }
                 }
             }
@@ -229,7 +260,7 @@ impl Debug for Value {
 }
 
 impl Display for Value {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         unsafe {
             if self.ty == ValueType::Int {
                 write!(fmt, "{}", self.val.int)?;
@@ -248,6 +279,7 @@ impl Display for Value {
                     ObjectType::Array => write!(fmt, "array")?,
                     ObjectType::Class => write!(fmt, "class")?,
                     ObjectType::Instance => write!(fmt, "instance")?,
+                    ObjectType::Native => write!(fmt, "native")?,
                 }
             }
         }
@@ -266,7 +298,7 @@ impl PartialEq for Value {
                 ValueType::Nil => false,
                 ValueType::Int => self.as_int() == other.as_int(),
                 ValueType::Float => self.as_float() == other.as_float(),
-                ValueType::Object => unimplemented!(),
+                ValueType::Object => self.as_object() == other.as_object(),
             }
         }
     }
