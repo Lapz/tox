@@ -1,12 +1,15 @@
-use infer::env::{Entry, VarEntry};
-use infer::types::{Type, Unique};
+use infer::env::{VarEntry, VarType};
+use infer::types::{Type, TypeCon, TypeVar, Unique};
+use std::collections::HashMap;
 use std::rc::Rc;
 use util::emmiter::Reporter;
 use util::pos::Span;
 use util::symbol::{Symbol, SymbolFactory, Symbols};
+
 #[derive(Debug)]
 pub struct CompileCtx<'a> {
     symbols: Symbols<()>,
+    typevars: HashMap<TypeVar, VarType>,
     types: Symbols<Type>,
     vars: Symbols<VarEntry>,
     reporter: &'a mut Reporter,
@@ -22,76 +25,41 @@ impl<'a> CompileCtx<'a> {
         let nil_symbol = types.symbol("nil");
         let bool_symbol = types.symbol("bool");
 
-        types.enter(int_symbol, Type::Int);
-        types.enter(float_symbol, Type::Float);
-        types.enter(bool_symbol, Type::Bool);
+        types.enter(int_symbol, Type::App(TypeCon::Int, vec![]));
+        types.enter(float_symbol, Type::App(TypeCon::Float, vec![]));
+        types.enter(bool_symbol, Type::App(TypeCon::Bool, vec![]));
         types.enter(nil_symbol, Type::Nil);
-        types.enter(string_symbol, Type::Str);
+        types.enter(string_symbol, Type::App(TypeCon::Str, vec![]));
 
         let mut vars = Symbols::new(Rc::clone(strings));
 
         {
             let mut add_builtin = |name: &str, params: Vec<Type>, returns: Type| {
                 let symbol = vars.symbol(name);
+                params.push(returns);
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::Fun(params.clone(), Box::new(returns.clone()), false),
+                        ty: Type::App(TypeCon::Arrow, params),
                     },
                 );
-
-                types.enter(symbol, Type::Fun(params, Box::new(returns), false));
             };
 
-            add_builtin("clock", vec![], Type::Float);
-            add_builtin("hex", vec![Type::Int], Type::Str);
-            add_builtin("oct", vec![Type::Int], Type::Str);
-            add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
-            add_builtin("to_int", vec![Type::Str], Type::Int);
-            add_builtin("trim", vec![Type::Str], Type::Str);
-            add_builtin("is_digit", vec![Type::Str], Type::Bool);
-            add_builtin("char_at", vec![Type::Str, Type::Int], Type::Str);
-        }
-
-        {
-            let mut add_builtin_class = |name: &str, methods: Vec<(&str, Entry)>| {
-                let symbol = vars.symbol(name);
-
-                use std::collections::HashMap;
-
-                let mut methods_ty = HashMap::new();
-
-                for method in methods {
-                    let name = vars.symbol(method.0);
-                    methods_ty.insert(name, method.1);
-                }
-
-                let entry = VarEntry::Var(Type::Class(
-                    symbol,
-                    HashMap::new(),
-                    methods_ty.clone(),
-                    Unique::new(),
-                ));
-
-                vars.enter(symbol, entry);
-                types.enter(
-                    symbol,
-                    Type::Class(symbol, HashMap::new(), methods_ty, Unique::new()),
-                );
-            };
-
-            add_builtin_class(
-                "io",
-                vec![(
-                    "readline",
-                    Entry::Fun(Type::Fun(vec![], Box::new(Type::Str), false)),
-                )],
+            add_builtin("clock", vec![], Type::App(TypeCon::Float, vec![]));
+            add_builtin(
+                "random",
+                vec![
+                    Type::App(TypeCon::Int, vec![]),
+                    Type::App(TypeCon::Int, vec![]),
+                ],
+                Type::App(TypeCon::Int, vec![]),
             );
         }
 
         CompileCtx {
             symbols: Symbols::new(Rc::clone(strings)),
             types,
+            typevars: HashMap::new(),
             vars,
             reporter,
         }
@@ -146,5 +114,13 @@ impl<'a> CompileCtx<'a> {
 
     pub fn add_var(&mut self, symbol: Symbol, data: VarEntry) {
         self.vars.enter(symbol, data)
+    }
+
+    pub fn get_tvar(&self, ident: TypeVar) -> Option<&VarType> {
+        self.typevars.get(&ident)
+    }
+
+    pub fn add_tvar(&mut self, ident: TypeVar, data: VarType) {
+        self.typevars.insert(ident, data);
     }
 }

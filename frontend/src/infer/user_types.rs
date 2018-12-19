@@ -1,6 +1,7 @@
+///! Transforms the type within the ast into types that are understood by the backend
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use infer::types::Type;
+use infer::types::{Type, TypeCon};
 use syntax::ast::Type as astType;
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -22,23 +23,26 @@ impl Infer {
                 Err(())
             }
             astType::Nil => Ok(Type::Nil),
-            astType::Arr(ref s) => Ok(Type::Array(Box::new(self.trans_type(s, ctx)?))),
+            astType::Arr(ref s) => Ok(Type::App(
+                TypeCon::Array(Box::new(self.trans_type(s, ctx)?)),
+                vec![],
+            )),
             astType::Func(ref params, ref returns) => {
-                let mut param_tys = Vec::with_capacity(params.len());
+                let mut trans_types = Vec::with_capacity(params.len());
 
-                for e_ty in params {
-                    param_tys.push(self.trans_type(e_ty, ctx)?)
+                for ty in params {
+                    trans_types.push(self.trans_type(ty, ctx)?)
                 }
 
-                if let Some(ref ret) = *returns {
-                    Ok(Type::Fun(
-                        param_tys,
-                        Box::new(self.trans_type(ret, ctx)?),
-                        false,
-                    ))
+                let ret = if let Some(ref ret) = *returns {
+                    self.trans_type(ret, ctx)?
                 } else {
-                    Ok(Type::Fun(param_tys, Box::new(Type::Nil), false))
-                }
+                    Type::Nil
+                };
+
+                trans_types.push(ret);
+
+                Ok(Type::App(TypeCon::Arrow, trans_types))
             }
         }
     }

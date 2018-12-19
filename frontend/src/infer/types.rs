@@ -1,7 +1,6 @@
 //! This module provides the types that are used throughout tox for the typeChecking
 
 use ctx::CompileCtx;
-use infer::env::Entry;
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use util::symbol::Symbol;
@@ -30,6 +29,7 @@ pub enum TypeCon {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
+    // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
     App(TypeCon, Vec<Type>),
     Class(Symbol, Vec<Property>, Vec<Type>, Unique), // Name, Properties, Methods,Unique
     Generic(Vec<TypeVar>, Box<Type>),

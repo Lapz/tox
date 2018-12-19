@@ -3,31 +3,17 @@
 
 use infer::types::Type;
 
+/// A typed variable mapped to a var of a number i.e int | float or otherwise
 #[derive(Debug, Clone, PartialEq)]
-pub enum Entry {
-    Ty(Type),
-    Class(Type),
-    Fun(Type),
+pub enum VarType {
+    Number,
+    Other,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum VarEntry {
     Var(Type),
     Fun { ty: Type },
-}
-
-impl Entry {
-    pub fn ty(&self) -> &Type {
-        match *self {
-            Entry::Ty(ref ty) | Entry::Class(ref ty) | Entry::Fun(ref ty) => ty,
-        }
-    }
-
-    pub fn get_ty(self) -> Type {
-        match self {
-            Entry::Ty(ty) | Entry::Class(ty) | Entry::Fun(ty) => ty,
-        }
-    }
 }
 
 impl VarEntry {
