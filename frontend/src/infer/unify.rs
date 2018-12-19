@@ -1,6 +1,7 @@
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use infer::types::Type;
+use infer::types::{Type, TypeCon};
+use std::collections::HashMap;
 use util::pos::Span;
 
 impl Infer {
@@ -13,8 +14,8 @@ impl Infer {
     ) -> InferResult<()> {
         match (lhs, rhs) {
             (
-                &Type::Class(ref name1, ref f1, ref m1, ref unique1),
-                &Type::Class(ref name2, ref f2, ref m2, ref unique2),
+                &Type::Class(ref name1, ref p1, ref m1, ref unique1),
+                &Type::Class(ref name2, ref p2, ref m2, ref unique2),
             ) => {
                 if unique1 != unique2 {
                     let msg = format!(
@@ -28,33 +29,66 @@ impl Infer {
                 }
 
                 for (method1, method2) in m1.iter().zip(m2) {
-                    self.unify(&method1.1.ty(), &method2.1.ty(), span, ctx)?;
+                    self.unify(&method1, &method2, span, ctx)?;
                 }
 
-                for (field1, field2) in f1.iter().zip(f2) {
-                    self.unify(&field1.1, &field2.1, span, ctx)?;
+                for (property1, property2) in p1.iter().zip(p2) {
+                    self.unify(&property1.ty, &property2.ty, span, ctx)?;
                 }
 
                 Ok(())
             }
-            (&Type::Fun(_, ref ret, _), ref o) => {
-                self.unify(ret, o, span, ctx)?;
+
+            (&Type::App(TypeCon::Void, _), &Type::Class(_, _, _, _)) => Ok(()),
+            (&Type::Class(_, _, _, _), &Type::App(TypeCon::Void, _)) => Ok(()),
+
+            (&Type::App(ref tycon1, ref types1), &Type::App(ref tycon2, ref types2)) => {
+                if tycon1 != tycon2 {
+                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    ctx.error(msg, span);
+                    return Err(());
+                }
+
+                for (a, b) in types1.iter().zip(types2.iter()) {
+                    self.unify(a, b, span, ctx)?
+                }
                 Ok(())
             }
 
-            (ref o, &Type::Fun(_, ref ret, _)) => {
-                self.unify(ret, o, span, ctx)?;
-                Ok(())
+            (&Type::Generic(ref vars1, ref ret1), &Type::Generic(ref vars2, ref ret2)) => {
+                let mut mappings = HashMap::new();
+
+                for var in vars1 {
+                    mappings.insert(*var, Type::Var(*var));
+                }
+
+                for var in vars2 {
+                    mappings.insert(*var, Type::Var(*var));
+                }
+
+                self.unify(ret1, &self.subst(ret2, &mut mappings), span, ctx)
             }
 
-            (&Type::Int, &Type::Int) => Ok(()),
-            (&Type::Str, &Type::Str) => Ok(()),
-            (&Type::Bool, &Type::Bool) => Ok(()),
-            (&Type::Float, &Type::Float) => Ok(()),
+            (&Type::Var(ref v1), &Type::Var(ref v2)) => {
+                if v1 == v2 {
+                    Ok(())
+                } else {
+                    let a = ctx.get_tvar(*v1).cloned(); // FIXME:Remove .cloned when NLL ;
+                    let b = ctx.get_tvar(*v2).cloned(); // FIXME:Remove .cloned when NLL ;
+
+                    if a != b {
+                        let msg =
+                            format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                        ctx.error(msg, span);
+                        return Err(());
+                    }
+
+                    Ok(())
+                }
+            }
+
             (&Type::Nil, &Type::Nil) => Ok(()),
-            (&Type::Nil, &Type::Class(_, _, _, _)) => Ok(()),
-            (&Type::Array(_), &Type::Nil) => Ok(()),
-            (&Type::Dict(_, _), &Type::Nil) => Ok(()),
+            (&Type::Nil, &Type::App(TypeCon::Void, _)) => Ok(()),
             (t1, t2) => {
                 let msg = format!("Cannot unify `{}` vs `{}`", t1.print(ctx), t2.print(ctx));
                 ctx.error(msg, span);

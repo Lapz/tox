@@ -3,9 +3,8 @@
 use ctx::CompileCtx;
 use infer::env::Entry;
 use std::collections::HashMap;
+use std::fmt::{self, Display};
 use util::symbol::Symbol;
-use std::fmt::{self,Display};
-
 
 static mut TYPEVAR_COUNT: u32 = 0;
 
@@ -26,19 +25,16 @@ pub enum TypeCon {
     Float,
     Int,
     Str,
-    Void
+    Void,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    
-    App(TypeCon,Vec<Type>),
-    Class(Symbol,Vec<Property>,Vec<Type>,Unique), // Name, Properties, Methods,Unique
-    Generic(Vec<TypeVar>,Box<Type>),
+    App(TypeCon, Vec<Type>),
+    Class(Symbol, Vec<Property>, Vec<Type>, Unique), // Name, Properties, Methods,Unique
+    Generic(Vec<TypeVar>, Box<Type>),
     Nil,
     Var(TypeVar),
-    
-    
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -63,28 +59,25 @@ impl TypeVar {
     }
 }
 
-
 impl Type {
     pub fn is_int(&self) -> bool {
         match *self {
-            Type::App(TypeCon::Int,_) => true,
+            Type::App(TypeCon::Int, _) => true,
             _ => false,
         }
     }
 
     pub fn is_float(&self) -> bool {
         match *self {
-            Type::App(TypeCon::Float,_) => true,
+            Type::App(TypeCon::Float, _) => true,
             _ => false,
         }
     }
 }
 
 impl Type {
-
     pub fn print(&self, ctx: &CompileCtx) -> String {
         match *self {
-
             Type::App(ref tycon, ref types) => {
                 let mut fmt_string = String::new();
 
@@ -157,22 +150,19 @@ impl Type {
 
             Type::Nil => "nil".into(),
 
-            Type::Var(ref v) => {
-                "{{integer}}".into()
-            }
+            Type::Var(ref v) => "{{integer}}".into(),
         }
     }
 }
-
 
 impl Display for TypeCon {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             TypeCon::Arrow => write!(f, "->"),
-            TypeCon::Array(ref inner) => write!(f, "{}",inner),
+            TypeCon::Array(ref inner) => write!(f, "{}", inner),
             TypeCon::Bool => write!(f, "bool"),
             TypeCon::Float => write!(f, "float"),
-            TypeCon::Int=> write!(f, "int"),
+            TypeCon::Int => write!(f, "int"),
             TypeCon::Str => write!(f, "str"),
             TypeCon::Void => write!(f, "nil"),
         }
@@ -182,7 +172,6 @@ impl Display for TypeCon {
 impl Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-        
             Type::App(ref tycon, ref types) => {
                 if let TypeCon::Arrow = *tycon {
                     write!(f, "fn (")?;
@@ -213,7 +202,7 @@ impl Display for Type {
                 write!(f, "")
             }
 
-            Type::Class(ref name, ref fields,_, _) => {
+            Type::Class(ref name, ref fields, _, _) => {
                 write!(f, "{}<", name)?;
 
                 for (i, field) in fields.iter().enumerate() {
@@ -226,7 +215,7 @@ impl Display for Type {
 
                 write!(f, ">")
             }
-            
+
             Type::Generic(ref vars, ref ret) => {
                 write!(f, "poly <")?;
 
@@ -245,7 +234,6 @@ impl Display for Type {
 
             Type::Nil => write!(f, "nil"),
             Type::Var(ref v) => write!(f, "{}", v),
-            
         }
     }
 }

@@ -6,6 +6,7 @@ pub(crate) mod env;
 mod alias;
 mod class;
 mod function;
+pub(crate) mod subst;
 pub(crate) mod types;
 mod unify;
 mod user_types;
