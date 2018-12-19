@@ -28,7 +28,7 @@ impl TypeEnv {
         let nil_symbol = types.symbol("nil");
         let bool_symbol = types.symbol("bool");
 
-        types.enter(int_symbol, Type::Int);
+        types.enter(int_symbol, Type::App(TypeCon::Int, vec![]));
         types.enter(float_symbol, Type::Float);
         types.enter(bool_symbol, Type::Bool);
         types.enter(nil_symbol, Type::Nil);
@@ -41,10 +41,10 @@ impl TypeEnv {
         };
 
         env.add_builtin("clock", vec![], Type::Float);
-        env.add_builtin("hex", vec![Type::Int], Type::Str);
-        env.add_builtin("oct", vec![Type::Int], Type::Str);
-        env.add_builtin("random", vec![Type::Int, Type::Int], Type::Int);
-        env.add_builtin("to_int", vec![Type::Str], Type::Int);
+        env.add_builtin("hex", vec![Type::App(TypeCon::Int, vec![])], Type::Str);
+        env.add_builtin("oct", vec![Type::App(TypeCon::Int, vec![])], Type::Str);
+        env.add_builtin("random", vec![Type::App(TypeCon::Int, vec![]), Type::App(TypeCon::Int, vec![])], Type::App(TypeCon::Int, vec![]));
+        env.add_builtin("to_int", vec![Type::Str], Type::App(TypeCon::Int, vec![]));
         env.add_builtin("trim", vec![Type::Str], Type::Str);
 
         env.add_builtin_class(

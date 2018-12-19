@@ -85,7 +85,7 @@ impl Infer {
             Expression::ClassInstance { .. } => self.infer_class_instance(expr, ctx)?,
 
             Expression::Grouping { expr } => {
-                return self.infer_grouping(*expr,expr.span,ctx);
+                return self.infer_grouping(*expr, expr.span, ctx);
             }
 
             Expression::Get { .. } => self.infer_object_get(expr, ctx)?,

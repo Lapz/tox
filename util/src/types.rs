@@ -67,7 +67,7 @@ impl Display for Type {
             Type::Dict(ref key, ref value) => write!(f, "Dictionary<{},{}>", key, value),
             Type::Array(ref a) => write!(f, "Array of {} ", a),
             Type::Name(ref name, ref ty) => write!(f, "Type alias {} = {}", name, ty),
-            Type::Int => write!(f, "Int"),
+            Type::App(TypeCon::Int, vec![]) => write!(f, "Int"),
             Type::Str => write!(f, "Str"),
             Type::Bool => write!(f, "Boolean"),
             Type::Nil => write!(f, "Nil"),
@@ -159,7 +159,7 @@ impl<'a> PartialEq for Type {
 
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
-            | (&Type::Int, &Type::Int)
+            | (&Type::App(TypeCon::Int, vec![]), &Type::App(TypeCon::Int, vec![]))
             | (&Type::Str, &Type::Str)
             | (&Type::Bool, &Type::Bool) => true,
 
@@ -183,7 +183,7 @@ impl<'a> PartialOrd for Type {
             | (s @ &Type::Array(_), o @ &Type::Array(_)) => s.partial_cmp(o),
             (&Type::Nil, &Type::Nil)
             | (&Type::Float, &Type::Float)
-            | (&Type::Int, &Type::Int)
+            | (&Type::App(TypeCon::Int, vec![]), &Type::App(TypeCon::Int, vec![]))
             | (&Type::Str, &Type::Str)
             | (&Type::Bool, &Type::Bool) => Some(Ordering::Equal),
             _ => None,
@@ -212,7 +212,7 @@ impl Hash for Type {
             }
             Type::Nil => "nil".hash(state),
             Type::Float => "float".hash(state),
-            Type::Int => "int".hash(state),
+            Type::App(TypeCon::Int, vec![]) => "int".hash(state),
             Type::Str => "str".hash(state),
             Type::Bool => "bool".hash(state),
         }

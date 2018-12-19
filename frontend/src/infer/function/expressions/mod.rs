@@ -4,3 +4,4 @@ mod binary;
 mod closure;
 
 mod grouping;
+mod subscript;

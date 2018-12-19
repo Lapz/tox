@@ -29,6 +29,6 @@ macro_rules! float_type {
 #[macro_export]
 macro_rules! int_type {
     () => {
-        InferedType { ty: Type::Int }
+        InferedType { ty: Type::App(TypeCon::Int, vec![]) }
     };
 }
