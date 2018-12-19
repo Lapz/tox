@@ -9,7 +9,6 @@ use util::symbol::{Symbol, SymbolFactory, Symbols};
 #[derive(Debug)]
 pub struct CompileCtx<'a> {
     symbols: Symbols<()>,
-    typevars: HashMap<TypeVar, VarType>,
     types: Symbols<Type>,
     vars: Symbols<VarEntry>,
     reporter: &'a mut Reporter,
@@ -59,7 +58,6 @@ impl<'a> CompileCtx<'a> {
         CompileCtx {
             symbols: Symbols::new(Rc::clone(strings)),
             types,
-            typevars: HashMap::new(),
             vars,
             reporter,
         }
@@ -114,13 +112,5 @@ impl<'a> CompileCtx<'a> {
 
     pub fn add_var(&mut self, symbol: Symbol, data: VarEntry) {
         self.vars.enter(symbol, data)
-    }
-
-    pub fn get_tvar(&self, ident: TypeVar) -> Option<&VarType> {
-        self.typevars.get(&ident)
-    }
-
-    pub fn add_tvar(&mut self, ident: TypeVar, data: VarType) {
-        self.typevars.insert(ident, data);
     }
 }

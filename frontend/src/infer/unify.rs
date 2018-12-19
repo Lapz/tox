@@ -73,17 +73,9 @@ impl Infer {
                 if v1 == v2 {
                     Ok(())
                 } else {
-                    let a = ctx.get_tvar(*v1).cloned(); // FIXME:Remove .cloned when NLL ;
-                    let b = ctx.get_tvar(*v2).cloned(); // FIXME:Remove .cloned when NLL ;
-
-                    if a != b {
-                        let msg =
-                            format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
-                        ctx.error(msg, span);
-                        return Err(());
-                    }
-
-                    Ok(())
+                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    ctx.error(msg, span);
+                    Err(())
                 }
             }
 

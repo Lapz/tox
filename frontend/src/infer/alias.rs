@@ -17,7 +17,6 @@ impl Infer {
 
         for ident in &alias.value.alias.value.type_params {
             let tv = TypeVar::new();
-            ctx.add_tvar(tv, VarType::Other);
             ctx.add_type(ident.value, Type::Var(tv));
             poly_tvs.push(tv);
         }

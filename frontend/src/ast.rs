@@ -1,5 +1,6 @@
 use infer::types::Type;
 
+use infer::types::Property;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -21,13 +22,8 @@ pub struct Function {
 pub struct Class {
     pub name: Symbol,
     pub superclass: Option<Spanned<Symbol>>,
-    pub fields: Vec<Field>,
+    pub properties: Vec<Property>,
     pub methods: Vec<Function>,
-}
-#[derive(Debug, Clone)]
-pub struct Field {
-    pub name: Symbol,
-    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]

@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::env::{Entry, VarEntry};
-use infer::types::{Type, Unique};
+use infer::env::VarEntry;
+use infer::types::{Property, Type, TypeVar, Unique};
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Class;
@@ -13,86 +13,79 @@ impl Infer {
         class: Spanned<Class>,
         ctx: &mut CompileCtx,
     ) -> InferResult<t::Class> {
-        let mut field_types = HashMap::new();
-        let mut methods_types = HashMap::new();
-        let mut methods = Vec::new();
-        let mut fields = Vec::new();
+        let mut generic_type_vars = Vec::with_capacity(class.value.name.value.type_params.len());
+        let mut type_params = Vec::with_capacity(class.value.name.value.type_params.len());
 
-        if let Some(ref sclass) = class.value.superclass {
-            if let Some(mut entry) = ctx.look_type(sclass.value).cloned() {
-                match entry {
-                    Type::Class(_, ref fields, ref methods, _) => {
-                        field_types.extend(fields.clone().into_iter());
-                        methods_types.extend(methods.clone().into_iter());
-                    }
+        ctx.begin_scope();
 
-                    _ => {
-                        let msg = format!("The type `{}` is not inheritable.", entry.print(ctx));
-
-                        ctx.error(msg, sclass.span);
-                        return Err(());
-                    }
-                }
-            } else {
-                let msg = format!("`{}` is not a inheritable class", ctx.name(sclass.value));
-
-                ctx.error(msg, sclass.span);
-                return Err(());
-            }
+        for symbol in class.value.name.value.type_params.iter() {
+            let type_var = TypeVar::new();
+            ctx.add_type(symbol.value, Type::Var(type_var));
+            generic_type_vars.push(type_var);
+            type_params.push(symbol.value)
         }
 
-        for field in class.value.fields.iter() {
-            let ty = self.trans_type(&field.value.ty, ctx)?;
-            fields.push(t::Field {
-                name: field.value.name.value,
-                ty: ty.clone(),
-            });
-            field_types.insert(field.value.name.value, ty);
-        }
+        let unique = Unique::new();
 
         ctx.add_type(
-            class.value.name.value,
-            Type::Class(
-                class.value.name.value,
-                field_types.clone(),
-                methods_types.clone(),
-                Unique::new(),
+            class.value.name.value.name.value,
+            Type::Generic(
+                generic_type_vars.clone(),
+                Box::new(Type::Class(
+                    class.value.name.value.name.value,
+                    vec![],
+                    vec![],
+                    unique,
+                )),
             ),
-        ); // Allows for new methods by making the class name available
+        ); // For recursive types we need to add the empty struct
+
+        let mut property_types = Vec::with_capacity(class.value.fields.len());
+        let mut properties = Vec::with_capacity(class.value.fields.len());
+
+        let mut methods_types = Vec::with_capacity(class.value.methods.len());
+        let mut methods = Vec::with_capacity(class.value.methods.len());
+
+        for property in class.value.fields.iter() {
+            property_types.push(Property {
+                name: property.value.name.value,
+                ty: self.trans_type(&property.value.ty, ctx)?,
+            })
+        }
 
         for method in class.value.methods {
             let fun = self.infer_function(method, ctx)?;
+            let mut types = fun
+                .params
+                .clone()
+                .into_iter()
+                .map(|param| param.ty)
+                .collect();
 
-            methods_types.insert(
-                fun.name,
-                Entry::Fun(Type::Fun(
-                    fun.params
-                        .clone()
-                        .into_iter()
-                        .map(|param| param.ty)
-                        .collect(),
-                    Box::new(fun.returns.clone()),
-                    false,
-                )),
-            );
+            methods_types.push(fun.returns.clone());
             methods.push(fun);
         }
 
-        let ty = Type::Class(
-            class.value.name.value,
-            field_types,
-            methods_types,
-            Unique::new(),
-        );
+        ctx.end_scope();
 
-        ctx.add_type(class.value.name.value, ty.clone());
-        ctx.add_var(class.value.name.value, VarEntry::Var(ty));
+        ctx.add_type(
+            class.value.name.value.name.value,
+            Type::Generic(
+                generic_type_vars.clone(),
+                Box::new(Type::Class(
+                    class.value.name.value.name.value,
+                    property_types.clone(),
+                    methods_types.clone(),
+                    unique,
+                )),
+            ),
+        ); // Adds the type to the global scope
 
         Ok(t::Class {
-            name: class.value.name.value,
+            name: class.value.name.value.name.value,
             superclass: class.value.superclass,
             methods,
-            fields,
+            properties,
         })
     }
 }
