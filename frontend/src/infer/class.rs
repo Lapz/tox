@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::types::{Property, Type, TypeVar, Unique,TypeCon,Method};
+use infer::types::{Method, Property, Type, TypeCon, TypeVar, Unique};
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Class;
@@ -55,7 +55,7 @@ impl Infer {
 
         for method in class.value.methods {
             let fun = self.infer_function(method, ctx)?;
-            let mut types:Vec<Type> = fun
+            let mut types: Vec<Type> = fun
                 .params
                 .clone()
                 .into_iter()
@@ -64,11 +64,11 @@ impl Infer {
 
             types.push(fun.returns.clone());
 
-            methods_types.push(Method{
-                name:fun.name,
-                ty:Type::App(TypeCon::Arrow,types)
+            methods_types.push(Method {
+                name: fun.name,
+                ty: Type::App(TypeCon::Arrow, types),
             });
-            
+
             methods.push(fun);
         }
 

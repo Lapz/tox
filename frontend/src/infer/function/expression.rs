@@ -90,7 +90,9 @@ impl Infer {
                 return self.infer_grouping(*expr, expr.span, ctx);
             }
 
-            Expression::Get { .. } => self.infer_object_get(expr, ctx)?,
+            Expression::Get { object, property } => {
+                return self.infer_get(*object, property, expr.span, ctx);
+            }
 
             Expression::SubScript { target, index } => {
                 return self.infer_subscript(*target, *index, expr.span, ctx);
@@ -98,7 +100,11 @@ impl Infer {
 
             Expression::Literal(literal) => return self.infer_literal(literal, expr.span, ctx),
 
-            Expression::Set { object,name,value } => return self.infer_set(object,name,value,expr.span,ctx),
+            Expression::Set {
+                object,
+                name,
+                value,
+            } => return self.infer_set(*object, name, *value, expr.span, ctx),
 
             Expression::Ternary {
                 condition,
@@ -401,86 +407,4 @@ impl Infer {
             _ => unreachable!(),
         }
     }
-
-    fn infer_object_get(
-        &mut self,
-        expr: Spanned<Expression>,
-        ctx: &mut CompileCtx,
-    ) -> InferResult<(Spanned<t::Expression>, Type)> {
-        match expr.value {
-            Expression::Get { object, property } => {
-                let ob_instance = self.infer_expr(*object, ctx)?;
-
-                match ob_instance.value.ty.clone() {
-                    Type::Class(ref name, _, _, _) => {
-                        if let Some(ty) = ctx.look_type(*name).cloned() {
-                            // Look at the conical type
-
-                            match ty {
-                                Type::Class(_, ref fields, ref methods, _) => {
-                                    for (field_name, field_ty) in fields {
-                                        if field_name == &property.value {
-                                            return Ok((
-                                                Spanned::new(
-                                                    t::Expression::GetProperty {
-                                                        property_name: property.value,
-                                                        property: ob_instance,
-                                                    },
-                                                    expr.span,
-                                                ),
-                                                field_ty.clone(),
-                                            ));
-                                        }
-                                    }
-
-                                    for (method_name, method_ty) in methods {
-                                        if method_name == &property.value {
-                                            let ty = method_ty.clone().get_ty();
-
-                                            return Ok((
-                                                Spanned::new(
-                                                    t::Expression::GetMethod {
-                                                        method_name: property.value,
-                                                        method: ob_instance,
-                                                    },
-                                                    expr.span,
-                                                ),
-                                                ty, // Change to return the return type
-                                            ));
-                                        }
-                                    } // change to use a hashmap.get
-                                }
-
-                                _ => unreachable!(),
-                            }
-                        }
-
-                        let msg = format!(
-                            "class `{}` doesn't have a field/method named `{}`",
-                            ctx.name(*name),
-                            ctx.name(property.value)
-                        );
-
-                        ctx.error(msg, expr.span);
-
-                        Err(())
-                    }
-
-                    ref other_ty => {
-                        let msg = format!(
-                            "Type {} dosen't have the method/field {}",
-                            other_ty.print(ctx),
-                            ctx.name(property.value)
-                        );
-
-                        ctx.error(msg, property.span);
-                        return Err(());
-                    }
-                }
-            }
-            _ => unreachable!(),
-        }
-    }
-
-   
 }

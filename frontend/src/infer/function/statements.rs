@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::types::{Type,TypeCon};
+use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
@@ -97,7 +97,7 @@ impl Infer {
                     let span = cond.span;
                     let ty = self.infer_expr(cond, ctx)?;
 
-                    self.unify(&Type::App(TypeCon::Bool,vec![]), &ty.value.ty, span, ctx)?;
+                    self.unify(&Type::App(TypeCon::Bool, vec![]), &ty.value.ty, span, ctx)?;
 
                     block.push(Spanned::new(
                         t::Statement::While(
@@ -115,7 +115,7 @@ impl Infer {
                                         t::Expression::Literal(Literal::True(true)),
                                         span,
                                     )),
-                                    ty: Type::App(TypeCon::Bool,vec![]),
+                                    ty: Type::App(TypeCon::Bool, vec![]),
                                 },
                                 span,
                             ),
@@ -135,7 +135,12 @@ impl Infer {
             } => {
                 let span = cond.span;
                 let cond_tyexpr = self.infer_expr(cond, ctx)?;
-                self.unify(&Type::App(TypeCon::Bool,vec![]), &cond_tyexpr.value.ty, span, ctx)?;
+                self.unify(
+                    &Type::App(TypeCon::Bool, vec![]),
+                    &cond_tyexpr.value.ty,
+                    span,
+                    ctx,
+                )?;
 
                 let then_tyexpr = Box::new(self.infer_statement(*then, ctx)?);
                 let mut otherwise_tyexpr = None;
@@ -165,7 +170,7 @@ impl Infer {
             Statement::While { cond, body } => {
                 let span = cond.span;
                 let expr = self.infer_expr(cond, ctx)?;
-                self.unify(&Type::App(TypeCon::Bool,vec![]), &expr.value.ty, span, ctx)?;
+                self.unify(&Type::App(TypeCon::Bool, vec![]), &expr.value.ty, span, ctx)?;
 
                 Ok(Spanned::new(
                     t::Statement::While(expr, Box::new(self.infer_statement(*body, ctx)?)),
