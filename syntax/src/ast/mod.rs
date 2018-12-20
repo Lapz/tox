@@ -100,15 +100,9 @@ pub enum Expression {
     },
 
     Closure(Box<Spanned<Function>>),
-    Call {
-        callee: Box<Spanned<Expression>>,
-        args: Vec<Spanned<Expression>>,
-    },
+    Call(Spanned<Call>),
 
-    ClassInstance {
-        symbol: Spanned<Symbol>,
-        props: Vec<Spanned<InstanceField>>,
-    },
+    ClassLiteral(Spanned<ClassLiteral>),
 
     Get {
         object: Box<Spanned<Expression>>,
@@ -146,11 +140,49 @@ pub enum Expression {
 }
 
 #[derive(Debug, Clone)]
-pub struct InstanceField {
+pub struct ClassLiteralField {
     pub symbol: Spanned<Symbol>,
     pub expr: Spanned<Expression>,
 }
 
+#[derive(Debug, Clone)]
+pub enum ClassLiteral {
+    /// A class literal with no provided types
+    /// i.e Foo {
+    ///     int:0
+    /// }
+    Simple {
+        symbol: Spanned<Symbol>,
+        props: Vec<Spanned<ClassLiteralField>>,
+    },
+    /// A class literal with  provided types
+    /// i.e Foo::<i32> {
+    ///     int:0
+    /// }   
+    Instantiation {
+        symbol: Spanned<Symbol>,
+        types: Spanned<Vec<Spanned<Type>>>,
+        props: Vec<Spanned<ClassLiteralField>>,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum Call {
+    /// A function/method literal with no provided types
+    /// i.e foo.bar(1,2,3); add(10,2);
+    Simple {
+        args: Vec<Spanned<Expression>>,
+        callee: Box<Spanned<Expression>>,
+    },
+
+    /// A function/method literal with provided types
+    /// i.e id::<i32>(foo); foo.add::<i32,i32>(10,2);
+    Instantiation {
+        args: Vec<Spanned<Expression>>,
+        callee: Box<Spanned<Expression>>,
+        types: Spanned<Vec<Spanned<Type>>>,
+    },
+}
 #[derive(Debug, Clone)]
 pub enum Type {
     /// Type that is an identifier i.e bool,int,float

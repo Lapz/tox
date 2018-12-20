@@ -1088,53 +1088,98 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
-        if self.recognise(TokenType::LBRACE) {
-            self.next()?;
-
-            let mut props = vec![];
-
-            if !self.recognise(TokenType::RBRACE) {
-                loop {
-                    let (open_span, symbol) =
-                        self.consume_get_symbol_and_span("Expected a field name")?;
-
-                    self.consume(&TokenType::COLON, "Expected a colon")?;
-
-                    let expr = self.parse_expression()?;
-
-                    props.push(Spanned {
-                        span: open_span.to(symbol.get_span()),
-                        value: InstanceField { symbol, expr },
-                    });
-
-                    if self.recognise(TokenType::COMMA) {
-                        self.next()?;
-                    } else {
-                        break;
-                    }
-                }
-            }
-
-            let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
-
-            Ok(Spanned {
-                span: symbol.get_span().to(close_span),
-                value: Expression::ClassInstance { symbol, props },
-            })
-        } else {
-            Ok(Spanned {
-                span: symbol.get_span(),
-                value: Expression::Var(symbol),
-            })
-        }
-    }
 
     fn call(&mut self) -> ParserResult<Spanned<Expression>> {
         let mut expr = self.primary()?;
 
         loop {
-            if self.recognise(TokenType::LPAREN) {
+            if self.recognise(TokenType::NAMESPACE) {
+                self.next()?; // Eat the ::
+
+                let less_than_span =
+                    self.consume_get_span(&TokenType::LESSTHAN, "Expected `<` ")?;
+
+                let mut types = vec![];
+
+                if !self.recognise(TokenType::GREATERTHAN) {
+                    loop {
+                        types.push(self.parse_type()?);
+
+                        if self.recognise(TokenType::COMMA) {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                let greater_than_span =
+                    self.consume_get_span(&TokenType::GREATERTHAN, "Expected `>` ")?;
+
+                if self.recognise(TokenType::LBRACE) {
+
+                    let ident = match expr.value {
+                        Expression::Var(ref s) => s.clone(),
+                        _ => unreachable!()
+                    };
+
+                    let struct_lit = self.parse_ident(ident)?;
+
+                    match struct_lit {
+                        Spanned {
+                            value:
+                                Expression::ClassLiteral(Spanned {
+                                    value: ClassLiteral::Simple { symbol, props },
+                                    ..
+                                }),
+                            span: end_span,
+                        } => return Ok(Spanned {
+                            value: Expression::ClassLiteral(Spanned {
+                                span: expr.span.to(greater_than_span),
+                                value: ClassLiteral::Instantiation {
+                                    types:Spanned {
+                                        span:less_than_span.to(greater_than_span),
+                                        value:types,
+                                    },
+                                    symbol,
+                                    props,
+                                },
+                            }),
+                            span: expr.get_span().to(end_span),
+                        }),
+
+                        _ => unreachable!(),
+                    }
+                } else {
+                    let whole_span = expr.span;
+                    let call = self.finish_call(expr)?;
+
+                    match call {
+                        Spanned {
+                            value:
+                                Expression::Call(Spanned {
+                                    value: Call::Simple { args, callee },
+                                    ..
+                                }),
+                            ..
+                        } => return Ok(Spanned {
+                            value: Expression::Call(Spanned {
+                                span: whole_span.to(call.span),
+                                value: Call::Instantiation {
+                                    types:Spanned {
+                                        span:less_than_span.to(greater_than_span),
+                                        value:types,
+                                    },
+                                    callee,
+                                    args,
+                                },
+                            }),
+                            span: { whole_span.to(call.span) },
+                        }),
+                        _ => unreachable!(),
+                    }
+                }
+            } else if self.recognise(TokenType::LPAREN) {
                 expr = self.finish_call(expr)?;
             } else if self.recognise(TokenType::LBRACKET) {
                 let open_span = self.consume_get_span(&TokenType::LBRACKET, "Expected '[' ")?;
@@ -1170,6 +1215,50 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
+        if self.recognise(TokenType::LBRACE) {
+            self.next()?;
+
+            let mut props = vec![];
+
+            if !self.recognise(TokenType::RBRACE) {
+                loop {
+                    let (open_span, symbol) =
+                        self.consume_get_symbol_and_span("Expected a field name")?;
+
+                    self.consume(&TokenType::COLON, "Expected a colon")?;
+
+                    let expr = self.parse_expression()?;
+
+                    props.push(Spanned {
+                        span: open_span.to(symbol.get_span()),
+                        value: ClassLiteralField { symbol, expr },
+                    });
+
+                    if self.recognise(TokenType::COMMA) {
+                        self.next()?;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected '}' ")?;
+            // { symbol, props }
+            Ok(Spanned {
+                span: symbol.get_span().to(close_span),
+                value: Expression::ClassLiteral(Spanned {
+                    span: symbol.span.to(close_span),
+                    value: ClassLiteral::Simple { symbol, props },
+                }),
+            })
+        } else {
+            Ok(Spanned {
+                span: symbol.get_span(),
+                value: Expression::Var(symbol),
+            })
+        }
+    }
     fn finish_call(&mut self, callee: Spanned<Expression>) -> ParserResult<Spanned<Expression>> {
         self.consume(&TokenType::LPAREN, "Expected '(' ")?;
 
@@ -1191,10 +1280,13 @@ impl<'a> Parser<'a> {
 
         Ok(Spanned {
             span: callee.get_span().to(close_span),
-            value: Expression::Call {
-                callee: Box::new(callee),
-                args,
-            },
+            value: Expression::Call(Spanned {
+                span: callee.get_span().to(close_span),
+                value: Call::Simple {
+                    callee: Box::new(callee),
+                    args,
+                },
+            }),
         })
     }
 }
