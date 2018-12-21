@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
                 '(' => Ok(span(TokenType::LPAREN, start)),
                 ')' => Ok(span(TokenType::RPAREN, start)),
                 ',' => Ok(span(TokenType::COMMA, start)),
-                
+
                 '|' => Ok(span(TokenType::BAR, start)),
                 '^' => Ok(span(TokenType::EXPONENTIAL, start)),
                 '%' => Ok(span(TokenType::MODULO, start)),
@@ -36,7 +36,7 @@ impl<'a> Parser<'a> {
                     if self.peek(|ch| ch == ':') {
                         self.advance();
                         Ok(spans(TokenType::NAMESPACE, start, start.shift(':')))
-                    }else {
+                    } else {
                         Ok(span(TokenType::COLON, start))
                     }
                 }

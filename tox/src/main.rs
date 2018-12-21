@@ -28,8 +28,8 @@ fn main() {
         // if opts.interpreter {
         //     run_interpreter(file);
         // } else {
-            run(file);
-        // }
+        run(file);
+    // }
     } else {
         // repl()
     }
@@ -127,7 +127,7 @@ pub fn run(path: String) {
         }
     };
 
-    println!("{:#?}",ast);
+    println!("{:#?}", ast);
 
     // let mut infer = Infer::new();
 

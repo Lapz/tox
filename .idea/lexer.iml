@@ -27,8 +27,13 @@
       <sourceFolder url="file://$MODULE_DIR$/tox/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tox/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/tox/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/opcode/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/opcode/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/opcode/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/opcode/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/frontend/target" />
       <excludeFolder url="file://$MODULE_DIR$/interpreter/target" />
+      <excludeFolder url="file://$MODULE_DIR$/opcode/target" />
       <excludeFolder url="file://$MODULE_DIR$/syntax/target" />
       <excludeFolder url="file://$MODULE_DIR$/tox/target" />
       <excludeFolder url="file://$MODULE_DIR$/util/target" />

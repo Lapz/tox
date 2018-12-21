@@ -1088,7 +1088,6 @@ impl<'a> Parser<'a> {
         })
     }
 
-
     fn call(&mut self) -> ParserResult<Spanned<Expression>> {
         let mut expr = self.primary()?;
 
@@ -1117,10 +1116,9 @@ impl<'a> Parser<'a> {
                     self.consume_get_span(&TokenType::GREATERTHAN, "Expected `>` ")?;
 
                 if self.recognise(TokenType::LBRACE) {
-
                     let ident = match expr.value {
                         Expression::Var(ref s) => s.clone(),
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     };
 
                     let struct_lit = self.parse_ident(ident)?;
@@ -1133,20 +1131,22 @@ impl<'a> Parser<'a> {
                                     ..
                                 }),
                             span: end_span,
-                        } => return Ok(Spanned {
-                            value: Expression::ClassLiteral(Spanned {
-                                span: expr.span.to(greater_than_span),
-                                value: ClassLiteral::Instantiation {
-                                    types:Spanned {
-                                        span:less_than_span.to(greater_than_span),
-                                        value:types,
+                        } => {
+                            return Ok(Spanned {
+                                value: Expression::ClassLiteral(Spanned {
+                                    span: expr.span.to(greater_than_span),
+                                    value: ClassLiteral::Instantiation {
+                                        types: Spanned {
+                                            span: less_than_span.to(greater_than_span),
+                                            value: types,
+                                        },
+                                        symbol,
+                                        props,
                                     },
-                                    symbol,
-                                    props,
-                                },
-                            }),
-                            span: expr.get_span().to(end_span),
-                        }),
+                                }),
+                                span: expr.get_span().to(end_span),
+                            });
+                        }
 
                         _ => unreachable!(),
                     }
@@ -1162,20 +1162,22 @@ impl<'a> Parser<'a> {
                                     ..
                                 }),
                             ..
-                        } => return Ok(Spanned {
-                            value: Expression::Call(Spanned {
-                                span: whole_span.to(call.span),
-                                value: Call::Instantiation {
-                                    types:Spanned {
-                                        span:less_than_span.to(greater_than_span),
-                                        value:types,
+                        } => {
+                            return Ok(Spanned {
+                                value: Expression::Call(Spanned {
+                                    span: whole_span.to(call.span),
+                                    value: Call::Instantiation {
+                                        types: Spanned {
+                                            span: less_than_span.to(greater_than_span),
+                                            value: types,
+                                        },
+                                        callee,
+                                        args,
                                     },
-                                    callee,
-                                    args,
-                                },
-                            }),
-                            span: { whole_span.to(call.span) },
-                        }),
+                                }),
+                                span: { whole_span.to(call.span) },
+                            });
+                        }
                         _ => unreachable!(),
                     }
                 }

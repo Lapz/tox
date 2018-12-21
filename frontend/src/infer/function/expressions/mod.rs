@@ -2,7 +2,7 @@ mod array;
 mod assign;
 mod binary;
 mod call;
-mod class_instance;
+mod class_literal;
 mod closure;
 mod get;
 mod grouping;

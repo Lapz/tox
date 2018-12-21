@@ -70,6 +70,11 @@ pub enum Statement {
 
     Return(Spanned<TypedExpression>),
 }
+#[derive(Debug, Clone)]
+pub struct Property {
+    pub name: Symbol,
+    pub ty: Spanned<TypedExpression>,
+}
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -80,7 +85,10 @@ pub enum Expression {
     Call(Symbol, Vec<Spanned<TypedExpression>>),
 
     Closure(Box<Function>),
-    ClassInstance(Symbol, Vec<(Symbol, Spanned<TypedExpression>)>),
+    ClassLiteral {
+        symbol: Symbol,
+        properties: Vec<Spanned<Property>>,
+    },
     GetProperty {
         property_name: Symbol,
         property: Spanned<TypedExpression>,
