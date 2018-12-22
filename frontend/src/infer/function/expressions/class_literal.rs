@@ -1,12 +1,14 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::types::{self, Type, TypeCon, TypeVar};
+use infer::types::{self, Property, TypeCon, TypeVar};
 use infer::{Infer, InferResult};
-use syntax::ast::{AssignOperator, ClassLiteralField, Expression, Function, Literal, Op, UnaryOp};
+use std::collections::HashMap;
+use syntax::ast::{
+    AssignOperator, ClassLiteralField, Expression, Function, Literal, Op, Type, UnaryOp,
+};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
-use std::collections::HashMap;
 
 impl Infer {
     pub(crate) fn infer_class_literal(
@@ -25,8 +27,8 @@ impl Infer {
         };
 
         match class_type {
-            Type::Generic(ref typevars, ref ty) => match **ty {
-                Type::Class(_, ref properties, ref methods, ref unique) => {
+            types::Type::Generic(ref typevars, ref ty) => match **ty {
+                types::Type::Class(_, ref properties, ref methods, ref unique) => {
                     let mut mappings = HashMap::new();
                     let mut type_lit_expressions = Vec::new();
                     let mut types = Vec::new();
@@ -34,12 +36,12 @@ impl Infer {
 
                     for (def_property, property) in properties.iter().zip(props.into_iter()) {
                         if def_property.name == property.value.symbol.value {
-                            let line_span = property.span;
-                            let ty = self.infer_expr(property.value.expr, ctx)?;
-
-                            type_lit_expressions.push(t::ClassLiteralProperty {
-                                name: property.value.symbol.value,
-                                ty:ty.value.ty,
+                            type_lit_expressions.push(Spanned {
+                                value: t::ClassLiteralProperty {
+                                    name: property.value.symbol.value,
+                                    expr: self.infer_expr(property.value.expr, ctx)?,
+                                },
+                                span: property.span,
                             });
                         } else {
                             unknown = true;
@@ -54,24 +56,28 @@ impl Infer {
                         }
                     }
 
-                    for (type_var, exprs) in typevars.iter().zip(type_lit_expressions.iter()) {
-                        mappings.insert(*type_var, exprs.value.ty.clone());
+                    for (type_var, literal_expression) in
+                        typevars.iter().zip(type_lit_expressions.iter())
+                    {
+                        mappings.insert(*type_var, literal_expression.value.expr.value.ty.clone());
                     }
 
-                    for (mut expr, def_property) in type_lit_expressions.into_iter().zip(properties)
+                    for (mut literal_expression, def_property) in
+                        type_lit_expressions.iter_mut().zip(properties)
                     {
                         self.unify(
                             &self.subst(&def_property.ty, &mut mappings),
-                            &self.subst(&expr.ty.value.ty, &mut mappings),
-                            expr.span,
+                            &self.subst(&literal_expression.value.expr.value.ty, &mut mappings),
+                            literal_expression.value.expr.span,
                             ctx,
                         )?;
 
-                        let ty = self.subst(&expr.ty.value.ty, &mut mappings);
+                        let ty = self.subst(&literal_expression.value.expr.value.ty, &mut mappings);
 
-                        expr.ty.value.ty = ty.clone();
+                        literal_expression.value.expr.value.ty = ty.clone(); // change the type so its the proper type
+
                         types.push(types::Property {
-                            name: expr.ty.value.name,
+                            name: literal_expression.value.name,
                             ty,
                         });
                     }
@@ -96,11 +102,12 @@ impl Infer {
                                 },
                                 span: whole_span,
                             }),
-                            ty: Type::Class(symbol.value, types, methods.clone(), *unique),
+                            ty: types::Type::Class(symbol.value, types, methods.clone(), *unique),
                         },
                         span: whole_span,
                     })
-                } // for (typevar, literal_expression) in typevars.iter().zip(p)
+                }
+                _ => unreachable!(),
             },
             _ => {
                 let msg = format!("`{}` is not a class", ctx.name(symbol.value));
@@ -110,7 +117,6 @@ impl Infer {
             }
         }
     }
-
 
     pub(crate) fn infer_class_instantiated_literal(
         &mut self,
@@ -129,10 +135,9 @@ impl Infer {
         };
 
         match class_type {
-            Type::Generic(ref typevars, ref ty) => match **ty {
-                Type::Class(_, ref properties, ref methods, ref unique) => {
-
-                    if typevars.len() != types.len() {
+            types::Type::Generic(ref typevars, ref ty) => match **ty {
+                types::Type::Class(_, ref properties, ref methods, ref unique) => {
+                    if typevars.len() != types.value.len() {
                         let msg = format!(
                             "Found `{}` type params expected `{}`",
                             types.value.len(),
@@ -151,12 +156,12 @@ impl Infer {
 
                     for (def_property, property) in properties.iter().zip(props.into_iter()) {
                         if def_property.name == property.value.symbol.value {
-                            let line_span = property.span;
-                            let ty = self.infer_expr(property.value.expr, ctx)?;
-
-                            type_lit_expressions.push(t::ClassLiteralProperty {
-                                name: property.value.symbol.value,
-                                ty,
+                            type_lit_expressions.push(Spanned {
+                                value: t::ClassLiteralProperty {
+                                    name: property.value.symbol.value,
+                                    expr: self.infer_expr(property.value.expr, ctx)?,
+                                },
+                                span: property.span,
                             });
                         } else {
                             unknown = true;
@@ -171,27 +176,31 @@ impl Infer {
                         }
                     }
 
-                    for (type_var, exprs) in typevars.iter().zip(type_lit_expressions.iter()) {
-                        mappings.insert(*type_var, exprs.value.ty.clone());
+                    for (type_var, literal_expression) in
+                        typevars.iter().zip(type_lit_expressions.iter())
+                    {
+                        mappings.insert(*type_var, literal_expression.value.expr.value.ty.clone());
                     }
 
-                    for (mut expr, def_property) in type_lit_expressions.into_iter().zip(properties)
-                        {
-                            self.unify(
-                                &self.subst(&def_property.ty, &mut mappings),
-                                &self.subst(&expr.ty.value.ty, &mut mappings),
-                                expr.span,
-                                ctx,
-                            )?;
+                    for (mut literal_expression, def_property) in
+                        type_lit_expressions.iter_mut().zip(properties)
+                    {
+                        self.unify(
+                            &self.subst(&def_property.ty, &mut mappings),
+                            &self.subst(&literal_expression.value.expr.value.ty, &mut mappings),
+                            literal_expression.value.expr.span,
+                            ctx,
+                        )?;
 
-                            let ty = self.subst(&expr.ty.value.ty, &mut mappings);
+                        let ty = self.subst(&literal_expression.value.expr.value.ty, &mut mappings);
 
-                            expr.ty.value.ty = ty.clone();
-                            literal_types.push(types::Property {
-                                name: expr.ty.value.name,
-                                ty,
-                            });
-                        }
+                        literal_expression.value.expr.value.ty = ty.clone();
+
+                        literal_types.push(types::Property {
+                            name: literal_expression.value.name,
+                            ty,
+                        });
+                    }
 
                     if properties.len() > type_lit_expressions.len() {
                         let msg = format!("class `{}` is missing fields", ctx.name(symbol.value));
@@ -213,11 +222,18 @@ impl Infer {
                                 },
                                 span: whole_span,
                             }),
-                            ty: Type::Class(symbol.value, literal_types, methods.clone(), *unique),
+                            ty: types::Type::Class(
+                                symbol.value,
+                                literal_types,
+                                methods.clone(),
+                                *unique,
+                            ),
                         },
                         span: whole_span,
                     })
-                } // for (typevar, literal_expression) in typevars.iter().zip(p)
+                }
+
+                _ => unreachable!(), // for (typevar, literal_expression) in typevars.iter().zip(p)
             },
             _ => {
                 let msg = format!("`{}` is not a class", ctx.name(symbol.value));

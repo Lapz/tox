@@ -42,7 +42,7 @@ impl Infer {
                                     t::Expression::Var(symbol.value, target_ty.clone()),
                                     target_span,
                                 )),
-                                ty: target_ty,
+                                ty: target_ty.clone(),
                             },
                             target_span,
                         ); // the type of the target manually construted to be a type Expression
@@ -83,7 +83,7 @@ impl Infer {
 
                 let expr = self.infer_expr(target, ctx)?;
 
-                match &expr.value.ty {
+                match expr.value.ty.clone() {
                     Type::App(TypeCon::Array(ref ty), _) => (
                         Spanned::new(t::Expression::Index(expr, index_ty), whole_span),
                         *ty.clone(),

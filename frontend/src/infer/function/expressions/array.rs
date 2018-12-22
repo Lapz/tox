@@ -9,7 +9,7 @@ use util::pos::{Span, Spanned};
 impl Infer {
     pub(crate) fn infer_array(
         &mut self,
-        items: Vec<Spanned<Expression>>,
+        mut items: Vec<Spanned<Expression>>,
         span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {

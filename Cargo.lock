@@ -171,16 +171,6 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "interpreter"
-version = "0.1.0"
-dependencies = [
- "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.3.22 (registry+https://github.com/rust-lang/crates.io-index)",
- "syntax 0.1.0",
- "util 0.1.0",
-]
-
-[[package]]
 name = "itertools"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -442,7 +442,7 @@ impl<'a> Parser<'a> {
 *  ***********************
 */
 impl<'a> Parser<'a> {
-    fn parse_function(&mut self, kind: &str) -> ParserResult<Spanned<Function>> {
+    fn parse_function(&mut self, _kind: &str) -> ParserResult<Spanned<Function>> {
         let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'function' ")?;
 
         let name = self.parse_item_name()?;

@@ -33,7 +33,7 @@ impl<'a> CompileCtx<'a> {
         let mut vars = Symbols::new(Rc::clone(strings));
 
         {
-            let mut add_builtin = |name: &str, params: Vec<Type>, returns: Type| {
+            let mut add_builtin = |name: &str, mut params: Vec<Type>, returns: Type| {
                 let symbol = vars.symbol(name);
                 params.push(returns);
                 vars.enter(

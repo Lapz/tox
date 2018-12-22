@@ -517,30 +517,25 @@ impl<'a> Builder<'a> {
                     self.compile_expression(arg)?;
                 }
 
-                match expr.value.ty {
-                    Type::Fun(_, _, true) => {
-                        self.emit_byte(opcode::CALLCLOSURE);
-                        self.emit_byte(args.len() as u8);
-                    }
-                    _ => {
-                        self.emit_bytes(opcode::CALL, callee.0 as u8);
-                        self.emit_byte(args.len() as u8);
-                    }
-                }
+                self.emit_bytes(opcode::CALL, callee.0 as u8);
+                self.emit_byte(args.len() as u8)
             }
 
-            Expression::ClassInstance(ref symbol, ref properties) => {
-                for (_, expr) in properties.iter().rev() {
+            Expression::ClassLiteral {
+                ref symbol,
+                ref properties,
+            } => {
+                for property in properties.iter().rev() {
                     //rev because poped of stack
-                    self.compile_expression(expr)?;
+                    self.compile_expression(&property.value.expr)?;
                 }
 
                 self.emit_bytes(opcode::CLASSINSTANCE, symbol.0 as u8);
                 self.emit_byte(properties.len() as u8);
 
-                for (ident, _) in properties.iter().rev() {
+                for property in properties.iter().rev() {
                     //rev because poped of stack
-                    self.emit_byte(ident.0 as u8);
+                    self.emit_byte(property.value.name.0 as u8);
                 }
             }
 

@@ -25,8 +25,8 @@ impl Infer {
             poly_tvs.push(tv);
         }
 
-        let mut param_types = Vec::with_capacity(function.value.params.value.len());
-        let mut params = Vec::with_capacity(function.value.params.value.len());
+        let mut param_types: Vec<t::FunctionParam> =
+            Vec::with_capacity(function.value.params.value.len());
 
         let returns = if let Some(ref ty) = function.value.returns {
             self.trans_type(&ty, ctx)?

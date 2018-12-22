@@ -114,7 +114,7 @@ pub fn run(path: String) {
         ::std::process::exit(0)
     }
 
-    let mut reporter = Reporter::new();
+    let reporter = Reporter::new();
 
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));

@@ -73,7 +73,7 @@ pub enum Statement {
 #[derive(Debug, Clone)]
 pub struct ClassLiteralProperty {
     pub name: Symbol,
-    pub ty: Spanned<TypedExpression>,
+    pub expr: Spanned<TypedExpression>,
 }
 
 #[derive(Debug, Clone)]

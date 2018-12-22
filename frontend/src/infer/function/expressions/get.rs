@@ -17,7 +17,7 @@ impl Infer {
     ) -> InferResult<Spanned<t::TypedExpression>> {
         let class_instance = self.infer_expr(object, ctx)?;
 
-        match class_instance.value.ty {
+        match class_instance.value.ty.clone() {
             Type::Class(ref class_name, ref propertys, ref methods, _) => {
                 for property_type in propertys {
                     if property_type.name == property.value {

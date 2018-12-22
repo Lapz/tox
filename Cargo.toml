@@ -2,7 +2,7 @@
 members = [
     "syntax",
     "frontend",
-    "interpreter",
+    # "interpreter",
     "util",
     "opcode",
     "tox",
