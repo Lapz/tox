@@ -2,10 +2,10 @@
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
 use infer::types::{Type, TypeCon};
+use std::collections::HashMap;
 use syntax::ast::Type as astType;
 use util::pos::Spanned;
 use util::symbol::Symbol;
-use std::collections::HashMap;
 impl Infer {
     pub(crate) fn trans_type(
         &self,
@@ -75,7 +75,12 @@ impl Infer {
                                 ::std::mem::swap(&mut field.ty, &mut ty);
                             }
 
-                            Ok(Type::Class(symbol.value, fields.clone(), methods.clone(),unique))
+                            Ok(Type::Class(
+                                symbol.value,
+                                fields.clone(),
+                                methods.clone(),
+                                unique,
+                            ))
                         }
                         _ => unreachable!(), // Polymorphic functions are not stored as types they are stored as vars
                     },
@@ -85,8 +90,6 @@ impl Infer {
                         Err(())
                     }
                 }
-
-                
             }
         }
     }

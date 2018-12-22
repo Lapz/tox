@@ -69,7 +69,7 @@ impl Infer {
                                                 ),
                                                 whole_span,
                                             )),
-                                            ty:method_type.ty.clone(),
+                                            ty: method_type.ty.clone(),
                                         },
                                         whole_span,
                                     ));

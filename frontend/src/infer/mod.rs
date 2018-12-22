@@ -58,6 +58,7 @@ impl Infer {
             new_program
                 .functions
                 .push(self.infer_function(function, &mut ctx)?);
+            self.body = types::Type::Nil; // resets the body for the next run
         }
 
         if self.main.is_none() {

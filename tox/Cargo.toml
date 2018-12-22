@@ -10,7 +10,7 @@ default = []
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
-# frontend = {path = "../frontend"}
+frontend = {path = "../frontend"}
 # interpreter = {path ="../interpreter"}
 # vm = {path="../vm"}
 structopt = "0.1.6"

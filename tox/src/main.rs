@@ -1,5 +1,5 @@
 extern crate fnv;
-// extern crate frontend;
+extern crate frontend;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
@@ -10,7 +10,7 @@ extern crate util;
 
 mod repl;
 
-// use frontend::{compile, Infer};
+use frontend::{compile, Infer};
 // use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
@@ -114,7 +114,7 @@ pub fn run(path: String) {
         ::std::process::exit(0)
     }
 
-    let reporter = Reporter::new();
+    let mut reporter = Reporter::new();
 
     let strings = Rc::new(SymbolFactory::new());
     let mut symbols = Symbols::new(Rc::clone(&strings));
@@ -127,18 +127,16 @@ pub fn run(path: String) {
         }
     };
 
-    println!("{:#?}", ast);
+    let mut infer = Infer::new();
 
-    // let mut infer = Infer::new();
+    let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
+        Ok(ast) => ast,
+        Err(_) => {
+            reporter.emit(input);
 
-    // let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
-    //     Ok(ast) => ast,
-    //     Err(_) => {
-    //         reporter.emit(input);
-
-    //         ::std::process::exit(65)
-    //     }
-    // };
+            ::std::process::exit(65)
+        }
+    };
 
     // let (program, objects) = match compile(&typed_ast, &mut reporter) {
     //     Ok(functions) => functions,

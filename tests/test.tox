@@ -1,10 +1,7 @@
-class List<T> {
-  head:T,
-  tail:List<T>;
+fn id<T>(t:T) -> T {
+  return t;
 }
 
 fn main() {
-  let foo = id::<i32>(10);
-  print(foo.a); // expect:1
-  print(foo.b); // expect:2
+  let foo = id(10);
 }

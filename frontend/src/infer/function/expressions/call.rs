@@ -5,8 +5,7 @@ use infer::types::{self, Property, TypeCon, TypeVar};
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::{
-    AssignOperator, ClassLiteralField, Expression, Function, Literal, Op, Type, UnaryOp,
-    Call
+    AssignOperator, Call, ClassLiteralField, Expression, Function, Literal, Op, Type, UnaryOp,
 };
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
@@ -24,10 +23,12 @@ impl Infer {
                 let whole_span = call.span;
 
                 match call.value {
-                    Call::Simple {callee,args} => self.infer_call(*callee,args,whole_span,ctx),
-                    _ => unimplemented!()
+                    Call::Simple { callee, args } => {
+                        self.infer_call(*callee, args, whole_span, ctx)
+                    }
+                    _ => unimplemented!(),
                 }
-            },
+            }
             Expression::Var(ref symbol) => {
                 let func = if let Some(func) = ctx.look_var(symbol.value).cloned() {
                     func
@@ -85,7 +86,8 @@ impl Infer {
                                 }
                             }
 
-                            for (call_expression, def_type) in arg_types.iter_mut().zip(func_types) {
+                            for (call_expression, def_type) in arg_types.iter_mut().zip(func_types)
+                            {
                                 self.unify(
                                     &self.subst(def_type, &mut mappings),
                                     &self.subst(&call_expression.value.ty, &mut mappings),

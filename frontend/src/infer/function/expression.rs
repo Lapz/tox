@@ -106,9 +106,7 @@ impl Infer {
                 }
             }
 
-            Expression::Grouping { expr:inner } => {
-                self.infer_grouping(*inner, expr.span, ctx)
-            },
+            Expression::Grouping { expr: inner } => self.infer_grouping(*inner, expr.span, ctx),
 
             Expression::Get { object, property } => {
                 self.infer_get(*object, property, expr.span, ctx)

@@ -156,7 +156,7 @@ impl Type {
 
             Type::Nil => "nil".into(),
 
-            Type::Var(ref v) => "{{integer}}".into(),
+            Type::Var(ref v) => format!("{{T:{}}}", v),
         }
     }
 }
