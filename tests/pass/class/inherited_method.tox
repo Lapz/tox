@@ -4,14 +4,14 @@ class Foo {
   }
 }
 
-class Bar < Foo {
+class Bar extends Foo {
   fn inBar() {
     print("in bar");
     
   }
 }
 
-class Baz < Bar {
+class Baz extends Bar {
   fn init() -> Baz {
     return Baz {};
   }

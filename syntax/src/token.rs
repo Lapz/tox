@@ -74,6 +74,8 @@ impl<'a> Display for TokenType<'a> {
             TokenType::AND => write!(f, "and"),
             TokenType::OR => write!(f, "or"),
             TokenType::NIL => write!(f, "nil"),
+            TokenType::MATCH => write!(f,"match"),
+            TokenType::EXTENDS => write!(f,"case"),
         }
     }
 }
@@ -138,6 +140,8 @@ pub enum TokenType<'a> {
     FALSE(bool),
     PRINT,
     CLASS,
+    MATCH,
+    EXTENDS,
 
     FOR,
     WHILE,

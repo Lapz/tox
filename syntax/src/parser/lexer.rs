@@ -352,8 +352,8 @@ fn look_up_identifier(id: &str) -> TokenType {
     match id {
         // Class
         "class" => TokenType::CLASS,
+        "extends" => TokenType::EXTENDS,
         "print" => TokenType::PRINT,
-
         "type" => TokenType::TYPE,
         // Functions and vars
         "fn" => TokenType::FUNCTION,

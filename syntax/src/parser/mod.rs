@@ -1303,7 +1303,7 @@ impl<'a> Parser<'a> {
 
         let name = self.parse_item_name()?;
 
-        let superclass = if self.recognise(TokenType::LESSTHAN) {
+        let superclass = if self.recognise(TokenType::EXTENDS) {
             self.next()?;
             Some(self.consume_get_symbol("Expected a superclass name")?)
         } else {
