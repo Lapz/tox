@@ -1,4 +1,3 @@
-use super::env::VarType;
 use super::types::{Type, TypeVar};
 use ctx::CompileCtx;
 use infer::{Infer, InferResult};

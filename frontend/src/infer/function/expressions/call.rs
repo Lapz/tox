@@ -1,14 +1,10 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::env::VarEntry;
-use infer::types::{self, Property, TypeCon, TypeVar};
+use infer::types;
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
-use syntax::ast::{
-    AssignOperator, Call, ClassLiteralField, Expression, Function, Literal, Op, Type, UnaryOp,
-};
+use syntax::ast::{Call, Expression, Type};
 use util::pos::{Span, Spanned};
-use util::symbol::Symbol;
 
 impl Infer {
     pub(crate) fn infer_call(

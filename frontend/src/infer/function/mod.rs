@@ -25,9 +25,6 @@ impl Infer {
             poly_tvs.push(tv);
         }
 
-        let mut param_types: Vec<t::FunctionParam> =
-            Vec::with_capacity(function.value.params.value.len());
-
         let returns = if let Some(ref ty) = function.value.returns {
             self.trans_type(&ty, ctx)?
         } else {
@@ -69,7 +66,7 @@ impl Infer {
         let mut body = self.infer_statement(function.value.body, ctx)?;
 
         ctx.end_scope();
-        println!("{:?}",self.body );
+
         self.unify(&returns, &self.body, span, ctx)?;
 
         if &ctx.name(function.value.name.value.name.value) == "main" {
@@ -110,6 +107,8 @@ impl Infer {
                 _ => (),
             }
         } // AUTO INSERT RETURN
+
+        self.body = Type::Nil; // fixes a bug that i dont what caueses
 
         Ok(t::Function {
             name: function.value.name.value.name.value,

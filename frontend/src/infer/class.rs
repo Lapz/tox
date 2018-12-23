@@ -1,9 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::env::VarEntry;
+
 use infer::types::{Method, Property, Type, TypeCon, TypeVar, Unique};
 use infer::{Infer, InferResult};
-use std::collections::HashMap;
 use syntax::ast::Class;
 use util::pos::Spanned;
 
@@ -41,7 +40,6 @@ impl Infer {
         ); // For recursive types we need to add the empty struct
 
         let mut property_types = Vec::with_capacity(class.value.fields.len());
-        let mut properties = Vec::with_capacity(class.value.fields.len());
 
         let mut methods_types = Vec::with_capacity(class.value.methods.len());
         let mut methods = Vec::with_capacity(class.value.methods.len());
@@ -66,7 +64,7 @@ impl Infer {
 
             methods_types.push(Method {
                 name: fun.name,
-                ty: Type::Generic(vec![],Box::new(Type::App(TypeCon::Arrow, types))),
+                ty: Type::Generic(vec![], Box::new(Type::App(TypeCon::Arrow, types))),
             });
 
             methods.push(fun);
@@ -91,7 +89,7 @@ impl Infer {
             name: class.value.name.value.name.value,
             superclass: class.value.superclass,
             methods,
-            properties,
+            properties: property_types,
         })
     }
 }

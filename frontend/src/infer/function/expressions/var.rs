@@ -1,9 +1,6 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::env::VarEntry;
-use infer::types::{Type, TypeCon, TypeVar};
 use infer::{Infer, InferResult};
-use syntax::ast::{AssignOperator, Expression, Function, Literal, Op, UnaryOp};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 

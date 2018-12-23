@@ -3,13 +3,6 @@
 
 use infer::types::Type;
 
-/// A typed variable mapped to a var of a number i.e int | float or otherwise
-#[derive(Debug, Clone, PartialEq)]
-pub enum VarType {
-    Number,
-    Other,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum VarEntry {
     Var(Type),

@@ -1,6 +1,6 @@
-use infer::env::{VarEntry, VarType};
-use infer::types::{Type, TypeCon, TypeVar, Unique};
-use std::collections::HashMap;
+use infer::env::VarEntry;
+use infer::types::{Type, TypeCon};
+
 use std::rc::Rc;
 use util::emmiter::Reporter;
 use util::pos::Span;

@@ -1,7 +1,6 @@
 //! This module provides the types that are used throughout tox for the typeChecking
 
 use ctx::CompileCtx;
-use std::collections::HashMap;
 use std::fmt::{self, Display};
 use util::symbol::Symbol;
 

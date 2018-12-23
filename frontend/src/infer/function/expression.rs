@@ -1,10 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::env::VarEntry;
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
-
-use syntax::ast::{Call, ClassLiteral, Expression, Literal, Op, UnaryOp};
+use syntax::ast::{Call, ClassLiteral, Expression};
 use util::pos::Spanned;
 
 impl Infer {
@@ -14,7 +11,7 @@ impl Infer {
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
         match expr.value {
-            Expression::Array { mut items } => self.infer_array(items, expr.span, ctx),
+            Expression::Array { items } => self.infer_array(items, expr.span, ctx),
 
             Expression::Assign {
                 name, kind, value, ..
@@ -120,7 +117,7 @@ impl Infer {
                 self.infer_subscript(*target, *index, expr.span, ctx)
             }
 
-            Expression::Literal(literal) => self.infer_literal(literal, expr.span, ctx),
+            Expression::Literal(literal) => self.infer_literal(literal, expr.span),
 
             Expression::Set {
                 object,
@@ -142,139 +139,6 @@ impl Infer {
         }
     }
 
-    // fn call(
-    //     &mut self,
-    //     call: Spanned<Expression>,
-    //     ctx: &mut CompileCtx,
-    // ) -> InferResult<(Spanned<t::Expression>, Type)> {
-    //     match call.value {
-    //         Expression::Call { callee, args } => match callee.value {
-    //             Expression::Call { .. } => return self.infer_call(*callee, ctx),
-    //             Expression::Var(ref sym) => {
-    //                 if let Some(ty) = ctx.look_var(sym.value).cloned() {
-    //                     let ty = ty.get_ty();
-
-    //                     match ty {
-    //                         Type::Fun(ref targs, ref ret, ref is_closure) => {
-    //                             if args.len() != targs.len() {
-    //                                 let msg = format!(
-    //                                     "Expected `{}` args found `{}` ",
-    //                                     targs.len(),
-    //                                     args.len()
-    //                                 );
-    //                                 ctx.error(msg, call.span);
-    //                                 return Err(());
-    //                             }
-
-    //                             let mut callee_exprs = Vec::with_capacity(args.len());
-
-    //                             for (arg, param_type) in args.into_iter().zip(targs) {
-    //                                 let span = arg.span;
-    //                                 let ty_expr = self.infer_expr(arg, ctx)?;
-
-    //                                 self.unify(param_type, &ty_expr.value.ty, span, ctx)?;
-
-    //                                 callee_exprs.push(ty_expr)
-    //                             }
-
-    //                             Ok((
-    //                                 Spanned::new(
-    //                                     t::Expression::Call(sym.value, callee_exprs),
-    //                                     call.span,
-    //                                 ),
-    //                                 if *is_closure {
-    //                                     ty.clone()
-    //                                 } else {
-    //                                     *ret.clone()
-    //                                 },
-    //                             ))
-    //                         }
-
-    //                         _ => {
-    //                             let msg = format!("`{}` is not callable", ctx.name(sym.value));
-
-    //                             ctx.error(msg, callee.span);
-
-    //                             return Err(());
-    //                         }
-    //                     }
-    //                 } else {
-    //                     let msg = format!("Undefined variable '{}' ", ctx.name(sym.value));
-    //                     ctx.error(msg, sym.span);
-    //                     return Err(());
-    //                 }
-    //             }
-
-    //             Expression::Get { .. } => {
-    //                 let (callee, ty) = self.infer_object_get(*callee, ctx)?;
-
-    //                 match ty {
-    //                     Type::Fun(ref param_types, ref returns, _) => {
-    //                         if args.len() != param_types.len() {
-    //                             let msg = format!(
-    //                                 "Expected `{}` args found `{}` ",
-    //                                 param_types.len(),
-    //                                 args.len()
-    //                             );
-    //                             ctx.error(msg, call.span);
-    //                             return Err(());
-    //                         }
-
-    //                         let mut callee_exprs = Vec::with_capacity(args.len());
-
-    //                         for (arg, param_type) in args.into_iter().zip(param_types) {
-    //                             let span = arg.span;
-    //                             let ty_expr = self.infer_expr(arg, ctx)?;
-
-    //                             self.unify(param_type, &ty_expr.value.ty, span, ctx)?;
-
-    //                             callee_exprs.push(ty_expr)
-    //                         }
-
-    //                         match callee.value {
-    //                             t::Expression::GetMethod {
-    //                                 method_name,
-    //                                 method,
-    //                             } => match method.value.expr.value {
-    //                                 t::Expression::Var(_, Type::Class(klass_name, _, _, _)) => {
-    //                                     // type inference returns the type of the main classs
-    //                                     Ok((
-    //                                         Spanned::new(
-    //                                             t::Expression::StaticMethodCall {
-    //                                                 class_name: klass_name,
-    //                                                 method_name,
-    //                                                 params: callee_exprs,
-    //                                             },
-    //                                             call.span,
-    //                                         ),
-    //                                         *returns.clone(),
-    //                                     ))
-    //                                 }
-
-    //                                 _ => Ok((
-    //                                     Spanned::new(
-    //                                         t::Expression::InstanceMethodCall {
-    //                                             method_name,
-    //                                             instance: method,
-    //                                             params: callee_exprs,
-    //                                         },
-    //                                         call.span,
-    //                                     ),
-    //                                     *returns.clone(),
-    //                                 )),
-    //                             },
-
-    //                             _ => unreachable!(),
-    //                         }
-    //                     }
-
-    //                     _ => {
-    //                         let msg = format!("Type {} is not callable", ty.print(ctx));
-    //                         ctx.error(msg, callee.span);
-    //                         return Err(());
-    //                     }
-    //                 }
-    //             }
     //             Expression::Closure(function) => {
     //                 let returns = if let Some(ref ty) = function.value.returns {
     //                     self.trans_type(&ty, ctx)?
