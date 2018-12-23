@@ -63,7 +63,10 @@ fn main() {
 
 [] Implement nested ~~for~~ while loops
 [x] Improve documentation
-[x] Fix variable scopes
+[x] Fix variable scope
+[ ] Readd inherited methods
+[ ] Finish the work on generic function calls
+[ ] Readd typechecking of closures
  
 
 
