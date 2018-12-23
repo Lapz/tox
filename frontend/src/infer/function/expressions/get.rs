@@ -18,51 +18,60 @@ impl Infer {
 
         match class_instance.value.ty.clone() {
             Type::Generic(_, ref ty) => match **ty {
-                Type::Class(ref class_name, ref propertys, ref methods, _) => {
-                    for property_type in propertys {
-                        if property_type.name == property.value {
-                            return Ok(Spanned::new(
-                                t::TypedExpression {
-                                    expr: Box::new(Spanned::new(
-                                        t::Expression::GetProperty {
-                                            property_name: property.value,
-                                            property: class_instance,
-                                        },
-                                        whole_span,
-                                    )),
-                                    ty: property_type.ty.clone(),
-                                },
-                                whole_span,
-                            ));
-                        }
+                Type::Class(ref class_name, _, _, _) => {
+                    match ctx.look_type(*class_name).unwrap().clone() { // We look at the canical type within the environment due to constructor functions not having  the right type informantion as methods are missing
+                        Type::Generic(_, ref ty) => match **ty {
+                            Type::Class(_, ref propertys, ref methods, _) => {
+                                for property_type in propertys {
+                                    if property_type.name == property.value {
+                                        return Ok(Spanned::new(
+                                            t::TypedExpression {
+                                                expr: Box::new(Spanned::new(
+                                                    t::Expression::GetProperty {
+                                                        property_name: property.value,
+                                                        property: class_instance,
+                                                    },
+                                                    whole_span,
+                                                )),
+                                                ty: property_type.ty.clone(),
+                                            },
+                                            whole_span,
+                                        ));
+                                    }
+                                }
+
+                                for method_type in methods {
+                                    if method_type.name == property.value {
+                                        return Ok(Spanned::new(
+                                            t::TypedExpression {
+                                                expr: Box::new(Spanned::new(
+                                                    t::Expression::GetMethod {
+                                                        method_name: property.value,
+                                                        method: class_instance,
+                                                    },
+                                                    whole_span,
+                                                )),
+                                                ty: method_type.ty.clone(),
+                                            },
+                                            whole_span,
+                                        ));
+                                    }
+                                }
+
+                                let msg = format!(
+                                    "class `{}` doesn't have a field/method named `{}`",
+                                    ctx.name(*class_name),
+                                    ctx.name(property.value)
+                                );
+
+                                ctx.error(msg, whole_span);
+                                Err(())
+                            }
+                            _ => unreachable!(),
+                        },
+
+                        _ => unreachable!()
                     }
-
-                    for method_type in methods {
-                        if method_type.name == property.value {
-                            return Ok(Spanned::new(
-                                t::TypedExpression {
-                                    expr: Box::new(Spanned::new(
-                                        t::Expression::GetMethod {
-                                            method_name: property.value,
-                                            method: class_instance,
-                                        },
-                                        whole_span,
-                                    )),
-                                    ty: method_type.ty.clone(),
-                                },
-                                whole_span,
-                            ));
-                        }
-                    }
-
-                    let msg = format!(
-                        "class `{}` doesn't have a field/method named `{}`",
-                        ctx.name(*class_name),
-                        ctx.name(property.value)
-                    );
-
-                    ctx.error(msg, whole_span);
-                    Err(())
                 }
 
                 ref err_type => {

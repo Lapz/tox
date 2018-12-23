@@ -26,22 +26,57 @@ impl Infer {
 
         let unique = Unique::new();
 
+        let mut property_types = Vec::with_capacity(class.value.fields.len());
+
+        let mut methods_types = Vec::with_capacity(class.value.methods.len());
+
+        if let Some(ref super_class) = class.value.superclass {
+            if let Some(ref ty) = ctx.look_type(super_class.value).cloned() {
+                match ty {
+                    Type::Generic(_, ref ty) => match **ty {
+                        Type::Class(_, ref properties, ref methods, _) => {
+                            property_types.extend(properties.clone().into_iter());
+                            methods_types.extend(methods.clone().into_iter());
+                        }
+                        _ => {
+                            let msg = format!("The type `{}` is not inheritable.", ty.print(ctx));
+
+                            ctx.error(msg, super_class.span);
+                            return Err(());
+                        }
+                    },
+
+                    _ => {
+                        let msg = format!("The type `{}` is not inheritable.", ty.print(ctx));
+
+                        ctx.error(msg, super_class.span);
+                        return Err(());
+                    }
+                }
+            } else {
+                let msg = format!(
+                    "`{}` is not a inheritable class",
+                    ctx.name(super_class.value)
+                );
+
+                ctx.error(msg, super_class.span);
+                return Err(());
+            }
+        }
+
         ctx.add_type(
             class.value.name.value.name.value,
             Type::Generic(
                 generic_type_vars.clone(),
                 Box::new(Type::Class(
                     class.value.name.value.name.value,
-                    vec![],
-                    vec![],
+                    property_types.clone(),
+                    methods_types.clone(),
                     unique,
                 )),
             ),
         ); // For recursive types we need to add the empty struct
 
-        let mut property_types = Vec::with_capacity(class.value.fields.len());
-
-        let mut methods_types = Vec::with_capacity(class.value.methods.len());
         let mut methods = Vec::with_capacity(class.value.methods.len());
 
         for property in class.value.fields.iter() {
@@ -71,7 +106,6 @@ impl Infer {
         }
 
         ctx.end_scope();
-
         ctx.add_type(
             class.value.name.value.name.value,
             Type::Generic(
