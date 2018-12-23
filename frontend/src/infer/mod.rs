@@ -20,7 +20,7 @@ use util::symbol::Symbol;
 pub struct Infer {
     body: types::Type,
     main: Option<Symbol>,
-    // resolver: self::resolver::Resolver,
+
 }
 
 impl Infer {
@@ -28,7 +28,6 @@ impl Infer {
         Self {
             body: self::types::Type::Nil,
             main: None,
-            // resolver: self::resolver::Resolver::new(),
         }
     }
 

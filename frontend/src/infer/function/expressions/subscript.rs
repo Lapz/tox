@@ -22,7 +22,7 @@ impl Infer {
         // we can index string i.e "abc"[0]
         // or we can index var i.e a[10];
         // thats why we check for vars
-        match target.value {
+        let (expr,ty) = match target.value {
             Expression::Var(symbol) => {
                 let target_ty = self.infer_symbol_type(&symbol, ctx)?;
 
@@ -95,6 +95,14 @@ impl Infer {
                 }
             }
         };
-        unimplemented!()
+         
+        Ok(Spanned {
+            value:t::TypedExpression {
+                expr:Box::new(expr),
+                ty
+            },
+            span:whole_span
+        })
+        
     }
 }
