@@ -6,7 +6,7 @@ extern crate structopt_derive;
 // extern crate interpreter;
 extern crate syntax;
 extern crate util;
-// extern crate vm;
+extern crate vm;
 
 mod repl;
 
@@ -19,7 +19,7 @@ use structopt::StructOpt;
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
-// use vm::VM;
+use vm::VM;
 
 fn main() {
     let opts = Cli::from_args();
@@ -138,16 +138,16 @@ pub fn run(path: String) {
         }
     };
 
-    // let (program, objects) = match compile(&typed_ast, &mut reporter) {
-    //     Ok(functions) => functions,
-    //     Err(_) => {
-    //         reporter.emit(input);
-    //         ::std::process::exit(65)
-    //     }
-    // };
+    let (program, objects) = match compile(&typed_ast, &mut reporter) {
+        Ok(functions) => functions,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
-    // let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-    // vm.run();
+    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+    vm.run();
 }
 
 #[derive(StructOpt, Debug)]

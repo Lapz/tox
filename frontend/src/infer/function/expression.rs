@@ -28,7 +28,11 @@ impl Infer {
                     Call::Simple { args, callee } => {
                         self.infer_call(*callee, args, whole_span, ctx)
                     }
-                    _ => unimplemented!(),
+                    Call::Instantiation {
+                        types,
+                        callee,
+                        args,
+                    } => self.infer_call_instantiated(*callee, args, types, whole_span, ctx),
                 }
             }
 

@@ -101,11 +101,14 @@ impl Infer {
     ) -> InferResult<Type> {
         match ctx.look_var(symbol.value).cloned() {
             Some(ty) => return Ok(ty.clone().get_ty()),
-            None => {
-                let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
-                ctx.error(msg, symbol.span);
-                Err(())
-            }
+            None => match ctx.look_type(symbol.value).cloned() {
+                Some(ty) => return Ok(ty.clone()),
+                None => {
+                    let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
+                    ctx.error(msg, symbol.span);
+                    Err(())
+                }
+            },
         }
     }
 }

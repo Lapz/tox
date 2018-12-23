@@ -69,7 +69,7 @@ impl Infer {
         let mut body = self.infer_statement(function.value.body, ctx)?;
 
         ctx.end_scope();
-
+        println!("{:?}",self.body );
         self.unify(&returns, &self.body, span, ctx)?;
 
         if &ctx.name(function.value.name.value.name.value) == "main" {

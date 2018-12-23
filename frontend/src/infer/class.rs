@@ -66,7 +66,7 @@ impl Infer {
 
             methods_types.push(Method {
                 name: fun.name,
-                ty: Type::App(TypeCon::Arrow, types),
+                ty: Type::Generic(vec![],Box::new(Type::App(TypeCon::Arrow, types))),
             });
 
             methods.push(fun);

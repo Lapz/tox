@@ -600,6 +600,7 @@ dependencies = [
  "syntax 0.1.0",
  "tempfile 3.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "util 0.1.0",
+ "vm 0.1.0",
  "walkdir 2.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

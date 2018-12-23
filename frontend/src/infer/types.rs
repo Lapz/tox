@@ -120,34 +120,38 @@ impl Type {
 
             Type::Class(ref name, ref properties, _, _) => {
                 let mut fmt_string = String::new();
-                fmt_string.push_str(&format!("{}<", ctx.name(*name)));
+                fmt_string.push_str(&format!("{}", ctx.name(*name)));
 
-                for (i, field) in properties.iter().enumerate() {
-                    if i + 1 == properties.len() {
-                        fmt_string.push_str(&format!("{}", field.ty.print(ctx)));
-                    } else {
-                        fmt_string.push_str(&format!("{},", field.ty.print(ctx)));
+                if !properties.is_empty() {
+                    fmt_string.push('<');
+                    for (i, field) in properties.iter().enumerate() {
+                        if i + 1 == properties.len() {
+                            fmt_string.push_str(&format!("{}", field.ty.print(ctx)));
+                        } else {
+                            fmt_string.push_str(&format!("{},", field.ty.print(ctx)));
+                        }
                     }
                 }
-
-                fmt_string.push('>');
 
                 fmt_string
             }
 
             Type::Generic(ref vars, ref ret) => {
                 let mut fmt_string = String::new();
-                fmt_string.push_str("poly<");
+                fmt_string.push_str("poly ");
 
-                for (i, var) in vars.iter().enumerate() {
-                    if i + 1 == vars.len() {
-                        fmt_string.push(var.0 as u8 as char);
-                    } else {
-                        fmt_string.push_str(&format!("{},", var.0 as u8 as char));
+                if !vars.is_empty() {
+                    fmt_string.push('<');
+                    for (i, var) in vars.iter().enumerate() {
+                        if i + 1 == vars.len() {
+                            fmt_string.push(var.0 as u8 as char);
+                        } else {
+                            fmt_string.push_str(&format!("{},", var.0 as u8 as char));
+                        }
                     }
-                }
 
-                fmt_string.push('>');
+                    fmt_string.push('>');
+                }
 
                 fmt_string.push_str(&ret.print(ctx));
 
@@ -209,21 +213,39 @@ impl Display for Type {
             }
 
             Type::Class(ref name, ref fields, _, _) => {
-                write!(f, "{}<", name)?;
+                write!(f, "{}", name)?;
 
-                for (i, field) in fields.iter().enumerate() {
-                    if i + 1 == fields.len() {
-                        write!(f, "{}", field.ty)?;
-                    } else {
-                        write!(f, "{},", field.ty)?;
+                if !fields.is_empty() {
+                    write!(f, "<")?;
+                    for (i, field) in fields.iter().enumerate() {
+                        if i + 1 == fields.len() {
+                            write!(f, "{}", field.ty)?;
+                        } else {
+                            write!(f, "{},", field.ty)?;
+                        }
                     }
+
+                    write!(f, ">")?;
                 }
 
-                write!(f, ">")
+                Ok(())
             }
 
             Type::Generic(ref vars, ref ret) => {
-                write!(f, "poly <")?;
+                write!(f, "poly")?;
+
+                if !vars.is_empty() {
+                    write!(f, "<")?;
+                    for (i, var) in vars.iter().enumerate() {
+                        if i + 1 == vars.len() {
+                            write!(f, "{}", var)?;
+                        } else {
+                            write!(f, "{},", var)?;
+                        }
+                    }
+
+                    write!(f, ">")?;
+                }
 
                 for (i, var) in vars.iter().enumerate() {
                     if i + 1 == vars.len() {

@@ -18,52 +18,65 @@ impl Infer {
         let class_instance = self.infer_expr(object, ctx)?;
 
         match class_instance.value.ty.clone() {
-            Type::Class(ref class_name, ref propertys, ref methods, _) => {
-                for property_type in propertys {
-                    if property_type.name == property.value {
-                        return Ok(Spanned::new(
-                            t::TypedExpression {
-                                expr: Box::new(Spanned::new(
-                                    t::Expression::GetProperty {
-                                        property_name: property.value,
-                                        property: class_instance,
-                                    },
-                                    whole_span,
-                                )),
-                                ty: property_type.ty.clone(),
-                            },
-                            whole_span,
-                        ));
+            Type::Generic(_, ref ty) => match **ty {
+                Type::Class(ref class_name, ref propertys, ref methods, _) => {
+                    for property_type in propertys {
+                        if property_type.name == property.value {
+                            return Ok(Spanned::new(
+                                t::TypedExpression {
+                                    expr: Box::new(Spanned::new(
+                                        t::Expression::GetProperty {
+                                            property_name: property.value,
+                                            property: class_instance,
+                                        },
+                                        whole_span,
+                                    )),
+                                    ty: property_type.ty.clone(),
+                                },
+                                whole_span,
+                            ));
+                        }
                     }
+
+                    for method_type in methods {
+                        if method_type.name == property.value {
+                            return Ok(Spanned::new(
+                                t::TypedExpression {
+                                    expr: Box::new(Spanned::new(
+                                        t::Expression::GetMethod {
+                                            method_name: property.value,
+                                            method: class_instance,
+                                        },
+                                        whole_span,
+                                    )),
+                                    ty: method_type.ty.clone(),
+                                },
+                                whole_span,
+                            ));
+                        }
+                    }
+
+                    let msg = format!(
+                        "class `{}` doesn't have a field/method named `{}`",
+                        ctx.name(*class_name),
+                        ctx.name(property.value)
+                    );
+
+                    ctx.error(msg, whole_span);
+                    Err(())
                 }
 
-                for method_type in methods {
-                    if method_type.name == property.value {
-                        return Ok(Spanned::new(
-                            t::TypedExpression {
-                                expr: Box::new(Spanned::new(
-                                    t::Expression::GetMethod {
-                                        method_name: property.value,
-                                        method: class_instance,
-                                    },
-                                    whole_span,
-                                )),
-                                ty: method_type.ty.clone(),
-                            },
-                            whole_span,
-                        ));
-                    }
+                ref err_type => {
+                    let msg = format!(
+                        "Type {} dosen't have the method/field {}",
+                        err_type.print(ctx),
+                        ctx.name(property.value)
+                    );
+
+                    ctx.error(msg, whole_span);
+                    Err(())
                 }
-
-                let msg = format!(
-                    "class `{}` doesn't have a field/method named `{}`",
-                    ctx.name(*class_name),
-                    ctx.name(property.value)
-                );
-
-                ctx.error(msg, whole_span);
-                Err(())
-            }
+            },
 
             ref err_type => {
                 let msg = format!(

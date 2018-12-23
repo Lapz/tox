@@ -150,9 +150,14 @@ impl Infer {
                     }
 
                     let mut mappings = HashMap::new();
+
                     let mut type_lit_expressions = Vec::new();
                     let mut literal_types = Vec::new();
                     let mut unknown = false;
+
+                    for (ty, type_var) in types.value.into_iter().zip(typevars.iter()) {
+                        mappings.insert(*type_var, self.trans_type(&ty, ctx)?);
+                    }
 
                     for (def_property, property) in properties.iter().zip(props.into_iter()) {
                         if def_property.name == property.value.symbol.value {
