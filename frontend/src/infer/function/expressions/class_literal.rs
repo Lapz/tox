@@ -100,7 +100,15 @@ impl Infer {
                                 },
                                 span: whole_span,
                             }),
-                            ty: types::Type::Class(symbol.value, types, methods.clone(), *unique),
+                            ty: types::Type::Generic(
+                                typevars.clone(),
+                                Box::new(types::Type::Class(
+                                    symbol.value,
+                                    types,
+                                    methods.clone(),
+                                    *unique,
+                                )),
+                            ),
                         },
                         span: whole_span,
                     })
@@ -225,11 +233,15 @@ impl Infer {
                                 },
                                 span: whole_span,
                             }),
-                            ty: types::Type::Class(
-                                symbol.value,
-                                literal_types,
-                                methods.clone(),
-                                *unique,
+
+                            ty: types::Type::Generic(
+                                typevars.clone(),
+                                Box::new(types::Type::Class(
+                                    symbol.value,
+                                    literal_types,
+                                    methods.clone(),
+                                    *unique,
+                                )),
                             ),
                         },
                         span: whole_span,

@@ -266,7 +266,12 @@ impl PartialEq for Value {
                 ValueType::Nil => false,
                 ValueType::Int => self.as_int() == other.as_int(),
                 ValueType::Float => self.as_float() == other.as_float(),
-                ValueType::Object => unimplemented!(),
+                ValueType::Object => {
+                    let s = self.as_object();
+                    let other = other.as_object();
+
+                    unimplemented!()
+                }
             }
         }
     }

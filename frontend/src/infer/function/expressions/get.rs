@@ -76,6 +76,7 @@ impl Infer {
                 }
 
                 ref err_type => {
+                    println!("{:?}", err_type);
                     let msg = format!(
                         "Type {} dosen't have the method/field {}",
                         err_type.print(ctx),
@@ -93,6 +94,8 @@ impl Infer {
                     err_type.print(ctx),
                     ctx.name(property.value)
                 );
+
+                println!("{:?}", err_type);
 
                 ctx.error(msg, whole_span);
                 Err(())

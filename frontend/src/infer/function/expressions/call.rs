@@ -78,12 +78,11 @@ impl Infer {
                                 });
                             }
 
-                                for arg in arg_types.iter() {
-                                    for type_var in typevars {
-                                        mappings.insert(*type_var, arg.value.ty.clone());
-                                    }
+                            for arg in arg_types.iter() {
+                                for type_var in typevars {
+                                    mappings.insert(*type_var, arg.value.ty.clone());
                                 }
-                            
+                            }
 
                             for (call_expression, def_type) in arg_types.iter_mut().zip(func_types)
                             {

@@ -130,6 +130,8 @@ impl Type {
                             fmt_string.push_str(&format!("{},", field.ty.print(ctx)));
                         }
                     }
+
+                    fmt_string.push('>');
                 }
 
                 fmt_string
@@ -253,8 +255,6 @@ impl Display for Type {
                         write!(f, "{},", var)?;
                     }
                 }
-
-                write!(f, ">")?;
 
                 write!(f, " {}", ret)
             }

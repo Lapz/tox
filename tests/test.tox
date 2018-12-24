@@ -1,37 +1,17 @@
-
-
-class Foo {
-  fn inFoo() {
-    print("in foo");
-  }
-  
-  fn id<T>(t:T) -> T {
-    return t;
-  }
-
-}
-
-class Bar extends Foo {
-  fn inBar() {
-    print("in bar");
-    
-  }
-}
-
-class Baz extends Bar {
-  fn init() -> Baz {
-    return Baz {};
-  }
-  fn inBaz() {
-    print("in baz");
-    
-  }
+class Foo<T> {
+  bar:T;
 }
 
 fn main() {
-  let baz = Baz.init();
-  baz.inFoo(); // expect:in foo
-  baz.inBar(); // expect:in bar
-  baz.inBaz(); // expect:in baz
-  let a:bool = baz.id::<i32>(10);
+  let baz = Foo {
+    bar:10
+  };
+
+  let boo = Foo {
+    bar:true
+  };
+
+  print baz.bar;
+  print boo.bar;
+
 }

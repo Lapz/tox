@@ -99,7 +99,7 @@ impl Infer {
 
             methods_types.push(Method {
                 name: fun.name,
-                ty: Type::Generic(vec![], Box::new(Type::App(TypeCon::Arrow, types))),
+                ty: ctx.look_var(fun.name).unwrap().clone().get_ty(),
             });
 
             methods.push(fun);
