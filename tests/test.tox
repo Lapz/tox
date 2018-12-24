@@ -11,7 +11,8 @@ fn main() {
     bar:true
   };
 
-  print baz.bar;
-  print boo.bar;
+  let add = |a:int,b:int| -> int {
+    return a+b;
+  };
 
 }

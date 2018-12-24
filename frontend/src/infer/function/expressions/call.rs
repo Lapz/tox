@@ -258,7 +258,31 @@ impl Infer {
                     }
                 }
             }
-            Expression::Closure(function) => unimplemented!(),
+            Expression::Closure(function) => {
+
+                let closure = self.infer_function(*function, ctx)?;
+                let mut params: Vec<types::Type> = closure
+                    .params
+                    .iter()
+                    .map(|param| param.ty.clone())
+                    .collect();
+                params.push(closure.returns.clone());
+                let ty = types::Type::Generic(
+                    vec![],
+                    Box::new(types::Type::App(types::TypeCon::Arrow, params)),
+                );
+
+                Ok(Spanned {
+                    value: t::TypedExpression {
+                        expr: Box::new(Spanned::new(
+                            t::Expression::Closure(Box::new(closure)),
+                            whole_span,
+                        )),
+                        ty,
+                    },
+                    span: whole_span,
+                })
+            },
 
             _ => {
                 ctx.error("Not callable", whole_span);
@@ -520,7 +544,30 @@ impl Infer {
                 }
             }
 
-            Expression::Closure(function) => unimplemented!(),
+            Expression::Closure(function) => {
+                let closure = self.infer_function(*function, ctx)?;
+                let mut params: Vec<types::Type> = closure
+                    .params
+                    .iter()
+                    .map(|param| param.ty.clone())
+                    .collect();
+                params.push(closure.returns.clone());
+                let ty = types::Type::Generic(
+                    vec![],
+                    Box::new(types::Type::App(types::TypeCon::Arrow, params)),
+                );
+
+                Ok(Spanned {
+                    value: t::TypedExpression {
+                        expr: Box::new(Spanned::new(
+                            t::Expression::Closure(Box::new(closure)),
+                            whole_span,
+                        )),
+                        ty,
+                    },
+                    span: whole_span,
+                })
+            },
 
             _ => {
                 ctx.error("Not callable", whole_span);

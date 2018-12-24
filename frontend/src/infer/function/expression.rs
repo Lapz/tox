@@ -1,3 +1,4 @@
+use super::super::types;
 use ast as t;
 use ctx::CompileCtx;
 use infer::{Infer, InferResult};
@@ -34,60 +35,29 @@ impl Infer {
             }
 
             Expression::Closure(function) => {
-                // let returns = if let Some(ref ty) = function.value.returns {
-                //     self.trans_type(&ty, ctx)?
-                // } else {
-                //     Type::Nil
-                // };
+                let whole_span = expr.span;
+                let closure = self.infer_function(*function, ctx)?;
+                let mut params: Vec<types::Type> = closure
+                    .params
+                    .iter()
+                    .map(|param| param.ty.clone())
+                    .collect();
+                params.push(closure.returns.clone());
+                let ty = types::Type::Generic(
+                    vec![],
+                    Box::new(types::Type::App(types::TypeCon::Arrow, params)),
+                );
 
-                // let mut param_types = Vec::with_capacity(function.value.params.value.len());
-                // let mut env_types = Vec::with_capacity(function.value.params.value.len());
-
-                // for param in function.value.params.value.iter() {
-                //     let ty = self.trans_type(&param.value.ty, ctx)?;
-
-                //     env_types.push(ty.clone());
-                //     param_types.push(t::FunctionParam {
-                //         name: param.value.name.value,
-                //         ty,
-                //     })
-                // }
-
-                // let fn_signature = Type::Fun(env_types.clone(), Box::new(returns.clone()), true);
-
-                // ctx.add_var(
-                //     function.value.name.value,
-                //     VarEntry::Fun {
-                //         ty: fn_signature.clone(),
-                //     },
-                // );
-
-                // ctx.begin_scope();
-
-                // for param in param_types.iter() {
-                //     ctx.add_var(param.name, VarEntry::Var(param.ty.clone()))
-                // }
-
-                // let span = function.value.body.span;
-                // let name = function.value.name.value;
-                // let body = self.infer_statement(function.value.body, ctx)?;
-
-                // ctx.end_scope();
-
-                // (
-                //     Spanned::new(
-                //         t::Expression::Closure(Box::new(t::Function {
-                //             name,
-                //             params: param_types,
-                //             body: Box::new(body),
-                //             returns: returns.clone(),
-                //         })),
-                //         span,
-                //     ),
-                //     fn_signature,
-                // )
-
-                unimplemented!()
+                Ok(Spanned {
+                    value: t::TypedExpression {
+                        expr: Box::new(Spanned::new(
+                            t::Expression::Closure(Box::new(closure)),
+                            whole_span,
+                        )),
+                        ty,
+                    },
+                    span: whole_span,
+                })
             }
 
             Expression::ClassLiteral(class_literal) => {
