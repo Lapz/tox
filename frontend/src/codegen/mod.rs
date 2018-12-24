@@ -525,6 +525,8 @@ impl<'a> Builder<'a> {
                 ref symbol,
                 ref properties,
             } => {
+
+                
                 for property in properties.iter().rev() {
                     //rev because poped of stack
                     self.compile_expression(&property.value.expr)?;

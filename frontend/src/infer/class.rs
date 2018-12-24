@@ -64,6 +64,7 @@ impl Infer {
             }
         }
 
+      
         ctx.add_type(
             class.value.name.value.name.value,
             Type::Generic(
@@ -85,6 +86,19 @@ impl Infer {
                 ty: self.trans_type(&property.value.ty, ctx)?,
             })
         }
+
+        ctx.add_type(
+            class.value.name.value.name.value,
+            Type::Generic(
+                generic_type_vars.clone(),
+                Box::new(Type::Class(
+                    class.value.name.value.name.value,
+                    property_types.clone(),
+                    methods_types.clone(),
+                    unique,
+                )),
+            ),
+        ); // Ensures that if the class returned from a function has the right number of properties
 
         for method in class.value.methods {
             let fun = self.infer_function(method, ctx)?;

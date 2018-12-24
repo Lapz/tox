@@ -32,6 +32,9 @@ impl Infer {
                     let mut types = Vec::new();
                     let mut unknown = false;
 
+
+                
+                   
                     for (def_property, property) in properties.iter().zip(props.into_iter()) {
                         if def_property.name == property.value.symbol.value {
                             type_lit_expressions.push(Spanned {
@@ -41,6 +44,7 @@ impl Infer {
                                 },
                                 span: property.span,
                             });
+                          
                         } else {
                             unknown = true;
 

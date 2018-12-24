@@ -241,7 +241,24 @@ impl Infer {
                                         }
                                     }
 
-                                    _ => unreachable!(),
+                                    _ => Ok(Spanned {
+                                        value: t::TypedExpression {
+                                            expr: Box::new(Spanned {
+                                                value: t::Expression::InstanceMethodCall {
+                                                    method_name,
+                                                    instance: method,
+                                                    params: arg_types
+                                                        .into_iter()
+                                                        .map(|arg| arg.value.expr)
+                                                        .collect(),
+                                                },
+                                                span: whole_span,
+                                            }),
+                                            ty: self
+                                                .subst(func_types.last().unwrap(), &mut mappings),
+                                        },
+                                        span: whole_span,
+                                    }),
                                 },
 
                                 _ => unreachable!(),
@@ -259,7 +276,6 @@ impl Infer {
                 }
             }
             Expression::Closure(function) => {
-
                 let closure = self.infer_function(*function, ctx)?;
                 let mut params: Vec<types::Type> = closure
                     .params
@@ -282,7 +298,7 @@ impl Infer {
                     },
                     span: whole_span,
                 })
-            },
+            }
 
             _ => {
                 ctx.error("Not callable", whole_span);
@@ -567,7 +583,7 @@ impl Infer {
                     },
                     span: whole_span,
                 })
-            },
+            }
 
             _ => {
                 ctx.error("Not callable", whole_span);
