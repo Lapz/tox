@@ -1,7 +1,37 @@
-fn id<T>(t:T) -> T {
-  return t;
+
+
+class Foo {
+  fn inFoo() {
+    print("in foo");
+  }
+  
+  fn id<T>(t:T) -> T {
+    return t;
+  }
+
+}
+
+class Bar extends Foo {
+  fn inBar() {
+    print("in bar");
+    
+  }
+}
+
+class Baz extends Bar {
+  fn init() -> Baz {
+    return Baz {};
+  }
+  fn inBaz() {
+    print("in baz");
+    
+  }
 }
 
 fn main() {
-  let foo = id(10);
+  let baz = Baz.init();
+  baz.inFoo(); // expect:in foo
+  baz.inBar(); // expect:in bar
+  baz.inBaz(); // expect:in baz
+  let a:bool = baz.id::<i32>(10);
 }

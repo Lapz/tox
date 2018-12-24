@@ -19,7 +19,8 @@ impl Infer {
         match class_instance.value.ty.clone() {
             Type::Generic(_, ref ty) => match **ty {
                 Type::Class(ref class_name, _, _, _) => {
-                    match ctx.look_type(*class_name).unwrap().clone() { // We look at the canical type within the environment due to constructor functions not having  the right type informantion as methods are missing
+                    match ctx.look_type(*class_name).unwrap().clone() {
+                        // We look at the canical type within the environment due to constructor functions not having  the right type informantion as methods are missing
                         Type::Generic(_, ref ty) => match **ty {
                             Type::Class(_, ref propertys, ref methods, _) => {
                                 for property_type in propertys {
@@ -70,7 +71,7 @@ impl Infer {
                             _ => unreachable!(),
                         },
 
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     }
                 }
 

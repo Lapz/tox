@@ -20,7 +20,6 @@ use util::symbol::Symbol;
 pub struct Infer {
     body: types::Type,
     main: Option<Symbol>,
-
 }
 
 impl Infer {
