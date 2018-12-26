@@ -1,18 +1,22 @@
-class Foo<T> {
-  bar:T;
+
+
+fn swap(x:int,y:int) {
+  let tmp = x;
+  x=y;
+  y =tmp;
 }
 
 fn main() {
-  let baz = Foo {
-    bar:10
-  };
+  let a =11;
+  let b = 10;
 
-  let boo = Foo {
-    bar:true
-  };
+  swap(a,b);
 
-  let add = |a:int,b:int| -> int {
-    return a+b;
-  };
+  print a;
+  print b;
+
+  
+
+
 
 }

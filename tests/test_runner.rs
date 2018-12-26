@@ -33,11 +33,12 @@ fn main() {
         let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
 
 
-        println!("{}",entry.path().to_str().unwrap());
+       
         file.read_to_string(&mut source)
             .expect("something went wrong reading the file");
 
         let expect_pattern = "// expect:";
+        let skip_pattern =  "//skip";
 
         for line in source.lines() {
 
