@@ -3,7 +3,6 @@ mod assign;
 mod binary;
 mod call;
 mod class_literal;
-mod closure;
 mod get;
 mod grouping;
 mod literal;

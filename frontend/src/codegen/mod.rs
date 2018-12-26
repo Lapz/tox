@@ -307,7 +307,9 @@ impl<'a> Builder<'a> {
             Expression::Assign(ref ident, ref op, ref expr) => {
                 let pos = if let Some(pos) = self.locals.get(ident) {
                     *pos
-                } else {
+                } else if let Some(pos) = self.params.get(ident) {
+                    *pos
+                }else {
                     unreachable!(); // Params are treated as locals so it should be present
                 };
 
