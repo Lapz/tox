@@ -5,22 +5,23 @@ use crate::opcode;
 use std::collections::HashMap;
 use util::symbol::Symbol;
 use crate::value::Value;
+use fnv::FnvHashMap;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
 #[derive(Debug)]
 pub struct StackFrame<'a> {
     ip: usize,
-    locals: HashMap<u8, Value>,
+    locals: FnvHashMap<u8, Value>,
     function: &'a Function,
-    params: HashMap<u8, Value>,
+    params: FnvHashMap<u8, Value>,
 }
 
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
     frames: Vec<StackFrame<'a>>,
     current_frame: StackFrame<'a>,
-    native_functions: HashMap<Symbol, Value>,
+    native_functions: FnvHashMap<Symbol, Value>,
     program: &'a Program,
     objects: RawObject,
     stack_top: usize,
@@ -42,12 +43,12 @@ impl<'a> VM<'a> {
 
         let current_frame = StackFrame {
             ip: 0,
-            locals: HashMap::new(),
+            locals: FnvHashMap::default(),
             function: main_function.unwrap(),
-            params: HashMap::new(),
+            params: FnvHashMap::default(),
         };
 
-        let mut native_functions = HashMap::new();
+        let mut native_functions = FnvHashMap::default();
         native_functions.insert(
             Symbol(1),
             Value::object(NativeObject::new(2, native::random, objects)),
@@ -275,7 +276,7 @@ impl<'a> VM<'a> {
                 opcode::CALLCLOSURE => {
                     let arg_count = self.read_byte();
 
-                    let mut params = HashMap::new();
+                    let mut params = FnvHashMap::default();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
@@ -287,7 +288,7 @@ impl<'a> VM<'a> {
 
                     let call_frame = StackFrame {
                         ip: 0,
-                        locals: HashMap::new(),
+                        locals: FnvHashMap::default(),
                         function: closure,
                         params,
                     };
@@ -302,7 +303,7 @@ impl<'a> VM<'a> {
 
                     let function = self.program.functions.get(&function_name).unwrap();
 
-                    let mut params = HashMap::new();
+                    let mut params = FnvHashMap::default();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
@@ -310,7 +311,7 @@ impl<'a> VM<'a> {
 
                     let call_frame = StackFrame {
                         ip: 0,
-                        locals: HashMap::new(),
+                        locals: FnvHashMap::default(),
                         function: function,
                         params,
                     };
@@ -345,7 +346,7 @@ impl<'a> VM<'a> {
 
                     let function = &instance.methods.get(&method_name).unwrap();
 
-                    let mut params = HashMap::new();
+                    let mut params = FnvHashMap::default();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
@@ -353,7 +354,7 @@ impl<'a> VM<'a> {
 
                     let call_frame = StackFrame {
                         ip: 0,
-                        locals: HashMap::new(),
+                        locals: FnvHashMap::default(),
                         function: function,
                         params,
                     };
@@ -375,7 +376,7 @@ impl<'a> VM<'a> {
                         .get(&method_name)
                         .unwrap();
 
-                    let mut params = HashMap::new();
+                    let mut params = FnvHashMap::default();
 
                     for i in 0..arg_count {
                         params.insert(i, self.pop());
@@ -383,7 +384,7 @@ impl<'a> VM<'a> {
 
                     let call_frame = StackFrame {
                         ip: 0,
-                        locals: HashMap::new(),
+                        locals: FnvHashMap::default(),
                         function: function,
                         params,
                     };
@@ -426,7 +427,7 @@ impl<'a> VM<'a> {
 
                     let methods = class.methods.clone();
 
-                    let mut properties = HashMap::new();
+                    let mut properties = FnvHashMap::default();
 
                     for _ in 0..num_properties {
                         properties.insert(Symbol(self.read_byte() as u64), self.pop());

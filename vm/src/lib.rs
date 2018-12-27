@@ -19,22 +19,23 @@ pub use crate::chunk::Chunk;
 pub use crate::object::{FunctionObject, RawObject, StringObject};
 pub use crate::value::Value;
 pub use crate::vm::VM;
+use fnv::FnvHashMap;
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,
-    pub params: ::std::collections::HashMap<::util::symbol::Symbol, usize>,
+    pub params: FnvHashMap<::util::symbol::Symbol, usize>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Class {
     pub name: ::util::symbol::Symbol,
-    pub methods: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
+    pub methods: FnvHashMap<::util::symbol::Symbol, Function>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    pub functions: ::std::collections::HashMap<::util::symbol::Symbol, Function>,
-    pub classes: ::std::collections::HashMap<::util::symbol::Symbol, Class>,
+    pub functions: FnvHashMap<::util::symbol::Symbol, Function>,
+    pub classes: FnvHashMap<::util::symbol::Symbol, Class>,
 }

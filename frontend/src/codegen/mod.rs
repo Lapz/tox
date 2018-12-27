@@ -1,12 +1,12 @@
 use ast;
 use infer::types::{Type, TypeCon};
 use opcode;
-use std::collections::HashMap;
 use std::hash::Hash;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
-use util::symbol::Symbol;
+use util::symbol::{Symbol,Symbols};
 use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
+use fnv::FnvHashMap;
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -19,14 +19,14 @@ struct LoopDescription {
 
 #[derive(Debug, Clone)]
 pub struct StackedMap<K: Hash + Eq, V: Clone> {
-    table: HashMap<K, Vec<V>>,
+    table: FnvHashMap<K, Vec<V>>,
     scopes: Vec<Option<K>>,
 }
 
 impl<K: Hash + Eq + Copy, V: Clone> StackedMap<K, V> {
     pub fn new() -> Self {
         StackedMap {
-            table: HashMap::new(),
+            table: FnvHashMap::default(),
             scopes: vec![],
         }
     }
@@ -61,11 +61,13 @@ pub struct Builder<'a> {
     /// The number is the postion of the local on the local stack
     locals: StackedMap<Symbol, usize>,
 
-    params: HashMap<Symbol, usize>,
+    params: FnvHashMap<Symbol, usize>,
     current_loop: Option<LoopDescription>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
+
+    symbols: &'a Symbols<()>,
     /// The reporter used to reporter any errors
     reporter: &'a mut Reporter,
     /// The slot of the variable
@@ -77,8 +79,9 @@ pub struct Builder<'a> {
 impl<'a> Builder<'a> {
     pub fn new(
         reporter: &'a mut Reporter,
+        symbols:&'a Symbols<()>,
         objects: RawObject,
-        params: HashMap<Symbol, usize>,
+        params: FnvHashMap<Symbol, usize>,
     ) -> Self {
         Builder {
             chunk: Chunk::new(),
@@ -86,6 +89,7 @@ impl<'a> Builder<'a> {
             line: 0,
             slots: 0,
             current_loop: None,
+            symbols,
             params,
             objects,
             reporter,
@@ -509,18 +513,26 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Call(ref callee, ref args) => {
-                // if args.is_empty() {
-                //     self.emit_bytes(opcode::CALL, callee.0 as u8);
-                //     self.emit_byte(0);
-                //     return Ok(());
-                // }
+               
 
+               
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
 
-                self.emit_bytes(opcode::CALL, callee.0 as u8);
-                self.emit_byte(args.len() as u8)
+                let name = self.symbols.name(*callee);
+
+                match name.as_str() {
+                    "clock" | "rand" => {
+                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8)
+                    },
+                    _ => {
+                        self.emit_bytes(opcode::CALL, callee.0 as u8);
+                        self.emit_byte(args.len() as u8)
+                    }
+                }
+
+                
             }
 
             Expression::ClassLiteral {
@@ -640,7 +652,7 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Closure(ref func) => {
-                let closure = compile_function(func, self.reporter, self.objects)?;
+                let closure = compile_function(func, self.symbols,self.reporter, self.objects)?;
 
                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
 
@@ -694,13 +706,14 @@ impl<'a> Builder<'a> {
 
 fn compile_class(
     class: &ast::Class,
+    symbols:&Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
 ) -> ParseResult<Class> {
-    let mut methods = HashMap::new();
+    let mut methods = FnvHashMap::default();
 
     for method in class.methods.iter() {
-        methods.insert(method.name, compile_function(method, reporter, objects)?);
+        methods.insert(method.name, compile_function(method, symbols,reporter, objects)?);
     }
 
     Ok(Class {
@@ -711,16 +724,17 @@ fn compile_class(
 
 fn compile_function(
     func: &ast::Function,
+    symbols:&Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
 ) -> ParseResult<Function> {
-    let mut params = HashMap::new();
+    let mut params = FnvHashMap::default();
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(param.name, i);
     } // store param id and the index in the vec
 
-    let mut builder = Builder::new(reporter, objects, params);
+    let mut builder = Builder::new(reporter,symbols, objects, params);
 
     builder.compile_statement(&func.body)?;
 
@@ -732,21 +746,21 @@ fn compile_function(
     })
 }
 
-pub fn compile(ast: &ast::Program, reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
-    let mut funcs = HashMap::new();
-    let mut classes: HashMap<Symbol, Class> = HashMap::new();
+pub fn compile(ast: &ast::Program,symbols:&Symbols<()>,reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
+    let mut funcs = FnvHashMap::default();
+    let mut classes: FnvHashMap<Symbol, Class> = FnvHashMap::default();
 
     let objects = ::std::ptr::null::<RawObject>() as RawObject;
 
     for function in ast.functions.iter() {
         funcs.insert(
             function.name,
-            compile_function(function, reporter, objects)?,
+            compile_function(function, symbols,reporter, objects)?,
         );
     }
 
     for class in ast.classes.iter() {
-        let mut compiled_class = compile_class(class, reporter, objects)?;
+        let mut compiled_class = compile_class(class,symbols, reporter, objects)?;
 
         if let Some(ref superclass) = class.superclass {
             let superclass = classes.get(&superclass.value).unwrap();

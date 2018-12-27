@@ -38,7 +38,7 @@ impl<'a> CompileCtx<'a> {
                 vars.enter(
                     symbol,
                     VarEntry::Fun {
-                        ty: Type::App(TypeCon::Arrow, params),
+                        ty: Type::Generic(vec![],Box::new(Type::App(TypeCon::Arrow, params))),
                     },
                 );
             };
