@@ -31,15 +31,15 @@ fn main() {
         run(file);
     // }
     } else {
-        // repl()
+        repl()
     }
 }
 
-// pub fn repl() {
-//     use repl::Repl;
+pub fn repl() {
+    use repl::Repl;
 
-//     Repl::new().run();
-// }
+    Repl::new().run();
+}
 
 // pub fn run_interpreter(path: String) {
 //     let mut file = File::open(path).expect("File not found");
