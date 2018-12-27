@@ -355,6 +355,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         "extends" => TokenType::EXTENDS,
         "print" => TokenType::PRINT,
         "type" => TokenType::TYPE,
+        "as" => TokenType::AS,
         // Functions and vars
         "fn" => TokenType::FUNCTION,
         "let" => TokenType::LET,

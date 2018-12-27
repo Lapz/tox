@@ -3,10 +3,6 @@
 //! a ```VM``` and an ```Assembler``` for the tasm langauage
 use opcode;
 
-
-
-
-
 #[macro_use]
 mod macros;
 mod chunk;

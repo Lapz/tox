@@ -32,19 +32,16 @@ fn main() {
 
         let mut file = File::open(entry.path().to_str().unwrap()).expect("File not found");
 
-
-       
         file.read_to_string(&mut source)
             .expect("something went wrong reading the file");
 
         let expect_pattern = "// expect:";
-        let skip_pattern =  "//skip";
+        let skip_pattern = "//skip";
 
         for line in source.lines() {
-
             match line.match_indices(&skip_pattern).next() {
-                Some((_,_)) => continue 'outer,
-                None => ()
+                Some((_, _)) => continue 'outer,
+                None => (),
             }
 
             if let Some((index, _)) = line.match_indices(&expect_pattern).next() {
@@ -52,7 +49,6 @@ fn main() {
                 let expects = line[from..].to_string();
                 expected.push(expects);
             }
-            
         }
 
         undisclosedc.args(&["run", entry.path().to_str().unwrap()]);

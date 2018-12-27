@@ -867,9 +867,22 @@ impl<'a> Parser<'a> {
 
         use self::TokenType::*;
 
-        binary!(self, AND, lhs, parse_equality);
+        if self.recognise(TokenType::AS) {
+            self.next()?;
 
-        Ok(lhs)
+            let ty = self.parse_type()?;
+
+            Ok(Spanned {
+                span: lhs.span.to(ty.span),
+                value: Expression::Cast {
+                    from: Box::new(lhs),
+                    to: ty,
+                },
+            })
+        } else {
+            binary!(self, AND, lhs, parse_equality);
+            Ok(lhs)
+        }
     }
 
     fn parse_equality(&mut self) -> ParserResult<Spanned<Expression>> {

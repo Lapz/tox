@@ -1,9 +1,9 @@
 use super::Function;
+use crate::value::Value;
 use fnv::FnvHashMap;
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 use util::symbol::Symbol;
-use crate::value::Value;
 
 pub type RawObject = *mut Object;
 pub type NativeFn = fn(*const Value) -> Value;

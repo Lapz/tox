@@ -1,12 +1,12 @@
 use ast;
+use fnv::FnvHashMap;
 use infer::types::{Type, TypeCon};
 use opcode;
 use std::hash::Hash;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
-use util::symbol::{Symbol,Symbols};
+use util::symbol::{Symbol, Symbols};
 use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
-use fnv::FnvHashMap;
 type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
@@ -79,7 +79,7 @@ pub struct Builder<'a> {
 impl<'a> Builder<'a> {
     pub fn new(
         reporter: &'a mut Reporter,
-        symbols:&'a Symbols<()>,
+        symbols: &'a Symbols<()>,
         objects: RawObject,
         params: FnvHashMap<Symbol, usize>,
     ) -> Self {
@@ -313,7 +313,7 @@ impl<'a> Builder<'a> {
                     *pos
                 } else if let Some(pos) = self.params.get(ident) {
                     *pos
-                }else {
+                } else {
                     unreachable!(); // Params are treated as locals so it should be present
                 };
 
@@ -512,10 +512,37 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            Expression::Call(ref callee, ref args) => {
-               
+            Expression::Cast(ref from, ref to) => {
+                self.compile_expression(from)?;
 
-               
+                match (&from.value.ty, &to) {
+                    (Type::App(TypeCon::Int, _), Type::App(TypeCon::Float, _)) => {
+                        self.emit_byte(opcode::INT2FLOAT)
+                    }
+
+                    (Type::App(TypeCon::Float, _), Type::App(TypeCon::Int, _)) => {
+                        self.emit_byte(opcode::FLOAT2INT)
+                    }
+
+                    (Type::App(TypeCon::Bool, _), Type::App(TypeCon::Int, _)) => {
+                        self.emit_byte(opcode::BOOL2INT)
+                    }
+
+                    (
+                        Type::App(TypeCon::Int, _),
+                        Type::App(TypeCon::Str, _),
+                    ) => self.emit_byte(opcode::INT2STR),
+
+                    (
+                        Type::App(TypeCon::Float, _),
+                        Type::App(TypeCon::Str, _),
+                    ) => self.emit_byte(opcode::FLOAT2STR),
+
+                    _ => unreachable!(), // cast only allows int -> float, float -> int, bool -> int
+                }
+            }
+
+            Expression::Call(ref callee, ref args) => {
                 for arg in args {
                     self.compile_expression(arg)?;
                 }
@@ -523,24 +550,18 @@ impl<'a> Builder<'a> {
                 let name = self.symbols.name(*callee);
 
                 match name.as_str() {
-                    "clock" | "rand" => {
-                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8)
-                    },
+                    "clock" | "rand" => self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8),
                     _ => {
                         self.emit_bytes(opcode::CALL, callee.0 as u8);
                         self.emit_byte(args.len() as u8)
                     }
                 }
-
-                
             }
 
             Expression::ClassLiteral {
                 ref symbol,
                 ref properties,
             } => {
-
-                
                 for property in properties.iter().rev() {
                     //rev because poped of stack
                     self.compile_expression(&property.value.expr)?;
@@ -652,7 +673,7 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Closure(ref func) => {
-                let closure = compile_function(func, self.symbols,self.reporter, self.objects)?;
+                let closure = compile_function(func, self.symbols, self.reporter, self.objects)?;
 
                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
 
@@ -706,14 +727,17 @@ impl<'a> Builder<'a> {
 
 fn compile_class(
     class: &ast::Class,
-    symbols:&Symbols<()>,
+    symbols: &Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
 ) -> ParseResult<Class> {
     let mut methods = FnvHashMap::default();
 
     for method in class.methods.iter() {
-        methods.insert(method.name, compile_function(method, symbols,reporter, objects)?);
+        methods.insert(
+            method.name,
+            compile_function(method, symbols, reporter, objects)?,
+        );
     }
 
     Ok(Class {
@@ -724,7 +748,7 @@ fn compile_class(
 
 fn compile_function(
     func: &ast::Function,
-    symbols:&Symbols<()>,
+    symbols: &Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
 ) -> ParseResult<Function> {
@@ -734,7 +758,7 @@ fn compile_function(
         params.insert(param.name, i);
     } // store param id and the index in the vec
 
-    let mut builder = Builder::new(reporter,symbols, objects, params);
+    let mut builder = Builder::new(reporter, symbols, objects, params);
 
     builder.compile_statement(&func.body)?;
 
@@ -746,7 +770,11 @@ fn compile_function(
     })
 }
 
-pub fn compile(ast: &ast::Program,symbols:&Symbols<()>,reporter: &mut Reporter) -> ParseResult<(Program, RawObject)> {
+pub fn compile(
+    ast: &ast::Program,
+    symbols: &Symbols<()>,
+    reporter: &mut Reporter,
+) -> ParseResult<(Program, RawObject)> {
     let mut funcs = FnvHashMap::default();
     let mut classes: FnvHashMap<Symbol, Class> = FnvHashMap::default();
 
@@ -755,12 +783,12 @@ pub fn compile(ast: &ast::Program,symbols:&Symbols<()>,reporter: &mut Reporter) 
     for function in ast.functions.iter() {
         funcs.insert(
             function.name,
-            compile_function(function, symbols,reporter, objects)?,
+            compile_function(function, symbols, reporter, objects)?,
         );
     }
 
     for class in ast.classes.iter() {
-        let mut compiled_class = compile_class(class,symbols, reporter, objects)?;
+        let mut compiled_class = compile_class(class, symbols, reporter, objects)?;
 
         if let Some(ref superclass) = class.superclass {
             let superclass = classes.get(&superclass.value).unwrap();

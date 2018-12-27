@@ -1,0 +1,9 @@
+
+fn main() {
+  let t = true;
+  let f = false;
+
+  print t as int;//expect:1
+  print f as int;//expect:0
+
+}

@@ -1,22 +1,4 @@
 
-
-fn swap(x:int,y:int) {
-  let tmp = x;
-  x=y;
-  y =tmp;
-}
-
 fn main() {
-  let a =11;
-  let b = 10;
-
-  swap(a,b);
-
-  print a;
-  print b;
-
-  
-
-
-
+  print 1 as str;
 }

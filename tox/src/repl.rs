@@ -1,7 +1,7 @@
 use frontend::{compile, Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
-use syntax::ast::{Function, Program,ItemName};
+use syntax::ast::{Function, ItemName, Program};
 
 use syntax::parser::Parser;
 use util::emmiter::Reporter;
@@ -61,10 +61,13 @@ impl Repl {
 
             let pusedo_main = Spanned::new(
                 Function {
-                    name: Spanned::new(ItemName {
-                        name:Spanned::new(pusedo_main_symbol,pusedo_main_span),
-                        type_params:vec![]
-                    }, pusedo_main_span),
+                    name: Spanned::new(
+                        ItemName {
+                            name: Spanned::new(pusedo_main_symbol, pusedo_main_span),
+                            type_params: vec![],
+                        },
+                        pusedo_main_span,
+                    ),
                     params: Spanned::new(vec![], pusedo_main_span),
                     returns: None,
                     body: expr,
@@ -89,7 +92,7 @@ impl Repl {
                 }
             };
 
-            let (program, objects) = match compile(&typed_ast,&symbols, &mut reporter) {
+            let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
                 Ok(functions) => functions,
                 Err(_) => {
                     reporter.emit(&input);

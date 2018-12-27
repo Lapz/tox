@@ -76,6 +76,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::NIL => write!(f, "nil"),
             TokenType::MATCH => write!(f, "match"),
             TokenType::EXTENDS => write!(f, "extends"),
+            TokenType::AS => write!(f, "as"),
         }
     }
 }
@@ -149,6 +150,7 @@ pub enum TokenType<'a> {
     OR,
     NIL,
     TYPE,
+    AS,
 
     // Other
     EOF,

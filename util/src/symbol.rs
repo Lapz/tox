@@ -75,7 +75,7 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
                 return *key;
             }
         }
-        
+
         let symbol = Symbol(*self.strings.next.borrow());
         self.strings
             .mappings
@@ -99,7 +99,6 @@ impl SymbolFactory {
         map.insert(Symbol(2), "clock".into());
         map.insert(Symbol(3), "read".into());
         map.insert(Symbol(4), "fopen".into());
-       
 
         SymbolFactory {
             next: RefCell::new(5),

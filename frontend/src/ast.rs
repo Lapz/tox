@@ -84,6 +84,8 @@ pub enum Expression {
     Binary(Spanned<TypedExpression>, Op, Spanned<TypedExpression>),
     Call(Symbol, Vec<Spanned<TypedExpression>>),
 
+    Cast(Spanned<TypedExpression>, Type),
+
     Closure(Box<Function>),
     ClassLiteral {
         symbol: Symbol,
