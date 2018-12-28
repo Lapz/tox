@@ -1,0 +1,5 @@
+
+
+fn main() {
+  print true as float;//error: Cannot cast `bool` to type `float`
+}

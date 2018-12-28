@@ -1,7 +1,7 @@
+use crate::object::{RawObject, StringObject};
 use crate::value::Value;
 use rand::{thread_rng, Rng};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::object::{StringObject,RawObject};
 /// Calculate the number of seconds since the UNIX_EPOCH
 pub fn clock(_: *const Value) -> Value {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
@@ -19,27 +19,36 @@ pub fn random(args: *const Value) -> Value {
 }
 
 /// Reads input from stdin until the user presses enter
-pub fn read(_:*const Value) -> Value {
-        let mut input = String::new();
-        use std::io;
-        io::stdin().read_line(&mut input).expect("Unable to read input from stdin");
+pub fn read(_: *const Value) -> Value {
+    let mut input = String::new();
+    use std::io;
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Unable to read input from stdin");
 
-        Value::object(StringObject::from_owned(input, ::std::ptr::null::<RawObject>() as RawObject))
+    Value::object(StringObject::from_owned(
+        input,
+        ::std::ptr::null::<RawObject>() as RawObject,
+    ))
 }
 
 /// Open a file and returns the contents
-pub fn fopen(args:*const Value) -> Value {
-        let path = unsafe {
-                (*args.add(0)).as_string().value().trim_end_matches('\0')
-        };
+pub fn fopen(args: *const Value) -> Value {
+    let path = unsafe { (*args.add(0)).as_string().value().trim_end_matches('\0') };
 
-        let mut input = String::new();
+    let mut input = String::new();
 
-        use std::io::{Read};
+    use std::io::Read;
 
-        println!("{:?}",path);
+    println!("{:?}", path);
 
-        ::std::fs::File::open(path).unwrap().read_to_string(&mut input).unwrap();
+    ::std::fs::File::open(path)
+        .unwrap()
+        .read_to_string(&mut input)
+        .unwrap();
 
-        Value::object(StringObject::from_owned(input, ::std::ptr::null::<RawObject>() as RawObject))
+    Value::object(StringObject::from_owned(
+        input,
+        ::std::ptr::null::<RawObject>() as RawObject,
+    ))
 }

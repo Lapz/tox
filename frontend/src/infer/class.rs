@@ -64,7 +64,6 @@ impl Infer {
             }
         }
 
-      
         ctx.add_type(
             class.value.name.value.name.value,
             Type::Generic(

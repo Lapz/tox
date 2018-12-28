@@ -1,11 +1,12 @@
 use super::{Function, Program};
 use crate::native;
-use crate::object::{ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject};
+use crate::object::{
+    ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject,
+};
 use crate::opcode;
-use std::collections::HashMap;
-use util::symbol::Symbol;
 use crate::value::Value;
 use fnv::FnvHashMap;
+use util::symbol::Symbol;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
@@ -68,7 +69,6 @@ impl<'a> VM<'a> {
             Symbol(4),
             Value::object(NativeObject::new(1, native::fopen, objects)),
         );
-        
 
         Ok(VM {
             stack: [Value::nil(); STACK_MAX],
@@ -188,6 +188,31 @@ impl<'a> VM<'a> {
                 opcode::MULF => binary_op!(*,as_float,float,self),
                 opcode::DIV => binary_op!(/,as_int,int,self),
                 opcode::DIVF => binary_op!(/,as_float,float,self),
+                opcode::INT2FLOAT => {
+                    let value = self.pop().as_int();
+                    self.push(Value::float(value as f64))
+                }
+                opcode::FLOAT2INT => {
+                    let value = self.pop().as_float();
+                    self.push(Value::int(value as i64))
+                }
+                opcode::BOOL2INT => {
+                    let value = self.pop().as_bool();
+                    self.push(Value::int(value as i64))
+                }
+
+                opcode::FLOAT2STR => {
+                    let value = self.pop().as_float();
+                    let value = format!("{}", value);
+                    self.push(Value::object(StringObject::from_owned(value, self.objects)));
+                }
+
+                opcode::INT2STR => {
+                    let value = self.pop().as_int();
+                    let value = format!("{}", value);
+                    self.push(Value::object(StringObject::from_owned(value, self.objects)));
+                }
+
                 opcode::LOOP => {
                     let address = self.read_16_bits();
 
@@ -328,7 +353,7 @@ impl<'a> VM<'a> {
 
                     let arg_count = function.arity;
                     let result = (function.function)(
-                        self.stack[self.stack_top-arg_count as usize..self.stack_top].as_ptr(),
+                        self.stack[self.stack_top - arg_count as usize..self.stack_top].as_ptr(),
                     );
 
                     self.stack_top -= arg_count as usize;
@@ -441,12 +466,10 @@ impl<'a> VM<'a> {
                 opcode::CONCAT => self.concat(),
 
                 #[cfg(not(feature = "debug"))]
-                _ => {
-                    unsafe {
-                        use std::hint::unreachable_unchecked;
-                        unreachable_unchecked()
-                    }
-                }
+                _ => unsafe {
+                    use std::hint::unreachable_unchecked;
+                    unreachable_unchecked()
+                },
                 #[cfg(feature = "debug")]
                 ref e => {
                     {
@@ -507,7 +530,6 @@ impl<'a> VM<'a> {
         self.stack_top += 1;
     }
 
-    
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack[self.stack_top]

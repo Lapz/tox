@@ -99,10 +99,16 @@ pub enum Expression {
         rhs: Box<Spanned<Expression>>,
     },
 
-    Closure(Box<Spanned<Function>>),
     Call(Spanned<Call>),
 
+    Cast {
+        from: Box<Spanned<Expression>>,
+        to: Spanned<Type>,
+    },
+
     ClassLiteral(Spanned<ClassLiteral>),
+
+    Closure(Box<Spanned<Function>>),
 
     Get {
         object: Box<Spanned<Expression>>,

@@ -138,7 +138,7 @@ pub fn run(path: String) {
         }
     };
 
-    let (program, objects) = match compile(&typed_ast, &symbols,&mut reporter) {
+    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);
@@ -146,7 +146,7 @@ pub fn run(path: String) {
         }
     };
 
-    let mut vm = VM::new(symbols.symbol("main"),&program, objects).unwrap();
+    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
     vm.run();
 }
 

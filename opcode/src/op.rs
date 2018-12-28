@@ -116,4 +116,17 @@ pub mod opcode {
     pub const CALLSTATICMETHOD: u8 = 044;
 
     pub const CALLNATIVE: u8 = 045;
+
+    /// converts an int(i64)  to float(f64)
+    pub const INT2FLOAT: u8 = 046;
+    /// converts an float(f64)  to int(i64)
+    /// results in a loss of precession
+    pub const FLOAT2INT: u8 = 047;
+    /// converts a boolean to int(i64)
+    pub const BOOL2INT: u8 = 049;
+
+    pub const INT2STR: u8 = 050;
+
+    pub const FLOAT2STR: u8 = 051;
+
 }

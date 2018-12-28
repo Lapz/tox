@@ -34,6 +34,8 @@ impl Infer {
                 }
             }
 
+            Expression::Cast { from, to } => self.infer_cast(*from, to, expr.span, ctx),
+
             Expression::Closure(function) => {
                 let whole_span = expr.span;
                 let closure = self.infer_function(*function, ctx)?;
