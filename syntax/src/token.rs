@@ -53,6 +53,7 @@ impl<'a> Display for TokenType<'a> {
             TokenType::LBRACE => write!(f, "{{"),   // {
             TokenType::RBRACE => write!(f, "}}"),   // }
             TokenType::FRETURN => write!(f, "->"),
+            TokenType::MATCHARROW => write!(f,"=>"),
             TokenType::BAR => write!(f, "|"),
             TokenType::NAMESPACE => write!(f, "::"),
             // Keywords,
@@ -120,6 +121,7 @@ pub enum TokenType<'a> {
     RBRACE,    // }
     BAR,       // |
     NAMESPACE, // ::
+    MATCHARROW,
 
     // Comparison
     LESSTHAN,         // <

@@ -528,15 +528,13 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::BOOL2INT)
                     }
 
-                    (
-                        Type::App(TypeCon::Int, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::INT2STR),
+                    (Type::App(TypeCon::Int, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::INT2STR)
+                    }
 
-                    (
-                        Type::App(TypeCon::Float, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::FLOAT2STR),
+                    (Type::App(TypeCon::Float, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::FLOAT2STR)
+                    }
 
                     _ => unreachable!(), // cast only allows int -> float, float -> int, bool -> int
                 }

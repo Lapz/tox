@@ -28,6 +28,8 @@ pub struct Parser<'a> {
     end: Position,
     /// Flag that manages whetere we are in a cond or class instance
     parsing_cond: bool,
+    /// Flag that manages whetere we are in a match_arm
+    parsing_match_arm: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -46,6 +48,7 @@ impl<'a> Parser<'a> {
             chars,
             symbols,
             parsing_cond: false,
+            parsing_match_arm:true
         };
 
         past_tokens.push_back(parser.next().unwrap());
@@ -611,7 +614,7 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
 
         Ok(Spanned {
-            span: self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?,
+            span: if self.parsing_match_arm { expr.span} else { self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?},
             value: Statement::Expr(expr),
         })
     }
@@ -768,7 +771,9 @@ impl<'a> Parser<'a> {
      * ***************** */
 
     fn parse_expression(&mut self) -> ParserResult<Spanned<Expression>> {
-        self.assignment()
+        
+            self.assignment()
+        
     }
 
     fn assignment(&mut self) -> ParserResult<Spanned<Expression>> {
@@ -780,7 +785,7 @@ impl<'a> Parser<'a> {
             TokenType::MINUSASSIGN,
             TokenType::STARASSIGN,
             TokenType::SLASHASSIGN,
-        ]) {
+        ]) && !self.parsing_match_arm {
             let kind = self.get_assign_op()?;
 
             let value = self.assignment()?;
@@ -996,6 +1001,8 @@ impl<'a> Parser<'a> {
                     value: Expression::Literal(Literal::Float(n)),
                 }),
 
+                TokenType::MATCH => self.parse_match(*span),
+
                 TokenType::LPAREN => {
                     let expr = Box::new(self.parse_expression()?);
 
@@ -1013,7 +1020,9 @@ impl<'a> Parser<'a> {
                         span: *span,
                     };
                     self.parse_ident(ident)
-                }
+                },
+
+                
 
                 TokenType::BAR => {
                     let closure = self.parse_closure(*span)?;
@@ -1064,6 +1073,62 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_match(&mut self,start_span:Span) -> ParserResult<Spanned<Expression>> {
+
+        self.parsing_cond = true;
+
+        let cond = self.parse_expression()?;
+
+        self.parsing_cond = false;
+
+        let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected `{` ")?;
+
+        let mut arms = Vec::new();
+
+        if !self.recognise(TokenType::RBRACE) {
+            loop {
+                self.parsing_match_arm = true;
+                
+                let pattern = self.parse_expression()?;
+
+                self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
+                
+                
+                let body = self.parse_statement()?;
+
+                self.parsing_match_arm = false;
+
+
+                let span = pattern.span.to(body.span);
+
+                arms.push(Spanned {
+                    value:MatchArm {
+                        pattern,
+                        body,
+                    },
+                    span
+                });
+
+                if self.recognise(TokenType::COMMA) {
+                    self.next()?;
+                } else {
+                    break;
+                }
+            }
+
+        }
+
+        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected `}` ")?;
+
+        Ok(Spanned {
+            value: Expression::Match {
+                cond:Box::new(cond),
+                arms: Spanned::new(arms, open_span.to(close_span)),
+            },
+            span: start_span.to(close_span),
+        })
+    }
+
     fn parse_closure(&mut self, open_span: Span) -> ParserResult<Spanned<Function>> {
         let params = self.parse_params(open_span, "closure")?;
 
@@ -1105,6 +1170,7 @@ impl<'a> Parser<'a> {
         let mut expr = self.primary()?;
 
         loop {
+
             if self.recognise(TokenType::NAMESPACE) {
                 self.next()?; // Eat the ::
 
@@ -1231,7 +1297,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_ident(&mut self, symbol: Spanned<Symbol>) -> ParserResult<Spanned<Expression>> {
-        if self.recognise(TokenType::LBRACE) {
+        if self.recognise(TokenType::LBRACE) && !self.parsing_cond {
             self.next()?;
 
             let mut props = vec![];

@@ -69,7 +69,10 @@ impl<'a> Parser<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         Ok(spans(TokenType::EQUALEQUAL, start, start.shift('=')))
-                    } else {
+                    } else if self.peek(|ch| ch == '>') {
+                        self.advance();
+                        Ok(spans(TokenType::MATCHARROW, start, start.shift('>')))
+                    }else {
                         Ok(span(TokenType::ASSIGN, start))
                     }
                 }
@@ -356,6 +359,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         "print" => TokenType::PRINT,
         "type" => TokenType::TYPE,
         "as" => TokenType::AS,
+        "match" => TokenType::MATCH,
         // Functions and vars
         "fn" => TokenType::FUNCTION,
         "let" => TokenType::LET,
@@ -368,6 +372,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         "break" => TokenType::BREAK,
         "continue" => TokenType::CONTINUE,
         "do" => TokenType::DO,
+        
         // Booleans
         "true" => TokenType::TRUE(true),
         "false" => TokenType::FALSE(false),

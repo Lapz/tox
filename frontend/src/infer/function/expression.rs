@@ -85,6 +85,8 @@ impl Infer {
                 self.infer_get(*object, property, expr.span, ctx)
             }
 
+            Expression::Match {..} => unimplemented!(),
+
             Expression::SubScript { target, index } => {
                 self.infer_subscript(*target, *index, expr.span, ctx)
             }

@@ -1,0 +1,8 @@
+fn main() {
+    let name = "Lenard";
+
+    let admin =  match name {
+        "Lenard" => true,   
+        _   => false 
+    };
+}
