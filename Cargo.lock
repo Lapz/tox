@@ -27,6 +27,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "backend"
+version = "0.1.0"
+dependencies = [
+ "opcode 0.1.0",
+ "syntax 0.1.0",
+ "util 0.1.0",
+ "vm 0.1.0",
+]
+
+[[package]]
 name = "bitflags"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -584,6 +594,7 @@ name = "tox"
 version = "0.2.0"
 dependencies = [
  "ansi_term 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "backend 0.1.0",
  "clippy 0.0.186 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "frontend 0.1.0",
