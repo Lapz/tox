@@ -11,6 +11,7 @@ default = []
 util = {path = "../util"}
 syntax = {path = "../syntax"}
 frontend = {path = "../frontend"}
+backend = {path = "../backend"}
 # interpreter = {path ="../interpreter"}
 vm = {path="../vm"}
 structopt = "0.1.6"

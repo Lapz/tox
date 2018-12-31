@@ -1,0 +1,11 @@
+[package]
+name = "backend"
+version = "0.1.0"
+authors = ["Lenard Pratt <striderman34@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+util = {path = "../util"}
+opcode = {path = "../opcode"}
+syntax = {path= "../syntax"}
+vm = {path = "../vm"}

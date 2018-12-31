@@ -1,3 +1,5 @@
+use crate::CodegenResult;
+
 use ast;
 use fnv::FnvHashMap;
 use infer::types::{Type, TypeCon};
@@ -7,7 +9,6 @@ use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::{Symbol, Symbols};
 use vm::{Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject, Value};
-type ParseResult<T> = Result<T, ()>;
 
 #[derive(Debug, Clone, Copy)]
 struct LoopDescription {
@@ -133,13 +134,13 @@ impl<'a> Builder<'a> {
         self.emit_byte(byte2);
     }
 
-    pub fn emit_constant(&mut self, constant: Value, span: Span) -> ParseResult<()> {
+    pub fn emit_constant(&mut self, constant: Value, span: Span) -> CodegenResult<()> {
         let value = self.make_constant(constant, span)?;
         self.emit_bytes(opcode::CONSTANT, value);
         Ok(())
     }
 
-    pub fn make_constant(&mut self, value: Value, span: Span) -> ParseResult<u8> {
+    pub fn make_constant(&mut self, value: Value, span: Span) -> CodegenResult<u8> {
         let index = self.chunk.add_constant(value);
 
         if index > 256 {
@@ -156,7 +157,7 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn compile_statement(&mut self, statement: &Spanned<ast::Statement>) -> ParseResult<()> {
+    pub fn compile_statement(&mut self, statement: &Spanned<ast::Statement>) -> CodegenResult<()> {
         use ast::Statement;
         self.set_span(statement.span);
         match statement.value {
@@ -303,7 +304,10 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn compile_expression(&mut self, expr: &Spanned<ast::TypedExpression>) -> ParseResult<()> {
+    pub fn compile_expression(
+        &mut self,
+        expr: &Spanned<ast::TypedExpression>,
+    ) -> CodegenResult<()> {
         use ast::{AssignOperator, Expression, Literal, Op};
         self.set_span(expr.span);
 
@@ -528,15 +532,13 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::BOOL2INT)
                     }
 
-                    (
-                        Type::App(TypeCon::Int, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::INT2STR),
+                    (Type::App(TypeCon::Int, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::INT2STR)
+                    }
 
-                    (
-                        Type::App(TypeCon::Float, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::FLOAT2STR),
+                    (Type::App(TypeCon::Float, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::FLOAT2STR)
+                    }
 
                     _ => unreachable!(), // cast only allows int -> float, float -> int, bool -> int
                 }
@@ -694,7 +696,7 @@ impl<'a> Builder<'a> {
         &mut self,
         lhs: &Spanned<ast::TypedExpression>,
         rhs: &Spanned<ast::TypedExpression>,
-    ) -> ParseResult<()> {
+    ) -> CodegenResult<()> {
         self.compile_expression(lhs)?;
 
         let false_label = self.emit_jump(opcode::JUMPNOT);
@@ -710,7 +712,7 @@ impl<'a> Builder<'a> {
         &mut self,
         lhs: &Spanned<ast::TypedExpression>,
         rhs: &Spanned<ast::TypedExpression>,
-    ) -> ParseResult<()> {
+    ) -> CodegenResult<()> {
         self.compile_expression(lhs)?;
 
         let else_label = self.emit_jump(opcode::JUMPIF);
@@ -730,7 +732,7 @@ fn compile_class(
     symbols: &Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
-) -> ParseResult<Class> {
+) -> CodegenResult<Class> {
     let mut methods = FnvHashMap::default();
 
     for method in class.methods.iter() {
@@ -751,7 +753,7 @@ fn compile_function(
     symbols: &Symbols<()>,
     reporter: &mut Reporter,
     objects: RawObject,
-) -> ParseResult<Function> {
+) -> CodegenResult<Function> {
     let mut params = FnvHashMap::default();
 
     for (i, param) in func.params.iter().enumerate() {
@@ -774,7 +776,7 @@ pub fn compile(
     ast: &ast::Program,
     symbols: &Symbols<()>,
     reporter: &mut Reporter,
-) -> ParseResult<(Program, RawObject)> {
+) -> CodegenResult<(Program, RawObject)> {
     let mut funcs = FnvHashMap::default();
     let mut classes: FnvHashMap<Symbol, Class> = FnvHashMap::default();
 

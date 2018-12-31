@@ -1,3 +1,4 @@
+extern crate backend;
 extern crate fnv;
 extern crate frontend;
 extern crate structopt;
@@ -10,7 +11,8 @@ extern crate vm;
 
 mod repl;
 
-use frontend::{compile, Infer};
+use backend::vm::compile as compile_vm;
+use frontend::Infer;
 // use interpreter::{interpret, Environment};
 use std::fs::File;
 use std::io::Read;
@@ -28,7 +30,7 @@ fn main() {
         // if opts.interpreter {
         //     run_interpreter(file);
         // } else {
-        run(file);
+        run(file, opts.vm);
     // }
     } else {
         repl()
@@ -100,7 +102,7 @@ pub fn repl() {
 //     };
 // }
 
-pub fn run(path: String) {
+pub fn run(path: String, vm: bool) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -138,16 +140,18 @@ pub fn run(path: String) {
         }
     };
 
-    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
-        Ok(functions) => functions,
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
+    if compile_vm {
+        let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+            Ok(functions) => functions,
+            Err(_) => {
+                reporter.emit(input);
+                ::std::process::exit(65)
+            }
+        };
 
-    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-    vm.run();
+        let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+        vm.run();
+    }
 }
 
 #[derive(StructOpt, Debug)]
@@ -158,4 +162,7 @@ pub struct Cli {
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,
+    /// Run in vm mode. Default is cranelift backedn
+    #[structopt(long = "vm", short = "v")]
+    pub vm: bool,
 }
