@@ -2,6 +2,7 @@
 members = [
     "backend",
     "syntax",
+    "ir",
     "frontend",
     # "interpreter",
     "util",
