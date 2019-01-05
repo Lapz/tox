@@ -1,4 +1,4 @@
-use super::types::{Method, Property, Type, TypeVar};
+use ir::types::{Method, Property, Type, TypeVar};
 use super::Infer;
 use std::collections::HashMap;
 
