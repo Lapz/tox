@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::fmt::{self,Debug,Display};
+use std::fmt::{self, Debug, Display};
 use util::symbol::Symbol;
-
 
 static mut LABEL_COUNT: u32 = 0;
 
@@ -19,30 +18,28 @@ pub struct Label(u32);
 #[derive(Clone, Copy, Hash, PartialEq, Default)]
 pub struct Register(u32);
 
-
 pub struct Program {
     pub functions: Vec<Function>,
-    pub classes: Vec<Class>
+    pub classes: Vec<Class>,
 }
 
 pub struct Function {
-    pub name:Symbol,
-    pub params:Vec<Label>,
-    pub body:Vec<Instruction>
-}
-
-#[derive(Debug,Clone)]
-pub struct Class {
-    ident:Symbol,
-    fields:Vec<crate::types::Type>,
-    methods:Vec<crate::types::Type>
-
+    pub name: Symbol,
+    pub params: Vec<Label>,
+    pub body: Vec<Instruction>,
 }
 
 #[derive(Debug, Clone)]
+pub struct Class {
+    ident: Symbol,
+    fields: Vec<crate::types::Type>,
+    methods: Vec<crate::types::Type>,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct LoopDescription {
-    start: BlockID,
-    end: BlockID,
+    pub start: BlockID,
+    pub end: BlockID,
 }
 
 #[derive(Debug, Clone)]
@@ -58,7 +55,7 @@ pub enum Value {
     /// Float Constant
     Float(f64),
     /// A named variable
-    Name(Symbol),
+    Register(Register),
     ///  Contents of a word of memory at address
     Mem(Vec<u8>),
 }
@@ -85,6 +82,15 @@ impl BlockID {
     }
 }
 
+impl LoopDescription {
+    pub fn start(&self) -> BlockID {
+        self.start
+    }
+
+    pub fn end(&self) -> BlockID {
+        self.end
+    }
+}
 impl Label {
     pub fn new() -> Label {
         let count = unsafe { LABEL_COUNT };
@@ -113,11 +119,10 @@ impl Register {
     }
 }
 
-
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Instruction {
-    pub instruction:Inst,
-    pub ty:crate::types::Type
+    pub instruction: Inst,
+    pub ty: crate::types::Type,
 }
 
 /// Instruction used in the IR
@@ -132,12 +137,12 @@ pub enum Inst {
 
     Binary(Register, Value, BinaryOp, Value),
 
-    Cast(Value,crate::types::Type),
-    
+    Cast(Value, crate::types::Type),
+
     Call(Value, Value, Vec<Value>),
 
     StatementStart,
-    
+
     /// t1 = val
     Store(Value, Value),
 
@@ -181,8 +186,8 @@ impl Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Value::Const(ref v) => write!(f, "{}", v),
-            Value::Float(ref v) => write!(f, "{}",v),
-            Value::Name(ref name) => write!(f, "{}", name),
+            Value::Float(ref v) => write!(f, "{}", v),
+            Value::Register(ref name) => write!(f, "{}", name),
             Value::Mem(ref bytes) => {
                 write!(f, "[")?;
 
@@ -274,4 +279,3 @@ impl Display for BlockEnd {
         }
     }
 }
-

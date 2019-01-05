@@ -7,25 +7,26 @@ mod alias;
 mod class;
 mod function;
 pub(crate) mod subst;
-pub(crate) mod types;
+// pub(crate) mod types;
 mod unify;
 mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
+use ir::types::Type;
 use std::rc::Rc;
 use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Infer {
-    body: types::Type,
+    body: Type,
     main: Option<Symbol>,
 }
 
 impl Infer {
     pub fn new() -> Self {
         Self {
-            body: self::types::Type::Nil,
+            body: Type::Nil,
             main: None,
         }
     }

@@ -1,6 +1,6 @@
 use ast as t;
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::Literal;
 use util::pos::{Span, Spanned};
 

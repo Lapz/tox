@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::types;
 use infer::{Infer, InferResult};
+use ir::types;
 use syntax::ast::{Expression, Type};
 use util::pos::{Span, Spanned};
 
@@ -45,8 +45,8 @@ impl Infer {
             (lhs, rhs) => {
                 let msg = format!(
                     "Cannot cast `{}` to type `{}`",
-                    lhs.print(ctx),
-                    rhs.print(ctx)
+                    lhs.print(ctx.symbols()),
+                    rhs.print(ctx.symbols())
                 );
                 ctx.error(msg, whole_span);
                 return Err(());
