@@ -131,7 +131,7 @@ pub struct Instruction {
 pub enum Inst {
     /// A stack allocated array of size whatever
     /// Stored at a location
-    Array(Vec<Value>),
+    Array(Value,usize),
 
     Drop(Register),
 
@@ -140,6 +140,8 @@ pub enum Inst {
     Cast(Value, crate::types::Type),
 
     Call(Value, Value, Vec<Value>),
+
+    Print(Value),
 
     StatementStart,
 

@@ -74,7 +74,7 @@ pub enum Statement {
 
     While(Spanned<TypedExpression>, Spanned<TypedStatement>),
 
-    Var {
+    Let {
         ident: Symbol,
         ty: Type,
         expr: Option<Spanned<TypedExpression>>,
