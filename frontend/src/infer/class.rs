@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::{Method, Property, Type, TypeVar, Unique};
 use infer::{Infer, InferResult};
+use ir::types::{Method, Property, Type, TypeVar, Unique};
 use syntax::ast::Class;
 use util::pos::Spanned;
 
@@ -39,7 +39,10 @@ impl Infer {
                             methods_types.extend(methods.clone().into_iter());
                         }
                         _ => {
-                            let msg = format!("The type `{}` is not inheritable.", ty.print(ctx));
+                            let msg = format!(
+                                "The type `{}` is not inheritable.",
+                                ty.print(ctx.symbols())
+                            );
 
                             ctx.error(msg, super_class.span);
                             return Err(());
@@ -47,7 +50,8 @@ impl Infer {
                     },
 
                     _ => {
-                        let msg = format!("The type `{}` is not inheritable.", ty.print(ctx));
+                        let msg =
+                            format!("The type `{}` is not inheritable.", ty.print(ctx.symbols()));
 
                         ctx.error(msg, super_class.span);
                         return Err(());

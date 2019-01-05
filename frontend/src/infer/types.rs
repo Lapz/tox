@@ -91,15 +91,15 @@ impl Type {
 
                     for i in 0..types.len() - 1 {
                         if i + 1 == types.len() - 1 {
-                            fmt_string.push_str(&format!("{}", types[i].print(ctx)));
+                            fmt_string.push_str(&format!("{}", types[i].print(ctx.symbols())));
                         } else {
-                            fmt_string.push_str(&format!("{},", types[i].print(ctx)));
+                            fmt_string.push_str(&format!("{},", types[i].print(ctx.symbols())));
                         }
                     }
 
                     fmt_string.push_str(") -> ");
 
-                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(ctx)));
+                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(ctx.symbols())));
 
                     return fmt_string;
                 }
@@ -108,9 +108,9 @@ impl Type {
 
                 for (i, ty) in types.iter().enumerate() {
                     if i + 1 == types.len() {
-                        fmt_string.push_str(&ty.print(ctx))
+                        fmt_string.push_str(&ty.print(ctx.symbols()))
                     } else {
-                        fmt_string.push_str(&format!("{},", ty.print(ctx)))
+                        fmt_string.push_str(&format!("{},", ty.print(ctx.symbols())))
                     }
                 }
 
@@ -125,9 +125,9 @@ impl Type {
                     fmt_string.push('<');
                     for (i, field) in properties.iter().enumerate() {
                         if i + 1 == properties.len() {
-                            fmt_string.push_str(&format!("{}", field.ty.print(ctx)));
+                            fmt_string.push_str(&format!("{}", field.ty.print(ctx.symbols())));
                         } else {
-                            fmt_string.push_str(&format!("{},", field.ty.print(ctx)));
+                            fmt_string.push_str(&format!("{},", field.ty.print(ctx.symbols())));
                         }
                     }
 
@@ -154,7 +154,7 @@ impl Type {
                     fmt_string.push('>');
                 }
 
-                fmt_string.push_str(&ret.print(ctx));
+                fmt_string.push_str(&ret.print(ctx.symbols()));
 
                 fmt_string
             }

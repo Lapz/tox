@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::types::Type;
 use infer::{Infer, InferResult};
+use ir::types::Type;
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
@@ -79,7 +79,7 @@ impl Infer {
                     println!("{:?}", err_type);
                     let msg = format!(
                         "Type {} dosen't have the method/field {}",
-                        err_type.print(ctx),
+                        err_type.print(ctx.symbols()),
                         ctx.name(property.value)
                     );
 
@@ -91,7 +91,7 @@ impl Infer {
             ref err_type => {
                 let msg = format!(
                     "Type {} dosen't have the method/field {}",
-                    err_type.print(ctx),
+                    err_type.print(ctx.symbols()),
                     ctx.name(property.value)
                 );
 

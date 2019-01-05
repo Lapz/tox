@@ -1,8 +1,8 @@
-use util::symbol::Symbol;
-use std::fmt::{self,Display};
+use std::fmt::{self, Display};
+use util::symbol::{Symbol, Symbols};
 
-static mut TYPEVAR_COUNT:u32 = 0;
-static mut UNIQUE_COUNT:u32 =  0;
+static mut TYPEVAR_COUNT: u32 = 0;
+static mut UNIQUE_COUNT: u32 = 0;
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -12,8 +12,7 @@ pub struct TypeVar(pub u32);
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Unique(pub u32);
 
-
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeCon {
     Arrow,
     Array(Box<Type>),
@@ -21,13 +20,12 @@ pub enum TypeCon {
     Float,
     Int,
     Str,
-    Void
+    Void,
 }
 
-
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    App(TypeCon, Vec<Type>),// when type::Con is type::Con::Arrow the last type in the vec of types is the return type
+    App(TypeCon, Vec<Type>), // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
     Class(Symbol, Vec<Property>, Vec<Method>, Unique), // Name, Properties, Methods,Unique
     Generic(Vec<TypeVar>, Box<Type>),
     Nil,
@@ -47,11 +45,8 @@ pub struct Method {
 }
 
 impl Property {
-    pub fn new(name:Symbol,ty:Type) -> Property {
-        Property {
-            name,
-            ty
-        }
+    pub fn new(name: Symbol, ty: Type) -> Property {
+        Property { name, ty }
     }
 }
 
@@ -64,11 +59,8 @@ impl Unique {
 }
 
 impl Method {
-    pub fn new(name:Symbol,ty:Type) -> Method {
-        Method {
-            name,
-            ty
-        }
+    pub fn new(name: Symbol, ty: Type) -> Method {
+        Method { name, ty }
     }
 }
 
@@ -92,6 +84,92 @@ impl Type {
         match *self {
             Type::App(TypeCon::Float, _) => true,
             _ => false,
+        }
+    }
+}
+
+impl Type {
+    pub fn print<'a>(&self, symbols: &'a Symbols<()>) -> String {
+        match *self {
+            Type::App(ref tycon, ref types) => {
+                let mut fmt_string = String::new();
+
+                if let TypeCon::Arrow = *tycon {
+                    fmt_string.push_str("fn(");
+
+                    for i in 0..types.len() - 1 {
+                        if i + 1 == types.len() - 1 {
+                            fmt_string.push_str(&format!("{}", types[i].print(symbols)));
+                        } else {
+                            fmt_string.push_str(&format!("{},", types[i].print(symbols)));
+                        }
+                    }
+
+                    fmt_string.push_str(") -> ");
+
+                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(symbols)));
+
+                    return fmt_string;
+                }
+
+                fmt_string.push_str(&format!("{}", tycon));
+
+                for (i, ty) in types.iter().enumerate() {
+                    if i + 1 == types.len() {
+                        fmt_string.push_str(&ty.print(symbols))
+                    } else {
+                        fmt_string.push_str(&format!("{},", ty.print(symbols)))
+                    }
+                }
+
+                fmt_string
+            }
+
+            Type::Class(ref name, ref properties, _, _) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str(&format!("{}", symbols.name(*name)));
+
+                if !properties.is_empty() {
+                    fmt_string.push('<');
+                    for (i, field) in properties.iter().enumerate() {
+                        if i + 1 == properties.len() {
+                            fmt_string.push_str(&format!("{}", field.ty.print(symbols)));
+                        } else {
+                            fmt_string.push_str(&format!("{},", field.ty.print(symbols)));
+                        }
+                    }
+
+                    fmt_string.push('>');
+                }
+
+                fmt_string
+            }
+
+            Type::Generic(ref vars, ref ret) => {
+                let mut fmt_string = String::new();
+                fmt_string.push_str("poly ");
+
+                if !vars.is_empty() {
+                    fmt_string.push('<');
+                    for (i, var) in vars.iter().enumerate() {
+                        if i + 1 == vars.len() {
+                            fmt_string.push(var.0 as u8 as char);
+                        } else {
+                            fmt_string.push_str(&format!("{},", var.0 as u8 as char));
+                        }
+                    }
+
+                    fmt_string.push('>');
+                }
+
+                fmt_string.push_str(&ret.print(symbols));
+
+                fmt_string
+            }
+
+            Type::Nil => "nil".into(),
+
+            Type::Var(ref v) => format!("{{T:{}}}", v),
         }
     }
 }

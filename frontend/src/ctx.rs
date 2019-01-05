@@ -1,5 +1,5 @@
 use infer::env::VarEntry;
-use infer::types::{Type, TypeCon};
+use ir::types::{Type, TypeCon};
 
 use std::rc::Rc;
 use util::emmiter::Reporter;
@@ -86,6 +86,10 @@ impl<'a> CompileCtx<'a> {
     /// Find the corresponding name for a symbol
     pub fn name(&self, symbol: Symbol) -> String {
         self.vars.name(symbol)
+    }
+
+    pub fn symbols(&self) -> &Symbols<()> {
+        &self.symbols
     }
 
     /// CHeck for a Type in the symbol Env

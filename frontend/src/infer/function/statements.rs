@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 
@@ -81,7 +81,7 @@ impl Infer {
                             _ => {
                                 let msg = format!(
                                     "Increment cannot be of type `{}`",
-                                    ty.value.ty.print(ctx)
+                                    ty.value.ty.print(ctx.symbols())
                                 );
 
                                 ctx.error(msg, span);

@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 
@@ -70,7 +70,8 @@ impl Infer {
                     }
 
                     _ => {
-                        let msg = format!(" Cannot index type `{}` ", target_ty.print(ctx));
+                        let msg =
+                            format!(" Cannot index type `{}` ", target_ty.print(ctx.symbols()));
                         ctx.error(msg, target_span);
                         return Err(());
                     }

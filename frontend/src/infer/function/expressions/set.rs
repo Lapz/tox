@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::Type;
 use infer::{Infer, InferResult};
+use ir::types::Type;
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
@@ -94,7 +94,7 @@ impl Infer {
             ref other_ty => {
                 let msg = format!(
                     "Type {} dosen't have the method/field {}",
-                    other_ty.print(ctx),
+                    other_ty.print(ctx.symbols()),
                     ctx.name(property.value)
                 );
 
