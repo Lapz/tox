@@ -192,7 +192,7 @@ impl Infer {
                         ctx.add_var(ident.value, VarEntry::Var(t.clone()));
 
                         return Ok(Spanned::new(
-                            t::Statement::Var {
+                            t::Statement::Let {
                                 ident: ident.value,
                                 ty: t,
                                 expr: Some(expr_tyexpr),
@@ -204,7 +204,7 @@ impl Infer {
                     ctx.add_var(ident.value, VarEntry::Var(expr_tyexpr.value.ty.clone()));
 
                     Ok(Spanned::new(
-                        t::Statement::Var {
+                        t::Statement::Let {
                             ident: ident.value,
                             ty: expr_tyexpr.value.ty.clone(),
                             expr: Some(expr_tyexpr),
@@ -218,7 +218,7 @@ impl Infer {
                         ctx.add_var(ident.value, VarEntry::Var(ty.clone()));
 
                         return Ok(Spanned::new(
-                            t::Statement::Var {
+                            t::Statement::Let {
                                 ident: ident.value,
                                 ty,
                                 expr: None,
@@ -230,7 +230,7 @@ impl Infer {
                     ctx.add_var(ident.value, VarEntry::Var(Type::Nil));
 
                     Ok(Spanned::new(
-                        t::Statement::Var {
+                        t::Statement::Let {
                             ident: ident.value,
                             ty: Type::Nil,
                             expr: None,

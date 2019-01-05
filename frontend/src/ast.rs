@@ -62,7 +62,7 @@ pub enum Statement {
 
     While(Spanned<TypedExpression>, Box<Spanned<Statement>>),
 
-    Var {
+    Let {
         ident: Symbol,
         ty: Type,
         expr: Option<Spanned<TypedExpression>>,

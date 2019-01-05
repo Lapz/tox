@@ -1,6 +1,6 @@
 use ast as t;
 use ir::instructions::*;
-use ir::types::Type;
+use ir::types::*;
 use std::collections::HashMap;
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -183,13 +183,19 @@ impl<'a> Builder<'a> {
                 self.start_block(after);
             }
 
-            Statement::Var { ident, ty, expr } => {
+            Statement::Let { ident, ty, expr } => {
                 let reg = self.add_local(ident);
 
                 if let Some(expr) = expr {
                     let expr = self.build_expr(expr);
                     self.emit_store(Value::Register(reg), expr, ty);
                 }
+            }
+
+            Statement::Print(expr) => {
+                let expr = self.build_expr(expr);
+
+                self.emit_instruction(Inst::Print(expr), Type::Nil);
             }
 
             Statement::Return(expr) => {
@@ -227,12 +233,45 @@ impl<'a> Builder<'a> {
 
                 self.start_block(after);
             }
-
-            _ => unimplemented!(),
         }
     }
 
-    fn build_expr(&mut self,expr: Spanned<t::TypedExpression>) -> Value {
-        unimplemented!()
+    fn build_expr(&mut self, expr: Spanned<t::TypedExpression>) -> Value {
+        use self::t::Expression;
+
+        let expr = expr.value;
+
+        let ty = expr.ty;
+        let expr = expr.expr.value;
+
+        match expr {
+            Expression::Array(items) => {
+                let temp = Register::new();
+
+                self.emit_instruction(Inst::Array(Value::Register(temp), items.len()), ty.clone());
+
+                for (i, item) in items.into_iter().enumerate() {
+                    let result = self.build_expr(item);
+                    let offset = Register::new();
+
+                    self.emit_instruction(
+                        Inst::Binary(
+                            offset,
+                            Value::Register(temp),
+                            BinaryOp::Plus,
+                            Value::Const(i as u64),
+                        ),
+                        Type::App(TypeCon::Int, vec![]),
+                    );
+
+
+                    self.emit_store(Value::Register(offset), result,Type::Nil);
+                }
+
+                Value::Register(temp)
+            },
+
+            _ => unimplemented!()
+        }
     }
 }
