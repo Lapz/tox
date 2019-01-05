@@ -271,6 +271,15 @@ impl<'a> Builder<'a> {
                 Value::Register(temp)
             },
 
+            Expression::Assign(var,op,expr) => {
+                let expr = self.build_expr(expr);
+                let var = self.build_var(var).expect("Undefined Variable");
+
+                self.emit_store(var, expr, ty.clone());
+
+                var
+            }
+
             _ => unimplemented!()
         }
     }
