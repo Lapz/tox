@@ -20,6 +20,17 @@ pub struct Label(u32);
 pub struct Register(u32);
 
 
+pub struct Program {
+    pub functions: Vec<Function>,
+    pub classes: Vec<Class>
+}
+
+pub struct Function {
+    pub name:Symbol,
+    pub params:Vec<Label>,
+    pub body:Vec<Instruction>
+}
+
 #[derive(Debug,Clone)]
 pub struct Class {
     ident:Symbol,
@@ -105,8 +116,8 @@ impl Register {
 
 #[derive(Debug,Clone,PartialEq)]
 pub struct Instruction {
-    instruction:Inst,
-    ty:crate::types::Type
+    pub instruction:Inst,
+    pub ty:crate::types::Type
 }
 
 /// Instruction used in the IR
