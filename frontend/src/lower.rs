@@ -2,6 +2,7 @@ use ast as t;
 use ir::instructions::*;
 use ir::types::*;
 use std::collections::HashMap;
+use syntax::ast::{Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use util::symbol::Symbols;
@@ -259,28 +260,216 @@ impl<'a> Builder<'a> {
                             offset,
                             Value::Register(temp),
                             BinaryOp::Plus,
-                            Value::Const(i as u64),
+                            Value::Const(i as i64),
                         ),
                         Type::App(TypeCon::Int, vec![]),
                     );
 
-
-                    self.emit_store(Value::Register(offset), result,Type::Nil);
+                    self.emit_store(Value::Register(offset), result, Type::Nil);
                 }
 
                 Value::Register(temp)
-            },
+            }
 
-            Expression::Assign(var,op,expr) => {
+            Expression::Assign(var, op, expr) => {
                 let expr = self.build_expr(expr);
-                let var = self.build_var(var).expect("Undefined Variable");
+                let var = self.build_var(&var).expect("Undefined Variable");
 
-                self.emit_store(var, expr, ty.clone());
+                self.emit_store(var.clone(), expr, ty.clone());
 
                 var
             }
 
-            _ => unimplemented!()
+            Expression::Binary(lhs, op, rhs) => match op {
+                Op::And => self.build_and(lhs, rhs, ty),
+                Op::Or => self.build_or(lhs, rhs, ty),
+                _ => {
+                    let lhs = self.build_expr(lhs);
+                    let rhs = self.build_expr(rhs);
+
+                    let op = gen_bin_op(op);
+                    let result = Register::new();
+
+                    self.emit_instruction(Inst::Binary(result, lhs, op, rhs), ty);
+                    Value::Register(result)
+                }
+            },
+
+            Expression::Call(callee, args) => {
+                let result = Register::new();
+                let ident = Value::Named(callee);
+                let mut temps = Vec::with_capacity(args.len()); // Temps where the expressions are stored
+
+                for expr in args {
+                    temps.push(self.build_expr(expr))
+                }
+
+                self.emit_instruction(Inst::Call(Value::Register(result), ident, temps), ty);
+
+                Value::Register(result)
+            }
+
+            Expression::Cast(expr, ty) => {
+                let result = self.build_expr(expr);
+
+                self.emit_instruction(Inst::Cast(result.clone(), ty.clone()), ty);
+
+                result
+            }
+
+            Expression::ClassLiteral { .. } => unimplemented!(),
+
+            Expression::Closure(_) => unimplemented!(),
+            Expression::Literal(literal) => {
+                let tmp = Register::new();
+
+                match literal {
+                    Literal::False(_) => {
+                        self.emit_store(Value::Register(tmp), Value::Bool(false), ty);
+                    }
+                    Literal::Nil => {
+                        self.emit_store(Value::Register(tmp), Value::Nil, ty);
+                    },
+
+
+                    Literal::Int(number) => {
+                        self.emit_store(Value::Register(tmp), Value::Const(number), ty)
+                    },
+
+                    Literal::Float(number) => {
+                        self.emit_store(Value::Register(tmp), Value::Float(number), ty)
+                    }
+
+                    Literal::Str(string) => {
+                        let mut bytes = string.into_bytes();
+
+                        self.emit_store(Value::Register(tmp), Value::Mem(bytes), ty);
+                    }
+
+                    Literal::True(_) => {
+                        self.emit_store(Value::Register(tmp), Value::Bool(true), ty);
+                    }
+                };
+
+                Value::Register(tmp)
+            }
+
+            _ => unimplemented!(),
         }
+    }
+
+    fn build_and(
+        &mut self,
+        l: Spanned<t::TypedExpression>,
+        r: Spanned<t::TypedExpression>,
+        ty: Type,
+    ) -> Value {
+        let lhs_ty = l.value.ty.clone();
+        let built_lhs = self.build_expr(l);
+        let rhs_block = self.new_block();
+        let reset_block = self.new_block();
+        let after_block = self.new_block();
+        let result = Register::new();
+
+        self.end_block(BlockEnd::Branch(built_lhs.clone(), reset_block, rhs_block));
+
+        self.start_block(rhs_block);
+
+        let built_rhs = self.build_expr(r);
+
+        self.emit_store(Value::Register(result), built_rhs.clone(), ty.clone());
+
+        self.end_block(BlockEnd::Jump(after_block));
+        self.start_block(reset_block);
+
+        self.emit_store(Value::Register(result), Value::Bool(true), ty);
+
+        self.end_block(BlockEnd::Jump(after_block));
+
+        self.start_block(after_block);
+
+        Value::Register(result)
+    }
+
+    fn build_or(
+        &mut self,
+        l: Spanned<t::TypedExpression>,
+        r: Spanned<t::TypedExpression>,
+        ty:Type
+    ) -> Value {
+        unimplemented!()
+    }
+
+    fn build_var(&self, var: &Symbol) -> Option<Value> {
+        if let Some(register) = self.locals.get(var) {
+            Some(Value::Register(*register))
+        } else if let Some(register) = self.parameters.get(var) {
+            Some(Value::Register(*register))
+        } else {
+            None
+        }
+    }
+}
+
+
+fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
+    let mut builder = Builder::new(symbols);
+
+    for param in function.params {
+        builder.add_param(param.name);
+    }
+
+        let start = builder.new_block();
+
+        builder.start_block(start);
+        builder.build_statement(*function.body);
+
+        if builder.current_block.is_some() {
+            builder.end_block(BlockEnd::End);
+        }
+
+    Function {
+        name: function.name,
+        params: builder.parameters(),
+        start_block: start,
+        blocks: builder.blocks(),
+       
+    }
+}
+
+pub fn build_program(symbols: &Symbols<()>, old_program: t::Program) -> Program {
+    let mut new_program = Program { functions: vec![],classes:vec![] };
+
+    for function in old_program.functions {
+        new_program
+            .functions
+            .push(build_function(function, symbols));
+    }
+
+    new_program
+}
+
+fn gen_un_op(op: UnaryOp) -> UnaryOp {
+    match op {
+        UnaryOp::Minus => UnaryOp::Minus,
+        UnaryOp::Bang => UnaryOp::Bang,
+    }
+}
+
+fn gen_bin_op(op: Op) -> BinaryOp {
+    match op {
+        Op::Plus => BinaryOp::Plus,
+        Op::Minus => BinaryOp::Minus,
+        Op::Star => BinaryOp::Mul,
+        Op::Slash => BinaryOp::Div,
+        Op::LessThan => BinaryOp::Lt,
+        Op::GreaterThan => BinaryOp::Gt,
+        Op::LessThanEqual => BinaryOp::Lte,
+        Op::GreaterThanEqual => BinaryOp::Gte,
+        Op::EqualEqual => BinaryOp::Equal,
+        Op::BangEqual => BinaryOp::NotEqual,
+        // Op::And => BinaryOp::And,
+        // Op::Or => BinaryOp::Or,
+        _ => unreachable!(),
     }
 }

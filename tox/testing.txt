@@ -1,0 +1,22 @@
+function main()
+{
+start: label_0
+label_2:	
+	t2 <- 0
+
+	goto label_3
+label_3:	
+	t3 <- nil
+
+	return t3
+label_1:	
+	t1 <- 1
+
+	goto label_3
+label_0:	
+	t0 <- true
+
+	branch t0 label_1 label_2
+label_4:
+	end
+}

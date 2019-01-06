@@ -25,8 +25,9 @@ pub struct Program {
 
 pub struct Function {
     pub name: Symbol,
-    pub params: Vec<Label>,
-    pub body: Vec<Instruction>,
+    pub params: Vec<Register>,
+    pub blocks: HashMap<BlockID, Block>,
+    pub start_block: BlockID,
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +43,7 @@ pub struct LoopDescription {
     pub end: BlockID,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Block {
     pub instructions: Vec<Instruction>,
     pub end: BlockEnd,
@@ -51,13 +52,19 @@ pub struct Block {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     /// Integer Constant
-    Const(u64),
+    Const(i64),
     /// Float Constant
     Float(f64),
-    /// A named variable
+    /// One of many registers
     Register(Register),
+
+    Named(Symbol),
     ///  Contents of a word of memory at address
     Mem(Vec<u8>),
+
+    Bool(bool),
+
+    Nil,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -131,7 +138,7 @@ pub struct Instruction {
 pub enum Inst {
     /// A stack allocated array of size whatever
     /// Stored at a location
-    Array(Value,usize),
+    Array(Value, usize),
 
     Drop(Register),
 
@@ -190,6 +197,9 @@ impl Display for Value {
             Value::Const(ref v) => write!(f, "{}", v),
             Value::Float(ref v) => write!(f, "{}", v),
             Value::Register(ref name) => write!(f, "{}", name),
+            Value::Named(ref name) => write!(f, "{}", name),
+            Value::Bool(ref b) => write!(f, "{}", b),
+            Value::Nil => write!(f, "nil"),
             Value::Mem(ref bytes) => {
                 write!(f, "[")?;
 
@@ -279,5 +289,72 @@ impl Display for BlockEnd {
                 write!(f, "branch {} {} {}", v, t_branch, f_branch)
             }
         }
+    }
+}
+
+
+impl Display for Instruction {
+    fn fmt(&self,f:&mut fmt::Formatter) -> fmt::Result {
+
+
+        if self.instruction == Inst::StatementStart {
+            write!(f, "")
+        }else {
+            write!(f, "{}:{}",self.instruction,self.ty)
+        }
+        
+    }
+}
+
+
+impl Display for Inst {
+    fn fmt(&self,out:&mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Inst::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
+            Inst::StatementStart => write!(out, ""),
+            Inst::Binary(ref res, ref lhs, ref op, ref rhs) => {
+                write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
+            },
+            Inst::Print(ref v) => write!(out, "print {}",v),
+
+            Inst::Drop(ref reg) => write!(out, "drop {}", reg),
+            Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
+            Inst::Cast(ref dest, ref ty) => {
+                write!(out, "{} as {}", dest, ty)
+            }
+            Inst::Unary(ref dest, ref source, ref op) => {
+                write!(out, "{} <- {}{}", dest, op, source)
+            }
+            Inst::Return(ref label) => write!(out, "return @{}", label),
+            Inst::Call(ref dest, ref callee, ref args) => {
+                write!(out, "{} <- call {} ", dest, callee)?;
+
+                for arg in args {
+                    write!(out, "{}", arg)?;
+                }
+
+                write!(out, "")?;
+
+                Ok(())
+            }
+        }
+    }
+}
+
+
+
+
+
+impl Debug for Block {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        
+        for inst in self.instructions.iter() {
+            writeln!(f, "{}",inst)?;
+        }
+
+        writeln!(f,"{}",self.end)?;
+
+
+        Ok(())
     }
 }

@@ -1,5 +1,8 @@
 
 fn main() {
-  let a = "a";
-  print [1] == [1];
+  if true {
+    1;
+  }else {
+    0;
+  }
 }
