@@ -37,7 +37,7 @@ impl Infer {
         program: ::syntax::ast::Program,
         strings: &Rc<::util::symbol::SymbolFactory>,
         reporter: &mut ::util::emmiter::Reporter,
-    ) -> InferResult<::ast::Program> {
+    ) -> InferResult<ir::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
 
         let mut new_program = super::ast::Program {
@@ -65,7 +65,9 @@ impl Infer {
             return Err(());
         }
 
-        Ok(new_program)
+
+
+        Ok(::lower::build_program(&ctx.symbols(), new_program))
     }
 
     pub fn set_main(&mut self, symbol: Symbol) {

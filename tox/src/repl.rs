@@ -1,4 +1,4 @@
-use frontend::{compile, Infer};
+use frontend::{Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, ItemName, Program};
@@ -92,17 +92,17 @@ impl Repl {
                 }
             };
 
-            let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
-                Ok(functions) => functions,
-                Err(_) => {
-                    reporter.emit(&input);
-                    continue;
-                }
-            };
+            // let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+            //     Ok(functions) => functions,
+            //     Err(_) => {
+            //         reporter.emit(&input);
+            //         continue;
+            //     }
+            // };
 
-            let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+            // let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
 
-            vm.run()
+            // vm.run()
         }
     }
 }

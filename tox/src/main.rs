@@ -9,6 +9,8 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
+extern crate ir;
+
 mod repl;
 
 // use backend::vm::compile as compile_vm;
@@ -22,6 +24,7 @@ use syntax::parser::Parser;
 use util::emmiter::Reporter;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
+use ir::printer::Printer;
 
 fn main() {
     let opts = Cli::from_args();
@@ -30,7 +33,7 @@ fn main() {
         // if opts.interpreter {
         //     run_interpreter(file);
         // } else {
-        run(file, opts.vm);
+        run(file, opts.vm,opts.ir_file);
     // }
     } else {
         repl()
@@ -102,7 +105,7 @@ pub fn repl() {
 //     };
 // }
 
-pub fn run(path: String, vm: bool) {
+pub fn run(path: String, vm: bool,print_ir:Option<String>) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -140,6 +143,18 @@ pub fn run(path: String, vm: bool) {
         }
     };
 
+    if print_ir.is_some() {
+        let printer = Printer::new(&symbols);
+
+        printer.print_program(&typed_ast,&mut File::create(print_ir.unwrap()).unwrap()).unwrap();
+
+    }
+
+    #[cfg(feature="graphviz")]
+    {
+        typed_ast.graphviz(&mut File::create("viz.dot").unwrap()).unwrap();
+    }
+
     // if compile_vm {
     //     let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
     //         Ok(functions) => functions,
@@ -165,4 +180,10 @@ pub struct Cli {
     /// Run in vm mode. Default is cranelift backedn
     #[structopt(long = "vm", short = "v")]
     pub vm: bool,
+
+    /// Dump the ir to the given file
+    #[structopt(long = "file", short = "-f")]
+    pub ir_file: Option<String>
+
+
 }
