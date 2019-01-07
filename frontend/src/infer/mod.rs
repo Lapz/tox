@@ -65,8 +65,6 @@ impl Infer {
             return Err(());
         }
 
-
-
         Ok(::lower::build_program(&ctx.symbols(), new_program))
     }
 
