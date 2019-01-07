@@ -5,4 +5,6 @@ fn main() {
   }else {
     0;
   }
+
+  let a =10;
 }

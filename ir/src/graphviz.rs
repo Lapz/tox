@@ -1,46 +1,61 @@
 use crate::instructions::{Block, BlockEnd, BlockID, Instruction, Program};
+use petgraph::dot::{Config, Dot};
 use petgraph::Graph;
 use std::collections::HashMap;
 use std::io::{self, Write};
-use petgraph::dot::{Dot, Config};
+
+const GRAPHSTART: &'static str = r##"digraph {
+    rankdir=TD; ordering=out;
+    color="#efefef";
+    node[shape=box style=filled fontsize=8 fontname="Verdana" fillcolor="#efefef"];
+    edge[fontsize=8 fontname="Verdana"];"##;
+
 impl Program {
     pub fn graphviz<W: Write>(&self, out: &mut W) -> io::Result<()> {
-        
-
         for function in self.functions.iter() {
-            let mut graph = Graph::<&BlockID,&Block>::new();
+            write!(out, "{}", GRAPHSTART)?;
 
-            let mut mappings = HashMap::new();
+
+            let mut end = Vec::new();
+
+           
 
             for (id, block) in function.blocks.iter() {
-                let node = graph.add_node(&id);
-
-                mappings.insert(*id, node);
-
-                
-            }
-
-            for (id,block) in function.blocks.iter() {
-
                 if block.instructions.is_empty() {
                     continue; // skip empty blocks
-                    
                 }
+
+                write!(out, "\n\t{} [label=\"",id.0)?;
+
+                for inst in block.instructions.iter() {
+                    write!(out, "\\l{}", inst)?;
+                }
+
+               
+                write!(out, "\\l{}",block.end)?;
                 match block.end {
                     BlockEnd::Jump(to) => {
-                        graph.update_edge(mappings[&id],mappings[&to],block);
-                    },
+                        
+                        end.push(format!("{}->{}", id.0, to.0));
+                    }
 
                     BlockEnd::Return(_) => (),
                     BlockEnd::End => (),
-                    BlockEnd::Branch(_,t,f) => {
-                         graph.update_edge(mappings[&function.start_block],mappings[&t],block);
-                         graph.update_edge(mappings[&function.start_block],mappings[&f],block);
+                    BlockEnd::Branch(_, t, f) => {
+                        end.push(format!("{}->{}", id.0, t.0));
+                        end.push(format!("{}->{}", id.0, f.0));
                     }
                 }
+
+                write!(out, "\"]")?;
             }
 
-            writeln!(out, "{:?}",Dot::new(&graph))?;
+
+            for e in end {
+                write!(out, "\n\t{}",e)?;
+            }
+
+            write!(out, "\n}}")?;
         }
 
         Ok(())
