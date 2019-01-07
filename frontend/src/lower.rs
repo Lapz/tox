@@ -329,12 +329,11 @@ impl<'a> Builder<'a> {
                     }
                     Literal::Nil => {
                         self.emit_store(Value::Register(tmp), Value::Nil, ty);
-                    },
-
+                    }
 
                     Literal::Int(number) => {
                         self.emit_store(Value::Register(tmp), Value::Const(number), ty)
-                    },
+                    }
 
                     Literal::Float(number) => {
                         self.emit_store(Value::Register(tmp), Value::Float(number), ty)
@@ -354,7 +353,9 @@ impl<'a> Builder<'a> {
                 Value::Register(tmp)
             }
 
-            _ => unimplemented!(),
+            Expression::Grouping(expr) => self.build_expr(expr),
+
+            ref e => unimplemented!("{:?}", e),
         }
     }
 
@@ -395,7 +396,7 @@ impl<'a> Builder<'a> {
         &mut self,
         l: Spanned<t::TypedExpression>,
         r: Spanned<t::TypedExpression>,
-        ty:Type
+        ty: Type,
     ) -> Value {
         unimplemented!()
     }
@@ -411,7 +412,6 @@ impl<'a> Builder<'a> {
     }
 }
 
-
 fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
     let mut builder = Builder::new(symbols);
 
@@ -419,26 +419,28 @@ fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
         builder.add_param(param.name);
     }
 
-        let start = builder.new_block();
+    let start = builder.new_block();
 
-        builder.start_block(start);
-        builder.build_statement(*function.body);
+    builder.start_block(start);
+    builder.build_statement(*function.body);
 
-        if builder.current_block.is_some() {
-            builder.end_block(BlockEnd::End);
-        }
+    if builder.current_block.is_some() {
+        builder.end_block(BlockEnd::End);
+    }
 
     Function {
         name: function.name,
         params: builder.parameters(),
         start_block: start,
         blocks: builder.blocks(),
-       
     }
 }
 
 pub fn build_program(symbols: &Symbols<()>, old_program: t::Program) -> Program {
-    let mut new_program = Program { functions: vec![],classes:vec![] };
+    let mut new_program = Program {
+        functions: vec![],
+        classes: vec![],
+    };
 
     for function in old_program.functions {
         new_program

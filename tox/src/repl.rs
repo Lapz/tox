@@ -1,4 +1,4 @@
-use frontend::{Infer};
+use frontend::Infer;
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, ItemName, Program};
