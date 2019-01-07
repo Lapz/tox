@@ -292,36 +292,29 @@ impl Display for BlockEnd {
     }
 }
 
-
 impl Display for Instruction {
-    fn fmt(&self,f:&mut fmt::Formatter) -> fmt::Result {
-
-
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.instruction == Inst::StatementStart {
             write!(f, "")
-        }else {
-            write!(f, "{}:{}",self.instruction,self.ty)
+        } else {
+            write!(f, "{}:{}", self.instruction, self.ty)
         }
-        
     }
 }
 
-
 impl Display for Inst {
-    fn fmt(&self,out:&mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Inst::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
             Inst::StatementStart => write!(out, ""),
             Inst::Binary(ref res, ref lhs, ref op, ref rhs) => {
                 write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
-            },
-            Inst::Print(ref v) => write!(out, "print {}",v),
+            }
+            Inst::Print(ref v) => write!(out, "print {}", v),
 
             Inst::Drop(ref reg) => write!(out, "drop {}", reg),
             Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::Cast(ref dest, ref ty) => {
-                write!(out, "{} as {}", dest, ty)
-            }
+            Inst::Cast(ref dest, ref ty) => write!(out, "{} as {}", dest, ty),
             Inst::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
@@ -341,19 +334,13 @@ impl Display for Inst {
     }
 }
 
-
-
-
-
 impl Debug for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        
         for inst in self.instructions.iter() {
-            writeln!(f, "{}",inst)?;
+            writeln!(f, "{}", inst)?;
         }
 
-        writeln!(f,"{}",self.end)?;
-
+        writeln!(f, "{}", self.end)?;
 
         Ok(())
     }

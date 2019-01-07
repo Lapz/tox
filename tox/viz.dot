@@ -1,16 +1,14 @@
 digraph {
-
     rankdir=TD; ordering=out;
     color="#efefef";
     node[shape=box style=filled fontsize=8 fontname="Verdana" fillcolor="#efefef"];
     edge[fontsize=8 fontname="Verdana"];
-    0 [label="BlockID(0)\lt0 <- true\lbranch t0 label_1 label_2"]
-    1 [label="BlockID(1)\lt1 <- 1:int\lgoto label_3"]
-    2 [label="BlockID(2)\lt1 <- 0:int\lgoto label_3"]
-    3 [label="BlockID(3)\lt3 <- nil\lreturn t3"]
-    0 -> 1 
-    0 -> 2
-    1 -> 3
-    2 -> 3 
+	1 [label="\l\lt1 <- 1:int\lgoto label_3"]
+	2 [label="\l\lt2 <- 0:int\lgoto label_3"]
+	3 [label="\l\lt4 <- 10:int\lt3 <- t4:int\l\lt5 <- nil:nil\lreturn t5"]
+	0 [label="\l\lt0 <- true:bool\lbranch t0 label_1 label_2"]
+	1->3
+	2->3
+	0->1
+	0->2
 }
-

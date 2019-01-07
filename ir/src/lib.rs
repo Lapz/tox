@@ -1,6 +1,6 @@
 pub mod instructions;
-pub mod types;
 pub mod printer;
+pub mod types;
 
 #[cfg(feature = "graphviz")]
 pub mod graphviz;
