@@ -355,7 +355,7 @@ impl<'a> Builder<'a> {
 
             Expression::Grouping(expr) => self.build_expr(expr),
 
-            ref e => unimplemented!("{:?}", e),
+            // ref e => unimplemented!("{:?}", e),
         }
     }
 
@@ -365,7 +365,6 @@ impl<'a> Builder<'a> {
         r: Spanned<t::TypedExpression>,
         ty: Type,
     ) -> Value {
-        let lhs_ty = l.value.ty.clone();
         let built_lhs = self.build_expr(l);
         let rhs_block = self.new_block();
         let reset_block = self.new_block();

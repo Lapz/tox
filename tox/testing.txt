@@ -1,72 +1,32 @@
-function mai()
+function main()
 {
 start: label_0
+label_7:
+	goto label_4
+label_8:
+	goto label_1
+label_3:	
+	t2 <- nil
+
+	return t2
+label_9:
+	end
+label_2:	
+
+	goto label_4
 label_1:	t0 <- true
 
 	branch t0 label_2 label_3
-label_5:	
-	t4 <- 1
+label_4:	t1 <- false
 
-	goto label_7
-label_2:	
-
-	goto label_1
-label_3:	
-	t2 <- 10
-	t1 <- t2
-	
-	t3 <- true
-
-	branch t3 label_5 label_6
+	branch t1 label_5 label_6
 label_6:	
-	t5 <- 0
 
-	goto label_7
-label_7:	
-	t6 <- nil
+	goto label_6
+label_5:	
 
-	return t6
+	goto label_4
 label_0:	
 
 	goto label_1
-label_8:
-	end
-label_4:
-	goto label_1
-}
-function main()
-{
-start: label_9
-label_15:	
-	t12 <- 0
-
-	goto label_16
-label_9:	
-
-	goto label_10
-label_13:
-	goto label_10
-label_14:	
-	t11 <- 1
-
-	goto label_16
-label_17:
-	end
-label_16:	
-	t13 <- nil
-
-	return t13
-label_12:	
-	t9 <- 10
-	t8 <- t9
-	
-	t10 <- true
-
-	branch t10 label_14 label_15
-label_10:	t7 <- true
-
-	branch t7 label_11 label_12
-label_11:	
-
-	goto label_10
 }
