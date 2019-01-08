@@ -7,6 +7,7 @@ mod class_literal;
 mod get;
 mod grouping;
 mod literal;
+mod pattern;
 mod set;
 mod subscript;
 mod ternary;

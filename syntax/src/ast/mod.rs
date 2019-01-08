@@ -122,6 +122,7 @@ pub enum Expression {
     Match {
         cond: Box<Spanned<Expression>>,
         arms: Spanned<Vec<Spanned<MatchArm>>>,
+        all: Option<Box<Spanned<Statement>>>,
     },
 
     SubScript {

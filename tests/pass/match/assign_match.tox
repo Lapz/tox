@@ -3,6 +3,7 @@ fn main() {
 
     let admin =  match name {
         "Lenard" => true,   
-        _   => false 
+        _   => false,
+        _ =>true
     };
 }

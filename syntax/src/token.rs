@@ -53,9 +53,10 @@ impl<'a> Display for TokenType<'a> {
             TokenType::LBRACE => write!(f, "{{"),   // {
             TokenType::RBRACE => write!(f, "}}"),   // }
             TokenType::FRETURN => write!(f, "->"),
-            TokenType::MATCHARROW => write!(f,"=>"),
+            TokenType::MATCHARROW => write!(f, "=>"),
             TokenType::BAR => write!(f, "|"),
             TokenType::NAMESPACE => write!(f, "::"),
+            TokenType::UNDERSCORE => write!(f, "_"),
             // Keywords,
             TokenType::FUNCTION => write!(f, "fun"),
             TokenType::PRINT => write!(f, "print"),
@@ -106,22 +107,23 @@ pub enum TokenType<'a> {
     EXPONENTIAL, // ^
 
     // Puntuation
-    FRETURN,   // ->
-    DOT,       // .
-    QUESTION,  // ?
-    COLON,     // :
-    COMMA,     // ,
-    COMMENT,   // //
-    SEMICOLON, // ;
-    LPAREN,    // (
-    RPAREN,    // )
-    LBRACKET,  // [
-    RBRACKET,  // ]
-    LBRACE,    // {
-    RBRACE,    // }
-    BAR,       // |
-    NAMESPACE, // ::
-    MATCHARROW,
+    FRETURN,    // ->
+    DOT,        // .
+    QUESTION,   // ?
+    COLON,      // :
+    COMMA,      // ,
+    COMMENT,    // //
+    SEMICOLON,  // ;
+    LPAREN,     // (
+    RPAREN,     // )
+    LBRACKET,   // [
+    RBRACKET,   // ]
+    LBRACE,     // {
+    RBRACE,     // }
+    BAR,        // |
+    NAMESPACE,  // ::
+    MATCHARROW, // =>
+    UNDERSCORE, // _
 
     // Comparison
     LESSTHAN,         // <

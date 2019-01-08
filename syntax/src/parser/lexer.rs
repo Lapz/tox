@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
                 '(' => Ok(span(TokenType::LPAREN, start)),
                 ')' => Ok(span(TokenType::RPAREN, start)),
                 ',' => Ok(span(TokenType::COMMA, start)),
-
+                '_' => Ok(span(TokenType::UNDERSCORE, start)),
                 '|' => Ok(span(TokenType::BAR, start)),
                 '^' => Ok(span(TokenType::EXPONENTIAL, start)),
                 '%' => Ok(span(TokenType::MODULO, start)),
@@ -72,7 +72,7 @@ impl<'a> Parser<'a> {
                     } else if self.peek(|ch| ch == '>') {
                         self.advance();
                         Ok(spans(TokenType::MATCHARROW, start, start.shift('>')))
-                    }else {
+                    } else {
                         Ok(span(TokenType::ASSIGN, start))
                     }
                 }
@@ -218,6 +218,11 @@ impl<'a> Parser<'a> {
         self.reporter.error(msg.into(), span)
     }
 
+    /// Reporter an error with the given span
+    pub(crate) fn span_warn<T: Into<String>>(&mut self, msg: T, span: Span) {
+        self.reporter.warn(msg.into(), span)
+    }
+
     /// Method that handles a line comment
     pub(crate) fn line_comment(&mut self, start: Position) {
         let (_, _) = self.take_whilst(start, |ch| ch != '\n');
@@ -347,7 +352,7 @@ fn spans(token: TokenType, start: Position, end: Position) -> Spanned<Token> {
 
 #[inline]
 fn is_letter_ch(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_'
+    ch.is_alphanumeric()
 }
 
 #[inline]
@@ -372,7 +377,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         "break" => TokenType::BREAK,
         "continue" => TokenType::CONTINUE,
         "do" => TokenType::DO,
-        
+
         // Booleans
         "true" => TokenType::TRUE(true),
         "false" => TokenType::FALSE(false),

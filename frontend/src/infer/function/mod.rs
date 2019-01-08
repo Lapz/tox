@@ -74,12 +74,12 @@ impl Infer {
         }
 
         if Type::Nil == returns {
-            match &mut body.value {
+            match &mut body.value.statement.value {
                 t::Statement::Block(ref mut statements) => {
                     let mut add_return = false;
 
                     if let Some(statement) = statements.last() {
-                        match statement.value {
+                        match statement.value.statement.value {
                             t::Statement::Return(_) => (),
                             _ => {
                                 add_return = true;
@@ -90,16 +90,22 @@ impl Infer {
 
                     if add_return {
                         statements.push(Spanned::new(
-                            t::Statement::Return(Spanned::new(
-                                t::TypedExpression {
-                                    expr: Box::new(Spanned::new(
-                                        t::Expression::Literal(t::Literal::Nil),
+                            t::TypedStatement {
+                                statement: Box::new(Spanned::new(
+                                    t::Statement::Return(Spanned::new(
+                                        t::TypedExpression {
+                                            expr: Box::new(Spanned::new(
+                                                t::Expression::Literal(t::Literal::Nil),
+                                                span,
+                                            )),
+                                            ty: Type::Nil,
+                                        },
                                         span,
                                     )),
-                                    ty: Type::Nil,
-                                },
-                                span,
-                            )),
+                                    span,
+                                )),
+                                ty: Type::Nil,
+                            },
                             span,
                         ))
                     }

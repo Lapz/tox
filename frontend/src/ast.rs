@@ -15,7 +15,7 @@ pub struct Program {
 pub struct Function {
     pub name: Symbol,
     pub params: Vec<FunctionParam>,
-    pub body: Box<Spanned<Statement>>,
+    pub body: Box<Spanned<TypedStatement>>,
     pub returns: Type,
 }
 #[derive(Debug, Clone)]
@@ -40,27 +40,39 @@ pub struct TypedExpression {
 }
 
 #[derive(Debug, Clone)]
+pub struct TypedStatement {
+    pub statement: Box<Spanned<Statement>>,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone)]
 pub struct FunctionParam {
     pub name: Symbol,
     pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
+pub struct MatchArm {
+    pub pattern: Spanned<TypedExpression>,
+    pub body: Spanned<TypedStatement>,
+}
+
+#[derive(Debug, Clone)]
 pub enum Statement {
-    Block(Vec<Spanned<Statement>>),
+    Block(Vec<Spanned<TypedStatement>>),
     Break,
     Continue,
     Expr(Spanned<TypedExpression>),
 
     If {
         cond: Spanned<TypedExpression>,
-        then: Box<Spanned<Statement>>,
-        otherwise: Option<Box<Spanned<Statement>>>,
+        then: Spanned<TypedStatement>,
+        otherwise: Option<Spanned<TypedStatement>>,
     },
 
     Print(Spanned<TypedExpression>),
 
-    While(Spanned<TypedExpression>, Box<Spanned<Statement>>),
+    While(Spanned<TypedExpression>, Spanned<TypedStatement>),
 
     Var {
         ident: Symbol,
@@ -109,6 +121,13 @@ pub enum Expression {
         params: Vec<Spanned<TypedExpression>>,
     },
     Literal(Literal),
+
+    Match {
+        cond: Spanned<TypedExpression>,
+        arms: Spanned<Vec<Spanned<MatchArm>>>,
+        all: Option<Spanned<TypedStatement>>,
+    },
+
     /// Name, Object, Value
     Set(Symbol, Spanned<TypedExpression>, Spanned<TypedExpression>),
     StaticMethodCall {
