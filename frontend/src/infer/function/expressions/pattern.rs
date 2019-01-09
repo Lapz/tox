@@ -1,9 +1,9 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
+use infer::types::{Type};
 use infer::{Infer, InferResult};
-use syntax::ast::{Expression, MatchArm, UnaryOp,Statement};
+use syntax::ast::{Expression, MatchArm, Statement};
 use util::pos::{Span, Spanned};
 
 impl Infer {
@@ -64,7 +64,7 @@ impl Infer {
         let all = if let Some(all) = all {
             let body = self.infer_statement(*all, ctx)?;
 
-            self.unify(&body.value.ty,&return_type,body.span,ctx)?;
+            self.unify(&body.value.ty, &return_type, body.span, ctx)?;
             Some(body)
         } else {
             None

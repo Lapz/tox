@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
             chars,
             symbols,
             parsing_cond: false,
-            parsing_match_arm: true,
+            parsing_match_arm: false,
         };
 
         past_tokens.push_back(parser.next().unwrap());

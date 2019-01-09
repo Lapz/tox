@@ -156,7 +156,10 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn compile_statement(&mut self, statement: &Spanned<ast::TypedStatement>) -> ParseResult<()> {
+    pub fn compile_statement(
+        &mut self,
+        statement: &Spanned<ast::TypedStatement>,
+    ) -> ParseResult<()> {
         use ast::Statement;
         self.set_span(statement.value.statement.span);
         match statement.value.statement.value {
@@ -623,12 +626,14 @@ impl<'a> Builder<'a> {
 
             Expression::Grouping(ref expr) => {
                 self.compile_expression(expr)?;
-            },
+            }
 
-            Expression::Match {ref cond,ref arms,ref all} => {
+            Expression::Match {
+                ref cond,
+                ref arms,
+                ref all,
+            } => {
                 self.compile_expression(cond)?;
-
-              
 
                 for arm in arms.value.iter() {
                     self.compile_expression(&arm.value.pattern)?;
@@ -639,16 +644,11 @@ impl<'a> Builder<'a> {
                     self.patch_jump(false_label);
 
                     self.emit_jump(opcode::JUMP);
-
                 }
 
-
-               if let Some(ref all) = all {
+                if let Some(ref all) = all {
                     self.compile_statement(all)?;
-               }
-
-              
-
+                }
             }
 
             Expression::Ternary(ref cond, ref if_true, ref if_false) => {
@@ -799,7 +799,6 @@ pub fn compile(
     symbols: &Symbols<()>,
     reporter: &mut Reporter,
 ) -> ParseResult<(Program, RawObject)> {
-   
     let mut funcs = FnvHashMap::default();
     let mut classes: FnvHashMap<Symbol, Class> = FnvHashMap::default();
 

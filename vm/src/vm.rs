@@ -163,6 +163,8 @@ impl<'a> VM<'a> {
                 opcode::EQUAL => {
                     let b = self.pop();
                     let a = self.pop();
+
+                    println!("{:?},{:?}", a, b);
                     self.push(Value::bool(a == b));
                 }
 

@@ -2,126 +2,162 @@ use crate::object::{
     ArrayObject, ClassObject, FunctionObject, InstanceObject, NativeObject, Object, ObjectType,
     RawObject, StringObject,
 };
+
 use std::fmt::{self, Debug, Display};
 use std::mem;
-#[derive(Clone, Copy)]
-/// A value within the VM
-pub struct Value {
-    val: As,
-    ty: ValueType,
-}
 
-/// The possible types of values
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ValueType {
-    Int,
-    Float,
-    Nil,
-    Bool,
-    Object,
+// A mask that selects the sign bit.
+const SIGN_BIT: u64 =  1 << 63; // 1 << 63
+// The bits that must be set to indicate a quiet NaN.
+const QNAN: u64 = 0x7ffc000000000000 as u64;
+
+const TAG_NIL: u64 = 1;
+const TAG_FALSE: u64 = 2;
+const TAG_TRUE: u64 = 3;
+const TAG_INT: u64 = 4;
+const TAG_FLOAT: u64 = 5;
+
+const TRUE_VAL: Value = VMValue(QNAN | TAG_TRUE);
+const FALSE_VAL: Value = VMValue(QNAN | TAG_FALSE);
+const NIL_VAL: Value = VMValue(QNAN | TAG_NIL);
+
+#[derive(Clone, Copy,PartialEq)]
+pub struct VMValue(pub u64);
+
+impl VMValue {
+    pub fn inner(&self) -> u64 {
+        self.0
+    }
 }
+pub type Value = VMValue;
+
 
 /// A union of the values
 #[derive(Clone, Copy)]
 #[repr(C)]
-pub union As {
-    boolean: bool,
+pub union NumberUnion {
+    bits64: u64,
+    bits: [u32; 2],
     float: f64,
     int: i64,
-    /// A values whos state is stored on the heap
-    object: RawObject,
 }
 
-impl Value {
+
+impl VMValue {
     pub fn bool(value: bool) -> Value {
-        Value {
-            val: As { boolean: value },
-            ty: ValueType::Bool,
+        if value {
+            TRUE_VAL
+        } else {
+            FALSE_VAL
         }
     }
 
     pub fn nil() -> Value {
-        Value {
-            val: As { int: 0 },
-            ty: ValueType::Nil,
-        }
+        VMValue(QNAN | TAG_NIL)
     }
 
     pub fn float(float: f64) -> Value {
-        Value {
-            val: As { float },
-            ty: ValueType::Float,
+        unsafe {
+            let mut data: NumberUnion = std::mem::uninitialized();
+            data.float = float;
+            return VMValue(data.bits64);
         }
     }
 
     pub fn int(int: i64) -> Value {
-        Value {
-            val: As { int },
-            ty: ValueType::Int,
+        unsafe {
+            let mut data: NumberUnion = std::mem::uninitialized();
+            data.int = int;
+            return VMValue(data.bits64);
         }
     }
 
     pub fn object(object: RawObject) -> Value {
-        Value {
-            val: As { object },
-            ty: ValueType::Object,
+    
+        VMValue( (SIGN_BIT | QNAN | object as usize as u64) as u64)
+    }
+
+    #[inline]
+    pub fn is_obj_type(&self, ty: ObjectType) -> bool {
+        unsafe {
+            self.is_object() && std::mem::transmute::<RawObject, &Object>(self.as_object()).ty == ty
         }
     }
 
     #[inline]
-    pub fn as_bool(&self) -> bool {
-        debug_assert_eq!(
-            self.ty,
-            ValueType::Bool,
-            "Value is type `{:?}` instead of {:?}",
-            self.ty,
-            ValueType::Bool
-        );
+    pub fn is_object(&self) -> bool {
+        (((self.inner()) & (QNAN | SIGN_BIT)) == (QNAN | SIGN_BIT))
+    }
 
-        unsafe { self.val.boolean }
+    #[inline]
+    pub fn is_class(&self) -> bool {
+        self.is_obj_type(ObjectType::Class)
+    }
+
+    #[inline]
+    pub fn is_string(&self) -> bool {
+        self.is_obj_type(ObjectType::String)
+    }
+
+    #[inline]
+    pub fn is_native(&self) -> bool {
+        self.is_obj_type(ObjectType::Native)
+    }
+
+    #[inline]
+    pub fn is_int(&self) -> bool {
+        (((self.inner()) & (QNAN | TAG_INT)) == (QNAN | TAG_INT))
+    }
+
+    #[inline]
+    pub fn is_float(&self) -> bool {
+        (((self.inner()) & (QNAN | TAG_FLOAT)) == (QNAN | TAG_FLOAT))
+    }
+
+    #[inline]
+    pub fn is_nil(&self) -> bool {
+        self == &NIL_VAL
+    }
+
+    #[inline]
+    pub fn is_bool(&self) -> bool {
+        (((self.inner()) & (QNAN | TAG_FALSE)) == (QNAN | TAG_FALSE))
+    }
+
+    #[inline]
+    pub fn as_bool(&self) -> bool {
+        self == &TRUE_VAL
     }
 
     #[inline]
     pub fn as_int(&self) -> i64 {
-        debug_assert_eq!(
-            self.ty,
-            ValueType::Int,
-            "Value is type `{:?}` instead of {:?}",
-            self.ty,
-            ValueType::Int
-        );
+        unsafe {
+            let mut data: NumberUnion = std::mem::uninitialized();
 
-        unsafe { self.val.int }
+            data.bits64 = self.inner();
+
+            data.int
+        }
     }
 
     #[inline]
     pub fn as_float(&self) -> f64 {
-        debug_assert_eq!(
-            self.ty,
-            ValueType::Float,
-            "Value is type `{:?}` instead of {:?}",
-            self.ty,
-            ValueType::Float
-        );
+        unsafe {
+            let mut data: NumberUnion = std::mem::uninitialized();
 
-        unsafe { self.val.float }
+            data.bits64 = self.inner();
+
+            data.float
+        }
     }
 
     #[inline]
     pub fn as_object(&self) -> RawObject {
-        debug_assert_eq!(
-            self.ty,
-            ValueType::Object,
-            "Value is type `{:?}` instead of {:?}",
-            self.ty,
-            ValueType::Object
-        );
-
-        unsafe { self.val.object }
+        (self.inner() & !(SIGN_BIT | QNAN)) as usize as RawObject
     }
 
     #[inline]
-    pub fn as_string<'a>(&self) -> &StringObject<'a> {
+    pub fn as_string<'a>(&self) -> &'a StringObject<'a> {
         let ptr = self.as_object();
 
         unsafe { mem::transmute(ptr) }
@@ -168,92 +204,74 @@ impl Value {
 
         unsafe { mem::transmute(ptr) }
     }
-
-    #[inline]
-    pub fn is_object(&self) -> bool {
-        self.ty == ValueType::Object
-    }
-
-    #[inline]
-    pub fn is_class(&self) -> bool {
-        unsafe {
-            self.is_object()
-                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::Class
-        }
-    }
-
-    #[inline]
-    pub fn is_string(&self) -> bool {
-        unsafe {
-            self.is_object()
-                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::String
-        }
-    }
-    #[inline]
-    pub fn is_native(&self) -> bool {
-        unsafe {
-            self.is_object()
-                && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ObjectType::Native
-        }
-    }
 }
 
 impl Debug for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(fmt, "Value {{")?;
         unsafe {
-            match self.ty {
-                ValueType::Int | ValueType::Nil => write!(fmt, "val:{:?},", self.val.int)?,
+            if self.is_object() {
+                let obj: &Object = std::mem::transmute(self.as_object());
 
-                ValueType::Float => {
-                    write!(fmt, "val:{:?},", self.val.float)?;
-                }
+                match obj.ty {
+                    ObjectType::String => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &StringObject>(self.as_object())
+                    )?,
 
-                ValueType::Bool => {
-                    write!(fmt, "val:{:?},", self.val.boolean)?;
-                }
+                    ObjectType::Func => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &FunctionObject>(self.as_object())
+                    )?,
+                    ObjectType::Array => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &ArrayObject>(self.as_object())
+                    )?,
+                    ObjectType::Class => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &ClassObject>(self.as_object())
+                    )?,
+                    ObjectType::Instance => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &InstanceObject>(self.as_object())
+                    )?,
 
-                ValueType::Object => {
-                    let obj: &Object = mem::transmute(self.as_object());
-
-                    match obj.ty {
-                        ObjectType::String => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &StringObject>(self.val.object)
-                        )?,
-                        ObjectType::Func => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &FunctionObject>(self.val.object)
-                        )?,
-                        ObjectType::Array => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &ArrayObject>(self.val.object)
-                        )?,
-                        ObjectType::Class => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &ClassObject>(self.val.object)
-                        )?,
-                        ObjectType::Instance => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &InstanceObject>(self.val.object)
-                        )?,
-
-                        ObjectType::Native => write!(
-                            fmt,
-                            "{:#?}",
-                            ::std::mem::transmute::<RawObject, &NativeObject>(self.val.object)
-                        )?,
-                    }
+                    ObjectType::Native => write!(
+                        fmt,
+                        "{:#?}",
+                        ::std::mem::transmute::<RawObject, &NativeObject>(self.as_object())
+                    )?,
                 }
             }
         }
+        //     match self.ty {
+        //         ValueType::Int  ValueType::Nil => write!(fmt, "val:{:?},", self.val.int)?,
 
-        write!(fmt, " ty:{:?}", self.ty)?;
+        //         ValueType::Float => {
+        //             write!(fmt, "val:{:?},", self.val.float)?;
+        //         }
+
+        //         ValueType::Bool => {
+        //             write!(fmt, "val:{:?},", self.val.boolean)?;
+        //         }
+
+        //         ValueType::Object => {
+        //             let obj: &Object = mem::transmute(self.as_object());
+
+        //             match obj.ty {
+        // ObjectType::String =>
+        //                 O
+        //             }
+        //         }
+        //     }
+        // }
+
+        write!(fmt, "{:?}", self.0)?;
         write!(fmt, "}}")?;
         Ok(())
     }
@@ -262,15 +280,15 @@ impl Debug for Value {
 impl Display for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         unsafe {
-            if self.ty == ValueType::Int {
-                write!(fmt, "{}", self.val.int)?;
-            } else if self.ty == ValueType::Nil {
+            if self.is_int() {
+                write!(fmt, "{}", self.as_int())?;
+            } else if self.is_nil() {
                 write!(fmt, "nil")?;
-            } else if self.ty == ValueType::Float {
-                write!(fmt, "{}", self.val.float)?;
-            } else if self.ty == ValueType::Bool {
-                write!(fmt, "{}", self.val.boolean)?;
-            } else if self.ty == ValueType::Object {
+            } else if self.is_float() {
+                write!(fmt, "{}", self.as_float())?;
+            } else if self.is_bool() {
+                write!(fmt, "{}", self.as_bool())?;
+            } else if self.is_object() {
                 let obj: &Object = mem::transmute(self.as_object());
 
                 match obj.ty {
@@ -288,23 +306,4 @@ impl Display for Value {
     }
 }
 
-impl PartialEq for Value {
-    fn eq(&self, other: &Value) -> bool {
-        if self.ty != other.ty {
-            false
-        } else {
-            match self.ty {
-                ValueType::Bool => self.as_bool() == other.as_bool(),
-                ValueType::Nil => false,
-                ValueType::Int => self.as_int() == other.as_int(),
-                ValueType::Float => self.as_float() == other.as_float(),
-                ValueType::Object => {
-                    let s = self.as_object();
-                    let other = other.as_object();
 
-                    unimplemented!()
-                }
-            }
-        }
-    }
-}

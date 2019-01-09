@@ -1,4 +1,5 @@
 
 fn main() {
-  print 1 as str;
+  let a = "a";
+  print a == "b";
 }
