@@ -19,7 +19,7 @@ pub enum ObjectType {
     Native,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(C)]
 pub struct NativeObject {
     pub obj: Object,
@@ -27,7 +27,7 @@ pub struct NativeObject {
     pub function: NativeFn,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(C)]
 pub struct Object {
     pub ty: ObjectType,
@@ -48,7 +48,7 @@ pub struct ArrayObject {
     pub items: Vec<Value>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(C)]
 pub struct ClassObject {
     pub obj: Object,
@@ -63,7 +63,7 @@ pub struct InstanceObject {
     pub methods: FnvHashMap<Symbol, Function>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(C)]
 pub struct FunctionObject {
     pub obj: Object,
@@ -71,7 +71,7 @@ pub struct FunctionObject {
     pub function: super::Function,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 #[repr(C)]
 pub enum ObjectValue<'a> {
     /// A pointer to a string

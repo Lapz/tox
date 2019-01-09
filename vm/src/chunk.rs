@@ -4,7 +4,7 @@ use opcode;
 
 type Line = u32;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 /// A wrapper around an array of bytes
 pub struct Chunk {
     pub code: Vec<u8>,

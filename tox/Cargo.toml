@@ -4,7 +4,7 @@ version = "0.2.0"
 authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
-# debug = ["vm/debug"] 
+debug = ["vm/debug"] 
 # Enable debug statements within the vm
 
 [dependencies]

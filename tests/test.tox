@@ -1,5 +1,5 @@
 
 fn main() {
   let a = "a";
-  print a == "b";
+  print [1] == [1];
 }

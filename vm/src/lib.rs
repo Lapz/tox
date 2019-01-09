@@ -1,6 +1,7 @@
 //! The VM module it contains the vm.
 //! The opcodes for the vm can be found in the opcode module
 //! a ```VM``` and an ```Assembler``` for the tasm langauage
+
 use opcode;
 
 #[macro_use]
@@ -17,7 +18,7 @@ pub use crate::value::Value;
 pub use crate::vm::VM;
 use fnv::FnvHashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub name: ::util::symbol::Symbol,
     pub body: Chunk,

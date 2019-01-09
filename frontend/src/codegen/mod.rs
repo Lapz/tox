@@ -434,6 +434,7 @@ impl<'a> Builder<'a> {
                     self.emit_constant(Value::int(*n), expr.value.expr.span)?;
                 }
                 Literal::Float(ref f) => {
+                    println!("float");
                     self.emit_constant(Value::float(*f), expr.value.expr.span)?;
                 }
                 Literal::Str(ref string) => {
