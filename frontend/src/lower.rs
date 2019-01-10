@@ -46,6 +46,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn end_block(&mut self, end: BlockEnd) {
+        println!("{:?}",end);
         let (id, inst) = self.current_block.take().unwrap();
 
         self.blocks.insert(
@@ -76,6 +77,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn emit_store(&mut self, dest: Value, source: Value, ty: Type) {
+         println!("{:?}",self.current_block);
         self.current_block
             .as_mut()
             .expect("Basic block should be started")
@@ -187,6 +189,8 @@ impl<'a> Builder<'a> {
             }
 
             Statement::Let { ident, ty, expr } => {
+
+                
                 let reg = self.add_local(ident);
 
                 if let Some(expr) = expr {
@@ -322,6 +326,22 @@ impl<'a> Builder<'a> {
             Expression::ClassLiteral { .. } => unimplemented!(),
 
             Expression::Closure(_) => unimplemented!(),
+            
+
+            Expression::GetProperty {property_name,property} => {
+                unimplemented!()
+            },
+
+            Expression::GetMethod { method_name,method} => {
+                unimplemented!()
+            },
+
+            Expression::Index(target,index) => {
+                unimplemented!()
+            }
+
+            
+
             Expression::Literal(literal) => {
                 let tmp = Register::new();
 
@@ -353,9 +373,62 @@ impl<'a> Builder<'a> {
                 };
 
                 Value::Register(tmp)
+            },
+
+            Expression::Match {cond,arms,all} => {
+                let after_block = self.new_block();
+
+                let cond = self.build_expr(cond);
+
+                let result  = Register::new();
+
+                let block_ids:Vec<BlockID> = (0..arms.value.len()+1).map(|_| self.new_block()).collect();
+
+
+
+                self.end_block(BlockEnd::End);
+
+                for (i,arm) in arms.value.into_iter().enumerate() {
+
+                    self.start_block(block_ids[i]);
+                    let pattern = self.build_expr(arm.value.pattern);
+                    self.build_statement(arm.value.body);
+                    self.end_block(BlockEnd::Branch(
+                        pattern,
+                        after_block,
+                        block_ids[i+1]
+                    ));
+                }
+
+                self.start_block(after_block);
+
+                // if let Some(all) = all {
+                //     self.start_block(*block_ids.last().unwrap());
+
+
+                // }
+
+                Value::Register(result)
+            },
+
+            Expression::Set(name,object,value) => {
+                unimplemented!()
+            },
+
+            Expression::StaticMethodCall {
+                class_name,
+                method_name,
+                params
+            } => {
+unimplemented!() 
             }
 
+
             Expression::Grouping(expr) => self.build_expr(expr),
+
+            Expression::Var(ref symbol,_) =>  {
+                self.build_var(symbol).unwrap()
+            }
 
             ref e => unimplemented!("{:?}", e),
         }

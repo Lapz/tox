@@ -41,6 +41,9 @@ impl Program {
                 BlockEnd::Branch(_, t, f) => {
                     end.push(format!("{}->{}", id.0, t.0));
                     end.push(format!("{}->{}", id.0, f.0));
+                },
+                BlockEnd::Link(to) => {
+                    end.push(format!("{}->{}", id.0, to.0));
                 }
             }
 

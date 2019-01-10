@@ -72,6 +72,7 @@ pub enum BlockEnd {
     Jump(BlockID),
     Return(Value),
     Branch(Value, BlockID, BlockID),
+    Link(BlockID),
     End,
 }
 
@@ -287,7 +288,9 @@ impl Display for BlockEnd {
             BlockEnd::Return(ref id) => write!(f, "return {}", id),
             BlockEnd::Branch(ref v, ref t_branch, ref f_branch) => {
                 write!(f, "branch {} {} {}", v, t_branch, f_branch)
-            }
+            },
+
+            BlockEnd::Link(ref link) => write!(f, "next {}",link),
         }
     }
 }

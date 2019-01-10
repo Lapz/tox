@@ -12,6 +12,7 @@ graphviz = ["frontend/graphviz"]
 [dependencies]
 util = {path = "../util"}
 syntax = {path = "../syntax"}
+
 frontend = {path = "../frontend"}
 backend = {path = "../backend"}
 # interpreter = {path ="../interpreter"}

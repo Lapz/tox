@@ -52,6 +52,7 @@ impl<'a> Printer<'a> {
             match block.end {
                 BlockEnd::End => write!(out, "\n\tend")?,
                 BlockEnd::Jump(ref id) => write!(out, "\n\tgoto {}", id)?,
+                BlockEnd::Link(ref id) => write!(out, "\n\tlink {}", id)?,
                 BlockEnd::Return(ref value) => write!(out, "\n\treturn {}", value)?,
                 BlockEnd::Branch(ref value, ref t, ref f) => {
                     write!(out, "\n\tbranch {} {} {}", value, t, f)?
