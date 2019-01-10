@@ -98,8 +98,10 @@ impl<'a> Builder<'a> {
         reg
     }
 
-    pub fn build_statement(&mut self, s: Spanned<t::Statement>) {
+    pub fn build_statement(&mut self, s: Spanned<t::TypedStatement>) {
         use self::t::Statement;
+
+        let s = *s.value.statement; // prevents colleteral moves error
 
         match s.value {
             Statement::Block(statements) => {
@@ -149,13 +151,13 @@ impl<'a> Builder<'a> {
 
                 self.start_block(body);
 
-                self.build_statement(*then);
+                self.build_statement(then);
 
                 self.end_block(BlockEnd::Jump(after));
 
                 self.start_block(other);
 
-                self.build_statement(*otherwise);
+                self.build_statement(otherwise);
 
                 self.end_block(BlockEnd::Jump(after));
 
@@ -177,7 +179,7 @@ impl<'a> Builder<'a> {
 
                 self.start_block(body);
 
-                self.build_statement(*then);
+                self.build_statement(then);
 
                 self.end_block(BlockEnd::Jump(after));
 
@@ -228,7 +230,7 @@ impl<'a> Builder<'a> {
 
                 self.start_block(body_block);
 
-                self.build_statement(*body);
+                self.build_statement(body);
 
                 self.end_block(BlockEnd::Jump(cond_block));
 
@@ -355,7 +357,7 @@ impl<'a> Builder<'a> {
 
             Expression::Grouping(expr) => self.build_expr(expr),
 
-            // ref e => unimplemented!("{:?}", e),
+            ref e => unimplemented!("{:?}", e),
         }
     }
 
