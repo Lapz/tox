@@ -6,4 +6,6 @@ fn main() {
         _   => false,
         _ =>true
     };
+
+    print admin;
 }
