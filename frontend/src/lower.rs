@@ -386,27 +386,30 @@ impl<'a> Builder<'a> {
 
 
 
-                self.end_block(BlockEnd::End);
+                self.end_block(BlockEnd::Link(*block_ids.first().unwrap())); //fix empty match
 
                 for (i,arm) in arms.value.into_iter().enumerate() {
-
+                    let result = Register::new();
                     self.start_block(block_ids[i]);
                     let pattern = self.build_expr(arm.value.pattern);
+                    self.emit_instruction(Inst::Binary(result,pattern, BinaryOp::Equal,cond.clone()), Type::App(TypeCon::Bool,vec![]));
                     self.build_statement(arm.value.body);
                     self.end_block(BlockEnd::Branch(
-                        pattern,
+                        Value::Register(result),
                         after_block,
                         block_ids[i+1]
                     ));
                 }
 
+               
+
+                if let Some(all) = all {
+                    self.start_block(*block_ids.last().unwrap());
+                    self.build_statement(all);
+                    self.end_block(BlockEnd::Link(after_block))
+                }
+                
                 self.start_block(after_block);
-
-                // if let Some(all) = all {
-                //     self.start_block(*block_ids.last().unwrap());
-
-
-                // }
 
                 Value::Register(result)
             },

@@ -3,8 +3,8 @@ fn main() {
 
     let admin =  match name {
         "Lenard" => true,   
-        _   => false,
-        _ =>true
+        "Rust" => true,
+        _   => false
     };
 
     print admin;
