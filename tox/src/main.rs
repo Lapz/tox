@@ -135,7 +135,10 @@ pub fn run(path: String, vm: bool, print_ir: Option<String>) {
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
-        Ok(ast) => ast,
+        Ok(ast) => {
+            reporter.emit(input); //emit warnings
+            ast
+        }
         Err(_) => {
             reporter.emit(input);
 

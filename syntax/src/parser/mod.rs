@@ -1101,9 +1101,9 @@ impl<'a> Parser<'a> {
                     self.parsing_match_arm = false;
 
                     if catch_all.is_some() {
-                        let span = catch_all.as_ref().unwrap().span;
+                       
 
-                        self.span_warn("`_` pattern is allready present", span);
+                        self.span_warn("`_` pattern is allready present", pattern.to(body.span));
                     }
 
                     catch_all = Some(Box::new(body));

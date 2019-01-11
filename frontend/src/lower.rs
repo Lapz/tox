@@ -46,7 +46,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn end_block(&mut self, end: BlockEnd) {
-        println!("{:?}",end);
+        
         let (id, inst) = self.current_block.take().unwrap();
 
         self.blocks.insert(
@@ -77,7 +77,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn emit_store(&mut self, dest: Value, source: Value, ty: Type) {
-         println!("{:?}",self.current_block);
+         
         self.current_block
             .as_mut()
             .expect("Basic block should be started")
