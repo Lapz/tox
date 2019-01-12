@@ -30,6 +30,8 @@ dependencies = [
 name = "backend"
 version = "0.1.0"
 dependencies = [
+ "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ir 0.1.0",
  "opcode 0.1.0",
  "syntax 0.1.0",
  "util 0.1.0",

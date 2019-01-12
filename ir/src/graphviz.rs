@@ -41,7 +41,7 @@ impl Program {
                 BlockEnd::Branch(_, t, f) => {
                     end.push(format!("{}->{}", id.0, t.0));
                     end.push(format!("{}->{}", id.0, f.0));
-                },
+                }
                 BlockEnd::Link(to) => {
                     end.push(format!("{}->{}", id.0, to.0));
                 }
@@ -75,9 +75,9 @@ impl Program {
                 .expect("failed to execute process")
                 .stdout;
 
+            let mut file =
+                File::create(&format!("graphviz/{}.png", symbols.name(function.name))).unwrap();
 
-            let mut file = File::create(&format!("graphviz/{}.png", symbols.name(function.name))).unwrap();
-           
             file.write(&output)?;
 
             fs::remove_file(file_name)?;

@@ -78,7 +78,7 @@ impl<'a> Printer<'a> {
 
             Inst::Drop(ref reg) => write!(out, "drop {}", reg),
             Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::Cast(ref dest, ref ty) => write!(out, "{} as {}", dest, ty),
+            Inst::Cast(ref dest,_, ref ty) => write!(out, "{} as {}", dest, ty),
             Inst::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }

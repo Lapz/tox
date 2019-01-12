@@ -316,9 +316,10 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Cast(expr, ty) => {
+                let from = expr.value.ty.clone();
                 let result = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Cast(result.clone(), ty.clone()), ty);
+                self.emit_instruction(Inst::Cast(result.clone(), from,ty.clone()), ty);
 
                 result
             }

@@ -145,7 +145,7 @@ pub enum Inst {
 
     Binary(Register, Value, BinaryOp, Value),
 
-    Cast(Value, crate::types::Type),
+    Cast(Value, crate::types::Type,crate::types::Type),
 
     Call(Value, Value, Vec<Value>),
 
@@ -288,9 +288,9 @@ impl Display for BlockEnd {
             BlockEnd::Return(ref id) => write!(f, "return {}", id),
             BlockEnd::Branch(ref v, ref t_branch, ref f_branch) => {
                 write!(f, "branch {} {} {}", v, t_branch, f_branch)
-            },
+            }
 
-            BlockEnd::Link(ref link) => write!(f, "next {}",link),
+            BlockEnd::Link(ref link) => write!(f, "next {}", link),
         }
     }
 }
@@ -317,7 +317,7 @@ impl Display for Inst {
 
             Inst::Drop(ref reg) => write!(out, "drop {}", reg),
             Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::Cast(ref dest, ref ty) => write!(out, "{} as {}", dest, ty),
+            Inst::Cast(ref dest, _ ,ref ty) => write!(out, "{} as {}", dest, ty),
             Inst::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
