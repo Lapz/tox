@@ -15,8 +15,8 @@ pub struct BlockID(pub u32);
 pub struct Label(u32);
 
 /// A temp label that can either be a temp location or a register
-#[derive(Clone, Copy, Hash, PartialEq, Default)]
-pub struct Register(u32);
+#[derive(Clone, Copy, Hash, PartialEq, Default, Eq)]
+pub struct Register(pub u32);
 
 pub struct Program {
     pub functions: Vec<Function>,
@@ -145,7 +145,7 @@ pub enum Inst {
 
     Binary(Register, Value, BinaryOp, Value),
 
-    Cast(Value, crate::types::Type,crate::types::Type),
+    Cast(Value, crate::types::Type, crate::types::Type),
 
     Call(Value, Value, Vec<Value>),
 
@@ -317,7 +317,7 @@ impl Display for Inst {
 
             Inst::Drop(ref reg) => write!(out, "drop {}", reg),
             Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::Cast(ref dest, _ ,ref ty) => write!(out, "{} as {}", dest, ty),
+            Inst::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
             Inst::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }

@@ -46,7 +46,6 @@ impl<'a> Builder<'a> {
     }
 
     pub fn end_block(&mut self, end: BlockEnd) {
-        
         let (id, inst) = self.current_block.take().unwrap();
 
         self.blocks.insert(
@@ -77,7 +76,6 @@ impl<'a> Builder<'a> {
     }
 
     pub fn emit_store(&mut self, dest: Value, source: Value, ty: Type) {
-         
         self.current_block
             .as_mut()
             .expect("Basic block should be started")
@@ -189,8 +187,6 @@ impl<'a> Builder<'a> {
             }
 
             Statement::Let { ident, ty, expr } => {
-
-                
                 let reg = self.add_local(ident);
 
                 if let Some(expr) = expr {
@@ -319,7 +315,7 @@ impl<'a> Builder<'a> {
                 let from = expr.value.ty.clone();
                 let result = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Cast(result.clone(), from,ty.clone()), ty);
+                self.emit_instruction(Inst::Cast(result.clone(), from, ty.clone()), ty);
 
                 result
             }
@@ -327,21 +323,18 @@ impl<'a> Builder<'a> {
             Expression::ClassLiteral { .. } => unimplemented!(),
 
             Expression::Closure(_) => unimplemented!(),
-            
 
-            Expression::GetProperty {property_name,property} => {
-                unimplemented!()
-            },
+            Expression::GetProperty {
+                property_name,
+                property,
+            } => unimplemented!(),
 
-            Expression::GetMethod { method_name,method} => {
-                unimplemented!()
-            },
+            Expression::GetMethod {
+                method_name,
+                method,
+            } => unimplemented!(),
 
-            Expression::Index(target,index) => {
-                unimplemented!()
-            }
-
-            
+            Expression::Index(target, index) => unimplemented!(),
 
             Expression::Literal(literal) => {
                 let tmp = Register::new();
@@ -374,65 +367,59 @@ impl<'a> Builder<'a> {
                 };
 
                 Value::Register(tmp)
-            },
+            }
 
-            Expression::Match {cond,arms,all} => {
+            Expression::Match { cond, arms, all } => {
                 let after_block = self.new_block();
 
                 let cond = self.build_expr(cond);
 
-                let result  = Register::new();
+                let result = Register::new();
 
-                let block_ids:Vec<BlockID> = (0..arms.value.len()+1).map(|_| self.new_block()).collect();
-
-
+                let block_ids: Vec<BlockID> = (0..arms.value.len() + 1)
+                    .map(|_| self.new_block())
+                    .collect();
 
                 self.end_block(BlockEnd::Link(*block_ids.first().unwrap())); //fix empty match
 
-                for (i,arm) in arms.value.into_iter().enumerate() {
+                for (i, arm) in arms.value.into_iter().enumerate() {
                     let result = Register::new();
                     self.start_block(block_ids[i]);
                     let pattern = self.build_expr(arm.value.pattern);
-                    self.emit_instruction(Inst::Binary(result,pattern, BinaryOp::Equal,cond.clone()), Type::App(TypeCon::Bool,vec![]));
+                    self.emit_instruction(
+                        Inst::Binary(result, pattern, BinaryOp::Equal, cond.clone()),
+                        Type::App(TypeCon::Bool, vec![]),
+                    );
                     self.build_statement(arm.value.body);
                     self.end_block(BlockEnd::Branch(
                         Value::Register(result),
                         after_block,
-                        block_ids[i+1]
+                        block_ids[i + 1],
                     ));
                 }
-
-               
 
                 if let Some(all) = all {
                     self.start_block(*block_ids.last().unwrap());
                     self.build_statement(all);
                     self.end_block(BlockEnd::Link(after_block))
                 }
-                
+
                 self.start_block(after_block);
 
                 Value::Register(result)
-            },
+            }
 
-            Expression::Set(name,object,value) => {
-                unimplemented!()
-            },
+            Expression::Set(name, object, value) => unimplemented!(),
 
             Expression::StaticMethodCall {
                 class_name,
                 method_name,
-                params
-            } => {
-unimplemented!() 
-            }
-
+                params,
+            } => unimplemented!(),
 
             Expression::Grouping(expr) => self.build_expr(expr),
 
-            Expression::Var(ref symbol,_) =>  {
-                self.build_var(symbol).unwrap()
-            }
+            Expression::Var(ref symbol, _) => self.build_var(symbol).unwrap(),
 
             ref e => unimplemented!("{:?}", e),
         }

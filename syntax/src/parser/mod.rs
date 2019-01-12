@@ -1101,8 +1101,6 @@ impl<'a> Parser<'a> {
                     self.parsing_match_arm = false;
 
                     if catch_all.is_some() {
-                       
-
                         self.span_warn("`_` pattern is allready present", pattern.to(body.span));
                     }
 

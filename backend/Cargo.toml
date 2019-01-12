@@ -8,6 +8,6 @@ edition = "2018"
 util = {path = "../util"}
 opcode = {path = "../opcode"}
 syntax = {path= "../syntax"}
-vm = {path = "../vm"}
+vm = {features=["debug"],path = "../vm"}
 ir= {path="../ir"}
 fnv = "1.0.6"

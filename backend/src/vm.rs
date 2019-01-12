@@ -2,6 +2,7 @@ use crate::CodegenResult;
 
 // use ast;
 use fnv::FnvHashMap;
+use std::collections::HashMap;
 // use infer::types::{Type, TypeCon};
 use ir::instructions::*;
 use ir::types::{Type, TypeCon};
@@ -10,7 +11,7 @@ use std::hash::Hash;
 use util::emmiter::Reporter;
 use util::pos::{Span, Spanned};
 use util::symbol::{Symbol, Symbols};
-use vm::{self, Chunk, Class, Function, FunctionObject, Program, RawObject, StringObject};
+use vm::{self, Chunk, FunctionObject, RawObject, StringObject};
 
 // #[derive(Debug, Clone, Copy)]
 // struct LoopDescription {
@@ -21,7 +22,7 @@ use vm::{self, Chunk, Class, Function, FunctionObject, Program, RawObject, Strin
 // }
 
 #[derive(Debug, Clone)]
-pub struct StackedMap<K: Hash + Eq, V: Clone> {
+struct StackedMap<K: Hash + Eq, V: Clone> {
     table: FnvHashMap<K, Vec<V>>,
     scopes: Vec<Option<K>>,
 }
@@ -57,14 +58,14 @@ impl<K: Hash + Eq + Copy, V: Clone> StackedMap<K, V> {
         self.table.get(key).and_then(|vec| vec.last())
     }
 }
-pub struct Builder<'a> {
+struct Builder<'a> {
     /// The current chunk
     chunk: Chunk,
     /// A count of all local vars
     /// The number is the postion of the local on the local stack
-    locals: StackedMap<Symbol, usize>,
+    locals: StackedMap<Register, usize>,
 
-    params: FnvHashMap<Symbol, usize>,
+    params: &'a FnvHashMap<Register, usize>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
@@ -83,7 +84,7 @@ impl<'a> Builder<'a> {
         reporter: &'a mut Reporter,
         symbols: &'a Symbols<()>,
         objects: RawObject,
-        params: FnvHashMap<Symbol, usize>,
+        params: &'a FnvHashMap<Register, usize>,
     ) -> Self {
         Builder {
             chunk: Chunk::new(),
@@ -134,90 +135,113 @@ impl<'a> Builder<'a> {
         self.emit_byte(byte2);
     }
 
-    pub fn emit_constant(&mut self, constant: vm::Value, span: Span) -> CodegenResult<()> {
-        let value = self.make_constant(constant, span)?;
+    pub fn emit_constant(&mut self, constant: vm::Value) -> CodegenResult<()> {
+        let value = self.make_constant(constant);
         self.emit_bytes(opcode::CONSTANT, value);
         Ok(())
     }
 
-    pub fn make_constant(&mut self, value: vm::Value, span: Span) -> CodegenResult<u8> {
+    pub fn make_constant(&mut self, value: vm::Value) -> u8 {
         let index = self.chunk.add_constant(value);
 
-        if index > 256 {
-            self.reporter.error("too many constants in one chunk", span);
-            Err(())
-        } else {
-            Ok(index as u8)
-        }
+        index as u8
     }
 
     pub fn compile_instruction(&mut self, inst: &Instruction) -> CodegenResult<()> {
         let ty = &inst.ty;
-        let inst = inst.instruction;
+        let inst = &inst.instruction;
 
         match inst {
             Inst::Array(ref pos, ref size) => {
+                self.compile_value(pos)?;
                 self.emit_bytes(opcode::ARRAY, *size as u8);
             }
-            Inst::Binary(_, _, ref op, _) => match (ty, op) {
-                (Type::App(TypeCon::Int, _), BinaryOp::Plus) => self.emit_byte(opcode::ADD),
-                (Type::App(TypeCon::Float, _), BinaryOp::Plus) => self.emit_byte(opcode::ADDF),
+            Inst::Binary(_, ref lhs, ref op, ref rhs) => {
+                self.compile_value(lhs)?;
+                self.compile_value(rhs)?;
 
-                (Type::App(TypeCon::Int, _), BinaryOp::Minus) => self.emit_byte(opcode::SUB),
-                (Type::App(TypeCon::Float, _), BinaryOp::Minus) => self.emit_byte(opcode::SUBF),
+                match (ty, op) {
+                    (Type::App(TypeCon::Int, _), BinaryOp::Plus) => self.emit_byte(opcode::ADD),
+                    (Type::App(TypeCon::Float, _), BinaryOp::Plus) => self.emit_byte(opcode::ADDF),
 
-                (Type::App(TypeCon::Int, _), BinaryOp::Div) => self.emit_byte(opcode::DIV),
-                (Type::App(TypeCon::Float, _), BinaryOp::Div) => self.emit_byte(opcode::DIVF),
+                    (Type::App(TypeCon::Int, _), BinaryOp::Minus) => self.emit_byte(opcode::SUB),
+                    (Type::App(TypeCon::Float, _), BinaryOp::Minus) => self.emit_byte(opcode::SUBF),
 
-                (Type::App(TypeCon::Int, _), BinaryOp::Mul) => self.emit_byte(opcode::MUL),
-                (Type::App(TypeCon::Float, _), BinaryOp::Mul) => self.emit_byte(opcode::MULF),
+                    (Type::App(TypeCon::Int, _), BinaryOp::Div) => self.emit_byte(opcode::DIV),
+                    (Type::App(TypeCon::Float, _), BinaryOp::Div) => self.emit_byte(opcode::DIVF),
 
-                // For comparisson the lhs and the rhs should be the same so only
-                // check the type of the lhs
-                (Type::App(TypeCon::Bool, _), BinaryOp::Lt) => match lhs.value.ty {
-                    Type::App(TypeCon::Int, _) => self.emit_byte(opcode::LESS),
-                    Type::App(TypeCon::Float, _) => self.emit_byte(opcode::LESSF),
-                    _ => unreachable!(),
-                },
+                    (Type::App(TypeCon::Int, _), BinaryOp::Mul) => self.emit_byte(opcode::MUL),
+                    (Type::App(TypeCon::Float, _), BinaryOp::Mul) => self.emit_byte(opcode::MULF),
 
-                (Type::App(TypeCon::Bool, _), BinaryOp::Lte) => match lhs.value.ty {
-                    Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::LESS, opcode::NOT),
-                    Type::App(TypeCon::Float, _) => self.emit_bytes(opcode::LESSF, opcode::NOT),
-                    _ => unreachable!(),
-                },
+                    // For comparisson the lhs and the rhs should be the same so only
+                    // check the type of the lhs
+                    (Type::App(TypeCon::Bool, _), BinaryOp::Lt) => match ty {
+                        Type::App(TypeCon::Int, _) => self.emit_byte(opcode::LESS),
+                        Type::App(TypeCon::Float, _) => self.emit_byte(opcode::LESSF),
+                        _ => unreachable!(),
+                    },
 
-                (Type::App(TypeCon::Bool, _), BinaryOp::Gt) => match lhs.value.ty {
-                    Type::App(TypeCon::Int, _) => self.emit_byte(opcode::GREATER),
-                    Type::App(TypeCon::Float, _) => self.emit_byte(opcode::GREATERF),
-                    _ => unreachable!(),
-                },
+                    (Type::App(TypeCon::Bool, _), BinaryOp::Lte) => match ty {
+                        Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::LESS, opcode::NOT),
+                        Type::App(TypeCon::Float, _) => self.emit_bytes(opcode::LESSF, opcode::NOT),
+                        _ => unreachable!(),
+                    },
 
-                (Type::App(TypeCon::Bool, _), BinaryOp::Gte) => match lhs.value.ty {
-                    Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::GREATER, opcode::NOT),
-                    Type::App(TypeCon::Float, _) => self.emit_bytes(opcode::GREATERF, opcode::NOT),
-                    _ => unreachable!(),
-                },
+                    (Type::App(TypeCon::Bool, _), BinaryOp::Gt) => match ty {
+                        Type::App(TypeCon::Int, _) => self.emit_byte(opcode::GREATER),
+                        Type::App(TypeCon::Float, _) => self.emit_byte(opcode::GREATERF),
+                        _ => unreachable!(),
+                    },
 
-                (Type::App(TypeCon::Str, _), BinaryOp::Plus) => self.emit_byte(opcode::CONCAT),
+                    (Type::App(TypeCon::Bool, _), BinaryOp::Gte) => match ty {
+                        Type::App(TypeCon::Int, _) => self.emit_bytes(opcode::GREATER, opcode::NOT),
+                        Type::App(TypeCon::Float, _) => {
+                            self.emit_bytes(opcode::GREATERF, opcode::NOT)
+                        }
+                        _ => unreachable!(),
+                    },
 
-                (_, BinaryOp::Equal) => self.emit_byte(opcode::EQUAL),
-                (_, BinaryOp::NotEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
+                    (Type::App(TypeCon::Str, _), BinaryOp::Plus) => self.emit_byte(opcode::CONCAT),
 
-                // #[cfg(not(feature = "debug"))]
-                // _ => unsafe {
-                //     ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
-                // },
+                    (_, BinaryOp::Equal) => self.emit_byte(opcode::EQUAL),
+                    (_, BinaryOp::NotEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
 
-                // #[cfg(feature = "debug")]
-                (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
-            },
+                    // #[cfg(not(feature = "debug"))]
+                    // _ => unsafe {
+                    //     ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
+                    // },
+
+                    // #[cfg(feature = "debug")]
+                    (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
+                }
+            }
 
             Inst::Call(_, ident, args) => {
 
-                // let name = self.symbols.name
+                for arg in args.iter() {
+                    self.compile_value(arg)?;
+                }
+
+                let callee = match ident {
+                    Value::Named(ref sym) => *sym,
+                    _ => unreachable!()
+                };
+
+                let name = self.symbols.name(callee);
+
+                match name.as_str() {
+                    "clock" | "rand" => self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8),
+                    _ => {
+                        self.emit_bytes(opcode::CALL, callee.0 as u8);
+                        self.emit_byte(args.len() as u8)
+                    }
+}
+
+
             }
 
-            Inst::Cast(_, ref from, ref to) => {
+            Inst::Cast(ref value, ref from, ref to) => {
+                self.compile_value(value)?;
                 match (from, to) {
                     (Type::App(TypeCon::Int, _), Type::App(TypeCon::Float, _)) => {
                         self.emit_byte(opcode::INT2FLOAT)
@@ -243,20 +267,29 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            Inst::Print(ref value) => self.emit_byte(opcode::PRINT),
+            Inst::Print(ref value) => {
+                self.compile_value(value)?;
+                self.emit_byte(opcode::PRINT)
+            }
 
-            Inst::Return(_) => self.emit_byte(opcode::RETURN),
+            Inst::Return(ref value) => {
+                self.compile_value(value)?;
+                self.emit_byte(opcode::RETURN)
+            },
 
             Inst::StatementStart => (),
 
-            Inst::Unary(_, ref a, ref op) => match *op {
-                UnaryOp::Bang => self.emit_byte(opcode::NOT),
-                UnaryOp::Minus => match ty {
-                    Type::App(TypeCon::Int, _) => self.emit_byte(opcode::NEGATE),
-                    Type::App(TypeCon::Float, _) => self.emit_byte(opcode::NEGATEF),
-                    _ => unreachable!(),
-                },
-            },
+            Inst::Unary(_, ref operand, ref op) => {
+                self.compile_value(operand)?;
+                match *op {
+                    UnaryOp::Bang => self.emit_byte(opcode::NOT),
+                    UnaryOp::Minus => match ty {
+                        Type::App(TypeCon::Int, _) => self.emit_byte(opcode::NEGATE),
+                        Type::App(TypeCon::Float, _) => self.emit_byte(opcode::NEGATEF),
+                        _ => unreachable!(),
+                    },
+                }
+            }
 
             _ => unimplemented!(),
         }
@@ -264,691 +297,113 @@ impl<'a> Builder<'a> {
         Ok(())
     }
 
-    //     pub fn set_span(&mut self, span: Span) {
-    //         if span.start.line > self.line {
-    //             self.line = span.start.line
-    //         }
-    //     }
+    fn compile_value(&mut self, value: &Value) -> CodegenResult<()> {
+        match value {
+            Value::Const(ref v) => self.emit_constant(vm::Value::int(*v)),
+            Value::Float(ref v) => self.emit_constant(vm::Value::float(*v)),
+            Value::Register(ref name) => {
+                if let Some(pos) = self.locals.get(name).cloned() {
+                    self.emit_bytes(opcode::GETLOCAL, pos as u8);
+                } else if let Some(offset) = self.params.get(name).cloned() {
+                    self.emit_bytes(opcode::GETPARAM, offset as u8);
+                } else {
+                    //do nothing because this is a temp and the value should be on the stack
+                }
+
+                Ok(())
+            }
+            Value::Named(ref name) => unimplemented!(),
+            Value::Bool(ref b) => {
+                if *b {
+                    self.emit_byte(opcode::TRUE)
+                } else {
+                    self.emit_byte(opcode::FALSE)
+                }
+
+                Ok(())
+            }
+            Value::Nil => {
+                self.emit_byte(opcode::NIL);
+                Ok(())
+            }
+            Value::Mem(ref bytes) => {
+                let object = StringObject::from_bytes(bytes, self.objects);
+                self.emit_constant(vm::Value::object(object))
+            }
+        }
+    }
+
+
 }
 
-//     pub fn compile_statement(
-//         &mut self,
-//         statement: &Spanned<ast::TypedStatement>,
-//     ) -> ParseResult<()> {
-//         use ast::Statement;
-//         self.set_span(statement.value.statement.span);
-//         match statement.value.statement.value {
-//             Statement::Block(ref statements) => {
-//                 self.locals.begin_scope();
 
-//                 for statement in statements {
-//                     self.compile_statement(statement)?;
-//                 }
-//                 self.locals.end_scope();
-
-//                 Ok(())
-//             }
-
-//             Statement::Break => {
-//                 let description = self.current_loop.expect("Using break outside a loop");
-
-//                 self.emit_bytes(opcode::JUMP, description.end as u8);
-
-//                 Ok(())
-//             }
-
-//             Statement::Continue => {
-//                 let description = self.current_loop.expect("Using break outside a loop");
-
-//                 self.emit_bytes(opcode::JUMP, description.start as u8);
-//                 Ok(())
-//             }
-
-//             Statement::Expr(ref expr) => {
-//                 self.compile_expression(expr)?;
-
-//                 self.emit_byte(opcode::POP);
-
-//                 Ok(())
-//             }
-
-//             Statement::Print(ref expr) => {
-//                 self.compile_expression(expr)?;
-
-//                 self.emit_byte(opcode::PRINT);
-//                 Ok(())
-//             }
-
-//             Statement::Return(ref expr) => {
-//                 self.compile_expression(expr)?;
-
-//                 self.emit_byte(opcode::RETURN);
-
-//                 Ok(())
-//             }
-
-//             Statement::If {
-//                 ref cond,
-//                 ref then,
-//                 otherwise: None,
-//             } => {
-//                 self.compile_expression(cond)?;
-
-//                 let false_label = self.emit_jump(opcode::JUMPNOT);
-
-//                 self.emit_byte(opcode::POP);
-
-//                 self.compile_statement(then)?;
-
-//                 self.patch_jump(false_label);
-
-//                 self.emit_byte(opcode::POP);
-
-//                 Ok(())
-//             }
-
-//             Statement::If {
-//                 ref cond,
-//                 ref then,
-//                 otherwise: Some(ref otherwise),
-//             } => {
-//                 self.compile_expression(cond)?;
-
-//                 let false_label = self.emit_jump(opcode::JUMPNOT);
-
-//                 self.emit_byte(opcode::POP);
-
-//                 self.compile_statement(then)?;
-
-//                 let end_label = self.emit_jump(opcode::JUMP);
-
-//                 self.patch_jump(false_label);
-
-//                 self.emit_byte(opcode::POP);
-
-//                 self.compile_statement(otherwise)?;
-
-//                 self.patch_jump(end_label);
-
-//                 Ok(())
-//             }
-
-//             Statement::Var {
-//                 ref ident,
-//                 ref expr,
-//                 ..
-//             } => {
-//                 //
-//                 if let Some(ref expr) = *expr {
-//                     self.compile_expression(expr)?;
-//                 } else {
-//                     self.emit_constant(Value::nil(), statement.span)?;
-//                 } // Compile the expression
-
-//                 let slot = self.new_slot();
-
-//                 self.locals.insert(*ident, slot as usize);
-
-//                 self.emit_bytes(opcode::SETLOCAL, slot as u8); // Write the symbol id
-
-//                 Ok(())
-//             }
-
-//             Statement::While(ref cond, ref body) => {
-//                 let start_label = self.chunk.code.len();
-
-//                 self.compile_expression(cond)?;
-
-//                 let out = self.emit_jump(opcode::JUMPNOT);
-
-//                 self.current_loop = Some(LoopDescription {
-//                     start: start_label,
-//                     end: out,
-//                 });
-
-//                 self.emit_byte(opcode::POP);
-
-//                 self.compile_statement(body)?;
-
-//                 self.emit_loop(start_label); // Jumps back to the start
-
-//                 self.patch_jump(out); // the outer label
-
-//                 self.emit_byte(opcode::POP); //removes cond from stack
-
-//                 Ok(())
-//             }
-//         }
-//     }
-
-//     pub fn compile_expression(
-//         &mut self,
-//         expr: &Spanned<ast::TypedExpression>,
-//     ) -> CodegenResult<()> {
-//         use ast::{AssignOperator, Expression, Literal, Op};
-//         self.set_span(expr.span);
-
-//         match expr.value.expr.value {
-//             Expression::Assign(ref ident, ref op, ref expr) => {
-//                 let pos = if let Some(pos) = self.locals.get(ident) {
-//                     *pos
-//                 } else if let Some(pos) = self.params.get(ident) {
-//                     *pos
-//                 } else {
-//                     unreachable!(); // Params are treated as locals so it should be present
-//                 };
-
-//                 match *op {
-//                     AssignOperator::Equal => {
-//                         self.compile_expression(expr)?;
-//                         self.emit_bytes(opcode::SETLOCAL, pos as u8);
-//                     }
-//                     AssignOperator::MinusEqual => {
-//                         self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
-
-//                         let opcode = match expr.value.ty {
-//                             Type::App(TypeCon::Int, _) => opcode::SUB,
-//                             Type::App(TypeCon::Float, _) => opcode::SUBF,
-//                             _ => unreachable!(), // type checker should prevent this
-//                         };
-
-//                         self.compile_expression(expr)?; // get the expr
-
-//                         self.emit_byte(opcode);
-
-//                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
-//                     }
-
-//                     AssignOperator::PlusEqual => {
-//                         self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
-
-//                         let opcode = match expr.value.ty {
-//                             Type::App(TypeCon::Int, _) => opcode::ADD,
-//                             Type::App(TypeCon::Float, _) => opcode::ADDF,
-//                             _ => unreachable!(), // type checker should prevent this
-//                         };
-
-//                         self.compile_expression(expr)?; // get the expr
-
-//                         self.emit_byte(opcode);
-
-//                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
-//                     }
-
-//                     AssignOperator::SlashEqual => {
-//                         self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
-
-//                         let opcode = match expr.value.ty {
-//                             Type::App(TypeCon::Int, _) => opcode::DIV,
-//                             Type::App(TypeCon::Float, _) => opcode::DIVF,
-//                             _ => unreachable!(), // type checker should prevent this
-//                         };
-
-//                         self.compile_expression(expr)?; // get the expr
-
-//                         self.emit_byte(opcode);
-
-//                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
-//                     }
-
-//                     AssignOperator::StarEqual => {
-//                         self.emit_bytes(opcode::GETLOCAL, pos as u8); // get the var
-
-//                         let opcode = match expr.value.ty {
-//                             Type::App(TypeCon::Int, _) => opcode::MUL,
-//                             Type::App(TypeCon::Float, _) => opcode::MULF,
-//                             _ => unreachable!(), // type checker should prevent this
-//                         };
-
-//                         self.compile_expression(expr)?; // get the expr
-
-//                         self.emit_byte(opcode);
-
-//                         self.emit_bytes(opcode::SETLOCAL, pos as u8); // store it in x
-//                     }
-//                 }
-//             }
-
-//             Expression::Array(ref exprs) => {
-//                 for expr in exprs.iter().rev() {
-//                     // reverse because items how items are popped off the stack
-//                     self.compile_expression(expr)?;
-//                 }
-
-//                 self.emit_bytes(opcode::ARRAY, exprs.len() as u8);
-//             }
-
-//             Expression::Index(ref target, ref index) => {
-//                 match expr.value.ty {
-//                     Type::App(TypeCon::Str, _) => {
-//                         self.compile_expression(target)?;
-//                         self.compile_expression(index)?;
-
-//                         self.emit_byte(opcode::INDEXSTRING);
-//                     }
-
-//                     Type::App(TypeCon::Array(_), _) => {
-//                         self.compile_expression(target)?;
-//                         self.compile_expression(index)?;
-
-//                         self.emit_byte(opcode::INDEXARRAY);
-//                     }
-
-//                     _ => unreachable!(), // Type checking should prevent this being reached
-//                 }
-//             }
-
-//             Expression::Literal(ref literal) => match *literal {
-//                 Literal::False(_) => {
-//                     self.emit_byte(opcode::FALSE);
-//                 }
-//                 Literal::True(_) => {
-//                     self.emit_byte(opcode::TRUE);
-//                 }
-//                 Literal::Nil => {
-//                     self.emit_byte(opcode::NIL);
-//                 }
-//                 Literal::Int(ref n) => {
-//                     self.emit_constant(Value::int(*n), expr.value.expr.span)?;
-//                 }
-//                 Literal::Float(ref f) => {
-//                     println!("float");
-//                     self.emit_constant(Value::float(*f), expr.value.expr.span)?;
-//                 }
-//                 Literal::Str(ref string) => {
-//                     let object = StringObject::new(string, self.objects);
-
-//                     self.emit_constant(Value::object(object), expr.value.expr.span)?;
-//                 }
-//             },
-
-//             Expression::Binary(ref lhs, ref op, ref rhs) => {
-//                 if *op == BinaryOp::And {
-//                     self.compile_and(lhs, rhs)?;
-//                 } else if *op == BinaryOp::Or {
-//                     self.compile_or(lhs, rhs)?;
-//                 } else {
-//                     self.compile_expression(lhs)?;
-//                     self.compile_expression(rhs)?;
-
-//                     match (&expr.value.ty, op) {
-//                         (Type::App(TypeCon::Int, _), BinaryOp::Plus) => self.emit_byte(opcode::ADD),
-//                         (Type::App(TypeCon::Float, _), BinaryOp::Plus) => self.emit_byte(opcode::ADDF),
-
-//                         (Type::App(TypeCon::Int, _), BinaryOp::Minus) => self.emit_byte(opcode::SUB),
-//                         (Type::App(TypeCon::Float, _), BinaryOp::Minus) => self.emit_byte(opcode::SUBF),
-
-//                         (Type::App(TypeCon::Int, _), BinaryOp::Slash) => self.emit_byte(opcode::DIV),
-//                         (Type::App(TypeCon::Float, _), BinaryOp::Slash) => self.emit_byte(opcode::DIVF),
-
-//                         (Type::App(TypeCon::Int, _), BinaryOp::Star) => self.emit_byte(opcode::MUL),
-//                         (Type::App(TypeCon::Float, _), BinaryOp::Star) => self.emit_byte(opcode::MULF),
-
-//                         // For comparisson the lhs and the rhs should be the same so only
-//                         // check the type of the lhs
-//                         (Type::App(TypeCon::Bool, _), BinaryOp::LessThan) => match lhs.value.ty {
-//                             Type::App(TypeCon::Int, _) => self.emit_byte(opcode::LESS),
-//                             Type::App(TypeCon::Float, _) => self.emit_byte(opcode::LESSF),
-//                             _ => unreachable!(),
-//                         },
-
-//                         (Type::App(TypeCon::Bool, _), BinaryOp::LessThanEqual) => match lhs.value.ty {
-//                             Type::App(TypeCon::Int, _) => {
-//                                 self.emit_bytes(opcode::LESS, opcode::NOT)
-//                             }
-//                             Type::App(TypeCon::Float, _) => {
-//                                 self.emit_bytes(opcode::LESSF, opcode::NOT)
-//                             }
-//                             _ => unreachable!(),
-//                         },
-
-//                         (Type::App(TypeCon::Bool, _), BinaryOp::GreaterThan) => match lhs.value.ty {
-//                             Type::App(TypeCon::Int, _) => self.emit_byte(opcode::GREATER),
-//                             Type::App(TypeCon::Float, _) => self.emit_byte(opcode::GREATERF),
-//                             _ => unreachable!(),
-//                         },
-
-//                         (Type::App(TypeCon::Bool, _), BinaryOp::GreaterThanEqual) => match lhs.value.ty {
-//                             Type::App(TypeCon::Int, _) => {
-//                                 self.emit_bytes(opcode::GREATER, opcode::NOT)
-//                             }
-//                             Type::App(TypeCon::Float, _) => {
-//                                 self.emit_bytes(opcode::GREATERF, opcode::NOT)
-//                             }
-//                             _ => unreachable!(),
-//                         },
-
-//                         (Type::App(TypeCon::Str, _), BinaryOp::Plus) => self.emit_byte(opcode::CONCAT),
-
-//                         (_, BinaryOp::EqualEqual) => self.emit_byte(opcode::EQUAL),
-//                         (_, BinaryOp::BangEqual) => self.emit_bytes(opcode::EQUAL, opcode::NOT),
-
-//                         // #[cfg(not(feature = "debug"))]
-//                         // _ => unsafe {
-//                         //     ::std::hint::unreachable_unchecked() // only in release mode for that extra speed boost
-//                         // },
-
-//                         // #[cfg(feature = "debug")]
-//                         (ref ty, ref op) => unimplemented!(" ty {:?} op {:?}", ty, op),
-//                     }
-//                 }
-//             }
-
-//             Expression::Cast(ref from, ref to) => {
-//                 self.compile_expression(from)?;
-
-//                 match (&from.value.ty, &to) {
-//                     (Type::App(TypeCon::Int, _), Type::App(TypeCon::Float, _)) => {
-//                         self.emit_byte(opcode::INT2FLOAT)
-//                     }
-
-//                     (Type::App(TypeCon::Float, _), Type::App(TypeCon::Int, _)) => {
-//                         self.emit_byte(opcode::FLOAT2INT)
-//                     }
-
-//                     (Type::App(TypeCon::Bool, _), Type::App(TypeCon::Int, _)) => {
-//                         self.emit_byte(opcode::BOOL2INT)
-//                     }
-
-//                     (Type::App(TypeCon::Int, _), Type::App(TypeCon::Str, _)) => {
-//                         self.emit_byte(opcode::INT2STR)
-//                     }
-
-//                     (Type::App(TypeCon::Float, _), Type::App(TypeCon::Str, _)) => {
-//                         self.emit_byte(opcode::FLOAT2STR)
-//                     }
-
-//                     _ => unreachable!(), // cast only allows int -> float, float -> int, bool -> int
-//                 }
-//             }
-
-//             Expression::Call(ref callee, ref args) => {
-//                 for arg in args {
-//                     self.compile_expression(arg)?;
-//                 }
-
-//                 let name = self.symbols.name(*callee);
-
-//                 match name.as_str() {
-//                     "clock" | "rand" => self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8),
-//                     _ => {
-//                         self.emit_bytes(opcode::CALL, callee.0 as u8);
-//                         self.emit_byte(args.len() as u8)
-//                     }
-//                 }
-//             }
-
-//             Expression::ClassLiteral {
-//                 ref symbol,
-//                 ref properties,
-//             } => {
-//                 for property in properties.iter().rev() {
-//                     //rev because poped of stack
-//                     self.compile_expression(&property.value.expr)?;
-//                 }
-
-//                 self.emit_bytes(opcode::CLASSINSTANCE, symbol.0 as u8);
-//                 self.emit_byte(properties.len() as u8);
-
-//                 for property in properties.iter().rev() {
-//                     //rev because poped of stack
-//                     self.emit_byte(property.value.name.0 as u8);
-//                 }
-//             }
-
-//             Expression::InstanceMethodCall {
-//                 ref method_name,
-//                 ref instance,
-//                 ref params,
-//             } => {
-//                 for param in params {
-//                     self.compile_expression(param)?;
-//                 }
-
-//                 self.compile_expression(instance)?;
-
-//                 self.emit_byte(opcode::CALLINSTANCEMETHOD);
-//                 self.emit_bytes(method_name.0 as u8, params.len() as u8);
-//             }
-
-//             Expression::StaticMethodCall {
-//                 ref class_name,
-//                 ref method_name,
-//                 ref params,
-//             } => {
-//                 for param in params {
-//                     self.compile_expression(param)?;
-//                 }
-
-//                 self.emit_byte(opcode::CALLSTATICMETHOD);
-//                 self.emit_bytes(class_name.0 as u8, method_name.0 as u8);
-//                 self.emit_byte(params.len() as u8);
-//             }
-
-//             Expression::GetProperty {
-//                 ref property_name,
-//                 ref property,
-//                 ..
-//             } => {
-//                 self.compile_expression(property)?;
-//                 self.emit_bytes(opcode::GETPROPERTY, property_name.0 as u8)
-//             }
-
-//             Expression::GetMethod {
-//                 ref method_name,
-//                 ref method,
-//                 ..
-//             } => {
-//                 self.compile_expression(method)?;
-//                 self.emit_bytes(opcode::GETMETHOD, method_name.0 as u8)
-//             }
-
-//             Expression::Grouping(ref expr) => {
-//                 self.compile_expression(expr)?;
-//             }
-
-//             Expression::Match {
-//                 ref cond,
-//                 ref arms,
-//                 ref all,
-//             } => {
-//                 self.compile_expression(cond)?;
-
-//                 for arm in arms.value.iter() {
-//                     self.compile_expression(&arm.value.pattern)?;
-//                     self.compile_expression(cond)?;
-//                     self.emit_byte(opcode::EQUAL); // ie pattern == cond
-//                     let false_label = self.emit_jump(opcode::JUMPNOT);
-//                     self.compile_statement(&arm.value.body)?;
-//                     self.patch_jump(false_label);
-
-//                     self.emit_jump(opcode::JUMP);
-//                 }
-
-//                 if let Some(ref all) = all {
-//                     self.compile_statement(all)?;
-//                 }
-//             }
-
-//             Expression::Ternary(ref cond, ref if_true, ref if_false) => {
-//                 self.compile_expression(cond)?;
-
-//                 let false_label = self.emit_jump(opcode::JUMPNOT);
-
-//                 self.compile_expression(if_true)?;
-
-//                 let end_label = self.emit_jump(opcode::JUMP);
-
-//                 self.patch_jump(false_label);
-
-//                 self.compile_expression(if_false)?;
-
-//                 self.patch_jump(end_label);
-//             }
-
-//             Expression::Unary(ref op, ref expr) => {
-//                 use ast::UnaryOp;
-
-//                 self.compile_expression(expr)?;
-
-//                 match *op {
-//                     UnaryBinaryOp::Bang => {
-//                         self.emit_byte(opcode::NOT);
-//                     }
-
-//                     UnaryBinaryOp::Minus => match &expr.value.ty {
-//                         Type::App(TypeCon::Int, _) => self.emit_byte(opcode::NEGATE),
-//                         Type::App(TypeCon::Float, _) => self.emit_byte(opcode::NEGATEF),
-//                         _ => unreachable!(),
-//                     },
-//                 }
-//             }
-
-//             Expression::Var(ref ident, _) => {
-//                 if let Some(pos) = self.locals.get(ident).cloned() {
-//                     self.emit_bytes(opcode::GETLOCAL, pos as u8);
-//                 } else if let Some(offset) = self.params.get(ident).cloned() {
-//                     self.emit_bytes(opcode::GETPARAM, offset as u8);
-//                 } else {
-//                     self.reporter.error("Undefined variable", expr.span);
-//                     return Err(()); // Params are treated as locals so it should be present
-//                 }
-//             }
-
-//             Expression::Closure(ref func) => {
-//                 let closure = compile_function(func, self.symbols, self.reporter, self.objects)?;
-
-//                 let func = FunctionObject::new(closure.params.len(), closure, self.objects);
-
-//                 self.emit_constant(Value::object(func), expr.span)?;
-//             }
-
-//             Expression::Set(ref property, ref instance, ref value) => {
-//                 self.compile_expression(value)?;
-//                 self.compile_expression(instance)?;
-//                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
-//             }
-//         }
-
-//         Ok(())
-//     }
-
-//     fn compile_and(
-//         &mut self,
-//         lhs: &Spanned<ast::TypedExpression>,
-//         rhs: &Spanned<ast::TypedExpression>,
-//     ) -> CodegenResult<()> {
-//         self.compile_expression(lhs)?;
-
-//         let false_label = self.emit_jump(opcode::JUMPNOT);
-
-//         self.compile_expression(rhs)?;
-
-//         self.patch_jump(false_label);
-
-//         Ok(())
-//     }
-
-//     fn compile_or(
-//         &mut self,
-//         lhs: &Spanned<ast::TypedExpression>,
-//         rhs: &Spanned<ast::TypedExpression>,
-//     ) -> CodegenResult<()> {
-//         self.compile_expression(lhs)?;
-
-//         let else_label = self.emit_jump(opcode::JUMPIF);
-
-//         self.compile_expression(rhs)?;
-
-//         self.patch_jump(else_label);
-
-//         self.emit_byte(opcode::POP);
-
-//         Ok(())
-//     }
-// }
-
-// fn compile_class(
-//     class: &ast::Class,
-//     symbols: &Symbols<()>,
-//     reporter: &mut Reporter,
-//     objects: RawObject,
-// ) -> CodegenResult<Class> {
-//     let mut methods = FnvHashMap::default();
-
-//     for method in class.methods.iter() {
-//         methods.insert(
-//             method.name,
-//             compile_function(method, symbols, reporter, objects)?,
-//         );
-//     }
-
-//     Ok(Class {
-//         name: class.name,
-//         methods,
-//     })
-// }
-
-// fn compile_function(
-//     func: &ast::Function,
-//     symbols: &Symbols<()>,
-//     reporter: &mut Reporter,
-//     objects: RawObject,
-// ) -> CodegenResult<Function> {
-//     let mut params = FnvHashMap::default();
-
-//     for (i, param) in func.params.iter().enumerate() {
-//         params.insert(param.name, i);
-//     } // store param id and the index in the vec
-
-//     let mut builder = Builder::new(reporter, symbols, objects, params);
-
-//     builder.compile_statement(&func.body)?;
-
-//     Ok(Function {
-//         name: func.name,
-//         // locals: builder.locals,
-//         body: builder.chunk,
-//         params: builder.params,
-//     })
-// }
-
-// pub fn compile(
-//     ast: &ast::Program,
-//     symbols: &Symbols<()>,
-//     reporter: &mut Reporter,
-// ) -> CodegenResult<(Program, RawObject)> {
-//     let mut funcs = FnvHashMap::default();
-//     let mut classes: FnvHashMap<Symbol, Class> = FnvHashMap::default();
-
-//     let objects = ::std::ptr::null::<RawObject>() as RawObject;
-
-//     for function in ast.functions.iter() {
-//         funcs.insert(
-//             function.name,
-//             compile_function(function, symbols, reporter, objects)?,
-//         );
-//     }
-
-//     for class in ast.classes.iter() {
-//         let mut compiled_class = compile_class(class, symbols, reporter, objects)?;
-
-//         if let Some(ref superclass) = class.superclass {
-//             let superclass = classes.get(&superclass.value).unwrap();
-
-//             compiled_class
-//                 .methods
-//                 .extend(superclass.methods.clone().into_iter());
-//         }
-
-//         classes.insert(class.name, compiled_class);
-//     }
-
-//     Ok((
-//         Program {
-//             functions: funcs,
-//             classes,
-//         },
-//         objects,
-//     ))
-// }
+fn compile_function(
+    func: &Function,
+    symbols: &Symbols<()>,
+    reporter: &mut Reporter,
+    objects: RawObject,
+) -> CodegenResult<vm::Function> {
+    let mut params = FnvHashMap::default();
+
+    for (i, param) in func.params.iter().enumerate() {
+        params.insert(*param, i);
+    } // store param id and the index in the vec
+
+    let mut chunks = HashMap::new();
+
+    for (id, block) in func.blocks.iter() {
+        let mut builder = Builder::new(reporter, symbols, objects, &params);
+
+        for inst in block.instructions.iter() {
+            builder.compile_instruction(inst)?;
+        }
+        
+        builder.chunk.disassemble("test");
+
+        chunks.insert(id, builder.chunk);
+    }
+
+    println!("{:?}",chunks );
+
+    unimplemented!()
+}
+
+pub fn compile(
+    ast: &Program,
+    symbols: &Symbols<()>,
+    reporter: &mut Reporter,
+) -> CodegenResult<(vm::Program, RawObject)> {
+    let mut funcs = FnvHashMap::default();
+    let mut classes: FnvHashMap<Symbol, vm::Class> = FnvHashMap::default();
+
+    let objects = ::std::ptr::null::<RawObject>() as RawObject;
+
+    for function in ast.functions.iter() {
+        funcs.insert(
+            function.name,
+            compile_function(function, symbols, reporter, objects)?,
+        );
+    }
+
+    // for class in ast.classes.iter() {
+    //     let mut compiled_class = compile_class(class, symbols, reporter, objects)?;
+
+    //     if let Some(ref superclass) = class.superclass {
+    //         let superclass = classes.get(&superclass.value).unwrap();
+
+    //         compiled_class
+    //             .methods
+    //             .extend(superclass.methods.clone().into_iter());
+    //     }
+
+    //     classes.insert(class.name, compiled_class);
+    // }
+
+    Ok((
+        vm::Program {
+            functions: funcs,
+            classes,
+        },
+        objects,
+    ))
+}

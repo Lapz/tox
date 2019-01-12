@@ -13,7 +13,7 @@ extern crate ir;
 
 mod repl;
 
-// use backend::vm::compile as compile_vm;
+use backend::compile_vm;
 use frontend::Infer;
 // use interpreter::{interpret, Environment};
 use ir::printer::Printer;
@@ -160,16 +160,16 @@ pub fn run(path: String, vm: bool, print_ir: Option<String>) {
     }
 
     // if compile_vm {
-    //     let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
-    //         Ok(functions) => functions,
-    //         Err(_) => {
-    //             reporter.emit(input);
-    //             ::std::process::exit(65)
-    //         }
-    //     };
+    let (program, objects) = match compile_vm(&typed_ast, &symbols, &mut reporter) {
+        Ok(functions) => functions,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
 
-    //     let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-    //     vm.run();
+    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+    vm.run();
     // }
 }
 

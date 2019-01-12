@@ -1,9 +1,4 @@
 fn main() {
-  while(true) {
-    while(false) {
-      continue;
-    }
-    break;
-  }
+  10+10;
 
 }
