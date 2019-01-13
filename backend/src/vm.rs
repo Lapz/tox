@@ -267,6 +267,10 @@ impl<'a> Builder<'a> {
                 }
             }
 
+            Inst::Drop(_) => {
+                
+            }
+
             Inst::Print(ref value) => {
                 self.compile_value(value)?;
                 self.emit_byte(opcode::PRINT)
@@ -278,6 +282,12 @@ impl<'a> Builder<'a> {
             },
 
             Inst::StatementStart => (),
+
+            Inst::Store(ref lhs,ref rhs) => {
+                self.compile_value(lhs)?;
+                self.compile_value(rhs)?;
+
+            }
 
             Inst::Unary(_, ref operand, ref op) => {
                 self.compile_value(operand)?;
@@ -291,7 +301,7 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            _ => unimplemented!(),
+            
         }
 
         Ok(())
