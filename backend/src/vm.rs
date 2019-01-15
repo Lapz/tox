@@ -63,7 +63,7 @@ struct Builder<'a> {
     chunk: Chunk,
     /// A count of all local vars
     /// The number is the postion of the local on the local stack
-    locals: StackedMap<Register, usize>,
+    locals: &'a FnvHashMap<Register, usize>,
 
     params: &'a FnvHashMap<Register, usize>,
     ///  A linked list of all the objects allocated. This
@@ -85,10 +85,11 @@ impl<'a> Builder<'a> {
         symbols: &'a Symbols<()>,
         objects: RawObject,
         params: &'a FnvHashMap<Register, usize>,
+        locals: &'a FnvHashMap<Register, usize>,
     ) -> Self {
         Builder {
             chunk: Chunk::new(),
-            locals: StackedMap::new(),
+            locals,
             line: 0,
             slots: 0,
             symbols,
@@ -217,14 +218,13 @@ impl<'a> Builder<'a> {
             }
 
             Inst::Call(_, ident, args) => {
-
                 for arg in args.iter() {
                     self.compile_value(arg)?;
                 }
 
                 let callee = match ident {
                     Value::Named(ref sym) => *sym,
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 };
 
                 let name = self.symbols.name(callee);
@@ -235,9 +235,7 @@ impl<'a> Builder<'a> {
                         self.emit_bytes(opcode::CALL, callee.0 as u8);
                         self.emit_byte(args.len() as u8)
                     }
-}
-
-
+                }
             }
 
             Inst::Cast(ref value, ref from, ref to) => {
@@ -267,9 +265,7 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            Inst::Drop(_) => {
-                
-            }
+            Inst::Drop(_) => {}
 
             Inst::Print(ref value) => {
                 self.compile_value(value)?;
@@ -279,14 +275,13 @@ impl<'a> Builder<'a> {
             Inst::Return(ref value) => {
                 self.compile_value(value)?;
                 self.emit_byte(opcode::RETURN)
-            },
+            }
 
             Inst::StatementStart => (),
 
-            Inst::Store(ref lhs,ref rhs) => {
+            Inst::Store(ref lhs, ref rhs) => {
                 self.compile_value(lhs)?;
                 self.compile_value(rhs)?;
-
             }
 
             Inst::Unary(_, ref operand, ref op) => {
@@ -300,8 +295,6 @@ impl<'a> Builder<'a> {
                     },
                 }
             }
-
-            
         }
 
         Ok(())
@@ -342,10 +335,7 @@ impl<'a> Builder<'a> {
             }
         }
     }
-
-
 }
-
 
 fn compile_function(
     func: &Function,
@@ -354,26 +344,31 @@ fn compile_function(
     objects: RawObject,
 ) -> CodegenResult<vm::Function> {
     let mut params = FnvHashMap::default();
+    let mut locals = FnvHashMap::default();
 
     for (i, param) in func.params.iter().enumerate() {
         params.insert(*param, i);
     } // store param id and the index in the vec
 
+    for (i, local) in func.locals.iter().enumerate() {
+        locals.insert(*local, i);
+    }
+
     let mut chunks = HashMap::new();
 
     for (id, block) in func.blocks.iter() {
-        let mut builder = Builder::new(reporter, symbols, objects, &params);
+        let mut builder = Builder::new(reporter, symbols, objects, &params, &locals);
 
         for inst in block.instructions.iter() {
             builder.compile_instruction(inst)?;
         }
-        
+
         builder.chunk.disassemble("test");
 
         chunks.insert(id, builder.chunk);
     }
 
-    println!("{:?}",chunks );
+    println!("{:?}", chunks);
 
     unimplemented!()
 }

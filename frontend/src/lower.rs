@@ -64,6 +64,10 @@ impl<'a> Builder<'a> {
             .collect()
     }
 
+    pub fn locals(&mut self) -> Vec<Register> {
+        self.locals.iter().map(|(_, register)| *register).collect()
+    }
+
     pub fn emit_instruction(&mut self, inst: Inst, ty: Type) {
         self.current_block
             .as_mut()
@@ -496,6 +500,7 @@ fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
     Function {
         name: function.name,
         params: builder.parameters(),
+        locals: builder.locals(),
         start_block: start,
         blocks: builder.blocks(),
     }

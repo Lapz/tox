@@ -26,6 +26,7 @@ pub struct Program {
 pub struct Function {
     pub name: Symbol,
     pub params: Vec<Register>,
+    pub locals: Vec<Register>,
     pub blocks: HashMap<BlockID, Block>,
     pub start_block: BlockID,
 }
