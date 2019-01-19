@@ -1,11 +1,14 @@
 fn main() {
     let name = "Lenard";
+    let x =10;
 
     let admin =  match name {
-        "Lenard" => true,   
+        "Lenar" => false,
+        "Lenard" => true,  
         _   => false,
         _ =>true
     };
+    
 
     print admin;
 }

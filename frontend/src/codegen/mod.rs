@@ -239,12 +239,14 @@ impl<'a> Builder<'a> {
             } => {
                 self.compile_expression(cond)?;
 
+                // Jump to the else branch if the condition is false.
                 let false_label = self.emit_jump(opcode::JUMPNOT);
 
                 self.emit_byte(opcode::POP);
 
                 self.compile_statement(then)?;
 
+                 // Jump over the else branch when the if branch is taken.
                 let end_label = self.emit_jump(opcode::JUMP);
 
                 self.patch_jump(false_label);
@@ -634,22 +636,26 @@ impl<'a> Builder<'a> {
                 ref arms,
                 ref all,
             } => {
+                let mut labels = vec![];
+
                 self.compile_expression(cond)?;
 
                 for arm in arms.value.iter() {
                     self.compile_expression(&arm.value.pattern)?;
                     self.compile_expression(cond)?;
                     self.emit_byte(opcode::EQUAL); // ie pattern == cond
+                    
                     let false_label = self.emit_jump(opcode::JUMPNOT);
                     self.compile_statement(&arm.value.body)?;
-                    self.patch_jump(false_label);
-
-                    self.emit_jump(opcode::JUMP);
+                    labels.push(false_label);
                 }
 
                 if let Some(ref all) = all {
                     self.compile_statement(all)?;
                 }
+
+                labels.iter().for_each(|label| self.patch_jump(*label));
+
             }
 
             Expression::Ternary(ref cond, ref if_true, ref if_false) => {

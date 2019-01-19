@@ -5,7 +5,7 @@ use rand::{self, Rng};
 use std::collections::VecDeque;
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
-use util::pos::{CharPosition, Position, Span, Spanned};
+use util::pos::{CharPosition, Position, Span, Spanned, EMPTYSPAN};
 use util::symbol::{Symbol, Symbols};
 
 pub type ParserResult<T> = Result<T, ()>;
@@ -1351,7 +1351,11 @@ impl<'a> Parser<'a> {
                 span: symbol.get_span().to(close_span),
                 value: Expression::ClassLiteral(Spanned {
                     span: symbol.span.to(close_span),
-                    value: ClassLiteral::Simple { symbol, props },
+                    value: ClassLiteral::Instantiation {
+                        symbol,
+                        types: Spanned::new(Vec::new(), EMPTYSPAN),
+                        props,
+                    },
                 }),
             })
         } else {
