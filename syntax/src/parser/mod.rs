@@ -1225,7 +1225,7 @@ impl<'a> Parser<'a> {
                         Spanned {
                             value:
                                 Expression::ClassLiteral(Spanned {
-                                    value: ClassLiteral::Simple { symbol, props },
+                                    value: ClassLiteral { symbol, props,.. },
                                     ..
                                 }),
                             span: end_span,
@@ -1233,7 +1233,7 @@ impl<'a> Parser<'a> {
                             return Ok(Spanned {
                                 value: Expression::ClassLiteral(Spanned {
                                     span: expr.span.to(greater_than_span),
-                                    value: ClassLiteral::Instantiation {
+                                    value: ClassLiteral  {
                                         types: Spanned {
                                             span: less_than_span.to(greater_than_span),
                                             value: types,
@@ -1354,7 +1354,7 @@ impl<'a> Parser<'a> {
                 span: symbol.get_span().to(close_span),
                 value: Expression::ClassLiteral(Spanned {
                     span: symbol.span.to(close_span),
-                    value: ClassLiteral::Instantiation {
+                    value: ClassLiteral {
                         symbol,
                         props,
                         types: Spanned::new(Vec::new(), EMPTYSPAN),

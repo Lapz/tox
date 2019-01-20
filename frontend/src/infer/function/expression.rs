@@ -23,7 +23,7 @@ impl Infer {
             Expression::Call(call) => {
                 let whole_span = expr.span;
                 match call.value {
-                    Call  {
+                    Call {
                         types,
                         callee,
                         args,
@@ -63,15 +63,13 @@ impl Infer {
                 let whole_span = expr.span;
 
                 match class_literal.value {
-                    ClassLiteral::Simple { symbol, props } => {
-                        self.infer_class_literal(symbol, props, whole_span, ctx)
-                    }
-                    ClassLiteral::Instantiation {
+
+                    ClassLiteral {
                         symbol,
                         types,
                         props,
                     } => {
-                        self.infer_class_instantiated_literal(symbol, props, types, whole_span, ctx)
+                        self.infer_class_literal(symbol, props, types, whole_span, ctx)
                     }
                 }
             }
