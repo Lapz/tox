@@ -5,7 +5,7 @@ use rand::{self, Rng};
 use std::collections::VecDeque;
 use token::{Token, TokenType};
 use util::emmiter::Reporter;
-use util::pos::{CharPosition, Position, Span, Spanned};
+use util::pos::{CharPosition, Position, Span, Spanned, EMPTYSPAN};
 use util::symbol::{Symbol, Symbols};
 
 pub type ParserResult<T> = Result<T, ()>;
@@ -1256,7 +1256,12 @@ impl<'a> Parser<'a> {
                         Spanned {
                             value:
                                 Expression::Call(Spanned {
-                                    value: Call::Simple { args, callee },
+                                    value:
+                                        Call {
+                                            args,
+                                            callee,
+                                            .. // replace the old types with the new
+                                        },
                                     ..
                                 }),
                             ..
@@ -1264,7 +1269,7 @@ impl<'a> Parser<'a> {
                             return Ok(Spanned {
                                 value: Expression::Call(Spanned {
                                     span: whole_span.to(call.span),
-                                    value: Call::Instantiation {
+                                    value: Call {
                                         types: Spanned {
                                             span: less_than_span.to(greater_than_span),
                                             value: types,
@@ -1349,7 +1354,11 @@ impl<'a> Parser<'a> {
                 span: symbol.get_span().to(close_span),
                 value: Expression::ClassLiteral(Spanned {
                     span: symbol.span.to(close_span),
-                    value: ClassLiteral::Simple { symbol, props },
+                    value: ClassLiteral::Instantiation {
+                        symbol,
+                        props,
+                        types: Spanned::new(Vec::new(), EMPTYSPAN),
+                    },
                 }),
             })
         } else {
@@ -1382,9 +1391,10 @@ impl<'a> Parser<'a> {
             span: callee.get_span().to(close_span),
             value: Expression::Call(Spanned {
                 span: callee.get_span().to(close_span),
-                value: Call::Simple {
+                value: Call {
                     callee: Box::new(callee),
                     args,
+                    types: Spanned::new(vec![], EMPTYSPAN),
                 },
             }),
         })

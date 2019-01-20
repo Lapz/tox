@@ -184,22 +184,14 @@ pub enum ClassLiteral {
     },
 }
 
+/// A function/method literal with optional provided types
+/// i.e id::<i32>(foo); foo.add::<i32,i32>(10,2); foo(1,2);
+/// if a function call is not instantiated the span for types is the [`EMPTYSPAN`]
 #[derive(Debug, Clone)]
-pub enum Call {
-    /// A function/method literal with no provided types
-    /// i.e foo.bar(1,2,3); add(10,2);
-    Simple {
-        args: Vec<Spanned<Expression>>,
-        callee: Box<Spanned<Expression>>,
-    },
-
-    /// A function/method literal with provided types
-    /// i.e id::<i32>(foo); foo.add::<i32,i32>(10,2);
-    Instantiation {
-        args: Vec<Spanned<Expression>>,
-        callee: Box<Spanned<Expression>>,
-        types: Spanned<Vec<Spanned<Type>>>,
-    },
+pub struct Call {
+    pub args: Vec<Spanned<Expression>>,
+    pub callee: Box<Spanned<Expression>>,
+    pub types: Spanned<Vec<Spanned<Type>>>,
 }
 #[derive(Debug, Clone)]
 pub enum Type {

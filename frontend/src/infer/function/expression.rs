@@ -23,14 +23,11 @@ impl Infer {
             Expression::Call(call) => {
                 let whole_span = expr.span;
                 match call.value {
-                    Call::Simple { args, callee } => {
-                        self.infer_call(*callee, args, whole_span, ctx)
-                    }
-                    Call::Instantiation {
+                    Call  {
                         types,
                         callee,
                         args,
-                    } => self.infer_call_instantiated(*callee, args, types, whole_span, ctx),
+                    } => self.infer_call(*callee, args, types, whole_span, ctx),
                 }
             }
 
