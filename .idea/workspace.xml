@@ -1,0 +1,837 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added if statements">
+      <change beforePath="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ir/src/instructions.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/instructions.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/syntax/src/parser/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/parser/mod.rs" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileColors">
+    <fileColor scope="Non-Project Files (Material Default)" color="2E3C43" />
+    <fileColor scope="Non-Project Files (Material Darker)" color="323232" />
+    <fileColor scope="Non-Project Files (Material Lighter)" color="eae8e8" />
+    <fileColor scope="Non-Project Files (Material Palenight)" color="2f2e43" />
+  </component>
+  <component name="FileEditorManager">
+    <splitter split-orientation="horizontal" split-proportion="0.58407736">
+      <split-first>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/class_literal.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="422">
+                  <caret line="30" column="13" selection-start-line="30" selection-start-column="13" selection-end-line="30" selection-end-column="13" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-1313">
+                  <caret line="151" selection-start-line="151" selection-end-line="151" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/ir/src/graphviz.rs">
+              <provider selected="true" editor-type-id="text-editor" />
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/ir/src/lib.rs">
+              <provider selected="true" editor-type-id="text-editor" />
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/ir/src/printer.rs">
+              <provider selected="true" editor-type-id="text-editor" />
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/ir/src/instructions.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="123">
+                  <caret line="139" selection-start-line="139" selection-end-line="139" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="304">
+                  <caret line="919" column="8" selection-start-line="919" selection-start-column="8" selection-end-line="919" selection-end-column="8" />
+                  <folding>
+                    <element signature="e#23687#23688#0" expanded="true" />
+                    <element signature="e#23719#23720#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/cast.rs">
+              <provider selected="true" editor-type-id="text-editor" />
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/tests/test.tox">
+              <provider selected="true" editor-type-id="text-editor" />
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="192">
+                  <caret line="65" column="33" selection-start-line="65" selection-start-column="33" selection-end-line="65" selection-end-column="33" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="1635">
+                  <caret line="109" selection-start-line="109" selection-end-line="109" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/syntax/src/ast/mod.rs">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="331">
+                  <caret line="208" column="13" selection-start-line="208" selection-start-column="13" selection-end-line="208" selection-end-column="13" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>Object::None</find>
+      <find>undefin</find>
+      <find>Undefined variable</find>
+      <find>undefined</find>
+      <find>.zi</find>
+      <find>.zip</find>
+      <find>print</find>
+      <find>infer_object_get</find>
+      <find>write_p</find>
+      <find>string</find>
+      <find>println!(</find>
+      <find>IGL</find>
+      <find>println</find>
+      <find>mem::</find>
+      <find>&lt;'a&gt;</find>
+      <find>Statement::Class</find>
+      <find>::Class</find>
+      <find>l</find>
+      <find>SET</find>
+      <find>get</find>
+      <find>::Get</find>
+      <find>infer_class_</find>
+      <find>GET {</find>
+      <find>PRINT</find>
+      <find>t::Property</find>
+      <find>::Insta</find>
+      <find>Call::Simple</find>
+      <find>::Simple</find>
+      <find>::ClassLiteral</find>
+      <find>Call::In</find>
+    </findStrings>
+    <replaceStrings>
+      <replace />
+    </replaceStrings>
+    <dirStrings>
+      <dir>$PROJECT_DIR$/frontend/src</dir>
+    </dirStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Lenard Pratt &lt;striderman34@gmail.com&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/token.rs" />
+        <option value="$PROJECT_DIR$/vm/Cargo.toml" />
+        <option value="$PROJECT_DIR$/vm/src/lib.rs" />
+        <option value="$PROJECT_DIR$/vm/src/assembler/symbols.rs" />
+        <option value="$PROJECT_DIR$/tests/test.tasm" />
+        <option value="$PROJECT_DIR$/vm/src/assembler/token.rs" />
+        <option value="$PROJECT_DIR$/sem/src/semant/inferexp.rs" />
+        <option value="$PROJECT_DIR$/codegen/src/label.rs" />
+        <option value="$PROJECT_DIR$/codegen/src/gen_bytecode.rs" />
+        <option value="$PROJECT_DIR$/util/src/pos.rs" />
+        <option value="$PROJECT_DIR$/Cargo.toml" />
+        <option value="$PROJECT_DIR$/tox/Cargo.toml" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/function/statements.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/ctx.rs" />
+        <option value="$PROJECT_DIR$/util/src/emmiter.rs" />
+        <option value="$PROJECT_DIR$/tox/src/main.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/mod.rs" />
+        <option value="$PROJECT_DIR$/interpreter/src/builtins.rs" />
+        <option value="$PROJECT_DIR$/interpreter/src/lib.rs" />
+        <option value="$PROJECT_DIR$/tox/ast2.txt" />
+        <option value="$PROJECT_DIR$/tox/ast.txt" />
+        <option value="$PROJECT_DIR$/tox/lhs2.txt" />
+        <option value="$PROJECT_DIR$/tox/lhs.txt" />
+        <option value="$PROJECT_DIR$/interpreter/src/object.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/function/mod.rs" />
+        <option value="$PROJECT_DIR$/interpreter/src/interpreter.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/lib.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/class.rs" />
+        <option value="$PROJECT_DIR$/tox/output2.txt" />
+        <option value="$PROJECT_DIR$/vm/src/debug.rs" />
+        <option value="$PROJECT_DIR$/vm/src/assembler/mod.rs" />
+        <option value="$PROJECT_DIR$/vm/src/assembler/parsers.rs" />
+        <option value="$PROJECT_DIR$/vm/src/opcode.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/codegen/mod.rs" />
+        <option value="$PROJECT_DIR$/vm/src/vm.rs" />
+        <option value="$PROJECT_DIR$/tox/output.tasm" />
+        <option value="$PROJECT_DIR$/frontend/src/codegen/tasm.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/env.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/ast.rs" />
+        <option value="$PROJECT_DIR$/tests/test.tox" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs" />
+        <option value="$PROJECT_DIR$/syntax/src/ast/mod.rs" />
+        <option value="$PROJECT_DIR$/syntax/src/parser/mod.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" />
+        <option value="$PROJECT_DIR$/frontend/src/infer/function/expressions/class_literal.rs" />
+        <option value="$PROJECT_DIR$/ir/src/instructions.rs" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="120" />
+    <option name="y" value="23" />
+    <option name="width" value="1397" />
+    <option name="height" value="958" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1547994086852" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="org.rust.alreadyTriedToolchainAutoDiscovery" value="true" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Cargo Command.test">
+    <configuration default="true" type="Applet">
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test vm::tests::test_eq_opcode" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package vm --lib vm::tests::test_eq_opcode -- --exact" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="true" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test vm::tests::test_hlt_opcode" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package vm --lib vm::tests::test_hlt_opcode -- --exact" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="true" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test vm::tests::test_jmp_opcode" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package vm --lib vm::tests::test_jmp_opcode -- --exact" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="true" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test vm::tests::test_jump_equal_opcode" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package vm --lib vm::tests::test_jump_equal_opcode -- --exact" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="true" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test vm::tests::test_set_opcode" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package vm --lib vm::tests::test_set_opcode -- --exact" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="true" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="channel" value="DEFAULT" />
+      <option name="command" value="test --package tox" />
+      <option name="allFeatures" value="false" />
+      <option name="nocapture" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="TestNG">
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <properties />
+      <listeners />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file enabled="true" id="idea.log" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Cargo Command.test" />
+      <item itemvalue="Cargo Command.Test vm::tests::test_eq_opcode" />
+      <item itemvalue="Cargo Command.Test vm::tests::test_hlt_opcode" />
+      <item itemvalue="Cargo Command.Test vm::tests::test_jmp_opcode" />
+      <item itemvalue="Cargo Command.Test vm::tests::test_jump_equal_opcode" />
+      <item itemvalue="Cargo Command.Test vm::tests::test_set_opcode" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Cargo Command.Test vm::tests::test_set_opcode" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="" />
+      <created>1510943299967</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1510943299967</updated>
+      <workItem from="1510943309743" duration="168000" />
+      <workItem from="1537641105551" duration="1016000" />
+      <workItem from="1537642323329" duration="7964000" />
+      <workItem from="1537698831545" duration="91000" />
+      <workItem from="1537957293915" duration="80000" />
+      <workItem from="1537957391938" duration="10000" />
+      <workItem from="1537958419285" duration="54000" />
+      <workItem from="1537958481130" duration="1000" />
+      <workItem from="1537958635335" duration="359000" />
+      <workItem from="1537959120105" duration="259000" />
+      <workItem from="1537970425318" duration="3548000" />
+      <workItem from="1538139112461" duration="1994000" />
+      <workItem from="1538156793412" duration="454000" />
+      <workItem from="1538305612864" duration="53000" />
+      <workItem from="1538305735829" duration="2883000" />
+      <workItem from="1538390445875" duration="69000" />
+      <workItem from="1538468548907" duration="721000" />
+      <workItem from="1538751389523" duration="21000" />
+      <workItem from="1538752764788" duration="3000" />
+      <workItem from="1539782621935" duration="2000" />
+      <workItem from="1545395651106" duration="2965000" />
+      <workItem from="1545499961522" duration="1512000" />
+    </task>
+    <task id="LOCAL-00001" summary="Added push and pop">
+      <created>1535643193060</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1535643193061</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Added if statements">
+      <created>1538317576599</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1538317576599</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TestHistory">
+    <history-entry file="test - 2019.01.20 at 14h 20m 46s.xml">
+      <configuration name="test" configurationId="CargoCommandRunConfiguration" />
+    </history-entry>
+    <history-entry file="test - 2019.01.20 at 14h 21m 39s.xml">
+      <configuration name="test" configurationId="CargoCommandRunConfiguration" />
+    </history-entry>
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="42564000" />
+  </component>
+  <component name="TodoView" selected-index="3">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="120" y="23" width="1397" height="958" extended-state="0" />
+    <layout>
+      <window_info id="Structure" order="0" side_tool="true" weight="0.25" />
+      <window_info id="Image Layers" order="1" />
+      <window_info id="Designer" order="2" />
+      <window_info id="UI Designer" order="3" />
+      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.21697417" />
+      <window_info id="Learn" order="5" weight="0.32840237" />
+      <window_info id="Capture Tool" order="6" />
+      <window_info id="Favorites" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4945055" weight="0.28060046" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4969475" weight="0.32448035" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="7" sideWeight="0.48814228" visible="true" weight="0.2655889" />
+      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5118577" side_tool="true" weight="0.2655889" />
+      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.4981685" weight="0.32678983" />
+      <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Capture Analysis" order="4" />
+      <window_info anchor="right" id="Cargo" order="5" />
+      <window_info anchor="right" id="Theme Preview" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+      <window_info anchor="right" id="Database" order="8" />
+      <window_info anchor="right" id="Maven Projects" order="9" />
+    </layout>
+    <layout-to-restore>
+      <window_info id="Structure" order="0" side_tool="true" weight="0.25" />
+      <window_info id="Image Layers" order="1" />
+      <window_info id="Designer" order="2" />
+      <window_info id="UI Designer" order="3" />
+      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.103933945" />
+      <window_info id="Learn" order="5" weight="0.32840237" />
+      <window_info id="Capture Tool" order="6" />
+      <window_info id="Favorites" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49925148" weight="0.28103682" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.324861" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.4949303" visible="true" weight="0.2681729" />
+      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.50506973" side_tool="true" weight="0.2681729" />
+      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.498503" weight="0.32742155" />
+      <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Capture Analysis" order="4" />
+      <window_info anchor="right" id="Cargo" order="5" />
+      <window_info anchor="right" id="Theme Preview" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+      <window_info anchor="right" id="Database" order="8" />
+      <window_info anchor="right" id="Maven Projects" order="9" />
+    </layout-to-restore>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="Added push and pop" />
+    <MESSAGE value="Added if statements" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added if statements" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/interpreter/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="36" selection-start-line="36" selection-end-line="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="12" selection-start-line="8" selection-start-column="12" selection-end-line="8" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test.tasm" />
+    <entry file="file://$PROJECT_DIR$/vm/src/op.rs" />
+    <entry file="file://$PROJECT_DIR$/tox/output.txt" />
+    <entry file="file://$PROJECT_DIR$/tox/output2.txt" />
+    <entry file="file://$PROJECT_DIR$/vm/src/debug.rs" />
+    <entry file="file://$PROJECT_DIR$/vm/src/chunk.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/opcode.rs" />
+    <entry file="file://$PROJECT_DIR$/vm/Cargo.toml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/assembler/parsers.rs" />
+    <entry file="file://$PROJECT_DIR$/tests/unexpected_character.tox" />
+    <entry file="file://$PROJECT_DIR$/vm/src/assembler/mod.rs" />
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/resolver.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4050">
+          <caret line="274" column="28" selection-start-line="274" selection-start-column="21" selection-end-line="274" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/mod.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="403">
+          <caret line="47" column="9" selection-start-line="47" selection-start-column="9" selection-end-line="47" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/syntax/src/parser/macros.rs" />
+    <entry file="file://$PROJECT_DIR$/tox/ast.txt" />
+    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" />
+    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/label.rs" />
+    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/tasm.rs" />
+    <entry file="file://$PROJECT_DIR$/tox/output.tasm" />
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="938">
+            <caret line="87" selection-start-line="87" selection-end-line="87" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/env.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="15" selection-start-line="18" selection-start-column="15" selection-end-line="18" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/types.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="975">
+          <caret line="65" column="1" selection-start-line="65" selection-start-column="1" selection-end-line="65" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/mod.rs" />
+    <entry file="file://$PROJECT_DIR$/util/src/pos.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="22" column="8" selection-start-line="22" selection-start-column="8" selection-end-line="22" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vm/src/vm.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2895">
+          <caret line="193" selection-start-line="193" selection-end-line="193" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/ctx.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="750">
+          <caret line="50" column="52" selection-start-line="50" selection-start-column="52" selection-end-line="50" selection-end-column="52" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/ternary.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/var.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/unary.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/grouping.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/get.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/closure.rs" />
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/subst.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/ast.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1800">
+          <caret line="120" column="21" selection-start-line="120" selection-start-column="21" selection-end-line="120" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/mai.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/statements.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="31" selection-start-line="31" selection-end-line="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test.tox">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="192">
+          <caret line="65" column="33" selection-start-line="65" selection-start-column="33" selection-end-line="65" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/class_literal.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="422">
+          <caret line="30" column="13" selection-start-line="30" selection-start-column="13" selection-end-line="30" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="304">
+          <caret line="919" column="8" selection-start-line="919" selection-start-column="8" selection-end-line="919" selection-end-column="8" />
+          <folding>
+            <element signature="e#23687#23688#0" expanded="true" />
+            <element signature="e#23719#23720#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/cast.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1313">
+          <caret line="151" selection-start-line="151" selection-end-line="151" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir/src/graphviz.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir/src/lib.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir/src/printer.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/syntax/src/ast/mod.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="331">
+          <caret line="208" column="13" selection-start-line="208" selection-start-column="13" selection-end-line="208" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir/src/instructions.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="123">
+          <caret line="139" selection-start-line="139" selection-end-line="139" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>No facets are configured</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>1.8</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>lexer</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.6" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>
