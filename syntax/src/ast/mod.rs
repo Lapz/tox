@@ -163,25 +163,19 @@ pub struct ClassLiteralField {
     pub expr: Spanned<Expression>,
 }
 
+/// A class literal with  provided types or with no provided types
+/// i.e Foo::<i32> {
+///     int:0
+/// }
+///  /// i.e Foo {
+///     int:0
+/// }
+/// if a classliteral is not instantiated the span for types is the [`EMPTYSPAN`]
 #[derive(Debug, Clone)]
-pub enum ClassLiteral {
-    /// A class literal with no provided types
-    /// i.e Foo {
-    ///     int:0
-    /// }
-    Simple {
-        symbol: Spanned<Symbol>,
-        props: Vec<Spanned<ClassLiteralField>>,
-    },
-    /// A class literal with  provided types
-    /// i.e Foo::<i32> {
-    ///     int:0
-    /// }   
-    Instantiation {
-        symbol: Spanned<Symbol>,
-        types: Spanned<Vec<Spanned<Type>>>,
-        props: Vec<Spanned<ClassLiteralField>>,
-    },
+pub struct ClassLiteral {
+    pub symbol: Spanned<Symbol>,
+    pub types: Spanned<Vec<Spanned<Type>>>,
+    pub props: Vec<Spanned<ClassLiteralField>>,
 }
 
 /// A function/method literal with optional provided types
