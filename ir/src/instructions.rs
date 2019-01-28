@@ -50,6 +50,50 @@ pub struct Block {
     pub end: BlockEnd,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum BlockEnd {
+    Jump(BlockID),
+    Return(Value),
+    Branch(Value, BlockID, BlockID),
+    Link(BlockID),
+    End,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Instruction {
+    pub instruction: Inst,
+    pub ty: crate::types::Type,
+}
+
+/// Instruction used in the IR
+/// Instructions are of the form i <- a op b
+#[derive(Debug, Clone, PartialEq)]
+pub enum Inst {
+    /// A stack allocated array of size whatever
+    /// Stored at a location
+    Array(Value, usize),
+
+    Drop(Register),
+
+    Binary(Register, Value, BinaryOp, Value),
+
+    Cast(Value, crate::types::Type, crate::types::Type),
+
+    Call(Value, Value, Vec<Value>),
+
+    Print(Value),
+
+    StatementStart,
+
+    /// t1 = val
+    Store(Value, Value),
+
+    /// t1 = op a
+    Unary(Value, Value, UnaryOp),
+
+    Return(Value),
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     /// Integer Constant
@@ -68,13 +112,63 @@ pub enum Value {
     Nil,
 }
 
+
+/// Instruction used in the IR
+/// Instructions are of the form i <- a op b
 #[derive(Debug, Clone, PartialEq)]
-pub enum BlockEnd {
-    Jump(BlockID),
+pub enum Inst2 {
+    /// A stack allocated array of size whatever
+    /// Stored at a location
+    Array(Value, usize),
+
+    Drop(Register),
+
+    Binary(Register, Value, BinaryOp, Value),
+
+    Cast(Value, crate::types::Type, crate::types::Type),
+
+    Call(Value, Value, Vec<Value>),
+
+    Print(Value),
+
+    /// t1 = val
+    /// dest = src
+    Store(Value, Value),
+
+    /// t1 = op a
+    Unary(Value, Value, UnaryOp),
+
     Return(Value),
-    Branch(Value, BlockID, BlockID),
-    Link(BlockID),
-    End,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum BinaryOp {
+    Plus,
+    Minus,
+    Mul,
+    Div,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+    Equal,
+    NotEqual,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum UnaryOp {
+    Bang,
+    Minus,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CmpOp {
+    LT,
+    GT,
+    LTE,
+    GTE,
+    EQ,
+    NE,
 }
 
 impl BlockID {
@@ -126,71 +220,6 @@ impl Register {
 
         temp
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Instruction {
-    pub instruction: Inst,
-    pub ty: crate::types::Type,
-}
-
-/// Instruction used in the IR
-/// Instructions are of the form i <- a op b
-#[derive(Debug, Clone, PartialEq)]
-pub enum Inst {
-    /// A stack allocated array of size whatever
-    /// Stored at a location
-    Array(Value, usize),
-
-    Drop(Register),
-
-    Binary(Register, Value, BinaryOp, Value),
-
-    Cast(Value, crate::types::Type, crate::types::Type),
-
-    Call(Value, Value, Vec<Value>),
-
-    Print(Value),
-
-    StatementStart,
-
-    /// t1 = val
-    Store(Value, Value),
-
-    /// t1 = op a
-    Unary(Value, Value, UnaryOp),
-
-    Return(Value),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum BinaryOp {
-    Plus,
-    Minus,
-    Mul,
-    Div,
-    Gt,
-    Gte,
-    Lt,
-    Lte,
-    Equal,
-    NotEqual,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum UnaryOp {
-    Bang,
-    Minus,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum CmpOp {
-    LT,
-    GT,
-    LTE,
-    GTE,
-    EQ,
-    NE,
 }
 
 impl Display for Value {
