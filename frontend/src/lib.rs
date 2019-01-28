@@ -2,6 +2,7 @@
 extern crate pretty_assertions;
 
 extern crate fnv;
+extern crate ir;
 extern crate opcode;
 extern crate rand;
 extern crate syntax;
@@ -12,10 +13,8 @@ extern crate vm;
 // mod resolver;
 // mod test;
 mod ast;
-mod codegen;
 mod ctx;
 mod infer;
+mod lower;
 
-// pub use codegen::Compiler;
-pub use codegen::compile;
 pub use infer::Infer;

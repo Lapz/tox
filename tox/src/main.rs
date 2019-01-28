@@ -1,3 +1,4 @@
+extern crate backend;
 extern crate fnv;
 extern crate frontend;
 extern crate structopt;
@@ -8,10 +9,14 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
+extern crate ir;
+
 mod repl;
 
-use frontend::{compile, Infer};
+use backend::compile_vm;
+use frontend::Infer;
 // use interpreter::{interpret, Environment};
+use ir::printer::Printer;
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -28,7 +33,7 @@ fn main() {
         // if opts.interpreter {
         //     run_interpreter(file);
         // } else {
-        run(file);
+        run(file, opts.vm, opts.ir_file);
     // }
     } else {
         repl()
@@ -100,7 +105,7 @@ pub fn repl() {
 //     };
 // }
 
-pub fn run(path: String) {
+pub fn run(path: String, vm: bool, print_ir: Option<String>) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -130,7 +135,10 @@ pub fn run(path: String) {
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
-        Ok(ast) => ast,
+        Ok(ast) => {
+            reporter.emit(input); //emit warnings
+            ast
+        }
         Err(_) => {
             reporter.emit(input);
 
@@ -138,7 +146,21 @@ pub fn run(path: String) {
         }
     };
 
-    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+    if print_ir.is_some() {
+        let printer = Printer::new(&symbols);
+
+        printer
+            .print_program(&typed_ast, &mut File::create(print_ir.unwrap()).unwrap())
+            .unwrap();
+    }
+
+    #[cfg(feature = "graphviz")]
+    {
+        typed_ast.graphviz(&symbols).unwrap();
+    }
+
+    // if compile_vm {
+    let (program, objects) = match compile_vm(&typed_ast, &symbols, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);
@@ -148,6 +170,7 @@ pub fn run(path: String) {
 
     let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
     vm.run();
+    // }
 }
 
 #[derive(StructOpt, Debug)]
@@ -158,4 +181,11 @@ pub struct Cli {
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,
+    /// Run in vm mode. Default is cranelift backedn
+    #[structopt(long = "vm", short = "v")]
+    pub vm: bool,
+
+    /// Dump the ir to the given file
+    #[structopt(long = "file", short = "-f")]
+    pub ir_file: Option<String>,
 }

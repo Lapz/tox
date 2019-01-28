@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::{Expression, UnaryOp};
 use util::pos::{Span, Spanned};
 
@@ -25,7 +25,7 @@ impl Infer {
                 if !expr.value.ty.is_int() && !expr.value.ty.is_float() {
                     let msg = format!(
                         "Cannot use `-` operator on type `{}`",
-                        expr.value.ty.print(ctx)
+                        expr.value.ty.print(ctx.symbols())
                     );
 
                     ctx.error(msg, whole_span);

@@ -1,6 +1,6 @@
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use infer::types::{Type, TypeCon};
+use ir::types::{Type, TypeCon};
 use std::collections::HashMap;
 use util::pos::Span;
 
@@ -44,7 +44,11 @@ impl Infer {
 
             (&Type::App(ref tycon1, ref types1), &Type::App(ref tycon2, ref types2)) => {
                 if tycon1 != tycon2 {
-                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    let msg = format!(
+                        "Cannot unify `{}` vs `{}`",
+                        lhs.print(ctx.symbols()),
+                        rhs.print(ctx.symbols())
+                    );
                     ctx.error(msg, span);
                     return Err(());
                 }
@@ -73,7 +77,11 @@ impl Infer {
                 if v1 == v2 {
                     Ok(())
                 } else {
-                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    let msg = format!(
+                        "Cannot unify `{}` vs `{}`",
+                        lhs.print(ctx.symbols()),
+                        rhs.print(ctx.symbols())
+                    );
                     ctx.error(msg, span);
                     Err(())
                 }
@@ -83,7 +91,11 @@ impl Infer {
                 if &**ret1 == *t {
                     Ok(())
                 } else {
-                    let msg = format!("Cannot unify `{}` vs `{}`", lhs.print(ctx), rhs.print(ctx));
+                    let msg = format!(
+                        "Cannot unify `{}` vs `{}`",
+                        lhs.print(ctx.symbols()),
+                        rhs.print(ctx.symbols())
+                    );
                     ctx.error(msg, span);
                     Err(())
                 }
@@ -92,7 +104,11 @@ impl Infer {
             (&Type::Nil, &Type::Nil) => Ok(()),
             (&Type::Nil, &Type::App(TypeCon::Void, _)) => Ok(()),
             (t1, t2) => {
-                let msg = format!("Cannot unify `{}` vs `{}`", t1.print(ctx), t2.print(ctx));
+                let msg = format!(
+                    "Cannot unify `{}` vs `{}`",
+                    t1.print(ctx.symbols()),
+                    t2.print(ctx.symbols())
+                );
                 ctx.error(msg, span);
                 Err(())
             }

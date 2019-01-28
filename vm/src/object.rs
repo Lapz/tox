@@ -77,6 +77,8 @@ pub enum ObjectValue<'a> {
     /// A pointer to a string
     Str(&'a str),
 
+    /// A pointer to some bytes
+    Mem(&'a [u8]),
     /// An actual rust string
     String(String),
 }
@@ -150,6 +152,16 @@ impl<'a> StringObject<'a> {
         Box::into_raw(Box::new(s)) as RawObject
     }
 
+    /// Conserveatly copies the string from the pointer
+    pub fn from_bytes(string: &'a [u8], next: RawObject) -> RawObject {
+        let s = StringObject {
+            obj: Object::new(ObjectType::String, next),
+            chars: ObjectValue::Mem(string),
+        };
+
+        Box::into_raw(Box::new(s)) as RawObject
+    }
+
     /// Creates a new String Object that takes ownership of the string passed in
     pub fn from_owned(chars: String, next: RawObject) -> RawObject {
         let s = StringObject {
@@ -170,6 +182,7 @@ impl<'a> ObjectValue<'a> {
         match *self {
             ObjectValue::Str(ref string) => string,
             ObjectValue::String(ref string) => string,
+            ObjectValue::Mem(ref bytes) => std::str::from_utf8(bytes).unwrap(),
         }
     }
 }
@@ -185,27 +198,27 @@ impl<'a> Deref for StringObject<'a> {
 impl<'a> Display for ObjectValue<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            ObjectValue::Str(ref string) => write!(f, "{}", string)?,
-            ObjectValue::String(ref string) => write!(f, "{}", string)?,
+            ObjectValue::Str(ref string) => write!(f, "{}", string),
+            ObjectValue::String(ref string) => write!(f, "{}", string),
+            ObjectValue::Mem(ref bytes) => write!(f, "{}", std::str::from_utf8(bytes).unwrap()),
         }
-        Ok(())
     }
 }
 
 impl<'a> Debug for ObjectValue<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            ObjectValue::Str(ref string) => write!(f, "static: {:?}", string)?,
-            ObjectValue::String(ref string) => write!(f, "new: {:?}", string)?,
+            ObjectValue::Str(ref string) => write!(f, "static: {:?}", string),
+            ObjectValue::String(ref string) => write!(f, "new: {:?}", string),
+            ObjectValue::Mem(ref bytes) => {
+                write!(f, "static   {:?}", std::str::from_utf8(bytes).unwrap())
+            }
         }
-        Ok(())
     }
 }
 
 impl<'a> Display for StringObject<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.chars)?;
-
-        Ok(())
+        write!(f, "{}", self.chars)
     }
 }

@@ -1,6 +1,6 @@
-use infer::types::Type;
+use ir::types::Type;
 
-use infer::types::Property;
+use ir::types::Property;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -74,7 +74,7 @@ pub enum Statement {
 
     While(Spanned<TypedExpression>, Spanned<TypedStatement>),
 
-    Var {
+    Let {
         ident: Symbol,
         ty: Type,
         expr: Option<Spanned<TypedExpression>>,

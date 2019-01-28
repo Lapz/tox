@@ -1,5 +1,0 @@
-
-fn main() {
-  let a = "a";
-  print [1] == [1];
-}

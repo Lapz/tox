@@ -1101,9 +1101,7 @@ impl<'a> Parser<'a> {
                     self.parsing_match_arm = false;
 
                     if catch_all.is_some() {
-                        let span = catch_all.as_ref().unwrap().span;
-
-                        self.span_warn("`_` pattern is allready present", span);
+                        self.span_warn("`_` pattern is allready present", pattern.to(body.span));
                     }
 
                     catch_all = Some(Box::new(body));
@@ -1258,7 +1256,12 @@ impl<'a> Parser<'a> {
                         Spanned {
                             value:
                                 Expression::Call(Spanned {
-                                    value: Call::Simple { args, callee },
+                                    value:
+                                        Call {
+                                            args,
+                                            callee,
+                                            .. // replace the old types with the new
+                                        },
                                     ..
                                 }),
                             ..
@@ -1266,7 +1269,7 @@ impl<'a> Parser<'a> {
                             return Ok(Spanned {
                                 value: Expression::Call(Spanned {
                                     span: whole_span.to(call.span),
-                                    value: Call::Instantiation {
+                                    value: Call {
                                         types: Spanned {
                                             span: less_than_span.to(greater_than_span),
                                             value: types,
@@ -1353,8 +1356,8 @@ impl<'a> Parser<'a> {
                     span: symbol.span.to(close_span),
                     value: ClassLiteral::Instantiation {
                         symbol,
-                        types: Spanned::new(Vec::new(), EMPTYSPAN),
                         props,
+                        types: Spanned::new(Vec::new(), EMPTYSPAN),
                     },
                 }),
             })
@@ -1388,9 +1391,10 @@ impl<'a> Parser<'a> {
             span: callee.get_span().to(close_span),
             value: Expression::Call(Spanned {
                 span: callee.get_span().to(close_span),
-                value: Call::Simple {
+                value: Call {
                     callee: Box::new(callee),
                     args,
+                    types: Spanned::new(vec![], EMPTYSPAN),
                 },
             }),
         })

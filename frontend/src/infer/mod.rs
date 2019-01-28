@@ -7,25 +7,26 @@ mod alias;
 mod class;
 mod function;
 pub(crate) mod subst;
-pub(crate) mod types;
+// pub(crate) mod types;
 mod unify;
 mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
+use ir::types::Type;
 use std::rc::Rc;
 use util::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct Infer {
-    body: types::Type,
+    body: Type,
     main: Option<Symbol>,
 }
 
 impl Infer {
     pub fn new() -> Self {
         Self {
-            body: self::types::Type::Nil,
+            body: Type::Nil,
             main: None,
         }
     }
@@ -36,7 +37,7 @@ impl Infer {
         program: ::syntax::ast::Program,
         strings: &Rc<::util::symbol::SymbolFactory>,
         reporter: &mut ::util::emmiter::Reporter,
-    ) -> InferResult<::ast::Program> {
+    ) -> InferResult<ir::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
 
         let mut new_program = super::ast::Program {
@@ -56,7 +57,7 @@ impl Infer {
             new_program
                 .functions
                 .push(self.infer_function(function, &mut ctx)?);
-            self.body = types::Type::Nil; // resets the body for the next run
+            self.body = Type::Nil; // resets the body for the next run
         }
 
         if self.main.is_none() {
@@ -64,7 +65,7 @@ impl Infer {
             return Err(());
         }
 
-        Ok(new_program)
+        Ok(::lower::build_program(&ctx.symbols(), new_program))
     }
 
     pub fn set_main(&mut self, symbol: Symbol) {

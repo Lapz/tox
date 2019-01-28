@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 
@@ -97,7 +97,7 @@ impl Infer {
                             _ => {
                                 let msg = format!(
                                     "Increment cannot be of type `{}`",
-                                    typed_expr.value.ty.print(ctx)
+                                    typed_expr.value.ty.print(ctx.symbols())
                                 );
 
                                 ctx.error(msg, span);
@@ -262,7 +262,7 @@ impl Infer {
                         return Ok(Spanned::new(
                             t::TypedStatement {
                                 statement: Box::new(Spanned::new(
-                                    t::Statement::Var {
+                                    t::Statement::Let {
                                         ident: ident.value,
                                         ty: t,
                                         expr: Some(expr_tyexpr),
@@ -279,7 +279,7 @@ impl Infer {
 
                     ((
                         Spanned::new(
-                            t::Statement::Var {
+                            t::Statement::Let {
                                 ident: ident.value,
                                 ty: expr_tyexpr.value.ty.clone(),
                                 expr: Some(expr_tyexpr),
@@ -297,7 +297,7 @@ impl Infer {
                         return Ok(Spanned::new(
                             t::TypedStatement {
                                 statement: Box::new(Spanned::new(
-                                    t::Statement::Var {
+                                    t::Statement::Let {
                                         ident: ident.value,
                                         ty,
                                         expr: None,
@@ -314,7 +314,7 @@ impl Infer {
 
                     ((
                         Spanned::new(
-                            t::Statement::Var {
+                            t::Statement::Let {
                                 ident: ident.value,
                                 ty: Type::Nil,
                                 expr: None,

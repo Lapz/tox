@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
 use infer::{Infer, InferResult};
+use ir::types::{Type, TypeCon};
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 
@@ -30,7 +30,7 @@ impl Infer {
                 nitems.push(ty_expr);
             }
 
-            let ret_ty = nitems[0].value.ty.clone();
+            let ret_ty = nitems[0].value.ty.clone(); // type of an individual element
 
             (
                 Spanned::new(t::Expression::Array(nitems), span),
