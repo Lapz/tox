@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added if statements">
-      <change beforePath="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/infer/function/expression.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/lower.rs" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/lower.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ir/src/instructions.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/instructions.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syntax/src/parser/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/syntax/src/parser/mod.rs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,7 +24,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/class_literal.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="422">
+                <state relative-caret-position="450">
                   <caret line="30" column="13" selection-start-line="30" selection-start-column="13" selection-end-line="30" selection-end-column="13" />
                 </state>
               </provider>
@@ -34,7 +33,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-1313">
+                <state relative-caret-position="2265">
                   <caret line="151" selection-start-line="151" selection-end-line="151" />
                 </state>
               </provider>
@@ -58,8 +57,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/ir/src/instructions.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="123">
-                  <caret line="139" selection-start-line="139" selection-end-line="139" />
+                <state relative-caret-position="108">
+                  <caret line="117" column="22" selection-start-line="117" selection-start-column="22" selection-end-line="117" selection-end-column="22" />
                 </state>
               </provider>
             </entry>
@@ -67,7 +66,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="304">
+                <state relative-caret-position="13755">
                   <caret line="919" column="8" selection-start-line="919" selection-start-column="8" selection-end-line="919" selection-end-column="8" />
                   <folding>
                     <element signature="e#23687#23688#0" expanded="true" />
@@ -83,14 +82,9 @@
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/tests/test.tox">
-              <provider selected="true" editor-type-id="text-editor" />
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="192">
+                <state relative-caret-position="975">
                   <caret line="65" column="33" selection-start-line="65" selection-start-column="33" selection-end-line="65" selection-end-column="33" />
                 </state>
               </provider>
@@ -242,8 +236,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="PackagesPane" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -260,6 +252,8 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -431,6 +425,7 @@
       <workItem from="1539782621935" duration="2000" />
       <workItem from="1545395651106" duration="2965000" />
       <workItem from="1545499961522" duration="1512000" />
+      <workItem from="1548068829473" duration="82000" />
     </task>
     <task id="LOCAL-00001" summary="Added push and pop">
       <created>1535643193060</created>
@@ -456,9 +451,15 @@
     <history-entry file="test - 2019.01.20 at 14h 21m 39s.xml">
       <configuration name="test" configurationId="CargoCommandRunConfiguration" />
     </history-entry>
+    <history-entry file="test - 2019.01.21 at 11h 07m 44s.xml">
+      <configuration name="test" configurationId="CargoCommandRunConfiguration" />
+    </history-entry>
+    <history-entry file="test - 2019.01.21 at 11h 07m 58s.xml">
+      <configuration name="test" configurationId="CargoCommandRunConfiguration" />
+    </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="42564000" />
+    <option name="totallyTimeSpent" value="42646000" />
   </component>
   <component name="TodoView" selected-index="3">
     <todo-panel id="selected-file">
@@ -476,10 +477,11 @@
       <window_info id="Image Layers" order="1" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
-      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.21697417" />
+      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.2199262" />
       <window_info id="Learn" order="5" weight="0.32840237" />
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4945055" weight="0.28060046" />
@@ -487,16 +489,17 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4969475" weight="0.32448035" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="7" sideWeight="0.48814228" visible="true" weight="0.2655889" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.48814228" weight="0.2655889" />
       <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5118577" side_tool="true" weight="0.2655889" />
       <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.4981685" weight="0.32678983" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
+      <window_info anchor="right" id="Maven" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="right" id="Capture Analysis" order="4" />
-      <window_info anchor="right" id="Cargo" order="5" />
+      <window_info anchor="right" id="Cargo" order="5" weight="0.3298893" />
       <window_info anchor="right" id="Theme Preview" order="6" />
       <window_info anchor="right" id="Palette&#9;" order="7" />
       <window_info anchor="right" id="Database" order="8" />
@@ -689,37 +692,16 @@
     <entry file="file://$PROJECT_DIR$/tests/test.tox">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="65" column="33" selection-start-line="65" selection-start-column="33" selection-end-line="65" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/class_literal.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="422">
+        <state relative-caret-position="450">
           <caret line="30" column="13" selection-start-line="30" selection-start-column="13" selection-end-line="30" selection-end-column="13" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="919" column="8" selection-start-line="919" selection-start-column="8" selection-end-line="919" selection-end-column="8" />
-          <folding>
-            <element signature="e#23687#23688#0" expanded="true" />
-            <element signature="e#23719#23720#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/cast.rs">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1313">
+        <state relative-caret-position="2265">
           <caret line="151" selection-start-line="151" selection-end-line="151" />
         </state>
       </provider>
@@ -733,6 +715,27 @@
     <entry file="file://$PROJECT_DIR$/ir/src/printer.rs">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/syntax/src/parser/mod.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="13755">
+          <caret line="919" column="8" selection-start-line="919" selection-start-column="8" selection-end-line="919" selection-end-column="8" />
+          <folding>
+            <element signature="e#23687#23688#0" expanded="true" />
+            <element signature="e#23719#23720#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expressions/cast.rs">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/infer/function/expression.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="975">
+          <caret line="65" column="33" selection-start-line="65" selection-start-column="33" selection-end-line="65" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/syntax/src/ast/mod.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="331">
@@ -742,8 +745,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ir/src/instructions.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="123">
-          <caret line="139" selection-start-line="139" selection-end-line="139" />
+        <state relative-caret-position="108">
+          <caret line="117" column="22" selection-start-line="117" selection-start-column="22" selection-end-line="117" selection-end-column="22" />
         </state>
       </provider>
     </entry>
