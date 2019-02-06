@@ -2,7 +2,7 @@ use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
 use infer::{Infer, InferResult};
-use ir::types::{Type, TypeCon};
+use infer::types::{Type, TypeCon};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 

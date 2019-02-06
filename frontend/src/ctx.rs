@@ -1,5 +1,5 @@
 use infer::env::VarEntry;
-use ir::types::{Type, TypeCon};
+use infer::types::{Type, TypeCon};
 
 use std::rc::Rc;
 use util::emmiter::Reporter;

@@ -2,7 +2,7 @@ use ast as t;
 use ctx::CompileCtx;
 
 use infer::{Infer, InferResult};
-use ir::types::Type;
+use infer::types::Type;
 use syntax::ast::{Expression, MatchArm, Statement};
 use util::pos::{Span, Spanned};
 

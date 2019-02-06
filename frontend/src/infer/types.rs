@@ -1,17 +1,14 @@
-//! This module provides the types that are used throughout tox for the typeChecking
-
-use ctx::CompileCtx;
 use std::fmt::{self, Display};
-use util::symbol::Symbol;
+use util::symbol::{Symbol, Symbols};
 
 static mut TYPEVAR_COUNT: u32 = 0;
-
 static mut UNIQUE_COUNT: u32 = 0;
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeVar(pub u32);
 
+/// A unique identifier that
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Unique(pub u32);
 
@@ -28,8 +25,7 @@ pub enum TypeCon {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
-    App(TypeCon, Vec<Type>),
+    App(TypeCon, Vec<Type>), // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
     Class(Symbol, Vec<Property>, Vec<Method>, Unique), // Name, Properties, Methods,Unique
     Generic(Vec<TypeVar>, Box<Type>),
     Nil,
@@ -48,11 +44,23 @@ pub struct Method {
     pub ty: Type,
 }
 
+impl Property {
+    pub fn new(name: Symbol, ty: Type) -> Property {
+        Property { name, ty }
+    }
+}
+
 impl Unique {
     pub fn new() -> Self {
         let value = unsafe { UNIQUE_COUNT };
         unsafe { UNIQUE_COUNT += 1 };
         Unique(value)
+    }
+}
+
+impl Method {
+    pub fn new(name: Symbol, ty: Type) -> Method {
+        Method { name, ty }
     }
 }
 
@@ -81,7 +89,7 @@ impl Type {
 }
 
 impl Type {
-    pub fn print(&self, ctx: &CompileCtx) -> String {
+    pub fn print<'a>(&self, symbols: &'a Symbols<()>) -> String {
         match *self {
             Type::App(ref tycon, ref types) => {
                 let mut fmt_string = String::new();
@@ -91,15 +99,15 @@ impl Type {
 
                     for i in 0..types.len() - 1 {
                         if i + 1 == types.len() - 1 {
-                            fmt_string.push_str(&format!("{}", types[i].print(ctx.symbols())));
+                            fmt_string.push_str(&format!("{}", types[i].print(symbols)));
                         } else {
-                            fmt_string.push_str(&format!("{},", types[i].print(ctx.symbols())));
+                            fmt_string.push_str(&format!("{},", types[i].print(symbols)));
                         }
                     }
 
                     fmt_string.push_str(") -> ");
 
-                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(ctx.symbols())));
+                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(symbols)));
 
                     return fmt_string;
                 }
@@ -108,9 +116,9 @@ impl Type {
 
                 for (i, ty) in types.iter().enumerate() {
                     if i + 1 == types.len() {
-                        fmt_string.push_str(&ty.print(ctx.symbols()))
+                        fmt_string.push_str(&ty.print(symbols))
                     } else {
-                        fmt_string.push_str(&format!("{},", ty.print(ctx.symbols())))
+                        fmt_string.push_str(&format!("{},", ty.print(symbols)))
                     }
                 }
 
@@ -119,15 +127,15 @@ impl Type {
 
             Type::Class(ref name, ref properties, _, _) => {
                 let mut fmt_string = String::new();
-                fmt_string.push_str(&format!("{}", ctx.name(*name)));
+                fmt_string.push_str(&format!("{}", symbols.name(*name)));
 
                 if !properties.is_empty() {
                     fmt_string.push('<');
                     for (i, field) in properties.iter().enumerate() {
                         if i + 1 == properties.len() {
-                            fmt_string.push_str(&format!("{}", field.ty.print(ctx.symbols())));
+                            fmt_string.push_str(&format!("{}", field.ty.print(symbols)));
                         } else {
-                            fmt_string.push_str(&format!("{},", field.ty.print(ctx.symbols())));
+                            fmt_string.push_str(&format!("{},", field.ty.print(symbols)));
                         }
                     }
 
@@ -154,7 +162,7 @@ impl Type {
                     fmt_string.push('>');
                 }
 
-                fmt_string.push_str(&ret.print(ctx.symbols()));
+                fmt_string.push_str(&ret.print(symbols));
 
                 fmt_string
             }

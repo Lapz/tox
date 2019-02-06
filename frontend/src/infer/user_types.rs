@@ -1,7 +1,7 @@
 ///! Transforms the type within the ast into types that are understood by the backend
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use ir::types::{Type, TypeCon};
+use infer::types::{Type, TypeCon};
 use std::collections::HashMap;
 use syntax::ast::Type as astType;
 use util::pos::Spanned;

@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::{Infer, InferResult};
-use ir::types::{Type, TypeCon};
+use infer::types::{Type, TypeCon};
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 

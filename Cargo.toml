@@ -1,12 +1,10 @@
 [workspace]
 members = [
-    "backend",
     "syntax",
-    "ir",
     "frontend",
     # "interpreter",
     "util",
     "opcode",
-    "tox",
+    "tox"
 ]
 

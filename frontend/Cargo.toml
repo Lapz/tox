@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["rowlandsonpratt <striderman34@gmail.com>"]
 
 
-[features]
-graphviz=["ir/graphviz"]
 
 
 [dependencies]
@@ -13,7 +11,6 @@ util = {path = "../util"}
 opcode = {path = "../opcode"}
 syntax = {path= "../syntax"}
 vm = {path = "../vm"}
-ir = {path="../ir"}
 rand = "0.3.16"
 fnv = "1.0.6"
 

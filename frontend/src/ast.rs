@@ -1,6 +1,6 @@
-use ir::types::Type;
+use infer::types::Type;
 
-use ir::types::Property;
+use infer::types::Property;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;

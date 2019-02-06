@@ -1,4 +1,4 @@
-extern crate backend;
+
 extern crate fnv;
 extern crate frontend;
 extern crate structopt;
@@ -9,14 +9,12 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
-extern crate ir;
 
 mod repl;
 
-use backend::compile_vm;
+use frontend::compile;
 use frontend::Infer;
 // use interpreter::{interpret, Environment};
-use ir::printer::Printer;
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -146,21 +144,10 @@ pub fn run(path: String, vm: bool, print_ir: Option<String>) {
         }
     };
 
-    if print_ir.is_some() {
-        let printer = Printer::new(&symbols);
-
-        printer
-            .print_program(&typed_ast, &mut File::create(print_ir.unwrap()).unwrap())
-            .unwrap();
-    }
-
-    #[cfg(feature = "graphviz")]
-    {
-        typed_ast.graphviz(&symbols).unwrap();
-    }
+    
 
     // if compile_vm {
-    let (program, objects) = match compile_vm(&typed_ast, &symbols, &mut reporter) {
+    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);

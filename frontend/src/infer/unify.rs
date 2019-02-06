@@ -1,6 +1,6 @@
 use super::{Infer, InferResult};
 use ctx::CompileCtx;
-use ir::types::{Type, TypeCon};
+use infer::types::{Type, TypeCon};
 use std::collections::HashMap;
 use util::pos::Span;
 

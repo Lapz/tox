@@ -5,7 +5,6 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 [features]
 default = []
 debug = ["vm/debug"] 
-graphviz = ["frontend/graphviz"]
 # debug = ["vm/debug"] 
 # Enable debug statements within the vm
 
@@ -14,10 +13,8 @@ util = {path = "../util"}
 syntax = {path = "../syntax"}
 
 frontend = {path = "../frontend"}
-backend = {path = "../backend"}
 # interpreter = {path ="../interpreter"}
 vm = {path="../vm"}
-ir = {path="../ir"}
 structopt = "0.1.6"
 structopt-derive = "0.1.6"
 clippy = {version = "*", optional = true}

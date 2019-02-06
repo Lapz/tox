@@ -2,7 +2,7 @@ use ast as t;
 use ctx::CompileCtx;
 
 use infer::{Infer, InferResult};
-use ir::types::{Method, Property, Type, TypeVar, Unique};
+use infer::types::{Method, Property, Type, TypeVar, Unique};
 use syntax::ast::Class;
 use util::pos::Spanned;
 

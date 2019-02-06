@@ -6,7 +6,7 @@ use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
 use infer::{Infer, InferResult};
-use ir::types::{Type, TypeCon, TypeVar};
+use infer::types::{Type, TypeCon, TypeVar};
 use syntax::ast::Function;
 use util::pos::Spanned;
 

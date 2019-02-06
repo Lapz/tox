@@ -7,13 +7,13 @@ mod alias;
 mod class;
 mod function;
 pub(crate) mod subst;
-// pub(crate) mod types;
+pub(crate) mod types;
 mod unify;
 mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
-use ir::types::Type;
+use infer::types::Type;
 use std::rc::Rc;
 use util::symbol::Symbol;
 
@@ -37,7 +37,7 @@ impl Infer {
         program: ::syntax::ast::Program,
         strings: &Rc<::util::symbol::SymbolFactory>,
         reporter: &mut ::util::emmiter::Reporter,
-    ) -> InferResult<ir::Program> {
+    ) -> InferResult<super::ast::Program> {
         let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
 
         let mut new_program = super::ast::Program {
@@ -65,7 +65,7 @@ impl Infer {
             return Err(());
         }
 
-        Ok(::lower::build_program(&ctx.symbols(), new_program))
+        Ok(new_program)
     }
 
     pub fn set_main(&mut self, symbol: Symbol) {
