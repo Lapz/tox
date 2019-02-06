@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::{Infer, InferResult};
 use infer::types;
+use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::{ClassLiteralField, Type};
 use util::pos::{Span, Spanned};

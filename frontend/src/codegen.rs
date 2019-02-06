@@ -1,6 +1,6 @@
+use super::infer::types::{Type, TypeCon};
 use ast;
 use fnv::FnvHashMap;
-use super::infer::types::{Type, TypeCon};
 use opcode;
 use std::hash::Hash;
 use util::emmiter::Reporter;
@@ -156,7 +156,10 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn compile_statement(&mut self, statement: &Spanned<ast::TypedStatement>) -> ParseResult<()> {
+    pub fn compile_statement(
+        &mut self,
+        statement: &Spanned<ast::TypedStatement>,
+    ) -> ParseResult<()> {
         use ast::Statement;
         self.set_span(statement.span);
         match statement.value.statement.value {
@@ -189,7 +192,7 @@ impl<'a> Builder<'a> {
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
 
-                self.emit_byte(opcode::POP);
+                
 
                 Ok(())
             }
@@ -528,15 +531,13 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::BOOL2INT)
                     }
 
-                    (
-                        Type::App(TypeCon::Int, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::INT2STR),
+                    (Type::App(TypeCon::Int, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::INT2STR)
+                    }
 
-                    (
-                        Type::App(TypeCon::Float, _),
-                        Type::App(TypeCon::Str, _),
-                    ) => self.emit_byte(opcode::FLOAT2STR),
+                    (Type::App(TypeCon::Float, _), Type::App(TypeCon::Str, _)) => {
+                        self.emit_byte(opcode::FLOAT2STR)
+                    }
 
                     _ => unreachable!(), // cast only allows int -> float, float -> int, bool -> int
                 }
@@ -627,7 +628,33 @@ impl<'a> Builder<'a> {
                 self.compile_expression(expr)?;
             }
 
-            Expression::Match {..} => unimplemented!(),
+            Expression::Match { ref cond,ref arms,ref all } => {
+                self.compile_expression(cond)?;
+
+                let mut jumps = Vec::new();
+
+
+                for arm in arms.value.iter() {
+                    self.compile_expression(&arm.value.pattern)?;
+                    self.compile_expression(cond)?; //TODO: check if legal i.e if a+1
+                    self.emit_byte(opcode::EQUAL);
+                    jumps.push(self.emit_jump(opcode::JUMPNOT));
+                    self.compile_statement(&arm.value.body)?;
+                    jumps.push(self.emit_jump(opcode::JUMP));
+                    // self.emit_byte(opcode::POP);
+                }
+
+
+                if let Some(ref all) = all {
+                    self.compile_statement(all)?;
+                }
+
+                for label in jumps {
+                    println!("{}",label );
+                    self.patch_jump(label);
+                }
+
+            },
 
             Expression::Ternary(ref cond, ref if_true, ref if_false) => {
                 self.compile_expression(cond)?;

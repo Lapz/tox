@@ -1,6 +1,6 @@
 use ctx::CompileCtx;
-use infer::{Infer, InferResult};
 use infer::types::{Type, TypeVar};
+use infer::{Infer, InferResult};
 use syntax::ast::TypeAlias;
 use util::pos::Spanned;
 impl Infer {

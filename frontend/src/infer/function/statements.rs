@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::{Infer, InferResult};
 use infer::types::{Type, TypeCon};
+use infer::{Infer, InferResult};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 

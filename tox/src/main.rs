@@ -1,4 +1,3 @@
-
 extern crate fnv;
 extern crate frontend;
 extern crate structopt;
@@ -8,7 +7,6 @@ extern crate structopt_derive;
 extern crate syntax;
 extern crate util;
 extern crate vm;
-
 
 mod repl;
 
@@ -143,8 +141,6 @@ pub fn run(path: String, vm: bool, print_ir: Option<String>) {
             ::std::process::exit(65)
         }
     };
-
-    
 
     // if compile_vm {
     let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {

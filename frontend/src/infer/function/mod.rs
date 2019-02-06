@@ -5,8 +5,8 @@ mod statements;
 use ast as t;
 use ctx::CompileCtx;
 use infer::env::VarEntry;
-use infer::{Infer, InferResult};
 use infer::types::{Type, TypeCon, TypeVar};
+use infer::{Infer, InferResult};
 use syntax::ast::Function;
 use util::pos::Spanned;
 

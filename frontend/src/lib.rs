@@ -12,10 +12,10 @@ extern crate vm;
 // mod resolver;
 // mod test;
 mod ast;
+mod codegen;
 mod ctx;
 mod infer;
 mod lower;
-mod codegen;
 
-pub use infer::Infer;
 pub use codegen::compile;
+pub use infer::Infer;

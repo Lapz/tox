@@ -1,7 +1,7 @@
 use ast as t;
 use ctx::CompileCtx;
-use infer::{Infer, InferResult};
 use infer::types;
+use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::{Call, Expression, Type};
 use util::pos::{Span, Spanned};
@@ -239,7 +239,26 @@ impl Infer {
                                         }
                                     }
 
-                                    _ => unreachable!(),
+                                    t::Expression::ClassLiteral { .. } => Ok(Spanned {
+                                        value: t::TypedExpression {
+                                            expr: Box::new(Spanned {
+                                                value: t::Expression::InstanceMethodCall {
+                                                    method_name,
+                                                    instance: method.clone(),
+                                                    params: arg_types
+                                                        .into_iter()
+                                                        .map(|arg| arg.value.expr)
+                                                        .collect(),
+                                                },
+                                                span: whole_span,
+                                            }),
+                                            ty: self
+                                                .subst(func_types.last().unwrap(), &mut mappings),
+                                        },
+                                        span: whole_span,
+                                    }),
+
+                                    ref e => unreachable!("{:?}", e),
                                 },
 
                                 _ => unreachable!(),

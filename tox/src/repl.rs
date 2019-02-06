@@ -1,4 +1,4 @@
-use frontend::{Infer,compile};
+use frontend::{compile, Infer};
 use std::io::{self, Write};
 use std::rc::Rc;
 use syntax::ast::{Function, ItemName, Program};
@@ -8,7 +8,6 @@ use util::emmiter::Reporter;
 use util::pos::Spanned;
 use util::symbol::{SymbolFactory, Symbols};
 use vm::VM;
-
 
 pub struct Repl {}
 

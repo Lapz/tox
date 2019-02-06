@@ -1,8 +1,8 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::{Infer, InferResult};
 use infer::types::{Method, Property, Type, TypeVar, Unique};
+use infer::{Infer, InferResult};
 use syntax::ast::Class;
 use util::pos::Spanned;
 
