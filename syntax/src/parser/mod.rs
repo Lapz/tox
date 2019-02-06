@@ -1085,13 +1085,15 @@ impl<'a> Parser<'a> {
 
         let mut arms = Vec::new();
 
-        let mut catch_all: Option<Box<Spanned<Statement>>> = None;
+        let mut seen_catch_all = false;
 
         if !self.recognise(TokenType::RBRACE) {
             loop {
                 self.parsing_match_arm = true;
 
                 if self.recognise(TokenType::UNDERSCORE) {
+                    seen_catch_all = true;
+
                     let pattern = self.consume_get_span(&TokenType::UNDERSCORE, "Expected `_` ")?;
 
                     self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
@@ -1100,11 +1102,20 @@ impl<'a> Parser<'a> {
 
                     self.parsing_match_arm = false;
 
-                    if catch_all.is_some() {
+                    if seen_catch_all {
                         self.span_warn("`_` pattern is allready present", pattern.to(body.span));
                     }
 
-                    catch_all = Some(Box::new(body));
+                    let span = pattern.to(body.span);
+
+                    arms.push(Spanned {
+                        value: MatchArm {
+                            pattern: None,
+                            body,
+                            is_all: true,
+                        },
+                        span,
+                    });
 
                     if self.recognise(TokenType::COMMA) {
                         self.next()?;
@@ -1125,7 +1136,11 @@ impl<'a> Parser<'a> {
                 let span = pattern.span.to(body.span);
 
                 arms.push(Spanned {
-                    value: MatchArm { pattern, body },
+                    value: MatchArm {
+                        pattern: Some(pattern),
+                        body,
+                        is_all: false,
+                    },
                     span,
                 });
 
@@ -1143,7 +1158,6 @@ impl<'a> Parser<'a> {
             value: Expression::Match {
                 cond: Box::new(cond),
                 arms: Spanned::new(arms, open_span.to(close_span)),
-                all: catch_all,
             },
             span: start_span.to(close_span),
         })

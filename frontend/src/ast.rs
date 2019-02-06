@@ -53,8 +53,9 @@ pub struct FunctionParam {
 
 #[derive(Debug, Clone)]
 pub struct MatchArm {
-    pub pattern: Spanned<TypedExpression>,
+    pub pattern: Option<Spanned<TypedExpression>>,
     pub body: Spanned<TypedStatement>,
+    pub is_all: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -125,7 +126,6 @@ pub enum Expression {
     Match {
         cond: Spanned<TypedExpression>,
         arms: Spanned<Vec<Spanned<MatchArm>>>,
-        all: Option<Spanned<TypedStatement>>,
     },
 
     /// Name, Object, Value

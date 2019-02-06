@@ -11,7 +11,6 @@ impl Infer {
         &mut self,
         cond: Spanned<Expression>,
         arms: Spanned<Vec<Spanned<MatchArm>>>,
-        all: Option<Box<Spanned<Statement>>>,
         whole_span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
@@ -28,47 +27,68 @@ impl Infer {
         if !arms.is_empty() {
             let first = arms.remove(0);
             let first_span = first.span;
-            let first_pattern = self.infer_expr(first.value.pattern, ctx)?;
-            let first_body = self.infer_statement(first.value.body, ctx)?;
 
-            return_type = first_body.value.ty.clone();
-
-            typed_arms.push(Spanned::new(
-                t::MatchArm {
-                    pattern: first_pattern,
-                    body: first_body,
-                },
-                first_span,
-            ));
-
-            for arm in arms {
-                let span = arm.span;
-                let lhs = self.infer_expr(arm.value.pattern, ctx)?;
-
-                self.unify(&lhs.value.ty, &pattern_type, lhs.span, ctx)?;
-
-                let rhs = self.infer_statement(arm.value.body, ctx)?;
-
-                self.unify(&rhs.value.ty, &return_type, rhs.span, ctx)?;
+            if first.value.pattern.is_none() {
+                let first_body = self.infer_statement(first.value.body, ctx)?;
+                return_type = first_body.value.ty.clone();
 
                 typed_arms.push(Spanned::new(
                     t::MatchArm {
-                        pattern: lhs,
-                        body: rhs,
+                        pattern: None,
+                        body: first_body,
+                        is_all: true,
                     },
-                    span,
+                    first_span,
+                ));
+            } else {
+                let first_pattern = self.infer_expr(first.value.pattern.unwrap(), ctx)?;
+                let first_body = self.infer_statement(first.value.body, ctx)?;
+
+                return_type = first_body.value.ty.clone();
+
+                typed_arms.push(Spanned::new(
+                    t::MatchArm {
+                        pattern: Some(first_pattern),
+                        body: first_body,
+                        is_all: false,
+                    },
+                    first_span,
                 ));
             }
+
+            for arm in arms {
+                let span = arm.span;
+                let is_all = arm.value.is_all;
+
+                if is_all {
+                    typed_arms.push(Spanned::new(
+                        t::MatchArm {
+                            pattern: None,
+                            body: self.infer_statement(arm.value.body, ctx)?,
+                            is_all: true,
+                        },
+                        span,
+                    ));
+                } else {
+                    let lhs = self.infer_expr(arm.value.pattern.unwrap(), ctx)?; // unwrap
+
+                    self.unify(&lhs.value.ty, &pattern_type, lhs.span, ctx)?;
+
+                    let rhs = self.infer_statement(arm.value.body, ctx)?;
+
+                    self.unify(&rhs.value.ty, &return_type, rhs.span, ctx)?;
+
+                    typed_arms.push(Spanned::new(
+                        t::MatchArm {
+                            pattern: Some(lhs),
+                            body: rhs,
+                            is_all: false,
+                        },
+                        span,
+                    ));
+                }
+            }
         }
-
-        let all = if let Some(all) = all {
-            let body = self.infer_statement(*all, ctx)?;
-
-            self.unify(&body.value.ty, &return_type, body.span, ctx)?;
-            Some(body)
-        } else {
-            None
-        };
 
         Ok(Spanned::new(
             t::TypedExpression {
@@ -76,7 +96,6 @@ impl Infer {
                     t::Expression::Match {
                         cond,
                         arms: Spanned::new(typed_arms, arms_span),
-                        all,
                     },
                     whole_span,
                 )),

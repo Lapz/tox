@@ -77,9 +77,7 @@ impl Infer {
                 self.infer_get(*object, property, expr.span, ctx)
             }
 
-            Expression::Match { cond, arms, all } => {
-                self.infer_match(*cond, arms, all, expr.span, ctx)
-            }
+            Expression::Match { cond, arms } => self.infer_match(*cond, arms, expr.span, ctx),
 
             Expression::SubScript { target, index } => {
                 self.infer_subscript(*target, *index, expr.span, ctx)

@@ -192,8 +192,6 @@ impl<'a> Builder<'a> {
             Statement::Expr(ref expr) => {
                 self.compile_expression(expr)?;
 
-                
-
                 Ok(())
             }
 
@@ -628,33 +626,29 @@ impl<'a> Builder<'a> {
                 self.compile_expression(expr)?;
             }
 
-            Expression::Match { ref cond,ref arms,ref all } => {
+            Expression::Match { ref cond, ref arms } => {
                 self.compile_expression(cond)?;
 
                 let mut jumps = Vec::new();
 
-
                 for arm in arms.value.iter() {
-                    self.compile_expression(&arm.value.pattern)?;
-                    self.compile_expression(cond)?; //TODO: check if legal i.e if a+1
-                    self.emit_byte(opcode::EQUAL);
-                    jumps.push(self.emit_jump(opcode::JUMPNOT));
-                    self.compile_statement(&arm.value.body)?;
-                    jumps.push(self.emit_jump(opcode::JUMP));
-                    // self.emit_byte(opcode::POP);
-                }
-
-
-                if let Some(ref all) = all {
-                    self.compile_statement(all)?;
+                    if arm.value.is_all {
+                        self.compile_statement(&arm.value.body)?;
+                        jumps.push(self.emit_jump(opcode::JUMP));
+                    } else {
+                        self.compile_expression(arm.value.pattern.as_ref().unwrap())?;
+                        self.compile_expression(cond)?; //TODO: check if legal i.e if a+1
+                        self.emit_byte(opcode::EQUAL);
+                        jumps.push(self.emit_jump(opcode::JUMPNOT));
+                        self.compile_statement(&arm.value.body)?;
+                        jumps.push(self.emit_jump(opcode::JUMP));
+                    }
                 }
 
                 for label in jumps {
-                    println!("{}",label );
                     self.patch_jump(label);
                 }
-
-            },
+            }
 
             Expression::Ternary(ref cond, ref if_true, ref if_false) => {
                 self.compile_expression(cond)?;
