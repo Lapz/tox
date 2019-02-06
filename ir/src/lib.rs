@@ -1,4 +1,5 @@
 pub mod instructions;
+pub mod liveness;
 pub mod printer;
 pub mod types;
 
