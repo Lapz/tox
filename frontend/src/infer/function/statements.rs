@@ -226,8 +226,6 @@ impl Infer {
             Statement::Print(expr) => {
                 let mut type_expr = self.infer_expr(expr, ctx)?;
 
-                type_expr.value.ty = Type::Nil; // print expressions are given the type of Nil to signify that they return nothing
-
                 ((
                     Spanned::new(t::Statement::Print(type_expr), statement.span),
                     Type::Nil,

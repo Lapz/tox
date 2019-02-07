@@ -128,6 +128,8 @@ pub fn run(path: String) {
         }
     };
 
+    
+
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {

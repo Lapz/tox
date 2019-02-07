@@ -63,10 +63,6 @@ fn main() {
 
         let mut got = 0;
 
-        if expected.is_empty() {
-            println!("{}",entry.path().to_str().unwrap());
-        }
-
         for expects in expected.iter() {
             if output.contains(expects) {
                 got += 1;
@@ -79,8 +75,6 @@ fn main() {
             pass += 1
         } else {
 
-            println!("{:#?}",expected);
-            println!("{:#?}",output);
             fail += 1;
 
             failed.push(
@@ -92,8 +86,6 @@ fn main() {
             );
         }
     }
-
-    println!("Total:{}",Green.bold().paint(num.to_string()));
 
     println!(
         "Pass:{} Fail:{}",
