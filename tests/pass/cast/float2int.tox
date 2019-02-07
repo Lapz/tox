@@ -1,10 +1,9 @@
-
 fn main() {
   let cal = 1/3 as float;
-  print cal;//expect:0;
+  print cal;// expect:0
   
   let cal = 5.0/3.0;
-  print cal;//expect:1.6666666666666667
+  print cal;// expect:1.6666666666666667
   
-  print cal as int;//expect 1
+  print cal as int;// expect:1
 }

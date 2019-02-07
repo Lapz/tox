@@ -1,4 +1,4 @@
 fn main() {
-    print("ok"); //expect:ok
+    print("ok"); // expect:ok
     // comment
 }

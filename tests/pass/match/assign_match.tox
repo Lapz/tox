@@ -8,5 +8,5 @@ fn main() {
     };
     
 
-    print admin;
+    print admin;// expect:yes
 }

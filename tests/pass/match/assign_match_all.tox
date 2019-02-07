@@ -8,5 +8,5 @@ fn main() {
         _ => "negro"
     };
 
-    print admin;
+    print admin;// expect:other
 }

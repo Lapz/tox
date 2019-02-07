@@ -29,7 +29,7 @@ fn main() {
         // if opts.interpreter {
         //     run_interpreter(file);
         // } else {
-        run(file, opts.vm, opts.ir_file);
+        run(file);
     // }
     } else {
         repl()
@@ -101,7 +101,7 @@ pub fn repl() {
 //     };
 // }
 
-pub fn run(path: String, vm: bool, print_ir: Option<String>) {
+pub fn run(path: String) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -164,9 +164,7 @@ pub struct Cli {
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,
-    /// Run in vm mode. Default is cranelift backedn
-    #[structopt(long = "vm", short = "v")]
-    pub vm: bool,
+    
 
     /// Dump the ir to the given file
     #[structopt(long = "file", short = "-f")]

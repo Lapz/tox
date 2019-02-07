@@ -630,8 +630,10 @@ impl<'a> Builder<'a> {
                 self.compile_expression(cond)?;
 
                 let mut jumps = Vec::new();
+                
 
                 for arm in arms.value.iter() {
+                    println!("{}",arm.value.is_all);
                     if arm.value.is_all {
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
@@ -639,9 +641,13 @@ impl<'a> Builder<'a> {
                         self.compile_expression(arm.value.pattern.as_ref().unwrap())?;
                         self.compile_expression(cond)?; //TODO: check if legal i.e if a+1
                         self.emit_byte(opcode::EQUAL);
-                        jumps.push(self.emit_jump(opcode::JUMPNOT));
+
+                        let offset = self.emit_jump(opcode::JUMPNOT);
+                        
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
+
+                        self.patch_jump(offset);
                     }
                 }
 

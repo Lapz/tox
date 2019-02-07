@@ -1,5 +1,5 @@
 class Foo {}
 
 fn main() {
-    print(Foo{}); //expect: instance
+    print(Foo{}); // expect:instance
 }

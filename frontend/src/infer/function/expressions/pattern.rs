@@ -3,7 +3,7 @@ use ctx::CompileCtx;
 
 use infer::types::Type;
 use infer::{Infer, InferResult};
-use syntax::ast::{Expression, MatchArm, Statement};
+use syntax::ast::{Expression, MatchArm};
 use util::pos::{Span, Spanned};
 
 impl Infer {

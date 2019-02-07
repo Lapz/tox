@@ -15,14 +15,18 @@ use walkdir::WalkDir;
 fn main() {
     let mut pass = 0i32;
     let mut fail = 0i32;
+    let mut num = 0i32;
     let mut failed = Vec::new();
 
     'outer: for entry in WalkDir::new("../tests/pass") {
+
         let entry = entry.unwrap();
 
         if entry.path().is_dir() {
             continue;
         }
+
+        num +=1;
 
         let mut undisclosedc = Command::new("cargo");
 
@@ -59,15 +63,24 @@ fn main() {
 
         let mut got = 0;
 
+        if expected.is_empty() {
+            println!("{}",entry.path().to_str().unwrap());
+        }
+
         for expects in expected.iter() {
             if output.contains(expects) {
                 got += 1;
+            }else {
+                println!("{:?}",expects);
             }
         }
 
         if got == expected.len() {
             pass += 1
         } else {
+
+            println!("{:#?}",expected);
+            println!("{:#?}",output);
             fail += 1;
 
             failed.push(
@@ -80,11 +93,15 @@ fn main() {
         }
     }
 
+    println!("Total:{}",Green.bold().paint(num.to_string()));
+
     println!(
         "Pass:{} Fail:{}",
         Green.bold().paint(pass.to_string()),
         Red.bold().paint(fail.to_string())
     );
+
+    
 
     if !failed.is_empty() {
         for test in failed {
