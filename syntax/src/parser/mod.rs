@@ -338,6 +338,69 @@ impl<'a> Parser<'a> {
     }
 }
 
+
+/* ***********************
+* Enums
+*  ***********************
+*/
+
+impl<'a> Parser<'a> {
+    fn parse_enum(&mut self) -> ParserResult<Spanned<()>> {
+        let open_span = self.consume_get_span(&TokenType::ENUM, "expected 'enum'")?;
+
+        let ident = self.parse_item_name()?;
+
+        self.consume(&TokenType::LBRACE, "Expected `{`")?;
+
+       if !self.recognise(TokenType::RBRACE) {
+            loop {
+                let identifier = match self.next()? {
+                    id @ Spanned {
+                        value:Token {
+                            token:TokenType::IDENTIFIER(_)
+                        },
+                        ..
+                    } => id,
+
+                    Spanned {
+                        span,
+                        value:Token {
+                            token
+                        },
+                        
+                        ..
+                    } => {
+                        let msg = format!("Expected an ident instead found {}",token);
+                        self.reporter.error("msg", span);
+                        return Err(())
+                    }
+                };
+
+
+                if self.recognise(TokenType::LPAREN) {
+                    self.next()?;
+                    let inner = self.parse_item_name()?;
+                    self.consume(&TokenType::RPAREN, "Expected `(`")?;
+                }
+
+                if self.recognise(TokenType::COMMA) {
+                        self.next()?;
+                        continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+
+        self.consume(&TokenType::RBRACE, "Expected `{`")?;
+
+
+        unimplemented!()
+
+    }
+}
+
 /* ***********************
 *  Type Aliases
 *  ***********************
