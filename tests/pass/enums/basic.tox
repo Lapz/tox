@@ -1,0 +1,8 @@
+enum Foo {
+    Fizz,
+    Bar
+}
+
+fn main() {
+    
+}

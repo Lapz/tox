@@ -62,6 +62,7 @@ impl<'a> Parser<'a> {
             classes: Vec::new(),
             functions: Vec::new(),
             aliases: Vec::new(),
+            enums: Vec::new(),
         };
 
         let mut had_error = false;
@@ -79,6 +80,14 @@ impl<'a> Parser<'a> {
             } else if self.recognise(TokenType::CLASS) {
                 match self.parse_class_declaration() {
                     Ok(class) => program.classes.push(class),
+                    Err(_) => {
+                        had_error = true;
+                        self.synchronize()?;
+                    }
+                }
+            } else if self.recognise(TokenType::ENUM) {
+                match self.parse_enum() {
+                    Ok(sum) => program.enums.push(sum),
                     Err(_) => {
                         had_error = true;
                         self.synchronize()?;
@@ -317,10 +326,11 @@ impl<'a> Parser<'a> {
             let mut generic_param = Vec::new();
 
             loop {
+                
                 generic_param.push(self.consume_get_symbol("Expected an identifier")?);
 
                 if self.recognise(TokenType::COMMA) {
-                    self.advance();
+                    self.next()?;
                 } else {
                     break;
                 }
@@ -338,66 +348,75 @@ impl<'a> Parser<'a> {
     }
 }
 
-
 /* ***********************
 * Enums
 *  ***********************
 */
 
 impl<'a> Parser<'a> {
-    fn parse_enum(&mut self) -> ParserResult<Spanned<()>> {
+    fn parse_enum(&mut self) -> ParserResult<Spanned<Enum>> {
         let open_span = self.consume_get_span(&TokenType::ENUM, "expected 'enum'")?;
 
+        
         let ident = self.parse_item_name()?;
+
+        let mut variants = Vec::new();
 
         self.consume(&TokenType::LBRACE, "Expected `{`")?;
 
-       if !self.recognise(TokenType::RBRACE) {
+        if !self.recognise(TokenType::RBRACE) {
             loop {
-                let identifier = match self.next()? {
-                    id @ Spanned {
-                        value:Token {
-                            token:TokenType::IDENTIFIER(_)
-                        },
-                        ..
-                    } => id,
+                let name = match self.next()? {
+                    Spanned {
+                        value:
+                            Token {
+                                token: TokenType::IDENTIFIER(ident),
+                            },
+                        span,
+                    } => Spanned {
+                        span,
+                        value: self.symbols.symbol(ident),
+                    },
 
                     Spanned {
                         span,
-                        value:Token {
-                            token
-                        },
-                        
+                        value: Token { token },
                         ..
                     } => {
-                        let msg = format!("Expected an ident instead found {}",token);
-                        self.reporter.error("msg", span);
-                        return Err(())
+                        let msg = format!("Expected an ident instead found {}", token);
+                        self.reporter.error(msg, span);
+                        return Err(());
                     }
                 };
 
+                let mut inner = None;
 
                 if self.recognise(TokenType::LPAREN) {
                     self.next()?;
-                    let inner = self.parse_item_name()?;
+                    inner = Some(self.parse_item_name()?);
                     self.consume(&TokenType::RPAREN, "Expected `(`")?;
                 }
 
+                variants.push(EnumVariant { name, inner });
+
                 if self.recognise(TokenType::COMMA) {
-                        self.next()?;
-                        continue;
+                    self.next()?;
+                    continue;
                 } else {
                     break;
                 }
             }
         }
 
+        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected `{`")?;
 
-        self.consume(&TokenType::RBRACE, "Expected `{`")?;
-
-
-        unimplemented!()
-
+        Ok(Spanned {
+            value: Enum {
+                name: ident,
+                variants,
+            },
+            span: open_span.to(close_span),
+        })
     }
 }
 

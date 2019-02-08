@@ -6,6 +6,7 @@ pub struct Program {
     pub functions: Vec<Spanned<Function>>,
     pub classes: Vec<Spanned<Class>>,
     pub aliases: Vec<Spanned<TypeAlias>>,
+    pub enums: Vec<Spanned<Enum>>,
 }
 
 #[derive(Debug, Clone)]
@@ -28,6 +29,18 @@ pub struct Class {
     pub superclass: Option<Spanned<Symbol>>,
     pub methods: Vec<Spanned<Function>>,
     pub fields: Vec<Spanned<Field>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Enum {
+    pub name: Spanned<ItemName>,
+    pub variants: Vec<EnumVariant>,
+}
+
+#[derive(Debug, Clone)]
+pub struct EnumVariant {
+    pub name: Spanned<Symbol>,
+    pub inner: Option<Spanned<ItemName>>,
 }
 
 #[derive(Debug, Clone)]

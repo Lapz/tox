@@ -630,10 +630,9 @@ impl<'a> Builder<'a> {
                 self.compile_expression(cond)?;
 
                 let mut jumps = Vec::new();
-                
 
                 for arm in arms.value.iter() {
-                    println!("{}",arm.value.is_all);
+                    println!("{}", arm.value.is_all);
                     if arm.value.is_all {
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
@@ -643,7 +642,7 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::EQUAL);
 
                         let offset = self.emit_jump(opcode::JUMPNOT);
-                        
+
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
 

@@ -19,14 +19,13 @@ fn main() {
     let mut failed = Vec::new();
 
     'outer: for entry in WalkDir::new("../tests/pass") {
-
         let entry = entry.unwrap();
 
         if entry.path().is_dir() {
             continue;
         }
 
-        num +=1;
+        num += 1;
 
         let mut undisclosedc = Command::new("cargo");
 
@@ -66,15 +65,14 @@ fn main() {
         for expects in expected.iter() {
             if output.contains(expects) {
                 got += 1;
-            }else {
-                println!("{:?}",expects);
+            } else {
+                println!("{:?}", expects);
             }
         }
 
         if got == expected.len() {
             pass += 1
         } else {
-
             fail += 1;
 
             failed.push(
@@ -92,8 +90,6 @@ fn main() {
         Green.bold().paint(pass.to_string()),
         Red.bold().paint(fail.to_string())
     );
-
-    
 
     if !failed.is_empty() {
         for test in failed {
