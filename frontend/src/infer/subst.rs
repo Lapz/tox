@@ -1,5 +1,5 @@
 use super::Infer;
-use infer::types::{Method, Property, Type, TypeVar};
+use infer::types::{Method, Property, Type, TypeVar, Variant};
 use std::collections::HashMap;
 
 impl Infer {
@@ -10,6 +10,21 @@ impl Infer {
                 tycon.clone(),
                 types.iter().map(|ty| self.subst(ty, substions)).collect(),
             ),
+
+            Type::Enum {
+                ref name,
+                ref variants,
+            } => Type::Enum {
+                name: *name,
+                variants: variants
+                    .iter()
+                    .map(|variant| Variant {
+                        ident: variant.ident,
+                        tag: variant.tag,
+                        inner: variant.inner.as_ref().map(|inner| self.subst(inner, substions)),
+                    })
+                    .collect(),
+            },
 
             Type::Class(ref name, ref fields, ref methods, ref unique) => {
                 let mut new_fields = Vec::new();

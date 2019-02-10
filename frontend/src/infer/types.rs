@@ -30,6 +30,23 @@ pub enum Type {
     Generic(Vec<TypeVar>, Box<Type>),
     Nil,
     Var(TypeVar),
+    Enum {
+        name: Symbol,
+        variants: Vec<Variant>,
+    },
+}
+
+/// Represent an enum variant
+/// Foo::Bar => Variant{
+///     ident:Sybmol(1) // symbol for Bar
+///     tag:0 // the number it was declared at
+///     inner:None // if it dosen't have an inner type i.e Ok(foo)
+/// }
+#[derive(Debug, Clone, PartialEq)]
+pub struct Variant {
+    pub ident: Symbol,
+    pub tag: u32,
+    pub inner: Option<Type>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -123,6 +140,13 @@ impl Type {
                 }
 
                 fmt_string
+            },
+            Type::Enum {ref name,..} => {
+                let mut fmt_string = String::new();
+
+                fmt_string.push_str(&format!("{}", symbols.name(*name)));
+
+                fmt_string
             }
 
             Type::Class(ref name, ref properties, _, _) => {
@@ -150,7 +174,11 @@ impl Type {
                 fmt_string.push_str("poly ");
 
                 if !vars.is_empty() {
+                    fmt_string.push_str(&ret.print(symbols));
+
                     fmt_string.push('<');
+
+                    
                     for (i, var) in vars.iter().enumerate() {
                         if i + 1 == vars.len() {
                             fmt_string.push(var.0 as u8 as char);
@@ -162,7 +190,7 @@ impl Type {
                     fmt_string.push('>');
                 }
 
-                fmt_string.push_str(&ret.print(symbols));
+                
 
                 fmt_string
             }
@@ -240,12 +268,45 @@ impl Display for Type {
                 Ok(())
             }
 
+            Type::Enum {
+                ref name,
+                ref variants,
+            } => {
+                write!(f, "enum {}",*name)?;
+
+                if !variants.is_empty() {
+                    write!(f, "<")?;
+                    for (i, variant) in variants.iter().enumerate() {
+                        if i + 1 == variants.len() {
+                            if let Some(ref inner) = variant.inner {
+                                write!(f, "{}:{}", variant.tag, inner)?;
+                            } else {
+                                write!(f, "{}", variant.tag)?;
+                            }
+                        } else {
+                            if let Some(ref inner) = variant.inner {
+                                write!(f, "{}:{},", variant.tag, inner)?;
+                            } else {
+                                write!(f, "{},", variant.tag)?;
+                            }
+                        }
+                    }
+
+                    write!(f, ">")?;
+                }
+
+                Ok(())
+            }
+
             Type::Generic(ref vars, ref ret) => {
                 write!(f, "poly")?;
+                 write!(f," {}",ret)?;
 
                 if !vars.is_empty() {
+                   
                     write!(f, "<")?;
                     for (i, var) in vars.iter().enumerate() {
+                        
                         if i + 1 == vars.len() {
                             write!(f, "{}", var)?;
                         } else {
@@ -256,15 +317,9 @@ impl Display for Type {
                     write!(f, ">")?;
                 }
 
-                for (i, var) in vars.iter().enumerate() {
-                    if i + 1 == vars.len() {
-                        write!(f, "{}", var)?;
-                    } else {
-                        write!(f, "{},", var)?;
-                    }
-                }
+                
 
-                write!(f, " {}", ret)
+                    Ok(())
             }
 
             Type::Nil => write!(f, "nil"),

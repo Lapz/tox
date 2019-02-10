@@ -5,6 +5,7 @@ pub(crate) mod env;
 // mod resolver;
 mod alias;
 mod class;
+mod sum;
 mod function;
 pub(crate) mod subst;
 pub(crate) mod types;
@@ -47,6 +48,11 @@ impl Infer {
 
         for alias in program.aliases.iter() {
             self.infer_alias(alias, &mut ctx)?;
+        }
+
+        for sum in program.enums {
+            self.infer_enum(sum,&mut ctx)?;
+            unimplemented!()
         }
 
         for class in program.classes {

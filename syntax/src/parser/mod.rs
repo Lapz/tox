@@ -326,7 +326,6 @@ impl<'a> Parser<'a> {
             let mut generic_param = Vec::new();
 
             loop {
-                
                 generic_param.push(self.consume_get_symbol("Expected an identifier")?);
 
                 if self.recognise(TokenType::COMMA) {
@@ -357,7 +356,6 @@ impl<'a> Parser<'a> {
     fn parse_enum(&mut self) -> ParserResult<Spanned<Enum>> {
         let open_span = self.consume_get_span(&TokenType::ENUM, "expected 'enum'")?;
 
-        
         let ident = self.parse_item_name()?;
 
         let mut variants = Vec::new();

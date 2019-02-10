@@ -79,7 +79,7 @@ impl Repl {
                 functions: vec![pusedo_main],
                 classes: vec![],
                 aliases: vec![],
-                enums:vec![],
+                enums: vec![],
             };
 
             let mut infer = Infer::new();
