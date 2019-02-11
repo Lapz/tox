@@ -1385,7 +1385,7 @@ impl<'a> Parser<'a> {
                 if self.recognise(TokenType::LESSTHAN) {
                     return self.parse_generic_call(expr);
                 } else {
-                    let (span, enum_name) = match expr {
+                    let (mut span, enum_name) = match expr {
                         Spanned {
                             span,
                             value: Expression::Var(ref ident),
