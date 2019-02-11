@@ -107,9 +107,7 @@ impl Infer {
                 enum_name,
                 variant,
                 inner,
-            } => {  
-                self.infer_variant(enum_name, variant, inner, expr.span, ctx)
-            }
+            } => self.infer_variant(enum_name, variant, inner, expr.span, ctx),
         }
     }
 }

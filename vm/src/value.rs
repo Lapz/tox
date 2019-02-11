@@ -294,7 +294,7 @@ mod NAN_tagging {
                         ObjectType::Class => write!(fmt, "class")?,
                         ObjectType::Instance => write!(fmt, "instance")?,
                         ObjectType::Native => write!(fmt, "native")?,
-                        ObjectType::Enum => write!(fmt,"enum")?,
+                        ObjectType::Enum => write!(fmt, "enum")?,
                     }
                 }
             }
@@ -619,9 +619,8 @@ mod normal {
                 } else if self.ty == ValueType::Bool {
                     write!(fmt, "{}", self.val.boolean)?;
                 } else if self.ty == ValueType::Object {
-
                     let obj: &Object = mem::transmute(self.as_object());
-    
+
                     match obj.ty {
                         ObjectType::String => write!(fmt, "{}", self.as_string())?,
                         ObjectType::Func => write!(fmt, " fun")?,

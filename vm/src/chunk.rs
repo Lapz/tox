@@ -95,8 +95,8 @@ impl Chunk {
             opcode::GETMETHOD => self.local_instruction("OPCODE::GETMETHOD", offset),
             opcode::CALLINSTANCEMETHOD => {
                 self.call_instruction("OPCODE::CALLINSTANCEMETHOD", offset)
-            },
-            opcode::ENUM =>self.enum_instruction("OPCODE::ENUM", offset),
+            }
+            opcode::ENUM => self.enum_instruction("OPCODE::ENUM", offset),
             opcode::CALLSTATICMETHOD => self.call_instruction("OPCODE::CALLSTATICMETHOD", offset),
             opcode::CLASSINSTANCE => self.call_instruction("OPCODE::CLASSINSTANCE", offset),
             _ => {
@@ -138,8 +138,8 @@ impl Chunk {
         offset + 4
     }
 
-    pub fn enum_instruction(&self,name:&str,offset:usize) -> usize {
-        let tag = self.code[offset+2];
+    pub fn enum_instruction(&self, name: &str, offset: usize) -> usize {
+        let tag = self.code[offset + 2];
         println!("{:16}  tag '{}' ", name, tag);
 
         offset + 3

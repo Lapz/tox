@@ -157,8 +157,6 @@ impl<'a> VM<'a> {
                 opcode::TRUE => self.push(Value::bool(true)),
                 opcode::FALSE => self.push(Value::bool(false)),
 
-                
-
                 opcode::NOT => {
                     let val = Value::bool(!self.pop().as_bool());
                     self.push(val)
@@ -475,8 +473,6 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CONCAT => self.concat(),
-
-                
 
                 #[cfg(not(feature = "debug"))]
                 _ => unsafe {

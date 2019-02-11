@@ -706,7 +706,6 @@ impl<'a> Builder<'a> {
             } => {
                 self.emit_byte(opcode::ENUM);
                 self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
-               
             }
 
             Expression::Closure(ref func) => {

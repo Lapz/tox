@@ -1164,15 +1164,15 @@ impl<'a> Parser<'a> {
         let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected `{` ")?;
 
         let mut arms = Vec::new();
-
-        let mut seen_catch_all = false;
+        // counter for how many times we've seen the `_` pattern
+        let mut seen_catch_all = 0;
 
         if !self.recognise(TokenType::RBRACE) {
             loop {
                 self.parsing_match_arm = true;
 
                 if self.recognise(TokenType::UNDERSCORE) {
-                    seen_catch_all = true;
+                    seen_catch_all += 1;
 
                     let pattern = self.consume_get_span(&TokenType::UNDERSCORE, "Expected `_` ")?;
 
@@ -1182,7 +1182,7 @@ impl<'a> Parser<'a> {
 
                     self.parsing_match_arm = false;
 
-                    if seen_catch_all {
+                    if seen_catch_all > 1 {
                         self.span_warn("`_` pattern is allready present", pattern.to(body.span));
                     }
 
@@ -1385,7 +1385,7 @@ impl<'a> Parser<'a> {
                 if self.recognise(TokenType::LESSTHAN) {
                     return self.parse_generic_call(expr);
                 } else {
-                    let (mut span, enum_name) = match expr {
+                    let (span, enum_name) = match expr {
                         Spanned {
                             span,
                             value: Expression::Var(ref ident),
@@ -1396,8 +1396,7 @@ impl<'a> Parser<'a> {
                             return Err(());
                         }
                     };
-                    let (mut span, variant) =
-                        self.consume_get_symbol_and_span("Expected an identifier")?;
+                    let variant = self.consume_get_symbol("Expected an identifier")?;
                     let mut inner = None;
 
                     if self.recognise(TokenType::LPAREN) {
