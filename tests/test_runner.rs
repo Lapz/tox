@@ -15,7 +15,6 @@ use walkdir::WalkDir;
 fn main() {
     let mut pass = 0i32;
     let mut fail = 0i32;
-    let mut num = 0i32;
     let mut failed = Vec::new();
 
     'outer: for entry in WalkDir::new("../tests/pass") {
@@ -24,8 +23,6 @@ fn main() {
         if entry.path().is_dir() {
             continue;
         }
-
-        num += 1;
 
         let mut undisclosedc = Command::new("cargo");
 

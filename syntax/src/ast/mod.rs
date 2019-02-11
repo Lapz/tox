@@ -161,6 +161,12 @@ pub enum Expression {
     },
 
     Var(Spanned<Symbol>),
+
+    Variant {
+        enum_name: Spanned<Symbol>,
+        variant: Spanned<Symbol>,
+        inner: Option<Box<Spanned<Expression>>>,
+    },
 }
 
 #[derive(Debug, Clone)]

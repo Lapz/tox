@@ -1,0 +1,8 @@
+enum List {
+    Head(int),
+    Tail
+}
+
+fn main() {
+    let foo = List::Tail(10);
+}

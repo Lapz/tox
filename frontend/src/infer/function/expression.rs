@@ -102,6 +102,15 @@ impl Infer {
             }
 
             Expression::Var(var) => self.infer_var(var, expr.span, ctx),
+
+            Expression::Variant {
+                enum_name,
+                variant,
+                inner,
+            } => {
+                println!("got here");
+                self.infer_variant(enum_name, variant, inner, expr.span, ctx)
+            }
         }
     }
 }

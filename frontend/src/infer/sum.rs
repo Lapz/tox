@@ -20,18 +20,6 @@ impl Infer {
             type_params.push(symbol.value)
         }
 
-        println!(
-            "{}",
-            Type::Generic(
-                generic_type_vars.clone(),
-                Box::new(Type::Enum {
-                    name: _enum.value.name.value.name.value,
-                    variants: HashMap::new()
-                }),
-            )
-            .print(ctx.symbols())
-        );
-
         ctx.add_type(
             _enum.value.name.value.name.value,
             Type::Generic(
@@ -59,6 +47,8 @@ impl Infer {
 
             variants.insert(variant.name.value, v);
         }
+
+        ctx.end_scope();
 
         ctx.add_type(
             _enum.value.name.value.name.value,

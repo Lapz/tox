@@ -1280,73 +1280,68 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn call(&mut self) -> ParserResult<Spanned<Expression>> {
-        let mut expr = self.primary()?;
+    fn parse_generic_call(
+        &mut self,
+        expr: Spanned<Expression>,
+    ) -> ParserResult<Spanned<Expression>> {
+        let less_than_span = self.consume_get_span(&TokenType::LESSTHAN, "Expected `<` ")?;
 
-        loop {
-            if self.recognise(TokenType::NAMESPACE) {
-                self.next()?; // Eat the ::
+        let mut types = vec![];
 
-                let less_than_span =
-                    self.consume_get_span(&TokenType::LESSTHAN, "Expected `<` ")?;
+        if !self.recognise(TokenType::GREATERTHAN) {
+            loop {
+                types.push(self.parse_type()?);
 
-                let mut types = vec![];
+                if self.recognise(TokenType::COMMA) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+        }
 
-                if !self.recognise(TokenType::GREATERTHAN) {
-                    loop {
-                        types.push(self.parse_type()?);
+        let greater_than_span = self.consume_get_span(&TokenType::GREATERTHAN, "Expected `>` ")?;
 
-                        if self.recognise(TokenType::COMMA) {
-                            self.advance();
-                        } else {
-                            break;
-                        }
-                    }
+        if self.recognise(TokenType::LBRACE) {
+            let ident = match expr.value {
+                Expression::Var(ref s) => s.clone(),
+                _ => unreachable!(),
+            };
+
+            let struct_lit = self.parse_ident(ident)?;
+
+            match struct_lit {
+                Spanned {
+                    value:
+                        Expression::ClassLiteral(Spanned {
+                            value: ClassLiteral { symbol, props, .. },
+                            ..
+                        }),
+                    span: end_span,
+                } => {
+                    return Ok(Spanned {
+                        value: Expression::ClassLiteral(Spanned {
+                            span: expr.span.to(greater_than_span),
+                            value: ClassLiteral {
+                                types: Spanned {
+                                    span: less_than_span.to(greater_than_span),
+                                    value: types,
+                                },
+                                symbol,
+                                props,
+                            },
+                        }),
+                        span: expr.get_span().to(end_span),
+                    });
                 }
 
-                let greater_than_span =
-                    self.consume_get_span(&TokenType::GREATERTHAN, "Expected `>` ")?;
+                _ => unreachable!(),
+            }
+        } else {
+            let whole_span = expr.span;
+            let call = self.finish_call(expr)?;
 
-                if self.recognise(TokenType::LBRACE) {
-                    let ident = match expr.value {
-                        Expression::Var(ref s) => s.clone(),
-                        _ => unreachable!(),
-                    };
-
-                    let struct_lit = self.parse_ident(ident)?;
-
-                    match struct_lit {
-                        Spanned {
-                            value:
-                                Expression::ClassLiteral(Spanned {
-                                    value: ClassLiteral { symbol, props, .. },
-                                    ..
-                                }),
-                            span: end_span,
-                        } => {
-                            return Ok(Spanned {
-                                value: Expression::ClassLiteral(Spanned {
-                                    span: expr.span.to(greater_than_span),
-                                    value: ClassLiteral {
-                                        types: Spanned {
-                                            span: less_than_span.to(greater_than_span),
-                                            value: types,
-                                        },
-                                        symbol,
-                                        props,
-                                    },
-                                }),
-                                span: expr.get_span().to(end_span),
-                            });
-                        }
-
-                        _ => unreachable!(),
-                    }
-                } else {
-                    let whole_span = expr.span;
-                    let call = self.finish_call(expr)?;
-
-                    match call {
+            match call {
                         Spanned {
                             value:
                                 Expression::Call(Spanned {
@@ -1377,6 +1372,48 @@ impl<'a> Parser<'a> {
                         }
                         _ => unreachable!(),
                     }
+        }
+    }
+
+    fn call(&mut self) -> ParserResult<Spanned<Expression>> {
+        let mut expr = self.primary()?;
+
+        loop {
+            if self.recognise(TokenType::NAMESPACE) {
+                self.next()?; // Eat the ::
+
+                if self.recognise(TokenType::LESSTHAN) {
+                    return self.parse_generic_call(expr);
+                } else {
+                    let (mut span, enum_name) = match expr {
+                        Spanned {
+                            span,
+                            value: Expression::Var(ref ident),
+                        } => (span, ident.clone()),
+
+                        Spanned { span, .. } => {
+                            self.reporter.error("Expected an identifier", span);
+                            return Err(());
+                        }
+                    };
+                    let (mut span, variant) =
+                        self.consume_get_symbol_and_span("Expected an identifier")?;
+                    let mut inner = None;
+
+                    if self.recognise(TokenType::LPAREN) {
+                        self.next()?; //eat the ::
+                        inner = Some(Box::new(self.parse_expression()?));
+                        span = span.to(self.consume_get_span(&TokenType::RPAREN, "Expected `(`")?);
+                    }
+
+                    return Ok(Spanned {
+                        span,
+                        value: Expression::Variant {
+                            enum_name,
+                            variant,
+                            inner,
+                        },
+                    });
                 }
             } else if self.recognise(TokenType::LPAREN) {
                 expr = self.finish_call(expr)?;
