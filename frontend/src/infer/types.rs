@@ -38,11 +38,12 @@ pub enum Type {
 }
 
 /// Represent an enum variant
-/// Foo::Bar => Variant{
-///   
-///     tag:0 // the number it was declared at
+/// ```ignore
+/// Foo::Bar => Variant {
+//      tag:0, // the number it was declared at
 ///     inner:None // if it dosen't have an inner type i.e Ok(foo)
-/// }
+///  }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variant {
     pub tag: u32,
