@@ -17,6 +17,7 @@ pub enum ObjectType {
     Class,
     Instance,
     Native,
+    Enum,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,6 +33,15 @@ pub struct NativeObject {
 pub struct Object {
     pub ty: ObjectType,
     pub next: RawObject,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+#[repr(C)]
+pub struct EnumObject {
+    pub name: Symbol,
+    pub obj: Object,
+    pub tag: u32,
+    pub data: Option<Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -121,6 +131,19 @@ impl ArrayObject {
         };
 
         Box::into_raw(Box::new(array)) as RawObject
+    }
+}
+
+impl EnumObject {
+    pub fn new(name: Symbol, tag: u32, data: Option<Value>, next: RawObject) -> RawObject {
+        let _enum = EnumObject {
+            name,
+            obj: Object::new(ObjectType::Enum, next),
+            tag,
+            data,
+        };
+
+        Box::into_raw(Box::new(_enum)) as RawObject
     }
 }
 

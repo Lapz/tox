@@ -52,7 +52,7 @@ impl Infer {
                         return Err(());
                     } else if variant_ty.inner.is_some() && inner.is_none() {
                         let msg = format!(
-                            "The variant `{}` store data of type {} ",
+                            "The variant `{}` should store the data of type {} ",
                             ctx.name(variant.value),
                             variant_ty.inner.as_ref().unwrap().print(ctx.symbols())
                         );

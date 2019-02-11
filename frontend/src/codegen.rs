@@ -698,11 +698,14 @@ impl<'a> Builder<'a> {
                     self.reporter.error("Undefined variable", expr.span);
                     return Err(()); // Params are treated as locals so it should be present
                 }
-            },
+            }
 
-            Expression::VariantNoData {ref enum_name,ref tag} => {
-                println!("{}",tag );
-            },
+            Expression::VariantNoData {
+                ref enum_name,
+                ref tag,
+            } => {
+                println!("{}", tag);
+            }
 
             Expression::Closure(ref func) => {
                 let closure = compile_function(func, self.symbols, self.reporter, self.objects)?;
@@ -718,7 +721,7 @@ impl<'a> Builder<'a> {
                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
 
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
 
         Ok(())
