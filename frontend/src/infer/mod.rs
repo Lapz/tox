@@ -5,9 +5,9 @@ pub(crate) mod env;
 // mod resolver;
 mod alias;
 mod class;
-mod sum;
 mod function;
 pub(crate) mod subst;
+mod sum;
 pub(crate) mod types;
 mod unify;
 mod user_types;
@@ -51,8 +51,7 @@ impl Infer {
         }
 
         for sum in program.enums {
-            self.infer_enum(sum,&mut ctx)?;
-            unimplemented!()
+            self.infer_enum(sum, &mut ctx)?;
         }
 
         for class in program.classes {

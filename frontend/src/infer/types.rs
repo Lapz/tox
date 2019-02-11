@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{self, Display};
 use util::symbol::{Symbol, Symbols};
 
@@ -32,19 +33,18 @@ pub enum Type {
     Var(TypeVar),
     Enum {
         name: Symbol,
-        variants: Vec<Variant>,
+        variants: HashMap<Symbol, Variant>,
     },
 }
 
 /// Represent an enum variant
 /// Foo::Bar => Variant{
-///     ident:Sybmol(1) // symbol for Bar
+///   
 ///     tag:0 // the number it was declared at
 ///     inner:None // if it dosen't have an inner type i.e Ok(foo)
 /// }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variant {
-    pub ident: Symbol,
     pub tag: u32,
     pub inner: Option<Type>,
 }
@@ -140,8 +140,8 @@ impl Type {
                 }
 
                 fmt_string
-            },
-            Type::Enum {ref name,..} => {
+            }
+            Type::Enum { ref name, .. } => {
                 let mut fmt_string = String::new();
 
                 fmt_string.push_str(&format!("{}", symbols.name(*name)));
@@ -178,19 +178,16 @@ impl Type {
 
                     fmt_string.push('<');
 
-                    
                     for (i, var) in vars.iter().enumerate() {
                         if i + 1 == vars.len() {
-                            fmt_string.push(var.0 as u8 as char);
+                            fmt_string += &var.0.to_string();
                         } else {
-                            fmt_string.push_str(&format!("{},", var.0 as u8 as char));
+                            fmt_string.push_str(&format!("{},", var.0.to_string()));
                         }
                     }
 
                     fmt_string.push('>');
                 }
-
-                
 
                 fmt_string
             }
@@ -272,11 +269,13 @@ impl Display for Type {
                 ref name,
                 ref variants,
             } => {
-                write!(f, "enum {}",*name)?;
+                write!(f, "enum {}", *name)?;
 
                 if !variants.is_empty() {
                     write!(f, "<")?;
                     for (i, variant) in variants.iter().enumerate() {
+                        let variant = variant.1;
+
                         if i + 1 == variants.len() {
                             if let Some(ref inner) = variant.inner {
                                 write!(f, "{}:{}", variant.tag, inner)?;
@@ -300,13 +299,11 @@ impl Display for Type {
 
             Type::Generic(ref vars, ref ret) => {
                 write!(f, "poly")?;
-                 write!(f," {}",ret)?;
+                write!(f, " {}", ret)?;
 
                 if !vars.is_empty() {
-                   
                     write!(f, "<")?;
                     for (i, var) in vars.iter().enumerate() {
-                        
                         if i + 1 == vars.len() {
                             write!(f, "{}", var)?;
                         } else {
@@ -317,9 +314,7 @@ impl Display for Type {
                     write!(f, ">")?;
                 }
 
-                
-
-                    Ok(())
+                Ok(())
             }
 
             Type::Nil => write!(f, "nil"),

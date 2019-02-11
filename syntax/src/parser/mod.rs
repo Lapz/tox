@@ -391,7 +391,7 @@ impl<'a> Parser<'a> {
 
                 if self.recognise(TokenType::LPAREN) {
                     self.next()?;
-                    inner = Some(self.parse_item_name()?);
+                    inner = Some(self.parse_type()?);
                     self.consume(&TokenType::RPAREN, "Expected `(`")?;
                 }
 

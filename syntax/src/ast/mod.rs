@@ -40,7 +40,7 @@ pub struct Enum {
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     pub name: Spanned<Symbol>,
-    pub inner: Option<Spanned<ItemName>>,
+    pub inner: Option<Spanned<Type>>,
 }
 
 #[derive(Debug, Clone)]

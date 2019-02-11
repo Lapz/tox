@@ -18,10 +18,17 @@ impl Infer {
                 name: *name,
                 variants: variants
                     .iter()
-                    .map(|variant| Variant {
-                        ident: variant.ident,
-                        tag: variant.tag,
-                        inner: variant.inner.as_ref().map(|inner| self.subst(inner, substions)),
+                    .map(|(ident, variant)| {
+                        (
+                            *ident,
+                            Variant {
+                                tag: variant.tag,
+                                inner: variant
+                                    .inner
+                                    .as_ref()
+                                    .map(|inner| self.subst(inner, substions)),
+                            },
+                        )
                     })
                     .collect(),
             },
