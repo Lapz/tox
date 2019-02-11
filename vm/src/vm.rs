@@ -1,7 +1,7 @@
 use super::{Function, Program};
 use crate::native;
 use crate::object::{
-    ArrayObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject,
+    ArrayObject, EnumObject, FunctionObject, InstanceObject, NativeObject, RawObject, StringObject,
 };
 use crate::opcode;
 use crate::value::Value;
@@ -156,6 +156,9 @@ impl<'a> VM<'a> {
                 opcode::NIL => self.push(Value::nil()),
                 opcode::TRUE => self.push(Value::bool(true)),
                 opcode::FALSE => self.push(Value::bool(false)),
+
+                
+
                 opcode::NOT => {
                     let val = Value::bool(!self.pop().as_bool());
                     self.push(val)
@@ -286,6 +289,13 @@ impl<'a> VM<'a> {
                     ));
 
                     self.push(value)
+                }
+
+                opcode::ENUM => {
+                    let enum_name = Symbol(self.read_byte() as u64);
+                    let tag = self.read_byte() as u32;
+                    let object = EnumObject::new(enum_name, tag, None, self.objects);
+                    self.push(Value::object(object));
                 }
 
                 opcode::SETPROPERTY => {
@@ -465,6 +475,8 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CONCAT => self.concat(),
+
+                
 
                 #[cfg(not(feature = "debug"))]
                 _ => unsafe {

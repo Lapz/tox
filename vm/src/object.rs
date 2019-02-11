@@ -1,3 +1,6 @@
+//! Contains all the values that are objects within tox
+//! When adding a new object make sure the first field is obj:Object otherwise the transmutes will fail
+
 use super::Function;
 use crate::value::Value;
 use fnv::FnvHashMap;
@@ -38,8 +41,8 @@ pub struct Object {
 #[derive(Debug, Clone, PartialEq)]
 #[repr(C)]
 pub struct EnumObject {
-    pub name: Symbol,
     pub obj: Object,
+    pub name: Symbol,
     pub tag: u32,
     pub data: Option<Value>,
 }

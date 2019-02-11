@@ -1,0 +1,28 @@
+enum Day {
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+}
+
+
+fn main() {
+
+    let today = Day::Monday;
+    let tomorrow = Day::Tuesday;
+
+    match today {
+        Day::Monday => {
+            print "today is monday";
+        },
+        Day::Tuesday => {
+            print "today is tuesday";
+        },
+        _ => {
+            print "today is not monday";
+        }
+    };
+}

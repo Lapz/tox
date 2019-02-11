@@ -129,4 +129,5 @@ pub mod opcode {
 
     pub const FLOAT2STR: u8 = 051;
 
+    pub const ENUM: u8 = 052;
 }
