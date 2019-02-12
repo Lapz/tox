@@ -1,0 +1,9 @@
+enum List {
+    Head(List),
+    Tail
+}
+ 
+
+fn main() {
+    let list = List::Head(List::Head(List::Tail));
+} 

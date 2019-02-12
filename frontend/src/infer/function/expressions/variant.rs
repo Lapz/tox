@@ -63,6 +63,7 @@ impl Infer {
                         let span = inner.span;
                         let inner_ty = self.infer_expr(*inner, ctx)?;
 
+                        
                         self.unify(
                             variant_ty.inner.as_ref().unwrap(),
                             &inner_ty.value.ty,

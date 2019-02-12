@@ -708,6 +708,16 @@ impl<'a> Builder<'a> {
                 self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
             }
 
+            Expression::VariantWithData {
+                ref enum_name,
+                ref tag,
+                ref inner,
+            } => {
+                self.emit_byte(opcode::ENUM);
+                self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
+                self.compile_expression(inner)?;
+            }
+
             Expression::Closure(ref func) => {
                 let closure = compile_function(func, self.symbols, self.reporter, self.objects)?;
 

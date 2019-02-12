@@ -174,8 +174,6 @@ impl Type {
                 let mut fmt_string = String::new();
                 fmt_string.push_str(&ret.print(symbols));
 
-                
-
                 if !vars.is_empty() {
                     fmt_string.push('<');
                     for (i, var) in vars.iter().enumerate() {
@@ -187,8 +185,6 @@ impl Type {
                     }
                     fmt_string.push('>');
                 }
-                
-                
 
                 fmt_string
             }
@@ -303,16 +299,15 @@ impl Display for Type {
                 write!(f, " {:?}", ret)?;
 
                 write!(f, "<")?;
-                
+
                 if !vars.is_empty() {
-                    
                     for (i, var) in vars.iter().enumerate() {
                         if i + 1 == vars.len() {
                             write!(f, "{}", var)?;
                         } else {
                             write!(f, "{},", var)?;
                         }
-                    }                    
+                    }
                 }
 
                 write!(f, ">")?;

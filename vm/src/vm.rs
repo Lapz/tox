@@ -293,7 +293,15 @@ impl<'a> VM<'a> {
                     let enum_name = Symbol(self.read_byte() as u64);
                     let tag = self.read_byte() as u32;
                     let object = EnumObject::new(enum_name, tag, None, self.objects);
-                    self.push(Value::object(object));
+                    self.push(Value::object(object))
+                }
+
+                opcode::ENUMDATA => {
+                    let enum_name = Symbol(self.read_byte() as u64);
+                    let tag = self.read_byte() as u32;
+                    let data = self.pop();
+                    let object = EnumObject::new(enum_name, tag, Some(data), self.objects);
+                    self.push(Value::object(object))
                 }
 
                 opcode::SETPROPERTY => {

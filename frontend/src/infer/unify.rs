@@ -52,9 +52,8 @@ impl Infer {
                     variants: ref variants2,
                 },
             ) => {
-                if name1 != name2 || variants1.len() != variants2.len() {
+                if name1 != name2 {
                     let msg = format!("Enum `{}` != Enum `{}`", ctx.name(*name1), ctx.name(*name2));
-
                     ctx.error(msg, span);
                 }
 
@@ -112,32 +111,10 @@ impl Infer {
                 }
             }
 
-            (&Type::Generic(_, ref ret1), ref t) => {
-                if &**ret1 == *t {
-                    Ok(())
-                } else {
-                    let msg = format!(
-                        "Cannot unify `{}` vs `{}`",
-                        lhs.print(ctx.symbols()),
-                        rhs.print(ctx.symbols())
-                    );
-                    ctx.error(msg, span);
-                    Err(())
-                }
-            }
+            (&Type::Generic(_, ref ret1), ref t) => self.unify(ret1, t, span, ctx),
 
-            (ref t,&Type::Generic(_, ref ret1)) => {
-                if &**ret1 == *t {
-                    Ok(())
-                } else {
-                    let msg = format!(
-                        "Cannot unify `{}` vs `{}`",
-                        lhs.print(ctx.symbols()),
-                        rhs.print(ctx.symbols())
-                    );
-                    ctx.error(msg, span);
-                    Err(())
-                }
+            (ref t, &Type::Generic(_, ref ret1)) => {
+                self.unify(ret1, t, span, ctx)
             }
 
             (&Type::Nil, &Type::Nil) => Ok(()),
