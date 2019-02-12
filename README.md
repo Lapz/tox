@@ -61,10 +61,10 @@ fn main() {
 
 # TODO
 
-[ ] Implement exhaustive pattern matching
-[ ] Implement monomorphistation
-[ ] Implement the gc 
-[ ] Add constant folding
+- [ ] Implement exhaustive pattern matching
+- [ ] Implement monomorphistation
+- [ ] Implement the gc 
+- [ ] Add constant folding
 
 
 
