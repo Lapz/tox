@@ -42,6 +42,28 @@ impl Infer {
             (&Type::App(TypeCon::Void, _), &Type::Class(_, _, _, _)) => Ok(()),
             (&Type::Class(_, _, _, _), &Type::App(TypeCon::Void, _)) => Ok(()),
 
+            (
+                &Type::Enum {
+                    name: ref name1, ..
+                },
+                &Type::Enum {
+                    name: ref name2, ..
+                },
+            ) => {
+                if name1 != name2 {
+                    let msg = format!("Enum `{}` != Enum `{}`", ctx.name(*name1), ctx.name(*name2));
+                    ctx.error(msg, span);
+                }
+
+                // for(v1,v2) in variants1.iter().zip(variants2.iter()) {
+                //     self.unify(v)
+                // }
+
+                //TODO unify the variants maybe ?
+
+                Ok(())
+            }
+
             (&Type::App(ref tycon1, ref types1), &Type::App(ref tycon2, ref types2)) => {
                 if tycon1 != tycon2 {
                     let msg = format!(
@@ -87,22 +109,13 @@ impl Infer {
                 }
             }
 
-            (&Type::Generic(_, ref ret1), ref t) => {
-                if &**ret1 == *t {
-                    Ok(())
-                } else {
-                    let msg = format!(
-                        "Cannot unify `{}` vs `{}`",
-                        lhs.print(ctx.symbols()),
-                        rhs.print(ctx.symbols())
-                    );
-                    ctx.error(msg, span);
-                    Err(())
-                }
-            }
+            (&Type::Generic(_, ref ret1), ref t) => self.unify(ret1, t, span, ctx),
+
+            (ref t, &Type::Generic(_, ref ret1)) => self.unify(ret1, t, span, ctx),
 
             (&Type::Nil, &Type::Nil) => Ok(()),
             (&Type::Nil, &Type::App(TypeCon::Void, _)) => Ok(()),
+
             (t1, t2) => {
                 let msg = format!(
                     "Cannot unify `{}` vs `{}`",

@@ -128,8 +128,6 @@ pub fn run(path: String) {
         }
     };
 
-    
-
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
@@ -166,7 +164,6 @@ pub struct Cli {
     /// Run in interpreter mode
     #[structopt(long = "interpter", short = "-i")]
     pub interpreter: bool,
-    
 
     /// Dump the ir to the given file
     #[structopt(long = "file", short = "-f")]

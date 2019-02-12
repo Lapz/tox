@@ -630,10 +630,9 @@ impl<'a> Builder<'a> {
                 self.compile_expression(cond)?;
 
                 let mut jumps = Vec::new();
-                
 
                 for arm in arms.value.iter() {
-                    println!("{}",arm.value.is_all);
+                    println!("{}", arm.value.is_all);
                     if arm.value.is_all {
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
@@ -643,7 +642,7 @@ impl<'a> Builder<'a> {
                         self.emit_byte(opcode::EQUAL);
 
                         let offset = self.emit_jump(opcode::JUMPNOT);
-                        
+
                         self.compile_statement(&arm.value.body)?;
                         jumps.push(self.emit_jump(opcode::JUMP));
 
@@ -699,6 +698,24 @@ impl<'a> Builder<'a> {
                     self.reporter.error("Undefined variable", expr.span);
                     return Err(()); // Params are treated as locals so it should be present
                 }
+            }
+
+            Expression::VariantNoData {
+                ref enum_name,
+                ref tag,
+            } => {
+                self.emit_byte(opcode::ENUM);
+                self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
+            }
+
+            Expression::VariantWithData {
+                ref enum_name,
+                ref tag,
+                ref inner,
+            } => {
+                self.emit_byte(opcode::ENUM);
+                self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
+                self.compile_expression(inner)?;
             }
 
             Expression::Closure(ref func) => {

@@ -294,6 +294,7 @@ mod NAN_tagging {
                         ObjectType::Class => write!(fmt, "class")?,
                         ObjectType::Instance => write!(fmt, "instance")?,
                         ObjectType::Native => write!(fmt, "native")?,
+                        ObjectType::Enum => write!(fmt, "enum")?,
                     }
                 }
             }
@@ -331,8 +332,8 @@ mod NAN_tagging {
 #[cfg(not(feature = "NAN_tagging"))]
 mod normal {
     use crate::object::{
-        ArrayObject, ClassObject, FunctionObject, InstanceObject, NativeObject, Object, ObjectType,
-        RawObject, StringObject,
+        ArrayObject, ClassObject, EnumObject, FunctionObject, InstanceObject, NativeObject, Object,
+        ObjectType, RawObject, StringObject,
     };
 
     use std::fmt::{self, Debug, Display};
@@ -584,6 +585,12 @@ mod normal {
                                 )
                             )?,
 
+                            ObjectType::Enum => write!(
+                                fmt,
+                                "{:#?}",
+                                ::std::mem::transmute::<RawObject, &EnumObject>(self.val.object)
+                            )?,
+
                             ObjectType::Native => write!(
                                 fmt,
                                 "{:#?}",
@@ -621,6 +628,7 @@ mod normal {
                         ObjectType::Class => write!(fmt, "class")?,
                         ObjectType::Instance => write!(fmt, "instance")?,
                         ObjectType::Native => write!(fmt, "native")?,
+                        ObjectType::Enum => write!(fmt, "enum")?,
                     }
                 }
             }
@@ -685,6 +693,17 @@ mod normal {
                                     std::mem::transmute(other.as_object());
 
                                 self_func == other_func
+                            }
+
+                            ObjectType::Enum => {
+                                let self_enum: &EnumObject = std::mem::transmute(self.as_object());
+
+                                let other_enum: &EnumObject =
+                                    std::mem::transmute(other.as_object());
+
+                                self_enum.name == other_enum.name
+                                    && self_enum.tag == other_enum.tag
+                                    && self_enum.data == other_enum.data
                             }
                             ObjectType::Native => {
                                 let self_native: &NativeObject =

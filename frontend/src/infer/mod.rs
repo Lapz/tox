@@ -7,6 +7,7 @@ mod alias;
 mod class;
 mod function;
 pub(crate) mod subst;
+mod sum;
 pub(crate) mod types;
 mod unify;
 mod user_types;
@@ -47,6 +48,10 @@ impl Infer {
 
         for alias in program.aliases.iter() {
             self.infer_alias(alias, &mut ctx)?;
+        }
+
+        for sum in program.enums {
+            self.infer_enum(sum, &mut ctx)?;
         }
 
         for class in program.classes {

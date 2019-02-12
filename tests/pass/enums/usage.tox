@@ -1,0 +1,22 @@
+enum Day {
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+}
+
+
+fn main() {
+
+    let today = Day::Monday;
+    let tomorrow = Day::Tuesday;
+
+    print today;
+    print tomorrow;
+
+    print today == tomorrow;
+    print today != tomorrow;
+}

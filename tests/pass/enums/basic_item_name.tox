@@ -1,0 +1,18 @@
+enum Result <T,E> {
+    Ok(T),
+    Err(E)
+}
+
+
+fn me() -> Result<int,str> {
+    if true {
+        return Result::Ok(1);
+    }
+    return Result::Err("You are not a person");
+}
+fn main() {
+    let res = me();
+
+    print res;
+
+}

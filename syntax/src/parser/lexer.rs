@@ -365,6 +365,7 @@ fn look_up_identifier(id: &str) -> TokenType {
         "type" => TokenType::TYPE,
         "as" => TokenType::AS,
         "match" => TokenType::MATCH,
+        "enum" => TokenType::ENUM,
         // Functions and vars
         "fn" => TokenType::FUNCTION,
         "let" => TokenType::LET,

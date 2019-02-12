@@ -83,6 +83,37 @@ impl Infer {
                                 unique,
                             ))
                         }
+
+                        Type::Enum {
+                            ref mut variants,
+                            ref name,
+                        } => {
+                            if tvars.is_empty() {
+                                let msg =
+                                    format!("Type `{}` is not polymorphic", ctx.name(symbol.value));
+                                ctx.error(msg, symbol.span);
+                                return Err(());
+                            }
+
+                            let mut mappings = HashMap::new();
+
+                            for (tvar, ty) in tvars.iter().zip(types) {
+                                mappings.insert(*tvar, self.trans_type(ty, ctx)?);
+                            } // First create the mappings
+
+                            for mut variant in &mut variants.iter_mut() {
+                                if let Some(ref mut inner) = variant.1.inner {
+                                    let mut ty = self.subst(inner, &mut mappings);
+
+                                    ::std::mem::swap(inner, &mut ty);
+                                }
+                            }
+
+                            Ok(Type::Enum {
+                                name: *name,
+                                variants: variants.clone(),
+                            })
+                        }
                         _ => unreachable!(), // Polymorphic functions are not stored as types they are stored as vars
                     },
                     _ => {
