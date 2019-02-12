@@ -44,12 +44,10 @@ impl Infer {
 
             (
                 &Type::Enum {
-                    name: ref name1,
-                    variants: ref variants1,
+                    name: ref name1, ..
                 },
                 &Type::Enum {
-                    name: ref name2,
-                    variants: ref variants2,
+                    name: ref name2, ..
                 },
             ) => {
                 if name1 != name2 {
@@ -113,9 +111,7 @@ impl Infer {
 
             (&Type::Generic(_, ref ret1), ref t) => self.unify(ret1, t, span, ctx),
 
-            (ref t, &Type::Generic(_, ref ret1)) => {
-                self.unify(ret1, t, span, ctx)
-            }
+            (ref t, &Type::Generic(_, ref ret1)) => self.unify(ret1, t, span, ctx),
 
             (&Type::Nil, &Type::Nil) => Ok(()),
             (&Type::Nil, &Type::App(TypeCon::Void, _)) => Ok(()),

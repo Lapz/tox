@@ -731,8 +731,6 @@ impl<'a> Builder<'a> {
                 self.compile_expression(instance)?;
                 self.emit_bytes(opcode::SETPROPERTY, property.0 as u8);
             }
-
-            _ => unimplemented!(),
         }
 
         Ok(())

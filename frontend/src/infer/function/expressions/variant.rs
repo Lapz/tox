@@ -2,6 +2,7 @@ use ast as t;
 use ctx::CompileCtx;
 use infer::types;
 use infer::{Infer, InferResult};
+use std::collections::HashMap;
 use syntax::ast::{Expression, UnaryOp};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
@@ -63,10 +64,16 @@ impl Infer {
                         let span = inner.span;
                         let inner_ty = self.infer_expr(*inner, ctx)?;
 
-                        
+                        let mut mappings = HashMap::new();
+
+                        mappings.insert(
+                            typevars[(variant_ty.tag) as usize],
+                            inner_ty.value.ty.clone(),
+                        );
+
                         self.unify(
-                            variant_ty.inner.as_ref().unwrap(),
-                            &inner_ty.value.ty,
+                            &self.subst(variant_ty.inner.as_ref().unwrap(), &mut mappings),
+                            &self.subst(&inner_ty.value.ty, &mut mappings),
                             span,
                             ctx,
                         )?;
