@@ -1,0 +1,13 @@
+enum List {
+    Head(int),
+    Tail
+}
+
+enum List2 {
+    Head(int),
+    Tail
+}
+
+fn main() {
+    let foo:List = List2::Tail;
+}

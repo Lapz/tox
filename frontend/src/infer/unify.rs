@@ -126,6 +126,20 @@ impl Infer {
                 }
             }
 
+            (ref t,&Type::Generic(_, ref ret1)) => {
+                if &**ret1 == *t {
+                    Ok(())
+                } else {
+                    let msg = format!(
+                        "Cannot unify `{}` vs `{}`",
+                        lhs.print(ctx.symbols()),
+                        rhs.print(ctx.symbols())
+                    );
+                    ctx.error(msg, span);
+                    Err(())
+                }
+            }
+
             (&Type::Nil, &Type::Nil) => Ok(()),
             (&Type::Nil, &Type::App(TypeCon::Void, _)) => Ok(()),
 

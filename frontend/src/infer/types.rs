@@ -172,13 +172,12 @@ impl Type {
 
             Type::Generic(ref vars, ref ret) => {
                 let mut fmt_string = String::new();
-                fmt_string.push_str("poly ");
+                fmt_string.push_str(&ret.print(symbols));
+
+                
 
                 if !vars.is_empty() {
-                    fmt_string.push_str(&ret.print(symbols));
-
                     fmt_string.push('<');
-
                     for (i, var) in vars.iter().enumerate() {
                         if i + 1 == vars.len() {
                             fmt_string += &var.0.to_string();
@@ -186,9 +185,10 @@ impl Type {
                             fmt_string.push_str(&format!("{},", var.0.to_string()));
                         }
                     }
-
                     fmt_string.push('>');
                 }
+                
+                
 
                 fmt_string
             }
@@ -300,20 +300,22 @@ impl Display for Type {
 
             Type::Generic(ref vars, ref ret) => {
                 write!(f, "poly")?;
-                write!(f, " {}", ret)?;
+                write!(f, " {:?}", ret)?;
 
+                write!(f, "<")?;
+                
                 if !vars.is_empty() {
-                    write!(f, "<")?;
+                    
                     for (i, var) in vars.iter().enumerate() {
                         if i + 1 == vars.len() {
                             write!(f, "{}", var)?;
                         } else {
                             write!(f, "{},", var)?;
                         }
-                    }
-
-                    write!(f, ">")?;
+                    }                    
                 }
+
+                write!(f, ">")?;
 
                 Ok(())
             }
