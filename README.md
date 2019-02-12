@@ -61,13 +61,10 @@ fn main() {
 
 # TODO
 
-[] Implement nested ~~for~~ while loops
-[x] Improve documentation
-[x] Fix variable scope
-[x] Readd inherited methods
-[ ] Finish the work on generic function calls
-[ ] Readd typechecking of closures
- 
+[ ] Implement exhaustive pattern matching
+[ ] Implement monomorphistation
+[ ] Implement the gc 
+[ ] Add constant folding
 
 
 
