@@ -1,3 +1,8 @@
+enum List {
+    Cons(int,List),
+    Nil
+}
+
 fn main() {
-    print (5 - (3 - 1)) + -1;// expect:2
+    let f = List::Cons(1,List::Cons(2,Lost::Cons(3,List::Nil)));
 }

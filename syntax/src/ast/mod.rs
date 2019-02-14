@@ -40,7 +40,7 @@ pub struct Enum {
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
     pub name: Spanned<Symbol>,
-    pub inner: Option<Spanned<Type>>,
+    pub constructor: Vec<Spanned<Type>>,
 }
 
 #[derive(Debug, Clone)]
@@ -162,10 +162,10 @@ pub enum Expression {
 
     Var(Spanned<Symbol>),
 
-    Variant {
+    Constructor {
         enum_name: Spanned<Symbol>,
         variant: Spanned<Symbol>,
-        inner: Option<Box<Spanned<Expression>>>,
+        args: Vec<Spanned<Expression>>,
     },
 }
 

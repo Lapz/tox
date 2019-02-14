@@ -387,15 +387,23 @@ impl<'a> Parser<'a> {
                     }
                 };
 
-                let mut inner = None;
+                let mut constructor = vec![];
 
                 if self.recognise(TokenType::LPAREN) {
                     self.next()?;
-                    inner = Some(self.parse_type()?);
+                    loop {
+                        constructor.push(self.parse_type()?);
+                        if self.recognise(TokenType::COMMA) {
+                            self.next()?;
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
                     self.consume(&TokenType::RPAREN, "Expected `(`")?;
                 }
 
-                variants.push(EnumVariant { name, inner });
+                variants.push(EnumVariant { name, constructor });
 
                 if self.recognise(TokenType::COMMA) {
                     self.next()?;
@@ -1397,20 +1405,28 @@ impl<'a> Parser<'a> {
                         }
                     };
                     let variant = self.consume_get_symbol("Expected an identifier")?;
-                    let mut inner = None;
+                    let mut args = Vec::new();
 
                     if self.recognise(TokenType::LPAREN) {
                         self.next()?; //eat the ::
-                        inner = Some(Box::new(self.parse_expression()?));
+                        loop {
+                            args.push(self.parse_expression()?);
+                            if self.recognise(TokenType::COMMA) {
+                                self.next()?;
+                                continue;
+                            } else {
+                                break;
+                            }
+                        }
                         span = span.to(self.consume_get_span(&TokenType::RPAREN, "Expected `(`")?);
                     }
 
                     return Ok(Spanned {
                         span,
-                        value: Expression::Variant {
+                        value: Expression::Constructor {
                             enum_name,
                             variant,
-                            inner,
+                            args,
                         },
                     });
                 }

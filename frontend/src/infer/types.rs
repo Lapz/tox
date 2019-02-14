@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use util::symbol::{Symbol, Symbols};
+use pattern::Constructor;
 
 static mut TYPEVAR_COUNT: u32 = 0;
 static mut UNIQUE_COUNT: u32 = 0;
@@ -32,7 +33,7 @@ pub enum Type {
     Nil,
     Var(TypeVar),
     Enum {
-        name: Symbol,
+        name: Symbol, // The enum variable
         variants: HashMap<Symbol, Variant>,
     },
 }
@@ -40,14 +41,18 @@ pub enum Type {
 /// Represent an enum variant
 /// ```ignore
 /// Foo::Bar => Variant {
-//      tag:0, // the number it was declared at
-///     inner:None // if it dosen't have an inner type i.e Ok(foo)
-///  }
+/// tag:0,
+/// constructor:Vec::new()
+/// },
+/// List::Cons(1,List::Nil) => Variant {
+///     tag:1,
+///     constructor:vec![Type::Int,Type::Enum]
+/// }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variant {
     pub tag: u32,
-    pub inner: Option<Type>,
+    pub constructor:Constructor,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -274,17 +279,17 @@ impl Display for Type {
                         let variant = variant.1;
 
                         if i + 1 == variants.len() {
-                            if let Some(ref inner) = variant.inner {
-                                write!(f, "{}:{}", variant.tag, inner)?;
-                            } else {
-                                write!(f, "{}", variant.tag)?;
-                            }
+                            // if let Some(ref inner) = variant.inner {
+                            //     write!(f, "{}:{}", variant.tag, inner)?;
+                            // } else {
+                            //     write!(f, "{}", variant.tag)?;
+                            // }
                         } else {
-                            if let Some(ref inner) = variant.inner {
-                                write!(f, "{}:{},", variant.tag, inner)?;
-                            } else {
-                                write!(f, "{},", variant.tag)?;
-                            }
+                            // if let Some(ref inner) = variant.inner {
+                            //     write!(f, "{}:{},", variant.tag, inner)?;
+                            // } else {
+                            //     write!(f, "{},", variant.tag)?;
+                            // }
                         }
                     }
 

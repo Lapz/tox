@@ -128,11 +128,14 @@ pub fn run(path: String) {
         }
     };
 
+    println!("{:#?}", ast);
+
     let mut infer = Infer::new();
 
     let typed_ast = match infer.infer(ast, &strings, &mut reporter) {
         Ok(ast) => {
             reporter.emit(input); //emit warnings
+
             ast
         }
         Err(_) => {

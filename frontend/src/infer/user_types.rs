@@ -102,11 +102,11 @@ impl Infer {
                             } // First create the mappings
 
                             for mut variant in &mut variants.iter_mut() {
-                                if let Some(ref mut inner) = variant.1.inner {
-                                    let mut ty = self.subst(inner, &mut mappings);
+                                // if let Some(ref mut inner) = variant.1.inner {
+                                //     let mut ty = self.subst(inner, &mut mappings);
 
-                                    ::std::mem::swap(inner, &mut ty);
-                                }
+                                //     ::std::mem::swap(inner, &mut ty);
+                                // }
                             }
 
                             Ok(Type::Enum {

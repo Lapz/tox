@@ -14,25 +14,26 @@ impl Infer {
             Type::Enum {
                 ref name,
                 ref variants,
-            } => Type::Enum {
-                name: *name,
-                variants: variants
-                    .iter()
-                    .map(|(ident, variant)| {
-                        (
-                            *ident,
-                            Variant {
-                                tag: variant.tag,
-                                inner: variant
-                                    .inner
-                                    .as_ref()
-                                    .map(|inner| self.subst(inner, substions)),
-                            },
-                        )
-                    })
-                    .collect(),
-            },
+            } => unimplemented!(),
 
+            // Type::Enum {
+            //     name: *name,
+            //     variants: variants
+            //         .iter()
+            //         .map(|(ident, variant)| {
+            //             (
+            //                 *ident,
+            //                 Variant {
+            //                     tag: variant.tag,
+            //                     inner: variant
+            //                         .inner
+            //                         .as_ref()
+            //                         .map(|inner| self.subst(inner, substions)),
+            //                 },
+            //             )
+            //         })
+            //         .collect(),
+            // },
             Type::Class(ref name, ref fields, ref methods, ref unique) => {
                 let mut new_fields = Vec::new();
                 let mut new_methods = Vec::new();

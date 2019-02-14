@@ -103,11 +103,11 @@ impl Infer {
 
             Expression::Var(var) => self.infer_var(var, expr.span, ctx),
 
-            Expression::Variant {
+            Expression::Constructor {
                 enum_name,
                 variant,
-                inner,
-            } => self.infer_variant(enum_name, variant, inner, expr.span, ctx),
+                args,
+            } => self.infer_constructor(enum_name, variant, args, expr.span, ctx),
         }
     }
 }
