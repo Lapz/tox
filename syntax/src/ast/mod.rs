@@ -134,7 +134,7 @@ pub enum Expression {
 
     Match {
         cond: Box<Spanned<Expression>>,
-        arms: Spanned<Vec<Spanned<MatchArm>>>,
+        patterns: Spanned<Vec<Spanned<MatchArm>>>,
     },
 
     SubScript {
@@ -169,10 +169,23 @@ pub enum Expression {
     },
 }
 
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+pub struct Constructor {
+    name: Symbol,
+    arity: usize,
+    span: usize,
+}
+
+#[derive(Debug, Clone)]
+pub enum Pattern {
+    Var(Spanned<Symbol>),
+    Con(Spanned<Symbol>, Vec<Spanned<Pattern>>), //we store the symbol and store the construor properly latter
+}
+
 #[derive(Debug, Clone)]
 pub struct MatchArm {
-    pub pattern: Option<Spanned<Expression>>,
-    pub body: Spanned<Statement>,
+    pub lhs: Spanned<Pattern>,
+    pub rhs: Spanned<Statement>,
     pub is_all: bool,
 }
 

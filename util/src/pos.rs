@@ -5,6 +5,10 @@ use itertools::structs::MultiPeek;
 use std::fmt::{self, Display};
 use std::str::Bytes;
 use std::str::Chars;
+use std::hash::Hash;
+use std::hash::Hasher;
+
+
 #[derive(Debug, Clone)]
 pub struct CharPosition<'a> {
     pub pos: Position,
@@ -24,7 +28,7 @@ pub struct Spanned<T> {
 }
 
 /// A span between two locations in a source file
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd,Hash)]
 pub struct Span {
     pub start: Position,
     pub end: Position,
@@ -43,7 +47,7 @@ pub const EMPTYSPAN: Span = Span {
     },
 };
 
-#[derive(Debug, Copy, PartialOrd, Clone, PartialEq, Eq, Ord)]
+#[derive(Debug, Copy, PartialOrd, Clone, PartialEq, Eq, Ord,Hash)]
 pub struct Position {
     pub line: u32,
     pub column: u32,
@@ -131,6 +135,24 @@ impl<T> Spanned<T> {
     }
 }
 
+impl<T: Copy + Clone> Copy for Spanned<T> {}
+
+impl<T: PartialEq> PartialEq for Spanned<T> {
+    fn eq(&self, other: &Spanned<T>) -> bool {
+        self.value == other.value && self.span == other.span
+    }
+}
+
+impl <T:Eq+PartialEq+Hash> Hash for Spanned<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+        self.span.hash(state);
+    }
+}
+
+impl <T:Eq> Eq for Spanned<T> {
+
+}
 impl Position {
     pub fn shift(mut self, ch: char) -> Self {
         if ch == '\n' {

@@ -4,5 +4,13 @@ enum List {
 }
 
 fn main() {
-    let f = List::Cons(1,List::Cons(2,Lost::Cons(3,List::Nil)));
+    let f =  List::Cons(1,List::Cons(1,List::Nil));
+
+    match f {
+        List::Cons(x,xy) => x,
+        List::Nil => 0,
+        x => 10,
+        y => 10
+
+    };
 }

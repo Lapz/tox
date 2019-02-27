@@ -1,20 +1,27 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display};
+use std::hash::Hash;
+use std::hash::Hasher;
+use util::pos::Spanned;
 use util::symbol::{Symbol, Symbols};
-use pattern::Constructor;
 
 static mut TYPEVAR_COUNT: u32 = 0;
 static mut UNIQUE_COUNT: u32 = 0;
+static mut PATTERNVAR_COUNT: u32 = 0;
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeVar(pub u32);
 
 /// A unique identifier that
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Default, Eq, Hash)]
 pub struct Unique(pub u32);
 
-#[derive(Debug, Clone, PartialEq)]
+/// A pattern var represent a variable from a pattern binding
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PatternVar(pub u32);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TypeCon {
     Arrow,
     Array(Box<Type>),
@@ -25,7 +32,7 @@ pub enum TypeCon {
     Void,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     App(TypeCon, Vec<Type>), // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
     Class(Symbol, Vec<Property>, Vec<Method>, Unique), // Name, Properties, Methods,Unique
@@ -36,8 +43,49 @@ pub enum Type {
         name: Symbol, // The enum variable
         variants: HashMap<Symbol, Variant>,
     },
+    Variant(Constructor),
 }
 
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Copy)]
+pub enum CSpan {
+    Range(usize),
+    Infinity,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Constructor {
+    name: Symbol,
+    args: Vec<Type>,
+    arity: usize,
+    span: CSpan,
+}
+
+impl Constructor {
+    pub fn new(name: Symbol, args: Vec<Type>, arity: usize, span: CSpan) -> Self {
+        Self {
+            name,
+            args,
+            arity,
+            span,
+        }
+    }
+
+    pub fn arity(&self) -> usize {
+        self.arity
+    }
+
+    pub fn types(&self) -> &Vec<Type> {
+        &self.args
+    }
+
+    pub fn span(&self) -> CSpan {
+        self.span
+    }
+
+    pub fn symbol(&self) -> Symbol {
+        self.name
+    }
+}
 /// Represent an enum variant
 /// ```ignore
 /// Foo::Bar => Variant {
@@ -49,19 +97,19 @@ pub enum Type {
 ///     constructor:vec![Type::Int,Type::Enum]
 /// }
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Variant {
     pub tag: u32,
-    pub constructor:Constructor,
+    pub constructor: Constructor,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Property {
     pub name: Symbol,
     pub ty: Type,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Method {
     pub name: Symbol,
     pub ty: Type,
@@ -92,6 +140,18 @@ impl TypeVar {
         let value = unsafe { TYPEVAR_COUNT };
         unsafe { TYPEVAR_COUNT += 1 };
         TypeVar(value)
+    }
+}
+
+impl PatternVar {
+    pub fn new() -> Self {
+        let p_var = unsafe { PatternVar(PATTERNVAR_COUNT) };
+
+        unsafe {
+            PATTERNVAR_COUNT += 1;
+        }
+
+        p_var
     }
 }
 
@@ -197,6 +257,8 @@ impl Type {
             Type::Nil => "nil".into(),
 
             Type::Var(ref v) => format!("{{T:{}}}", v),
+            // TODO change printing of variant
+            Type::Variant(ref con) => format!("{:?}", con),
         }
     }
 }
@@ -322,6 +384,7 @@ impl Display for Type {
 
             Type::Nil => write!(f, "nil"),
             Type::Var(ref v) => write!(f, "{}", v),
+            Type::Variant(ref c) => write!(f, "{:?}", c),
         }
     }
 }
@@ -329,5 +392,40 @@ impl Display for Type {
 impl Display for TypeVar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "tv{}", self.0)
+    }
+}
+
+impl Hash for Type {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match *self {
+            Type::App(ref con, ref types) => {
+                con.hash(state);
+                types.hash(state)
+            } // when type::Con is type::Con::Arrow the last type in the vec of types is the return type
+            Type::Class(ref name, ref props, ref methods, ref unique) => {
+                name.hash(state);
+                props.hash(state);
+                methods.hash(state);
+                unique.hash(state);
+            } // Name, Properties, Methods,Unique
+            Type::Generic(ref tvars, ref inner) => {
+                tvars.hash(state);
+                inner.hash(state);
+            }
+            Type::Nil => 4.hash(state),
+            Type::Var(ref tv) => tv.hash(state),
+
+            Type::Enum {
+                ref name,
+                ref variants,
+            } => {
+                name.hash(state);
+                for (_, v) in variants {
+                    v.hash(state);
+                }
+            }
+
+            Type::Variant(ref c) => c.hash(state),
+        }
     }
 }

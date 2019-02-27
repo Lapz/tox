@@ -77,8 +77,6 @@ impl Infer {
                 self.infer_get(*object, property, expr.span, ctx)
             }
 
-            Expression::Match { cond, arms } => self.infer_match(*cond, arms, expr.span, ctx),
-
             Expression::SubScript { target, index } => {
                 self.infer_subscript(*target, *index, expr.span, ctx)
             }
@@ -108,6 +106,10 @@ impl Infer {
                 variant,
                 args,
             } => self.infer_constructor(enum_name, variant, args, expr.span, ctx),
+
+            Expression::Match { cond, patterns } => {
+                self.infer_match(*cond, patterns, expr.span, ctx)
+            } // _ => unimplemented!()
         }
     }
 }

@@ -17,7 +17,6 @@ mod codegen;
 mod ctx;
 mod infer;
 mod lower;
-mod pattern;
 
 pub use codegen::compile;
 pub use infer::Infer;

@@ -700,22 +700,18 @@ impl<'a> Builder<'a> {
                 }
             }
 
-            Expression::VariantNoData {
+            Expression::Constructor {
                 ref enum_name,
                 ref tag,
+                ref args,
             } => {
                 self.emit_byte(opcode::ENUM);
                 self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
-            }
+                self.emit_byte(args.len() as u8);
 
-            Expression::VariantWithData {
-                ref enum_name,
-                ref tag,
-                ref inner,
-            } => {
-                self.emit_byte(opcode::ENUM);
-                self.emit_bytes(enum_name.value.0 as u8, *tag as u8);
-                self.compile_expression(inner)?;
+                for expr in args {
+                    self.compile_expression(expr)?;
+                }
             }
 
             Expression::Closure(ref func) => {

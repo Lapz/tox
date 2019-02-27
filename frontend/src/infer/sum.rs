@@ -1,11 +1,10 @@
 use ctx::CompileCtx;
 
-use infer::types::{Type, TypeVar, Variant};
+use infer::types::{CSpan, Constructor, PatternVar, Type, TypeVar, Variant};
 use infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Enum;
 use util::pos::Spanned;
-use pattern::Constructor;
 
 impl Infer {
     pub fn infer_enum(&mut self, _enum: Spanned<Enum>, ctx: &mut CompileCtx) -> InferResult<()> {
@@ -34,40 +33,56 @@ impl Infer {
 
         let mut variants = HashMap::with_capacity(_enum.value.variants.len());
 
-        
-        // for (i, variant) in _enum.value.variants.into_iter() {}
-        let span =_enum.value.variants.len();
+        let arity = _enum.value.variants.len(); // the arity is the same as the number of variants defined on the enum
+
         for (i, variant) in _enum.value.variants.into_iter().enumerate() {
-            let c = Constructor::new(variant.name.value,variant.constructor.len(),span);
-            
             let mut args = vec![];
 
             for arg in variant.constructor.iter() {
-                args.push(self.trans_type(arg,ctx)?);
+                args.push(self.trans_type(arg, ctx)?);
             }
-            
-            
+
+            let span = CSpan::Range(args.len());
 
             let v = Variant {
                 tag: i as u32,
-                constructor:c,
+                constructor: Constructor::new(variant.name.value, args, arity, span),
             };
 
             variants.insert(variant.name.value, v);
         }
 
-        // ctx.end_scope();
+        ctx.add_pattern_type(
+            PatternVar::new(),
+            Type::Enum {
+                name: _enum.value.name.value.name.value,
+                variants: variants.clone(),
+            },
+        );
 
-        // ctx.add_type(
-        //     _enum.value.name.value.name.value,
-        //     Type::Generic(
-        //         generic_type_vars.clone(),
-        //         Box::new(Type::Enum {
-        //             name: _enum.value.name.value.name.value,
-        //             variants,
-        //         }),
-        //     ),
-        // ); // Add the proper fully type checked enum
+        ctx.add_constructor(
+            Type::Enum {
+                name: _enum.value.name.value.name.value,
+                variants: variants.clone(),
+            },
+            variants
+                .iter()
+                .map(|(_, v)| v.constructor.clone())
+                .collect(),
+        );
+
+        ctx.end_scope();
+
+        ctx.add_type(
+            _enum.value.name.value.name.value,
+            Type::Generic(
+                generic_type_vars.clone(),
+                Box::new(Type::Enum {
+                    name: _enum.value.name.value.name.value,
+                    variants,
+                }),
+            ),
+        ); // Add the proper fully type checked enum
 
         Ok(())
     }

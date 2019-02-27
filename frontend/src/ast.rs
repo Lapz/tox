@@ -143,14 +143,9 @@ pub enum Expression {
     Unary(UnaryOp, Spanned<TypedExpression>),
     Var(Symbol, Type),
 
-    VariantWithData {
+    Constructor {
         enum_name: Spanned<Symbol>,
         tag: u32,
-        inner: Spanned<TypedExpression>,
-    },
-
-    VariantNoData {
-        enum_name: Spanned<Symbol>,
-        tag: u32,
+        args: Vec<Spanned<TypedExpression>>,
     },
 }

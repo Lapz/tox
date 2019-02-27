@@ -1,6 +1,7 @@
 mod lexer;
 
 use ast::*;
+use rand::distributions::Exp;
 use rand::{self, Rng};
 use std::collections::VecDeque;
 use token::{Token, TokenType};
@@ -1162,6 +1163,87 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn expr_to_pat(&mut self, expr: Spanned<Expression>) -> ParserResult<Spanned<Pattern>> {
+        match expr {
+            Spanned {
+                span,
+                value: Expression::Var(ref ident),
+            } => Ok(Spanned {
+                span,
+                value: Pattern::Var(*ident),
+            }),
+
+            Spanned {
+                span,
+                value: Expression::Constructor { variant, args, .. },
+            } => {
+                let mut nargs = Vec::new();
+
+                for arg in args {
+                    nargs.push(self.expr_to_pat(arg)?)
+                }
+
+                Ok(Spanned {
+                    span,
+                    value: Pattern::Con(variant, nargs),
+                })
+            }
+
+            Spanned { span, .. } => {
+                self.reporter.error("Not yet supported in patterns", span);
+                return Err(());
+            }
+        }
+    }
+
+    fn parse_expr_as_pat(&mut self) -> ParserResult<Spanned<Pattern>> {
+        let expr = self.parse_expression()?;
+        match expr {
+            Spanned {
+                span,
+                value: Expression::Var(ident),
+            } => {
+                if self.recognise(TokenType::LPAREN) {
+                    let mut args = vec![];
+
+                    loop {
+                        let expr = self.parse_expression()?;
+
+                        args.push(self.parse_expr_as_pat()?);
+
+                        if self.recognise(TokenType::COMMA) {
+                            self.next()?;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    self.consume(&TokenType::RPAREN, "Expected `(`")?;
+
+                    Ok(Spanned {
+                        span,
+                        value: Pattern::Con(ident, args),
+                    })
+                } else {
+                    Ok(Spanned {
+                        span,
+                        value: Pattern::Var(ident),
+                    })
+                }
+            }
+
+            Spanned {
+                span,
+                value: Expression::Constructor { .. },
+            } => self.expr_to_pat(expr),
+
+            Spanned { span, .. } => {
+                self.reporter.error("Not yet supported in patterns", span);
+                return Err(());
+            }
+        }
+    }
+
     fn parse_match(&mut self, start_span: Span) -> ParserResult<Spanned<Expression>> {
         self.parsing_cond = true;
 
@@ -1171,7 +1253,7 @@ impl<'a> Parser<'a> {
 
         let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected `{` ")?;
 
-        let mut arms = Vec::new();
+        let mut patterns = Vec::new();
         // counter for how many times we've seen the `_` pattern
         let mut seen_catch_all = 0;
 
@@ -1179,54 +1261,20 @@ impl<'a> Parser<'a> {
             loop {
                 self.parsing_match_arm = true;
 
-                if self.recognise(TokenType::UNDERSCORE) {
-                    seen_catch_all += 1;
-
-                    let pattern = self.consume_get_span(&TokenType::UNDERSCORE, "Expected `_` ")?;
-
-                    self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
-
-                    let body = self.parse_statement()?;
-
-                    self.parsing_match_arm = false;
-
-                    if seen_catch_all > 1 {
-                        self.span_warn("`_` pattern is allready present", pattern.to(body.span));
-                    }
-
-                    let span = pattern.to(body.span);
-
-                    arms.push(Spanned {
-                        value: MatchArm {
-                            pattern: None,
-                            body,
-                            is_all: true,
-                        },
-                        span,
-                    });
-
-                    if self.recognise(TokenType::COMMA) {
-                        self.next()?;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-
-                let pattern = self.parse_expression()?;
+                let lhs = self.parse_expr_as_pat()?;
 
                 self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
 
-                let body = self.parse_statement()?;
+                let rhs = self.parse_statement()?;
 
                 self.parsing_match_arm = false;
 
-                let span = pattern.span.to(body.span);
+                let span = lhs.span.to(rhs.span);
 
-                arms.push(Spanned {
+                patterns.push(Spanned {
                     value: MatchArm {
-                        pattern: Some(pattern),
-                        body,
+                        lhs,
+                        rhs,
                         is_all: false,
                     },
                     span,
@@ -1245,7 +1293,7 @@ impl<'a> Parser<'a> {
         Ok(Spanned {
             value: Expression::Match {
                 cond: Box::new(cond),
-                arms: Spanned::new(arms, open_span.to(close_span)),
+                patterns: Spanned::new(patterns, open_span.to(close_span)),
             },
             span: start_span.to(close_span),
         })

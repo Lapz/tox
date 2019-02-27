@@ -1,5 +1,5 @@
 use super::Infer;
-use infer::types::{Method, Property, Type, TypeVar, Variant};
+use infer::types::{Constructor, Method, Property, Type, TypeVar, Variant};
 use std::collections::HashMap;
 
 impl Infer {
@@ -14,7 +14,53 @@ impl Infer {
             Type::Enum {
                 ref name,
                 ref variants,
-            } => unimplemented!(),
+            } => {
+                let mut n_variants = HashMap::new();
+
+                for (s, variant) in variants {
+                    let arity = variant.constructor.arity();
+                    let span = variant.constructor.span();
+                    let symbol = variant.constructor.symbol();
+
+                    n_variants.insert(
+                        *s,
+                        Variant {
+                            tag: variant.tag,
+                            constructor: Constructor::new(
+                                symbol,
+                                variant
+                                    .constructor
+                                    .types()
+                                    .iter()
+                                    .map(|ty| self.subst(ty, substions))
+                                    .collect(),
+                                arity,
+                                span,
+                            ),
+                        },
+                    );
+                }
+
+                Type::Enum {
+                    name: *name,
+                    variants: n_variants,
+                }
+            }
+
+            Type::Variant(ref c) => {
+                let arity = c.arity();
+                let span = c.span();
+                let symbol = c.symbol();
+                Type::Variant(Constructor::new(
+                    symbol,
+                    c.types()
+                        .iter()
+                        .map(|ty| self.subst(ty, substions))
+                        .collect(),
+                    arity,
+                    span,
+                ))
+            }
 
             // Type::Enum {
             //     name: *name,

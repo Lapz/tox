@@ -5,6 +5,7 @@ pub(crate) mod env;
 // mod resolver;
 mod alias;
 mod class;
+pub(crate) mod coverage;
 mod function;
 pub(crate) mod subst;
 mod sum;

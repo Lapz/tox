@@ -1,107 +1,126 @@
 use ast as t;
 use ctx::CompileCtx;
 
-use infer::types::Type;
+use infer::types::{CSpan, Constructor, PatternVar, Type, TypeCon};
 use infer::{Infer, InferResult};
-use syntax::ast::{Expression, MatchArm};
+use syntax::ast::{self, Expression, MatchArm};
 use util::pos::{Span, Spanned};
+use util::symbol::Symbol;
+use util::symbol::Symbols;
+
+use infer::coverage::*;
+use std::collections::HashMap;
 
 impl Infer {
     pub(crate) fn infer_match(
         &mut self,
         cond: Spanned<Expression>,
-        arms: Spanned<Vec<Spanned<MatchArm>>>,
+        patterns: Spanned<Vec<Spanned<MatchArm>>>,
         whole_span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
         let cond = self.infer_expr(cond, ctx)?;
 
-        let pattern_type = cond.value.ty.clone(); // type of the pattern
+        let cond_con = type_to_constructor(ctx.symbols_mut(), cond.value.ty.clone()); // type of the pattern
 
-        let mut return_type = Type::Nil; // Default return type is nill
+        let mut clauses = vec![];
 
-        let mut typed_arms = Vec::new();
-        let arms_span = arms.span;
-        let mut arms = arms.value;
 
-        if !arms.is_empty() {
-            let first = arms.remove(0);
-            let first_span = first.span;
 
-            if first.value.pattern.is_none() {
-                let first_body = self.infer_statement(first.value.body, ctx)?;
-                return_type = first_body.value.ty.clone();
 
-                typed_arms.push(Spanned::new(
-                    t::MatchArm {
-                        pattern: None,
-                        body: first_body,
-                        is_all: true,
-                    },
-                    first_span,
-                ));
-            } else {
-                let first_pattern = self.infer_expr(first.value.pattern.unwrap(), ctx)?;
-                let first_body = self.infer_statement(first.value.body, ctx)?;
 
-                return_type = first_body.value.ty.clone();
+        for pattern in patterns.value {
+            let clause = ast_to_coverage(&pattern.value.lhs, ctx);
+            clauses.push(ClausePattern(clause))
+        }
 
-                typed_arms.push(Spanned::new(
-                    t::MatchArm {
-                        pattern: Some(first_pattern),
-                        body: first_body,
-                        is_all: false,
-                    },
-                    first_span,
-                ));
+
+
+
+        let ideal = cond_con.into_iter().map(|con|
+            {
+                let (refine_to, _) = self.constructor_to_pattern(con,cond.span);
+                IdealPattern(Spanned::new(refine_to, cond.span))
             }
+        ).collect();
 
-            for arm in arms {
-                let span = arm.span;
-                let is_all = arm.value.is_all;
+        if let Err(ref e) = self.check_coverage(ideal, &mut clauses, ctx) {
 
-                if is_all {
-                    typed_arms.push(Spanned::new(
-                        t::MatchArm {
-                            pattern: None,
-                            body: self.infer_statement(arm.value.body, ctx)?,
-                            is_all: true,
-                        },
-                        span,
-                    ));
-                } else {
-                    let lhs = self.infer_expr(arm.value.pattern.unwrap(), ctx)?; // unwrap
+            match e {
+                CoverageError::RedundantClause(ref clauses) => {
+                    for clause in clauses {
+                        ctx.error("Redundant pattern",clause.0.span);
+                    }
 
-                    self.unify(&lhs.value.ty, &pattern_type, lhs.span, ctx)?;
+                    return Err(());
+                },
 
-                    let rhs = self.infer_statement(arm.value.body, ctx)?;
-
-                    self.unify(&rhs.value.ty, &return_type, rhs.span, ctx)?;
-
-                    typed_arms.push(Spanned::new(
-                        t::MatchArm {
-                            pattern: Some(lhs),
-                            body: rhs,
-                            is_all: false,
-                        },
-                        span,
-                    ));
-                }
+                _ => unimplemented!()
             }
         }
 
-        Ok(Spanned::new(
-            t::TypedExpression {
-                expr: Box::new(Spanned::new(
-                    t::Expression::Match {
-                        cond,
-                        arms: Spanned::new(typed_arms, arms_span),
-                    },
-                    whole_span,
-                )),
-                ty: return_type,
-            },
-            whole_span,
-        ))
+        unimplemented!()
+    }
+}
+
+fn ast_to_coverage(p: &Spanned<ast::Pattern>, ctx: &mut CompileCtx) -> Spanned<Pattern> {
+    let span = p.span;
+    match &p.value {
+        ast::Pattern::Var(ref var) => {
+            let p = PatternVar::new();
+            ctx.add_pattern_var(var.value, p);
+
+            Spanned::new(Pattern::Bind(p), span)
+        }
+
+        ast::Pattern::Con(ref name, ref inner) => Spanned::new(
+            Pattern::Const(
+                name.value,
+                inner.iter().map(|p| ast_to_coverage(p, ctx)).collect(),
+            ),
+            span,
+        ),
+    }
+}
+
+fn type_to_constructor(symbols: &mut Symbols<()>, t: Type) -> Vec<Constructor> {
+    match t {
+        Type::App(type_con, args) => match type_con {
+            TypeCon::Int => vec![Constructor::new(symbols.symbol("int"), vec![], 0, CSpan::Infinity)],
+            TypeCon::Float => vec![Constructor::new(symbols.symbol("float"), vec![], 0, CSpan::Infinity)],
+            TypeCon::Str => vec![Constructor::new(symbols.symbol("str"), vec![], 0, CSpan::Infinity)],
+            TypeCon::Bool => vec![Constructor::new(symbols.symbol("bool"), vec![], 0, CSpan::Range(2))],
+            TypeCon::Void => vec![Constructor::new(symbols.symbol("nil"), vec![], 0, CSpan::Range(1))],
+            TypeCon::Array(ty) => unimplemented!(),
+            TypeCon::Arrow => {
+                let len = args.len();
+                vec![Constructor::new(symbols.symbol(""), args, 1, CSpan::Range(len))]
+            }
+        },
+        Type::Nil => vec![Constructor::new(symbols.symbol("nil"), vec![], 0, CSpan::Range(1))],
+        Type::Var(_) => vec![Constructor::new(symbols.symbol(""), vec![], 0, CSpan::Range(1))],
+        Type::Variant(c) => vec![c],
+        Type::Enum { ref variants,.. } => {
+
+            let mut cons = Vec::new();
+
+
+            for (_,variant) in variants {
+                cons.push(variant.constructor.clone());
+            }
+            cons
+        }
+
+        Type::Class(name, properties, _, _) => {
+            let arity = properties.len();
+            vec![Constructor::new(
+                name,
+                properties.into_iter().map(|p| p.ty).collect(),
+                arity,
+                CSpan::Range(1),
+            )]
+        }
+
+        Type::Generic(_, inner) => type_to_constructor(symbols, *inner),
     }
 }
