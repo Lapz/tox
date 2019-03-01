@@ -1218,10 +1218,10 @@ impl<'a> Parser<'a> {
                         }
                     }
 
-                    self.consume(&TokenType::RPAREN, "Expected `(`")?;
+                    let close = self.consume_get_span(&TokenType::RPAREN, "Expected `)`")?;
 
                     Ok(Spanned {
-                        span,
+                        span:span.to(close),
                         value: Pattern::Con(ident, args),
                     })
                 } else {
@@ -1453,6 +1453,7 @@ impl<'a> Parser<'a> {
                         }
                     };
                     let variant = self.consume_get_symbol("Expected an identifier")?;
+                    span = span.to(variant.span);// get the span of the enum+variant name
                     let mut args = Vec::new();
 
                     if self.recognise(TokenType::LPAREN) {

@@ -122,7 +122,10 @@ impl Infer {
                     let mut substs = Vec::new();
 
                     for (p1, p2) in pats1.into_iter().zip(pats2.into_iter()) {
-                        substs.push(self.has_subst(p1.value, p2.value)?.unwrap_or(Subst::new()));
+                        if let Some(subst) = self.has_subst(p1.value, p2.value)? {
+                            substs.push(subst);
+                        }
+
                     }
 
                     Ok(Some(substs.into_iter().fold(
@@ -155,7 +158,7 @@ impl Infer {
                 Some(mut subst) => match subst.is_injective() {
                     IsInjectiveResult::Injective => {
 
-                        clauses.insert(0, clause.make_use());
+                        clauses.insert(0,clause.make_use());
                         Ok(clauses.to_vec())
                     }
                     IsInjectiveResult::NonInjective(binding) => {
