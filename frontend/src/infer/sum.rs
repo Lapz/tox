@@ -33,7 +33,7 @@ impl Infer {
 
         let mut variants = HashMap::with_capacity(_enum.value.variants.len());
 
-        let arity = _enum.value.variants.len(); // the arity is the same as the number of variants defined on the enum
+        let span = _enum.value.variants.len(); // the sapnis the same as the number of variants defined on the enum
 
         for (i, variant) in _enum.value.variants.into_iter().enumerate() {
             let mut args = vec![];
@@ -42,11 +42,14 @@ impl Infer {
                 args.push(self.trans_type(arg, ctx)?);
             }
 
-            let span = CSpan::Range(args.len());
+
+            let arity = args.len(); // number of args passed to the constructor
+
+
 
             let v = Variant {
                 tag: i as u32,
-                constructor: Constructor::new(variant.name.value, args, arity, span),
+                constructor: Constructor::new(variant.name.value, args, arity, CSpan::Range(span)),
             };
 
             variants.insert(variant.name.value, v);

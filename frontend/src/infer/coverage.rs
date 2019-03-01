@@ -154,6 +154,7 @@ impl Infer {
             match self.has_subst(ideal.0.value.clone(), clause.pattern.0.value.clone())? {
                 Some(mut subst) => match subst.is_injective() {
                     IsInjectiveResult::Injective => {
+
                         clauses.insert(0, clause.make_use());
                         Ok(clauses.to_vec())
                     }
@@ -172,11 +173,7 @@ impl Infer {
                     }
                 },
                 None => {
-                    let mut first = vec![clause];
-
-                    first.extend(self.covered_by(ideal, clauses, ctx)?);
-
-                    Ok(first)
+                    Ok(self.covered_by(ideal, clauses, ctx)?)
                 }
             }
         }
@@ -191,27 +188,35 @@ impl Infer {
 
         let mut checked_clauses = Vec::new();
 
+        let mut clauses = user_patterns
+            .into_iter()
+            .map(|clause| Clause::new(clause.clone()))
+            .collect::<Vec<Clause>>();
+
 
         for ideal in ideal {
-            checked_clauses.push(
-                self.covered_by(
-                    ideal,
-                    &mut user_patterns
-                        .into_iter()
-                        .map(|clause| Clause::new(clause.clone()))
-                        .collect::<Vec<Clause>>(),
-                    ctx,
-                )?
-            );
+
+
+            checked_clauses.push(self.covered_by(
+                ideal,
+                &mut clauses,
+                ctx,
+            )?);
+
         }
+        // hashset to remove doubles
+        let checked_clauses = checked_clauses.into_iter().flatten().collect::<HashSet<_>>();
 
-        let checked_clauses = checked_clauses.into_iter().flatten().collect();
 
 
 
-        let unused_patterns = self.unused_patterns(checked_clauses);
+
+        let unused_patterns = self.unused_patterns(checked_clauses.into_iter().collect::<Vec<_>>());
+
+
 
         if !unused_patterns.is_empty() {
+
             Err(CoverageError::RedundantClause(unused_patterns))
         } else {
             Ok(())
@@ -245,11 +250,13 @@ impl Clause {
         self.usage
     }
 
-    pub fn make_use(self) -> Clause {
-        Clause {
-            usage: self.usage + 1,
-            pattern: self.pattern,
+    pub fn make_use( self) -> Self {
+
+        Self {
+            usage:self.usage +1,
+            pattern:self.pattern
         }
+
     }
 }
 

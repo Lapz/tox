@@ -42,7 +42,7 @@ impl Infer {
                 let (refine_to, _) = self.constructor_to_pattern(con,cond.span);
                 IdealPattern(Spanned::new(refine_to, cond.span))
             }
-        ).collect();
+        ).collect::<Vec<_>>();
 
         if let Err(ref e) = self.check_coverage(ideal, &mut clauses, ctx) {
 
