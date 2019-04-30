@@ -1,8 +1,8 @@
-use ast as t;
-use ctx::CompileCtx;
+use crate::ast as t;
+use crate::ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
-use infer::{Infer, InferResult};
+use crate::infer::types::{Type, TypeCon};
+use crate::infer::{Infer, InferResult};
 use syntax::ast::{Expression, UnaryOp};
 use util::pos::{Span, Spanned};
 

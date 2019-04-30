@@ -1,6 +1,6 @@
-use infer::types::Type;
+use crate::infer::types::Type;
 
-use infer::types::Property;
+use crate::infer::types::Property;
 pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;

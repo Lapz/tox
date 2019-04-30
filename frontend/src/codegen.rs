@@ -1,5 +1,5 @@
 use super::infer::types::{Type, TypeCon};
-use ast;
+use crate::ast;
 use fnv::FnvHashMap;
 use opcode;
 use std::hash::Hash;
@@ -160,7 +160,7 @@ impl<'a> Builder<'a> {
         &mut self,
         statement: &Spanned<ast::TypedStatement>,
     ) -> ParseResult<()> {
-        use ast::Statement;
+        use crate::ast::Statement;
         self.set_span(statement.span);
         match statement.value.statement.value {
             Statement::Block(ref statements) => {
@@ -305,7 +305,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn compile_expression(&mut self, expr: &Spanned<ast::TypedExpression>) -> ParseResult<()> {
-        use ast::{AssignOperator, Expression, Literal, Op};
+        use crate::ast::{AssignOperator, Expression, Literal, Op};
         self.set_span(expr.span);
 
         match expr.value.expr.value {
@@ -672,7 +672,7 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Unary(ref op, ref expr) => {
-                use ast::UnaryOp;
+                use crate::ast::UnaryOp;
 
                 self.compile_expression(expr)?;
 
@@ -837,7 +837,7 @@ pub fn compile(
         let mut compiled_class = compile_class(class, symbols, reporter, objects)?;
 
         if let Some(ref superclass) = class.superclass {
-            let superclass = classes.get(&superclass.value).unwrap();
+            let superclass = &classes[&superclass.value];
 
             compiled_class
                 .methods

@@ -3,9 +3,9 @@
 
 use fnv::FnvHashMap;
 use std::cell::RefCell;
+use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 use std::rc::Rc;
-
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
 pub struct Symbol(pub u64);
 impl Display for Symbol {
@@ -94,6 +94,12 @@ impl<T: Clone + ::std::fmt::Debug> Symbols<T> {
 
 impl SymbolFactory {
     pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Default for SymbolFactory {
+    fn default() -> Self {
         let mut map = FnvHashMap::default();
         map.insert(Symbol(1), "random".into());
         map.insert(Symbol(2), "clock".into());
@@ -109,8 +115,8 @@ impl SymbolFactory {
 
 #[cfg(test)]
 mod test {
+    use crate::symbol::{Symbol, SymbolFactory, Symbols};
     use std::rc::Rc;
-    use symbol::{Symbol, SymbolFactory, Symbols};
 
     #[test]
     fn test() {

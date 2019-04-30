@@ -1,7 +1,7 @@
 //! Error reporting that reports all compiler errors.
+use crate::pos::Span;
+use crate::pos::EMPTYSPAN;
 use ansi_term::Colour::{Blue, Fixed, Purple, Red, Yellow};
-use pos::Span;
-use pos::EMPTYSPAN;
 use std::cell::RefCell;
 use std::fmt::{self, Display};
 use std::iter::repeat;
@@ -39,10 +39,7 @@ pub struct Reporter {
 
 impl Reporter {
     pub fn new() -> Reporter {
-        Self {
-            diagnostics: Rc::new(RefCell::new(Vec::new())),
-            end: EMPTYSPAN,
-        }
+        Self::default()
     }
 
     pub fn has_error(&self) -> bool {
@@ -104,6 +101,15 @@ impl Reporter {
     pub fn emit(&self, input: &str) {
         for diagnostic in self.diagnostics.borrow().iter() {
             print(input, diagnostic)
+        }
+    }
+}
+
+impl Default for Reporter {
+    fn default() -> Self {
+        Self {
+            diagnostics: Rc::new(RefCell::new(Vec::new())),
+            end: EMPTYSPAN,
         }
     }
 }

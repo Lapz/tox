@@ -1,7 +1,7 @@
-use ctx::CompileCtx;
+use crate::ctx::CompileCtx;
 
-use infer::types::{Type, TypeVar, Variant};
-use infer::{Infer, InferResult};
+use crate::infer::types::{Type, TypeVar, Variant};
+use crate::infer::{Infer, InferResult};
 use std::collections::HashMap;
 use syntax::ast::Enum;
 use util::pos::Spanned;

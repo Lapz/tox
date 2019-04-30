@@ -1,7 +1,7 @@
 ///! Transforms the type within the ast into types that are understood by the backend
 use super::{Infer, InferResult};
-use ctx::CompileCtx;
-use infer::types::{Type, TypeCon};
+use crate::ctx::CompileCtx;
+use crate::infer::types::{Type, TypeCon};
 use std::collections::HashMap;
 use syntax::ast::Type as astType;
 use util::pos::Spanned;
@@ -101,7 +101,7 @@ impl Infer {
                                 mappings.insert(*tvar, self.trans_type(ty, ctx)?);
                             } // First create the mappings
 
-                            for mut variant in &mut variants.iter_mut() {
+                            for variant in &mut variants.iter_mut() {
                                 if let Some(ref mut inner) = variant.1.inner {
                                     let mut ty = self.subst(inner, &mut mappings);
 
@@ -132,9 +132,9 @@ impl Infer {
         ctx: &mut CompileCtx,
     ) -> InferResult<Type> {
         match ctx.look_var(symbol.value).cloned() {
-            Some(ty) => return Ok(ty.clone().get_ty()),
+            Some(ty) => Ok(ty.clone().get_ty()),
             None => match ctx.look_type(symbol.value).cloned() {
-                Some(ty) => return Ok(ty.clone()),
+                Some(ty) => Ok(ty.clone()),
                 None => {
                     let msg = format!("Undefined variable '{}' ", ctx.name(symbol.value));
                     ctx.error(msg, symbol.span);

@@ -14,7 +14,7 @@ mod user_types;
 
 pub(crate) type InferResult<T> = Result<T, ()>;
 // pub use self::resolver::Resolver;
-use infer::types::Type;
+use crate::infer::types::Type;
 use std::rc::Rc;
 use util::symbol::Symbol;
 
@@ -24,12 +24,18 @@ pub struct Infer {
     main: Option<Symbol>,
 }
 
-impl Infer {
-    pub fn new() -> Self {
+impl Default for Infer {
+    fn default() -> Self {
         Self {
             body: Type::Nil,
             main: None,
         }
+    }
+}
+
+impl Infer {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Runs type inference returns a version of the ast which has the type of each operation
@@ -39,7 +45,7 @@ impl Infer {
         strings: &Rc<::util::symbol::SymbolFactory>,
         reporter: &mut ::util::emmiter::Reporter,
     ) -> InferResult<super::ast::Program> {
-        let mut ctx = ::ctx::CompileCtx::new(strings, reporter);
+        let mut ctx = crate::ctx::CompileCtx::new(strings, reporter);
 
         let mut new_program = super::ast::Program {
             functions: Vec::new(),

@@ -1,5 +1,5 @@
 use super::Infer;
-use infer::types::{Method, Property, Type, TypeVar, Variant};
+use crate::infer::types::{Method, Property, Type, TypeVar, Variant};
 use std::collections::HashMap;
 
 impl Infer {

@@ -1,6 +1,6 @@
 //! Contains all the values that are objects within tox
 //! When adding a new object make sure the first field is obj:Object otherwise the transmutes will fail
-
+#![allow(clippy::new_ret_no_self)]
 use super::Function;
 use crate::value::Value;
 use fnv::FnvHashMap;

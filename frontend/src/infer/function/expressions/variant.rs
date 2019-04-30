@@ -1,9 +1,9 @@
-use ast as t;
-use ctx::CompileCtx;
-use infer::types;
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::types;
+use crate::infer::{Infer, InferResult};
 use std::collections::HashMap;
-use syntax::ast::{Expression, UnaryOp};
+use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 
@@ -50,7 +50,7 @@ impl Infer {
                             ctx.name(variant.value)
                         );
                         ctx.error(msg, variant.span);
-                        return Err(());
+                        Err(())
                     } else if variant_ty.inner.is_some() && inner.is_none() {
                         let msg = format!(
                             "The variant `{}` should store the data of type {} ",
@@ -58,7 +58,7 @@ impl Infer {
                             variant_ty.inner.as_ref().unwrap().print(ctx.symbols())
                         );
                         ctx.error(msg, variant.span);
-                        return Err(());
+                        Err(())
                     } else if variant_ty.inner.is_some() && inner.is_some() {
                         let inner = inner.unwrap();
                         let span = inner.span;
@@ -80,7 +80,7 @@ impl Infer {
 
                         let expr = Spanned::new(
                             t::Expression::VariantWithData {
-                                enum_name: enum_name,
+                                enum_name,
                                 tag: variant_ty.tag,
                                 inner: inner_ty,
                             },
@@ -97,7 +97,7 @@ impl Infer {
                     } else {
                         let expr = Spanned::new(
                             t::Expression::VariantNoData {
-                                enum_name: enum_name,
+                                enum_name,
                                 tag: variant_ty.tag,
                             },
                             whole_span,

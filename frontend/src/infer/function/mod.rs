@@ -2,11 +2,11 @@ mod expression;
 mod expressions;
 mod statements;
 
-use ast as t;
-use ctx::CompileCtx;
-use infer::env::VarEntry;
-use infer::types::{Type, TypeCon, TypeVar};
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::env::VarEntry;
+use crate::infer::types::{Type, TypeCon, TypeVar};
+use crate::infer::{Infer, InferResult};
 use syntax::ast::Function;
 use util::pos::Spanned;
 
@@ -74,43 +74,40 @@ impl Infer {
         }
 
         if Type::Nil == returns {
-            match &mut body.value.statement.value {
-                t::Statement::Block(ref mut statements) => {
-                    let mut add_return = false;
+            if let t::Statement::Block(ref mut statements) = &mut body.value.statement.value {
+                let mut add_return = false;
 
-                    if let Some(statement) = statements.last() {
-                        match statement.value.statement.value {
-                            t::Statement::Return(_) => (),
-                            _ => {
-                                add_return = true;
-                                span = statement.span;
-                            }
+                if let Some(statement) = statements.last() {
+                    match statement.value.statement.value {
+                        t::Statement::Return(_) => (),
+                        _ => {
+                            add_return = true;
+                            span = statement.span;
                         }
                     }
+                }
 
-                    if add_return {
-                        statements.push(Spanned::new(
-                            t::TypedStatement {
-                                statement: Box::new(Spanned::new(
-                                    t::Statement::Return(Spanned::new(
-                                        t::TypedExpression {
-                                            expr: Box::new(Spanned::new(
-                                                t::Expression::Literal(t::Literal::Nil),
-                                                span,
-                                            )),
-                                            ty: Type::Nil,
-                                        },
-                                        span,
-                                    )),
+                if add_return {
+                    statements.push(Spanned::new(
+                        t::TypedStatement {
+                            statement: Box::new(Spanned::new(
+                                t::Statement::Return(Spanned::new(
+                                    t::TypedExpression {
+                                        expr: Box::new(Spanned::new(
+                                            t::Expression::Literal(t::Literal::Nil),
+                                            span,
+                                        )),
+                                        ty: Type::Nil,
+                                    },
                                     span,
                                 )),
-                                ty: Type::Nil,
-                            },
-                            span,
-                        ))
-                    }
+                                span,
+                            )),
+                            ty: Type::Nil,
+                        },
+                        span,
+                    ))
                 }
-                _ => (),
             }
         } // AUTO INSERT RETURN
 
@@ -120,7 +117,7 @@ impl Infer {
             name: function.value.name.value.name.value,
             params: param_types,
             body: Box::new(body),
-            returns: returns,
+            returns,
         })
     }
 }

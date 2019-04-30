@@ -82,11 +82,17 @@ impl Method {
     }
 }
 
-impl TypeVar {
-    pub fn new() -> Self {
+impl Default for TypeVar {
+    fn default() -> Self {
         let value = unsafe { TYPEVAR_COUNT };
         unsafe { TYPEVAR_COUNT += 1 };
         TypeVar(value)
+    }
+}
+
+impl TypeVar {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -117,15 +123,16 @@ impl Type {
 
                     for i in 0..types.len() - 1 {
                         if i + 1 == types.len() - 1 {
-                            fmt_string.push_str(&format!("{}", types[i].print(symbols)));
+                            fmt_string.push_str(&types[i].print(symbols).to_string());
                         } else {
-                            fmt_string.push_str(&format!("{},", types[i].print(symbols)));
+                            fmt_string += ",";
+                            fmt_string.push_str(&types[i].print(symbols).to_string());
                         }
                     }
 
                     fmt_string.push_str(") -> ");
 
-                    fmt_string.push_str(&format!("{}", types.last().unwrap().print(symbols)));
+                    fmt_string.push_str(&types.last().unwrap().print(symbols).to_string());
 
                     return fmt_string;
                 }
@@ -134,9 +141,10 @@ impl Type {
 
                 for (i, ty) in types.iter().enumerate() {
                     if i + 1 == types.len() {
-                        fmt_string.push_str(&ty.print(symbols))
+                        fmt_string.push_str(&ty.print(symbols).to_string())
                     } else {
-                        fmt_string.push_str(&format!("{},", ty.print(symbols)))
+                        fmt_string += ",";
+                        fmt_string.push_str(&ty.print(symbols).to_string())
                     }
                 }
 
@@ -145,22 +153,23 @@ impl Type {
             Type::Enum { ref name, .. } => {
                 let mut fmt_string = String::new();
 
-                fmt_string.push_str(&format!("{}", symbols.name(*name)));
+                fmt_string.push_str(&symbols.name(*name).to_string());
 
                 fmt_string
             }
 
             Type::Class(ref name, ref properties, _, _) => {
                 let mut fmt_string = String::new();
-                fmt_string.push_str(&format!("{}", symbols.name(*name)));
+                fmt_string.push_str(&symbols.name(*name).to_string());
 
                 if !properties.is_empty() {
                     fmt_string.push('<');
                     for (i, field) in properties.iter().enumerate() {
                         if i + 1 == properties.len() {
-                            fmt_string.push_str(&format!("{}", field.ty.print(symbols)));
+                            fmt_string.push_str(&field.ty.print(symbols).to_string());
                         } else {
-                            fmt_string.push_str(&format!("{},", field.ty.print(symbols)));
+                            fmt_string += ",";
+                            fmt_string.push_str(&field.ty.print(symbols).to_string());
                         }
                     }
 
@@ -279,12 +288,10 @@ impl Display for Type {
                             } else {
                                 write!(f, "{}", variant.tag)?;
                             }
+                        } else if let Some(ref inner) = variant.inner {
+                            write!(f, "{}:{},", variant.tag, inner)?;
                         } else {
-                            if let Some(ref inner) = variant.inner {
-                                write!(f, "{}:{},", variant.tag, inner)?;
-                            } else {
-                                write!(f, "{},", variant.tag)?;
-                            }
+                            write!(f, "{},", variant.tag)?;
                         }
                     }
 

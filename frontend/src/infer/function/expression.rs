@@ -1,7 +1,7 @@
-use ast as t;
-use ctx::CompileCtx;
-use infer::types;
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::types;
+use crate::infer::{Infer, InferResult};
 use syntax::ast::{Call, ClassLiteral, Expression};
 use util::pos::Spanned;
 
@@ -16,9 +16,9 @@ impl Infer {
 
             Expression::Assign {
                 name, kind, value, ..
-            } => self.infer_assign(name, kind, value, expr.span, ctx),
+            } => self.infer_assign(name, kind, *value, expr.span, ctx),
 
-            Expression::Binary { lhs, op, rhs } => self.infer_binary(lhs, op, rhs, expr.span, ctx),
+            Expression::Binary { lhs, op, rhs } => self.infer_binary(*lhs, op, *rhs, expr.span, ctx),
 
             Expression::Call(call) => {
                 let whole_span = expr.span;

@@ -13,7 +13,6 @@ mod NAN_tagging {
     };
 
     use std::fmt::{self, Debug, Display};
-    use std::mem;
     // A mask that selects the sign bit.
     const SIGN_BIT: u64 = 1 << 63; // 1 << 63
                                    // The bits that must be set to indicate a quiet NaN.
@@ -63,7 +62,7 @@ mod NAN_tagging {
 
         pub fn float(float: f64) -> Value {
             unsafe {
-                let mut data: NumberUnion = std::mem::uninitialized();
+                let mut data: NumberUnion = mem::uninitialized();
 
                 data.num = float;
 
@@ -73,7 +72,7 @@ mod NAN_tagging {
 
         pub fn int(int: i64) -> Value {
             unsafe {
-                let mut data: NumberUnion = std::mem::uninitialized();
+                let mut data: NumberUnion = mem::uninitialized();
 
                 data.num = int as f64;
 
@@ -93,8 +92,7 @@ mod NAN_tagging {
         #[inline]
         pub fn is_obj_type(&self, ty: ObjectType) -> bool {
             unsafe {
-                self.is_object()
-                    && std::mem::transmute::<RawObject, &Object>(self.as_object()).ty == ty
+                self.is_object() && mem::transmute::<RawObject, &Object>(self.as_object()).ty == ty
             }
         }
 
@@ -141,7 +139,7 @@ mod NAN_tagging {
         #[inline]
         pub fn as_int(&self) -> i64 {
             unsafe {
-                let mut data: NumberUnion = std::mem::uninitialized();
+                let mut data: NumberUnion = mem::uninitialized();
 
                 data.bits64 = self.inner() & !TAG_INT;
 
@@ -152,7 +150,7 @@ mod NAN_tagging {
         #[inline]
         pub fn as_float(&self) -> f64 {
             unsafe {
-                let mut data: NumberUnion = std::mem::uninitialized();
+                let mut data: NumberUnion = mem::uninitialized();
                 data.bits64 = self.inner() & !TAG_FLOAT;
                 println!("{:?}", data.num);
                 println!("{:b}", data.num.to_bits());
@@ -220,40 +218,40 @@ mod NAN_tagging {
             write!(fmt, "Value {{")?;
             unsafe {
                 if self.is_object() {
-                    let obj: &Object = std::mem::transmute(self.as_object());
+                    let obj: &Object = mem::transmute(self.as_object());
 
                     match obj.ty {
                         ObjectType::String => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &StringObject>(self.as_object())
+                            mem::transmute::<RawObject, &StringObject>(self.as_object())
                         )?,
 
                         ObjectType::Func => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &FunctionObject>(self.as_object())
+                            mem::transmute::<RawObject, &FunctionObject>(self.as_object())
                         )?,
                         ObjectType::Array => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &ArrayObject>(self.as_object())
+                            mem::transmute::<RawObject, &ArrayObject>(self.as_object())
                         )?,
                         ObjectType::Class => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &ClassObject>(self.as_object())
+                            mem::transmute::<RawObject, &ClassObject>(self.as_object())
                         )?,
                         ObjectType::Instance => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &InstanceObject>(self.as_object())
+                            mem::transmute::<RawObject, &InstanceObject>(self.as_object())
                         )?,
 
                         ObjectType::Native => write!(
                             fmt,
                             "{:#?}",
-                            ::std::mem::transmute::<RawObject, &NativeObject>(self.as_object())
+                            mem::transmute::<RawObject, &NativeObject>(self.as_object())
                         )?,
                     }
                 } else if self.is_nil() {
@@ -311,12 +309,11 @@ mod NAN_tagging {
                 false
             } else {
                 unsafe {
-                    let self_object: &Object = std::mem::transmute(self.as_object());
+                    let self_object: &Object = mem::transmute(self.as_object());
                     match self_object.ty {
                         ObjectType::String => {
-                            let self_string: &StringObject = std::mem::transmute(self.as_object());
-                            let other_string: &StringObject =
-                                std::mem::transmute(other.as_object());
+                            let self_string: &StringObject = mem::transmute(self.as_object());
+                            let other_string: &StringObject = mem::transmute(other.as_object());
 
                             self_string.chars == other_string.chars
                         }
@@ -337,7 +334,6 @@ mod normal {
     };
 
     use std::fmt::{self, Debug, Display};
-    use std::mem;
 
     #[derive(Clone, Copy)]
     /// A value within the VM
@@ -459,49 +455,49 @@ mod normal {
         pub fn as_string<'a>(&self) -> &StringObject<'a> {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const StringObject<'a>) }
         }
 
         #[inline]
         pub fn as_array<'a>(&self) -> &'a ArrayObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const ArrayObject) }
         }
 
         #[inline]
         pub fn as_class<'a>(&self) -> &'a ClassObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const ClassObject) }
         }
 
         #[inline]
         pub fn as_function<'a>(&self) -> &'a FunctionObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const FunctionObject) }
         }
 
         #[inline]
         pub fn as_native<'a>(&self) -> &'a NativeObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const NativeObject) }
         }
 
         #[inline]
         pub fn as_instance<'a>(&self) -> &'a InstanceObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &*(ptr as *const InstanceObject) }
         }
 
         #[inline]
         pub fn as_mut_instance<'a>(&self) -> &'a mut InstanceObject {
             let ptr = self.as_object();
 
-            unsafe { mem::transmute(ptr) }
+            unsafe { &mut *(ptr as *mut InstanceObject) }
         }
 
         #[inline]
@@ -511,28 +507,16 @@ mod normal {
 
         #[inline]
         pub fn is_class(&self) -> bool {
-            unsafe {
-                self.is_object()
-                    && mem::transmute::<RawObject, &Object>(self.as_object()).ty
-                        == ObjectType::Class
-            }
+            unsafe { self.is_object() && (*self.as_object()).ty == ObjectType::Class }
         }
 
         #[inline]
         pub fn is_string(&self) -> bool {
-            unsafe {
-                self.is_object()
-                    && mem::transmute::<RawObject, &Object>(self.as_object()).ty
-                        == ObjectType::String
-            }
+            unsafe { self.is_object() && (*self.as_object()).ty == ObjectType::String }
         }
         #[inline]
         pub fn is_native(&self) -> bool {
-            unsafe {
-                self.is_object()
-                    && mem::transmute::<RawObject, &Object>(self.as_object()).ty
-                        == ObjectType::Native
-            }
+            unsafe { self.is_object() && (*self.as_object()).ty == ObjectType::Native }
         }
     }
 
@@ -552,50 +536,32 @@ mod normal {
                     }
 
                     ValueType::Object => {
-                        let obj: &Object = mem::transmute(self.as_object());
+                        let obj: &Object = &*self.as_object();
 
                         match obj.ty {
-                            ObjectType::String => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &StringObject>(self.val.object)
-                            )?,
-                            ObjectType::Func => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &FunctionObject>(
-                                    self.val.object
-                                )
-                            )?,
-                            ObjectType::Array => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &ArrayObject>(self.val.object)
-                            )?,
-                            ObjectType::Class => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &ClassObject>(self.val.object)
-                            )?,
-                            ObjectType::Instance => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &InstanceObject>(
-                                    self.val.object
-                                )
-                            )?,
+                            ObjectType::String => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const StringObject))?
+                            }
+                            ObjectType::Func => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const FunctionObject))?
+                            }
+                            ObjectType::Array => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const ArrayObject))?
+                            }
+                            ObjectType::Class => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const ClassObject))?
+                            }
+                            ObjectType::Instance => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const InstanceObject))?
+                            }
 
-                            ObjectType::Enum => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &EnumObject>(self.val.object)
-                            )?,
+                            ObjectType::Enum => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const EnumObject))?
+                            }
 
-                            ObjectType::Native => write!(
-                                fmt,
-                                "{:#?}",
-                                ::std::mem::transmute::<RawObject, &NativeObject>(self.val.object)
-                            )?,
+                            ObjectType::Native => {
+                                write!(fmt, "{:#?}", &*(self.val.object as *const NativeObject))?
+                            }
                         }
                     }
                 }
@@ -619,7 +585,7 @@ mod normal {
                 } else if self.ty == ValueType::Bool {
                     write!(fmt, "{}", self.val.boolean)?;
                 } else if self.ty == ValueType::Object {
-                    let obj: &Object = mem::transmute(self.as_object());
+                    let obj: &Object = &*self.as_object();
 
                     match obj.ty {
                         ObjectType::String => write!(fmt, "{}", self.as_string())?,
@@ -648,31 +614,31 @@ mod normal {
                     ValueType::Int => self.as_int() == other.as_int(),
                     ValueType::Float => self.as_float() == other.as_float(),
                     ValueType::Object => unsafe {
-                        let self_object: &Object = std::mem::transmute(self.as_object());
+                        let self_object: &Object = &*self.as_object();
 
                         match self_object.ty {
                             ObjectType::String => {
                                 let self_string: &StringObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const StringObject<'_>);
                                 let other_string: &StringObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const StringObject<'_>);
 
                                 self_string.chars == other_string.chars
                             }
                             ObjectType::Array => {
                                 let self_array: &ArrayObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const ArrayObject);
                                 let other_array: &ArrayObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const ArrayObject);
 
                                 self_array.items == other_array.items
                             }
 
                             ObjectType::Instance => {
                                 let self_instance: &InstanceObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const InstanceObject);
                                 let other_instance: &InstanceObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const InstanceObject);
 
                                 self_instance.properties == other_instance.properties
                                 //shoud we check if methods are the same as well ?
@@ -680,26 +646,27 @@ mod normal {
 
                             ObjectType::Class => {
                                 let self_class: &ClassObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const ClassObject);
                                 let other_class: &ClassObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const ClassObject);
 
                                 self_class == other_class
                             }
                             ObjectType::Func => {
                                 let self_func: &FunctionObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const FunctionObject);
                                 let other_func: &FunctionObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const FunctionObject);
 
                                 self_func == other_func
                             }
 
                             ObjectType::Enum => {
-                                let self_enum: &EnumObject = std::mem::transmute(self.as_object());
+                                let self_enum: &EnumObject =
+                                    &*(self.as_object() as *const EnumObject);
 
                                 let other_enum: &EnumObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const EnumObject);
 
                                 self_enum.name == other_enum.name
                                     && self_enum.tag == other_enum.tag
@@ -707,9 +674,9 @@ mod normal {
                             }
                             ObjectType::Native => {
                                 let self_native: &NativeObject =
-                                    std::mem::transmute(self.as_object());
+                                    &*(self.as_object() as *const NativeObject);
                                 let other_native: &NativeObject =
-                                    std::mem::transmute(other.as_object());
+                                    &*(other.as_object() as *const NativeObject);
 
                                 self_native == other_native
                             }

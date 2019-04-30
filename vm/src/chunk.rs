@@ -117,7 +117,7 @@ impl Chunk {
     }
 
     pub fn jump_instruction(&self, name: &str, offset: usize) -> usize {
-        let dest = (self.code[offset + 1] as u16) << 8 | self.code[offset + 2] as u16;
+        let dest = u16::from(self.code[offset + 1]) << 8 | u16::from(self.code[offset + 2]);
 
         println!("{:16}{:4}", name, dest,);
 
