@@ -1,7 +1,7 @@
 ## Grammar
-[![](https://tokei.rs/b1/github/lapz/lexer)](https://github.com/lapz/tox)
+[![](https://tokei.rs/b1/github/lapz/tox)](https://github.com/lapz/tox)
 
-[![Build Status](https://travis-ci.org/Lapz/lexer.svg?branch=master)](https://travis-ci.org/Lapz/tox)
+[![Build Status](https://travis-ci.org/Lapz/tox.svg?branch=master)](https://travis-ci.org/Lapz/tox)
 # TOX
 
 Tox is a statically typed version of [lox](http://www.craftinginterpreters.com) that is written in rust.
