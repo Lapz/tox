@@ -1,7 +1,7 @@
-use ast as t;
-use ctx::CompileCtx;
-use infer::types::Type;
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::types::Type;
+use crate::infer::{Infer, InferResult};
 use syntax::ast::Expression;
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;

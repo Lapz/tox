@@ -1,6 +1,6 @@
-use ast as t;
-use ctx::CompileCtx;
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::{Infer, InferResult};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
 

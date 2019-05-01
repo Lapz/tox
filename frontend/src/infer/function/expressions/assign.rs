@@ -1,8 +1,8 @@
-use ast as t;
-use ctx::CompileCtx;
+use crate::ast as t;
+use crate::ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
-use infer::{Infer, InferResult};
+use crate::infer::types::{Type, TypeCon};
+use crate::infer::{Infer, InferResult};
 use syntax::ast::{AssignOperator, Expression};
 use util::pos::{Span, Spanned};
 use util::symbol::Symbol;
@@ -12,14 +12,14 @@ impl Infer {
         &mut self,
         name: Spanned<Symbol>,
         kind: Spanned<AssignOperator>,
-        value: Box<Spanned<Expression>>,
+        value: Spanned<Expression>,
         whole_span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
         let span = name.span.to(value.span);
 
         let ty = self.infer_symbol_type(&name, ctx)?;
-        let value_ty = self.infer_expr(*value, ctx)?;
+        let value_ty = self.infer_expr(value, ctx)?;
         use syntax::ast::AssignOperator::*;
         match kind.value {
             Equal => {

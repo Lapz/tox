@@ -1,5 +1,5 @@
-use parser::{Parser, ParserResult};
-use token::{Token, TokenType};
+use crate::parser::{Parser, ParserResult};
+use crate::token::{Token, TokenType};
 use util::pos::{Position, Span, Spanned};
 
 impl<'a> Parser<'a> {
@@ -283,13 +283,13 @@ impl<'a> Parser<'a> {
 
     /// Handles number,both ints and floats
     pub(crate) fn number(&mut self, start: Position) -> ParserResult<Spanned<Token<'a>>> {
-        let (end, int) = self.take_whilst(start, |c| c.is_numeric());
+        let (end, int) = self.take_whilst(start, char::is_numeric);
 
         let (token, start, end) = match self.lookahead {
             Some((_, '.')) => {
                 self.advance();
 
-                let (end, float) = self.take_whilst(start, |c| c.is_numeric());
+                let (end, float) = self.take_whilst(start, char::is_numeric);
 
                 match self.lookahead {
                     Some((pos, ch)) if ch.is_alphabetic() => {

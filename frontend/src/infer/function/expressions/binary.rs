@@ -1,24 +1,24 @@
-use ast as t;
-use ctx::CompileCtx;
+use crate::ast as t;
+use crate::ctx::CompileCtx;
 
-use infer::types::{Type, TypeCon};
-use infer::{Infer, InferResult};
+use crate::infer::types::{Type, TypeCon};
+use crate::infer::{Infer, InferResult};
 use syntax::ast::{Expression, Op};
 use util::pos::{Span, Spanned};
 
 impl Infer {
     pub(crate) fn infer_binary(
         &mut self,
-        lhs: Box<Spanned<Expression>>,
+        lhs: Spanned<Expression>,
         op: Spanned<Op>,
-        rhs: Box<Spanned<Expression>>,
+        rhs: Spanned<Expression>,
         whole_span: Span,
         ctx: &mut CompileCtx,
     ) -> InferResult<Spanned<t::TypedExpression>> {
         let span = lhs.span.to(rhs.span);
 
-        let lhs = self.infer_expr(*lhs, ctx)?;
-        let rhs = self.infer_expr(*rhs, ctx)?;
+        let lhs = self.infer_expr(lhs, ctx)?;
+        let rhs = self.infer_expr(rhs, ctx)?;
         let (typed, ty) = match op.value {
             Op::BangEqual | Op::EqualEqual => (
                 Spanned::new(t::Expression::Binary(lhs, op.value, rhs), whole_span),

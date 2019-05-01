@@ -1,8 +1,8 @@
-use ast as t;
-use ctx::CompileCtx;
-use infer::env::VarEntry;
-use infer::types::{Type, TypeCon};
-use infer::{Infer, InferResult};
+use crate::ast as t;
+use crate::ctx::CompileCtx;
+use crate::infer::env::VarEntry;
+use crate::infer::types::{Type, TypeCon};
+use crate::infer::{Infer, InferResult};
 use syntax::ast::{Literal, Statement};
 use util::pos::Spanned;
 
@@ -47,26 +47,24 @@ impl Infer {
 
                 ctx.end_scope();
 
-                ((
+                (
                     Spanned::new(t::Statement::Block(new_statements), statement.span),
                     Type::Nil,
-                ))
+                )
             }
-            Statement::Break => ((Spanned::new(t::Statement::Break, statement.span), Type::Nil)),
-            Statement::Continue => {
-                ((
-                    Spanned::new(t::Statement::Continue, statement.span),
-                    Type::Nil,
-                ))
-            }
+            Statement::Break => (Spanned::new(t::Statement::Break, statement.span), Type::Nil),
+            Statement::Continue => (
+                Spanned::new(t::Statement::Continue, statement.span),
+                Type::Nil,
+            ),
             Statement::Expr(expr) => {
                 let type_expr = self.infer_expr(expr, ctx)?;
                 let ty = type_expr.value.ty.clone();
 
-                ((
+                (
                     Spanned::new(t::Statement::Expr(type_expr), statement.span),
                     ty,
-                )) // Expressions are given the type of Nil to signify that they return nothing
+                ) // Expressions are given the type of Nil to signify that they return nothing
             }
 
             Statement::For {
@@ -81,7 +79,7 @@ impl Infer {
                 }
 
                 let mut block = vec![];
-                let mut span = body.span;
+                let span = body.span;
 
                 if let Some(init) = init {
                     block.push(self.infer_statement(*init, ctx)?);
@@ -184,7 +182,7 @@ impl Infer {
                     ))
                 }
 
-                ((Spanned::new(t::Statement::Block(block), span), Type::Nil))
+                (Spanned::new(t::Statement::Block(block), span), Type::Nil)
             }
 
             Statement::If {
@@ -210,7 +208,7 @@ impl Infer {
                     otherwise_tyexpr = Some(tyexpr)
                 }
 
-                ((
+                (
                     Spanned::new(
                         t::Statement::If {
                             cond: cond_tyexpr,
@@ -220,16 +218,16 @@ impl Infer {
                         statement.span,
                     ),
                     Type::Nil,
-                ))
+                )
             }
 
             Statement::Print(expr) => {
-                let mut type_expr = self.infer_expr(expr, ctx)?;
+                let type_expr = self.infer_expr(expr, ctx)?;
 
-                ((
+                (
                     Spanned::new(t::Statement::Print(type_expr), statement.span),
                     Type::Nil,
-                ))
+                )
             }
 
             Statement::While { cond, body } => {
@@ -237,13 +235,13 @@ impl Infer {
                 let expr = self.infer_expr(cond, ctx)?;
                 self.unify(&Type::App(TypeCon::Bool, vec![]), &expr.value.ty, span, ctx)?;
 
-                ((
+                (
                     Spanned::new(
                         t::Statement::While(expr, self.infer_statement(*body, ctx)?),
                         statement.span,
                     ),
                     Type::Nil,
-                ))
+                )
             }
 
             Statement::VarDeclaration { ident, ty, expr } => {
@@ -275,7 +273,7 @@ impl Infer {
 
                     ctx.add_var(ident.value, VarEntry::Var(expr_tyexpr.value.ty.clone()));
 
-                    ((
+                    (
                         Spanned::new(
                             t::Statement::Let {
                                 ident: ident.value,
@@ -285,7 +283,7 @@ impl Infer {
                             statement.span,
                         ),
                         Type::Nil,
-                    ))
+                    )
                 } else {
                     if let Some(ty) = ty {
                         let ty = self.trans_type(&ty, ctx)?;
@@ -310,7 +308,7 @@ impl Infer {
 
                     ctx.add_var(ident.value, VarEntry::Var(Type::Nil));
 
-                    ((
+                    (
                         Spanned::new(
                             t::Statement::Let {
                                 ident: ident.value,
@@ -320,7 +318,7 @@ impl Infer {
                             statement.span,
                         ),
                         Type::Nil,
-                    ))
+                    )
                 }
             }
 
@@ -329,10 +327,10 @@ impl Infer {
                 let ty = type_expr.value.ty.clone();
 
                 self.body = type_expr.value.ty.clone();
-                ((
+                (
                     Spanned::new(t::Statement::Return(type_expr), statement.span),
                     ty,
-                )) // Expressions are given the type of Nil to signify that they return nothing
+                ) // Expressions are given the type of Nil to signify that they return nothing
             }
         };
 

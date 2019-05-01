@@ -104,13 +104,13 @@ impl<'a> VM<'a> {
 
             #[cfg(feature = "stack")]
             {
-                print!("[");
+                println!("[");
 
                 for val in &self.stack[0..self.stack_top] {
                     print!("{},", val);
                 }
 
-                print!("]\n")
+                println!("]")
             }
 
             match self.read_byte() {
@@ -267,7 +267,7 @@ impl<'a> VM<'a> {
                     let instance = self.pop();
                     let instance = instance.as_instance();
 
-                    let property = Symbol(self.read_byte() as u64);
+                    let property = Symbol(u64::from(self.read_byte()));
                     let value = instance.properties[&property];
 
                     self.push(value);
@@ -277,9 +277,9 @@ impl<'a> VM<'a> {
                     let instance = self.pop();
                     let instance = instance.as_instance();
 
-                    let method_name = Symbol(self.read_byte() as u64);
+                    let method_name = Symbol(u64::from(self.read_byte()));
 
-                    let method = instance.methods.get(&method_name).unwrap();
+                    let method = &instance.methods[&method_name];
                     let value = Value::object(FunctionObject::new(
                         method.params.len(),
                         method.clone(),
@@ -290,15 +290,15 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::ENUM => {
-                    let enum_name = Symbol(self.read_byte() as u64);
-                    let tag = self.read_byte() as u32;
+                    let enum_name = Symbol(u64::from(self.read_byte()));
+                    let tag = u32::from(self.read_byte());
                     let object = EnumObject::new(enum_name, tag, None, self.objects);
                     self.push(Value::object(object))
                 }
 
                 opcode::ENUMDATA => {
-                    let enum_name = Symbol(self.read_byte() as u64);
-                    let tag = self.read_byte() as u32;
+                    let enum_name = Symbol(u64::from(self.read_byte()));
+                    let tag = u32::from(self.read_byte());
                     let data = self.pop();
                     let object = EnumObject::new(enum_name, tag, Some(data), self.objects);
                     self.push(Value::object(object))
@@ -310,7 +310,7 @@ impl<'a> VM<'a> {
 
                     let value = self.pop();
 
-                    let property = Symbol(self.read_byte() as u64);
+                    let property = Symbol(u64::from(self.read_byte()));
 
                     instance.properties.insert(property, value);
                 }
@@ -340,10 +340,10 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                    let function_name = Symbol(self.read_byte() as u64);
+                    let function_name = Symbol(u64::from(self.read_byte()));
                     let arg_count = self.read_byte();
 
-                    let function = self.program.functions.get(&function_name).unwrap();
+                    let function = &self.program.functions[&function_name];
 
                     let mut params = FnvHashMap::default();
 
@@ -354,7 +354,7 @@ impl<'a> VM<'a> {
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: FnvHashMap::default(),
-                        function: function,
+                        function,
                         params,
                     };
 
@@ -364,8 +364,8 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALLNATIVE => {
-                    let function_name = Symbol(self.read_byte() as u64);
-                    let function = self.native_functions.get(&function_name).unwrap();
+                    let function_name = Symbol(u64::from(self.read_byte()));
+                    let function = &self.native_functions[&function_name];
                     let function = function.as_native();
 
                     let arg_count = function.arity;
@@ -380,13 +380,13 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALLINSTANCEMETHOD => {
-                    let method_name = Symbol(self.read_byte() as u64);
+                    let method_name = Symbol(u64::from(self.read_byte()));
                     let arg_count = self.read_byte();
 
                     let instance = self.pop();
                     let instance = instance.as_instance();
 
-                    let function = &instance.methods.get(&method_name).unwrap();
+                    let function = &instance.methods[&method_name];
 
                     let mut params = FnvHashMap::default();
 
@@ -397,7 +397,7 @@ impl<'a> VM<'a> {
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: FnvHashMap::default(),
-                        function: function,
+                        function,
                         params,
                     };
 
@@ -406,17 +406,10 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALLSTATICMETHOD => {
-                    let class_name = Symbol(self.read_byte() as u64);
-                    let method_name = Symbol(self.read_byte() as u64);
+                    let class_name = Symbol(u64::from(self.read_byte()));
+                    let method_name = Symbol(u64::from(self.read_byte()));
                     let arg_count = self.read_byte();
-                    let function = self
-                        .program
-                        .classes
-                        .get(&class_name)
-                        .unwrap()
-                        .methods
-                        .get(&method_name)
-                        .unwrap();
+                    let function = &self.program.classes[&class_name].methods[&method_name];
 
                     let mut params = FnvHashMap::default();
 
@@ -427,7 +420,7 @@ impl<'a> VM<'a> {
                     let call_frame = StackFrame {
                         ip: 0,
                         locals: FnvHashMap::default(),
-                        function: function,
+                        function,
                         params,
                     };
 
@@ -454,25 +447,25 @@ impl<'a> VM<'a> {
                     let string = self.pop();
                     let string = string.as_string();
 
-                    let slice = &string.chars.string()[index..index + 1];
+                    let slice = &string.chars.string()[index..=index];
                     let result = StringObject::new(slice, self.objects);
 
                     self.push(Value::object(result))
                 }
 
                 opcode::CLASSINSTANCE => {
-                    let class_name = Symbol(self.read_byte() as u64);
+                    let class_name = Symbol(u64::from(self.read_byte()));
 
                     let num_properties = self.read_byte() as usize;
 
-                    let class = self.program.classes.get(&class_name).unwrap();
+                    let class = &self.program.classes[&class_name];
 
                     let methods = class.methods.clone();
 
                     let mut properties = FnvHashMap::default();
 
                     for _ in 0..num_properties {
-                        properties.insert(Symbol(self.read_byte() as u64), self.pop());
+                        properties.insert(Symbol(u64::from(self.read_byte())), self.pop());
                     }
 
                     let instance = InstanceObject::new(methods, properties, self.objects);
@@ -528,8 +521,8 @@ impl<'a> VM<'a> {
     }
 
     fn read_16_bits(&mut self) -> u16 {
-        let result = ((self.current_frame.function.body.code[self.current_frame.ip] as u16) << 8)
-            | self.current_frame.function.body.code[self.current_frame.ip + 1] as u16;
+        let result = (u16::from(self.current_frame.function.body.code[self.current_frame.ip]) << 8)
+            | u16::from(self.current_frame.function.body.code[self.current_frame.ip + 1]);
         // Shifts the instruction by 8 to the right and or all the 1's and 0's
         self.current_frame.ip += 2;
 

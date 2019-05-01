@@ -1,9 +1,9 @@
 mod lexer;
 
-use ast::*;
+use crate::ast::*;
+use crate::token::{Token, TokenType};
 use rand::{self, Rng};
 use std::collections::VecDeque;
-use token::{Token, TokenType};
 use util::emmiter::Reporter;
 use util::pos::{CharPosition, Position, Span, Spanned, EMPTYSPAN};
 use util::symbol::{Symbol, Symbols};
@@ -251,7 +251,7 @@ impl<'a> Parser<'a> {
     fn random_ident(&mut self) -> Symbol {
         let mut rng = rand::thread_rng();
         let letter: char = rng.gen_range(b'A', b'Z') as char;
-        let number: u32 = rng.gen_range(0, 999999);
+        let number: u32 = rng.gen_range(0, 999_999);
         let s = format!("{}{:06}", letter, number);
 
         self.symbols.symbol(&s)
@@ -1318,22 +1318,20 @@ impl<'a> Parser<'a> {
                             ..
                         }),
                     span: end_span,
-                } => {
-                    return Ok(Spanned {
-                        value: Expression::ClassLiteral(Spanned {
-                            span: expr.span.to(greater_than_span),
-                            value: ClassLiteral {
-                                types: Spanned {
-                                    span: less_than_span.to(greater_than_span),
-                                    value: types,
-                                },
-                                symbol,
-                                props,
+                } => Ok(Spanned {
+                    value: Expression::ClassLiteral(Spanned {
+                        span: expr.span.to(greater_than_span),
+                        value: ClassLiteral {
+                            types: Spanned {
+                                span: less_than_span.to(greater_than_span),
+                                value: types,
                             },
-                        }),
-                        span: expr.get_span().to(end_span),
-                    });
-                }
+                            symbol,
+                            props,
+                        },
+                    }),
+                    span: expr.get_span().to(end_span),
+                }),
 
                 _ => unreachable!(),
             }
@@ -1355,7 +1353,7 @@ impl<'a> Parser<'a> {
                                 }),
                             ..
                         } => {
-                            return Ok(Spanned {
+                            Ok(Spanned {
                                 value: Expression::Call(Spanned {
                                     span: whole_span.to(call.span),
                                     value: Call {
@@ -1368,7 +1366,7 @@ impl<'a> Parser<'a> {
                                     },
                                 }),
                                 span: { whole_span.to(call.span) },
-                            });
+                            })
                         }
                         _ => unreachable!(),
                     }

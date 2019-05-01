@@ -17,5 +17,5 @@ mod ctx;
 mod infer;
 mod lower;
 
-pub use codegen::compile;
-pub use infer::Infer;
+pub use crate::codegen::compile;
+pub use crate::infer::Infer;
