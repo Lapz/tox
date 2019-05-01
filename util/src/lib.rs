@@ -3,7 +3,6 @@ extern crate ansi_term;
 extern crate fnv;
 extern crate itertools;
 pub mod emmiter;
-pub mod macros;
 pub mod pos;
 pub mod symbol;
 

@@ -8,14 +8,10 @@ extern crate syntax;
 extern crate util;
 extern crate vm;
 
-#[macro_use]
-// mod resolver;
-// mod test;
 mod ast;
 mod codegen;
 mod ctx;
 mod infer;
-mod lower;
 
 pub use crate::codegen::compile;
 pub use crate::infer::Infer;

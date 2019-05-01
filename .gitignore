@@ -5,3 +5,4 @@
 */target/
 tox/out.ll
 .DS_Store
+*/.DS_Store
