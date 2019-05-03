@@ -5,7 +5,7 @@ pub(crate) use syntax::ast::{AssignOperator, Literal, Op, UnaryOp};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
     pub functions: Vec<Function>,
     pub classes: Vec<Class>,

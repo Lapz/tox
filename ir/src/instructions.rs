@@ -30,7 +30,18 @@ pub struct Function {
     pub blocks: HashMap<BlockID, Block>,
     pub start_block: BlockID,
 }
+#[derive(Debug, Clone)]
+pub struct StructLayout {
+    fields: HashMap<Symbol, usize>,
+}
 
+#[derive(Debug, Clone)]
+pub struct Layout {
+    /// the size of the field
+    size_of: usize,
+    /// the alignment
+    align_of: usize,
+}
 #[derive(Debug, Clone)]
 pub struct Class {
     ident: Symbol,
@@ -197,6 +208,12 @@ impl Register {
     }
 }
 
+impl Layout {
+    pub fn new(size_of: usize, align_of: usize) -> Layout {
+        Layout { align_of, size_of }
+    }
+}
+
 impl Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -328,7 +345,7 @@ impl Display for Inst {
             Inst::Return(ref label) => write!(out, "return @{}", label),
             Inst::Call(ref dest, ref callee, ref args) => {
                 for arg in args {
-                    write!(out, "arg: {}", arg)?;
+                    write!(out, "arg: {}\n", arg)?;
                 }
 
                 write!(out, "{} <- call {}", dest, callee)?;

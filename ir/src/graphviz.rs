@@ -20,14 +20,14 @@ impl Program {
         let mut end = Vec::new();
 
         for (id, block) in function.blocks.iter() {
-            if block.instructions.is_empty() {
-                continue; // skip empty blocks
-            }
+            // if block.instructions.is_empty() {
+            //     continue; // skip empty blocks
+            // }
 
-            write!(out, "\n\t{} [label=\"{}", id.0, id)?;
+            write!(out, "\n\t{} [label=\"{}\n", id.0, id)?;
 
             for inst in block.instructions.iter() {
-                write!(out, "\\l{}", inst)?;
+                write!(out, "\\l{}\n", inst)?;
             }
 
             write!(out, "\\l{}", block.end)?;
@@ -66,7 +66,6 @@ impl Program {
             let file_name = format!("graphviz/{}.dot", symbols.name(function.name));
 
             self.viz(&mut File::create(&file_name).unwrap(), function)?;
-            self.viz(&mut std::io::stdout(),function)?;
 
             let mut dot = Command::new("dot");
 
@@ -81,7 +80,7 @@ impl Program {
 
             file.write(&output)?;
 
-            fs::remove_file(file_name)?;
+            // fs::remove_file(file_name)?;
         }
 
         Ok(())

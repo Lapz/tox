@@ -82,30 +82,30 @@ pub fn run(path: String, print_ir: Option<String>) {
         }
     };
 
-    if let Some(f) = print_ir {
-        let printer = Printer::new(&symbols);
-        let program = build_program(&symbols, typed_ast);
+    #[cfg(feature = "graphviz")]
+    {
+        let program = build_program(&symbols, typed_ast.clone());
+        program.graphviz(&symbols).unwrap();
+        if let Some(f) = print_ir {
+            let printer = Printer::new(&symbols);
+            // let program = build_program(&symbols, typed_ast);
 
-        printer
-            .print_program(&program, &mut File::create(f).unwrap())
-            .unwrap();
-
-        #[cfg(feature = "graphviz")]
-        {
-            program.graphviz(&symbols).unwrap();
+            printer
+                .print_program(&program, &mut File::create(f).unwrap())
+                .unwrap();
         }
-    } else {
-        let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
-            Ok(functions) => functions,
-            Err(_) => {
-                reporter.emit(input);
-                ::std::process::exit(65)
-            }
-        };
-
-        let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-        vm.run();
     }
+
+    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+        Ok(functions) => functions,
+        Err(_) => {
+            reporter.emit(input);
+            ::std::process::exit(65)
+        }
+    };
+
+    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+    vm.run();
 }
 
 #[derive(StructOpt, Debug)]

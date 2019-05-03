@@ -9,11 +9,12 @@ extern crate util;
 extern crate vm;
 
 mod ast;
+mod build_cfg;
+mod build_structs;
 mod codegen;
 mod ctx;
 mod infer;
-mod lower;
 
+pub use crate::build_cfg::build_program;
 pub use crate::codegen::compile;
 pub use crate::infer::Infer;
-pub use crate::lower::build_program;

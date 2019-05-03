@@ -88,7 +88,7 @@ impl<'a> Printer<'a> {
                 write!(out, "{} <- call {} ", dest, callee)?;
 
                 for arg in args {
-                    write!(out, "{}", arg)?;
+                    write!(out, "{}\n", arg)?;
                 }
 
                 write!(out, "")?;
