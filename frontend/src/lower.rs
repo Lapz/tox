@@ -1,8 +1,8 @@
-use ast as t;
+use crate::ast as t;
+use crate::infer::types;
 use ir::instructions::*;
-use ir::types::*;
 use std::collections::HashMap;
-use syntax::ast::{Literal, Op, UnaryOp};
+use syntax::ast::{Literal, Op,self};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use util::symbol::Symbols;
@@ -68,25 +68,31 @@ impl<'a> Builder<'a> {
         self.locals.iter().map(|(_, register)| *register).collect()
     }
 
-    pub fn emit_instruction(&mut self, inst: Inst, ty: Type) {
+    pub fn emit_instruction(&mut self, inst: Inst) {
         self.current_block
             .as_mut()
             .expect("Basic Block should be started")
             .1
-            .push(Instruction {
-                instruction: inst,
-                ty,
-            });
+            .push(Instruction { instruction: inst });
     }
 
-    pub fn emit_store(&mut self, dest: Value, source: Value, ty: Type) {
+    pub fn emit_store(&mut self, dest: Register, source: Register) {
         self.current_block
             .as_mut()
             .expect("Basic block should be started")
             .1
             .push(Instruction {
                 instruction: Inst::Store(dest, source),
-                ty,
+            })
+    }
+
+    pub fn emit_store_immediate(&mut self, dest: Register, val: Value) {
+        self.current_block
+            .as_mut()
+            .expect("Basic block should be started")
+            .1
+            .push(Instruction {
+                instruction: Inst::StoreI(dest, val),
             })
     }
 
@@ -110,7 +116,7 @@ impl<'a> Builder<'a> {
         match s.value {
             Statement::Block(statements) => {
                 for statement in statements {
-                    self.emit_instruction(Inst::StatementStart, Type::Nil);
+                    self.emit_instruction(Inst::StatementStart);
                     self.build_statement(statement)
                 }
             }
@@ -190,19 +196,19 @@ impl<'a> Builder<'a> {
                 self.start_block(after);
             }
 
-            Statement::Let { ident, ty, expr } => {
+            Statement::Let { ident, expr, .. } => {
                 let reg = self.add_local(ident);
 
                 if let Some(expr) = expr {
                     let expr = self.build_expr(expr);
-                    self.emit_store(Value::Register(reg), expr, ty);
+                    self.emit_store(reg, expr);
                 }
             }
 
             Statement::Print(expr) => {
                 let expr = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Print(expr), Type::Nil);
+                self.emit_instruction(Inst::Print(expr));
             }
 
             Statement::Return(expr) => {
@@ -243,52 +249,42 @@ impl<'a> Builder<'a> {
         }
     }
 
-    fn build_expr(&mut self, expr: Spanned<t::TypedExpression>) -> Value {
+    fn build_expr(&mut self, expr: Spanned<t::TypedExpression>) -> Register {
         use self::t::Expression;
 
-        let expr = expr.value;
-
-        let ty = expr.ty;
-        let expr = expr.expr.value;
-
-        match expr {
+        match expr.value.expr.value {
             Expression::Array(items) => {
                 let temp = Register::new();
 
-                self.emit_instruction(Inst::Array(Value::Register(temp), items.len()), ty.clone());
+                self.emit_instruction(Inst::Array(temp, items.len()));
 
                 for (i, item) in items.into_iter().enumerate() {
                     let result = self.build_expr(item);
                     let offset = Register::new();
+                    let temp = Register::new();
 
-                    self.emit_instruction(
-                        Inst::Binary(
-                            offset,
-                            Value::Register(temp),
-                            BinaryOp::Plus,
-                            Value::Const(i as i64),
-                        ),
-                        Type::App(TypeCon::Int, vec![]),
-                    );
+                    self.emit_store_immediate(temp, Value::Const(i as i64));
 
-                    self.emit_store(Value::Register(offset), result, Type::Nil);
+                    self.emit_instruction(Inst::Binary(offset, temp, BinaryOp::Plus, temp));
+
+                    self.emit_store(offset, result);
                 }
 
-                Value::Register(temp)
+                temp
             }
 
             Expression::Assign(var, op, expr) => {
                 let expr = self.build_expr(expr);
                 let var = self.build_var(&var).expect("Undefined Variable");
 
-                self.emit_store(var.clone(), expr, ty.clone());
+                self.emit_store(var.clone(), expr);
 
                 var
             }
 
             Expression::Binary(lhs, op, rhs) => match op {
-                Op::And => self.build_and(lhs, rhs, ty),
-                Op::Or => self.build_or(lhs, rhs, ty),
+                Op::And => self.build_and(lhs, rhs),
+                Op::Or => self.build_or(lhs, rhs),
                 _ => {
                     let lhs = self.build_expr(lhs);
                     let rhs = self.build_expr(rhs);
@@ -296,32 +292,32 @@ impl<'a> Builder<'a> {
                     let op = gen_bin_op(op);
                     let result = Register::new();
 
-                    self.emit_instruction(Inst::Binary(result, lhs, op, rhs), ty);
-                    Value::Register(result)
+                    self.emit_instruction(Inst::Binary(result, lhs, op, rhs));
+                    result
                 }
             },
 
             Expression::Call(callee, args) => {
                 let result = Register::new();
-                let ident = Value::Named(callee);
-                let mut temps = Vec::with_capacity(args.len()); // Temps where the expressions are stored
+                let mut reg_args = Vec::with_capacity(args.len()); // Temps where the expressions are stored
 
                 for expr in args {
-                    temps.push(self.build_expr(expr))
+                    reg_args.push(self.build_expr(expr))
                 }
 
-                self.emit_instruction(Inst::Call(Value::Register(result), ident, temps), ty);
+                self.emit_instruction(Inst::Call(result, callee, reg_args));
 
-                Value::Register(result)
+                result
             }
 
-            Expression::Cast(expr, ty) => {
+            Expression::Cast(expr, _) => {
+                let dest = Register::new();
                 let from = expr.value.ty.clone();
                 let result = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Cast(result.clone(), from, ty.clone()), ty);
+                self.emit_instruction(Inst::Cast(dest, result, get_size(from)));
 
-                result
+                dest
             }
 
             Expression::ClassLiteral { .. } => unimplemented!(),
@@ -345,72 +341,71 @@ impl<'a> Builder<'a> {
 
                 match literal {
                     Literal::False(_) => {
-                        self.emit_store(Value::Register(tmp), Value::Bool(false), ty);
+                        self.emit_store_immediate(tmp, Value::Bool(false));
                     }
                     Literal::Nil => {
-                        self.emit_store(Value::Register(tmp), Value::Nil, ty);
+                        self.emit_store_immediate(tmp, Value::Nil);
                     }
 
-                    Literal::Int(number) => {
-                        self.emit_store(Value::Register(tmp), Value::Const(number), ty)
-                    }
+                    Literal::Int(number) => self.emit_store_immediate(tmp, Value::Const(number)),
 
-                    Literal::Float(number) => {
-                        self.emit_store(Value::Register(tmp), Value::Float(number), ty)
-                    }
+                    Literal::Float(number) => self.emit_store_immediate(tmp, Value::Float(number)),
 
                     Literal::Str(string) => {
                         let mut bytes = string.into_bytes();
 
-                        self.emit_store(Value::Register(tmp), Value::Mem(bytes), ty);
+                        self.emit_store_immediate(tmp, Value::Mem(bytes));
                     }
 
                     Literal::True(_) => {
-                        self.emit_store(Value::Register(tmp), Value::Bool(true), ty);
+                        self.emit_store_immediate(tmp, Value::Bool(true));
                     }
                 };
 
-                Value::Register(tmp)
+                tmp
             }
 
-            Expression::Match { cond, arms, all } => {
-                let after_block = self.new_block();
+            Expression::Match { cond, arms } => {
+                unimplemented!()
+                // let after_block = self.new_block();
 
-                let cond = self.build_expr(cond);
+                // let cond = self.build_expr(cond);
 
-                let result = Register::new();
+                // let result = Register::new();
 
-                let block_ids: Vec<BlockID> = (0..arms.value.len() + 1)
-                    .map(|_| self.new_block())
-                    .collect();
+                // let block_ids: Vec<BlockID> = (0..arms.value.len() + 1)
+                //     .map(|_| self.new_block())
+                //     .collect();
 
-                self.end_block(BlockEnd::Link(*block_ids.first().unwrap())); //fix empty match
+                // self.end_block(BlockEnd::Link(*block_ids.first().unwrap())); //fix empty match
 
-                for (i, arm) in arms.value.into_iter().enumerate() {
-                    let result = Register::new();
-                    self.start_block(block_ids[i]);
-                    let pattern = self.build_expr(arm.value.pattern);
-                    self.emit_instruction(
-                        Inst::Binary(result, pattern, BinaryOp::Equal, cond.clone()),
-                        Type::App(TypeCon::Bool, vec![]),
-                    );
-                    self.build_statement(arm.value.body);
-                    self.end_block(BlockEnd::Branch(
-                        Value::Register(result),
-                        after_block,
-                        block_ids[i + 1],
-                    ));
-                }
+                // for (i, arm) in arms.value.into_iter().enumerate() {
+                //     let result = Register::new();
+                //     self.start_block(block_ids[i]);
+                //     let pattern = self.build_expr(arm.value.pattern);
+                //     self.emit_instruction(Inst::Binary(
+                //         result,
+                //         pattern,
+                //         BinaryOp::Equal,
+                //         cond.clone(),
+                //     ));
+                //     self.build_statement(arm.value.body);
+                //     self.end_block(BlockEnd::Branch(
+                //         Value::Register(result),
+                //         after_block,
+                //         block_ids[i + 1],
+                //     ));
+                // }
 
-                if let Some(all) = all {
-                    self.start_block(*block_ids.last().unwrap());
-                    self.build_statement(all);
-                    self.end_block(BlockEnd::Link(after_block))
-                }
+                // if let Some(all) = all {
+                //     self.start_block(*block_ids.last().unwrap());
+                //     self.build_statement(all);
+                //     self.end_block(BlockEnd::Link(after_block))
+                // }
 
-                self.start_block(after_block);
+                // self.start_block(after_block);
 
-                Value::Register(result)
+                // result
             }
 
             Expression::Set(name, object, value) => {
@@ -422,12 +417,12 @@ impl<'a> Builder<'a> {
 
                 let value = self.build_expr(value);
 
-                self.emit_instruction(Inst::, type)
+                // self.emit_instruction(ae);
+                //
+                unimplemented!();
 
-
-
-                Value::Register(result)
-            },
+                result
+            }
 
             Expression::StaticMethodCall {
                 class_name,
@@ -436,6 +431,16 @@ impl<'a> Builder<'a> {
             } => unimplemented!(),
 
             Expression::Grouping(expr) => self.build_expr(expr),
+
+            Expression::Unary(op,val) => {
+                let result = Register::new();
+
+                let val = self.build_expr(val);
+
+                self.emit_instruction(Inst::Unary(result,val,gen_un_op(op)));
+
+                result
+            }
 
             Expression::Var(ref symbol, _) => self.build_var(symbol).unwrap(),
 
@@ -447,8 +452,7 @@ impl<'a> Builder<'a> {
         &mut self,
         l: Spanned<t::TypedExpression>,
         r: Spanned<t::TypedExpression>,
-        ty: Type,
-    ) -> Value {
+    ) -> Register {
         let built_lhs = self.build_expr(l);
         let rhs_block = self.new_block();
         let reset_block = self.new_block();
@@ -461,34 +465,31 @@ impl<'a> Builder<'a> {
 
         let built_rhs = self.build_expr(r);
 
-        self.emit_store(Value::Register(result), built_rhs.clone(), ty.clone());
+        self.emit_store(result, built_rhs.clone());
 
         self.end_block(BlockEnd::Jump(after_block));
         self.start_block(reset_block);
 
-        self.emit_store(Value::Register(result), Value::Bool(true), ty);
+        self.emit_store_immediate(result, Value::Bool(true));
 
         self.end_block(BlockEnd::Jump(after_block));
 
         self.start_block(after_block);
 
-        Value::Register(result)
+        result
     }
 
     fn build_or(
         &mut self,
         l: Spanned<t::TypedExpression>,
         r: Spanned<t::TypedExpression>,
-        ty: Type,
-    ) -> Value {
+    ) -> Register {
         unimplemented!()
     }
 
-    fn build_var(&self, var: &Symbol) -> Option<Value> {
-        if let Some(register) = self.locals.get(var) {
-            Some(Value::Register(*register))
-        } else if let Some(register) = self.parameters.get(var) {
-            Some(Value::Register(*register))
+    fn build_var(&self, var: &Symbol) -> Option<Register> {
+        if let Some(register) = self.locals.get(var).or(self.parameters.get(var)) {
+            Some(*register)
         } else {
             None
         }
@@ -535,10 +536,19 @@ pub fn build_program(symbols: &Symbols<()>, old_program: t::Program) -> Program 
     new_program
 }
 
-fn gen_un_op(op: UnaryOp) -> UnaryOp {
+fn gen_un_op(op: ast::UnaryOp) -> UnaryOp {
     match op {
-        UnaryOp::Minus => UnaryOp::Minus,
-        UnaryOp::Bang => UnaryOp::Bang,
+        ast::UnaryOp::Minus => UnaryOp::Minus,
+        ast::UnaryOp::Bang => UnaryOp::Bang,
+    }
+}
+
+fn get_size(ty: types::Type) -> Size {
+    match ty {
+        types::Type::App(types::TypeCon::Float, _) => Size::Bit64,
+        types::Type::App(types::TypeCon::Str, _) => Size::Bit64,
+        types::Type::App(types::TypeCon::Int, _) => Size::Bit64,
+        _ => unreachable!(),
     }
 }
 

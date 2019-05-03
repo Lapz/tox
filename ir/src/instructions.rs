@@ -14,7 +14,7 @@ pub struct BlockID(pub u32);
 /// A label in the code.
 pub struct Label(u32);
 
-/// A temp label that can either be a temp location or a register
+/// A register
 #[derive(Clone, Copy, Hash, PartialEq, Default, Eq)]
 pub struct Register(pub u32);
 
@@ -34,8 +34,6 @@ pub struct Function {
 #[derive(Debug, Clone)]
 pub struct Class {
     ident: Symbol,
-    fields: Vec<crate::types::Type>,
-    methods: Vec<crate::types::Type>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -53,8 +51,8 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockEnd {
     Jump(BlockID),
-    Return(Value),
-    Branch(Value, BlockID, BlockID),
+    Return(Register),
+    Branch(Register, BlockID, BlockID),
     Link(BlockID),
     End,
 }
@@ -62,36 +60,44 @@ pub enum BlockEnd {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub instruction: Inst,
-    pub ty: crate::types::Type,
 }
-
+#[derive(Debug, Clone, PartialEq)]
+pub enum Size {
+    Bit8,
+    Bit32,
+    Bit64,
+}
 /// Instruction used in the IR
 /// Instructions are of the form i <- a op b
 #[derive(Debug, Clone, PartialEq)]
 pub enum Inst {
     /// A stack allocated array of size whatever
     /// Stored at a location
-    Array(Value, usize),
+    Array(Register, usize),
 
     Drop(Register),
-
-    Binary(Register, Value, BinaryOp, Value),
-
-    Cast(Value, crate::types::Type, crate::types::Type),
-
-    Call(Value, Value, Vec<Value>),
-
-    Print(Value),
+    /// $dest = $lhs $op $rhs
+    Binary(Register, Register, BinaryOp, Register),
+    ///Cast the value from one type to another
+    /// $dest = $val as type
+    Cast(Register, Register, Size),
+    /// Call the function with the provided args in registers and store in in the dest
+    /// $dest = call $func
+    Call(Register, Symbol, Vec<Register>),
+    /// Print the value stored in the register
+    Print(Register),
 
     StatementStart,
 
-    /// t1 = val
-    Store(Value, Value),
+    /// $dest = val
+    StoreI(Register, Value),
+    /// $dest = val
+    Store(Register, Register),
 
-    /// t1 = op a
-    Unary(Value, Value, UnaryOp),
+    /// $dest = op $val
+    Unary(Register, Register, UnaryOp),
 
-    Return(Value),
+    Return(Register),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -102,43 +108,12 @@ pub enum Value {
     Float(f64),
     /// One of many registers
     Register(Register),
-
-    Named(Symbol),
     ///  Contents of a word of memory at address
     Mem(Vec<u8>),
 
     Bool(bool),
 
     Nil,
-}
-
-
-/// Instruction used in the IR
-/// Instructions are of the form i <- a op b
-#[derive(Debug, Clone, PartialEq)]
-pub enum Inst2 {
-    /// A stack allocated array of size whatever
-    /// Stored at a location
-    Array(Value, usize),
-
-    Drop(Register),
-
-    Binary(Register, Value, BinaryOp, Value),
-
-    Cast(Value, crate::types::Type, crate::types::Type),
-
-    Call(Value, Value, Vec<Value>),
-
-    Print(Value),
-
-    /// t1 = val
-    /// dest = src
-    Store(Value, Value),
-
-    /// t1 = op a
-    Unary(Value, Value, UnaryOp),
-
-    Return(Value),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -228,7 +203,6 @@ impl Display for Value {
             Value::Const(ref v) => write!(f, "{}", v),
             Value::Float(ref v) => write!(f, "{}", v),
             Value::Register(ref name) => write!(f, "{}", name),
-            Value::Named(ref name) => write!(f, "{}", name),
             Value::Bool(ref b) => write!(f, "{}", b),
             Value::Nil => write!(f, "nil"),
             Value::Mem(ref bytes) => {
@@ -330,7 +304,7 @@ impl Display for Instruction {
         if self.instruction == Inst::StatementStart {
             write!(f, "")
         } else {
-            write!(f, "{}:{}", self.instruction, self.ty)
+            write!(f, "{}", self.instruction)
         }
     }
 }
@@ -346,19 +320,18 @@ impl Display for Inst {
             Inst::Print(ref v) => write!(out, "print {}", v),
             Inst::Drop(ref reg) => write!(out, "drop {}", reg),
             Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
+            Inst::StoreI(ref dest, ref val) => write!(out, "{} <- {}", dest, val),
             Inst::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
             Inst::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
             Inst::Return(ref label) => write!(out, "return @{}", label),
             Inst::Call(ref dest, ref callee, ref args) => {
-                write!(out, "{} <- call {} ", dest, callee)?;
-
                 for arg in args {
-                    write!(out, "{}", arg)?;
+                    write!(out, "arg: {}", arg)?;
                 }
 
-                write!(out, "")?;
+                write!(out, "{} <- call {}", dest, callee)?;
 
                 Ok(())
             }
@@ -375,5 +348,15 @@ impl Debug for Block {
         writeln!(f, "{}", self.end)?;
 
         Ok(())
+    }
+}
+
+impl Display for Size {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Size::Bit8 => write!(f, "i8"),
+            Size::Bit32 => write!(f, "i32"),
+            Size::Bit64 => write!(f, "i64"),
+        }
     }
 }

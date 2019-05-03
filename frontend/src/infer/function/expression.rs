@@ -18,7 +18,9 @@ impl Infer {
                 name, kind, value, ..
             } => self.infer_assign(name, kind, *value, expr.span, ctx),
 
-            Expression::Binary { lhs, op, rhs } => self.infer_binary(*lhs, op, *rhs, expr.span, ctx),
+            Expression::Binary { lhs, op, rhs } => {
+                self.infer_binary(*lhs, op, *rhs, expr.span, ctx)
+            }
 
             Expression::Call(call) => {
                 let whole_span = expr.span;

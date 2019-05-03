@@ -12,6 +12,8 @@ mod ast;
 mod codegen;
 mod ctx;
 mod infer;
+mod lower;
 
 pub use crate::codegen::compile;
 pub use crate::infer::Infer;
+pub use crate::lower::build_program;

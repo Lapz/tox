@@ -1,0 +1,16 @@
+[package]
+name = "ir"
+version = "0.1.0"
+authors = ["lenardprattt <striderman34@gmail.com>"]
+edition = "2018"
+
+
+[features]
+graphviz=["petgraph"]
+
+[dependencies]
+util= { path="../util"}
+
+[dependencies.petgraph]
+version= "0.4"
+optional=true

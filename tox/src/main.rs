@@ -4,15 +4,18 @@ extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 // extern crate interpreter;
+extern crate ir;
 extern crate syntax;
 extern crate util;
 extern crate vm;
 
 mod repl;
 
+use frontend::build_program;
 use frontend::compile;
 use frontend::Infer;
 // use interpreter::{interpret, Environment};
+use ir::printer::Printer;
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -26,7 +29,7 @@ fn main() {
     let opts = Cli::from_args();
 
     if let Some(file) = opts.source {
-        run(file);
+        run(file, opts.ir_file);
     } else {
         repl()
     }
@@ -38,7 +41,7 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run(path: String) {
+pub fn run(path: String, print_ir: Option<String>) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -79,18 +82,30 @@ pub fn run(path: String) {
         }
     };
 
-    // if compile_vm {
-    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
-        Ok(functions) => functions,
-        Err(_) => {
-            reporter.emit(input);
-            ::std::process::exit(65)
-        }
-    };
+    if let Some(f) = print_ir {
+        let printer = Printer::new(&symbols);
+        let program = build_program(&symbols, typed_ast);
 
-    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-    vm.run();
-    // }
+        printer
+            .print_program(&program, &mut File::create(f).unwrap())
+            .unwrap();
+
+        #[cfg(feature = "graphviz")]
+        {
+            program.graphviz(&symbols).unwrap();
+        }
+    } else {
+        let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+            Ok(functions) => functions,
+            Err(_) => {
+                reporter.emit(input);
+                ::std::process::exit(65)
+            }
+        };
+
+        let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+        vm.run();
+    }
 }
 
 #[derive(StructOpt, Debug)]
