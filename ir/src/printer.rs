@@ -1,4 +1,4 @@
-use crate::instructions::{BlockEnd, Function, Inst, Program};
+use crate::instructions::{BlockEnd, Function, Instruction, Program};
 use std::io::{self, Write};
 use util::symbol::Symbols;
 
@@ -45,7 +45,7 @@ impl<'a> Printer<'a> {
 
             for inst in block.instructions.iter() {
                 write!(out, "\t")?;
-                self.print_instructions(&inst.instruction, out)?;
+                self.print_instructions(&inst, out)?;
                 write!(out, "\n")?;
             }
 
@@ -67,24 +67,21 @@ impl<'a> Printer<'a> {
         Ok(())
     }
 
-    pub fn print_instructions<T: Write>(&mut self, i: &Inst, out: &mut T) -> io::Result<()> {
+    pub fn print_instructions<T: Write>(&mut self, i: &Instruction, out: &mut T) -> io::Result<()> {
         match *i {
-            Inst::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
-            Inst::StatementStart => write!(out, ""),
-            Inst::Binary(ref res, ref lhs, ref op, ref rhs) => {
+            Instruction::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
+            Instruction::StatementStart => write!(out, ""),
+            Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => {
                 write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
             }
-            Inst::Print(ref v) => write!(out, "print {}", v),
-
-            Inst::Drop(ref reg) => write!(out, "drop {}", reg),
-            Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::StoreI(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
-            Inst::Unary(ref dest, ref source, ref op) => {
+            Instruction::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
+            Instruction::StoreI(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
+            Instruction::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
+            Instruction::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
-            Inst::Return(ref label) => write!(out, "return @{}", label),
-            Inst::Call(ref dest, ref callee, ref args) => {
+            Instruction::Return(ref label) => write!(out, "return @{}", label),
+            Instruction::Call(ref dest, ref callee, ref args) => {
                 write!(out, "{} <- call {} ", dest, callee)?;
 
                 for arg in args {

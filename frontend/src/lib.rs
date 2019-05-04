@@ -14,6 +14,7 @@ mod build_structs;
 mod codegen;
 mod ctx;
 mod infer;
+mod liveness;
 
 pub use crate::build_cfg::build_program;
 pub use crate::codegen::compile;

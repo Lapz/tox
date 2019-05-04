@@ -86,7 +86,7 @@ pub fn run(path: String, _print_ir: Option<String>) {
 
     #[cfg(feature = "graphviz")]
     {
-        let program = build_program(&symbols, typed_ast.clone());
+        let program = build_program(&mut symbols, typed_ast.clone());
         program.graphviz(&symbols).unwrap();
         if let Some(f) = _print_ir {
             let printer = Printer::new(&symbols);

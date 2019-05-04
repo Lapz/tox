@@ -67,11 +67,6 @@ pub enum BlockEnd {
     Link(BlockID),
     End,
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Instruction {
-    pub instruction: Inst,
-}
 #[derive(Debug, Clone, PartialEq)]
 pub enum Size {
     Bit8,
@@ -81,12 +76,10 @@ pub enum Size {
 /// Instruction used in the IR
 /// Instructions are of the form i <- a op b
 #[derive(Debug, Clone, PartialEq)]
-pub enum Inst {
+pub enum Instruction {
     /// A stack allocated array of size whatever
     /// Stored at a location
     Array(Register, usize),
-
-    Drop(Register),
     /// $dest = $lhs $op $rhs
     Binary(Register, Register, BinaryOp, Register),
     ///Cast the value from one type to another
@@ -95,9 +88,6 @@ pub enum Inst {
     /// Call the function with the provided args in registers and store in in the dest
     /// $dest = call $func
     Call(Register, Symbol, Vec<Register>),
-    /// Print the value stored in the register
-    Print(Register),
-
     StatementStart,
 
     /// $dest = val
@@ -317,33 +307,21 @@ impl Display for BlockEnd {
 }
 
 impl Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.instruction == Inst::StatementStart {
-            write!(f, "")
-        } else {
-            write!(f, "{}", self.instruction)
-        }
-    }
-}
-
-impl Display for Inst {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Inst::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
-            Inst::StatementStart => write!(out, ""),
-            Inst::Binary(ref res, ref lhs, ref op, ref rhs) => {
+            Instruction::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
+            Instruction::StatementStart => write!(out, ""),
+            Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => {
                 write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
             }
-            Inst::Print(ref v) => write!(out, "print {}", v),
-            Inst::Drop(ref reg) => write!(out, "drop {}", reg),
-            Inst::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Inst::StoreI(ref dest, ref val) => write!(out, "{} <- {}", dest, val),
-            Inst::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
-            Inst::Unary(ref dest, ref source, ref op) => {
+            Instruction::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
+            Instruction::StoreI(ref dest, ref val) => write!(out, "{} <- {}", dest, val),
+            Instruction::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
+            Instruction::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
-            Inst::Return(ref label) => write!(out, "return @{}", label),
-            Inst::Call(ref dest, ref callee, ref args) => {
+            Instruction::Return(ref label) => write!(out, "return @{}", label),
+            Instruction::Call(ref dest, ref callee, ref args) => {
                 for arg in args {
                     write!(out, "arg: {}\n", arg)?;
                 }

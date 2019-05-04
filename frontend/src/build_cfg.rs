@@ -9,7 +9,7 @@ use util::symbol::Symbols;
 
 #[derive(Debug)]
 struct Builder<'a> {
-    symbols: &'a Symbols<()>,
+    symbols: &'a mut Symbols<()>,
     locals: HashMap<Symbol, Register>,
     parameters: HashMap<Symbol, Register>,
     current_loop: Option<LoopDescription>,
@@ -18,7 +18,7 @@ struct Builder<'a> {
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(symbols: &'a Symbols<()>) -> Self {
+    pub fn new(symbols: &'a mut Symbols<()>) -> Self {
         Builder {
             symbols,
             locals: HashMap::new(),
@@ -68,12 +68,12 @@ impl<'a> Builder<'a> {
         self.locals.iter().map(|(_, register)| *register).collect()
     }
 
-    pub fn emit_instruction(&mut self, inst: Inst) {
+    pub fn emit_instruction(&mut self, inst: Instruction) {
         self.current_block
             .as_mut()
             .expect("Basic Block should be started")
             .1
-            .push(Instruction { instruction: inst });
+            .push(inst);
     }
 
     pub fn emit_store(&mut self, dest: Register, source: Register) {
@@ -81,9 +81,7 @@ impl<'a> Builder<'a> {
             .as_mut()
             .expect("Basic block should be started")
             .1
-            .push(Instruction {
-                instruction: Inst::Store(dest, source),
-            })
+            .push(Instruction::Store(dest, source))
     }
 
     pub fn emit_store_immediate(&mut self, dest: Register, val: Value) {
@@ -91,9 +89,7 @@ impl<'a> Builder<'a> {
             .as_mut()
             .expect("Basic block should be started")
             .1
-            .push(Instruction {
-                instruction: Inst::StoreI(dest, val),
-            })
+            .push(Instruction::StoreI(dest, val))
     }
 
     pub fn add_param(&mut self, symbol: Symbol) {
@@ -116,7 +112,7 @@ impl<'a> Builder<'a> {
         match s.value {
             Statement::Block(statements) => {
                 for statement in statements {
-                    self.emit_instruction(Inst::StatementStart);
+                    self.emit_instruction(Instruction::StatementStart);
                     self.build_statement(statement)
                 }
             }
@@ -208,7 +204,11 @@ impl<'a> Builder<'a> {
             Statement::Print(expr) => {
                 let expr = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Print(expr));
+                let args = vec![expr];
+
+                let symbol = self.symbols.symbol("print");
+
+                self.emit_instruction(Instruction::Call(Register::new(), symbol, args));
             }
 
             Statement::Return(expr) => {
@@ -256,7 +256,7 @@ impl<'a> Builder<'a> {
             Expression::Array(items) => {
                 let temp = Register::new();
 
-                self.emit_instruction(Inst::Array(temp, items.len()));
+                self.emit_instruction(Instruction::Array(temp, items.len()));
 
                 for (i, item) in items.into_iter().enumerate() {
                     let result = self.build_expr(item);
@@ -265,7 +265,7 @@ impl<'a> Builder<'a> {
 
                     self.emit_store_immediate(temp, Value::Const(i as i64));
 
-                    self.emit_instruction(Inst::Binary(offset, temp, BinaryOp::Plus, temp));
+                    self.emit_instruction(Instruction::Binary(offset, temp, BinaryOp::Plus, temp));
 
                     self.emit_store(offset, result);
                 }
@@ -277,7 +277,7 @@ impl<'a> Builder<'a> {
                 let expr = self.build_expr(expr);
                 let var = self.build_var(&var).expect("Undefined Variable");
 
-                self.emit_store(var.clone(), expr);
+                self.emit_store(var, expr);
 
                 var
             }
@@ -292,7 +292,7 @@ impl<'a> Builder<'a> {
                     let op = gen_bin_op(op);
                     let result = Register::new();
 
-                    self.emit_instruction(Inst::Binary(result, lhs, op, rhs));
+                    self.emit_instruction(Instruction::Binary(result, lhs, op, rhs));
                     result
                 }
             },
@@ -305,7 +305,7 @@ impl<'a> Builder<'a> {
                     reg_args.push(self.build_expr(expr))
                 }
 
-                self.emit_instruction(Inst::Call(result, callee, reg_args));
+                self.emit_instruction(Instruction::Call(result, callee, reg_args));
 
                 result
             }
@@ -315,7 +315,7 @@ impl<'a> Builder<'a> {
                 let from = expr.value.ty.clone();
                 let result = self.build_expr(expr);
 
-                self.emit_instruction(Inst::Cast(dest, result, get_size(from)));
+                self.emit_instruction(Instruction::Cast(dest, result, get_size(from)));
 
                 dest
             }
@@ -327,10 +327,10 @@ impl<'a> Builder<'a> {
 
                 let offset = self.build_expr(index);
 
-                self.emit_instruction(Inst::Binary(result,target,BinaryOp::Plus,offset));
+                self.emit_instruction(Instruction::Binary(result, target, BinaryOp::Plus, offset));
 
                 result
-            },
+            }
 
             Expression::Literal(literal) => {
                 let tmp = Register::new();
@@ -368,7 +368,7 @@ impl<'a> Builder<'a> {
 
                 let val = self.build_expr(val);
 
-                self.emit_instruction(Inst::Unary(result, val, gen_un_op(op)));
+                self.emit_instruction(Instruction::Unary(result, val, gen_un_op(op)));
 
                 result
             }
@@ -518,7 +518,7 @@ impl<'a> Builder<'a> {
     }
 }
 
-fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
+fn build_function(function: t::Function, symbols: &mut Symbols<()>) -> Function {
     let mut builder = Builder::new(symbols);
 
     for param in function.params {
@@ -543,7 +543,7 @@ fn build_function(function: t::Function, symbols: &Symbols<()>) -> Function {
     }
 }
 
-pub fn build_program(symbols: &Symbols<()>, old_program: t::Program) -> Program {
+pub fn build_program(symbols: &mut Symbols<()>, old_program: t::Program) -> Program {
     let mut new_program = Program {
         functions: vec![],
         classes: vec![],
@@ -554,6 +554,10 @@ pub fn build_program(symbols: &Symbols<()>, old_program: t::Program) -> Program 
             .functions
             .push(build_function(function, symbols));
     }
+
+    use crate::liveness::calculate_liveness;
+
+    calculate_liveness(&new_program);
 
     new_program
 }
@@ -586,8 +590,6 @@ fn gen_bin_op(op: Op) -> BinaryOp {
         Op::GreaterThanEqual => BinaryOp::Gte,
         Op::EqualEqual => BinaryOp::Equal,
         Op::BangEqual => BinaryOp::NotEqual,
-        // Op::And => BinaryOp::And,
-        // Op::Or => BinaryOp::Or,
         _ => unreachable!(),
     }
 }
