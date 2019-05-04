@@ -122,12 +122,6 @@ pub enum Expression {
         params: Vec<Spanned<TypedExpression>>,
     },
     Literal(Literal),
-
-    Match {
-        cond: Spanned<TypedExpression>,
-        arms: Spanned<Vec<Spanned<MatchArm>>>,
-    },
-
     /// Name, Object, Value
     Set(Symbol, Spanned<TypedExpression>, Spanned<TypedExpression>),
     StaticMethodCall {
@@ -142,15 +136,4 @@ pub enum Expression {
     ),
     Unary(UnaryOp, Spanned<TypedExpression>),
     Var(Symbol, Type),
-
-    VariantWithData {
-        enum_name: Spanned<Symbol>,
-        tag: u32,
-        inner: Spanned<TypedExpression>,
-    },
-
-    VariantNoData {
-        enum_name: Spanned<Symbol>,
-        tag: u32,
-    },
 }

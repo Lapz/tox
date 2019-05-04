@@ -79,8 +79,6 @@ impl Infer {
                 self.infer_get(*object, property, expr.span, ctx)
             }
 
-            Expression::Match { cond, arms } => self.infer_match(*cond, arms, expr.span, ctx),
-
             Expression::SubScript { target, index } => {
                 self.infer_subscript(*target, *index, expr.span, ctx)
             }
@@ -104,12 +102,6 @@ impl Infer {
             }
 
             Expression::Var(var) => self.infer_var(var, expr.span, ctx),
-
-            Expression::Variant {
-                enum_name,
-                variant,
-                inner,
-            } => self.infer_variant(enum_name, variant, inner, expr.span, ctx),
         }
     }
 }

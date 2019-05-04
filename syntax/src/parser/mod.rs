@@ -1084,8 +1084,6 @@ impl<'a> Parser<'a> {
                     value: Expression::Literal(Literal::Float(n)),
                 }),
 
-                TokenType::MATCH => self.parse_match(*span),
-
                 TokenType::LPAREN => {
                     let expr = Box::new(self.parse_expression()?);
 
@@ -1152,95 +1150,6 @@ impl<'a> Parser<'a> {
             },
             Err(_) => Err(()), // TODO: ADD an error?
         }
-    }
-
-    fn parse_match(&mut self, start_span: Span) -> ParserResult<Spanned<Expression>> {
-        self.parsing_cond = true;
-
-        let cond = self.parse_expression()?;
-
-        self.parsing_cond = false;
-
-        let open_span = self.consume_get_span(&TokenType::LBRACE, "Expected `{` ")?;
-
-        let mut arms = Vec::new();
-        // counter for how many times we've seen the `_` pattern
-        let mut seen_catch_all = 0;
-
-        if !self.recognise(TokenType::RBRACE) {
-            loop {
-                self.parsing_match_arm = true;
-
-                if self.recognise(TokenType::UNDERSCORE) {
-                    seen_catch_all += 1;
-
-                    let pattern = self.consume_get_span(&TokenType::UNDERSCORE, "Expected `_` ")?;
-
-                    self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
-
-                    let body = self.parse_statement()?;
-
-                    self.parsing_match_arm = false;
-
-                    if seen_catch_all > 1 {
-                        self.span_warn("`_` pattern is allready present", pattern.to(body.span));
-                    }
-
-                    let span = pattern.to(body.span);
-
-                    arms.push(Spanned {
-                        value: MatchArm {
-                            pattern: None,
-                            body,
-                            is_all: true,
-                        },
-                        span,
-                    });
-
-                    if self.recognise(TokenType::COMMA) {
-                        self.next()?;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-
-                let pattern = self.parse_expression()?;
-
-                self.consume(&TokenType::MATCHARROW, "Expected `=>` ")?;
-
-                let body = self.parse_statement()?;
-
-                self.parsing_match_arm = false;
-
-                let span = pattern.span.to(body.span);
-
-                arms.push(Spanned {
-                    value: MatchArm {
-                        pattern: Some(pattern),
-                        body,
-                        is_all: false,
-                    },
-                    span,
-                });
-
-                if self.recognise(TokenType::COMMA) {
-                    self.next()?;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected `}` ")?;
-
-        Ok(Spanned {
-            value: Expression::Match {
-                cond: Box::new(cond),
-                arms: Spanned::new(arms, open_span.to(close_span)),
-            },
-            span: start_span.to(close_span),
-        })
     }
 
     fn parse_closure(&mut self, open_span: Span) -> ParserResult<Spanned<Function>> {
@@ -1382,35 +1291,6 @@ impl<'a> Parser<'a> {
 
                 if self.recognise(TokenType::LESSTHAN) {
                     return self.parse_generic_call(expr);
-                } else {
-                    let (mut span, enum_name) = match expr {
-                        Spanned {
-                            span,
-                            value: Expression::Var(ref ident),
-                        } => (span, ident.clone()),
-
-                        Spanned { span, .. } => {
-                            self.reporter.error("Expected an identifier", span);
-                            return Err(());
-                        }
-                    };
-                    let variant = self.consume_get_symbol("Expected an identifier")?;
-                    let mut inner = None;
-
-                    if self.recognise(TokenType::LPAREN) {
-                        self.next()?; //eat the ::
-                        inner = Some(Box::new(self.parse_expression()?));
-                        span = span.to(self.consume_get_span(&TokenType::RPAREN, "Expected `(`")?);
-                    }
-
-                    return Ok(Spanned {
-                        span,
-                        value: Expression::Variant {
-                            enum_name,
-                            variant,
-                            inner,
-                        },
-                    });
                 }
             } else if self.recognise(TokenType::LPAREN) {
                 expr = self.finish_call(expr)?;

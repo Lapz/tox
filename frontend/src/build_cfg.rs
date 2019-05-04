@@ -320,20 +320,6 @@ impl<'a> Builder<'a> {
                 dest
             }
 
-            Expression::ClassLiteral { .. } => unimplemented!(),
-
-            Expression::Closure(_) => unimplemented!(),
-
-            Expression::GetProperty {
-                property_name,
-                property,
-            } => unimplemented!(),
-
-            Expression::GetMethod {
-                method_name,
-                method,
-            } => unimplemented!(),
-
             Expression::Index(target, index) => unimplemented!(),
 
             Expression::Literal(literal) => {
@@ -365,48 +351,39 @@ impl<'a> Builder<'a> {
                 tmp
             }
 
-            Expression::Match { cond, arms } => {
-                unimplemented!()
-                // let after_block = self.new_block();
+            Expression::Grouping(expr) => self.build_expr(expr),
 
-                // let cond = self.build_expr(cond);
+            Expression::Unary(op, val) => {
+                let result = Register::new();
 
-                // let result = Register::new();
+                let val = self.build_expr(val);
 
-                // let block_ids: Vec<BlockID> = (0..arms.value.len() + 1)
-                //     .map(|_| self.new_block())
-                //     .collect();
+                self.emit_instruction(Inst::Unary(result, val, gen_un_op(op)));
 
-                // self.end_block(BlockEnd::Link(*block_ids.first().unwrap())); //fix empty match
-
-                // for (i, arm) in arms.value.into_iter().enumerate() {
-                //     let result = Register::new();
-                //     self.start_block(block_ids[i]);
-                //     let pattern = self.build_expr(arm.value.pattern);
-                //     self.emit_instruction(Inst::Binary(
-                //         result,
-                //         pattern,
-                //         BinaryOp::Equal,
-                //         cond.clone(),
-                //     ));
-                //     self.build_statement(arm.value.body);
-                //     self.end_block(BlockEnd::Branch(
-                //         Value::Register(result),
-                //         after_block,
-                //         block_ids[i + 1],
-                //     ));
-                // }
-
-                // if let Some(all) = all {
-                //     self.start_block(*block_ids.last().unwrap());
-                //     self.build_statement(all);
-                //     self.end_block(BlockEnd::Link(after_block))
-                // }
-
-                // self.start_block(after_block);
-
-                // result
+                result
             }
+
+            Expression::Var(ref symbol, _) => self.build_var(symbol).unwrap(),
+
+            Expression::Ternary(ref cond, ref lhs, ref rhs) => unimplemented!(),
+
+            Expression::StaticMethodCall {
+                class_name,
+                method_name,
+                params,
+            } => unimplemented!(),
+
+            Expression::InstanceMethodCall { .. } => unimplemented!(),
+
+            Expression::GetProperty {
+                property_name,
+                property,
+            } => unimplemented!(),
+
+            Expression::GetMethod {
+                method_name,
+                method,
+            } => unimplemented!(),
 
             Expression::Set(name, object, value) => {
                 let result = Register::new();
@@ -424,27 +401,10 @@ impl<'a> Builder<'a> {
                 result
             }
 
-            Expression::StaticMethodCall {
-                class_name,
-                method_name,
-                params,
-            } => unimplemented!(),
+            Expression::ClassLiteral { .. } => unimplemented!(),
 
-            Expression::Grouping(expr) => self.build_expr(expr),
-
-            Expression::Unary(op, val) => {
-                let result = Register::new();
-
-                let val = self.build_expr(val);
-
-                self.emit_instruction(Inst::Unary(result, val, gen_un_op(op)));
-
-                result
-            }
-
-            Expression::Var(ref symbol, _) => self.build_var(symbol).unwrap(),
-
-            ref e => unimplemented!("{:?}", e),
+            Expression::Closure(_) => unimplemented!(),
+            // ref e => unimplemented!("{:?}", e),
         }
     }
 

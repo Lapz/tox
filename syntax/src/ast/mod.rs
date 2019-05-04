@@ -132,11 +132,6 @@ pub enum Expression {
         expr: Box<Spanned<Expression>>,
     },
 
-    Match {
-        cond: Box<Spanned<Expression>>,
-        arms: Spanned<Vec<Spanned<MatchArm>>>,
-    },
-
     SubScript {
         target: Box<Spanned<Expression>>,
         index: Box<Spanned<Expression>>,
@@ -161,19 +156,6 @@ pub enum Expression {
     },
 
     Var(Spanned<Symbol>),
-
-    Variant {
-        enum_name: Spanned<Symbol>,
-        variant: Spanned<Symbol>,
-        inner: Option<Box<Spanned<Expression>>>,
-    },
-}
-
-#[derive(Debug, Clone)]
-pub struct MatchArm {
-    pub pattern: Option<Spanned<Expression>>,
-    pub body: Spanned<Statement>,
-    pub is_all: bool,
 }
 
 #[derive(Debug, Clone)]
