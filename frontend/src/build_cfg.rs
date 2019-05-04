@@ -1,7 +1,8 @@
 use crate::ast as t;
 use crate::infer::types;
 use ir::instructions::*;
-use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, HashSet};
 use syntax::ast::{self, Literal, Op};
 use util::pos::Spanned;
 use util::symbol::Symbol;
@@ -13,7 +14,8 @@ struct Builder<'a> {
     locals: HashMap<Symbol, Register>,
     parameters: HashMap<Symbol, Register>,
     current_loop: Option<LoopDescription>,
-    blocks: HashMap<BlockID, Block>,
+    blocks: Vec<(BlockID, Block)>,
+    predecessors: HashMap<BlockID, HashSet<BlockID>>,
     current_block: Option<(BlockID, Vec<Instruction>)>,
 }
 
@@ -23,13 +25,14 @@ impl<'a> Builder<'a> {
             symbols,
             locals: HashMap::new(),
             parameters: HashMap::new(),
+            predecessors: HashMap::new(),
             current_loop: None,
             current_block: None,
-            blocks: HashMap::new(),
+            blocks: Vec::new(),
         }
     }
 
-    pub fn blocks(self) -> HashMap<BlockID, Block> {
+    pub fn blocks(self) -> Vec<(BlockID, Block)> {
         self.blocks
     }
 
@@ -45,16 +48,30 @@ impl<'a> Builder<'a> {
         self.current_block = Some((id, Vec::new()));
     }
 
+    pub fn add_predecessor(&mut self, id: BlockID, block: BlockID) {
+        let entry = self.predecessors.entry(id);
+        match entry {
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().insert(block);
+            }
+            Entry::Vacant(entry) => {
+                let mut set = HashSet::new();
+                set.insert(block);
+                entry.insert(set);
+            }
+        }
+    }
+
     pub fn end_block(&mut self, end: BlockEnd) {
         let (id, inst) = self.current_block.take().unwrap();
 
-        self.blocks.insert(
+        self.blocks.push((
             id,
             Block {
                 instructions: inst,
                 end,
             },
-        );
+        ));
     }
 
     pub fn parameters(&mut self) -> Vec<Register> {

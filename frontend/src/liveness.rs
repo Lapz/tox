@@ -11,7 +11,7 @@ pub struct LivenessChecker<'a> {
     pub values: HashMap<BlockID, (HashSet<Register>, HashSet<Register>)>,
     pub function: &'a Function,
     pub successors: HashMap<BlockID, HashSet<BlockID>>,
-    pub predecessors:HashMap<BlockID, HashSet<BlockID>>,
+    pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
 }
 
 impl<'a> LivenessChecker<'a> {
@@ -20,7 +20,7 @@ impl<'a> LivenessChecker<'a> {
             function,
             values: HashMap::new(),
             successors: HashMap::new(),
-            predecessors:HashMap::new()
+            predecessors: HashMap::new(),
         }
     }
 
@@ -28,38 +28,50 @@ impl<'a> LivenessChecker<'a> {
         self.values.insert(id, sets);
     }
 
+    pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
+        let entry = self.successors.entry(id);
+        match entry {
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().insert(block);
+            }
+            Entry::Vacant(entry) => {
+                let mut set = HashSet::new();
+                set.insert(block);
+                entry.insert(set);
+            }
+        }
+    }
+
+    pub fn add_predecessor(&mut self, id: BlockID, block: BlockID) {
+        let entry = self.predecessors.entry(id);
+        match entry {
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().insert(block);
+            }
+            Entry::Vacant(entry) => {
+                let mut set = HashSet::new();
+                set.insert(block);
+                entry.insert(set);
+            }
+        }
+    }
+
     pub fn calculate_successors(&mut self) {
-        for (i, (id, block)) in self.function.blocks.iter().enumerate() {
+        for (i, (id, block)) in self.function.blocks.iter().enumerate().peekable() {
+            if i > 0 && !(i + 1 > self.function.blocks.len()) {
+                self.add_predecessor(*id, self.function.blocks[i - 1].0)
+            }
             match block.end {
-                BlockEnd::Branch(_, ref rhs, ref lhs) => {
-                    let entry = self.successors.entry(*id);
-                    match entry {
-                        Entry::Occupied(mut entry) => {
-                            entry.get_mut().insert(*rhs);
-                            entry.get_mut().insert(*lhs);
-                        }
-                        Entry::Vacant(entry) => {
-                            let mut set = HashSet::new();
-                            set.insert(*lhs);
-                            set.insert(*rhs);
-                            entry.insert(set);
-                        }
-                    }
+                BlockEnd::Branch(_, lhs, rhs) => {
+                    self.add_successors(*id, lhs);
+                    self.add_successors(*id, rhs);
+                    self.add_predecessor(lhs, *id);
+                    self.add_predecessor(rhs, *id);
                 }
 
-                BlockEnd::Jump(ref dest) => {
-                    let entry = self.successors.entry(*id);
-                    match entry {
-                        Entry::Occupied(mut entry) => {
-                            entry.get_mut().insert(*dest);
-                        }
-                        Entry::Vacant(entry) => {
-                            let mut set = HashSet::new();
-                            set.insert(*dest);
-
-                            entry.insert(set);
-                        }
-                    }
+                BlockEnd::Jump(dest) => {
+                    self.add_successors(*id, dest);
+                    self.add_predecessor(dest, *id);
                 }
                 BlockEnd::Return(_) => (),
                 BlockEnd::Link(_) => (),
@@ -89,21 +101,39 @@ pub fn calculate_liveness(p: &Program) {
         let mut checker = LivenessChecker::new(function);
         checker.calculate_successors();
 
-        for (block,successors) in &checker.successors {
-            print!("{} ,",block);
+        for (block, successors) in &checker.successors {
+            print!("{} ", block);
 
             print!("{{");
 
-            for (i,suc) in successors.iter().enumerate() {
-                if i+1 > successors.len() {
-                    print!("{}",suc)
-                }else {
-                    print!("{},",suc)
+            for (i, suc) in successors.iter().enumerate() {
+                if i + 1 == successors.len() {
+                    print!("{}", suc)
+                } else {
+                    print!("{},", suc)
                 }
             }
 
             print!("}}\n");
         }
+        println!("========================");
+        for (block, predecessors) in &checker.predecessors {
+            print!("{} ", block);
+
+            print!("{{");
+
+            for (i, suc) in predecessors.iter().enumerate() {
+                if i + 1 == predecessors.len() {
+                    print!("{}", suc)
+                } else {
+                    print!("{},", suc)
+                }
+            }
+
+            print!("}}\n");
+        }
+        println!("========================");
+
         for (id, block) in &function.blocks {
             checker.insert(*id, init(block))
         }
@@ -119,76 +149,76 @@ pub fn calculate_liveness(p: &Program) {
 }
 
 fn live_out(block: BlockID) -> HashSet<Register> {
-    // uevar.union()
+    // used.union()
 
     unimplemented!()
 }
 
 pub fn init(b: &Block) -> (HashSet<Register>, HashSet<Register>) {
-    let mut uevar = HashSet::new(); // variables used before they are defined
-    let mut varkill = HashSet::new(); // All variables defined in the block
+    let mut used = HashSet::new(); // variables used before they are defined
+    let mut defined = HashSet::new(); // All variables defined in the block
                                       //
     for inst in b.instructions.iter().rev() {
         use Instruction::*;
         match inst {
             Array(ref dest, _) => {
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             Binary(ref dest, ref lhs, _, ref rhs) => {
-                if !varkill.contains(lhs) {
-                    uevar.insert(*lhs);
-                } else if !varkill.contains(rhs) {
-                    uevar.insert(*rhs);
+                if !defined.contains(lhs) {
+                    used.insert(*lhs);
+                } else if !defined.contains(rhs) {
+                    used.insert(*rhs);
                 }
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
             Cast(ref dest, ref value, _) => {
-                if !varkill.contains(value) {
-                    uevar.insert(*value);
+                if !defined.contains(value) {
+                    used.insert(*value);
                 }
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             Call(ref dest, _, ref args) => {
                 for arg in args {
-                    if !varkill.contains(arg) {
-                        uevar.insert(*arg);
+                    if !defined.contains(arg) {
+                        used.insert(*arg);
                     }
                 }
 
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             StatementStart => (),
 
             StoreI(ref dest, _) => {
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             Store(ref dest, ref val) => {
-                if !varkill.contains(val) {
-                    uevar.insert(*val);
+                if !defined.contains(val) {
+                    used.insert(*val);
                 }
 
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             Unary(ref dest, ref val, _) => {
-                if !varkill.contains(val) {
-                    uevar.insert(*val);
+                if !defined.contains(val) {
+                    used.insert(*val);
                 }
 
-                varkill.insert(*dest);
+                defined.insert(*dest);
             }
 
             Return(ref val) => {
-                if !varkill.contains(val) {
-                    uevar.insert(*val);
+                if !defined.contains(val) {
+                    used.insert(*val);
                 }
             }
         }
     }
 
-    (uevar, varkill)
+    (used, defined)
 }
