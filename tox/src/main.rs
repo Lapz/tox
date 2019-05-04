@@ -11,11 +11,13 @@ extern crate vm;
 
 mod repl;
 
+#[cfg(feature = "graphviz")]
 use frontend::build_program;
 use frontend::compile;
 use frontend::Infer;
-// use interpreter::{interpret, Environment};
+#[cfg(feature = "graphviz")]
 use ir::printer::Printer;
+
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -41,7 +43,7 @@ pub fn repl() {
     Repl::new().run();
 }
 
-pub fn run(path: String, print_ir: Option<String>) {
+pub fn run(path: String, _print_ir: Option<String>) {
     let mut file = File::open(path).expect("File not found");
 
     let mut contents = String::new();
@@ -86,9 +88,8 @@ pub fn run(path: String, print_ir: Option<String>) {
     {
         let program = build_program(&symbols, typed_ast.clone());
         program.graphviz(&symbols).unwrap();
-        if let Some(f) = print_ir {
+        if let Some(f) = _print_ir {
             let printer = Printer::new(&symbols);
-            // let program = build_program(&symbols, typed_ast);
 
             printer
                 .print_program(&program, &mut File::create(f).unwrap())
