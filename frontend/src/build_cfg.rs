@@ -419,7 +419,7 @@ impl<'a> Builder<'a> {
         let after_block = self.new_block();
         let result = Register::new();
 
-        self.end_block(BlockEnd::Branch(built_lhs.clone(), reset_block, rhs_block));
+        self.end_block(BlockEnd::Branch(built_lhs.clone(), rhs_block, reset_block));
 
         self.start_block(rhs_block);
 
@@ -430,7 +430,7 @@ impl<'a> Builder<'a> {
         self.end_block(BlockEnd::Jump(after_block));
         self.start_block(reset_block);
 
-        self.emit_store_immediate(result, Value::Bool(true));
+        self.emit_store_immediate(result, Value::Bool(false));
 
         self.end_block(BlockEnd::Jump(after_block));
 
@@ -444,7 +444,30 @@ impl<'a> Builder<'a> {
         l: Spanned<t::TypedExpression>,
         r: Spanned<t::TypedExpression>,
     ) -> Register {
-        unimplemented!()
+       let built_lhs = self.build_expr(l);
+        let rhs_block = self.new_block();
+        let reset_block = self.new_block();
+        let after_block = self.new_block();
+        let result = Register::new();
+
+        self.end_block(BlockEnd::Branch(built_lhs, reset_block, rhs_block));
+
+        self.start_block(rhs_block);
+
+        let built_rhs = self.build_expr(r);
+
+        self.emit_store(result, built_rhs);
+
+        self.end_block(BlockEnd::Jump(after_block));
+        self.start_block(reset_block);
+
+        self.emit_store_immediate(result, Value::Bool(true));
+
+        self.end_block(BlockEnd::Jump(after_block));
+
+        self.start_block(after_block);
+
+        result
     }
 
     fn build_var(&self, var: &Symbol) -> Option<Register> {
