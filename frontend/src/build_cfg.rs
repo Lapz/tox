@@ -320,7 +320,17 @@ impl<'a> Builder<'a> {
                 dest
             }
 
-            Expression::Index(target, index) => unimplemented!(),
+            Expression::Index(target, index) => {
+                let result = Register::new();
+
+                let target = self.build_expr(target);
+
+                let offset = self.build_expr(index);
+
+                self.emit_instruction(Inst::Binary(result,target,BinaryOp::Plus,offset));
+
+                result
+            },
 
             Expression::Literal(literal) => {
                 let tmp = Register::new();
@@ -365,7 +375,36 @@ impl<'a> Builder<'a> {
 
             Expression::Var(ref symbol, _) => self.build_var(symbol).unwrap(),
 
-            Expression::Ternary(ref cond, ref lhs, ref rhs) => unimplemented!(),
+            Expression::Ternary(cond, lhs, rhs) => {
+                let result = Register::new();
+                let c = self.build_expr(cond);
+
+                let lhs_block = BlockID::new();
+                let rhs_block = BlockID::new(); // else body
+                let after_block = BlockID::new();
+
+                self.end_block(BlockEnd::Branch(c, lhs_block, rhs_block));
+
+                self.start_block(lhs_block);
+
+                let built_lhs = self.build_expr(lhs);
+
+                self.emit_store(result, built_lhs);
+
+                self.end_block(BlockEnd::Jump(after_block));
+
+                self.start_block(rhs_block);
+
+                let build_rhs = self.build_expr(rhs);
+
+                self.emit_store(result, build_rhs);
+
+                self.end_block(BlockEnd::Jump(after_block));
+
+                self.start_block(after_block);
+
+                result
+            }
 
             Expression::StaticMethodCall {
                 class_name,
@@ -444,7 +483,7 @@ impl<'a> Builder<'a> {
         l: Spanned<t::TypedExpression>,
         r: Spanned<t::TypedExpression>,
     ) -> Register {
-       let built_lhs = self.build_expr(l);
+        let built_lhs = self.build_expr(l);
         let rhs_block = self.new_block();
         let reset_block = self.new_block();
         let after_block = self.new_block();
