@@ -1,3 +1,21 @@
-fn main() {
-    print (5 - (3 - 1)) + -1;// expect:2
+
+
+fn main()  -> int{
+    let a =0;
+    let b = 1;
+    let c =2;
+    while(false) { 
+        if(a<9) {
+            b =a + 1; 
+            c =c + b;
+            a =b * 2;
+            
+        }
+
+        return c;
+    }
+
+    
+    
+   
 }

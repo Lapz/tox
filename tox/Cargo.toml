@@ -6,6 +6,7 @@ authors = ["Lenard Pratt <striderman34@gmail.com>"]
 default = []
 debug = ["vm/debug"]
 graphviz = ["frontend/graphviz"]
+prettytable = ["frontend/prettytable"]
 # debug = ["vm/debug"]  # Enable debug statements within the vm
 
 [dependencies]

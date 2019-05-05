@@ -1,6 +1,9 @@
 #[cfg(test)]
 extern crate pretty_assertions;
 
+#[cfg(feature = "prettytable")]
+extern crate text_tables;
+
 extern crate fnv;
 extern crate opcode;
 extern crate rand;

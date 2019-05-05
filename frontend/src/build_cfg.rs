@@ -242,6 +242,8 @@ impl<'a> Builder<'a> {
                 let body_block = BlockID::new();
                 let after = BlockID::new();
 
+                let outer_loop = self.current_loop.take();
+
                 self.current_loop = Some(LoopDescription {
                     start: cond_block,
                     end: after,
@@ -260,6 +262,8 @@ impl<'a> Builder<'a> {
                 self.build_statement(body);
 
                 self.end_block(BlockEnd::Jump(cond_block));
+
+                self.current_loop = outer_loop;
 
                 self.start_block(after);
             }
