@@ -1,5 +1,5 @@
 use ir::instructions::{Block, BlockEnd, BlockID, Function, Instruction, Program, Register};
-use std::collections::hash_map::Entry;
+use std::{ hash::Hash, collections::hash_map::Entry};
 use std::collections::{HashMap, HashSet};
 enum Use {
     Dead,
@@ -12,6 +12,7 @@ pub struct LivenessChecker<'a> {
     pub function: &'a Function,
     pub successors: HashMap<BlockID, HashSet<BlockID>>,
     pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
+    pub live_in: HashMap<BlockID, HashSet<Register>>,
 }
 
 impl<'a> LivenessChecker<'a> {
@@ -21,6 +22,7 @@ impl<'a> LivenessChecker<'a> {
             values: HashMap::new(),
             successors: HashMap::new(),
             predecessors: HashMap::new(),
+            live_in: HashMap::new(),
         }
     }
 
@@ -93,6 +95,88 @@ impl<'a> LivenessChecker<'a> {
                 }
             }
         }
+    }
+
+    pub fn live_in(&mut self,id: BlockID, b: &Block) -> (HashSet<Register>, HashSet<Register>) {
+        let mut used = HashSet::new(); // variables used before they are defined
+        let mut defined = HashSet::new(); // All variables defined in the block
+                                          //
+        for inst in b.instructions.iter().rev() {
+            use Instruction::*;
+            match inst {
+                Array(ref dest, _) => {
+                    defined.insert(*dest);
+                }
+
+                Binary(ref dest, ref lhs, _, ref rhs) => {
+                    if !defined.contains(lhs) {
+                        used.insert(*lhs);
+                    } else if !defined.contains(rhs) {
+                        used.insert(*rhs);
+                    }
+                    defined.insert(*dest);
+                }
+                Cast(ref dest, ref value, _) => {
+                    if !defined.contains(value) {
+                        used.insert(*value);
+                    }
+                    defined.insert(*dest);
+                }
+
+                Call(ref dest, _, ref args) => {
+                    for arg in args {
+                        if !defined.contains(arg) {
+                            used.insert(*arg);
+                        }
+                    }
+
+                    defined.insert(*dest);
+                }
+
+                StatementStart => (),
+
+                StoreI(ref dest, _) => {
+                    defined.insert(*dest);
+                }
+
+                Store(ref dest, ref val) => {
+                    if !defined.contains(val) {
+                        used.insert(*val);
+                    }
+
+                    defined.insert(*dest);
+                }
+
+                Unary(ref dest, ref val, _) => {
+                    if !defined.contains(val) {
+                        used.insert(*val);
+                    }
+
+                    defined.insert(*dest);
+                }
+
+                Return(ref val) => {
+                    if !defined.contains(val) {
+                        used.insert(*val);
+                    }
+                }
+            }
+        }
+
+
+        let out = &self.successors[&id];
+        let mut set:HashSet<BlockID> = HashSet::new();
+        
+        for id in out {
+            set.extend(&self.successors[&id]);
+        }
+
+        let out =set;
+
+        let live_in = used.union(out.difference(&defined).collect());
+
+
+        (used, defined)
     }
 }
 
