@@ -42,10 +42,12 @@ impl<'a> Printer<'a> {
 
         for (id, block) in f.blocks.iter() {
             write!(out, "{}:", id)?;
+            let mut inst_counter = 0;
 
             for inst in block.instructions.iter() {
-                write!(out, "\t")?;
+                write!(out, "{}\t", inst_counter)?;
                 self.print_instructions(&inst, out)?;
+                inst_counter += 1;
                 write!(out, "\n")?;
             }
 

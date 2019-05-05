@@ -156,18 +156,29 @@ impl<'a> LivenessChecker<'a> {
     }
 
     fn calulate_live_out(&mut self) {
-        'outer: loop {
+        
+        let mut changed = true;
+
+        while changed {
+            changed = false;
+
             for (id, _) in self.function.blocks.iter().rev() {
                 //save the current results
-                let current_in = self.live_in[&id].clone();
-                let current_out = self.live_out[&id].clone();
+                let old_in = self.live_in[&id].clone();
+                let old_out = self.live_out[&id].clone();
 
                 let (used, defined) = self.values[id].clone();
-
-                let diff: HashSet<_> = current_out.difference(&defined).cloned().collect();
-
-                *self.live_in.get_mut(id).unwrap() =
-                    used.union(&diff).cloned().collect::<HashSet<_>>();
+            
+                *self.live_in.get_mut(id).unwrap() = used
+                    .union(
+                        &old_out
+                            .difference(&defined)
+                            .cloned()
+                            .collect::<HashSet<_>>(),
+                    )
+                    .cloned()
+                    .collect::<HashSet<_>>();
+                
 
                 if let Some(successors) = self.successors.get(&id) {
                     let mut new_out = HashSet::new();
@@ -183,10 +194,11 @@ impl<'a> LivenessChecker<'a> {
 
                 // let mut new_out = HashSet::new();
 
-                if current_in == self.live_in[&id] && current_out == self.live_out[&id] {
-                    break 'outer;
+                if !(old_in == self.live_in[&id] && old_out == self.live_out[&id]) {
+                    changed = true;
                 }
             }
+
         }
     }
 }
