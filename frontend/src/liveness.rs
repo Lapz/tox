@@ -1,6 +1,6 @@
 use ir::instructions::{Block, BlockEnd, BlockID, Function, Instruction, Program, Register};
-use std::{ hash::Hash, collections::hash_map::Entry};
 use std::collections::{HashMap, HashSet};
+use std::{collections::hash_map::Entry, hash::Hash};
 enum Use {
     Dead,
     Alive,
@@ -13,6 +13,7 @@ pub struct LivenessChecker<'a> {
     pub successors: HashMap<BlockID, HashSet<BlockID>>,
     pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
     pub live_in: HashMap<BlockID, HashSet<Register>>,
+    pub live_out: HashMap<BlockID, HashSet<Register>>,
 }
 
 impl<'a> LivenessChecker<'a> {
@@ -23,6 +24,7 @@ impl<'a> LivenessChecker<'a> {
             successors: HashMap::new(),
             predecessors: HashMap::new(),
             live_in: HashMap::new(),
+            live_out: HashMap::new(),
         }
     }
 
@@ -60,6 +62,8 @@ impl<'a> LivenessChecker<'a> {
 
     pub fn calculate_successors(&mut self) {
         for (i, (id, block)) in self.function.blocks.iter().enumerate().peekable() {
+            self.live_in.insert(*id, HashSet::new()); // init the in[n] to empty
+            self.live_out.insert(*id, HashSet::new()); // init the out[n] to empty
             if i > 0 && !(i + 1 > self.function.blocks.len()) {
                 self.add_predecessor(*id, self.function.blocks[i - 1].0)
             }
@@ -77,30 +81,15 @@ impl<'a> LivenessChecker<'a> {
                 }
                 BlockEnd::Return(_) => (),
                 BlockEnd::Link(_) => (),
-                BlockEnd::End => {
-                    // if !(i + 1 > self.function.blocks.len()) {
-                    //     let entry = self.successors.entry(*id);
-                    //     match entry {
-                    //         Entry::Occupied(entry) => {
-                    //             entry.get_mut().insert(self.function.blocks[i]);
-                    //         }
-                    //         Entry::Vacant(entry) => {
-                    //             let mut set = HashSet::new();
-                    //             set.insert(*dest);
-
-                    //             entry.insert(set);
-                    //         }
-                    //     }
-                    // }
-                }
+                BlockEnd::End => {}
             }
         }
     }
 
-    pub fn live_in(&mut self,id: BlockID, b: &Block) -> (HashSet<Register>, HashSet<Register>) {
+    pub fn live_in(&mut self, id: BlockID, b: &Block) -> (HashSet<Register>, HashSet<Register>) {
         let mut used = HashSet::new(); // variables used before they are defined
         let mut defined = HashSet::new(); // All variables defined in the block
-                                          //
+
         for inst in b.instructions.iter().rev() {
             use Instruction::*;
             match inst {
@@ -163,20 +152,42 @@ impl<'a> LivenessChecker<'a> {
             }
         }
 
-
-        let out = &self.successors[&id];
-        let mut set:HashSet<BlockID> = HashSet::new();
-        
-        for id in out {
-            set.extend(&self.successors[&id]);
-        }
-
-        let out =set;
-
-        let live_in = used.union(out.difference(&defined).collect());
-
-
         (used, defined)
+    }
+
+    fn calulate_live_out(&mut self) {
+        'outer: loop {
+            for (id, _) in self.function.blocks.iter().rev() {
+                //save the current results
+                let current_in = self.live_in[&id].clone();
+                let current_out = self.live_out[&id].clone();
+
+                let (used, defined) = self.values[id].clone();
+
+                let diff: HashSet<_> = current_out.difference(&defined).cloned().collect();
+
+                *self.live_in.get_mut(id).unwrap() =
+                    used.union(&diff).cloned().collect::<HashSet<_>>();
+
+                if let Some(successors) = self.successors.get(&id) {
+                    let mut new_out = HashSet::new();
+
+                    for suc in successors {
+                        new_out.extend(self.live_in[suc].clone())
+                    }
+
+                    *self.live_out.get_mut(id).unwrap() = new_out;
+                }
+
+                // let successors = self.successors.get(&id).unwrap_or(&HashSet::new()); // some blocks have now suc
+
+                // let mut new_out = HashSet::new();
+
+                if current_in == self.live_in[&id] && current_out == self.live_out[&id] {
+                    break 'outer;
+                }
+            }
+        }
     }
 }
 
@@ -224,18 +235,28 @@ pub fn calculate_liveness(p: &Program) {
 
         println!("lable \tlive \tkill");
 
-        for (block, (live, kill)) in checker.values {
+        for (block, (live, kill)) in &checker.values {
             println!("{} \t {:?} \t {:?}", block, live, kill)
         }
 
         println!("========================");
+
+        checker.calulate_live_out();
+
+        println!("lable \tlive_in");
+
+        for (block, regs) in &checker.live_in {
+            println!("{} \t {:?} \t", block, regs)
+        }
+
+        println!("========================");
+
+        println!("lable \tlive_out");
+
+        for (block, regs) in &checker.live_out {
+            println!("{} \t {:?} \t", block, regs)
+        }
     }
-}
-
-fn live_out(block: BlockID) -> HashSet<Register> {
-    // used.union()
-
-    unimplemented!()
 }
 
 pub fn init(b: &Block) -> (HashSet<Register>, HashSet<Register>) {
