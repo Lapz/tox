@@ -1,9 +1,8 @@
 use crate::ast as t;
 use crate::infer::types;
 use ir::instructions::*;
-use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
-use syntax::ast::{self, Literal, Op};
+use syntax::ast::{self, Literal, Op,AssignOperator};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use util::symbol::Symbols;
@@ -48,19 +47,6 @@ impl<'a> Builder<'a> {
         self.current_block = Some((id, Vec::new()));
     }
 
-    pub fn add_predecessor(&mut self, id: BlockID, block: BlockID) {
-        let entry = self.predecessors.entry(id);
-        match entry {
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().insert(block);
-            }
-            Entry::Vacant(entry) => {
-                let mut set = HashSet::new();
-                set.insert(block);
-                entry.insert(set);
-            }
-        }
-    }
 
     pub fn end_block(&mut self, end: BlockEnd) {
         let (id, inst) = self.current_block.take().unwrap();
@@ -295,10 +281,33 @@ impl<'a> Builder<'a> {
             }
 
             Expression::Assign(var, op, expr) => {
-                let expr = self.build_expr(expr);
                 let var = self.build_var(&var).expect("Undefined Variable");
+                let expr = self.build_expr(expr);
+                match op {
+                    AssignOperator::Equal => {
+                        
+            
+                        self.emit_store(var, expr);
+                    },
+                    AssignOperator::MinusEqual => {
 
-                self.emit_store(var, expr);
+                        self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Minus, expr));
+                    },
+
+                    AssignOperator::PlusEqual => {
+                        self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Plus, expr));
+                    },
+
+                    AssignOperator::SlashEqual => {
+                        self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Div, expr));
+                    },
+
+                    AssignOperator::StarEqual => {
+                        self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Mul, expr));
+                    }
+                }
+                
+                
 
                 var
             }
@@ -370,7 +379,7 @@ impl<'a> Builder<'a> {
 
                     Literal::Str(string) => {
                         let mut bytes = string.into_bytes();
-
+                        bytes.push(b'\0');
                         self.emit_store_immediate(tmp, Value::Mem(bytes));
                     }
 

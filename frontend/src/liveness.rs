@@ -1,10 +1,7 @@
 use ir::instructions::{Block, BlockEnd, BlockID, Function, Instruction, Program, Register};
 use std::collections::{HashMap, HashSet};
-use std::{collections::hash_map::Entry, hash::Hash};
-enum Use {
-    Dead,
-    Alive,
-}
+use std::collections::hash_map::Entry;
+
 
 #[derive(Clone)]
 pub struct LivenessChecker<'a> {
