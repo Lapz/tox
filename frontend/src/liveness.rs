@@ -1,7 +1,15 @@
 use ir::instructions::{Block, BlockEnd, BlockID, Function, Instruction, Program, Register};
-use std::collections::{HashMap, HashSet};
+#[cfg(feature = "graphviz")]
+use petgraph::dot::{Config, Dot};
+use petgraph::Graph;
 use std::collections::hash_map::Entry;
-
+use std::collections::{HashMap, HashSet};
+#[cfg(feature = "graphviz")]
+use std::{
+    fs::{self, File},
+    io::{self, Write},
+    process::Command,
+};
 
 #[derive(Clone)]
 pub struct LivenessChecker<'a> {
@@ -12,6 +20,12 @@ pub struct LivenessChecker<'a> {
     pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
     pub live_in: HashMap<BlockID, HashSet<Register>>,
     pub live_out: HashMap<BlockID, HashSet<Register>>,
+    pub live_ranges: HashMap<Register, HashSet<Register>>,
+}
+
+#[derive(Clone)]
+pub struct InterferenceGraph {
+    pub graph: HashMap<Register, HashSet<Register>>,
 }
 
 impl<'a> LivenessChecker<'a> {
@@ -23,16 +37,13 @@ impl<'a> LivenessChecker<'a> {
             predecessors: HashMap::new(),
             live_in: HashMap::new(),
             live_out: HashMap::new(),
+            reg_graphs: HashMap::new(),
         };
 
         checker.init();
         checker.calculate_successors();
 
         checker
-    }
-
-    pub fn insert(&mut self, id: BlockID, sets: (HashSet<Register>, HashSet<Register>)) {
-        self.sets.insert(id, sets);
     }
 
     pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
@@ -159,8 +170,6 @@ impl<'a> LivenessChecker<'a> {
 
             self.sets.entry(*id).or_insert((used, defined));
         }
-
-        
     }
 
     fn calulate_live_out(&mut self) {
@@ -232,86 +241,63 @@ impl<'a> LivenessChecker<'a> {
             text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
     }
+
+    fn build_interference_graphs(&mut self) {
+        for (id, _) in &self.function.blocks {
+           
+
+            // let mut g = Graph::new_undirected();
+
+            // for def in defs {
+            //     for l in defs.union(&self.live_out[id]) {
+            //         {
+            //             let node = g.add_node(*l);
+            //             let dest_node = g.add_node(*def);
+            //             g.add_edge(node, dest_node, 0);
+            //         }
+            //     }
+
+            //     {
+            //         let node = g.add_node(*def);
+
+            //         for reg in &self.live_out[id] {
+            //             let dest_node = g.add_node(*reg);
+            //             g.add_edge(node, dest_node, 0);
+            //         }
+            //     }
+            //     graph.insert(*def, self.live_out[id].clone());
+            // }
+            // #[cfg(feature = "graphviz")]
+            // {
+            //     let file_name = format!("graphviz/{}.dot", id);
+
+            //     File::create(&file_name).unwrap().write(
+            //         Dot::with_config(&g, &[Config::EdgeNoLabel])
+            //             .to_string()
+            //             .as_bytes(),
+            //     );
+
+            //     let mut dot = Command::new("dot");
+
+            //     let output = dot
+            //         .args(&["-Tpng", &file_name])
+            //         .output()
+            //         .expect("failed to execute process")
+            //         .stdout;
+
+            //     let mut file = File::create(format!("graphviz/{}.png", id)).unwrap();
+            //     file.write(&output).unwrap();
+            // }
+
+            // self.reg_graphs.insert(*id, InterferenceGraph { graph });
+        }
+    }
 }
 
 pub fn calculate_liveness(p: &Program) {
     for function in &p.functions {
         let mut checker = LivenessChecker::new(function);
-       
-
-        for (id, block) in &function.blocks {
-            checker.insert(*id, init(block))
-        }
-
         checker.calulate_live_out();
+        checker.build_interference_graphs();
     }
-}
-
-pub fn init(b: &Block) -> (HashSet<Register>, HashSet<Register>) {
-    let mut used = HashSet::new(); // variables used before they are defined
-    let mut defined = HashSet::new(); // All variables defined in the block
-                                      //
-    for inst in b.instructions.iter().rev() {
-        use Instruction::*;
-        match inst {
-            Array(ref dest, _) => {
-                defined.insert(*dest);
-            }
-
-            Binary(ref dest, ref lhs, _, ref rhs) => {
-                if !defined.contains(lhs) {
-                    used.insert(*lhs);
-                } else if !defined.contains(rhs) {
-                    used.insert(*rhs);
-                }
-                defined.insert(*dest);
-            }
-            Cast(ref dest, ref value, _) => {
-                if !defined.contains(value) {
-                    used.insert(*value);
-                }
-                defined.insert(*dest);
-            }
-
-            Call(ref dest, _, ref args) => {
-                for arg in args {
-                    if !defined.contains(arg) {
-                        used.insert(*arg);
-                    }
-                }
-
-                defined.insert(*dest);
-            }
-
-            StatementStart => (),
-
-            StoreI(ref dest, _) => {
-                defined.insert(*dest);
-            }
-
-            Store(ref dest, ref val) => {
-                if !defined.contains(val) {
-                    used.insert(*val);
-                }
-
-                defined.insert(*dest);
-            }
-
-            Unary(ref dest, ref val, _) => {
-                if !defined.contains(val) {
-                    used.insert(*val);
-                }
-
-                defined.insert(*dest);
-            }
-
-            Return(ref val) => {
-                if !defined.contains(val) {
-                    used.insert(*val);
-                }
-            }
-        }
-    }
-
-    (used, defined)
 }

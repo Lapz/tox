@@ -2,7 +2,7 @@ use crate::ast as t;
 use crate::infer::types;
 use ir::instructions::*;
 use std::collections::{HashMap, HashSet};
-use syntax::ast::{self, Literal, Op,AssignOperator};
+use syntax::ast::{self, AssignOperator, Literal, Op};
 use util::pos::Spanned;
 use util::symbol::Symbol;
 use util::symbol::Symbols;
@@ -46,7 +46,6 @@ impl<'a> Builder<'a> {
 
         self.current_block = Some((id, Vec::new()));
     }
-
 
     pub fn end_block(&mut self, end: BlockEnd) {
         let (id, inst) = self.current_block.take().unwrap();
@@ -285,29 +284,24 @@ impl<'a> Builder<'a> {
                 let expr = self.build_expr(expr);
                 match op {
                     AssignOperator::Equal => {
-                        
-            
                         self.emit_store(var, expr);
-                    },
+                    }
                     AssignOperator::MinusEqual => {
-
                         self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Minus, expr));
-                    },
+                    }
 
                     AssignOperator::PlusEqual => {
                         self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Plus, expr));
-                    },
+                    }
 
                     AssignOperator::SlashEqual => {
                         self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Div, expr));
-                    },
+                    }
 
                     AssignOperator::StarEqual => {
                         self.emit_instruction(Instruction::Binary(var, var, BinaryOp::Mul, expr));
                     }
                 }
-                
-                
 
                 var
             }

@@ -1,4 +1,6 @@
 #[cfg(feature = "graphviz")]
+pub extern crate petgraph;
+#[cfg(feature = "graphviz")]
 pub mod graphviz;
 pub mod instructions;
 pub mod printer;
