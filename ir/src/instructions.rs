@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{self, Debug, Display};
 use util::symbol::Symbol;
 
@@ -201,6 +201,93 @@ impl Register {
 impl Layout {
     pub fn new(size_of: usize, align_of: usize) -> Layout {
         Layout { align_of, size_of }
+    }
+}
+
+impl Instruction {
+    pub fn is_move(&self) -> bool {
+        match self {
+            Instruction::Store(_, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn used(&self) -> HashSet<Register> {
+        let mut used = HashSet::new();
+        use Instruction::*;
+        match self {
+            Array(..) => {}
+            Binary(_, ref lhs, _, ref rhs) => {
+                used.insert(*lhs);
+                used.insert(*rhs);
+            }
+            Cast(_, ref value, _) => {
+                used.insert(*value);
+            }
+
+            Call(_, _, ref args) => {
+                for arg in args {
+                    used.insert(*arg);
+                }
+            }
+
+            StatementStart => {}
+
+            StoreI(_, _) => {}
+
+            Store(_, ref val) => {
+                used.insert(*val);
+            }
+
+            Unary(_, ref val, _) => {
+                used.insert(*val);
+            }
+
+            Return(ref val) => {
+                used.insert(*val);
+            }
+        }
+
+        used
+    }
+
+    pub fn def(&self) -> HashSet<Register> {
+        let mut defined = HashSet::new();
+        use Instruction::*;
+        match self {
+            Array(ref dest, _) => {
+                defined.insert(*dest);
+            }
+
+            Binary(ref dest, _, _, _) => {
+                defined.insert(*dest);
+            }
+            Cast(ref dest, _, _) => {
+                defined.insert(*dest);
+            }
+
+            Call(ref dest, _, _) => {
+                defined.insert(*dest);
+            }
+
+            StatementStart => (),
+
+            StoreI(ref dest, _) => {
+                defined.insert(*dest);
+            }
+
+            Store(ref dest, _) => {
+                defined.insert(*dest);
+            }
+
+            Unary(ref dest, _, _) => {
+                defined.insert(*dest);
+            }
+
+            Return(_) => {}
+        }
+
+        defined
     }
 }
 

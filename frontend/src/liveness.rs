@@ -37,7 +37,7 @@ impl<'a> LivenessChecker<'a> {
             predecessors: HashMap::new(),
             live_in: HashMap::new(),
             live_out: HashMap::new(),
-            reg_graphs: HashMap::new(),
+            live_ranges: HashMap::new(),
         };
 
         checker.init();
@@ -243,9 +243,64 @@ impl<'a> LivenessChecker<'a> {
     }
 
     fn build_interference_graphs(&mut self) {
-        for (id, _) in &self.function.blocks {
-           
+        let mut graph = Graph::new_undirected();
+        for (id, block) in &self.function.blocks {
+            let mut live = self.live_out[id].clone();
 
+            for inst in block.instructions.iter().rev() {
+                let used = inst.used();
+                if inst.is_move() {
+                    live = live
+                        .difference(&used)
+                        .cloned()
+                        .collect::<HashSet<Register>>();
+                }
+
+                let def = inst.def();
+
+                live = live
+                    .union(&def)
+                    .into_iter()
+                    .map(|x| *x)
+                    .collect::<HashSet<Register>>();
+
+                for d in &def {
+                    let start_node = graph.add_node(*d);
+                    for l in &live {
+                        
+                        let end_node = graph.add_node(*l);
+
+                        graph.add_edge(start_node, end_node, 1);
+                    }
+                }
+
+                live = used
+                    .union(&live.difference(&def).cloned().collect::<HashSet<_>>())
+                    .cloned()
+                    .collect::<HashSet<_>>()
+            }
+
+            #[cfg(feature = "graphviz")]
+            {
+                let file_name = format!("graphviz/{}.dot", id);
+
+                File::create(&file_name).unwrap().write(
+                    Dot::with_config(&graph, &[Config::EdgeNoLabel])
+                        .to_string()
+                        .as_bytes(),
+                ).unwrap();
+
+                let mut dot = Command::new("dot");
+
+                let output = dot
+                    .args(&["-Tpng", &file_name])
+                    .output()
+                    .expect("failed to execute process")
+                    .stdout;
+
+                let mut file = File::create(format!("graphviz/{}.png", id)).unwrap();
+                file.write(&output).unwrap();
+            }
             // let mut g = Graph::new_undirected();
 
             // for def in defs {
@@ -266,27 +321,6 @@ impl<'a> LivenessChecker<'a> {
             //         }
             //     }
             //     graph.insert(*def, self.live_out[id].clone());
-            // }
-            // #[cfg(feature = "graphviz")]
-            // {
-            //     let file_name = format!("graphviz/{}.dot", id);
-
-            //     File::create(&file_name).unwrap().write(
-            //         Dot::with_config(&g, &[Config::EdgeNoLabel])
-            //             .to_string()
-            //             .as_bytes(),
-            //     );
-
-            //     let mut dot = Command::new("dot");
-
-            //     let output = dot
-            //         .args(&["-Tpng", &file_name])
-            //         .output()
-            //         .expect("failed to execute process")
-            //         .stdout;
-
-            //     let mut file = File::create(format!("graphviz/{}.png", id)).unwrap();
-            //     file.write(&output).unwrap();
             // }
 
             // self.reg_graphs.insert(*id, InterferenceGraph { graph });
