@@ -15,7 +15,7 @@ pub struct BlockID(pub u32);
 pub struct Label(u32);
 
 /// A register
-#[derive(Clone, Copy, Hash, PartialEq, Default, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Default, Eq, Ord, PartialOrd)]
 pub struct Register(pub u32);
 
 pub struct Program {

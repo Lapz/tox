@@ -18,6 +18,8 @@ use frontend::Infer;
 #[cfg(feature = "graphviz")]
 use ir::printer::Printer;
 
+use ir::optimizations;
+
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -88,6 +90,7 @@ pub fn run(path: String, _print_ir: Option<String>) {
     {
         let program = build_program(&mut symbols, typed_ast.clone());
         program.graphviz(&symbols).unwrap();
+
         if let Some(f) = _print_ir {
             let printer = Printer::new(&symbols);
 
@@ -95,6 +98,8 @@ pub fn run(path: String, _print_ir: Option<String>) {
                 .print_program(&program, &mut File::create(f).unwrap())
                 .unwrap();
         }
+
+        optimizations(program);
     }
 
     let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {

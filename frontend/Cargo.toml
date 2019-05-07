@@ -7,7 +7,7 @@ edition = "2018"
 
 [features]
 graphviz=["ir/graphviz"]
-prettytable = ["text-tables"]
+
 
 [dependencies]
 util = {path = "../util"}
@@ -17,8 +17,6 @@ vm = {path = "../vm"}
 ir = {path = "../ir"}
 rand = "0.3.16"
 fnv = "1.0.6"
-text-tables = {version = "0.3.1", optional=true}
-petgraph = "0.4"
 
 [dev-dependencies]
 pretty_assertions = "0.4.0"

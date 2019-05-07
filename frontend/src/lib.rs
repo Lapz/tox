@@ -1,9 +1,6 @@
 #[cfg(test)]
 extern crate pretty_assertions;
 
-#[cfg(feature = "prettytable")]
-extern crate text_tables;
-
 extern crate fnv;
 extern crate opcode;
 extern crate rand;
@@ -17,7 +14,6 @@ mod build_structs;
 mod codegen;
 mod ctx;
 mod infer;
-mod liveness;
 
 pub use crate::build_cfg::build_program;
 pub use crate::codegen::compile;

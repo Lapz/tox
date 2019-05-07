@@ -1,9 +1,9 @@
-use ir::instructions::{Block, BlockEnd, BlockID, Function, Instruction, Program, Register};
+use crate::analysis::AnalysisState;
+use crate::instructions::{BlockEnd, BlockID, Function, Register};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
 use petgraph::Graph;
-use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::{hash_map::Entry, HashMap, HashSet};
 #[cfg(feature = "graphviz")]
 use std::{
     fs::{self, File},
@@ -11,39 +11,21 @@ use std::{
     process::Command,
 };
 
-#[derive(Clone)]
-pub struct LivenessChecker<'a> {
-    /// A mapping of the used and defined sets for a basic block
-    pub sets: HashMap<BlockID, (HashSet<Register>, HashSet<Register>)>,
-    pub function: &'a Function,
-    pub successors: HashMap<BlockID, HashSet<BlockID>>,
-    pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
-    pub live_in: HashMap<BlockID, HashSet<Register>>,
-    pub live_out: HashMap<BlockID, HashSet<Register>>,
-    pub live_ranges: HashMap<Register, HashSet<Register>>,
-}
-
-#[derive(Clone)]
-pub struct InterferenceGraph {
-    pub graph: HashMap<Register, HashSet<Register>>,
-}
-
-impl<'a> LivenessChecker<'a> {
-    pub fn new(function: &'a Function) -> Self {
-        let mut checker = Self {
-            function,
-            sets: HashMap::new(),
+impl AnalysisState {
+    pub fn new() -> Self {
+        Self {
+            used_defined: HashMap::new(),
             successors: HashMap::new(),
             predecessors: HashMap::new(),
             live_in: HashMap::new(),
             live_out: HashMap::new(),
-            live_ranges: HashMap::new(),
-        };
+            live_now: HashMap::new(),
+        }
 
-        checker.init();
-        checker.calculate_successors();
+        // checker.init();
+        // checker.calculate_successors();
 
-        checker
+        // checker
     }
 
     pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
@@ -74,12 +56,12 @@ impl<'a> LivenessChecker<'a> {
         }
     }
 
-    pub fn calculate_successors(&mut self) {
-        for (i, (id, block)) in self.function.blocks.iter().enumerate().peekable() {
+    pub fn calculate_successors(&mut self, function: &Function) {
+        for (i, (id, block)) in function.blocks.iter().enumerate().peekable() {
             self.live_in.insert(*id, HashSet::new()); // init the in[n] to empty
             self.live_out.insert(*id, HashSet::new()); // init the out[n] to empty
-            if i > 0 && !(i + 1 > self.function.blocks.len()) {
-                self.add_predecessor(*id, self.function.blocks[i - 1].0)
+            if i > 0 && !(i + 1 > function.blocks.len()) {
+                self.add_predecessor(*id, function.blocks[i - 1].0)
             }
             match block.end {
                 BlockEnd::Branch(_, lhs, rhs) => {
@@ -101,13 +83,13 @@ impl<'a> LivenessChecker<'a> {
     }
 
     /// Initialize the set of used and defined regsiters for a basic block
-    pub fn init(&mut self) {
-        for (id, block) in &self.function.blocks {
+    pub fn init(&mut self, function: &Function) {
+        for (id, block) in &function.blocks {
             let mut used = HashSet::new(); // variables used before they are defined
             let mut defined = HashSet::new(); // All variables defined in the block
 
             for inst in block.instructions.iter().rev() {
-                use Instruction::*;
+                use crate::instructions::Instruction::*;
                 match inst {
                     Array(ref dest, _) => {
                         defined.insert(*dest);
@@ -168,11 +150,89 @@ impl<'a> LivenessChecker<'a> {
                 }
             }
 
-            self.sets.entry(*id).or_insert((used, defined));
+            self.used_defined.entry(*id).or_insert((used, defined));
         }
     }
 
-    fn calulate_live_out(&mut self) {
+    pub fn calulate_live_now(&mut self, function: &Function) {
+        #[cfg(feature = "prettytable")]
+        let mut data: Vec<Vec<String>> = Vec::new();
+        #[cfg(feature = "prettytable")]
+        {
+            data.push(vec!["label".into(), "live_now".into()]);
+        }
+
+        for (id, block) in &function.blocks {
+            let mut live_now = self.live_out[id].clone();
+
+            for inst in &block.instructions {
+                use crate::instructions::Instruction::*;
+                match inst {
+                    Array(ref dest, _) => {
+                        live_now.remove(dest);
+                        // defined.insert(*dest);
+                    }
+
+                    Binary(ref dest, ref lhs, _, ref rhs) => {
+                        live_now.insert(*lhs);
+                        live_now.insert(*rhs);
+
+                        live_now.remove(dest);
+                    }
+                    Cast(ref dest, ref value, _) => {
+                        live_now.insert(*value);
+                        live_now.remove(dest);
+                    }
+
+                    Call(ref dest, _, ref args) => {
+                        for arg in args {
+                            live_now.insert(*arg);
+                        }
+
+                        live_now.remove(dest);
+                    }
+
+                    StatementStart => (),
+
+                    StoreI(ref dest, _) => {
+                        live_now.remove(dest);
+                    }
+
+                    Store(ref dest, ref val) => {
+                        live_now.insert(*val);
+
+                        live_now.remove(dest);
+                    }
+
+                    Unary(ref dest, ref val, _) => {
+                        live_now.insert(*val);
+
+                        live_now.remove(dest);
+                    }
+
+                    Return(ref val) => {
+                        live_now.insert(*val);
+                    }
+                }
+            }
+
+            self.live_now.insert(*id, live_now);
+        }
+
+        #[cfg(feature = "prettytable")]
+        {
+            for (id, live_in) in self.live_now.iter() {
+                data.push(vec![id.to_string(), format!("{:?}", live_in)]);
+            }
+        }
+
+        #[cfg(feature = "prettytable")]
+        {
+            text_tables::render(&mut std::io::stdout(), &data).unwrap();
+        }
+    }
+
+    pub fn calulate_live_out(&mut self, function: &Function) {
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
         #[cfg(feature = "prettytable")]
@@ -192,11 +252,11 @@ impl<'a> LivenessChecker<'a> {
         while changed {
             changed = false;
 
-            for (id, _) in self.function.blocks.iter().rev() {
+            for (id, _) in function.blocks.iter().rev() {
                 let old_in = self.live_in[&id].clone();
                 let old_out = self.live_out[&id].clone();
 
-                let (used, defined) = self.sets[id].clone();
+                let (used, defined) = self.used_defined[id].clone();
 
                 #[cfg(feature = "prettytable")]
                 {
@@ -242,11 +302,19 @@ impl<'a> LivenessChecker<'a> {
         }
     }
 
-    fn build_interference_graphs(&mut self) {
+    fn build_interference_graphs(&mut self, function: &Function) {
         let mut graph = Graph::new_undirected();
         let mut mappings = HashMap::new();
         let mut seen = HashSet::new();
-        for (id, block) in &self.function.blocks {
+        let mut intervals: HashMap<Register, HashSet<Register>> = HashMap::new();
+
+        #[cfg(feature = "prettytable")]
+        let mut data: Vec<Vec<String>> = Vec::new();
+        #[cfg(feature = "prettytable")]
+        {
+            data.push(vec!["register".into(), "live_range".into()]);
+        }
+        for (id, block) in &function.blocks {
             let mut live = self.live_out[id].clone();
 
             for inst in block.instructions.iter().rev() {
@@ -279,10 +347,22 @@ impl<'a> LivenessChecker<'a> {
                             mappings.insert(*l, node);
                             node
                         };
-                        if !seen.contains(&(end_node, start_node))  && end_node != start_node {
+                        if !seen.contains(&(end_node, start_node)) && end_node != start_node {
                             graph.add_edge(end_node, start_node, 1);
                         } else {
                             seen.insert((end_node, start_node));
+                        }
+
+                        let entry = intervals.entry(*d);
+                        match entry {
+                            Entry::Occupied(mut entry) => {
+                                entry.get_mut().insert(*l);
+                            }
+                            Entry::Vacant(entry) => {
+                                let mut set = HashSet::new();
+                                set.insert(*l);
+                                entry.insert(set);
+                            }
                         }
                     }
                 }
@@ -293,16 +373,29 @@ impl<'a> LivenessChecker<'a> {
                     .collect::<HashSet<_>>()
             }
         }
+        #[cfg(feature = "prettytable")]
+        {
+            for (reg, ranges) in &intervals {
+                let mut ranges = ranges.clone().into_iter().collect::<Vec<_>>();
+                ranges.sort();
+                data.push(vec![reg.to_string(), format!("{:?}", ranges)])
+            }
+
+            text_tables::render(&mut std::io::stdout(), &data).unwrap();
+        }
 
         #[cfg(feature = "graphviz")]
         {
             let file_name = format!("graphviz/main_reg.dot");
 
-            File::create(&file_name).unwrap().write(
-                Dot::with_config(&graph, &[Config::EdgeNoLabel])
-                    .to_string()
-                    .as_bytes(),
-            ).unwrap();
+            File::create(&file_name)
+                .unwrap()
+                .write(
+                    Dot::with_config(&graph, &[Config::EdgeNoLabel])
+                        .to_string()
+                        .as_bytes(),
+                )
+                .unwrap();
 
             let mut dot = Command::new("dot");
 
@@ -315,13 +408,5 @@ impl<'a> LivenessChecker<'a> {
             let mut file = File::create(format!("graphviz/main_reg.png")).unwrap();
             file.write(&output).unwrap();
         }
-    }
-}
-
-pub fn calculate_liveness(p: &Program) {
-    for function in &p.functions {
-        let mut checker = LivenessChecker::new(function);
-        checker.calulate_live_out();
-        checker.build_interference_graphs();
     }
 }

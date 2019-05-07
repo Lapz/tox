@@ -1,9 +1,11 @@
-#[cfg(feature = "graphviz")]
-pub extern crate petgraph;
+#[cfg(feature = "prettytable")]
+extern crate text_tables;
+pub mod analysis;
 #[cfg(feature = "graphviz")]
 pub mod graphviz;
 pub mod instructions;
 pub mod printer;
-
 pub const POINTER_SIZE: usize = 8;
 pub const FUNCTION_SIZE: usize = 8;
+
+pub use analysis::optimizations;

@@ -579,10 +579,6 @@ pub fn build_program(symbols: &mut Symbols<()>, old_program: t::Program) -> Prog
             .push(build_function(function, symbols));
     }
 
-    use crate::liveness::calculate_liveness;
-
-    calculate_liveness(&new_program);
-
     new_program
 }
 

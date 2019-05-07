@@ -6,11 +6,11 @@ edition = "2018"
 
 
 [features]
-graphviz=["petgraph"]
-
+graphviz=[]
+prettytable = ["text-tables"]
 [dependencies]
 util= { path="../util"}
+text-tables = {version = "0.3.1", optional=true}
 
 [dependencies.petgraph]
 version= "0.4"
-optional=true
