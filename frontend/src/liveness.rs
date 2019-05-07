@@ -245,6 +245,7 @@ impl<'a> LivenessChecker<'a> {
     fn build_interference_graphs(&mut self) {
         let mut graph = Graph::new_undirected();
         let mut mappings = HashMap::new();
+        let mut seen = HashSet::new();
         for (id, block) in &self.function.blocks {
             let mut live = self.live_out[id].clone();
 
@@ -278,8 +279,11 @@ impl<'a> LivenessChecker<'a> {
                             mappings.insert(*l, node);
                             node
                         };
-
-                        graph.add_edge(end_node, start_node, 0);
+                        if !seen.contains(&(end_node, start_node))  && end_node != start_node {
+                            graph.add_edge(end_node, start_node, 1);
+                        } else {
+                            seen.insert((end_node, start_node));
+                        }
                     }
                 }
 
@@ -290,30 +294,27 @@ impl<'a> LivenessChecker<'a> {
             }
         }
 
-           #[cfg(feature = "graphviz")]
-            {
-                let file_name = format!("graphviz/main.dot");
+        #[cfg(feature = "graphviz")]
+        {
+            let file_name = format!("graphviz/main_reg.dot");
 
-                File::create(&file_name)
-                    .unwrap()
-                    .write(
-                        Dot::with_config(&graph, &[Config::EdgeNoLabel])
-                            .to_string()
-                            .as_bytes(),
-                    )
-                    .unwrap();
+            File::create(&file_name).unwrap().write(
+                Dot::with_config(&graph, &[Config::EdgeNoLabel])
+                    .to_string()
+                    .as_bytes(),
+            ).unwrap();
 
-                let mut dot = Command::new("dot");
+            let mut dot = Command::new("dot");
 
-                let output = dot
-                    .args(&["-Tpng", &file_name])
-                    .output()
-                    .expect("failed to execute process")
-                    .stdout;
+            let output = dot
+                .args(&["-Tpng", &file_name])
+                .output()
+                .expect("failed to execute process")
+                .stdout;
 
-                let mut file = File::create(format!("graphviz/main_reg.png", id)).unwrap();
-                file.write(&output).unwrap();
-            }
+            let mut file = File::create(format!("graphviz/main_reg.png")).unwrap();
+            file.write(&output).unwrap();
+        }
     }
 }
 
