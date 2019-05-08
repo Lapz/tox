@@ -1,4 +1,4 @@
-use crate::analysis::AnalysisState;
+use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{BlockEnd, BlockID, Function, Register};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
@@ -19,13 +19,8 @@ impl AnalysisState {
             predecessors: HashMap::new(),
             live_in: HashMap::new(),
             live_out: HashMap::new(),
-            live_now: HashMap::new(),
+            intervals: HashMap::new(),
         }
-
-        // checker.init();
-        // checker.calculate_successors();
-
-        // checker
     }
 
     pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
@@ -153,85 +148,6 @@ impl AnalysisState {
             self.used_defined.entry(*id).or_insert((used, defined));
         }
     }
-
-    pub fn calulate_live_now(&mut self, function: &Function) {
-        #[cfg(feature = "prettytable")]
-        let mut data: Vec<Vec<String>> = Vec::new();
-        #[cfg(feature = "prettytable")]
-        {
-            data.push(vec!["label".into(), "live_now".into()]);
-        }
-
-        for (id, block) in &function.blocks {
-            let mut live_now = self.live_out[id].clone();
-
-            for inst in &block.instructions {
-                use crate::instructions::Instruction::*;
-                match inst {
-                    Array(ref dest, _) => {
-                        live_now.remove(dest);
-                        // defined.insert(*dest);
-                    }
-
-                    Binary(ref dest, ref lhs, _, ref rhs) => {
-                        live_now.insert(*lhs);
-                        live_now.insert(*rhs);
-
-                        live_now.remove(dest);
-                    }
-                    Cast(ref dest, ref value, _) => {
-                        live_now.insert(*value);
-                        live_now.remove(dest);
-                    }
-
-                    Call(ref dest, _, ref args) => {
-                        for arg in args {
-                            live_now.insert(*arg);
-                        }
-
-                        live_now.remove(dest);
-                    }
-
-                    StatementStart => (),
-
-                    StoreI(ref dest, _) => {
-                        live_now.remove(dest);
-                    }
-
-                    Store(ref dest, ref val) => {
-                        live_now.insert(*val);
-
-                        live_now.remove(dest);
-                    }
-
-                    Unary(ref dest, ref val, _) => {
-                        live_now.insert(*val);
-
-                        live_now.remove(dest);
-                    }
-
-                    Return(ref val) => {
-                        live_now.insert(*val);
-                    }
-                }
-            }
-
-            self.live_now.insert(*id, live_now);
-        }
-
-        #[cfg(feature = "prettytable")]
-        {
-            for (id, live_in) in self.live_now.iter() {
-                data.push(vec![id.to_string(), format!("{:?}", live_in)]);
-            }
-        }
-
-        #[cfg(feature = "prettytable")]
-        {
-            text_tables::render(&mut std::io::stdout(), &data).unwrap();
-        }
-    }
-
     pub fn calulate_live_out(&mut self, function: &Function) {
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
@@ -302,111 +218,45 @@ impl AnalysisState {
         }
     }
 
-    fn build_interference_graphs(&mut self, function: &Function) {
-        let mut graph = Graph::new_undirected();
-        let mut mappings = HashMap::new();
-        let mut seen = HashSet::new();
-        let mut intervals: HashMap<Register, HashSet<Register>> = HashMap::new();
-
+    pub fn calculate_live_intervals(&mut self, function: &Function) {
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
         #[cfg(feature = "prettytable")]
         {
-            data.push(vec!["register".into(), "live_range".into()]);
+            data.push(vec!["reg".into(), "range".into()]);
         }
+
         for (id, block) in &function.blocks {
-            let mut live = self.live_out[id].clone();
+            let live_out = &self.live_out[id];
 
-            for inst in block.instructions.iter().rev() {
-                let used = inst.used();
-                if inst.is_move() {
-                    live = live
-                        .difference(&used)
-                        .cloned()
-                        .collect::<HashSet<Register>>();
-                }
+            for i in 0..block.instructions.len() {
+                for reg in live_out {
+                    let entry = self.intervals.entry(*reg);
 
-                let def = inst.def();
-
-                live = live.union(&def).cloned().collect::<HashSet<Register>>();
-
-                for d in &def {
-                    let start_node = if let Some(entry) = mappings.get(d) {
-                        *entry
-                    } else {
-                        let node = graph.add_node(*d);
-
-                        mappings.insert(*d, node);
-                        node
-                    };
-                    for l in &live {
-                        let end_node = if let Some(entry) = mappings.get(l) {
-                            *entry
-                        } else {
-                            let node = graph.add_node(*l);
-                            mappings.insert(*l, node);
-                            node
-                        };
-                        if !seen.contains(&(end_node, start_node)) && end_node != start_node {
-                            graph.add_edge(end_node, start_node, 1);
-                        } else {
-                            seen.insert((end_node, start_node));
+                    match entry {
+                        Entry::Occupied(mut entry) => {
+                            entry.get_mut().end = i;
                         }
-
-                        let entry = intervals.entry(*d);
-                        match entry {
-                            Entry::Occupied(mut entry) => {
-                                entry.get_mut().insert(*l);
-                            }
-                            Entry::Vacant(entry) => {
-                                let mut set = HashSet::new();
-                                set.insert(*l);
-                                entry.insert(set);
-                            }
+                        Entry::Vacant(entry) => {
+                            entry.insert(Interval { start: i, end: i });
                         }
                     }
                 }
-
-                live = used
-                    .union(&live.difference(&def).cloned().collect::<HashSet<_>>())
-                    .cloned()
-                    .collect::<HashSet<_>>()
             }
         }
+
         #[cfg(feature = "prettytable")]
         {
-            for (reg, ranges) in &intervals {
-                let mut ranges = ranges.clone().into_iter().collect::<Vec<_>>();
-                ranges.sort();
-                data.push(vec![reg.to_string(), format!("{:?}", ranges)])
+            for (reg, interval) in &self.intervals {
+                {
+                    data.push(vec![reg.to_string(), interval.to_string()]);
+                }
             }
-
-            text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
 
-        #[cfg(feature = "graphviz")]
+        #[cfg(feature = "prettytable")]
         {
-            let file_name = format!("graphviz/main_reg.dot");
-
-            File::create(&file_name)
-                .unwrap()
-                .write(
-                    Dot::with_config(&graph, &[Config::EdgeNoLabel])
-                        .to_string()
-                        .as_bytes(),
-                )
-                .unwrap();
-
-            let mut dot = Command::new("dot");
-
-            let output = dot
-                .args(&["-Tpng", &file_name])
-                .output()
-                .expect("failed to execute process")
-                .stdout;
-
-            let mut file = File::create(format!("graphviz/main_reg.png")).unwrap();
-            file.write(&output).unwrap();
+            text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
     }
 }

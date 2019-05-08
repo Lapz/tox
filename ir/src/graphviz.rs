@@ -63,7 +63,10 @@ impl Program {
         fs::create_dir("./graphviz/").unwrap_or(());
 
         for function in self.functions.iter() {
-            let file_name = format!("graphviz/{}.dot", symbols.name(function.name));
+            let name = symbols.name(function.name);
+            fs::create_dir(&format!("graphviz/{}", name)).unwrap_or(());
+
+            let file_name = format!("graphviz/{}/{}.dot", name, name);
 
             self.viz(&mut File::create(&file_name).unwrap(), function)?;
 
@@ -75,8 +78,7 @@ impl Program {
                 .expect("failed to execute process")
                 .stdout;
 
-            let mut file =
-                File::create(&format!("graphviz/{}.png", symbols.name(function.name))).unwrap();
+            let mut file = File::create(&format!("graphviz/{}/{}.png", name, name)).unwrap();
 
             file.write(&output)?;
 
