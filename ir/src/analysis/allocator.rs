@@ -79,9 +79,8 @@ impl<'a> Allocator<'a> {
         &mut self,
         function: &Function,
     ) -> StableGraph<Register, usize, Undirected> {
-        let mut graph = StableGraph::with_capacity(10, 10);
+        let mut graph = Graph::new_undirected();
         let mut mappings = HashMap::new();
-        // let mut seen = HashSet::new();
 
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
@@ -114,7 +113,6 @@ impl<'a> Allocator<'a> {
                         list.insert(node);
 
                         self.work_list_moves.insert(node);
-                        // list.push()
                     }
                 }
 
@@ -139,26 +137,6 @@ impl<'a> Allocator<'a> {
                         };
 
                         self.add_edge(end_node, start_node, &mut graph)
-                        // if !seen.contains(&(end_node, start_node))
-                        //     && !seen.contains(&(start_node, end_node))
-                        //     && end_node != start_node
-                        // {
-                        //     graph.add_edge(end_node, start_node, 1);
-                        // } else {
-                        //     seen.insert((end_node, start_node));
-                        // }
-
-                        // let entry = intervals.entry(*d);
-                        // match entry {
-                        //     Entry::Occupied(mut entry) => {
-                        //         entry.get_mut().insert(*l);
-                        //     }
-                        //     Entry::Vacant(entry) => {
-                        //         let mut set = HashSet::new();
-                        //         set.insert(*l);
-                        //         entry.insert(set);
-                        //     }
-                        // }
                     }
                 }
 
@@ -167,16 +145,6 @@ impl<'a> Allocator<'a> {
                     .cloned()
                     .collect::<HashSet<_>>()
             }
-        }
-        #[cfg(feature = "prettytable")]
-        {
-            // for (reg, ranges) in &intervals {
-            //     let mut ranges = ranges.clone().into_iter().collect::<Vec<_>>();
-            //     ranges.sort();
-            //     data.push(vec![reg.to_string(), format!("{:?}", ranges)])
-            // }
-
-            // text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
 
         #[cfg(feature = "graphviz")]
@@ -215,14 +183,13 @@ impl<'a> Allocator<'a> {
         let mut initial_list = HashSet::new();
 
         std::mem::swap(&mut self.initial_list, &mut initial_list);
-
-        for index in initial_list {
-            if graph.edges(index).count() >= REG_COUNT {
-                self.spill_worklist.insert(index);
-            } else if self.move_related(index) {
-                self.freeze_worklist.insert(index);
+        for index in self.initial_list.iter() {
+            if graph.edges(*index).count() >= REG_COUNT {
+                self.spill_worklist.insert(*index);
+            } else if self.move_related(*index) {
+                self.freeze_worklist.insert(*index);
             } else {
-                self.simplify_work_list.insert(index);
+                self.simplify_work_list.insert(*index);
             }
         }
     }
@@ -262,11 +229,7 @@ impl<'a> Allocator<'a> {
 
             self.select_stack.push(node);
 
-            let mut neighbour_iter = graph.neighbors(node).detach();
-
-            while let Some(neighbour) = neighbour_iter.next_node(graph) {
-                self.decrement_degree(neighbour, graph);
-            }
+            self.decrement_degree(node, graph);
 
             let mut simplify_work_list = simplify_work_list.into_iter().collect::<HashSet<_>>();
 
@@ -291,7 +254,7 @@ impl<'a> Allocator<'a> {
             nodes.push(node)
         }
 
-        if degrees - 1 == REG_COUNT {
+        if degrees as isize - 1 == REG_COUNT as isize {
             self.enable_moves(nodes);
             self.spill_worklist.remove(&index);
             if self.move_related(index) {
@@ -332,7 +295,7 @@ impl<'a> Allocator<'a> {
         v: NodeIndex,
         graph: &mut StableGraph<Register, usize, Undirected>,
     ) {
-        if !is_adjcent(u, v, graph) && u != v {
+        if graph.find_edge(u, v).is_none() && u != v {
             if !self.pre_colored.contains(&u) && !self.pre_colored.contains(&v) {
                 graph.add_edge(u, v, 1);
             }
@@ -641,11 +604,7 @@ impl<'a> Allocator<'a> {
         }
         self.make_work_list(&mut graph);
 
-        while !self.simplify_work_list.is_empty()
-            && !self.work_list_moves.is_empty()
-            && !self.freeze_worklist.is_empty()
-            && !self.spill_worklist.is_empty()
-        {
+        while {
             if !self.simplify_work_list.is_empty() {
                 self.simplify(&mut graph);
             } else if !self.work_list_moves.is_empty() {
@@ -655,7 +614,12 @@ impl<'a> Allocator<'a> {
             } else if !self.spill_worklist.is_empty() {
                 self.select_spill();
             }
-        }
+
+            !(self.simplify_work_list.is_empty()
+                && self.work_list_moves.is_empty()
+                && self.freeze_worklist.is_empty()
+                && self.spill_worklist.is_empty())
+        } {}
 
         self.assign_colors(&graph);
 
@@ -672,7 +636,11 @@ impl<'a> Allocator<'a> {
     ) {
         let mut new_temps = HashSet::new();
         for v in &self.spilled_nodes {
-            let v = graph.node_weight(*v).unwrap();
+            let v = match graph.node_weight(*v) {
+                Some(v) => v,
+                None => continue,
+            };
+            
 
             for (_, block) in function.blocks.iter_mut() {
                 let mut before = Vec::new(); //index of stores to place before
@@ -759,7 +727,7 @@ impl<'a> Allocator<'a> {
                     let new_temp = Register::new();
                     block
                         .instructions
-                        .insert(index-1, Instruction::Store(new_temp, *v));
+                        .insert(index, Instruction::Store(new_temp, *v));
 
                     new_temps.insert(new_temp);
                 }
@@ -789,7 +757,6 @@ impl<'a> Allocator<'a> {
             .cloned()
             .collect::<HashSet<_>>();
 
-        
         self.colored_nodes = HashSet::new();
         self.coalesced_nodes = HashSet::new();
     }
