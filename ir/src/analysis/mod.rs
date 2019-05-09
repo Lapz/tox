@@ -49,10 +49,10 @@ pub struct AnalysisState {
     pub intervals: HashMap<Register, Interval>,
 }
 
-pub fn optimizations(symbols: &mut Symbols<()>, p: crate::instructions::Program) {
+pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     let mut state = Analysis::new();
 
-    for function in &p.functions {
+    for function in &mut p.functions {
         let mut allocator = Allocator::new(symbols, function);
         allocator.build_interference_graphs(function);
         allocator.allocate(0, function);

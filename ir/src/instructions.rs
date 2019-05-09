@@ -8,6 +8,7 @@ static mut REGISTER_COUNT: u32 = 0;
 
 static mut BLOCK_COUNT: u32 = 0;
 
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy)]
 pub struct BlockID(pub u32);
 

@@ -88,10 +88,10 @@ pub fn run(path: String, _print_ir: Option<String>) {
 
     #[cfg(feature = "graphviz")]
     {
-        let program = build_program(&mut symbols, typed_ast.clone());
+        let mut program = build_program(&mut symbols, typed_ast.clone());
         program.graphviz(&symbols).unwrap();
 
-        if let Some(f) = _print_ir {
+        if let Some(ref f) = _print_ir {
             let printer = Printer::new(&symbols);
 
             printer
@@ -99,7 +99,15 @@ pub fn run(path: String, _print_ir: Option<String>) {
                 .unwrap();
         }
 
-        optimizations(program);
+        optimizations(&mut symbols, &mut program);
+
+        if let Some(mut f) = _print_ir {
+            let printer = Printer::new(&symbols);
+            f.push_str("after_reg");
+            printer
+                .print_program(&program, &mut File::create(f).unwrap())
+                .unwrap();
+        }
     }
 
     let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {

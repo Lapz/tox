@@ -1,8 +1,8 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{BlockEnd, BlockID, Function, Register};
+use crate::instructions::{BlockEnd, BlockID, Function, Instruction, Register};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
-use petgraph::{graph::NodeIndex, Graph, Undirected};
+use petgraph::{graph::NodeIndex, stable_graph::StableGraph, Directed, Graph, Undirected};
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 #[cfg(feature = "graphviz")]
 use std::{
@@ -22,7 +22,7 @@ pub struct Allocator<'a> {
     freeze_worklist: HashSet<NodeIndex>,
     spill_worklist: HashSet<NodeIndex>,
     work_list: HashSet<NodeIndex>,
-    initial_list: HashSet<Register>, // register all ready present
+    initial_list: HashSet<NodeIndex>, // register all ready present
     simplify_work_list: HashSet<NodeIndex>,
     active_moves: HashSet<NodeIndex>,
     spilled_nodes: HashSet<NodeIndex>,
@@ -78,11 +78,10 @@ impl<'a> Allocator<'a> {
     pub fn build_interference_graphs(
         &mut self,
         function: &Function,
-    ) -> Graph<Register, usize, Undirected> {
-        let mut graph = Graph::new_undirected();
+    ) -> StableGraph<Register, usize, Undirected> {
+        let mut graph = StableGraph::with_capacity(10, 10);
         let mut mappings = HashMap::new();
         // let mut seen = HashSet::new();
-        let mut intervals: HashMap<Register, HashSet<Register>> = HashMap::new();
 
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
@@ -139,7 +138,7 @@ impl<'a> Allocator<'a> {
                             node
                         };
 
-                        self.add_edge(end_node,start_node,&mut graph)
+                        self.add_edge(end_node, start_node, &mut graph)
                         // if !seen.contains(&(end_node, start_node))
                         //     && !seen.contains(&(start_node, end_node))
                         //     && end_node != start_node
@@ -171,13 +170,13 @@ impl<'a> Allocator<'a> {
         }
         #[cfg(feature = "prettytable")]
         {
-            for (reg, ranges) in &intervals {
-                let mut ranges = ranges.clone().into_iter().collect::<Vec<_>>();
-                ranges.sort();
-                data.push(vec![reg.to_string(), format!("{:?}", ranges)])
-            }
+            // for (reg, ranges) in &intervals {
+            //     let mut ranges = ranges.clone().into_iter().collect::<Vec<_>>();
+            //     ranges.sort();
+            //     data.push(vec![reg.to_string(), format!("{:?}", ranges)])
+            // }
 
-            text_tables::render(&mut std::io::stdout(), &data).unwrap();
+            // text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
 
         #[cfg(feature = "graphviz")]
@@ -212,13 +211,12 @@ impl<'a> Allocator<'a> {
         graph
     }
 
-    fn make_work_list(&mut self, graph: &mut Graph<Register, usize, Undirected>) {
-        let count = graph.node_count();
-        for node in 0..count {
-            let index = NodeIndex::new(node);
-            let reg = graph[index];
-            self.initial_list.remove(&reg);
+    fn make_work_list(&mut self, graph: &mut StableGraph<Register, usize, Undirected>) {
+        let mut initial_list = HashSet::new();
 
+        std::mem::swap(&mut self.initial_list, &mut initial_list);
+
+        for index in initial_list {
             if graph.edges(index).count() >= REG_COUNT {
                 self.spill_worklist.insert(index);
             } else if self.move_related(index) {
@@ -250,7 +248,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn simplify(&mut self, graph: &mut Graph<Register, usize, Undirected>) {
+    fn simplify(&mut self, graph: &mut StableGraph<Register, usize, Undirected>) {
         if self.simplify_work_list.is_empty() {
             return;
         } else {
@@ -268,10 +266,7 @@ impl<'a> Allocator<'a> {
 
             while let Some(neighbour) = neighbour_iter.next_node(graph) {
                 self.decrement_degree(neighbour, graph);
-                graph.remove_node(neighbour);
             }
-
-            graph.remove_node(node); //check if this should occur earlier
 
             let mut simplify_work_list = simplify_work_list.into_iter().collect::<HashSet<_>>();
 
@@ -279,8 +274,14 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn decrement_degree(&mut self, index: NodeIndex, graph: &Graph<Register, usize, Undirected>) {
+    fn decrement_degree(
+        &mut self,
+        index: NodeIndex,
+        graph: &mut StableGraph<Register, usize, Undirected>,
+    ) {
         let degrees = graph.edges(index).count();
+
+        graph.remove_node(index);
 
         let mut nodes = vec![index];
 
@@ -312,10 +313,13 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn add_work_list(&mut self, node: NodeIndex, graph: &mut Graph<Register, usize, Undirected>) {
+    fn add_work_list(
+        &mut self,
+        node: NodeIndex,
+        graph: &mut StableGraph<Register, usize, Undirected>,
+    ) {
         if !self.pre_colored.contains(&node)
-            && !self.move_related(node)
-            && graph.edges(node).count() < REG_COUNT
+            && !(self.move_related(node) && graph.edges(node).count() < REG_COUNT)
         {
             self.freeze_worklist.remove(&node);
             self.simplify_work_list.insert(node);
@@ -326,7 +330,7 @@ impl<'a> Allocator<'a> {
         &mut self,
         u: NodeIndex,
         v: NodeIndex,
-        graph: &mut Graph<Register, usize, Undirected>,
+        graph: &mut StableGraph<Register, usize, Undirected>,
     ) {
         if !is_adjcent(u, v, graph) && u != v {
             if !self.pre_colored.contains(&u) && !self.pre_colored.contains(&v) {
@@ -337,7 +341,12 @@ impl<'a> Allocator<'a> {
 
     ///implements the heuristic used for coalescing a precolored register
     //think of a better name
-    fn ok(&self, t: NodeIndex, r: NodeIndex, graph: &Graph<Register, usize, Undirected>) -> bool {
+    fn ok(
+        &self,
+        t: NodeIndex,
+        r: NodeIndex,
+        graph: &StableGraph<Register, usize, Undirected>,
+    ) -> bool {
         let neighbors_t = graph.neighbors(t).collect::<HashSet<_>>();
         let adj_set = graph
             .neighbors(r)
@@ -345,7 +354,7 @@ impl<'a> Allocator<'a> {
             .union(&neighbors_t)
             .cloned()
             .collect::<HashSet<_>>();
-        neighbors_t.len() < REG_COUNT
+        graph.edges(t).count() < REG_COUNT
             || self.pre_colored.contains(&t)
             || adj_set.contains(&t)
             || adj_set.contains(&r)
@@ -355,12 +364,12 @@ impl<'a> Allocator<'a> {
     fn conservative(
         &mut self,
         nodes: Vec<NodeIndex>,
-        graph: &mut Graph<Register, usize, Undirected>,
+        graph: &mut StableGraph<Register, usize, Undirected>,
     ) -> bool {
         let mut k = 0;
 
         for node in nodes {
-            if graph.neighbors(node).count() >= REG_COUNT {
+            if graph.edges(node).count() >= REG_COUNT {
                 k += 1;
             }
         }
@@ -371,7 +380,7 @@ impl<'a> Allocator<'a> {
     fn adjacent(
         &mut self,
         node: NodeIndex,
-        graph: &Graph<Register, usize, Undirected>,
+        graph: &StableGraph<Register, usize, Undirected>,
     ) -> HashSet<NodeIndex> {
         let select_stack = self
             .select_stack
@@ -395,7 +404,7 @@ impl<'a> Allocator<'a> {
         &mut self,
         u: NodeIndex,
         v: NodeIndex,
-        graph: &mut Graph<Register, usize, Undirected>,
+        graph: &mut StableGraph<Register, usize, Undirected>,
     ) {
         if self.freeze_worklist.contains(&v) {
             self.freeze_worklist.remove(&v);
@@ -421,18 +430,21 @@ impl<'a> Allocator<'a> {
         let adjacent = self.adjacent(v, graph);
 
         for t in adjacent {
-            self.add_edge(t,u,graph);
+            self.add_edge(t, u, graph);
             self.decrement_degree(t, graph);
-            graph.remove_node(t);
         }
 
-        if graph.neighbors(u).count() >= REG_COUNT && self.freeze_worklist.contains(&u) {
+        if graph.edges(u).count() >= REG_COUNT && self.freeze_worklist.contains(&u) {
             self.freeze_worklist.remove(&u);
             self.spill_worklist.insert(u);
         }
     }
 
-    fn coalesce(&mut self, function: &Function, graph: &mut Graph<Register, usize, Undirected>) {
+    fn coalesce(
+        &mut self,
+        function: &Function,
+        graph: &mut StableGraph<Register, usize, Undirected>,
+    ) {
         let mut work_list_moves = HashSet::new();
 
         std::mem::swap(&mut self.work_list_moves, &mut work_list_moves);
@@ -556,7 +568,7 @@ impl<'a> Allocator<'a> {
         self.freeze_moves(node)
     }
 
-    fn assign_colors(&mut self, graph: &Graph<Register, usize, Undirected>) {
+    fn assign_colors(&mut self, graph: &StableGraph<Register, usize, Undirected>) {
         while !self.select_stack.is_empty() {
             let n = self.select_stack.remove(0);
 
@@ -584,6 +596,10 @@ impl<'a> Allocator<'a> {
 
                 let color = ok_colors.remove(0);
 
+                let mut ok_colors = ok_colors.into_iter().collect::<HashSet<_>>();
+
+                std::mem::swap(&mut ok_colors, &mut self.ok_colors);
+
                 self.color.insert(n, color);
             }
         }
@@ -593,7 +609,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    pub fn allocate(&mut self, count: usize, function: &Function) {
+    pub fn allocate(&mut self, count: usize, function: &mut Function) {
         let mut graph = self.build_interference_graphs(function);
         #[cfg(feature = "graphviz")]
         {
@@ -625,8 +641,6 @@ impl<'a> Allocator<'a> {
         }
         self.make_work_list(&mut graph);
 
-        println!("{:#?}", self);
-
         while !self.simplify_work_list.is_empty()
             && !self.work_list_moves.is_empty()
             && !self.freeze_worklist.is_empty()
@@ -646,14 +660,146 @@ impl<'a> Allocator<'a> {
         self.assign_colors(&graph);
 
         if !self.spilled_nodes.is_empty() {
-            //rewrite program
-            // count1;
+            self.rewrite_program(&mut graph, function);
             self.allocate(count + 1, function)
         }
     }
+
+    fn rewrite_program(
+        &mut self,
+        graph: &mut StableGraph<Register, usize, Undirected>,
+        function: &mut Function,
+    ) {
+        let mut new_temps = HashSet::new();
+        for v in &self.spilled_nodes {
+            let v = graph.node_weight(*v).unwrap();
+
+            for (_, block) in function.blocks.iter_mut() {
+                let mut before = Vec::new(); //index of stores to place before
+                let mut after = Vec::new(); //index of stores to place after
+
+                for (i, instruction) in block.instructions.iter().enumerate() {
+                    use crate::instructions::Instruction::*;
+                    match instruction {
+                        Array(ref dest, _) => {
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Binary(ref dest, ref lhs, _, ref rhs) => {
+                            if lhs == v {
+                                before.push(i);
+                            } else if rhs == v {
+                                before.push(i);
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+                        Cast(ref dest, ref value, _) => {
+                            if value == v {
+                                before.push(i);;
+                            }
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Call(ref dest, _, ref args) => {
+                            for arg in args {
+                                if arg == v {
+                                    before.push(i);
+                                }
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        StatementStart => (),
+
+                        StoreI(ref dest, _) => {
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Store(ref dest, ref val) => {
+                            if val == v {
+                                before.push(i);;
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Unary(ref dest, ref val, _) => {
+                            if val == v {
+                                before.push(i);
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Return(ref val) => {
+                            if val == v {
+                                after.push(i);
+                            }
+                        }
+                    }
+                }
+
+                for index in before {
+                    let new_temp = Register::new();
+                    block
+                        .instructions
+                        .insert(index-1, Instruction::Store(new_temp, *v));
+
+                    new_temps.insert(new_temp);
+                }
+
+                for index in after {
+                    let new_temp = Register::new();
+                    block
+                        .instructions
+                        .insert(index + 1, Instruction::Store(new_temp, *v));
+
+                    new_temps.insert(new_temp);
+                }
+            }
+        }
+
+        self.spilled_nodes = HashSet::new();
+
+        self.initial_list = self
+            .colored_nodes
+            .union(
+                &self
+                    .coalesced_nodes
+                    .union(&self.coalesced_nodes)
+                    .cloned()
+                    .collect::<HashSet<_>>(),
+            )
+            .cloned()
+            .collect::<HashSet<_>>();
+
+        
+        self.colored_nodes = HashSet::new();
+        self.coalesced_nodes = HashSet::new();
+    }
 }
 
-fn is_adjcent(t: NodeIndex, r: NodeIndex, graph: &Graph<Register, usize, Undirected>) -> bool {
+fn is_adjcent(
+    t: NodeIndex,
+    r: NodeIndex,
+    graph: &StableGraph<Register, usize, Undirected>,
+) -> bool {
     let neighbors_t = graph.neighbors(t).collect::<HashSet<_>>();
     let adj_set = graph
         .neighbors(r)
