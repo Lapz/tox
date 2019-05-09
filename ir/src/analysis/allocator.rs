@@ -78,8 +78,9 @@ impl<'a> Allocator<'a> {
     pub fn build_interference_graphs(
         &mut self,
         function: &Function,
-    ) -> StableGraph<Register, usize, Undirected> {
+    ) -> Graph<Register, usize, Undirected> {
         let mut graph = Graph::new_undirected();
+        // let mut graph = StableGraph::with_capacity(10,10);
         let mut mappings = HashMap::new();
 
         #[cfg(feature = "prettytable")]
@@ -179,7 +180,7 @@ impl<'a> Allocator<'a> {
         graph
     }
 
-    fn make_work_list(&mut self, graph: &mut StableGraph<Register, usize, Undirected>) {
+    fn make_work_list(&mut self, graph: &mut Graph<Register, usize, Undirected>) {
         let mut initial_list = HashSet::new();
 
         std::mem::swap(&mut self.initial_list, &mut initial_list);
@@ -215,7 +216,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn simplify(&mut self, graph: &mut StableGraph<Register, usize, Undirected>) {
+    fn simplify(&mut self, graph: &mut Graph<Register, usize, Undirected>) {
         if self.simplify_work_list.is_empty() {
             return;
         } else {
@@ -240,7 +241,7 @@ impl<'a> Allocator<'a> {
     fn decrement_degree(
         &mut self,
         index: NodeIndex,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) {
         let degrees = graph.edges(index).count();
 
@@ -279,7 +280,7 @@ impl<'a> Allocator<'a> {
     fn add_work_list(
         &mut self,
         node: NodeIndex,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) {
         if !self.pre_colored.contains(&node)
             && !(self.move_related(node) && graph.edges(node).count() < REG_COUNT)
@@ -293,7 +294,7 @@ impl<'a> Allocator<'a> {
         &mut self,
         u: NodeIndex,
         v: NodeIndex,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) {
         if graph.find_edge(u, v).is_none() && u != v {
             if !self.pre_colored.contains(&u) && !self.pre_colored.contains(&v) {
@@ -308,7 +309,7 @@ impl<'a> Allocator<'a> {
         &self,
         t: NodeIndex,
         r: NodeIndex,
-        graph: &StableGraph<Register, usize, Undirected>,
+        graph: &Graph<Register, usize, Undirected>,
     ) -> bool {
         let neighbors_t = graph.neighbors(t).collect::<HashSet<_>>();
         let adj_set = graph
@@ -327,7 +328,7 @@ impl<'a> Allocator<'a> {
     fn conservative(
         &mut self,
         nodes: Vec<NodeIndex>,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) -> bool {
         let mut k = 0;
 
@@ -343,7 +344,7 @@ impl<'a> Allocator<'a> {
     fn adjacent(
         &mut self,
         node: NodeIndex,
-        graph: &StableGraph<Register, usize, Undirected>,
+        graph: &Graph<Register, usize, Undirected>,
     ) -> HashSet<NodeIndex> {
         let select_stack = self
             .select_stack
@@ -367,7 +368,7 @@ impl<'a> Allocator<'a> {
         &mut self,
         u: NodeIndex,
         v: NodeIndex,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) {
         if self.freeze_worklist.contains(&v) {
             self.freeze_worklist.remove(&v);
@@ -406,7 +407,7 @@ impl<'a> Allocator<'a> {
     fn coalesce(
         &mut self,
         function: &Function,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
     ) {
         let mut work_list_moves = HashSet::new();
 
@@ -531,7 +532,7 @@ impl<'a> Allocator<'a> {
         self.freeze_moves(node)
     }
 
-    fn assign_colors(&mut self, graph: &StableGraph<Register, usize, Undirected>) {
+    fn assign_colors(&mut self, graph: &Graph<Register, usize, Undirected>) {
         while !self.select_stack.is_empty() {
             let n = self.select_stack.remove(0);
 
@@ -631,7 +632,7 @@ impl<'a> Allocator<'a> {
 
     fn rewrite_program(
         &mut self,
-        graph: &mut StableGraph<Register, usize, Undirected>,
+        graph: &mut Graph<Register, usize, Undirected>,
         function: &mut Function,
     ) {
         let mut new_temps = HashSet::new();
@@ -640,7 +641,6 @@ impl<'a> Allocator<'a> {
                 Some(v) => v,
                 None => continue,
             };
-            
 
             for (_, block) in function.blocks.iter_mut() {
                 let mut before = Vec::new(); //index of stores to place before
@@ -765,7 +765,7 @@ impl<'a> Allocator<'a> {
 fn is_adjcent(
     t: NodeIndex,
     r: NodeIndex,
-    graph: &StableGraph<Register, usize, Undirected>,
+    graph: &Graph<Register, usize, Undirected>,
 ) -> bool {
     let neighbors_t = graph.neighbors(t).collect::<HashSet<_>>();
     let adj_set = graph
