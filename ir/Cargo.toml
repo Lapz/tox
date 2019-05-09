@@ -11,6 +11,6 @@ prettytable = ["text-tables"]
 [dependencies]
 util= { path="../util"}
 text-tables = {version = "0.3.1", optional=true}
-
+indexmap = "*"
 [dependencies.petgraph]
 version= "0.4"

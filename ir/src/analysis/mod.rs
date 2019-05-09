@@ -4,14 +4,15 @@ mod color;
 mod dead_code;
 
 use crate::analysis::allocator::Allocator;
-use crate::instructions::{BlockID, Register};
+use crate::instructions::{BlockID, Function, Register};
+use indexmap::map::IndexMap;
 use std::collections::{HashMap, HashSet};
 use util::symbol::{Symbol, Symbols};
 #[derive(Debug, Clone, Default)]
 pub struct Analysis {
     state: HashMap<Symbol, AnalysisState>,
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct Interval {
     start: usize,
     end: usize,
@@ -46,15 +47,27 @@ pub struct AnalysisState {
     pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
     pub live_in: HashMap<BlockID, HashSet<Register>>,
     pub live_out: HashMap<BlockID, HashSet<Register>>,
-    pub intervals: HashMap<Register, Interval>,
+    pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
+}
+
+impl AnalysisState {
+    pub fn new(function: &Function) -> Self {
+        let mut state = Self::default();
+
+        state.init(&function);
+        state.calculate_successors(function);
+        state.calulate_live_out(function);
+        state.calculate_live_intervals(function);
+        state.intervals.sort_keys();
+        state
+    }
 }
 
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     let mut state = Analysis::new();
 
     for function in &mut p.functions {
-        let mut allocator = Allocator::new(symbols, function);
-        allocator.build_interference_graphs(function);
+        let mut allocator = Allocator::new(symbols, AnalysisState::new(function));
         allocator.allocate(0, function);
     }
 }

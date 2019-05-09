@@ -1,5 +1,6 @@
 use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{BlockEnd, BlockID, Function, Register};
+use indexmap::map::{self, IndexMap};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
 use petgraph::Graph;
@@ -12,17 +13,6 @@ use std::{
 };
 
 impl AnalysisState {
-    pub fn new() -> Self {
-        Self {
-            used_defined: HashMap::new(),
-            successors: HashMap::new(),
-            predecessors: HashMap::new(),
-            live_in: HashMap::new(),
-            live_out: HashMap::new(),
-            intervals: HashMap::new(),
-        }
-    }
-
     pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
         let entry = self.successors.entry(id);
         match entry {
@@ -227,18 +217,29 @@ impl AnalysisState {
         }
 
         for (id, block) in &function.blocks {
-            let live_out = &self.live_out[id];
-
-            for i in 0..block.instructions.len() {
-                for reg in live_out {
-                    let entry = self.intervals.entry(*reg);
-
+            for (i, instruction) in block.instructions.iter().enumerate() {
+                for reg in self.live_out[id].union(&instruction.used()) {
+                    let entry = self.intervals.entry(*id);
+                            
                     match entry {
-                        Entry::Occupied(mut entry) => {
-                            entry.get_mut().end = i;
+                        map::Entry::Occupied(mut entry) => {
+                            let entry = entry.get_mut().entry(*reg);
+                           
+                            match entry {
+                                map::Entry::Occupied(mut entry) => {
+                                    entry.get_mut().end = i;
+                                }
+                                map::Entry::Vacant(entry) => {
+                                    entry.insert(Interval { start: i, end: i });
+                                }
+                            }
+                            // entry = i;
                         }
-                        Entry::Vacant(entry) => {
-                            entry.insert(Interval { start: i, end: i });
+                        map::Entry::Vacant(entry) => {
+                            // println!("{}",*reg);
+                            entry
+                                .insert(IndexMap::new())
+                                .insert(*reg, Interval { start: i, end: i });
                         }
                     }
                 }
@@ -247,9 +248,14 @@ impl AnalysisState {
 
         #[cfg(feature = "prettytable")]
         {
-            for (reg, interval) in &self.intervals {
+            for (reg, intervals) in &self.intervals {
+                let mut string_format = String::new();
+
+                for (reg, interval) in intervals {
+                    string_format.push_str(&format!("{}:{}\n", reg, interval));
+                }
                 {
-                    data.push(vec![reg.to_string(), interval.to_string()]);
+                    data.push(vec![reg.to_string(),string_format]);
                 }
             }
         }
