@@ -8,14 +8,10 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
-            "program": "/Users/lenardprattt/Lenard/Rust/tox/target/debug/deps/tox-14aaf93dc5c3311d",
-            "args": ["/Users/lenardprattt/Lenard/Rust/tox/tests/test.tox"],
-            "cwd": "${workspaceRoot}",
-        
-            
-            
-            
+            "name": "Debug Tox",
+            "program": "${workspaceFolder}/target/debug/tox",
+            "args": ["${workspaceFolder}/tests/test.tox"],
+            "cwd": "${workspaceRoot}",  
         }
     ]
 }
