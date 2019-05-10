@@ -139,6 +139,11 @@ impl AnalysisState {
         }
     }
     pub fn calulate_live_out(&mut self, function: &Function) {
+        let mut changed = true;
+
+        #[cfg(feature = "prettytable")]
+        let mut iteration = 0;
+
         #[cfg(feature = "prettytable")]
         let mut data: Vec<Vec<String>> = Vec::new();
         #[cfg(feature = "prettytable")]
@@ -152,9 +157,7 @@ impl AnalysisState {
                 "in".into(),
             ]);
         }
-        let mut changed = true;
-        #[cfg(feature = "prettytable")]
-        let mut iteration = 0;
+
         while changed {
             changed = false;
 
@@ -220,11 +223,11 @@ impl AnalysisState {
             for (i, instruction) in block.instructions.iter().enumerate() {
                 for reg in self.live_out[id].union(&instruction.used()) {
                     let entry = self.intervals.entry(*id);
-                            
+
                     match entry {
                         map::Entry::Occupied(mut entry) => {
                             let entry = entry.get_mut().entry(*reg);
-                           
+
                             match entry {
                                 map::Entry::Occupied(mut entry) => {
                                     entry.get_mut().end = i;
@@ -255,7 +258,7 @@ impl AnalysisState {
                     string_format.push_str(&format!("{}:{}\n", reg, interval));
                 }
                 {
-                    data.push(vec![reg.to_string(),string_format]);
+                    data.push(vec![reg.to_string(), string_format]);
                 }
             }
         }

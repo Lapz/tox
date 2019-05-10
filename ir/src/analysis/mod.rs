@@ -2,6 +2,8 @@ mod allocator;
 mod analysis;
 mod color;
 mod dead_code;
+#[cfg(feature = "graphviz")]
+mod debug;
 
 use crate::analysis::allocator::Allocator;
 use crate::instructions::{BlockID, Function, Register};
@@ -61,13 +63,17 @@ impl AnalysisState {
         state.intervals.sort_keys();
         state
     }
+
+    pub fn empty() -> Self {
+        Self::default()
+    }
 }
 
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     let mut state = Analysis::new();
 
     for function in &mut p.functions {
-        let mut allocator = Allocator::new(symbols, AnalysisState::new(function));
-        allocator.allocate(0, function);
+        let mut allocator = Allocator::new(symbols, function);
+        allocator.allocate(0);
     }
 }

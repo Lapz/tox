@@ -23,6 +23,7 @@ pub struct Program {
     pub classes: Vec<Class>,
 }
 
+#[derive(Debug)]
 pub struct Function {
     pub name: Symbol,
     pub params: Vec<Register>,

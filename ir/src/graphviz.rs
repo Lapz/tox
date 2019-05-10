@@ -82,7 +82,7 @@ impl Program {
 
             file.write(&output)?;
 
-            // fs::remove_file(file_name)?;
+            fs::remove_file(file_name)?;
         }
 
         Ok(())

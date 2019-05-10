@@ -1,3 +1,5 @@
+#![feature(vec_remove_item)]
+
 #[cfg(feature = "prettytable")]
 extern crate text_tables;
 pub mod analysis;
