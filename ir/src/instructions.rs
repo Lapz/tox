@@ -1,5 +1,5 @@
 use indexmap::set::IndexSet;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use util::symbol::Symbol;
 
@@ -211,6 +211,20 @@ impl Instruction {
         match self {
             Instruction::Store(_, _) => true,
             _ => false,
+        }
+    }
+
+    pub fn is_store_i(&self) -> bool {
+        match self {
+            Instruction::StoreI(_, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_immediate(self) -> Option<Value> {
+        match self {
+            Instruction::StoreI(_, value) => Some(value),
+            _ => None,
         }
     }
 

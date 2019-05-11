@@ -1,11 +1,11 @@
 use crate::analysis::{AnalysisState, Interval};
-use crate::instructions::{BlockEnd, BlockID, Function, Register};
+use crate::instructions::{BlockEnd, BlockID, Function};
 use indexmap::map::{self, IndexMap};
 use indexmap::set::IndexSet;
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
-use petgraph::Graph;
-use std::collections::{hash_map::Entry, HashMap, HashSet};
+
+use std::collections::hash_map::Entry;
 #[cfg(feature = "graphviz")]
 use std::{
     fs::{self, File},

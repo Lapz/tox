@@ -94,6 +94,22 @@ impl<'a> Builder<'a> {
             .push(Instruction::StoreI(dest, val))
     }
 
+    pub fn last_instruction(&self) -> Option<&Instruction> {
+        self.current_block
+            .as_ref()
+            .expect("Basic block should be started")
+            .1
+            .last()
+    }
+
+    pub fn pop(&mut self) -> Option<Instruction> {
+        self.current_block
+            .as_mut()
+            .expect("Basic block should be started")
+            .1
+            .pop()
+    }
+
     pub fn add_param(&mut self, symbol: Symbol) {
         self.parameters.insert(symbol, Register::new());
     }
@@ -199,7 +215,14 @@ impl<'a> Builder<'a> {
 
                 if let Some(expr) = expr {
                     let expr = self.build_expr(expr);
-                    self.emit_store(reg, expr);
+
+                    if self.last_instruction().unwrap().is_store_i() {
+                        let inst = self.pop().unwrap();
+
+                        self.emit_store_immediate(reg, inst.get_immediate().unwrap());
+                    } else {
+                        self.emit_store(reg, expr);
+                    }
                 }
             }
 

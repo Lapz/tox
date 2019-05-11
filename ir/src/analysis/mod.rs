@@ -9,7 +9,7 @@ use crate::analysis::allocator::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs::File;
 use util::symbol::{Symbol, Symbols};
 #[derive(Debug, Clone, Default)]
@@ -72,12 +72,12 @@ impl AnalysisState {
 }
 
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
-    let mut state = Analysis::new();
+    let _state = Analysis::new();
 
     for function in &mut p.functions {
         {
             let mut allocator = Allocator::new(symbols, function);
-            allocator.allocate();
+            allocator.allocate(0);
         }
 
         let file_name = format!(
