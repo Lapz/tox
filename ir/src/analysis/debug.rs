@@ -20,8 +20,8 @@ impl<'a> Allocator<'a> {
     ) {
         let name = self.symbols.name(name);
 
-        fs::create_dir(&format!("./graphviz/{}", name));
-        let file_name = format!("./graphviz/{}/{}_initial_reg_{}.dot", name, name, iteration);
+        fs::create_dir(&format!("graphviz/{}", name));
+        let file_name = format!("graphviz/{}/{}_reg_{}.dot", name, name, iteration);
 
         File::create(&file_name)
             .unwrap()
@@ -40,11 +40,8 @@ impl<'a> Allocator<'a> {
             .expect("failed to execute process")
             .stdout;
 
-        let mut file = File::create(format!(
-            "graphviz/{}/{}_initial_reg_{}.png",
-            name, name, iteration
-        ))
-        .unwrap();
+        let mut file =
+            File::create(format!("graphviz/{}/{}_reg_{}.png", name, name, iteration)).unwrap();
         file.write(&output).unwrap();
 
         fs::remove_file(file_name);

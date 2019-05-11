@@ -9,6 +9,7 @@ use crate::analysis::allocator::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
 use util::symbol::{Symbol, Symbols};
 #[derive(Debug, Clone, Default)]
 pub struct Analysis {
@@ -73,7 +74,20 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
     let mut state = Analysis::new();
 
     for function in &mut p.functions {
-        let mut allocator = Allocator::new(symbols, function);
-        allocator.allocate(0);
+        {
+            let mut allocator = Allocator::new(symbols, function);
+            allocator.allocate();
+        }
+
+        let file_name = format!(
+            "graphviz/{name}/{name}_after_reg.tox",
+            name = symbols.name(function.name)
+        );
+
+        let mut printer = crate::printer::Printer::new(&symbols);
+
+        printer
+            .print_function(&function, &mut File::create(file_name).unwrap())
+            .unwrap();
     }
 }

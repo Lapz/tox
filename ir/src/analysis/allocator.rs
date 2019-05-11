@@ -12,6 +12,13 @@ pub struct Interval {
     end: usize,
 }
 
+/// store $to $from
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub struct Move {
+    from: Register,
+    to: Register,
+}
+
 impl Interval {
     pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
@@ -25,21 +32,21 @@ pub struct Allocator<'a> {
     state: AnalysisState,
     function: &'a mut Function,
     pub(crate) symbols: &'a mut Symbols<()>,
-    move_list: HashMap<Register, HashSet<Register>>,
-    work_list_moves: HashSet<Register>,
+    move_list: HashMap<Register, HashSet<Move>>,
+    work_list_moves: HashSet<Move>,
     precolored: HashSet<Register>,
     initial: HashSet<Register>,
     spill_work_list: Vec<Register>,
     spilled_nodes: HashSet<Register>,
     freeze_work_list: Vec<Register>,
     simplify_work_list: Vec<Register>,
-    select_stack: Vec<Register>,
+    select_stack: HashSet<Register>,
     coalesced_nodes: Vec<Register>,
-    coalesced_moves: HashSet<Register>,
-    active_moves: HashSet<Register>,
-    constrained_moves: HashSet<Register>,
+    coalesced_moves: HashSet<Move>,
+    active_moves: HashSet<Move>,
+    constrained_moves: HashSet<Move>,
     alias: HashMap<Register, Register>,
-    frozen_moves: Vec<Register>,
+    frozen_moves: Vec<Move>,
     colored_nodes: HashSet<Register>,
     color: HashMap<Register, usize>, // change to colour enum
     ok_colors: Vec<usize>,           // change to colour enum
@@ -78,7 +85,7 @@ impl<'a> Allocator<'a> {
             spill_work_list: Vec::new(),
             freeze_work_list: Vec::new(),
             simplify_work_list: Vec::new(),
-            select_stack: Vec::new(),
+            select_stack: HashSet::new(),
             coalesced_nodes: Vec::new(),
             active_moves: HashSet::new(),
             ok_colors: Vec::new(),
@@ -92,16 +99,22 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    pub fn allocate(&mut self, count: usize) {
+    pub fn allocate(&mut self) {
         self.state = AnalysisState::new(self.function);
 
         let mut graph = self.build_graph();
-        #[cfg(feature = "graphviz")]
+        // #[cfg(feature = "graphviz")]
         let mut count = 0;
 
         self.make_work_list(&graph);
 
+        #[cfg(feature = "graphviz")]
+        self.dump_debug(self.function.name, count, &graph);
+
         while {
+            println!("simp {:?}", self.spill_work_list);
+            println!("wkm {:?}", self.work_list_moves);
+            println!("spill {:?}", self.simplify_work_list);
             if !self.simplify_work_list.is_empty() {
                 self.simpilfy(&mut graph);
             } else if !self.work_list_moves.is_empty() {
@@ -114,22 +127,28 @@ impl<'a> Allocator<'a> {
 
             count += 1;
 
+            #[cfg(feature = "graphviz")]
+            self.dump_debug(self.function.name, count, &graph);
+
             !(self.simplify_work_list.is_empty()
                 && self.work_list_moves.is_empty()
                 && self.freeze_work_list.is_empty()
                 && self.spill_work_list.is_empty())
         } {}
 
+        println!("select {:?}", self.select_stack);
         self.assign_colors(&graph);
+        println!("select after {:?}", self.select_stack);
 
-        println!("{:#?}", self);
+        println!(" {:?}", self.select_stack);
 
-        if !self.spilled_nodes.is_empty() {
-            self.allocate(count + 1)
+        if !self.spilled_nodes.is_empty() && !self.initial.is_empty() {
+            self.rewrite_program();
+            self.allocate();
+            //  panic!();
         }
 
-        // #[cfg(feature = "graphviz")]
-        // self.dump_debug(self.function.name, count,&graph);
+        println!("colored {:?}", self.colored_nodes);
     }
 
     pub fn build_graph(&mut self) -> GraphMap<Register, usize, Undirected> {
@@ -144,12 +163,19 @@ impl<'a> Allocator<'a> {
                 if instruction.is_move() {
                     live = live.difference(&used).cloned().collect::<HashSet<_>>();
 
+                    let reg_move = match instruction {
+                        Instruction::Store(to, from) => Move {
+                            to: *to,
+                            from: *from,
+                        },
+                        _ => unreachable!(),
+                    };
+
                     for register in instruction.def().union(&used) {
-                        self.move_list
-                            .entry(*register)
-                            .or_insert(HashSet::new())
-                            .insert(*register);
-                        self.work_list_moves.insert(*register);
+                        self.move_list.entry(*register).or_insert(HashSet::new());
+
+                        self.move_list.get_mut(register).unwrap().insert(reg_move);
+                        self.work_list_moves.insert(reg_move);
                     }
                 }
 
@@ -237,7 +263,7 @@ impl<'a> Allocator<'a> {
             .collect::<HashSet<_>>()
     }
 
-    fn node_moves(&self, n: Register) -> HashSet<Register> {
+    fn node_moves(&self, n: Register) -> HashSet<Move> {
         if self.move_list.get(&n).is_some() {
             self.move_list[&n]
                 .intersection(
@@ -259,13 +285,9 @@ impl<'a> Allocator<'a> {
     }
 
     fn simpilfy(&mut self, graph: &mut GraphMap<Register, usize, Undirected>) {
-        if self.simplify_work_list.is_empty() {
-            return;
-        }
-
         let node = self.simplify_work_list.pop().unwrap();
 
-        self.select_stack.push(node);
+        self.select_stack.insert(node);
 
         let adjacent = self.adjacent(node, graph);
 
@@ -281,7 +303,7 @@ impl<'a> Allocator<'a> {
         graph: &mut GraphMap<Register, usize, Undirected>,
     ) {
         let degree = graph.edges(node).count();
-
+       
         graph.remove_edge(node, neighbour);
 
         if degree - 1 == NUMBER_REGISTER {
@@ -346,19 +368,17 @@ impl<'a> Allocator<'a> {
     }
 
     fn colaesce(&mut self, graph: &mut GraphMap<Register, usize, Undirected>) {
-        if self.work_list_moves.len() < 2 {
-            return;
-        }
-
         let mut work_list_moves = HashSet::new();
 
         std::mem::swap(&mut self.work_list_moves, &mut work_list_moves);
 
         let mut work_list_moves = work_list_moves.into_iter().collect::<Vec<_>>();
 
-        let x = self.get_alias(work_list_moves.pop().unwrap());
+        let work_move = work_list_moves.pop().unwrap();
 
-        let y = self.get_alias(work_list_moves.pop().unwrap());
+        let x = self.get_alias(work_move.to);
+
+        let y = self.get_alias(work_move.from);
 
         let (u, v) = if self.precolored.contains(&y) {
             (y, x)
@@ -367,13 +387,10 @@ impl<'a> Allocator<'a> {
         };
 
         if u == v {
-            self.coalesced_moves.insert(u);
-            self.coalesced_moves.insert(v);
+            self.coalesced_moves.insert(work_move);
             self.add_work_list(u, graph);
-            self.add_work_list(v, graph);
         } else if self.precolored.contains(&v) || graph.contains_edge(u, v) {
-            self.constrained_moves.insert(u);
-            self.constrained_moves.insert(v);
+            self.constrained_moves.insert(work_move);
 
             self.add_work_list(u, graph);
             self.add_work_list(v, graph);
@@ -396,16 +413,15 @@ impl<'a> Allocator<'a> {
                     graph,
                 )
         } {
-            self.coalesced_moves.insert(u);
-            self.coalesced_moves.insert(v);
-
+            self.coalesced_moves.insert(work_move);
             self.combine(u, v, graph);
-
             self.add_work_list(u, graph);
         } else {
-            self.active_moves.insert(u);
-            self.active_moves.insert(v);
+            self.active_moves.insert(work_move);
         }
+
+        let mut work_list_moves = work_list_moves.into_iter().collect::<HashSet<_>>();
+        std::mem::swap(&mut work_list_moves, &mut self.work_list_moves);
     }
 
     fn combine(
@@ -458,10 +474,6 @@ impl<'a> Allocator<'a> {
     }
 
     fn freeze(&mut self) {
-        if self.freeze_work_list.is_empty() {
-            return;
-        }
-
         let node = self.freeze_work_list.pop().unwrap();
 
         self.simplify_work_list.push(node);
@@ -472,22 +484,18 @@ impl<'a> Allocator<'a> {
     fn freeze_moves(&mut self, node: Register) {
         let node_moves = self.node_moves(node).into_iter().collect::<Vec<_>>();
 
-        for chunk in node_moves.chunks(2) {
-            let x = chunk[0];
-            let y = chunk[1];
-            let y_alias = self.get_alias(y);
+        for node_move in node_moves {
+            let y_alias = self.get_alias(node_move.from);
             let node_alias = self.get_alias(node);
             let v = if y_alias == node_alias {
-                self.get_alias(x)
+                self.get_alias(node_move.to)
             } else {
                 y_alias
             };
 
-            self.active_moves.remove(&x);
-            self.active_moves.remove(&y);
+            self.active_moves.remove(&node_move);
 
-            self.frozen_moves.push(x);
-            self.frozen_moves.push(y);
+            self.frozen_moves.push(node_move);
 
             if self.freeze_work_list.contains(&v) && self.node_moves(v).is_empty() {
                 self.freeze_work_list.remove_item(&v);
@@ -497,20 +505,21 @@ impl<'a> Allocator<'a> {
     }
 
     fn select_spill(&mut self) {
-        if self.spill_work_list.is_empty() {
-            return;
-        } else {
-            let register = self.spill_work_list.pop().unwrap(); // tot add a heuristic to get this
-            self.simplify_work_list.push(register);
+        let register = self.spill_work_list.pop().unwrap(); // tot add a heuristic to get this
 
-            self.freeze_moves(register);
-        }
-        // let register = self.
+        self.simplify_work_list.push(register);
+
+        self.freeze_moves(register);
     }
 
     fn assign_colors(&mut self, graph: &GraphMap<Register, usize, Undirected>) {
-        while !self.select_stack.is_empty() {
-            let node = self.select_stack.pop().unwrap();
+        let mut select_stack = HashSet::new();
+
+        std::mem::swap(&mut self.select_stack, &mut select_stack);
+
+        let mut select_stack = select_stack.into_iter().collect::<Vec<_>>();
+        while !select_stack.is_empty() {
+            let node = select_stack.pop().unwrap();
 
             self.ok_colors = (0..NUMBER_REGISTER - 1).collect::<Vec<_>>();
 
@@ -547,5 +556,132 @@ impl<'a> Allocator<'a> {
                 }
             }
         }
+    }
+
+    fn rewrite_program(&mut self) {
+        let mut new_temps = HashSet::new();
+        for v in &self.spilled_nodes {
+            for (_, block) in self.function.blocks.iter_mut() {
+                let mut before = Vec::new(); //index of stores to place before
+                let mut after = Vec::new(); //index of stores to place after
+
+                for (i, instruction) in block.instructions.iter().enumerate() {
+                    use crate::instructions::Instruction::*;
+                    match instruction {
+                        Array(ref dest, _) => {
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Binary(ref dest, ref lhs, _, ref rhs) => {
+                            if lhs == v {
+                                before.push(i);
+                            } else if rhs == v {
+                                before.push(i);
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+                        Cast(ref dest, ref value, _) => {
+                            if value == v {
+                                before.push(i);;
+                            }
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Call(ref dest, _, ref args) => {
+                            for arg in args {
+                                if arg == v {
+                                    before.push(i);
+                                }
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        StatementStart => (),
+
+                        StoreI(ref dest, _) => {
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Store(ref dest, ref val) => {
+                            if val == v {
+                                before.push(i);;
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Unary(ref dest, ref val, _) => {
+                            if val == v {
+                                before.push(i);
+                            }
+
+                            if dest == v {
+                                after.push(i);
+                            }
+                        }
+
+                        Return(ref val) => {
+                            if val == v {
+                                after.push(i);
+                            }
+                        }
+                    }
+                }
+
+                for index in before {
+                    let new_temp = Register::new();
+                    block
+                        .instructions
+                        .insert(index, Instruction::Store(new_temp, *v));
+
+                    new_temps.insert(new_temp);
+                }
+
+                for index in after {
+                    let new_temp = Register::new();
+                    block
+                        .instructions
+                        .insert(index + 1, Instruction::Store(new_temp, *v));
+
+                    new_temps.insert(new_temp);
+                }
+            }
+        }
+
+        self.spilled_nodes = HashSet::new();
+
+        self.initial = self
+            .colored_nodes
+            .union(
+                &self
+                    .coalesced_nodes
+                    .clone()
+                    .into_iter()
+                    .collect::<HashSet<_>>()
+                    .union(&new_temps)
+                    .cloned()
+                    .collect::<HashSet<_>>(),
+            )
+            .cloned()
+            .collect::<HashSet<_>>();
+
+        println!("init {:?}", self.initial);
+
+        self.colored_nodes = HashSet::new();
+        self.coalesced_nodes = Vec::new();
     }
 }

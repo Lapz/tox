@@ -118,8 +118,8 @@ pub fn run(path: String, _print_ir: Option<String>) {
         }
     };
 
-    let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
-    vm.run();
+    // let mut vm = VM::new(symbols.symbol("main"), &program, objects).unwrap();
+    // vm.run();
 }
 
 #[derive(StructOpt, Debug)]
