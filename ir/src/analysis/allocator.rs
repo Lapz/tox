@@ -112,9 +112,10 @@ impl<'a> Allocator<'a> {
         self.dump_debug(self.function.name, count, &graph);
 
         while {
-            println!("simp {:?}", self.spill_work_list);
+            println!("spill {:?}", self.spill_work_list);
             println!("wkm {:?}", self.work_list_moves);
-            println!("spill {:?}", self.simplify_work_list);
+            println!("simp {:?}", self.simplify_work_list);
+
             if !self.simplify_work_list.is_empty() {
                 self.simpilfy(&mut graph);
             } else if !self.work_list_moves.is_empty() {
@@ -142,7 +143,7 @@ impl<'a> Allocator<'a> {
 
         println!(" {:?}", self.select_stack);
 
-        if !self.spilled_nodes.is_empty() && !self.initial.is_empty() {
+        if !self.spilled_nodes.is_empty(){
             self.rewrite_program();
             self.allocate();
             //  panic!();
@@ -291,8 +292,13 @@ impl<'a> Allocator<'a> {
 
         let adjacent = self.adjacent(node, graph);
 
+
+        println!("{:?}",node);
+
+        
+
         for neighbour in adjacent {
-            self.decrement_degree(node, neighbour, graph)
+            self.decrement_degree(node,neighbour, graph)
         }
     }
 
@@ -303,6 +309,12 @@ impl<'a> Allocator<'a> {
         graph: &mut GraphMap<Register, usize, Undirected>,
     ) {
         let degree = graph.edges(node).count();
+
+        if degree < NUMBER_REGISTER {
+            return;
+        }
+
+        println!("node {} deg {:?}",node,degree);
        
         graph.remove_edge(node, neighbour);
 
