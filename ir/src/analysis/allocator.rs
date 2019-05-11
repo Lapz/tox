@@ -32,31 +32,32 @@ pub struct Allocator<'a> {
     state: AnalysisState,
     function: &'a mut Function,
     pub(crate) symbols: &'a mut Symbols<()>,
-    move_list: HashMap<Register, HashSet<Move>>,
-    work_list_moves: HashSet<Move>,
-    precolored: HashSet<Register>,
-    initial: HashSet<Register>,
+    move_list: HashMap<Register, IndexSet<Move>>,
+    work_list_moves: IndexSet<Move>,
+    precolored: IndexSet<Register>,
+    initial: IndexSet<Register>,
     spill_work_list: Vec<Register>,
-    spilled_nodes: HashSet<Register>,
+    spilled_nodes: IndexSet<Register>,
     freeze_work_list: Vec<Register>,
     simplify_work_list: Vec<Register>,
-    select_stack: HashSet<Register>,
+    select_stack: IndexSet<Register>,
     coalesced_nodes: Vec<Register>,
-    coalesced_moves: HashSet<Move>,
-    active_moves: HashSet<Move>,
-    constrained_moves: HashSet<Move>,
+    coalesced_moves: IndexSet<Move>,
+    active_moves: IndexSet<Move>,
+    constrained_moves: IndexSet<Move>,
     alias: HashMap<Register, Register>,
     frozen_moves: Vec<Move>,
-    colored_nodes: HashSet<Register>,
+    colored_nodes: IndexSet<Register>,
+    next_colour: usize,
     color: HashMap<Register, usize>, // change to colour enum
     ok_colors: Vec<usize>,           // change to colour enum
 }
 
 macro_rules! hashset {
-    () => { HashSet::new() };
+    () => { IndexSet::new() };
 
     ( $($x:expr),* ) => {{
-        let mut l = HashSet::new();
+        let mut l = IndexSet::new();
         $(
             l.insert($x);
         )*
@@ -64,7 +65,7 @@ macro_rules! hashset {
     }};
 
     ( $($x:expr ,)* ) => {{
-        let mut l = HashSet::new();
+        let mut l = IndexSet::new();
         $(
             l.insert($x);
         )*
@@ -78,23 +79,24 @@ impl<'a> Allocator<'a> {
             symbols,
             function,
             state: AnalysisState::empty(),
-            work_list_moves: HashSet::new(),
+            work_list_moves: IndexSet::new(),
             move_list: HashMap::new(),
-            precolored: HashSet::new(),
-            initial: HashSet::new(),
+            precolored: IndexSet::new(),
+            initial: IndexSet::new(),
             spill_work_list: Vec::new(),
             freeze_work_list: Vec::new(),
             simplify_work_list: Vec::new(),
-            select_stack: HashSet::new(),
+            select_stack: IndexSet::new(),
             coalesced_nodes: Vec::new(),
-            active_moves: HashSet::new(),
+            active_moves: IndexSet::new(),
             ok_colors: Vec::new(),
-            coalesced_moves: HashSet::new(),
-            constrained_moves: HashSet::new(),
-            spilled_nodes: HashSet::new(),
+            coalesced_moves: IndexSet::new(),
+            constrained_moves: IndexSet::new(),
+            spilled_nodes: IndexSet::new(),
             frozen_moves: Vec::new(),
-            colored_nodes: HashSet::new(),
+            colored_nodes: IndexSet::new(),
             color: HashMap::new(),
+            next_colour: 0,
             alias: HashMap::new(),
         }
     }
@@ -143,13 +145,14 @@ impl<'a> Allocator<'a> {
 
         println!(" {:?}", self.select_stack);
 
-        if !self.spilled_nodes.is_empty(){
+        if !self.spilled_nodes.is_empty() {
             self.rewrite_program();
             self.allocate();
             //  panic!();
         }
 
         println!("colored {:?}", self.colored_nodes);
+        println!("colour {:?}", self.color);
     }
 
     pub fn build_graph(&mut self) -> GraphMap<Register, usize, Undirected> {
@@ -162,7 +165,7 @@ impl<'a> Allocator<'a> {
                 let used = instruction.used();
                 let defined = instruction.def();
                 if instruction.is_move() {
-                    live = live.difference(&used).cloned().collect::<HashSet<_>>();
+                    live = live.difference(&used).cloned().collect::<IndexSet<_>>();
 
                     let reg_move = match instruction {
                         Instruction::Store(to, from) => Move {
@@ -173,14 +176,17 @@ impl<'a> Allocator<'a> {
                     };
 
                     for register in instruction.def().union(&used) {
-                        self.move_list.entry(*register).or_insert(HashSet::new());
+                        self.move_list.entry(*register).or_insert(IndexSet::new());
 
                         self.move_list.get_mut(register).unwrap().insert(reg_move);
                         self.work_list_moves.insert(reg_move);
                     }
                 }
 
-                live = live.union(&defined).cloned().collect::<HashSet<Register>>();
+                live = live
+                    .union(&defined)
+                    .cloned()
+                    .collect::<IndexSet<Register>>();
 
                 for def in &defined {
                     for live in &live {
@@ -193,10 +199,10 @@ impl<'a> Allocator<'a> {
                         &live
                             .difference(&defined)
                             .map(|x| *x)
-                            .collect::<HashSet<_>>(),
+                            .collect::<IndexSet<_>>(),
                     )
                     .cloned()
-                    .collect::<HashSet<_>>()
+                    .collect::<IndexSet<_>>()
             }
         }
 
@@ -204,7 +210,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn make_work_list(&mut self, graph: &GraphMap<Register, usize, Undirected>) {
-        let mut initial = HashSet::new();
+        let mut initial = IndexSet::new();
 
         std::mem::swap(&mut self.initial, &mut initial); // swap them out because we need to empty out the list
 
@@ -241,30 +247,30 @@ impl<'a> Allocator<'a> {
         &self,
         n: Register,
         graph: &GraphMap<Register, usize, Undirected>,
-    ) -> HashSet<Register> {
+    ) -> IndexSet<Register> {
         let union = self
             .select_stack
             .clone()
             .into_iter()
-            .collect::<HashSet<_>>()
+            .collect::<IndexSet<_>>()
             .union(
                 &self
                     .coalesced_nodes
                     .clone()
                     .into_iter()
-                    .collect::<HashSet<_>>(),
+                    .collect::<IndexSet<_>>(),
             )
             .cloned()
-            .collect::<HashSet<_>>();
+            .collect::<IndexSet<_>>();
         graph
             .neighbors(n)
-            .collect::<HashSet<_>>()
+            .collect::<IndexSet<_>>()
             .difference(&union)
             .cloned()
-            .collect::<HashSet<_>>()
+            .collect::<IndexSet<_>>()
     }
 
-    fn node_moves(&self, n: Register) -> HashSet<Move> {
+    fn node_moves(&self, n: Register) -> IndexSet<Move> {
         if self.move_list.get(&n).is_some() {
             self.move_list[&n]
                 .intersection(
@@ -272,12 +278,12 @@ impl<'a> Allocator<'a> {
                         .active_moves
                         .union(&self.work_list_moves)
                         .cloned()
-                        .collect::<HashSet<_>>(),
+                        .collect::<IndexSet<_>>(),
                 )
                 .cloned()
-                .collect::<HashSet<_>>()
+                .collect::<IndexSet<_>>()
         } else {
-            HashSet::new()
+            IndexSet::new()
         }
     }
 
@@ -292,13 +298,10 @@ impl<'a> Allocator<'a> {
 
         let adjacent = self.adjacent(node, graph);
 
-
-        println!("{:?}",node);
-
-        
+        println!("{:?}", node);
 
         for neighbour in adjacent {
-            self.decrement_degree(node,neighbour, graph)
+            self.decrement_degree(node, neighbour, graph)
         }
     }
 
@@ -314,8 +317,8 @@ impl<'a> Allocator<'a> {
             return;
         }
 
-        println!("node {} deg {:?}",node,degree);
-       
+        println!("node {} deg {:?}", node, degree);
+
         graph.remove_edge(node, neighbour);
 
         if degree - 1 == NUMBER_REGISTER {
@@ -334,7 +337,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn enable_moves(&mut self, nodes: HashSet<Register>) {
+    fn enable_moves(&mut self, nodes: IndexSet<Register>) {
         for node in nodes {
             for m in self.node_moves(node) {
                 if self.active_moves.contains(&m) {
@@ -380,7 +383,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn colaesce(&mut self, graph: &mut GraphMap<Register, usize, Undirected>) {
-        let mut work_list_moves = HashSet::new();
+        let mut work_list_moves = IndexSet::new();
 
         std::mem::swap(&mut self.work_list_moves, &mut work_list_moves);
 
@@ -432,7 +435,7 @@ impl<'a> Allocator<'a> {
             self.active_moves.insert(work_move);
         }
 
-        let mut work_list_moves = work_list_moves.into_iter().collect::<HashSet<_>>();
+        let mut work_list_moves = work_list_moves.into_iter().collect::<IndexSet<_>>();
         std::mem::swap(&mut work_list_moves, &mut self.work_list_moves);
     }
 
@@ -455,7 +458,7 @@ impl<'a> Allocator<'a> {
         let union = self.move_list[&u]
             .union(&self.move_list[&v])
             .cloned()
-            .collect::<HashSet<_>>();
+            .collect::<IndexSet<_>>();
 
         *self.move_list.get_mut(&u).unwrap() = union;
 
@@ -476,7 +479,7 @@ impl<'a> Allocator<'a> {
         if self
             .coalesced_nodes
             .iter()
-            .collect::<HashSet<_>>()
+            .collect::<IndexSet<_>>()
             .contains(&n)
         {
             self.get_alias(self.alias[&n])
@@ -525,7 +528,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn assign_colors(&mut self, graph: &GraphMap<Register, usize, Undirected>) {
-        let mut select_stack = HashSet::new();
+        let mut select_stack = IndexSet::new();
 
         std::mem::swap(&mut self.select_stack, &mut select_stack);
 
@@ -540,7 +543,7 @@ impl<'a> Allocator<'a> {
                     .colored_nodes
                     .union(&self.precolored)
                     .cloned()
-                    .collect::<HashSet<_>>()
+                    .collect::<IndexSet<_>>()
                     .contains(&self.get_alias(neighbor))
                 {
                     self.ok_colors
@@ -551,10 +554,15 @@ impl<'a> Allocator<'a> {
             if self.ok_colors.is_empty() {
                 self.spilled_nodes.insert(node);
             } else {
+                if self.next_colour + 1 > self.ok_colors.len() {
+                    self.next_colour = 0;
+                }
+
                 self.colored_nodes.insert(node);
 
-                let c = self.ok_colors[0];
+                let c = self.ok_colors[self.next_colour];
                 self.color.insert(node, c);
+                self.next_colour += 1;
             }
 
             for node in &self.coalesced_nodes {
@@ -571,7 +579,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn rewrite_program(&mut self) {
-        let mut new_temps = HashSet::new();
+        let mut new_temps = IndexSet::new();
         for v in &self.spilled_nodes {
             for (_, block) in self.function.blocks.iter_mut() {
                 let mut before = Vec::new(); //index of stores to place before
@@ -674,7 +682,7 @@ impl<'a> Allocator<'a> {
             }
         }
 
-        self.spilled_nodes = HashSet::new();
+        self.spilled_nodes = IndexSet::new();
 
         self.initial = self
             .colored_nodes
@@ -683,17 +691,15 @@ impl<'a> Allocator<'a> {
                     .coalesced_nodes
                     .clone()
                     .into_iter()
-                    .collect::<HashSet<_>>()
+                    .collect::<IndexSet<_>>()
                     .union(&new_temps)
                     .cloned()
-                    .collect::<HashSet<_>>(),
+                    .collect::<IndexSet<_>>(),
             )
             .cloned()
-            .collect::<HashSet<_>>();
+            .collect::<IndexSet<_>>();
 
-        println!("init {:?}", self.initial);
-
-        self.colored_nodes = HashSet::new();
+        self.colored_nodes = IndexSet::new();
         self.coalesced_nodes = Vec::new();
     }
 }

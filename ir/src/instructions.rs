@@ -1,3 +1,4 @@
+use indexmap::set::IndexSet;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{self, Debug, Display};
 use util::symbol::Symbol;
@@ -213,8 +214,8 @@ impl Instruction {
         }
     }
 
-    pub fn used(&self) -> HashSet<Register> {
-        let mut used = HashSet::new();
+    pub fn used(&self) -> IndexSet<Register> {
+        let mut used = IndexSet::new();
         use Instruction::*;
         match self {
             Array(..) => {}
@@ -252,8 +253,8 @@ impl Instruction {
         used
     }
 
-    pub fn def(&self) -> HashSet<Register> {
-        let mut defined = HashSet::new();
+    pub fn def(&self) -> IndexSet<Register> {
+        let mut defined = IndexSet::new();
         use Instruction::*;
         match self {
             Array(ref dest, _) => {

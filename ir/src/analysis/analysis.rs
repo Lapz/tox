@@ -1,6 +1,7 @@
 use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{BlockEnd, BlockID, Function, Register};
 use indexmap::map::{self, IndexMap};
+use indexmap::set::IndexSet;
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
 use petgraph::Graph;
@@ -20,7 +21,7 @@ impl AnalysisState {
                 entry.get_mut().insert(block);
             }
             Entry::Vacant(entry) => {
-                let mut set = HashSet::new();
+                let mut set = IndexSet::new();
                 set.insert(block);
                 entry.insert(set);
             }
@@ -34,7 +35,7 @@ impl AnalysisState {
                 entry.get_mut().insert(block);
             }
             Entry::Vacant(entry) => {
-                let mut set = HashSet::new();
+                let mut set = IndexSet::new();
                 set.insert(block);
                 entry.insert(set);
             }
@@ -43,8 +44,8 @@ impl AnalysisState {
 
     pub fn calculate_successors(&mut self, function: &Function) {
         for (i, (id, block)) in function.blocks.iter().enumerate().peekable() {
-            self.live_in.insert(*id, HashSet::new()); // init the in[n] to empty
-            self.live_out.insert(*id, HashSet::new()); // init the out[n] to empty
+            self.live_in.insert(*id, IndexSet::new()); // init the in[n] to empty
+            self.live_out.insert(*id, IndexSet::new()); // init the out[n] to empty
             if i > 0 && !(i + 1 > function.blocks.len()) {
                 self.add_predecessor(*id, function.blocks[i - 1].0)
             }
@@ -70,8 +71,8 @@ impl AnalysisState {
     /// Initialize the set of used and defined regsiters for a basic block
     pub fn init(&mut self, function: &Function) {
         for (id, block) in &function.blocks {
-            let mut used = HashSet::new(); // variables used before they are defined
-            let mut defined = HashSet::new(); // All variables defined in the block
+            let mut used = IndexSet::new(); // variables used before they are defined
+            let mut defined = IndexSet::new(); // All variables defined in the block
 
             for inst in block.instructions.iter().rev() {
                 use crate::instructions::Instruction::*;
@@ -173,7 +174,7 @@ impl AnalysisState {
                         id.to_string(),
                         format!("{:?}", used),
                         format!("{:?}", defined),
-                        format!("{:?}", self.successors.get(id).unwrap_or(&HashSet::new())),
+                        format!("{:?}", self.successors.get(id).unwrap_or(&IndexSet::new())),
                         format!("{:?}", &self.live_in[id]),
                         format!("{:?}", &self.live_out[id]),
                     ]);
@@ -184,13 +185,13 @@ impl AnalysisState {
                         &old_out
                             .difference(&defined)
                             .cloned()
-                            .collect::<HashSet<_>>(),
+                            .collect::<IndexSet<_>>(),
                     )
                     .cloned()
-                    .collect::<HashSet<_>>();
+                    .collect::<IndexSet<_>>();
 
                 if let Some(successors) = self.successors.get(&id) {
-                    let mut new_out = HashSet::new();
+                    let mut new_out = IndexSet::new();
 
                     for suc in successors {
                         new_out.extend(self.live_in[suc].clone())

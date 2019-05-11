@@ -8,6 +8,7 @@ mod debug;
 use crate::analysis::allocator::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
+use indexmap::set::IndexSet;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use util::symbol::{Symbol, Symbols};
@@ -45,11 +46,11 @@ impl Analysis {
 
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisState {
-    pub used_defined: HashMap<BlockID, (HashSet<Register>, HashSet<Register>)>,
-    pub successors: HashMap<BlockID, HashSet<BlockID>>,
-    pub predecessors: HashMap<BlockID, HashSet<BlockID>>,
-    pub live_in: HashMap<BlockID, HashSet<Register>>,
-    pub live_out: HashMap<BlockID, HashSet<Register>>,
+    pub used_defined: HashMap<BlockID, (IndexSet<Register>, IndexSet<Register>)>,
+    pub successors: HashMap<BlockID, IndexSet<BlockID>>,
+    pub predecessors: HashMap<BlockID, IndexSet<BlockID>>,
+    pub live_in: HashMap<BlockID, IndexSet<Register>>,
+    pub live_out: HashMap<BlockID, IndexSet<Register>>,
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
 }
 
