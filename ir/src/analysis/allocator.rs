@@ -103,8 +103,6 @@ impl<'a> Allocator<'a> {
     }
 
     pub fn allocate(&mut self, mut count: usize) {
-
-     
         self.state = AnalysisState::new(self.function);
 
         let mut graph = self.build_graph();
@@ -147,11 +145,10 @@ impl<'a> Allocator<'a> {
 
         // println!("select {:?}", self.select_stack);
         self.assign_colors(&graph);
-      
 
         if !self.spilled_nodes.is_empty() {
-            // self.rewrite_program();
-            // self.allocate(count + 1);
+            self.rewrite_program();
+            self.allocate(count + 1);
             //  panic!();
         }
 
@@ -160,7 +157,7 @@ impl<'a> Allocator<'a> {
     }
 
     pub fn build_graph(&mut self) -> GraphMap<Register, usize, Undirected> {
-        let mut graph:GraphMap<Register, usize, Undirected> = GraphMap::with_capacity(5, 5);
+        let mut graph: GraphMap<Register, usize, Undirected> = GraphMap::with_capacity(5, 5);
 
         for (id, block) in &self.function.blocks {
             let mut live = self.state.live_out[id].clone();
@@ -197,17 +194,16 @@ impl<'a> Allocator<'a> {
                         //copy to appease the great and wondefull borrow checker
                         if !graph.contains_edge(*live, *def) && live != def {
                             graph.add_node(*live); // add to the graph
-                            graph.add_node(*def);// add to the graph
+                            graph.add_node(*def); // add to the graph
 
-                            self.degree.insert(*live,0); // init the degree
-                            self.degree.insert(*def,0); // init the degree
+                            self.degree.insert(*live, 0); // init the degree
+                            self.degree.insert(*def, 0); // init the degree
 
                             if !self.precolored.contains(live) && !self.precolored.contains(def) {
                                 graph.add_edge(*live, *def, 1);
-                                 *self.degree.get_mut(live).unwrap() += 1;
+                                *self.degree.get_mut(live).unwrap() += 1;
 
-                                 *self.degree.get_mut(def).unwrap() += 1;
-                    
+                                *self.degree.get_mut(def).unwrap() += 1;
                             }
                         }
                     }
@@ -256,7 +252,6 @@ impl<'a> Allocator<'a> {
             if !self.precolored.contains(&u) && !self.precolored.contains(&v) {
                 graph.add_edge(u, v, 1);
                 *self.degree.get_mut(&u).unwrap() += 1;
-
                 *self.degree.get_mut(&v).unwrap() += 1;
             }
         }
@@ -330,11 +325,7 @@ impl<'a> Allocator<'a> {
     ) {
         let degree = self.degree[&node];
 
-        if degree != 0 {
-             *self.degree.get_mut(&node).unwrap() -= 1;
-        }
-
-       
+         *self.degree.get_mut(&node).unwrap() -= 1;
 
         println!("decreasing edge for node {} ", node);
 
@@ -530,7 +521,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn select_spill(&mut self) {
-        let register = self.spill_work_list.pop().unwrap(); // tot add a heuristic to get this
+        let register = self.spill_work_list.pop().unwrap(); // to di add a heuristic to get this
 
         self.simplify_work_list.push(register);
 
@@ -566,7 +557,7 @@ impl<'a> Allocator<'a> {
             if self.ok_colors.is_empty() {
                 self.spilled_nodes.insert(node);
             } else {
-                if self.next_colour + 1 > self.ok_colors.len() {
+                if self.next_colour + 1 > self.ok_colors.len() - 1 {
                     self.next_colour = 0;
                 }
 
@@ -593,105 +584,116 @@ impl<'a> Allocator<'a> {
     fn rewrite_program(&mut self) {
         let mut new_temps = IndexSet::new();
 
-        
         for v in &self.spilled_nodes {
             for (_, block) in self.function.blocks.iter_mut() {
                 let mut before = Vec::new(); //index of stores to place before
                 let mut after = Vec::new(); //index of stores to place after
 
-                for (i, instruction) in block.instructions.iter().enumerate() {
+                for (i, instruction) in block.instructions.iter_mut().enumerate() {
                     use crate::instructions::Instruction::*;
+
+                    let new_temp = Register::new();
+                    
                     match instruction {
-                        Array(ref dest, _) => {
+                        Array(ref mut dest, _) => {
                             if dest == v {
-                                after.push(i);
+                                after.push((i, new_temp));
+
+                                *dest = new_temp;
                             }
                         }
 
-                        Binary(ref dest, ref lhs, _, ref rhs) => {
+                        Binary(ref mut dest, ref mut lhs, _, ref mut rhs) => {
                             if lhs == v {
-                                before.push(i);
+                                before.push((i, new_temp));
+                                *lhs = new_temp;
                             } else if rhs == v {
-                                before.push(i);
+                                before.push((i, new_temp));
+                                *rhs = new_temp;
                             }
 
                             if dest == v {
-                                after.push(i);
+                                after.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
-                        Cast(ref dest, ref value, _) => {
+                        Cast(ref mut dest, ref mut value, _) => {
                             if value == v {
-                                before.push(i);;
+                                before.push((i, new_temp));
+                                *value = new_temp;
                             }
                             if dest == v {
-                                after.push(i);
+                                before.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
 
-                        Call(ref dest, _, ref args) => {
+                        Call(ref mut dest, _, ref mut args) => {
                             for arg in args {
                                 if arg == v {
-                                    before.push(i);
+                                    before.push((i, new_temp));
+                                    *arg = new_temp;
                                 }
                             }
 
                             if dest == v {
-                                after.push(i);
+                                after.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
 
                         StatementStart => (),
 
-                        StoreI(ref dest, _) => {
+                        StoreI(ref mut dest, _) => {
                             if dest == v {
-                                after.push(i);
+                                before.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
 
-                        Store(ref dest, ref val) => {
-                            if val == v {
-                                before.push(i);;
+                        Store(ref mut dest, ref mut value) => {
+                            if value == v {
+                                before.push((i, new_temp));
+                                *value = new_temp;
                             }
 
                             if dest == v {
-                                after.push(i);
+                                after.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
 
-                        Unary(ref dest, ref val, _) => {
-                            if val == v {
-                                before.push(i);
+                        Unary(ref mut dest, ref mut value, _) => {
+                            if value == v {
+                                before.push((i, new_temp));
+                                *value = new_temp;
                             }
 
                             if dest == v {
-                                after.push(i);
+                                after.push((i, new_temp));
+                                *dest = new_temp;
                             }
                         }
 
-                        Return(ref val) => {
-                            if val == v {
-                                after.push(i);
+                        Return(ref mut value) => {
+                            if value == v {
+                                before.push((i, new_temp));
+                                *value = new_temp
                             }
                         }
                     }
                 }
 
-                for index in before {
-                    let new_temp = Register::new();
+                for (index, temp) in before {
                     block
                         .instructions
-                        .insert(index, Instruction::Store(new_temp, *v));
-
-                    new_temps.insert(new_temp);
+                        .insert(index, Instruction::Store(temp, *v));
                 }
 
-                for index in after {
-                    let new_temp = Register::new();
+                for (index, temp) in after {
                     block
                         .instructions
-                        .insert(index + 1, Instruction::Store(new_temp, *v));
-
-                    new_temps.insert(new_temp);
+                        .insert(index, Instruction::Store(temp, *v));
                 }
             }
         }
