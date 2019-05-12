@@ -51,6 +51,10 @@ pub struct Allocator<'a> {
     next_colour: usize,
     pub(crate) color: IndexMap<Register, usize>, // change to colour enum
     ok_colors: Vec<usize>,                       // change to colour enum
+    /// the set of interference edges(u,v) in the graph;if (u,v)∈ adjSet,then (v, u) ∈ adjSet.
+    adjSet: IndexSet<(Register, Register)>,
+    /// adjacency list representation of the graph; for each non-precolored temporary u, adjList[u] is the set of nodes that interfere with u.
+    adjList: IndexMap<Register, IndexSet<Register>>,
 }
 
 macro_rules! hashset {
@@ -99,6 +103,8 @@ impl<'a> Allocator<'a> {
             degree: IndexMap::new(),
             next_colour: 0,
             alias: IndexMap::new(),
+            adjSet: IndexSet::new(),
+            adjList: IndexMap::new(),
         }
     }
 
@@ -107,8 +113,15 @@ impl<'a> Allocator<'a> {
 
         let mut graph = self.build_graph();
 
-        for node in graph.nodes() {
-            self.degree.insert(node, graph.edges(node).count());
+       
+
+        for (u,v) in &self.adjSet {
+
+            let u_count = self.adjList.entry(*u).or_insert(IndexSet::new()).len();
+            self.degree.insert(*u, u_count);
+
+            let v_count = self.adjList.entry(*v).or_insert(IndexSet::new()).len();
+            self.degree.insert(*v, v_count);
         }
         // #[cfg(feature = "graphviz")]
 
@@ -192,18 +205,18 @@ impl<'a> Allocator<'a> {
                 for def in &defined {
                     for live in &live {
                         //copy to appease the great and wondefull borrow checker
-                        if !graph.contains_edge(*live, *def) && live != def {
-                            graph.add_node(*live); // add to the graph
-                            graph.add_node(*def); // add to the graph
-
-                            self.degree.insert(*live, 0); // init the degree
-                            self.degree.insert(*def, 0); // init the degree
-
+                        if !self.adjSet.contains(&(*live, *def)) && live != def {
                             if !self.precolored.contains(live) && !self.precolored.contains(def) {
-                                graph.add_edge(*live, *def, 1);
-                                *self.degree.get_mut(live).unwrap() += 1;
-
-                                *self.degree.get_mut(def).unwrap() += 1;
+                                self.adjList
+                                    .entry(*live)
+                                    .or_insert(IndexSet::new())
+                                    .insert(*live);
+                                self.adjList
+                                    .entry(*def)
+                                    .or_insert(IndexSet::new())
+                                    .insert(*def);
+                                *self.degree.entry(*live).or_insert(0) += 1;
+                                *self.degree.entry(*def).or_insert(0) += 1;
                             }
                         }
                     }
@@ -230,6 +243,10 @@ impl<'a> Allocator<'a> {
         std::mem::swap(&mut self.initial, &mut initial); // swap them out because we need to empty out the list
 
         for initial in initial {
+            if !graph.contains_node(initial) {
+                self.degree.insert(initial, 0);
+            }
+
             if self.degree[&initial] >= NUMBER_REGISTER {
                 self.spill_work_list.push(initial)
             } else if self.move_related(initial) {
@@ -248,11 +265,12 @@ impl<'a> Allocator<'a> {
         v: Register,
         graph: &mut GraphMap<Register, usize, Undirected>,
     ) {
-        if !graph.contains_edge(u, v) && u != v {
+        if self.adjSet.contains(&(u, v)) && u != v {
             if !self.precolored.contains(&u) && !self.precolored.contains(&v) {
-                graph.add_edge(u, v, 1);
-                *self.degree.get_mut(&u).unwrap() += 1;
-                *self.degree.get_mut(&v).unwrap() += 1;
+                self.adjList.entry(u).or_insert(IndexSet::new()).insert(u);
+                self.adjList.entry(v).or_insert(IndexSet::new()).insert(v);
+                *self.degree.entry(u).or_insert(0) += 1;
+                *self.degree.entry(v).or_insert(0) += 1;
             }
         }
     }
@@ -277,12 +295,19 @@ impl<'a> Allocator<'a> {
             )
             .cloned()
             .collect::<IndexSet<_>>();
-        graph
-            .neighbors(n)
-            .collect::<IndexSet<_>>()
-            .difference(&union)
+
+        if self.adjList.get(&n).is_none() {
+            union
+        }else {
+            self.adjList[&n].difference(&union)
             .cloned()
             .collect::<IndexSet<_>>()
+        }
+
+        // adjacent
+        //     .difference(&union)
+        //     .cloned()
+        //     .collect::<IndexSet<_>>()
     }
 
     fn node_moves(&self, n: Register) -> IndexSet<Move> {
@@ -323,11 +348,15 @@ impl<'a> Allocator<'a> {
         node: Register,
         graph: &mut GraphMap<Register, usize, Undirected>,
     ) {
+
+       
         let degree = self.degree[&node];
 
-         *self.degree.get_mut(&node).unwrap() -= 1;
-
         println!("decreasing edge for node {} ", node);
+
+        if degree != 0 {
+            *self.degree.get_mut(&node).unwrap() -= 1;
+        }
 
         if degree < NUMBER_REGISTER {
             let mut nodes = self.adjacent(node, graph);
@@ -541,16 +570,16 @@ impl<'a> Allocator<'a> {
 
             self.ok_colors = (0..NUMBER_REGISTER - 1).collect::<Vec<_>>();
 
-            for neighbor in graph.neighbors(node) {
+            for neighbor in &self.adjList[&node] {
                 if self
                     .colored_nodes
                     .union(&self.precolored)
                     .cloned()
                     .collect::<IndexSet<_>>()
-                    .contains(&self.get_alias(neighbor))
+                    .contains(&self.get_alias(*neighbor))
                 {
                     self.ok_colors
-                        .remove_item(&self.color[&self.get_alias(neighbor)]);
+                        .remove_item(&self.color[&self.get_alias(*neighbor)]);
                 }
             }
 
@@ -593,7 +622,7 @@ impl<'a> Allocator<'a> {
                     use crate::instructions::Instruction::*;
 
                     let new_temp = Register::new();
-                    
+
                     match instruction {
                         Array(ref mut dest, _) => {
                             if dest == v {
