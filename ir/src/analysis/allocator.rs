@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{Function, Instruction, Register, STACK_POINTER};
+use crate::instructions::{Function, Instruction, Register};
 use indexmap::{IndexMap, IndexSet};
 
 use petgraph::{graphmap::GraphMap, Undirected};
@@ -88,7 +88,7 @@ impl<'a> Allocator<'a> {
             state: AnalysisState::empty(),
             work_list_moves: IndexSet::new(),
             move_list: IndexMap::new(),
-            precolored: hashset!(STACK_POINTER),
+            precolored: hashset!(),
             initial: IndexSet::new(),
             spill_work_list: Vec::new(),
             freeze_work_list: Vec::new(),
@@ -102,7 +102,7 @@ impl<'a> Allocator<'a> {
             spilled_nodes: IndexSet::new(),
             frozen_moves: Vec::new(),
             colored_nodes: IndexSet::new(),
-            color: hashmap!(STACK_POINTER => 0),
+            color: hashmap!(),
             degree: IndexMap::new(),
             next_colour: 0,
             alias: IndexMap::new(),
@@ -596,12 +596,12 @@ impl<'a> Allocator<'a> {
         for v in &self.spilled_nodes {
             let new_temp = *mappings.entry(v).or_insert(Register::new());
             new_temps.insert(new_temp);
-            for (_, block) in self.function.blocks.iter_mut() {
+
+            for (_, block) in self.function.blocks.iter_mut().rev() {
                 let mut before = IndexSet::new(); //index of stores to place before
                 let mut after = IndexSet::new(); //index of stores to place after
 
                 for (i, instruction) in block.instructions.iter_mut().rev().enumerate() {
-
                     match instruction {
                         Array(ref mut dest, _) => {
                             if dest == v {
@@ -692,16 +692,16 @@ impl<'a> Allocator<'a> {
                     }
                 }
 
-                for (index, temp) in before {
+                for (index, temp) in &before {
                     block
                         .instructions
-                        .insert(index, Instruction::Store(temp, *v));
+                        .insert(*index, Instruction::Store(*temp, *v));
                 }
 
-                for (index, temp) in after {
+                for (index, temp) in &after {
                     block
                         .instructions
-                        .insert(index + 1, Instruction::Store(temp, *v));
+                        .insert(index + 1, Instruction::Store(*temp, *v));
                 }
             }
         }

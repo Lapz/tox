@@ -5,7 +5,7 @@ use util::symbol::Symbol;
 
 static mut LABEL_COUNT: u32 = 0;
 
-static mut REGISTER_COUNT: u32 = 1;
+static mut REGISTER_COUNT: u32 = 0;
 
 static mut BLOCK_COUNT: u32 = 0;
 
