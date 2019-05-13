@@ -3,7 +3,7 @@ use crate::instructions::Register;
 use petgraph::dot::{Config, Dot};
 use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences, NodeIndexable};
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt,
     fs::{self, File},
     io::{self, Write},
@@ -21,12 +21,7 @@ const GRAPHSTART: &'static str = r##"graph {
     edge[fontsize=8 fontname="Verdana"];"##;
 
 impl<'a> Allocator<'a> {
-    pub fn dump_debug(
-        &self,
-        name: Symbol,
-        iteration: usize,
-        graph: &GraphMap<Register, usize, Undirected>,
-    ) {
+    pub fn dump_debug(&self, name: Symbol, iteration: usize) {
         let name = self.symbols.name(name);
 
         fs::create_dir(&format!("graphviz/{}", name));
@@ -36,10 +31,17 @@ impl<'a> Allocator<'a> {
 
         write!(&mut file, "{}\n", GRAPHSTART);
 
+        let mut indexs = HashMap::new();
+
         //output nodes
-        for (i, node) in graph.nodes().enumerate() {
+        for (i, (node, ns)) in self.adjList.iter().enumerate() {
+            indexs.insert(node, i);
+
+            for (j, n) in ns.iter().enumerate() {
+                indexs.insert(n, j);
+            }
             write!(&mut file, "\t{} [label=\"{}\"", i, node).unwrap();
-            if let Some(colour) = self.color.get(&node) {
+            if let Some(colour) = self.color.get(node) {
                 match colour {
                     0 => write!(&mut file, "fillcolor=red,style=filled").unwrap(),
                     1 => write!(&mut file, "fillcolor=green,style=filled").unwrap(),
@@ -52,16 +54,10 @@ impl<'a> Allocator<'a> {
 
         let mut seen = HashSet::new();
         //output edges
-        for node in graph.nodes() {
-            for (from, to, _) in graph.edges(node) {
+        for node in &self.adjList {
+            for (from, to) in &self.adjSet {
                 if !seen.contains(&(from, to)) || !seen.contains(&(to, from)) {
-                    writeln!(
-                        &mut file,
-                        "\t {} -- {}",
-                        graph.to_index(from),
-                        graph.to_index(to)
-                    )
-                    .unwrap();
+                    writeln!(&mut file, "\t {} -- {}", indexs[from], indexs[to]).unwrap();
 
                     seen.insert((from, to));
                     seen.insert((to, from));

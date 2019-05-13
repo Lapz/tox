@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{Function, Instruction, Register};
+use crate::instructions::{Function, Instruction, Register, STACK_POINTER};
 use indexmap::{IndexMap, IndexSet};
 
 use petgraph::{graphmap::GraphMap, Undirected};
@@ -52,9 +52,9 @@ pub struct Allocator<'a> {
     pub(crate) color: IndexMap<Register, usize>, // change to colour enum
     ok_colors: Vec<usize>,                       // change to colour enum
     /// the set of interference edges(u,v) in the graph;if (u,v)∈ adjSet,then (v, u) ∈ adjSet.
-    adjSet: IndexSet<(Register, Register)>,
+    pub(crate) adjSet: IndexSet<(Register, Register)>,
     /// adjacency list representation of the graph; for each non-precolored temporary u, adjList[u] is the set of nodes that interfere with u.
-    adjList: IndexMap<Register, IndexSet<Register>>,
+    pub(crate) adjList: IndexMap<Register, IndexSet<Register>>,
 }
 
 macro_rules! hashset {
@@ -67,16 +67,19 @@ macro_rules! hashset {
         )*
             l
     }};
+}
 
-    ( $($x:expr ,)* ) => {{
-        let mut l = IndexSet::new();
+macro_rules! hashmap {
+    () => { IndexMap::new() };
+
+    ( $($key:expr => $value:expr),* ) => {{
+        let mut l = IndexMap::new();
         $(
-            l.insert($x);
+            l.insert($key,$value);
         )*
             l
     }};
 }
-
 impl<'a> Allocator<'a> {
     pub fn new(symbols: &'a mut Symbols<()>, function: &'a mut Function) -> Self {
         Allocator {
@@ -85,7 +88,7 @@ impl<'a> Allocator<'a> {
             state: AnalysisState::empty(),
             work_list_moves: IndexSet::new(),
             move_list: IndexMap::new(),
-            precolored: IndexSet::new(),
+            precolored: hashset!(STACK_POINTER),
             initial: IndexSet::new(),
             spill_work_list: Vec::new(),
             freeze_work_list: Vec::new(),
@@ -99,7 +102,7 @@ impl<'a> Allocator<'a> {
             spilled_nodes: IndexSet::new(),
             frozen_moves: Vec::new(),
             colored_nodes: IndexSet::new(),
-            color: IndexMap::new(),
+            color: hashmap!(STACK_POINTER => 0),
             degree: IndexMap::new(),
             next_colour: 0,
             alias: IndexMap::new(),
@@ -111,34 +114,23 @@ impl<'a> Allocator<'a> {
     pub fn allocate(&mut self, mut count: usize) {
         self.state = AnalysisState::new(self.function);
 
-        let mut graph = self.build_graph();
+        self.build_graph();
 
-       
+        println!("nodes {:?}", self.adjSet);
+        println!("edges {:?}", self.adjList);
 
-        for (u,v) in &self.adjSet {
-
-            let u_count = self.adjList.entry(*u).or_insert(IndexSet::new()).len();
-            self.degree.insert(*u, u_count);
-
-            let v_count = self.adjList.entry(*v).or_insert(IndexSet::new()).len();
-            self.degree.insert(*v, v_count);
-        }
         // #[cfg(feature = "graphviz")]
 
-        self.make_work_list(&graph);
+        self.make_work_list();
 
         #[cfg(feature = "graphviz")]
-        self.dump_debug(self.function.name, count, &graph);
+        self.dump_debug(self.function.name, count);
 
         while {
-            // println!("spill {:?}", self.spill_work_list);
-            // println!("wkm {:?}", self.work_list_moves);
-            // println!("simp {:?}", self.simplify_work_list);
-
             if !self.simplify_work_list.is_empty() {
-                self.simpilfy(&mut graph);
+                self.simpilfy();
             } else if !self.work_list_moves.is_empty() {
-                self.colaesce(&mut graph)
+                self.colaesce()
             } else if !self.freeze_work_list.is_empty() {
                 self.freeze();
             } else if !self.spill_work_list.is_empty() {
@@ -148,7 +140,7 @@ impl<'a> Allocator<'a> {
             count += 1;
 
             #[cfg(feature = "graphviz")]
-            self.dump_debug(self.function.name, count, &graph);
+            self.dump_debug(self.function.name, count);
 
             !(self.simplify_work_list.is_empty()
                 && self.work_list_moves.is_empty()
@@ -156,21 +148,32 @@ impl<'a> Allocator<'a> {
                 && self.spill_work_list.is_empty())
         } {}
 
-        // println!("select {:?}", self.select_stack);
-        self.assign_colors(&graph);
+        self.assign_colors();
 
         if !self.spilled_nodes.is_empty() {
             self.rewrite_program();
             self.allocate(count + 1);
-            //  panic!();
         }
 
         #[cfg(feature = "graphviz")]
-        self.dump_debug(self.function.name, count + 1, &graph);
+        self.dump_debug(self.function.name, count + 1);
     }
 
-    pub fn build_graph(&mut self) -> GraphMap<Register, usize, Undirected> {
-        let mut graph: GraphMap<Register, usize, Undirected> = GraphMap::with_capacity(5, 5);
+    pub fn build_graph(&mut self) {
+        //init all the nodes
+        for (_, block) in &self.function.blocks {
+            for instruction in block.instructions.iter() {
+                for node in instruction.def() {
+                    self.adjList.insert(node, IndexSet::new());
+                    self.degree.insert(node, 0);
+                }
+
+                for node in instruction.used() {
+                    self.adjList.insert(node, IndexSet::new());
+                    self.degree.insert(node, 0);
+                }
+            }
+        }
 
         for (id, block) in &self.function.blocks {
             let mut live = self.state.live_out[id].clone();
@@ -206,17 +209,18 @@ impl<'a> Allocator<'a> {
                     for live in &live {
                         //copy to appease the great and wondefull borrow checker
                         if !self.adjSet.contains(&(*live, *def)) && live != def {
-                            if !self.precolored.contains(live) && !self.precolored.contains(def) {
-                                self.adjList
-                                    .entry(*live)
-                                    .or_insert(IndexSet::new())
-                                    .insert(*live);
-                                self.adjList
-                                    .entry(*def)
-                                    .or_insert(IndexSet::new())
-                                    .insert(*def);
-                                *self.degree.entry(*live).or_insert(0) += 1;
-                                *self.degree.entry(*def).or_insert(0) += 1;
+                            self.adjSet.insert((*live, *def));
+                            self.adjSet.insert((*def, *live));
+
+                            if !self.precolored.contains(live) {
+                                self.adjList.get_mut(live).unwrap().insert(*def);
+
+                                *self.degree.get_mut(live).unwrap() += 1;
+                            }
+
+                            if !self.precolored.contains(def) {
+                                self.adjList.get_mut(def).unwrap().insert(*live);
+                                *self.degree.get_mut(def).unwrap() += 1;
                             }
                         }
                     }
@@ -233,20 +237,33 @@ impl<'a> Allocator<'a> {
                     .collect::<IndexSet<_>>()
             }
         }
-
-        graph
     }
 
-    fn make_work_list(&mut self, graph: &GraphMap<Register, usize, Undirected>) {
+    // helper functions
+    /// Add an edge between two register if they are not the same and edge between them is not already present in the graph
+    fn add_edge(&mut self, u: Register, v: Register) {
+        if self.adjSet.contains(&(u, v)) && u != v {
+            self.adjSet.insert((u, v));
+            self.adjSet.insert((v, u));
+
+            if !self.precolored.contains(&u) {
+                self.adjList[&u].insert(v);
+                self.degree[&u] += 1;
+            }
+
+            if !self.precolored.contains(&v) {
+                self.adjList[&v].insert(u);
+                self.degree[&v] += 1;
+            }
+        }
+    }
+
+    fn make_work_list(&mut self) {
         let mut initial = IndexSet::new();
 
         std::mem::swap(&mut self.initial, &mut initial); // swap them out because we need to empty out the list
 
         for initial in initial {
-            if !graph.contains_node(initial) {
-                self.degree.insert(initial, 0);
-            }
-
             if self.degree[&initial] >= NUMBER_REGISTER {
                 self.spill_work_list.push(initial)
             } else if self.move_related(initial) {
@@ -257,57 +274,33 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    // helper functions
-    /// Add an edge between two register if they are not the same and edge between them is not already present in the graph
-    fn add_edge(
-        &mut self,
-        u: Register,
-        v: Register,
-        graph: &mut GraphMap<Register, usize, Undirected>,
-    ) {
-        if self.adjSet.contains(&(u, v)) && u != v {
-            if !self.precolored.contains(&u) && !self.precolored.contains(&v) {
-                self.adjList.entry(u).or_insert(IndexSet::new()).insert(u);
-                self.adjList.entry(v).or_insert(IndexSet::new()).insert(v);
-                *self.degree.entry(u).or_insert(0) += 1;
-                *self.degree.entry(v).or_insert(0) += 1;
-            }
-        }
-    }
-
     /// find all the nodes that are adjacent to the selected one in the graph.
-    fn adjacent(
-        &self,
-        n: Register,
-        graph: &GraphMap<Register, usize, Undirected>,
-    ) -> IndexSet<Register> {
-        let union = self
-            .select_stack
-            .clone()
-            .into_iter()
-            .collect::<IndexSet<_>>()
-            .union(
+    fn adjacent(&self, n: Register) -> IndexSet<Register> {
+        // let union = ;
+
+        // if self.adjList.get(&n).is_none() {
+        //     union
+        // } else {
+        self.adjList[&n]
+            .difference(
                 &self
-                    .coalesced_nodes
+                    .select_stack
                     .clone()
                     .into_iter()
+                    .collect::<IndexSet<_>>()
+                    .union(
+                        &self
+                            .coalesced_nodes
+                            .clone()
+                            .into_iter()
+                            .collect::<IndexSet<_>>(),
+                    )
+                    .cloned()
                     .collect::<IndexSet<_>>(),
             )
             .cloned()
-            .collect::<IndexSet<_>>();
-
-        if self.adjList.get(&n).is_none() {
-            union
-        }else {
-            self.adjList[&n].difference(&union)
-            .cloned()
             .collect::<IndexSet<_>>()
-        }
-
-        // adjacent
-        //     .difference(&union)
-        //     .cloned()
-        //     .collect::<IndexSet<_>>()
+        // }
     }
 
     fn node_moves(&self, n: Register) -> IndexSet<Move> {
@@ -331,25 +324,20 @@ impl<'a> Allocator<'a> {
         !self.node_moves(n).is_empty()
     }
 
-    fn simpilfy(&mut self, graph: &mut GraphMap<Register, usize, Undirected>) {
+    fn simpilfy(&mut self) {
+        println!("simplify called");
         let node = self.simplify_work_list.pop().unwrap();
 
         self.select_stack.insert(node);
 
-        let adjacent = self.adjacent(node, graph);
+        let adjacent = self.adjacent(node);
 
         for neighbour in adjacent {
-            self.decrement_degree(neighbour, graph)
+            self.decrement_degree(neighbour)
         }
     }
 
-    fn decrement_degree(
-        &mut self,
-        node: Register,
-        graph: &mut GraphMap<Register, usize, Undirected>,
-    ) {
-
-       
+    fn decrement_degree(&mut self, node: Register) {
         let degree = self.degree[&node];
 
         println!("decreasing edge for node {} ", node);
@@ -358,8 +346,8 @@ impl<'a> Allocator<'a> {
             *self.degree.get_mut(&node).unwrap() -= 1;
         }
 
-        if degree < NUMBER_REGISTER {
-            let mut nodes = self.adjacent(node, graph);
+        if degree == NUMBER_REGISTER {
+            let mut nodes = self.adjacent(node);
 
             nodes.insert(node);
 
@@ -385,7 +373,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn add_work_list(&mut self, node: Register, graph: &GraphMap<Register, usize, Undirected>) {
+    fn add_work_list(&mut self, node: Register) {
         if !self.precolored.contains(&node)
             && !(self.move_related(node) && self.degree[&node] < NUMBER_REGISTER)
         {
@@ -396,18 +384,14 @@ impl<'a> Allocator<'a> {
 
     ///implements the heuristic used for coalescing a precolored register
     //think of a better name
-    fn ok(&self, t: Register, r: Register, graph: &GraphMap<Register, usize, Undirected>) -> bool {
+    fn ok(&self, t: Register, r: Register) -> bool {
         self.degree[&t] < NUMBER_REGISTER
             || self.precolored.contains(&t)
-            || graph.contains_edge(t, r)
+            || self.adjSet.contains(&(t, r))
     }
 
     /// Conservative implements the conservative coalescing heuristic.
-    fn conservative(
-        &mut self,
-        nodes: Vec<Register>,
-        graph: &mut GraphMap<Register, usize, Undirected>,
-    ) -> bool {
+    fn conservative(&mut self, nodes: Vec<Register>) -> bool {
         let mut k = 0;
 
         for node in nodes {
@@ -419,14 +403,10 @@ impl<'a> Allocator<'a> {
         k < NUMBER_REGISTER
     }
 
-    fn colaesce(&mut self, graph: &mut GraphMap<Register, usize, Undirected>) {
-        let mut work_list_moves = IndexSet::new();
+    fn colaesce(&mut self) {
+        println!("colaesce called");
 
-        std::mem::swap(&mut self.work_list_moves, &mut work_list_moves);
-
-        let mut work_list_moves = work_list_moves.into_iter().collect::<Vec<_>>();
-
-        let work_move = work_list_moves.pop().unwrap();
+        let work_move = self.work_list_moves.pop().unwrap();
 
         let x = self.get_alias(work_move.to);
 
@@ -438,43 +418,45 @@ impl<'a> Allocator<'a> {
             (x, y)
         };
 
+        self.work_list_moves.remove(&work_move);
+
         if u == v {
             self.coalesced_moves.insert(work_move);
-            self.add_work_list(u, graph);
-        } else if self.precolored.contains(&v) || graph.contains_edge(u, v) {
+            self.add_work_list(u);
+        } else if self.precolored.contains(&v) || self.adjSet.contains(&(u, v)) {
             self.constrained_moves.insert(work_move);
 
-            self.add_work_list(u, graph);
-            self.add_work_list(v, graph);
+            self.add_work_list(u);
+            self.add_work_list(v);
         }
         // u ∈ precolored ∧ (∀t ∈ Adjacent(v), OK(t, u)) ∨ u ̸∈ precolored ∧ Conservative(Adjacent(u) ∪ Adjacent(v))
-        else if self.precolored.contains(&u) && self.ok(u, v, graph)
-            || !self.precolored.contains(&u)
-                && self.conservative(
-                    self.adjacent(u, graph)
-                        .union(&self.adjacent(v, graph))
-                        .cloned()
-                        .collect::<Vec<_>>(),
-                    graph,
-                )
+        else if self.precolored.contains(&u) && self.ok(v, u)
+        // {
+        //     let mut result = true;
+
+        //     for t in self.adjacent(v) {
+        //         result = self.ok(t, u);
+        //     }
+
+        //     result
+        // } 
+        || !self.precolored.contains(&u)
+            && self.conservative(
+                self.adjacent(u)
+                    .union(&self.adjacent(v))
+                    .cloned()
+                    .collect::<Vec<_>>(),
+            )
         {
             self.coalesced_moves.insert(work_move);
-            self.combine(u, v, graph);
-            self.add_work_list(u, graph);
+            self.combine(u, v);
+            self.add_work_list(u);
         } else {
             self.active_moves.insert(work_move);
         }
-
-        let mut work_list_moves = work_list_moves.into_iter().collect::<IndexSet<_>>();
-        std::mem::swap(&mut work_list_moves, &mut self.work_list_moves);
     }
 
-    fn combine(
-        &mut self,
-        u: Register,
-        v: Register,
-        graph: &mut GraphMap<Register, usize, Undirected>,
-    ) {
+    fn combine(&mut self, u: Register, v: Register) {
         if self.freeze_work_list.contains(&v) {
             self.freeze_work_list.remove_item(&v);
         } else {
@@ -494,9 +476,9 @@ impl<'a> Allocator<'a> {
 
         self.enable_moves(hashset!(v));
 
-        for t in self.adjacent(v, graph) {
-            self.add_edge(t, u, graph);
-            self.decrement_degree(v, graph);
+        for t in self.adjacent(v) {
+            self.add_edge(t, u);
+            self.decrement_degree(v);
         }
 
         if self.degree[&u] >= NUMBER_REGISTER && self.freeze_work_list.contains(&u) {
@@ -519,6 +501,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn freeze(&mut self) {
+        println!("freeze called");
         let node = self.freeze_work_list.pop().unwrap();
 
         self.simplify_work_list.push(node);
@@ -530,19 +513,17 @@ impl<'a> Allocator<'a> {
         let node_moves = self.node_moves(node).into_iter().collect::<Vec<_>>();
 
         for node_move in node_moves {
-            let y_alias = self.get_alias(node_move.from);
-            let node_alias = self.get_alias(node);
-            let v = if y_alias == node_alias {
+            let v = if self.get_alias(node_move.from) == self.get_alias(node) {
                 self.get_alias(node_move.to)
             } else {
-                y_alias
+                self.get_alias(node_move.from)
             };
 
             self.active_moves.remove(&node_move);
 
             self.frozen_moves.push(node_move);
 
-            if self.freeze_work_list.contains(&v) && self.node_moves(v).is_empty() {
+            if self.node_moves(v).is_empty() && self.degree[&v] < NUMBER_REGISTER {
                 self.freeze_work_list.remove_item(&v);
                 self.simplify_work_list.push(v);
             }
@@ -550,6 +531,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn select_spill(&mut self) {
+        println!("select_spill called");
         let register = self.spill_work_list.pop().unwrap(); // to di add a heuristic to get this
 
         self.simplify_work_list.push(register);
@@ -557,16 +539,11 @@ impl<'a> Allocator<'a> {
         self.freeze_moves(register);
     }
 
-    fn assign_colors(&mut self, graph: &GraphMap<Register, usize, Undirected>) {
-        let mut select_stack = IndexSet::new();
+    fn assign_colors(&mut self) {
+        println!("select stack {:?}", self.select_stack);
 
-        println!("stack {:?}", self.select_stack);
-
-        std::mem::swap(&mut self.select_stack, &mut select_stack);
-
-        let mut select_stack = select_stack.into_iter().collect::<Vec<_>>();
-        while !select_stack.is_empty() {
-            let node = select_stack.pop().unwrap();
+        while !self.select_stack.is_empty() {
+            let node = self.select_stack.pop().unwrap();
 
             self.ok_colors = (0..NUMBER_REGISTER - 1).collect::<Vec<_>>();
 
@@ -611,22 +588,24 @@ impl<'a> Allocator<'a> {
     }
 
     fn rewrite_program(&mut self) {
+        use crate::instructions::{Instruction::*, Value, POINTER_WIDTH};
+
         let mut new_temps = IndexSet::new();
+        let mut mappings = IndexMap::new();
 
         for v in &self.spilled_nodes {
+            let new_temp = *mappings.entry(v).or_insert(Register::new());
+            new_temps.insert(new_temp);
             for (_, block) in self.function.blocks.iter_mut() {
-                let mut before = Vec::new(); //index of stores to place before
-                let mut after = Vec::new(); //index of stores to place after
+                let mut before = IndexSet::new(); //index of stores to place before
+                let mut after = IndexSet::new(); //index of stores to place after
 
-                for (i, instruction) in block.instructions.iter_mut().enumerate() {
-                    use crate::instructions::Instruction::*;
-
-                    let new_temp = Register::new();
+                for (i, instruction) in block.instructions.iter_mut().rev().enumerate() {
 
                     match instruction {
                         Array(ref mut dest, _) => {
                             if dest == v {
-                                after.push((i, new_temp));
+                                after.insert((i, new_temp));
 
                                 *dest = new_temp;
                             }
@@ -634,25 +613,25 @@ impl<'a> Allocator<'a> {
 
                         Binary(ref mut dest, ref mut lhs, _, ref mut rhs) => {
                             if lhs == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *lhs = new_temp;
                             } else if rhs == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *rhs = new_temp;
                             }
 
                             if dest == v {
-                                after.push((i, new_temp));
+                                after.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
                         Cast(ref mut dest, ref mut value, _) => {
                             if value == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *value = new_temp;
                             }
                             if dest == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
@@ -660,13 +639,13 @@ impl<'a> Allocator<'a> {
                         Call(ref mut dest, _, ref mut args) => {
                             for arg in args {
                                 if arg == v {
-                                    before.push((i, new_temp));
+                                    before.insert((i, new_temp));
                                     *arg = new_temp;
                                 }
                             }
 
                             if dest == v {
-                                after.push((i, new_temp));
+                                after.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
@@ -675,38 +654,38 @@ impl<'a> Allocator<'a> {
 
                         StoreI(ref mut dest, _) => {
                             if dest == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
 
                         Store(ref mut dest, ref mut value) => {
                             if value == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *value = new_temp;
                             }
 
                             if dest == v {
-                                after.push((i, new_temp));
+                                after.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
 
                         Unary(ref mut dest, ref mut value, _) => {
                             if value == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *value = new_temp;
                             }
 
                             if dest == v {
-                                after.push((i, new_temp));
+                                after.insert((i, new_temp));
                                 *dest = new_temp;
                             }
                         }
 
                         Return(ref mut value) => {
                             if value == v {
-                                before.push((i, new_temp));
+                                before.insert((i, new_temp));
                                 *value = new_temp
                             }
                         }
@@ -722,7 +701,7 @@ impl<'a> Allocator<'a> {
                 for (index, temp) in after {
                     block
                         .instructions
-                        .insert(index, Instruction::Store(temp, *v));
+                        .insert(index + 1, Instruction::Store(temp, *v));
                 }
             }
         }

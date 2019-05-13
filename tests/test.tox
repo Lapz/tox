@@ -1,6 +1,16 @@
+fn main(a:int, b:int) -> int { 
+    let d=0;
+    let e=a;
 
+    while(e>0) {
+        d = d+b;
+        e = e-1;
+    }
 
-fn main(){
+    return d; 
+}
+
+/*fn main(){
     let a =0;
     let b = 1;
     let c =2;
@@ -11,4 +21,5 @@ fn main(){
     
     
    
-}
+}*/
+
