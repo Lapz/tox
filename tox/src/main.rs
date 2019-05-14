@@ -110,7 +110,7 @@ pub fn run(path: String, _print_ir: Option<String>) {
         }
     }
 
-    let (program, objects) = match compile(&typed_ast, &symbols, &mut reporter) {
+    let (_program, _objects) = match compile(&typed_ast, &symbols, &mut reporter) {
         Ok(functions) => functions,
         Err(_) => {
             reporter.emit(input);
