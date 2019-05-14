@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{Function, Instruction, Register};
+use crate::instructions::{Function, Instruction, Register, POINTER_WIDTH, STACK_POINTER};
 use indexmap::{IndexMap, IndexSet};
 
 use petgraph::{graphmap::GraphMap, Undirected};
@@ -55,6 +55,8 @@ pub struct Allocator<'a> {
     pub(crate) adjSet: IndexSet<(Register, Register)>,
     /// adjacency list representation of the graph; for each non-precolored temporary u, adjList[u] is the set of nodes that interfere with u.
     pub(crate) adjList: IndexMap<Register, IndexSet<Register>>,
+    offset: usize,
+    seen_inst: IndexSet<Instruction>,
 }
 
 macro_rules! hashset {
@@ -88,7 +90,7 @@ impl<'a> Allocator<'a> {
             state: AnalysisState::empty(),
             work_list_moves: IndexSet::new(),
             move_list: IndexMap::new(),
-            precolored: hashset!(),
+            precolored: hashset!(STACK_POINTER),
             initial: IndexSet::new(),
             spill_work_list: Vec::new(),
             freeze_work_list: Vec::new(),
@@ -102,12 +104,14 @@ impl<'a> Allocator<'a> {
             spilled_nodes: IndexSet::new(),
             frozen_moves: Vec::new(),
             colored_nodes: IndexSet::new(),
-            color: hashmap!(),
+            color: hashmap!(STACK_POINTER=>2),
             degree: IndexMap::new(),
             next_colour: 0,
             alias: IndexMap::new(),
             adjSet: IndexSet::new(),
             adjList: IndexMap::new(),
+            seen_inst: hashset!(),
+            offset: 0,
         }
     }
 
@@ -139,8 +143,8 @@ impl<'a> Allocator<'a> {
 
             count += 1;
 
-            #[cfg(feature = "graphviz")]
-            self.dump_debug(self.function.name, count);
+            // #[cfg(feature = "graphviz")]
+            // self.dump_debug(self.function.name, count);
 
             !(self.simplify_work_list.is_empty()
                 && self.work_list_moves.is_empty()
@@ -244,7 +248,7 @@ impl<'a> Allocator<'a> {
     fn add_edge(&mut self, u: Register, v: Register) {
         if self.adjSet.contains(&(u, v)) && u != v {
             self.adjSet.insert((u, v));
-            self.adjSet.insert((v, u));
+            // self.adjSet.insert((v, u));
 
             if !self.precolored.contains(&u) {
                 self.adjList[&u].insert(v);
@@ -430,17 +434,15 @@ impl<'a> Allocator<'a> {
             self.add_work_list(v);
         }
         // u ∈ precolored ∧ (∀t ∈ Adjacent(v), OK(t, u)) ∨ u ̸∈ precolored ∧ Conservative(Adjacent(u) ∪ Adjacent(v))
-        else if self.precolored.contains(&u) && self.ok(v, u)
-        // {
-        //     let mut result = true;
+        else if self.precolored.contains(&u) && {
+            let mut result = true;
 
-        //     for t in self.adjacent(v) {
-        //         result = self.ok(t, u);
-        //     }
+            for t in self.adjacent(v) {
+                result = self.ok(t, u);
+            }
 
-        //     result
-        // } 
-        || !self.precolored.contains(&u)
+            result
+        } || !self.precolored.contains(&u)
             && self.conservative(
                 self.adjacent(u)
                     .union(&self.adjacent(v))
@@ -571,6 +573,7 @@ impl<'a> Allocator<'a> {
 
                 let c = self.ok_colors[self.next_colour];
                 self.color.insert(node, c);
+
                 self.next_colour += 1;
             }
 
@@ -597,7 +600,7 @@ impl<'a> Allocator<'a> {
             let new_temp = *mappings.entry(v).or_insert(Register::new());
             new_temps.insert(new_temp);
 
-            for (_, block) in self.function.blocks.iter_mut().rev() {
+            for (id, block) in self.function.blocks.iter_mut().rev() {
                 let mut before = IndexSet::new(); //index of stores to place before
                 let mut after = IndexSet::new(); //index of stores to place after
 
@@ -679,7 +682,7 @@ impl<'a> Allocator<'a> {
 
                             if dest == v {
                                 after.insert((i, new_temp));
-                                *dest = new_temp;
+                                // *dest = new_temp;
                             }
                         }
 
@@ -693,15 +696,41 @@ impl<'a> Allocator<'a> {
                 }
 
                 for (index, temp) in &before {
-                    block
-                        .instructions
-                        .insert(*index, Instruction::Store(*temp, *v));
+                    if !self
+                        .seen_inst
+                        .contains(&Instruction::Store(*temp, STACK_POINTER))
+                    {
+                        block
+                            .instructions
+                            .insert(*index, Instruction::Store(*temp, STACK_POINTER));
+
+                        self.seen_inst
+                            .insert(Instruction::Store(*temp, STACK_POINTER));
+                    }
                 }
 
                 for (index, temp) in &after {
-                    block
-                        .instructions
-                        .insert(index + 1, Instruction::Store(*temp, *v));
+                    if !self
+                        .seen_inst
+                        .contains(&Instruction::Store(STACK_POINTER, *temp))
+                    {
+                        block
+                            .instructions
+                            .insert(*index + 1, Instruction::Store(STACK_POINTER, *temp));
+
+                        self.seen_inst
+                            .insert(Instruction::Store(STACK_POINTER, *temp));
+                    }
+                }
+
+                if self.state.live_in[id].contains(v) {
+                    self.seen_inst
+                        .insert(Instruction::Store(STACK_POINTER, new_temp));
+                }
+
+                if self.state.live_out[id].contains(v) {
+                    self.seen_inst
+                        .insert(Instruction::Store(new_temp, STACK_POINTER));
                 }
             }
         }

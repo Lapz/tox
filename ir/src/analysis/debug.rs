@@ -1,4 +1,4 @@
-use crate::analysis::Allocator;
+use crate::analysis::allocator::Allocator;
 use crate::instructions::Register;
 use petgraph::dot::{Config, Dot};
 use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences, NodeIndexable};
@@ -56,7 +56,7 @@ impl<'a> Allocator<'a> {
         //output edges
         for node in &self.adjList {
             for (from, to) in &self.adjSet {
-                if !seen.contains(&(from, to)) || !seen.contains(&(to, from)) {
+                if !seen.contains(&(from, to)) || !seen.contains(&(to, from)) && from != to {
                     writeln!(&mut file, "\t {} -- {}", indexs[from], indexs[to]).unwrap();
 
                     seen.insert((from, to));

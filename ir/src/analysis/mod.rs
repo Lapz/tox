@@ -2,10 +2,13 @@ mod allocator;
 mod analysis;
 mod color;
 mod dead_code;
+mod linear_scan;
+
 #[cfg(feature = "graphviz")]
 mod debug;
 
-use crate::analysis::allocator::Allocator;
+// use crate::analysis::allocator::Allocator;
+use crate::analysis::linear_scan::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
@@ -77,7 +80,9 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
     for function in &mut p.functions {
         {
             let mut allocator = Allocator::new(symbols, function);
-            allocator.allocate(0);
+            allocator.allocate();
+
+            // println!("{:?}", allocator)
         }
 
         let file_name = format!(

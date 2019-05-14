@@ -213,14 +213,8 @@ impl AnalysisState {
     }
 
     pub fn calculate_live_intervals(&mut self, function: &Function) {
-        #[cfg(feature = "prettytable")]
-        let mut data: Vec<Vec<String>> = Vec::new();
-        #[cfg(feature = "prettytable")]
-        {
-            data.push(vec!["reg".into(), "range".into()]);
-        }
-
         for (id, block) in &function.blocks {
+            self.intervals.insert(*id, IndexMap::new());
             for (i, instruction) in block.instructions.iter().enumerate() {
                 for reg in self.live_out[id].union(&instruction.used()) {
                     let entry = self.intervals.entry(*id);
@@ -252,21 +246,15 @@ impl AnalysisState {
 
         #[cfg(feature = "prettytable")]
         {
-            for (reg, intervals) in &self.intervals {
-                let mut string_format = String::new();
+            writeln!(&mut std::io::stdout(), "block|\treg|\trange");
+
+            for (block, intervals) in &self.intervals {
+                writeln!(&mut std::io::stdout(), "{}", block);
 
                 for (reg, interval) in intervals {
-                    string_format.push_str(&format!("{}:{}\n", reg, interval));
-                }
-                {
-                    data.push(vec![reg.to_string(), string_format]);
+                    writeln!(&mut std::io::stdout(), "\t{}:\t{}", reg, interval);
                 }
             }
-        }
-
-        #[cfg(feature = "prettytable")]
-        {
-            text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
     }
 }

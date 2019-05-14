@@ -1,15 +1,16 @@
 use indexmap::set::IndexSet;
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
+use std::hash::{Hash, Hasher};
 use util::symbol::Symbol;
 
 static mut LABEL_COUNT: u32 = 0;
 
-static mut REGISTER_COUNT: u32 = 0;
+static mut REGISTER_COUNT: u32 = 1;
 
 static mut BLOCK_COUNT: u32 = 0;
 
-pub const STACK_POINTER: Register = Register(1);
+pub const STACK_POINTER: Register = Register(0);
 
 pub const POINTER_WIDTH: u64 = 8;
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
@@ -72,7 +73,7 @@ pub enum BlockEnd {
     Link(BlockID),
     End,
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum Size {
     Bit8,
     Bit32,
@@ -80,7 +81,7 @@ pub enum Size {
 }
 /// Instruction used in the IR
 /// Instructions are of the form i <- a op b
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Instruction {
     /// A stack allocated array of size whatever
     /// Stored at a location
@@ -114,6 +115,8 @@ pub enum Value {
     Float(f64),
     /// One of many registers
     Register(Register),
+    /// get the offset of the provided register $0(reg)
+    OffsetRegister(Register, i64),
     ///  Contents of a word of memory at address
     Mem(Vec<u8>),
 
@@ -122,7 +125,7 @@ pub enum Value {
     Nil,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum BinaryOp {
     Plus,
     Minus,
@@ -136,7 +139,7 @@ pub enum BinaryOp {
     NotEqual,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum UnaryOp {
     Bang,
     Minus,
@@ -316,6 +319,7 @@ impl Display for Value {
             Value::Const(ref v) => write!(f, "{}", v),
             Value::Float(ref v) => write!(f, "{}", v),
             Value::Register(ref name) => write!(f, "{}", name),
+            Value::OffsetRegister(ref reg, ref val) => write!(f, "{}({})", val, reg),
             Value::Bool(ref b) => write!(f, "{}", b),
             Value::Nil => write!(f, "nil"),
             Value::Mem(ref bytes) => {
@@ -461,3 +465,15 @@ impl Display for Size {
         }
     }
 }
+
+impl Hash for Value {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Value::Float(ref value) => {}
+
+            rest @ _ => rest.hash(state),
+        }
+    }
+}
+
+impl Eq for Value {}
