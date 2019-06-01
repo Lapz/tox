@@ -1,5 +1,7 @@
 use crate::analysis::{AnalysisState, Interval};
-use crate::instructions::{Function, Instruction, Register, POINTER_WIDTH, STACK_POINTER};
+use crate::instructions::{
+    Function, Instruction, Register, POINTER_WIDTH, RAX, RBP, RES, STACK_POINTER,BlockID
+};
 use indexmap::{IndexMap, IndexSet};
 
 use petgraph::{graphmap::GraphMap, Undirected};
@@ -10,7 +12,7 @@ use util::symbol::Symbols;
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct StackLocation {
     offset: u64,
-    spill:Register,
+    interval: Interval,
 }
 
 const MAX_REGISTER: usize = 3;
@@ -22,7 +24,7 @@ pub struct Allocator<'a> {
     active: IndexMap<Register, Interval>,
     free_registers: IndexMap<Register, Interval>,
     pub(crate) symbols: &'a mut Symbols<()>,
-    location: IndexMap<Register, StackLocation>,
+    location: IndexMap<BlockID,IndexMap<Register, StackLocation>>,
     current_register: usize,
     offset: u64,
 }
@@ -60,7 +62,7 @@ impl<'a> Allocator<'a> {
             active: hashmap!(),
             ranges: hashset!(),
             current_register: 10,
-            free_registers: hashmap!(),
+            free_registers: hashmap!(RAX => Interval::default(),RES => Interval::default(),RBP => Interval::default()),
             location: hashmap!(),
             offset: 0,
         }
@@ -72,6 +74,8 @@ impl<'a> Allocator<'a> {
         std::mem::swap(&mut blocks, &mut self.function.blocks);
 
         for (id, _) in &blocks {
+
+            self.location.insert(*id,hashmap!());
             let mut intervals = IndexMap::new();
 
             std::mem::swap(&mut intervals, &mut self.state.intervals[id]);
@@ -79,13 +83,16 @@ impl<'a> Allocator<'a> {
                 self.expire(*reg, *interval);
 
                 if self.active.len() == MAX_REGISTER {
-                    self.spill_at_interval(*reg, *interval)
+                    self.spill_at_interval(*reg, *interval,*id)
                 } else {
-                    self.free_registers.insert(Register::new(), *interval);
+                    if let Some((free_reg, _)) = self.free_registers.pop() {
+                        // let (free_reg,_) = .unwrap();
+                        // self.free_registers.insert(Register::new(), *interval);
 
-                    self.active.insert(*reg, *interval);
+                        self.active.insert(free_reg, *interval);
 
-                    self.active.sort_keys();
+                        self.active.sort_keys();
+                    }
                 }
             }
 
@@ -114,16 +121,16 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn spill_at_interval(&mut self, reg: Register, interval: Interval) {
+    fn spill_at_interval(&mut self, reg: Register, interval: Interval,block_id:BlockID) {
         let (spill_register, spill_interval) = self.active.pop().unwrap();
 
         if spill_interval.end > interval.end {
             self.free_registers.insert(reg, spill_interval);
 
-            self.location.insert(
+            self.location[&block_id].insert(
                 spill_register,
                 StackLocation {
-                    spill:reg,
+                    interval: spill_interval,
                     offset: self.offset,
                 },
             );
@@ -134,10 +141,10 @@ impl<'a> Allocator<'a> {
 
             self.active.sort_keys();
         } else {
-            self.location.insert(
+            self.location[&block_id].insert(
                 reg,
                 StackLocation {
-                    spill:reg,
+                    interval: spill_interval,
                     offset: self.offset,
                 },
             );

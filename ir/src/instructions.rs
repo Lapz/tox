@@ -6,13 +6,20 @@ use util::symbol::Symbol;
 
 static mut LABEL_COUNT: u32 = 0;
 
-static mut REGISTER_COUNT: u32 = 1;
+static mut REGISTER_COUNT: u32 = 4;
 
 static mut BLOCK_COUNT: u32 = 0;
 
 pub const STACK_POINTER: Register = Register(0);
 
+pub const RAX: Register = Register(1);
+
+pub const RBP: Register = Register(2);
+
+pub const RES: Register = Register(3);
+
 pub const POINTER_WIDTH: u64 = 8;
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
 pub struct BlockID(pub u32);
 

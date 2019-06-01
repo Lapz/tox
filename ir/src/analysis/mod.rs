@@ -19,7 +19,7 @@ use util::symbol::{Symbol, Symbols};
 pub struct Analysis {
     state: HashMap<Symbol, AnalysisState>,
 }
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord, Default)]
 pub struct Interval {
     start: usize,
     end: usize,
