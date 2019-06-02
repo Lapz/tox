@@ -45,6 +45,7 @@
       <excludeFolder url="file://$MODULE_DIR$/ir/target" />
       <excludeFolder url="file://$MODULE_DIR$/opcode/target" />
       <excludeFolder url="file://$MODULE_DIR$/syntax/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/tox/target" />
       <excludeFolder url="file://$MODULE_DIR$/util/target" />
       <excludeFolder url="file://$MODULE_DIR$/vm/target" />

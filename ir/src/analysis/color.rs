@@ -1,6 +1,7 @@
 use crate::analysis::AnalysisState;
 use crate::instructions::{Function, Instruction, Register, POINTER_WIDTH, STACK_POINTER};
 use indexmap::{IndexMap, IndexSet};
+use std::cmp::Ordering;
 
 use petgraph::{graphmap::GraphMap, Undirected};
 
@@ -45,6 +46,7 @@ pub struct Allocator<'a> {
     pub(crate) adjSet: IndexSet<(Register, Register)>,
     /// adjacency list representation of the graph; for each non-precolored temporary u, adjList[u] is the set of nodes that interfere with u.
     pub(crate) adjList: IndexMap<Register, IndexSet<Register>>,
+    mappings: IndexMap<Register, Register>,
     offset: usize,
     seen_inst: IndexSet<Instruction>,
 }
@@ -102,6 +104,7 @@ impl<'a> Allocator<'a> {
             adjList: IndexMap::new(),
             seen_inst: hashset!(),
             offset: 0,
+            mappings: hashmap!(),
         }
     }
 
@@ -115,17 +118,10 @@ impl<'a> Allocator<'a> {
 
         self.check_invariants();
 
-        println!("nodes {:?}", self.adjSet);
-        println!("edges {:?}", self.adjList);
-
-        // #[cfg(feature = "graphviz")]
-
         self.make_work_list();
 
         #[cfg(feature = "graphviz")]
-        self.dump_debug(self.function.name, unsafe {
-            ALLOC_COUNTER
-        });
+        self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
 
         while {
             if !self.simplify_work_list.is_empty() {
@@ -155,9 +151,7 @@ impl<'a> Allocator<'a> {
         }
 
         #[cfg(feature = "graphviz")]
-        self.dump_debug(self.function.name, unsafe {
-            ALLOC_COUNTER
-        });
+        self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
     }
 
     pub fn build_graph(&mut self) {
@@ -333,12 +327,17 @@ impl<'a> Allocator<'a> {
         }
 
         for node in &self.simplify_work_list {
-            
-            assert!(self.simplify_work_list_invariant(node),"Simplify worklist invariant failed")
+            assert!(
+                self.simplify_work_list_invariant(node),
+                "Simplify worklist invariant failed"
+            )
         }
 
         for node in &self.freeze_work_list {
-            assert!(self.freeze_work_list_invariant(node),"Freeze worklist invariant check failed")
+            assert!(
+                self.freeze_work_list_invariant(node),
+                "Freeze worklist invariant check failed"
+            )
         }
 
         for node in &self.spill_work_list {
@@ -372,7 +371,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn simplify_work_list_invariant(&self, node: &Register) -> bool {
-      // (u ∈ freezeWorklist) ⇒ moveList[u] ∩ (activeMoves ∪ worklistMoves) ̸= {}
+        // (u ∈ freezeWorklist) ⇒ moveList[u] ∩ (activeMoves ∪ worklistMoves) ̸= {}
         self.degree[node] < NUMBER_REGISTER
             && self.move_list[node]
                 .intersection(
@@ -388,7 +387,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn freeze_work_list_invariant(&self, node: &Register) -> bool {
-      // (u ∈ freezeWorklist) ⇒ moveList[u] ∩ (activeMoves ∪ worklistMoves) ̸= {}
+        // (u ∈ freezeWorklist) ⇒ moveList[u] ∩ (activeMoves ∪ worklistMoves) ̸= {}
         self.degree[node] < NUMBER_REGISTER
             && !self.move_list[node]
                 .intersection(
@@ -468,6 +467,24 @@ impl<'a> Allocator<'a> {
             self.freeze_work_list.remove_item(&node);
             self.simplify_work_list.push(node);
         }
+    }
+
+    fn spill_cost(&self, node: &Register) -> f64 {
+        let degree = self.degree[node] as f64;
+
+        let mut uses = 0.0;
+        let mut defs = 0.0;
+
+        for (id, _) in &self.function.blocks {
+            if self.state.live_in[id].contains(node) {
+                uses += 1.0;
+            }
+            if self.state.live_out[id].contains(node) {
+                defs += 1.0;
+            }
+        }
+
+        (uses + defs) / degree
     }
 
     ///implements the heuristic used for coalescing a precolored register
@@ -617,8 +634,16 @@ impl<'a> Allocator<'a> {
     }
 
     fn select_spill(&mut self) {
-        println!("select_spill called");
-        let register = self.spill_work_list.pop().unwrap(); // to di add a heuristic to get this
+        let mut costs = hashmap!();
+
+        for node in &self.spill_work_list {
+            costs.insert(*node, self.spill_cost(node));
+        }
+
+        self.spill_work_list
+            .sort_by(|a, b| costs[a].partial_cmp(&costs[b]).unwrap());
+
+        let register = self.spill_work_list.remove(0); // to di add a heuristic to get this
 
         self.simplify_work_list.push(register);
 
@@ -678,10 +703,9 @@ impl<'a> Allocator<'a> {
         use crate::instructions::{Instruction::*, Value, POINTER_WIDTH};
 
         let mut new_temps = IndexSet::new();
-        let mut mappings = IndexMap::new();
 
         for v in &self.spilled_nodes {
-            let new_temp = *mappings.entry(v).or_insert(Register::new());
+            let new_temp = *self.mappings.entry(*v).or_insert(Register::new());
             new_temps.insert(new_temp);
 
             for (id, block) in self.function.blocks.iter_mut().rev() {
@@ -692,7 +716,7 @@ impl<'a> Allocator<'a> {
                     match instruction {
                         Array(ref mut dest, _) => {
                             if dest == v {
-                                after.insert((i, new_temp));
+                                after.insert((i, new_temp, v));
 
                                 *dest = new_temp;
                             }
@@ -700,25 +724,25 @@ impl<'a> Allocator<'a> {
 
                         Binary(ref mut dest, ref mut lhs, _, ref mut rhs) => {
                             if lhs == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *lhs = new_temp;
                             } else if rhs == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *rhs = new_temp;
                             }
 
                             if dest == v {
-                                after.insert((i, new_temp));
+                                after.insert((i, new_temp, v));
                                 *dest = new_temp;
                             }
                         }
                         Cast(ref mut dest, ref mut value, _) => {
                             if value == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *value = new_temp;
                             }
                             if dest == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *dest = new_temp;
                             }
                         }
@@ -726,13 +750,13 @@ impl<'a> Allocator<'a> {
                         Call(ref mut dest, _, ref mut args) => {
                             for arg in args {
                                 if arg == v {
-                                    before.insert((i, new_temp));
+                                    before.insert((i, new_temp, *v));
                                     *arg = new_temp;
                                 }
                             }
 
                             if dest == v {
-                                after.insert((i, new_temp));
+                                after.insert((i, new_temp, v));
                                 *dest = new_temp;
                             }
                         }
@@ -741,85 +765,81 @@ impl<'a> Allocator<'a> {
 
                         StoreI(ref mut dest, _) => {
                             if dest == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *dest = new_temp;
                             }
                         }
 
                         Store(ref mut dest, ref mut value) => {
                             if value == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *value = new_temp;
                             }
 
                             if dest == v {
-                                after.insert((i, new_temp));
+                                after.insert((i, new_temp, v));
                                 *dest = new_temp;
                             }
                         }
 
                         Unary(ref mut dest, ref mut value, _) => {
                             if value == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *value = new_temp;
                             }
 
                             if dest == v {
-                                after.insert((i, new_temp));
+                                after.insert((i, new_temp, v));
                                 // *dest = new_temp;
                             }
                         }
 
                         Return(ref mut value) => {
                             if value == v {
-                                before.insert((i, new_temp));
+                                before.insert((i, new_temp, *v));
                                 *value = new_temp
                             }
                         }
                     }
                 }
 
-                for (index, temp) in &before {
-                    if !self
-                        .seen_inst
-                        .contains(&Instruction::Store(*temp, STACK_POINTER))
+                for (index, temp, value) in &before {
+                    if !self.seen_inst.contains(&Instruction::Store(*temp, *value))
+                        || !self.seen_inst.contains(&Instruction::Store(*value, *temp))
                     {
                         block
                             .instructions
-                            .insert(*index, Instruction::Store(*temp, STACK_POINTER));
-
-                        self.seen_inst
-                            .insert(Instruction::Store(*temp, STACK_POINTER));
+                            .insert(*index, Instruction::Store(*temp, *value));
+                        block
+                            .instructions
+                            .insert(*index + 1, Instruction::Store(*value, *temp));
+                        self.seen_inst.insert(Instruction::Store(*temp, *value));
+                        self.seen_inst.insert(Instruction::Store(*value, *temp));
                     }
                 }
 
-                for (index, temp) in &after {
-                    if !self
-                        .seen_inst
-                        .contains(&Instruction::Store(STACK_POINTER, *temp))
+                for (index, temp, value) in &after {
+                    if !self.seen_inst.contains(&Instruction::Store(**value, *temp))
+                        || !self.seen_inst.contains(&Instruction::Store(*temp, **value))
                     {
                         block
                             .instructions
-                            .insert(*index + 1, Instruction::Store(STACK_POINTER, *temp));
+                            .insert(*index + 1, Instruction::Store(**value, *temp));
 
-                        self.seen_inst
-                            .insert(Instruction::Store(STACK_POINTER, *temp));
+                        block
+                            .instructions
+                            .insert(*index, Instruction::Store(**value, *temp));
+
+                        self.seen_inst.insert(Instruction::Store(**value, *temp));
+                        self.seen_inst.insert(Instruction::Store(*temp, **value));
                     }
                 }
 
-                // if self.state.live_in[id].contains(v) {
-                //     self.seen_inst
-                //         .insert(Instruction::Store(STACK_POINTER, new_temp));
-                // }
-
-                // if self.state.live_out[id].contains(v) {
-                //     self.seen_inst
-                //         .insert(Instruction::Store(new_temp, STACK_POINTER));
-                // }
+                println!("after\n{:#?}", block.instructions);
             }
         }
 
-        self.spilled_nodes = IndexSet::new();
+        self.spilled_nodes.clear();
 
         self.initial = self
             .colored_nodes
