@@ -412,16 +412,23 @@ impl<'a> Allocator<'a> {
     }
 
     fn simpilfy(&mut self) {
-        println!("simplify called");
         let node = self.simplify_work_list.pop().unwrap();
+
+        println!("simplifying node {:?}", node);
 
         self.select_stack.insert(node);
 
         let adjacent = self.adjacent(node);
 
         for neighbour in adjacent {
-            self.decrement_degree(neighbour)
+            self.decrement_degree(neighbour);
+            //
+            //            self.adjList[&node].remove(&neighbour);
+            //            self.adjList[&neighbour].remove(&node);
+            //            self.adjList.remove(&(neighbour, node));
         }
+
+        //        self.adjList.remove(&node);
     }
 
     fn decrement_degree(&mut self, node: Register) {
@@ -429,9 +436,7 @@ impl<'a> Allocator<'a> {
 
         println!("decreasing edge for node {} ", node);
 
-        if degree != 0 {
-            *self.degree.get_mut(&node).unwrap() -= 1;
-        }
+        *self.degree.get_mut(&node).unwrap() -= 1;
 
         if degree == NUMBER_REGISTER {
             let mut nodes = self.adjacent(node);
@@ -685,16 +690,16 @@ impl<'a> Allocator<'a> {
 
                 self.next_colour += 1;
             }
+        }
 
-            for node in &self.coalesced_nodes {
-                let alias = self.get_alias(*node);
+        for node in &self.coalesced_nodes {
+            let alias = self.get_alias(*node);
 
-                match self.color.get(&alias) {
-                    Some(alias_colour) => {
-                        self.color.insert(*node, *alias_colour);
-                    }
-                    None => (),
+            match self.color.get(&alias) {
+                Some(alias_colour) => {
+                    self.color.insert(*node, *alias_colour);
                 }
+                None => (),
             }
         }
     }

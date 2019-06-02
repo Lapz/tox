@@ -5,25 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added if statements">
-      <change beforePath="$PROJECT_DIR$/.idea/lexer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/lexer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ir.tox" beforeDir="false" afterPath="$PROJECT_DIR$/ir.tox" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ir.toxafter_reg" beforeDir="false" afterPath="$PROJECT_DIR$/ir.toxafter_reg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ir/src/analysis/color.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/analysis/color.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tox" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution>
+      <executable />
+    </execution>
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="isMigrated" value="true" />
@@ -38,13 +44,26 @@
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox">
-          <provider selected="true" editor-type-id="text-editor" />
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="696">
+              <caret line="29" selection-end-line="29" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ir.tox">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="600">
+              <caret line="25" column="4" lean-forward="true" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
+            </state>
+          </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/foo.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1340">
+            <state relative-caret-position="725">
               <caret line="67" selection-start-line="67" selection-end-line="67" />
             </state>
           </provider>
@@ -53,15 +72,45 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ir/src/analysis/color.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="80">
-              <caret line="4" selection-start-line="4" selection-end-line="4" />
+            <state relative-caret-position="1107">
+              <caret line="696" lean-forward="true" selection-start-line="696" selection-end-line="696" />
+              <folding>
+                <element signature="e#13726#13727#0" expanded="true" />
+                <element signature="e#13771#13772#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_9.png">
-          <provider selected="true" editor-type-id="images" />
+        <entry file="file://$PROJECT_DIR$/tox/src/main.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="456">
+              <caret line="58" column="26" lean-forward="true" selection-start-line="58" selection-start-column="26" selection-end-line="58" selection-end-column="26" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="360">
+              <caret line="15" column="8" lean-forward="true" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="18" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/.cargo/registry/src/github.com-1ecc6299db9ec823/indexmap-1.0.2/src/set.rs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-456">
+              <caret line="176" column="32" lean-forward="true" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
+              <folding>
+                <element signature="e#4818#4819#0" expanded="true" />
+                <element signature="e#4869#4870#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
@@ -76,7 +125,11 @@
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test.tox">
-          <provider selected="true" editor-type-id="text-editor" />
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="528">
+              <caret line="22" column="3" selection-start-line="22" selection-start-column="3" selection-end-line="23" />
+            </state>
+          </provider>
         </entry>
       </file>
     </leaf>
@@ -90,9 +143,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>undefined</find>
-      <find>.zi</find>
-      <find>.zip</find>
       <find>print</find>
       <find>infer_object_get</find>
       <find>write_p</find>
@@ -120,6 +170,9 @@
       <find>STACK</find>
       <find>self.spilled_nodes</find>
       <find>before.insert((i, new_temp))</find>
+      <find>decr</find>
+      <find>adjList</find>
+      <find>adjacent</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -131,6 +184,7 @@
   <component name="Git.Settings">
     <option name="PREVIOUS_COMMIT_AUTHORS">
       <list>
+        <option value="Lenard Pratt &lt;l3np27@gmail.com&gt;" />
         <option value="Lenard Pratt &lt;striderman34@gmail.com&gt;" />
       </list>
     </option>
@@ -139,7 +193,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/token.rs" />
         <option value="$PROJECT_DIR$/vm/Cargo.toml" />
         <option value="$PROJECT_DIR$/vm/src/lib.rs" />
         <option value="$PROJECT_DIR$/vm/src/assembler/symbols.rs" />
@@ -179,7 +232,6 @@
         <option value="$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" />
         <option value="$PROJECT_DIR$/frontend/src/infer/env.rs" />
         <option value="$PROJECT_DIR$/frontend/src/ast.rs" />
-        <option value="$PROJECT_DIR$/tests/test.tox" />
         <option value="$PROJECT_DIR$/frontend/src/infer/function/expressions/call.rs" />
         <option value="$PROJECT_DIR$/syntax/src/ast/mod.rs" />
         <option value="$PROJECT_DIR$/syntax/src/parser/mod.rs" />
@@ -188,6 +240,9 @@
         <option value="$PROJECT_DIR$/ir/src/instructions.rs" />
         <option value="$PROJECT_DIR$/frontend/Cargo.toml" />
         <option value="$PROJECT_DIR$/foo.txt" />
+        <option value="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" />
+        <option value="$PROJECT_DIR$/ir.tox" />
+        <option value="$PROJECT_DIR$/tests/test.tox" />
         <option value="$PROJECT_DIR$/ir/src/analysis/color.rs" />
       </list>
     </option>
@@ -195,9 +250,9 @@
   <component name="MacroExpansionManager">
     <option name="directoryName" value="MkJkpGSC" />
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="286" />
-    <option name="width" value="1636" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="953" />
+    <option name="width" value="974" />
     <option name="height" value="1047" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -230,6 +285,11 @@
               <item name="ir" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="analysis" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tox" type="462c0819:PsiDirectoryNode" />
+              <item name="tests" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
@@ -447,6 +507,9 @@
       <workItem from="1559489429139" duration="207000" />
       <workItem from="1559489699534" duration="36000" />
       <workItem from="1559491524004" duration="1703000" />
+      <workItem from="1559498336692" duration="293000" />
+      <workItem from="1559499513521" duration="3132000" />
+      <workItem from="1559503876434" duration="1042000" />
     </task>
     <task id="LOCAL-00001" summary="Added push and pop">
       <created>1535643193060</created>
@@ -462,7 +525,14 @@
       <option name="project" value="LOCAL" />
       <updated>1538317576599</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Shifted to temps and values.Removed stackpointer, add double insertions">
+      <created>1559498490397</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1559498490398</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -478,9 +548,12 @@
     <history-entry file="test - 2019.01.21 at 11h 07m 58s.xml">
       <configuration name="test" configurationId="CargoCommandRunConfiguration" />
     </history-entry>
+    <history-entry file="test - 2019.06.02 at 20h 48m 36s.xml">
+      <configuration name="test" configurationId="CargoCommandRunConfiguration" />
+    </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="51109000" />
+    <option name="totallyTimeSpent" value="55576000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -492,26 +565,26 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="953" y="0" width="974" height="1047" extended-state="0" />
     <layout>
       <window_info id="Structure" order="0" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="1" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
-      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.24360341" />
+      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.25273523" />
       <window_info id="Learn" order="5" weight="0.32840237" />
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49413645" weight="0.27735645" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49413645" weight="0.27702704" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4969475" weight="0.32448035" />
       <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.48415717" weight="0.25164112" />
-      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.50586355" side_tool="true" visible="true" weight="0.27952328" />
-      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.4981685" weight="0.32678983" />
+      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5025381" side_tool="true" weight="0.32932165" />
+      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.49746192" weight="0.32932165" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
       <window_info anchor="bottom" id="Docker" order="11" show_stripe_button="false" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
@@ -531,20 +604,20 @@
       <window_info id="Image Layers" order="1" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
-      <window_info active="true" content_ui="combo" id="Project" order="4" visible="true" weight="0.019011406" />
+      <window_info active="true" content_ui="combo" id="Project" order="4" visible="true" weight="0.29631978" />
       <window_info id="Learn" order="5" weight="0.32840237" />
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.3287858" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4945055" weight="0.28060046" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49413645" weight="0.27735645" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4969475" weight="0.32448035" />
-      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.48415717" visible="true" weight="0.25164112" />
-      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.51584285" side_tool="true" visible="true" weight="0.25164112" />
-      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.4981685" weight="0.32678983" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.48415717" weight="0.25164112" />
+      <window_info anchor="bottom" id="Event Log" order="8" sideWeight="0.5025381" side_tool="true" visible="true" weight="0.32932165" />
+      <window_info anchor="bottom" id="Version Control" order="9" sideWeight="0.49746192" visible="true" weight="0.32932165" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
       <window_info anchor="bottom" id="Docker" order="11" show_stripe_button="false" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
@@ -552,7 +625,7 @@
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="right" id="Capture Analysis" order="4" />
-      <window_info anchor="right" id="Cargo" order="5" weight="0.3298893" />
+      <window_info anchor="right" id="Cargo" order="5" weight="0.3293147" />
       <window_info anchor="right" id="Theme Preview" order="6" />
       <window_info anchor="right" id="Palette&#9;" order="7" />
       <window_info anchor="right" id="Database" order="8" />
@@ -567,12 +640,11 @@
     <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="Added push and pop" />
     <MESSAGE value="Added if statements" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added if statements" />
+    <MESSAGE value="Shifted to temps and values.Removed stackpointer, add double insertions" />
+    <option name="LAST_COMMIT_MESSAGE" value="Shifted to temps and values.Removed stackpointer, add double insertions" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/gen_tasm.rs" />
-    <entry file="file://$PROJECT_DIR$/frontend/src/codegen/label.rs" />
     <entry file="file://$PROJECT_DIR$/frontend/src/codegen/tasm.rs" />
     <entry file="file://$PROJECT_DIR$/tox/output.tasm" />
     <entry file="file://$PROJECT_DIR$/README.md">
@@ -732,20 +804,10 @@
     <entry file="file://$PROJECT_DIR$/ir/Cargo.toml">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/ir.tox">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/ir/src/instructions.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="287">
           <caret line="108" column="4" selection-start-line="108" selection-start-column="4" selection-end-line="108" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="366">
-          <caret line="47" column="6" selection-start-line="47" selection-start-column="6" selection-end-line="47" selection-end-column="6" />
         </state>
       </provider>
     </entry>
@@ -774,32 +836,74 @@
     <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox">
-      <provider selected="true" editor-type-id="text-editor" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_9.png" />
+    <entry file="file://$PROJECT_DIR$/tests/test.tox">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="22" column="3" selection-start-line="22" selection-start-column="3" selection-end-line="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.cargo/registry/src/github.com-1ecc6299db9ec823/indexmap-1.0.2/src/set.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-456">
+          <caret line="176" column="32" lean-forward="true" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
+          <folding>
+            <element signature="e#4818#4819#0" expanded="true" />
+            <element signature="e#4869#4870#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/foo.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1340">
+        <state relative-caret-position="725">
           <caret line="67" selection-start-line="67" selection-end-line="67" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_9.png">
+    <entry file="file://$PROJECT_DIR$/ir.tox">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="25" column="4" lean-forward="true" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="15" column="8" lean-forward="true" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="696">
+          <caret line="29" selection-end-line="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/src/main.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="456">
+          <caret line="58" column="26" lean-forward="true" selection-start-line="58" selection-start-column="26" selection-end-line="58" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
     <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test.tox">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/ir/src/analysis/color.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
+        <state relative-caret-position="1107">
+          <caret line="696" lean-forward="true" selection-start-line="696" selection-end-line="696" />
+          <folding>
+            <element signature="e#13726#13727#0" expanded="true" />
+            <element signature="e#13771#13772#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
