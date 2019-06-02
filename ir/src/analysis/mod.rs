@@ -1,4 +1,3 @@
-mod allocator;
 mod analysis;
 mod color;
 mod dead_code;
@@ -6,8 +5,9 @@ mod linear_scan;
 
 #[cfg(feature = "graphviz")]
 mod debug;
-
-// use crate::analysis::allocator::Allocator;
+#[cfg(not(feature = "linear_scan"))]
+use crate::analysis::color::Allocator;
+#[cfg(feature = "linear_scan")]
 use crate::analysis::linear_scan::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;

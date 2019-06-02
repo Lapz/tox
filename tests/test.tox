@@ -10,14 +10,35 @@ fn main(a:int, b:int) -> int {
     return d; 
 }
 
+/*fn main(a:int, b:int) -> int { 
+    let a =0;
+    let b = 1;
+    let c =2;
+    
+    b =a + 2; 
+    c =b * b;
+    b =c + 1;
+
+    return b * a;
+}*/
+
+/*fn main(){
+    
+    
+    
+   
+}*/
+
+
+
 /*fn main(){
     let a =0;
     let b = 1;
     let c =2;
     
-    b =a + 1; 
-    c =c + b;
-    a =b * 2;
+    b =a + 2; 
+    c =b * b;
+    b =c + 1;
     
     
    

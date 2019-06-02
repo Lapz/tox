@@ -1,6 +1,6 @@
 use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{
-    Function, Instruction, Register, POINTER_WIDTH, RAX, RBP, RES, STACK_POINTER,BlockID
+    BlockID, Function, Instruction, Register, POINTER_WIDTH, RAX, RBP, RES, STACK_POINTER,
 };
 use indexmap::{IndexMap, IndexSet};
 
@@ -24,7 +24,7 @@ pub struct Allocator<'a> {
     active: IndexMap<Register, Interval>,
     free_registers: IndexMap<Register, Interval>,
     pub(crate) symbols: &'a mut Symbols<()>,
-    location: IndexMap<BlockID,IndexMap<Register, StackLocation>>,
+    location: IndexMap<BlockID, IndexMap<Register, StackLocation>>,
     current_register: usize,
     offset: u64,
 }
@@ -74,8 +74,7 @@ impl<'a> Allocator<'a> {
         std::mem::swap(&mut blocks, &mut self.function.blocks);
 
         for (id, _) in &blocks {
-
-            self.location.insert(*id,hashmap!());
+            self.location.insert(*id, hashmap!());
             let mut intervals = IndexMap::new();
 
             std::mem::swap(&mut intervals, &mut self.state.intervals[id]);
@@ -83,7 +82,7 @@ impl<'a> Allocator<'a> {
                 self.expire(*reg, *interval);
 
                 if self.active.len() == MAX_REGISTER {
-                    self.spill_at_interval(*reg, *interval,*id)
+                    self.spill_at_interval(*reg, *interval, *id)
                 } else {
                     if let Some((free_reg, _)) = self.free_registers.pop() {
                         // let (free_reg,_) = .unwrap();
@@ -121,7 +120,7 @@ impl<'a> Allocator<'a> {
         }
     }
 
-    fn spill_at_interval(&mut self, reg: Register, interval: Interval,block_id:BlockID) {
+    fn spill_at_interval(&mut self, reg: Register, interval: Interval, block_id: BlockID) {
         let (spill_register, spill_interval) = self.active.pop().unwrap();
 
         if spill_interval.end > interval.end {

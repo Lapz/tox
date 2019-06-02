@@ -6,7 +6,7 @@ use indexmap::set::IndexSet;
 use petgraph::dot::{Config, Dot};
 
 use std::collections::hash_map::Entry;
-#[cfg(feature = "graphviz")]
+#[cfg(any(feature = "graphviz", feature = "prettytable"))]
 use std::{
     fs::{self, File},
     io::{self, Write},

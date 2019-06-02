@@ -11,11 +11,11 @@ extern crate vm;
 
 mod repl;
 
-#[cfg(feature = "graphviz")]
+#[cfg(any(feature = "graphviz", feature = "prettytable"))]
 use frontend::build_program;
 use frontend::compile;
 use frontend::Infer;
-#[cfg(feature = "graphviz")]
+#[cfg(any(feature = "graphviz", feature = "prettytable"))]
 use ir::printer::Printer;
 
 use ir::optimizations;
@@ -86,10 +86,13 @@ pub fn run(path: String, _print_ir: Option<String>) {
         }
     };
 
-    #[cfg(feature = "graphviz")]
+    #[cfg(any(feature = "graphviz", feature = "prettytable"))]
     {
         let mut program = build_program(&mut symbols, typed_ast.clone());
-        program.graphviz(&symbols).unwrap();
+        #[cfg(feature = "graphviz")]
+        {
+            program.graphviz(&symbols).unwrap();
+        }
 
         if let Some(ref f) = _print_ir {
             let printer = Printer::new(&symbols);

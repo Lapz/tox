@@ -1,4 +1,4 @@
-use crate::analysis::allocator::Allocator;
+use crate::analysis::color::Allocator;
 use crate::instructions::Register;
 use petgraph::dot::{Config, Dot};
 use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences, NodeIndexable};
