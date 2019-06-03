@@ -423,20 +423,21 @@ impl<'a> Allocator<'a> {
         for neighbour in adjacent {
             self.decrement_degree(neighbour);
             //
-            //            self.adjList[&node].remove(&neighbour);
-            //            self.adjList[&neighbour].remove(&node);
+            //    self.adjList[&node].remove(&neighbour);
+            //    self.adjList[&neighbour].remove(&node);
             //            self.adjList.remove(&(neighbour, node));
         }
-
-        //        self.adjList.remove(&node);
     }
 
     fn decrement_degree(&mut self, node: Register) {
-        let degree = self.degree[&node];
+        let mut degree = self.degree[&node];
 
         println!("decreasing edge for node {} ", node);
 
-        *self.degree.get_mut(&node).unwrap() -= 1;
+        if degree != 0 {
+            *self.degree.get_mut(&node).unwrap() -= 1;
+            degree -= 1;
+        }
 
         if degree == NUMBER_REGISTER {
             let mut nodes = self.adjacent(node);
@@ -646,7 +647,7 @@ impl<'a> Allocator<'a> {
         }
 
         self.spill_work_list
-            .sort_by(|a, b| costs[a].partial_cmp(&costs[b]).unwrap());
+            .sort_by(|a, b| costs[a].partial_cmp(&costs[b]).unwrap_or(Ordering::Less));
 
         let register = self.spill_work_list.remove(0); // to di add a heuristic to get this
 
@@ -695,7 +696,9 @@ impl<'a> Allocator<'a> {
         for node in &self.coalesced_nodes {
             let alias = self.get_alias(*node);
 
-            match self.color.get(&alias) {
+            let c = self.color.get(&alias);
+
+            match c {
                 Some(alias_colour) => {
                     self.color.insert(*node, *alias_colour);
                 }
