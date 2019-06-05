@@ -11,7 +11,7 @@ use util::symbol::Symbols;
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct StackLocation {
-    offset: u64,
+    offset: usize,
     interval: Interval,
 }
 
@@ -26,7 +26,7 @@ pub struct Allocator<'a> {
     pub(crate) symbols: &'a mut Symbols<()>,
     location: IndexMap<BlockID, IndexMap<Register, StackLocation>>,
     current_register: usize,
-    offset: u64,
+    offset: usize,
 }
 
 macro_rules! hashset {

@@ -42,13 +42,14 @@ pub struct Allocator<'a> {
     next_colour: usize,
     pub(crate) color: IndexMap<Register, usize>, // change to colour enum
     ok_colors: Vec<usize>,                       // change to colour enum
-    /// the set of interference edges(u,v) in the graph;if (u,v)∈ adjSet,then (v, u) ∈ adjSet.
-    pub(crate) adjSet: IndexSet<(Register, Register)>,
-    /// adjacency list representation of the graph; for each non-precolored temporary u, adjList[u] is the set of nodes that interfere with u.
-    pub(crate) adjList: IndexMap<Register, IndexSet<Register>>,
+    /// the set of interference edges(u,v) in the graph;if (u,v)∈ adj_set,then (v, u) ∈ adj_set.
+    pub(crate) adj_set: IndexSet<(Register, Register)>,
+    /// adjacency list representation of the graph; for each non-precolored temporary u, adj_list[u] is the set of nodes that interfere with u.
+    pub(crate) adj_list: IndexMap<Register, IndexSet<Register>>,
     mappings: IndexMap<Register, Register>,
     offset: usize,
     seen_inst: IndexSet<Instruction>,
+    spilled_before: IndexSet<Register>,
 }
 
 macro_rules! hashset {
@@ -100,11 +101,12 @@ impl<'a> Allocator<'a> {
             degree: IndexMap::new(),
             next_colour: 0,
             alias: IndexMap::new(),
-            adjSet: IndexSet::new(),
-            adjList: IndexMap::new(),
+            adj_set: IndexSet::new(),
+            adj_list: IndexMap::new(),
             seen_inst: hashset!(),
             offset: 0,
             mappings: hashmap!(),
+            spilled_before: hashset!(),
         }
     }
 
@@ -159,12 +161,12 @@ impl<'a> Allocator<'a> {
         for (_, block) in &self.function.blocks {
             for instruction in block.instructions.iter() {
                 for node in instruction.def() {
-                    self.adjList.insert(node, IndexSet::new());
+                    self.adj_list.insert(node, IndexSet::new());
                     self.degree.insert(node, 0);
                 }
 
                 for node in instruction.used() {
-                    self.adjList.insert(node, IndexSet::new());
+                    self.adj_list.insert(node, IndexSet::new());
                     self.degree.insert(node, 0);
                 }
             }
@@ -203,18 +205,18 @@ impl<'a> Allocator<'a> {
                 for def in &defined {
                     for live in &live {
                         //copy to appease the great and wondefull borrow checker
-                        if !self.adjSet.contains(&(*live, *def)) && live != def {
-                            self.adjSet.insert((*live, *def));
-                            self.adjSet.insert((*def, *live));
+                        if !self.adj_set.contains(&(*live, *def)) && live != def {
+                            self.adj_set.insert((*live, *def));
+                            self.adj_set.insert((*def, *live));
 
                             if !self.precolored.contains(live) {
-                                self.adjList.get_mut(live).unwrap().insert(*def);
+                                self.adj_list.get_mut(live).unwrap().insert(*def);
 
                                 *self.degree.get_mut(live).unwrap() += 1;
                             }
 
                             if !self.precolored.contains(def) {
-                                self.adjList.get_mut(def).unwrap().insert(*live);
+                                self.adj_list.get_mut(def).unwrap().insert(*live);
                                 *self.degree.get_mut(def).unwrap() += 1;
                             }
                         }
@@ -237,17 +239,17 @@ impl<'a> Allocator<'a> {
     // helper functions
     /// Add an edge between two register if they are not the same and edge between them is not already present in the graph
     fn add_edge(&mut self, u: Register, v: Register) {
-        if self.adjSet.contains(&(u, v)) && u != v {
-            self.adjSet.insert((u, v));
-            // self.adjSet.insert((v, u));
+        if self.adj_set.contains(&(u, v)) && u != v {
+            self.adj_set.insert((u, v));
+            // self.adj_set.insert((v, u));
 
             if !self.precolored.contains(&u) {
-                self.adjList[&u].insert(v);
+                self.adj_list[&u].insert(v);
                 self.degree[&u] += 1;
             }
 
             if !self.precolored.contains(&v) {
-                self.adjList[&v].insert(u);
+                self.adj_list[&v].insert(u);
                 self.degree[&v] += 1;
             }
         }
@@ -259,6 +261,7 @@ impl<'a> Allocator<'a> {
         std::mem::swap(&mut self.initial, &mut initial); // swap them out because we need to empty out the list
 
         for initial in initial {
+            println!("{:?}", initial);
             if self.degree[&initial] >= NUMBER_REGISTER {
                 self.spill_work_list.push(initial)
             } else if self.move_related(initial) {
@@ -273,10 +276,10 @@ impl<'a> Allocator<'a> {
     fn adjacent(&self, n: Register) -> IndexSet<Register> {
         // let union = ;
 
-        // if self.adjList.get(&n).is_none() {
+        // if self.adj_list.get(&n).is_none() {
         //     union
         // } else {
-        self.adjList[&n]
+        self.adj_list[&n]
             .difference(
                 &self
                     .select_stack
@@ -349,7 +352,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn degree_invariant(&self, node: Register) -> bool {
-        // degree(u) = |adjList(u)∩ (precolored ∪ simplifyWorklist ∪ freezeWorklist ∪ spillWorklist)
+        // degree(u) = |adj_list(u)∩ (precolored ∪ simplifyWorklist ∪ freezeWorklist ∪ spillWorklist)
         let mut all_work_list = Vec::new();
 
         all_work_list.extend(self.simplify_work_list.clone());
@@ -357,7 +360,7 @@ impl<'a> Allocator<'a> {
         all_work_list.extend(self.spill_work_list.clone());
 
         self.degree[&node]
-            == self.adjList[&node]
+            == self.adj_list[&node]
                 .intersection(
                     &self
                         .precolored
@@ -423,9 +426,9 @@ impl<'a> Allocator<'a> {
         for neighbour in adjacent {
             self.decrement_degree(neighbour);
             //
-            //    self.adjList[&node].remove(&neighbour);
-            //    self.adjList[&neighbour].remove(&node);
-            //            self.adjList.remove(&(neighbour, node));
+            //    self.adj_list[&node].remove(&neighbour);
+            //    self.adj_list[&neighbour].remove(&node);
+            //            self.adj_list.remove(&(neighbour, node));
         }
     }
 
@@ -498,7 +501,7 @@ impl<'a> Allocator<'a> {
     fn ok(&self, t: Register, r: Register) -> bool {
         self.degree[&t] < NUMBER_REGISTER
             || self.precolored.contains(&t)
-            || self.adjSet.contains(&(t, r))
+            || self.adj_set.contains(&(t, r))
     }
 
     /// Conservative implements the conservative coalescing heuristic.
@@ -534,7 +537,7 @@ impl<'a> Allocator<'a> {
         if u == v {
             self.coalesced_moves.insert(work_move);
             self.add_work_list(u);
-        } else if self.precolored.contains(&v) || self.adjSet.contains(&(u, v)) {
+        } else if self.precolored.contains(&v) || self.adj_set.contains(&(u, v)) {
             self.constrained_moves.insert(work_move);
 
             self.add_work_list(u);
@@ -664,7 +667,7 @@ impl<'a> Allocator<'a> {
 
             self.ok_colors = (0..NUMBER_REGISTER - 1).collect::<Vec<_>>();
 
-            for neighbor in &self.adjList[&node] {
+            for neighbor in &self.adj_list[&node] {
                 if self
                     .colored_nodes
                     .union(&self.precolored)
@@ -712,139 +715,61 @@ impl<'a> Allocator<'a> {
 
         let mut new_temps = IndexSet::new();
 
-        for v in &self.spilled_nodes {
-            let new_temp = *self.mappings.entry(*v).or_insert(Register::new());
-            new_temps.insert(new_temp);
+        let mut offset = 0;
 
-            for (id, block) in self.function.blocks.iter_mut().rev() {
-                let mut before = IndexSet::new(); //index of stores to place before
-                let mut after = IndexSet::new(); //index of stores to place after
+        for (_, block) in self.function.blocks.iter_mut().rev() {
+            let mut before = IndexSet::new(); //index of stores to place before
+            let mut after = IndexSet::new(); //index of stores to place after
 
-                for (i, instruction) in block.instructions.iter_mut().rev().enumerate() {
-                    match instruction {
-                        Array(ref mut dest, _) => {
-                            if dest == v {
-                                after.insert((i, new_temp, v));
+            for (i, instruction) in block.instructions.iter_mut().rev().enumerate() {
+                for spilled_node in &self.spilled_nodes {
+                    let mut defs = instruction.def();
+                    let mut uses = instruction.used();
+                    // generate a load before the use
+                    if uses.contains(spilled_node) {
+                        let new_temp = *self
+                            .mappings
+                            .entry(*spilled_node)
+                            .or_insert(STACK_POINTER.offset_at(offset));
+                        new_temps.insert(new_temp);
 
-                                *dest = new_temp;
-                            }
-                        }
+                        before.insert((i, Instruction::Store(new_temp, *spilled_node)));
+                        instruction.rewrite_uses(*spilled_node, new_temp);
+                        offset += POINTER_WIDTH;
+                    }
 
-                        Binary(ref mut dest, ref mut lhs, _, ref mut rhs) => {
-                            if lhs == v {
-                                before.insert((i, new_temp, *v));
-                                *lhs = new_temp;
-                            } else if rhs == v {
-                                before.insert((i, new_temp, *v));
-                                *rhs = new_temp;
-                            }
+                    if defs.contains(spilled_node) {
+                        let new_temp = *self
+                            .mappings
+                            .entry(*spilled_node)
+                            .or_insert(STACK_POINTER.offset_at(offset));
 
-                            if dest == v {
-                                after.insert((i, new_temp, v));
-                                *dest = new_temp;
-                            }
-                        }
-                        Cast(ref mut dest, ref mut value, _) => {
-                            if value == v {
-                                before.insert((i, new_temp, *v));
-                                *value = new_temp;
-                            }
-                            if dest == v {
-                                before.insert((i, new_temp, *v));
-                                *dest = new_temp;
-                            }
-                        }
-
-                        Call(ref mut dest, _, ref mut args) => {
-                            for arg in args {
-                                if arg == v {
-                                    before.insert((i, new_temp, *v));
-                                    *arg = new_temp;
-                                }
-                            }
-
-                            if dest == v {
-                                after.insert((i, new_temp, v));
-                                *dest = new_temp;
-                            }
-                        }
-
-                        StatementStart => (),
-
-                        StoreI(ref mut dest, _) => {
-                            if dest == v {
-                                before.insert((i, new_temp, *v));
-                                *dest = new_temp;
-                            }
-                        }
-
-                        Store(ref mut dest, ref mut value) => {
-                            if value == v {
-                                before.insert((i, new_temp, *v));
-                                *value = new_temp;
-                            }
-
-                            if dest == v {
-                                after.insert((i, new_temp, v));
-                                *dest = new_temp;
-                            }
-                        }
-
-                        Unary(ref mut dest, ref mut value, _) => {
-                            if value == v {
-                                before.insert((i, new_temp, *v));
-                                *value = new_temp;
-                            }
-
-                            if dest == v {
-                                after.insert((i, new_temp, v));
-                                // *dest = new_temp;
-                            }
-                        }
-
-                        Return(ref mut value) => {
-                            if value == v {
-                                before.insert((i, new_temp, *v));
-                                *value = new_temp
-                            }
-                        }
+                        after.insert((i + 1, Instruction::Store(*spilled_node, new_temp)));
+                        instruction.rewrite_def(new_temp);
+                        offset += POINTER_WIDTH;
                     }
                 }
-
-                for (index, temp, value) in &before {
-                    if !self.seen_inst.contains(&Instruction::Store(*temp, *value))
-                        || !self.seen_inst.contains(&Instruction::Store(*value, *temp))
-                    {
-                        block
-                            .instructions
-                            .insert(*index, Instruction::Store(*temp, *value));
-                        block
-                            .instructions
-                            .insert(*index + 1, Instruction::Store(*value, *temp));
-                        self.seen_inst.insert(Instruction::Store(*temp, *value));
-                        self.seen_inst.insert(Instruction::Store(*value, *temp));
-                    }
-                }
-
-                for (index, temp, value) in &after {
-                    if !self.seen_inst.contains(&Instruction::Store(**value, *temp))
-                        || !self.seen_inst.contains(&Instruction::Store(*temp, **value))
-                    {
-                        block
-                            .instructions
-                            .insert(*index + 1, Instruction::Store(**value, *temp));
-
-                        block
-                            .instructions
-                            .insert(*index, Instruction::Store(**value, *temp));
-
-                        self.seen_inst.insert(Instruction::Store(**value, *temp));
-                        self.seen_inst.insert(Instruction::Store(*temp, **value));
-                    }
-                }
-
-                println!("after\n{:#?}", block.instructions);
             }
+
+
+           
+
+            for (index, instruction) in before {
+                block.instructions.insert(index, instruction);
+            }
+
+            for (index, instruction) in after {
+                block.instructions.insert(index + 1, instruction);
+            }
+
+             block.instructions.retain(|instruction| {
+                 match instruction {
+                     Instruction::Store(ref lhs,ref rhs) => lhs == rhs,
+                     _ => true,
+                 }
+             })
+
+            // println!("after\n{:#?}", block.instructions);
         }
 
         self.spilled_nodes.clear();

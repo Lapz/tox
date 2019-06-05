@@ -34,7 +34,7 @@ impl<'a> Allocator<'a> {
         let mut indexs = HashMap::new();
 
         //output nodes
-        for (i, (node, ns)) in self.adjList.iter().enumerate() {
+        for (i, (node, ns)) in self.adj_list.iter().enumerate() {
             indexs.insert(node, i);
 
             for (j, n) in ns.iter().enumerate() {
@@ -54,8 +54,8 @@ impl<'a> Allocator<'a> {
 
         let mut seen = HashSet::new();
         //output edges
-        for node in &self.adjList {
-            for (from, to) in &self.adjSet {
+        for node in &self.adj_list {
+            for (from, to) in &self.adj_set {
                 if !seen.contains(&(from, to)) || !seen.contains(&(to, from)) && from != to {
                     writeln!(&mut file, "\t {} -- {}", indexs[from], indexs[to]).unwrap();
 

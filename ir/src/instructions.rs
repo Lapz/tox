@@ -10,15 +10,15 @@ static mut REGISTER_COUNT: u32 = 4;
 
 static mut BLOCK_COUNT: u32 = 0;
 
-pub const STACK_POINTER: Register = Register(0);
+pub const STACK_POINTER: Register = Register::Register(0);
 
-pub const RAX: Register = Register(1);
+pub const RAX: Register = Register::Register(1);
 
-pub const RBP: Register = Register(2);
+pub const RBP: Register = Register::Register(2);
 
-pub const RES: Register = Register(3);
+pub const RES: Register = Register::Register(3);
 
-pub const POINTER_WIDTH: u64 = 8;
+pub const POINTER_WIDTH: usize = 8;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
 pub struct BlockID(pub u32);
@@ -26,9 +26,15 @@ pub struct BlockID(pub u32);
 /// A label in the code.
 pub struct Label(u32);
 
+#[derive(Clone, Copy, Hash, Eq, Ord, PartialOrd)]
+pub enum Register {
+    Register(u32),
+    Offset(u32, usize),
+}
+
 /// A register
-#[derive(Clone, Copy, Hash, PartialEq, Default, Eq, Ord, PartialOrd)]
-pub struct Register(pub u32);
+
+// pub struct Register(pub u32);
 
 pub struct Program {
     pub functions: Vec<Function>,
@@ -203,13 +209,20 @@ impl Register {
     pub fn new() -> Register {
         let count = unsafe { REGISTER_COUNT };
 
-        let temp = Register(count);
+        let temp = Register::Register(count);
 
         unsafe {
             REGISTER_COUNT += 1;
         }
 
         temp
+    }
+
+    pub fn offset_at(&self, offset: usize) -> Register {
+        match self {
+            Register::Register(reg) => Register::Offset(*reg, offset),
+            Register::Offset(reg, _) => Register::Offset(*reg, offset),
+        }
     }
 }
 
@@ -318,6 +331,102 @@ impl Instruction {
 
         defined
     }
+
+    pub fn rewrite_uses(&mut self, old_reg: Register, new_reg: Register) {
+        use Instruction::*;
+        match self {
+            Array(_, _) => {}
+
+            Binary(_, ref mut lhs, _, ref mut rhs) => {
+                if *lhs == old_reg {
+                    *lhs = new_reg;
+                } else if *rhs == old_reg {
+                    *rhs = new_reg;
+                }
+            }
+            Cast(_, ref mut value, _) => {
+                if *value == old_reg {
+                    *value = new_reg;
+                }
+            }
+
+            Call(_, _, ref mut args) => {
+                for arg in args {
+                    if *arg == old_reg {
+                        *arg = new_reg;
+                    }
+                }
+            }
+
+            StatementStart => (),
+
+            StoreI(_, _) => {}
+
+            Store(_, ref mut value) => {
+                if *value == old_reg {
+                    *value = new_reg;
+                }
+            }
+
+            Unary(_, ref mut value, _) => {
+                if *value == old_reg {
+                    *value = new_reg;
+                }
+            }
+
+            Return(ref mut value) => {
+                if *value == old_reg {
+                    *value = new_reg
+                }
+            }
+        }
+    }
+
+    pub fn rewrite_def(&mut self, new_reg: Register) {
+        use Instruction::*;
+        match self {
+            Array(ref mut dest, _) => {
+                *dest = new_reg;
+            }
+
+            Binary(ref mut dest, _, _, _) => {
+                *dest = new_reg;
+            }
+            Cast(ref mut dest, _, _) => {
+                *dest = new_reg;
+            }
+
+            Call(ref mut dest, _, _) => {
+                *dest = new_reg;
+            }
+
+            StatementStart => (),
+
+            StoreI(ref mut dest, _) => {
+                *dest = new_reg;
+            }
+
+            Store(ref mut dest, _) => {
+                *dest = new_reg;
+            }
+
+            Unary(ref mut dest, _, _) => {
+                *dest = new_reg;
+            }
+
+            Return(_) => {}
+        }
+    }
+}
+
+impl PartialEq for Register {
+    fn eq(&self,o:&Register) -> bool {
+        match (self,o) {
+            (Register::Register(ref s),Register::Register(ref o)) => s == o,
+            (Register::Offset(ref s,so),Register::Offset(ref o,ref oo)) => s==o && so == oo,
+            _ => false
+        }
+    }
 }
 
 impl Display for Value {
@@ -385,15 +494,23 @@ impl Display for UnaryOp {
     }
 }
 
+
+
 impl Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "t{}", self.0)
+        match self {
+            Register::Register(ref v) => write!(f, "t{}", v),
+            Register::Offset(ref v, offset) => write!(f, "(t{}){}", v, offset),
+        }
     }
 }
 
 impl Debug for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "t{}", self.0)
+        match self {
+            Register::Register(ref v) => write!(f, "t{}", v),
+            Register::Offset(ref v, offset) => write!(f, "(t{}){}", v, offset),
+        }
     }
 }
 
