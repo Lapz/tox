@@ -134,9 +134,7 @@ impl<'a> Allocator<'a> {
         self.build();
 
         #[cfg(feature = "graphviz")]
-        self.dump_debug(self.function.name, unsafe {
-            ALLOC_COUNTER
-        });
+        self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
 
         self.make_work_list();
 
@@ -173,8 +171,12 @@ impl<'a> Allocator<'a> {
 
         std::mem::swap(&mut function, self.function);
 
+        println!("{:?}", self.function);
+
         for (id, block) in &function.blocks {
             let mut live = self.state.live_out[id].clone();
+
+            println!("{:?}",live);
 
             for instruction in &block.instructions {
                 let use_ = instruction.used();
@@ -214,7 +216,7 @@ impl<'a> Allocator<'a> {
             }
         }
 
-        std::mem::swap(&mut function, self.function)
+        std::mem::swap(&mut function, self.function);
     }
 
     fn add_edge(&mut self, u: Node, v: Node) {
@@ -235,11 +237,9 @@ impl<'a> Allocator<'a> {
     }
 
     fn make_work_list(&mut self) {
-        let mut initial = IndexSet::new();
+        while !self.initial.is_empty() {
+            let n = self.initial.pop().unwrap();
 
-        std::mem::swap(&mut initial, &mut self.initial);
-
-        for n in initial {
             if self.degree[&n] >= K {
                 self.spill_work_list.insert(n);
             } else if self.move_related(n) {
@@ -251,8 +251,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn adjacent(&self, n: Node) -> IndexSet<Node> {
-        if self.adj_list.contains_key(&n) {
-            self.adj_list[&n]
+        self.adj_list.get(&n).unwrap_or(&IndexSet::new())
                 .difference(
                     &self
                         .select_stack
@@ -265,9 +264,6 @@ impl<'a> Allocator<'a> {
                 )
                 .cloned()
                 .collect::<IndexSet<_>>()
-        } else {
-            IndexSet::new()
-        }
     }
 
     fn node_moves(&self, n: Node) -> IndexSet<Move> {
@@ -348,6 +344,8 @@ impl<'a> Allocator<'a> {
         } else {
             (x, y)
         };
+
+        println!("u:{} v:{}",u,v);
 
         if u == v {
             self.coalesced_moves.insert(m);
@@ -510,7 +508,7 @@ impl<'a> Allocator<'a> {
     fn assign_colors(&mut self) {
         let mut ok_colors = (0..K - 1).collect::<IndexSet<_>>();
 
-        println!("{:?}",self.select_stack);
+        println!("{:?}", self.select_stack);
 
         while !self.select_stack.is_empty() {
             let n = self.select_stack.pop().unwrap();
