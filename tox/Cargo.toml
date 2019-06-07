@@ -7,6 +7,9 @@ default = []
 debug = ["vm/debug"]
 graphviz = ["frontend/graphviz"]
 prettytable = ["ir/prettytable"]
+dom = ["ir/dom"]
+live_ranges = ["ir/live_ranges"]
+live_out = ["ir/live_out"]
 # debug = ["vm/debug"]  # Enable debug statements within the vm
 
 [dependencies]

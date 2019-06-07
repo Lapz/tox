@@ -56,6 +56,7 @@ pub struct AnalysisState {
     pub live_in: HashMap<BlockID, IndexSet<Register>>,
     pub live_out: HashMap<BlockID, IndexSet<Register>>,
     pub live_now: HashMap<BlockID, IndexSet<Register>>,
+    pub dominator: HashMap<BlockID, IndexSet<BlockID>>,
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
 }
 
@@ -66,9 +67,10 @@ impl AnalysisState {
         state.init(&function);
         state.calculate_successors(function);
         state.calulate_live_out(function);
-         state.calculate_live_now(function);
+        state.calculate_live_now(function);
+        state.find_dominance(function);
         state.calculate_live_intervals(function);
-       
+
         state
     }
 
@@ -87,7 +89,7 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
                 }
                 #[cfg(not(feature = "graphviz"))]
                 {
-                    color2::Allocator::new(function)
+                    linear_scan::Allocator::new(symbols, function)
                 }
             };
 

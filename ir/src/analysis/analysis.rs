@@ -1,7 +1,6 @@
 use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{BlockEnd, BlockID, Function};
-use indexmap::map::{self, IndexMap};
-use indexmap::set::IndexSet;
+use indexmap::{indexset, IndexMap, IndexSet};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
 
@@ -46,6 +45,9 @@ impl AnalysisState {
         for (i, (id, block)) in function.blocks.iter().enumerate().peekable() {
             self.live_in.insert(*id, IndexSet::new()); // init the in[n] to empty
             self.live_out.insert(*id, IndexSet::new()); // init the out[n] to empty
+
+            self.dominator.insert(*id, indexset!(*id));
+
             if i > 0 && !(i + 1 > function.blocks.len()) {
                 self.add_predecessor(*id, function.blocks[i - 1].0)
             }
@@ -76,64 +78,8 @@ impl AnalysisState {
 
             for inst in block.instructions.iter().rev() {
                 use crate::instructions::Instruction::*;
-                match inst {
-                    Array(ref dest, _) => {
-                        defined.insert(*dest);
-                    }
-
-                    Binary(ref dest, ref lhs, _, ref rhs) => {
-                        if !defined.contains(lhs) {
-                            used.insert(*lhs);
-                        } else if !defined.contains(rhs) {
-                            used.insert(*rhs);
-                        }
-                        defined.insert(*dest);
-                    }
-                    Cast(ref dest, ref value, _) => {
-                        if !defined.contains(value) {
-                            used.insert(*value);
-                        }
-                        defined.insert(*dest);
-                    }
-
-                    Call(ref dest, _, ref args) => {
-                        for arg in args {
-                            if !defined.contains(arg) {
-                                used.insert(*arg);
-                            }
-                        }
-
-                        defined.insert(*dest);
-                    }
-
-                    StatementStart => (),
-
-                    StoreI(ref dest, _) => {
-                        defined.insert(*dest);
-                    }
-
-                    Store(ref dest, ref val) => {
-                        if !defined.contains(val) {
-                            used.insert(*val);
-                        }
-
-                        defined.insert(*dest);
-                    }
-
-                    Unary(ref dest, ref val, _) => {
-                        if !defined.contains(val) {
-                            used.insert(*val);
-                        }
-
-                        defined.insert(*dest);
-                    }
-
-                    Return(ref val) => {
-                        if !defined.contains(val) {
-                            used.insert(*val);
-                        }
-                    }
-                }
+                used.extend(inst.used());
+                defined.extend(inst.def());
             }
 
             self.used_defined.entry(*id).or_insert((used, defined));
@@ -206,7 +152,7 @@ impl AnalysisState {
             }
         }
 
-        #[cfg(feature = "prettytable")]
+        #[cfg(feature = "live_out")]
         {
             text_tables::render(&mut std::io::stdout(), &data).unwrap();
         }
@@ -225,35 +171,88 @@ impl AnalysisState {
                     self.live_now.get_mut(id).unwrap().remove(&reg);
                 }
 
-                for reg in used {
-                    self.live_now.get_mut(id).unwrap().remove(&reg);
-                }
+                self.live_now.get_mut(id).unwrap().extend(used);
             }
         }
+    }
+
+    pub fn find_dominance(&mut self, function: &Function) {
+        // panic!();
+        #[cfg(feature = "prettytable")]
+        let mut iteration = 0;
+
+        #[cfg(feature = "prettytable")]
+        let mut data: Vec<Vec<String>> = Vec::new();
+        #[cfg(feature = "prettytable")]
+        {
+            data.push(vec!["label".into(),]);
+        }
+
+        let mut changed = true;
+
+        while changed {
+            changed = false;
+
+            #[cfg(feature = "prettytable")]
+            {
+                for (id, _) in function.blocks.iter().rev() {
+                    data.push(vec![id.to_string(), format!("{:?}", self.dominator[id])]);
+                }
+
+                if let Some(mut col) = data[0].get_mut(1) {
+                    col = &mut format!("{} pass", iteration);
+                } else {
+                    data[0].push(format!("{} pass", iteration))
+                }
+            }
+            for (id, _) in function.blocks.iter().rev() {
+                let new_set = if let Some(predecessors) = self.predecessors.get(&id) {
+                    let mut new_set = IndexSet::new();
+
+                    for pred in predecessors {
+                        new_set.extend(self.dominator[pred].clone())
+                    }
+
+                    new_set.insert(*id);
+
+                    new_set
+                } else {
+                    IndexSet::new()
+                };
+
+                if new_set != self.dominator[id] {
+                    *self.dominator.get_mut(id).unwrap() = new_set;
+                    changed = true;
+                    iteration += 1;
+                }
+            }
+
+            
+        }
+
+        #[cfg(feature = "dom")]
+            {
+                text_tables::render(&mut std::io::stdout(), &data).unwrap();
+            }
     }
 
     pub fn calculate_live_intervals(&mut self, function: &Function) {
         for (id, block) in &function.blocks {
             self.intervals.insert(*id, IndexMap::new());
             for (i, instruction) in block.instructions.iter().enumerate() {
-              
                 for reg in &self.live_out[id] {
                     if let Some(ref mut interval) = self.intervals[id].get_mut(reg) {
                         if instruction.used().contains(reg) || instruction.def().contains(reg) {
                             interval.end = i;
                         }
-                        
-                    }else {
-                        self.intervals[id].insert(*reg,Interval {
-                            start:i,
-                            end:i,
-                        });
+                    } else {
+                        self.intervals[id].insert(*reg, Interval { start: i, end: i });
                     };
                 }
             }
         }
 
-        #[cfg(feature = "prettytable")]
+        #[cfg(feature = "live_ranges")]
         {
             writeln!(&mut std::io::stdout(), "block|\treg|\trange");
 
