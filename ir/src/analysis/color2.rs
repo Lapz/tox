@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{Function, Instruction, Register};
+use crate::instructions::{Function, Instruction, Register, STACK_POINTER};
 use cfg_if::cfg_if;
 use indexmap::{indexmap, indexset, IndexMap, IndexSet};
 use std::cmp::Ordering;
@@ -62,6 +62,8 @@ pub struct Allocator<'a> {
     ///when a move (u,v) has been coalesced, and v put in coalescedNodes,then alias(v) = u.
     alias: IndexMap<Register, Register>,
     pub(crate) color: IndexMap<Register, usize>,
+
+    offset: usize,
     #[cfg(feature = "graphviz")]
     pub(crate) symbols: &'a mut Symbols<()>,
 }
@@ -92,6 +94,7 @@ impl<'a> Allocator<'a> {
             active_moves: IndexSet::new(),
             alias: IndexMap::new(),
             color: IndexMap::new(),
+            offset: 0,
         }
     }
 
@@ -121,6 +124,7 @@ impl<'a> Allocator<'a> {
             active_moves: IndexSet::new(),
             alias: IndexMap::new(),
             color: IndexMap::new(),
+            offset: 0,
         }
     }
 
@@ -157,7 +161,11 @@ impl<'a> Allocator<'a> {
 
         self.assign_colors();
 
+        #[cfg(feature = "graphviz")]
+        self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
+
         if !self.spilled_nodes.is_empty() {
+            self.rewrite_program();
             self.allocate();
         }
     }
@@ -171,16 +179,35 @@ impl<'a> Allocator<'a> {
 
         std::mem::swap(&mut function, self.function);
 
-        println!("{:?}", self.function);
-
         for (id, block) in &function.blocks {
             let mut live = self.state.live_out[id].clone();
-
-            println!("{:?}",live);
 
             for instruction in &block.instructions {
                 let use_ = instruction.used();
                 let def = instruction.def();
+
+                self.initial.extend(
+                    use_.clone()
+                        .difference(&self.colored_nodes)
+                        .cloned()
+                        .collect::<IndexSet<_>>(),
+                );
+                self.initial.extend(
+                    def.clone()
+                        .difference(&self.colored_nodes)
+                        .cloned()
+                        .collect::<IndexSet<_>>(),
+                );
+
+                use_.clone().into_iter().for_each(|reg| {
+                    self.adj_list.entry(reg).or_insert(indexset!());
+                    self.degree.entry(reg).or_insert(0);
+                });
+
+                def.clone().into_iter().for_each(|reg| {
+                    self.adj_list.entry(reg).or_insert(indexset!());
+                    self.degree.entry(reg).or_insert(0);
+                });
 
                 if instruction.is_move() {
                     live = live.difference(&use_).cloned().collect::<IndexSet<_>>();
@@ -251,19 +278,21 @@ impl<'a> Allocator<'a> {
     }
 
     fn adjacent(&self, n: Node) -> IndexSet<Node> {
-        self.adj_list.get(&n).unwrap_or(&IndexSet::new())
-                .difference(
-                    &self
-                        .select_stack
-                        .clone()
-                        .into_iter()
-                        .collect::<IndexSet<_>>()
-                        .union(&self.coalesced_nodes)
-                        .cloned()
-                        .collect::<IndexSet<_>>(),
-                )
-                .cloned()
-                .collect::<IndexSet<_>>()
+        self.adj_list
+            .get(&n)
+            .unwrap_or(&IndexSet::new())
+            .difference(
+                &self
+                    .select_stack
+                    .clone()
+                    .into_iter()
+                    .collect::<IndexSet<_>>()
+                    .union(&self.coalesced_nodes)
+                    .cloned()
+                    .collect::<IndexSet<_>>(),
+            )
+            .cloned()
+            .collect::<IndexSet<_>>()
     }
 
     fn node_moves(&self, n: Node) -> IndexSet<Move> {
@@ -301,7 +330,9 @@ impl<'a> Allocator<'a> {
     fn decrement_degree(&mut self, m: Node) {
         let d = self.degree[&m];
 
-        self.degree[&m] -= 1;
+        if d != 0 {
+            self.degree[&m] -= 1;
+        }
 
         if d == K {
             let mut nodes = self.adjacent(m);
@@ -345,7 +376,7 @@ impl<'a> Allocator<'a> {
             (x, y)
         };
 
-        println!("u:{} v:{}",u,v);
+        println!("u:{} v:{}", u, v);
 
         if u == v {
             self.coalesced_moves.insert(m);
@@ -506,7 +537,8 @@ impl<'a> Allocator<'a> {
     }
 
     fn assign_colors(&mut self) {
-        let mut ok_colors = (0..K - 1).collect::<IndexSet<_>>();
+        println!("assign colours");
+        let mut ok_colors = (0..=K - 1).collect::<IndexSet<_>>();
 
         println!("{:?}", self.select_stack);
 
@@ -528,10 +560,100 @@ impl<'a> Allocator<'a> {
             } else {
                 self.colored_nodes.insert(n);
 
-                let c = *ok_colors.get(&0).unwrap();
+                let c = ok_colors.pop().unwrap();
 
                 self.color.insert(n, c);
+
+                ok_colors.insert(c);
             }
         }
+    }
+
+    fn rewrite_program(&mut self) {
+        use crate::instructions::{Instruction::*, Value, POINTER_WIDTH};
+
+        let mut new_temps: IndexSet<Register> = IndexSet::new();
+
+        //mapping of old to new
+        let mut old_to_new = IndexMap::new();
+
+        for spilled_node in &self.spilled_nodes {
+            //allocate memory locations for each spilled_node.
+            let stack_loc = *old_to_new
+                .entry(*spilled_node)
+                .or_insert(STACK_POINTER.offset_at(self.offset));
+            self.offset += POINTER_WIDTH;
+
+            println!(
+                "spilled reg {} is stored on the stack at {}",
+                spilled_node, stack_loc
+            );
+        }
+
+        for (_, block) in self.function.blocks.iter_mut() {
+            let mut before = IndexSet::new(); //index of stores to place before
+            let mut after = IndexSet::new(); //index of stores to place after
+            for (i, instruction) in block.instructions.iter_mut().enumerate() {
+                let defs = instruction.def();
+                let uses = instruction.used();
+
+                {
+                    for used in uses {
+                        if self.spilled_nodes.contains(&used) {
+                            let new_temp = *old_to_new.entry(used).or_insert(Register::new());
+                            // new_temps.insert(new_temp);
+                            old_to_new.insert(used, new_temp);
+
+                            println!(
+                                "reg {} used in {} is replaced as {}",
+                                used, instruction, new_temp
+                            );
+
+                            before.insert((i, Instruction::Store(new_temp, used)));
+                            // instruction.rewrite_uses(used, new_temp);
+
+                            // self.spilled_before.insert(used);
+                        }
+                    }
+                }
+                {
+                    for def in defs {
+                        if self.spilled_nodes.contains(&def) {
+                            let new_temp = *old_to_new.entry(def).or_insert(Register::new());
+                            // new_temps.insert(new_temp);
+                            old_to_new.insert(def, new_temp);
+
+                            println!(
+                                "reg {} used in {} is replaced as {}",
+                                def, instruction, new_temp
+                            );
+
+                            after.insert((i + 1, Instruction::Store(def, new_temp)));
+                            // instruction.rewrite_def(new_temp);
+                            // self.spilled_before.insert(def);
+                        }
+                    }
+                }
+            }
+
+            let offset = before.len();
+
+            for (i, (index, instruction)) in before.into_iter().enumerate() {
+                block.instructions.insert(index + i, instruction);
+            }
+
+            for (i, (index, instruction)) in after.into_iter().enumerate() {
+                block.instructions.insert(index + i + offset, instruction);
+            }
+        }
+
+        self.spilled_nodes.clear();
+
+        self.initial.extend(self.colored_nodes.clone());
+        self.initial.extend(new_temps);
+
+        self.colored_nodes = IndexSet::new();
+        self.coalesced_nodes = IndexSet::new();
+        // panic!()
     }
 }

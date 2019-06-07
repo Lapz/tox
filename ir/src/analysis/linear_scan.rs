@@ -69,6 +69,7 @@ impl<'a> Allocator<'a> {
     }
 
     pub fn allocate(&mut self) {
+        let mut mappings = IndexMap::new();
         let mut blocks = Vec::new();
 
         std::mem::swap(&mut blocks, &mut self.function.blocks);
@@ -78,6 +79,9 @@ impl<'a> Allocator<'a> {
             let mut intervals = IndexMap::new();
 
             std::mem::swap(&mut intervals, &mut self.state.intervals[id]);
+            // println!("unsorted {:#?}", intervals);
+            intervals.sort_by(|_, v1, _, v2| v1.start.cmp(&v2.start));
+
             for (reg, interval) in &intervals {
                 self.expire(*reg, *interval);
 
@@ -85,12 +89,14 @@ impl<'a> Allocator<'a> {
                     self.spill_at_interval(*reg, *interval, *id)
                 } else {
                     if let Some((free_reg, _)) = self.free_registers.pop() {
-                        // let (free_reg,_) = .unwrap();
-                        // self.free_registers.insert(Register::new(), *interval);
-
                         self.active.insert(free_reg, *interval);
 
-                        self.active.sort_keys();
+                        mappings
+                            .entry(*reg)
+                            .or_insert(IndexSet::new())
+                            .insert(free_reg);
+
+                        self.active.sort_by(|_, v1, _, v2| v1.end.cmp(&v2.end));
                     }
                 }
             }
@@ -100,13 +106,12 @@ impl<'a> Allocator<'a> {
 
         std::mem::swap(&mut self.function.blocks, &mut blocks);
 
-        println!("{:#?}", self.location);
+        println!("spilled {:#?}", self.location);
+        println!("active {:#?}", self.active);
     }
 
     fn expire(&mut self, reg: Register, interval: Interval) {
-        if self.active.is_empty() {
-            return;
-        }
+        self.active.sort_by(|_, v1, _, v2| v1.end.cmp(&v2.end));
 
         while !self.active.is_empty() {
             let (active_reg, active_interval) = self.active.swap_remove_index(0).unwrap();

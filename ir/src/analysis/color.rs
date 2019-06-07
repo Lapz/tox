@@ -752,7 +752,7 @@ impl<'a> Allocator<'a> {
                                 used, instruction, new_temp
                             );
 
-                            before.insert((i, Instruction::Store(new_temp, self.mappings[&used])));
+                            before.insert((i, Instruction::Store(new_temp, used)));
                             instruction.rewrite_uses(used, new_temp);
 
                             // self.spilled_before.insert(used);
@@ -773,7 +773,7 @@ impl<'a> Allocator<'a> {
                             );
 
                             after
-                                .insert((i + 1, Instruction::Store(self.mappings[&def], new_temp)));
+                                .insert((i + 1, Instruction::Store(def, new_temp)));
                             instruction.rewrite_def(new_temp);
                             // self.spilled_before.insert(def);
                         }

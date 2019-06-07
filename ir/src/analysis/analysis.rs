@@ -212,34 +212,43 @@ impl AnalysisState {
         }
     }
 
+    pub fn calculate_live_now(&mut self, function: &Function) {
+        for (id, block) in &function.blocks {
+            let live_out = self.live_out[id].clone();
+            self.live_now.insert(*id, live_out);
+
+            for inst in block.instructions.iter() {
+                let def = inst.def();
+                let used = inst.used();
+
+                for reg in def {
+                    self.live_now.get_mut(id).unwrap().remove(&reg);
+                }
+
+                for reg in used {
+                    self.live_now.get_mut(id).unwrap().remove(&reg);
+                }
+            }
+        }
+    }
+
     pub fn calculate_live_intervals(&mut self, function: &Function) {
         for (id, block) in &function.blocks {
             self.intervals.insert(*id, IndexMap::new());
             for (i, instruction) in block.instructions.iter().enumerate() {
-                for reg in self.live_out[id].union(&instruction.used()) {
-                    let entry = self.intervals.entry(*id);
-
-                    match entry {
-                        map::Entry::Occupied(mut entry) => {
-                            let entry = entry.get_mut().entry(*reg);
-
-                            match entry {
-                                map::Entry::Occupied(mut entry) => {
-                                    entry.get_mut().end = i;
-                                }
-                                map::Entry::Vacant(entry) => {
-                                    entry.insert(Interval { start: i, end: i });
-                                }
-                            }
-                            // entry = i;
+              
+                for reg in &self.live_out[id] {
+                    if let Some(ref mut interval) = self.intervals[id].get_mut(reg) {
+                        if instruction.used().contains(reg) || instruction.def().contains(reg) {
+                            interval.end = i;
                         }
-                        map::Entry::Vacant(entry) => {
-                            // println!("{}",*reg);
-                            entry
-                                .insert(IndexMap::new())
-                                .insert(*reg, Interval { start: i, end: i });
-                        }
-                    }
+                        
+                    }else {
+                        self.intervals[id].insert(*reg,Interval {
+                            start:i,
+                            end:i,
+                        });
+                    };
                 }
             }
         }

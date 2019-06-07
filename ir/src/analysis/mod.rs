@@ -55,6 +55,7 @@ pub struct AnalysisState {
     pub predecessors: HashMap<BlockID, IndexSet<BlockID>>,
     pub live_in: HashMap<BlockID, IndexSet<Register>>,
     pub live_out: HashMap<BlockID, IndexSet<Register>>,
+    pub live_now: HashMap<BlockID, IndexSet<Register>>,
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
 }
 
@@ -65,8 +66,9 @@ impl AnalysisState {
         state.init(&function);
         state.calculate_successors(function);
         state.calulate_live_out(function);
+         state.calculate_live_now(function);
         state.calculate_live_intervals(function);
-        state.intervals.sort_keys();
+       
         state
     }
 
@@ -81,7 +83,7 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
             let mut allocator = {
                 #[cfg(feature = "graphviz")]
                 {
-                    color2::Allocator::new(symbols, function)
+                    linear_scan::Allocator::new(symbols, function)
                 }
                 #[cfg(not(feature = "graphviz"))]
                 {
