@@ -1,3 +1,4 @@
+use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
@@ -48,6 +49,22 @@ pub struct Function {
     pub locals: Vec<Register>,
     pub blocks: Vec<(BlockID, Block)>,
     pub start_block: BlockID,
+    pub registers: IndexMap<Register, usize>,
+    pub stack_locs: IndexMap<Register, Register>,
+}
+
+impl Function {
+    pub fn dummy() -> Self {
+        Function {
+            name: Symbol(0),
+            params: Vec::new(),
+            locals: Vec::new(),
+            blocks: Vec::new(),
+            start_block: BlockID(0),
+            registers: IndexMap::new(),
+            stack_locs: IndexMap::new(),
+        }
+    }
 }
 #[derive(Debug, Clone)]
 pub struct StructLayout {
@@ -420,11 +437,11 @@ impl Instruction {
 }
 
 impl PartialEq for Register {
-    fn eq(&self,o:&Register) -> bool {
-        match (self,o) {
-            (Register::Register(ref s),Register::Register(ref o)) => s == o,
-            (Register::Offset(ref s,so),Register::Offset(ref o,ref oo)) => s==o && so == oo,
-            _ => false
+    fn eq(&self, o: &Register) -> bool {
+        match (self, o) {
+            (Register::Register(ref s), Register::Register(ref o)) => s == o,
+            (Register::Offset(ref s, so), Register::Offset(ref o, ref oo)) => s == o && so == oo,
+            _ => false,
         }
     }
 }
@@ -493,8 +510,6 @@ impl Display for UnaryOp {
         }
     }
 }
-
-
 
 impl Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

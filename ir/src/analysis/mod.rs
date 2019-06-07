@@ -1,12 +1,13 @@
 mod analysis;
-mod color;
+// mod color;
+mod color2;
 mod dead_code;
 mod linear_scan;
 
 #[cfg(feature = "graphviz")]
 mod debug;
 #[cfg(not(feature = "linear_scan"))]
-use crate::analysis::color::Allocator;
+use crate::analysis::color2::Allocator;
 #[cfg(feature = "linear_scan")]
 use crate::analysis::linear_scan::Allocator;
 use crate::instructions::{BlockID, Function, Register};
@@ -75,12 +76,23 @@ impl AnalysisState {
 }
 
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
-    let _state = Analysis::new();
-
     for function in &mut p.functions {
         {
-            let mut allocator = Allocator::new(symbols, function);
-            allocator.allocate();
+            let mut allocator = {
+                #[cfg(feature = "graphviz")]
+                {
+                    color2::Allocator::new(symbols, function)
+                }
+                #[cfg(not(feature = "graphviz"))]
+                {
+                    color2::Allocator::new(function)
+                }
+            };
+
+            allocator.allocate()
+
+            // function.registers = allocator.color;
+            // function.stack_locs = allocator.mappings;
 
             // println!("{:?}", allocator)
         }

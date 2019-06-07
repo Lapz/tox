@@ -46,7 +46,7 @@ pub struct Allocator<'a> {
     pub(crate) adj_set: IndexSet<(Register, Register)>,
     /// adjacency list representation of the graph; for each non-precolored temporary u, adj_list[u] is the set of nodes that interfere with u.
     pub(crate) adj_list: IndexMap<Register, IndexSet<Register>>,
-    mappings: IndexMap<Register, Register>,
+    pub(crate) mappings: IndexMap<Register, Register>,
     offset: usize,
     seen_inst: IndexSet<Instruction>,
     spilled_before: IndexSet<Register>,
@@ -114,11 +114,12 @@ impl<'a> Allocator<'a> {
         unsafe {
             ALLOC_COUNTER += 1;
         }
+
         self.state = AnalysisState::new(self.function);
 
         self.build_graph();
 
-        self.check_invariants();
+        // self.check_invariants();
 
         self.make_work_list();
 
@@ -178,6 +179,7 @@ impl<'a> Allocator<'a> {
             for instruction in block.instructions.iter().rev() {
                 let used = instruction.used();
                 let defined = instruction.def();
+
                 if instruction.is_move() {
                     live = live.difference(&used).cloned().collect::<IndexSet<_>>();
 
@@ -231,7 +233,7 @@ impl<'a> Allocator<'a> {
                             .collect::<IndexSet<_>>(),
                     )
                     .cloned()
-                    .collect::<IndexSet<_>>()
+                    .collect::<IndexSet<_>>();
             }
         }
     }
@@ -241,7 +243,7 @@ impl<'a> Allocator<'a> {
     fn add_edge(&mut self, u: Register, v: Register) {
         if self.adj_set.contains(&(u, v)) && u != v {
             self.adj_set.insert((u, v));
-            // self.adj_set.insert((v, u));
+            self.adj_set.insert((v, u));
 
             if !self.precolored.contains(&u) {
                 self.adj_list[&u].insert(v);
@@ -261,7 +263,6 @@ impl<'a> Allocator<'a> {
         std::mem::swap(&mut self.initial, &mut initial); // swap them out because we need to empty out the list
 
         for initial in initial {
-            println!("{:?}", initial);
             if self.degree[&initial] >= NUMBER_REGISTER {
                 self.spill_work_list.push(initial)
             } else if self.move_related(initial) {
@@ -274,8 +275,6 @@ impl<'a> Allocator<'a> {
 
     /// find all the nodes that are adjacent to the selected one in the graph.
     fn adjacent(&self, n: Register) -> IndexSet<Register> {
-        // let union = ;
-
         // if self.adj_list.get(&n).is_none() {
         //     union
         // } else {
@@ -423,12 +422,10 @@ impl<'a> Allocator<'a> {
 
         let adjacent = self.adjacent(node);
 
+        // assert!(self.degree[&node] ==adjacent.len(),"degree {} node {}\n adj_list {:?}, adjacent {:?}",self.degree[&node],node,self.adj_list[&node],adjacent);
+
         for neighbour in adjacent {
             self.decrement_degree(neighbour);
-            //
-            //    self.adj_list[&node].remove(&neighbour);
-            //    self.adj_list[&neighbour].remove(&node);
-            //            self.adj_list.remove(&(neighbour, node));
         }
     }
 
@@ -590,7 +587,7 @@ impl<'a> Allocator<'a> {
 
         for t in self.adjacent(v) {
             self.add_edge(t, u);
-            self.decrement_degree(v);
+            self.decrement_degree(t);
         }
 
         if self.degree[&u] >= NUMBER_REGISTER && self.freeze_work_list.contains(&u) {
@@ -713,83 +710,97 @@ impl<'a> Allocator<'a> {
     fn rewrite_program(&mut self) {
         use crate::instructions::{Instruction::*, Value, POINTER_WIDTH};
 
-        let mut new_temps = IndexSet::new();
+        let mut new_temps: IndexSet<Register> = IndexSet::new();
 
-        let mut offset = 0;
+        //mapping of old to new
+        let mut old_to_new = IndexMap::new();
 
-        for (_, block) in self.function.blocks.iter_mut().rev() {
+        for spilled_node in &self.spilled_nodes {
+            //allocate memory locations for each spilled_node.
+            let stack_loc = *self
+                .mappings
+                .entry(*spilled_node)
+                .or_insert(STACK_POINTER.offset_at(self.offset));
+            self.offset += POINTER_WIDTH;
+
+            println!(
+                "spilled reg {} is stored on the stack at {}",
+                spilled_node, stack_loc
+            );
+        }
+
+        println!("{:#?}", self.function.blocks);
+
+        for (_, block) in self.function.blocks.iter_mut() {
             let mut before = IndexSet::new(); //index of stores to place before
             let mut after = IndexSet::new(); //index of stores to place after
+            for (i, instruction) in block.instructions.iter_mut().enumerate() {
+                let defs = instruction.def();
+                let uses = instruction.used();
 
-            for (i, instruction) in block.instructions.iter_mut().rev().enumerate() {
-                for spilled_node in &self.spilled_nodes {
-                    let mut defs = instruction.def();
-                    let mut uses = instruction.used();
-                    // generate a load before the use
-                    if uses.contains(spilled_node) {
-                        let new_temp = *self
-                            .mappings
-                            .entry(*spilled_node)
-                            .or_insert(STACK_POINTER.offset_at(offset));
-                        new_temps.insert(new_temp);
+                {
+                    for used in uses {
+                        if self.spilled_nodes.contains(&used)
+                            && !self.spilled_before.contains(&used)
+                        {
+                            let new_temp = *old_to_new.entry(used).or_insert(Register::new());
+                            new_temps.insert(new_temp);
+                            old_to_new.insert(used, new_temp);
 
-                        before.insert((i, Instruction::Store(new_temp, *spilled_node)));
-                        instruction.rewrite_uses(*spilled_node, new_temp);
-                        offset += POINTER_WIDTH;
+                            println!(
+                                "reg {} used in {} is replaced as {}",
+                                used, instruction, new_temp
+                            );
+
+                            before.insert((i, Instruction::Store(new_temp, self.mappings[&used])));
+                            instruction.rewrite_uses(used, new_temp);
+
+                            // self.spilled_before.insert(used);
+                        }
                     }
+                }
+                {
+                    for def in defs {
+                        if self.spilled_nodes.contains(&def) && !self.spilled_before.contains(&def)
+                        {
+                            let new_temp = *old_to_new.entry(def).or_insert(Register::new());
+                            new_temps.insert(new_temp);
+                            old_to_new.insert(def, new_temp);
 
-                    if defs.contains(spilled_node) {
-                        let new_temp = *self
-                            .mappings
-                            .entry(*spilled_node)
-                            .or_insert(STACK_POINTER.offset_at(offset));
+                            println!(
+                                "reg {} used in {} is replaced as {}",
+                                def, instruction, new_temp
+                            );
 
-                        after.insert((i + 1, Instruction::Store(*spilled_node, new_temp)));
-                        instruction.rewrite_def(new_temp);
-                        offset += POINTER_WIDTH;
+                            after
+                                .insert((i + 1, Instruction::Store(self.mappings[&def], new_temp)));
+                            instruction.rewrite_def(new_temp);
+                            // self.spilled_before.insert(def);
+                        }
                     }
                 }
             }
 
+            let offset = before.len();
 
-           
-
-            for (index, instruction) in before {
-                block.instructions.insert(index, instruction);
+            for (i, (index, instruction)) in before.into_iter().enumerate() {
+                block.instructions.insert(index + i, instruction);
             }
 
-            for (index, instruction) in after {
-                block.instructions.insert(index + 1, instruction);
+            for (i, (index, instruction)) in after.into_iter().enumerate() {
+                block.instructions.insert(index + i + offset, instruction);
             }
-
-             block.instructions.retain(|instruction| {
-                 match instruction {
-                     Instruction::Store(ref lhs,ref rhs) => lhs == rhs,
-                     _ => true,
-                 }
-             })
-
-            // println!("after\n{:#?}", block.instructions);
         }
 
         self.spilled_nodes.clear();
 
-        self.initial = self
-            .colored_nodes
-            .union(
-                &self
-                    .coalesced_nodes
-                    .clone()
-                    .into_iter()
-                    .collect::<IndexSet<_>>()
-                    .union(&new_temps)
-                    .cloned()
-                    .collect::<IndexSet<_>>(),
-            )
-            .cloned()
-            .collect::<IndexSet<_>>();
+        self.initial.extend(self.colored_nodes.clone());
+        self.initial.extend(new_temps);
 
         self.colored_nodes = IndexSet::new();
         self.coalesced_nodes = Vec::new();
+
+        println!("{:#?}", self.function.blocks);
+        // panic!()
     }
 }

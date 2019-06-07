@@ -1,6 +1,7 @@
 use crate::ast as t;
 use crate::infer::types;
 use ir::instructions::*;
+use ir::{IndexMap, IndexSet};
 use std::collections::{HashMap, HashSet};
 use syntax::ast::{self, AssignOperator, Literal, Op};
 use util::pos::Spanned;
@@ -587,6 +588,8 @@ fn build_function(function: t::Function, symbols: &mut Symbols<()>) -> Function 
         locals: builder.locals(),
         start_block: start,
         blocks: builder.blocks(),
+        registers: IndexMap::new(),
+        stack_locs: IndexMap::new(),
     }
 }
 

@@ -11,3 +11,5 @@ pub const POINTER_SIZE: usize = 8;
 pub const FUNCTION_SIZE: usize = 8;
 
 pub use analysis::optimizations;
+
+pub use indexmap::{IndexMap, IndexSet};
