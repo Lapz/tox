@@ -159,8 +159,6 @@ impl<'a> Allocator<'a> {
 
         self.assign_colors();
 
-        println!("{:#?}",self);
-
         if !self.spilled_nodes.is_empty() {
             self.allocate();
         }
