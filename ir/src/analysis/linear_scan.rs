@@ -82,6 +82,7 @@ impl<'a> Allocator<'a> {
             // println!("unsorted {:#?}", intervals);
             intervals.sort_by(|_, v1, _, v2| v1.start.cmp(&v2.start));
 
+            // println!("id {} sorted {:#?}", id, intervals);
             for (reg, interval) in &intervals {
                 self.expire(*reg, *interval);
 
@@ -92,9 +93,9 @@ impl<'a> Allocator<'a> {
                         self.active.insert(free_reg, *interval);
 
                         mappings
-                            .entry(*reg)
-                            .or_insert(IndexSet::new())
-                            .insert(free_reg);
+                            .entry(*id)
+                            .or_insert(IndexMap::new())
+                            .insert(*reg, free_reg);
 
                         self.active.sort_by(|_, v1, _, v2| v1.end.cmp(&v2.end));
                     }
@@ -106,15 +107,15 @@ impl<'a> Allocator<'a> {
 
         std::mem::swap(&mut self.function.blocks, &mut blocks);
 
-        println!("spilled {:#?}", self.location);
-        println!("active {:#?}", self.active);
+        println!("spilled {:#?}", mappings);
+        // println!("active {:#?}", self.active);
     }
 
     fn expire(&mut self, reg: Register, interval: Interval) {
-        self.active.sort_by(|_, v1, _, v2| v1.end.cmp(&v2.end));
-
+        self.active.sort_by(|_, v1, _, v2| v2.end.cmp(&v1.end));
+        // println!("{:?}",self.active);
         while !self.active.is_empty() {
-            let (active_reg, active_interval) = self.active.swap_remove_index(0).unwrap();
+            let (active_reg, active_interval) = self.active.pop().unwrap();
 
             if active_interval.end >= interval.start {
                 self.active.insert(active_reg, active_interval);

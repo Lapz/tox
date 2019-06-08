@@ -13,12 +13,11 @@ use crate::analysis::linear_scan::Allocator;
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
-use std::collections::HashMap;
 use std::fs::File;
 use util::symbol::{Symbol, Symbols};
 #[derive(Debug, Clone, Default)]
 pub struct Analysis {
-    state: HashMap<Symbol, AnalysisState>,
+    state: IndexMap<Symbol, AnalysisState>,
 }
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord, Default)]
 pub struct Interval {
@@ -50,13 +49,14 @@ impl Analysis {
 
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisState {
-    pub used_defined: HashMap<BlockID, (IndexSet<Register>, IndexSet<Register>)>,
-    pub successors: HashMap<BlockID, IndexSet<BlockID>>,
-    pub predecessors: HashMap<BlockID, IndexSet<BlockID>>,
-    pub live_in: HashMap<BlockID, IndexSet<Register>>,
-    pub live_out: HashMap<BlockID, IndexSet<Register>>,
-    pub live_now: HashMap<BlockID, IndexSet<Register>>,
-    pub dominator: HashMap<BlockID, IndexSet<BlockID>>,
+    pub used_defined: IndexMap<BlockID, (IndexSet<Register>, IndexSet<Register>)>,
+    pub successors: IndexMap<BlockID, IndexSet<BlockID>>,
+    pub predecessors: IndexMap<BlockID, IndexSet<BlockID>>,
+    pub live_in: IndexMap<BlockID, IndexSet<Register>>,
+    pub live_out: IndexMap<BlockID, IndexSet<Register>>,
+    pub live_now: IndexMap<BlockID, IndexSet<Register>>,
+    pub dominator: IndexMap<BlockID, IndexSet<BlockID>>,
+    pub frontier: IndexMap<BlockID, IndexSet<BlockID>>,
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
 }
 
@@ -69,6 +69,7 @@ impl AnalysisState {
         state.calulate_live_out(function);
         state.calculate_live_now(function);
         state.find_dominance(function);
+        // state.find_dominance_frontier(function);
         state.calculate_live_intervals(function);
 
         state

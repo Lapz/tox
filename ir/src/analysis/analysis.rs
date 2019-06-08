@@ -1,10 +1,10 @@
 use crate::analysis::{AnalysisState, Interval};
 use crate::instructions::{BlockEnd, BlockID, Function};
+use indexmap::map::Entry;
 use indexmap::{indexset, IndexMap, IndexSet};
 #[cfg(feature = "graphviz")]
 use petgraph::dot::{Config, Dot};
 
-use std::collections::hash_map::Entry;
 #[cfg(any(feature = "graphviz", feature = "prettytable"))]
 use std::{
     fs::{self, File},
@@ -46,11 +46,9 @@ impl AnalysisState {
             self.live_in.insert(*id, IndexSet::new()); // init the in[n] to empty
             self.live_out.insert(*id, IndexSet::new()); // init the out[n] to empty
 
-            self.dominator.insert(*id, indexset!(*id));
+            self.frontier.insert(*id, IndexSet::new());
 
-            if i > 0 && !(i + 1 > function.blocks.len()) {
-                self.add_predecessor(*id, function.blocks[i - 1].0)
-            }
+         
             match block.end {
                 BlockEnd::Branch(_, lhs, rhs) => {
                     self.add_successors(*id, lhs);
@@ -109,8 +107,8 @@ impl AnalysisState {
             changed = false;
 
             for (id, _) in function.blocks.iter().rev() {
-                let old_in = self.live_in[&id].clone();
-                let old_out = self.live_out[&id].clone();
+                let old_in = self.live_in[id].clone();
+                let old_out = self.live_out[id].clone();
 
                 let (used, defined) = self.used_defined[id].clone();
 
@@ -136,17 +134,17 @@ impl AnalysisState {
                     .cloned()
                     .collect::<IndexSet<_>>();
 
-                if let Some(successors) = self.successors.get(&id) {
+                if let Some(successors) = self.successors.get(id) {
                     let mut new_out = IndexSet::new();
 
                     for suc in successors {
-                        new_out.extend(self.live_in[suc].clone())
+                        new_out.extend(self.live_in.get(suc).clone().unwrap_or(&IndexSet::new()))
                     }
 
                     *self.live_out.get_mut(id).unwrap() = new_out;
                 }
 
-                if !(old_in == self.live_in[&id] && old_out == self.live_out[&id]) {
+                if !(old_in == self.live_in[id] && old_out == self.live_out[id]) {
                     changed = true;
                 }
             }
@@ -176,8 +174,46 @@ impl AnalysisState {
         }
     }
 
+    pub fn find_dominance_frontier(&mut self, function: &Function) {
+        for (id, _) in &function.blocks {
+            if let Some(predecessors) = self.predecessors.get(id) {
+                if predecessors.len() >= 2 {
+                    // the paper uses >=2 whilst the implementation in engeneering compilers says multiple predecessors
+                    for p in predecessors {
+                        let mut runner = *p;
+
+                        while runner != self.immediate_dominator(id) {
+                            self.frontier.get_mut(p).unwrap().insert(*id);
+                            runner = self.immediate_dominator(&runner);
+                        }
+                    }
+                }
+            }
+        }
+
+        println!("{:#?}", self.frontier);
+    }
+
+    pub fn immediate_dominator(&self, id: &BlockID) -> BlockID {
+        let mut set = self.dominator[id].clone();
+
+        set.remove(id);
+
+        if let Some(predecessors) = self.predecessors.get(id) {
+            for p in predecessors {
+                if set.contains(p) {
+                    return *p;
+                }
+            }
+
+            *id
+        } else {
+            *id
+        }
+    }
+
     pub fn find_dominance(&mut self, function: &Function) {
-        // panic!();
+        // panic!("{:#?}", self.predecessors);
         #[cfg(feature = "prettytable")]
         let mut iteration = 0;
 
@@ -185,7 +221,22 @@ impl AnalysisState {
         let mut data: Vec<Vec<String>> = Vec::new();
         #[cfg(feature = "prettytable")]
         {
-            data.push(vec!["label".into(),]);
+            data.push(vec!["label".into()]);
+        }
+
+        // we need to set the first block to contain itself only
+        let all_nodes = function
+            .blocks
+            .iter()
+            .map(|(id, _)| *id)
+            .collect::<IndexSet<_>>();
+
+        let first = function.blocks[0].0;
+
+        self.dominator.insert(first, indexset!(first));
+        // // intialise the each Domset to include all the nodes except the first
+        for (id, _) in function.blocks.iter().skip(1) {
+            self.dominator.insert(*id, all_nodes.clone());
         }
 
         let mut changed = true;
@@ -206,34 +257,40 @@ impl AnalysisState {
                 }
             }
             for (id, _) in function.blocks.iter().rev() {
-                let new_set = if let Some(predecessors) = self.predecessors.get(&id) {
-                    let mut new_set = IndexSet::new();
 
-                    for pred in predecessors {
-                        new_set.extend(self.dominator[pred].clone())
+
+                let mut new_set = indexset!(*id);
+                if let Some(predecessors) = self.predecessors.get(id) {
+                    
+                    let mut intersection = self.dominator[predecessors.get_index(0).unwrap()].clone();
+                    for pred in predecessors.iter().skip(1) {
+                        intersection = intersection.intersection(&self.dominator[pred]).cloned().collect::<IndexSet<_>>();
                     }
 
-                    new_set.insert(*id);
+                    new_set.extend(intersection);
 
-                    new_set
-                } else {
-                    IndexSet::new()
+
                 };
 
                 if new_set != self.dominator[id] {
                     *self.dominator.get_mut(id).unwrap() = new_set;
                     changed = true;
-                    iteration += 1;
+                    #[cfg(feature = "prettytable")]
+                    {
+                        iteration += 1;
+                    }
                 }
             }
-
-            
         }
 
         #[cfg(feature = "dom")]
-            {
-                text_tables::render(&mut std::io::stdout(), &data).unwrap();
-            }
+        {
+            text_tables::render(&mut std::io::stdout(), &data).unwrap();
+        }
+
+        self.dominator.sort_keys();
+
+        println!("{:#?}", self.dominator);
     }
 
     pub fn calculate_live_intervals(&mut self, function: &Function) {
@@ -264,5 +321,47 @@ impl AnalysisState {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::AnalysisState;
+    use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
+    #[test]
+    fn check_dominator() {
+        let mut example_cfg = Vec::new();
+
+        let b0 = BlockID::new();
+        let b1 = BlockID::new();
+        let b2 = BlockID::new();
+        let b3 = BlockID::new();
+        let b4 = BlockID::new();
+        let b5 = BlockID::new();
+        let b6 = BlockID::new();
+        let b7 = BlockID::new();
+        let b8 = BlockID::new();
+
+        example_cfg.push((b0, Block::new(vec![], BlockEnd::Jump(b1))));
+        example_cfg.push((
+            b1,
+            Block::new(vec![], BlockEnd::Branch(Register::new(), b2, b5)),
+        ));
+        example_cfg.push((b2, Block::new(vec![], BlockEnd::Jump(b3))));
+        example_cfg.push((
+            b5,
+            Block::new(vec![], BlockEnd::Branch(Register::new(), b6, b8)),
+        ));
+        example_cfg.push((b6, Block::new(vec![], BlockEnd::Jump(b7))));
+        example_cfg.push((b8, Block::new(vec![], BlockEnd::Jump(b7))));
+        example_cfg.push((b7, Block::new(vec![], BlockEnd::Jump(b3))));
+        example_cfg.push((b3, Block::new(vec![], BlockEnd::Jump(b4))));
+        example_cfg.push((b4, Block::new(vec![], BlockEnd::End)));
+
+        let mut function = Function::dummy();
+
+        function.blocks = example_cfg;
+
+        let mut analysis = AnalysisState::new(&function);
     }
 }
