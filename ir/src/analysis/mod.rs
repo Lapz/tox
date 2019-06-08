@@ -69,7 +69,7 @@ impl AnalysisState {
         state.calulate_live_out(function);
         state.calculate_live_now(function);
         state.find_dominance(function);
-        // state.find_dominance_frontier(function);
+        state.find_dominance_frontier(function);
         state.calculate_live_intervals(function);
 
         state

@@ -29,6 +29,10 @@ impl AnalysisState {
 
     pub fn add_predecessor(&mut self, id: BlockID, block: BlockID) {
         let entry = self.predecessors.entry(id);
+
+        if id == block {
+            return;
+        }
         match entry {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().insert(block);
@@ -42,13 +46,10 @@ impl AnalysisState {
     }
 
     pub fn calculate_successors(&mut self, function: &Function) {
-        for (i, (id, block)) in function.blocks.iter().enumerate().peekable() {
+        for (id, block) in function.blocks.iter().rev() {
             self.live_in.insert(*id, IndexSet::new()); // init the in[n] to empty
             self.live_out.insert(*id, IndexSet::new()); // init the out[n] to empty
 
-            self.frontier.insert(*id, IndexSet::new());
-
-         
             match block.end {
                 BlockEnd::Branch(_, lhs, rhs) => {
                     self.add_successors(*id, lhs);
@@ -175,41 +176,34 @@ impl AnalysisState {
     }
 
     pub fn find_dominance_frontier(&mut self, function: &Function) {
+
+        for (id,_) in &function.blocks {
+            self.frontier.insert(*id, IndexSet::new());
+        }
+
         for (id, _) in &function.blocks {
             if let Some(predecessors) = self.predecessors.get(id) {
-                if predecessors.len() >= 2 {
-                    // the paper uses >=2 whilst the implementation in engeneering compilers says multiple predecessors
-                    for p in predecessors {
-                        let mut runner = *p;
+                for p in predecessors {
+                    let mut runner = *p;
 
-                        while runner != self.immediate_dominator(id) {
-                            self.frontier.get_mut(p).unwrap().insert(*id);
-                            runner = self.immediate_dominator(&runner);
-                        }
+                    while runner != self.immediate_dominator(id).unwrap_or(runner) {
+                        self.frontier.get_mut(&runner).unwrap().insert(*id);
+                        runner = self.immediate_dominator(&runner).unwrap_or(runner);
                     }
                 }
             }
         }
 
-        println!("{:#?}", self.frontier);
+        self.frontier.sort_keys();
     }
 
-    pub fn immediate_dominator(&self, id: &BlockID) -> BlockID {
+    pub fn immediate_dominator(&self, id: &BlockID) -> Option<BlockID> {
         let mut set = self.dominator[id].clone();
 
         set.remove(id);
 
-        if let Some(predecessors) = self.predecessors.get(id) {
-            for p in predecessors {
-                if set.contains(p) {
-                    return *p;
-                }
-            }
-
-            *id
-        } else {
-            *id
-        }
+        set.sort();
+        set.pop()
     }
 
     pub fn find_dominance(&mut self, function: &Function) {
@@ -257,19 +251,18 @@ impl AnalysisState {
                 }
             }
             for (id, _) in function.blocks.iter().rev() {
-
-
                 let mut new_set = indexset!(*id);
                 if let Some(predecessors) = self.predecessors.get(id) {
-                    
-                    let mut intersection = self.dominator[predecessors.get_index(0).unwrap()].clone();
+                    let mut intersection =
+                        self.dominator[predecessors.get_index(0).unwrap()].clone();
                     for pred in predecessors.iter().skip(1) {
-                        intersection = intersection.intersection(&self.dominator[pred]).cloned().collect::<IndexSet<_>>();
+                        intersection = intersection
+                            .intersection(&self.dominator[pred])
+                            .cloned()
+                            .collect::<IndexSet<_>>();
                     }
 
                     new_set.extend(intersection);
-
-
                 };
 
                 if new_set != self.dominator[id] {
@@ -289,8 +282,6 @@ impl AnalysisState {
         }
 
         self.dominator.sort_keys();
-
-        println!("{:#?}", self.dominator);
     }
 
     pub fn calculate_live_intervals(&mut self, function: &Function) {
@@ -328,19 +319,85 @@ impl AnalysisState {
 mod test {
     use super::AnalysisState;
     use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
+    use indexmap::{indexmap, indexset};
+    use pretty_assertions::{assert_eq};
+
+
+    #[test]
+
+    fn check_predecessors() {
+        let function = test_function();
+
+        let mut analysis = AnalysisState::new(&function);
+
+        let expected_pred = indexmap!(
+            BlockID(1) => indexset!(BlockID(0)),
+            BlockID(2) => indexset!(BlockID(1)),
+            BlockID(3) => indexset!(BlockID(2),BlockID(7)),
+            BlockID(4) => indexset!(BlockID(3)),
+            BlockID(5) => indexset!(BlockID(1)),
+            BlockID(6) => indexset!(BlockID(5)),
+            BlockID(7) => indexset!(BlockID(6),BlockID(8)),
+            BlockID(8) => indexset!(BlockID(5)),
+        );
+
+        analysis.predecessors.sort_keys();
+
+        println!("{:#?}",analysis.predecessors);
+
+        assert_eq!(analysis.predecessors,expected_pred)
+    }
+
     #[test]
     fn check_dominator() {
+        let function = test_function();
+
+        let analysis = AnalysisState::new(&function);
+
+        let expected_dom = indexmap!(
+            BlockID(0) => indexset!(BlockID(0)),
+            BlockID(1) => indexset!(BlockID(1),BlockID(0)),
+            BlockID(2) => indexset!(BlockID(2),BlockID(1),BlockID(0)),
+            BlockID(3) => indexset!(BlockID(3),BlockID(1),BlockID(0)),
+            BlockID(4) => indexset!(BlockID(4),BlockID(3),BlockID(1),BlockID(0)),
+            BlockID(5) => indexset!(BlockID(5),BlockID(1),BlockID(0)),
+            BlockID(6) => indexset!(BlockID(6),BlockID(5),BlockID(1),BlockID(0)),
+            BlockID(7) => indexset!(BlockID(7),BlockID(5),BlockID(1),BlockID(0)),
+            BlockID(8) => indexset!(BlockID(8),BlockID(5),BlockID(1),BlockID(0)),
+        );
+
+        assert_eq!(analysis.dominator, expected_dom);
+    }
+
+    #[test]
+    fn check_idom() {
+        let function = test_function();
+
+        let analysis = AnalysisState::new(&function);
+
+        assert_eq!(analysis.immediate_dominator(&BlockID(0)), None);
+        assert_eq!(analysis.immediate_dominator(&BlockID(1)), Some(BlockID(0)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(2)), Some(BlockID(1)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(3)), Some(BlockID(1)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(4)), Some(BlockID(3)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(5)), Some(BlockID(1)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(6)), Some(BlockID(5)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(7)), Some(BlockID(5)));
+        assert_eq!(analysis.immediate_dominator(&BlockID(8)), Some(BlockID(5)));
+    }
+
+    fn test_function() -> Function {
         let mut example_cfg = Vec::new();
 
-        let b0 = BlockID::new();
-        let b1 = BlockID::new();
-        let b2 = BlockID::new();
-        let b3 = BlockID::new();
-        let b4 = BlockID::new();
-        let b5 = BlockID::new();
-        let b6 = BlockID::new();
-        let b7 = BlockID::new();
-        let b8 = BlockID::new();
+        let b0 = BlockID(0);
+        let b1 = BlockID(1);
+        let b2 = BlockID(2);
+        let b3 = BlockID(3);
+        let b4 = BlockID(4);
+        let b5 = BlockID(5);
+        let b6 = BlockID(6);
+        let b7 = BlockID(7);
+        let b8 = BlockID(8);
 
         example_cfg.push((b0, Block::new(vec![], BlockEnd::Jump(b1))));
         example_cfg.push((
@@ -362,6 +419,6 @@ mod test {
 
         function.blocks = example_cfg;
 
-        let mut analysis = AnalysisState::new(&function);
+        function
     }
 }

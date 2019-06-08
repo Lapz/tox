@@ -95,6 +95,11 @@ pub struct Block {
     pub end: BlockEnd,
 }
 
+impl Block {
+    pub fn new(instructions: Vec<Instruction>, end: BlockEnd) -> Self {
+        Self { instructions, end }
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockEnd {
     Jump(BlockID),
