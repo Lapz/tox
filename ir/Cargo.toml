@@ -19,3 +19,6 @@ intrusive-collections = "0.7.8"
 cfg-if="*"
 [dependencies.petgraph]
 version= "0.4"
+
+[dev-dependencies]
+pretty_assertions = "0.6.1"
