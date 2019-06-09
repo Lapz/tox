@@ -14,7 +14,7 @@ struct Builder<'a> {
     locals: HashMap<Symbol, Register>,
     parameters: HashMap<Symbol, Register>,
     current_loop: Option<LoopDescription>,
-    blocks: Vec<(BlockID, Block)>,
+    blocks: IndexMap<BlockID, Block>,
     predecessors: HashMap<BlockID, HashSet<BlockID>>,
     current_block: Option<(BlockID, Vec<Instruction>)>,
 }
@@ -28,11 +28,11 @@ impl<'a> Builder<'a> {
             predecessors: HashMap::new(),
             current_loop: None,
             current_block: None,
-            blocks: Vec::new(),
+            blocks: IndexMap::new(),
         }
     }
 
-    pub fn blocks(self) -> Vec<(BlockID, Block)> {
+    pub fn blocks(self) -> IndexMap<BlockID, Block> {
         self.blocks
     }
 
@@ -51,13 +51,13 @@ impl<'a> Builder<'a> {
     pub fn end_block(&mut self, end: BlockEnd) {
         let (id, inst) = self.current_block.take().unwrap();
 
-        self.blocks.push((
+        self.blocks.insert(
             id,
             Block {
                 instructions: inst,
                 end,
             },
-        ));
+        );
     }
 
     pub fn parameters(&mut self) -> Vec<Register> {
@@ -116,7 +116,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn add_local(&mut self, symbol: Symbol) -> Register {
-        let reg = Register::new();
+        let reg = Register::named(symbol);
 
         self.locals.insert(symbol, reg);
 
@@ -286,7 +286,7 @@ impl<'a> Builder<'a> {
             Expression::Array(items) => {
                 let temp = Register::new();
 
-                self.emit_instruction(Instruction::Array(temp, items.len()));
+                self.emit_store_immediate(temp, Value::Array(items.len()));
 
                 for (i, item) in items.into_iter().enumerate() {
                     let result = self.build_expr(item);

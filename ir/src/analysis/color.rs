@@ -141,7 +141,7 @@ impl<'a> Allocator<'a> {
             // self.dump_debug(self.function.name, count);
 
             !(self.simplify_work_list.is_empty()
-                && self.work_list_moves.is_empty()
+                // && self.work_list_moves.is_empty()
                 && self.freeze_work_list.is_empty()
                 && self.spill_work_list.is_empty())
         } {}
@@ -772,8 +772,7 @@ impl<'a> Allocator<'a> {
                                 def, instruction, new_temp
                             );
 
-                            after
-                                .insert((i + 1, Instruction::Store(def, new_temp)));
+                            after.insert((i + 1, Instruction::Store(def, new_temp)));
                             instruction.rewrite_def(new_temp);
                             // self.spilled_before.insert(def);
                         }

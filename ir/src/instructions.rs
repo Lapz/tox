@@ -3,7 +3,7 @@ use indexmap::set::IndexSet;
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::hash::{Hash, Hasher};
-use util::symbol::Symbol;
+use util::symbol::{Symbol, Symbols};
 
 static mut LABEL_COUNT: u32 = 0;
 
@@ -29,8 +29,10 @@ pub struct Label(u32);
 
 #[derive(Clone, Copy, Hash, Eq, Ord, PartialOrd)]
 pub enum Register {
+    /// A random register
     Register(u32),
     Offset(u32, usize),
+    Named(Symbol),
 }
 
 /// A register
@@ -47,7 +49,7 @@ pub struct Function {
     pub name: Symbol,
     pub params: Vec<Register>,
     pub locals: Vec<Register>,
-    pub blocks: Vec<(BlockID, Block)>,
+    pub blocks: IndexMap<BlockID, Block>,
     pub start_block: BlockID,
     pub registers: IndexMap<Register, usize>,
     pub stack_locs: IndexMap<Register, Register>,
@@ -59,7 +61,7 @@ impl Function {
             name: Symbol(0),
             params: Vec::new(),
             locals: Vec::new(),
-            blocks: Vec::new(),
+            blocks: IndexMap::new(),
             start_block: BlockID(0),
             registers: IndexMap::new(),
             stack_locs: IndexMap::new(),
@@ -118,9 +120,6 @@ pub enum Size {
 /// Instructions are of the form i <- a op b
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Instruction {
-    /// A stack allocated array of size whatever
-    /// Stored at a location
-    Array(Register, usize),
     /// $dest = $lhs $op $rhs
     Binary(Register, Register, BinaryOp, Register),
     ///Cast the value from one type to another
@@ -129,17 +128,17 @@ pub enum Instruction {
     /// Call the function with the provided args in registers and store in in the dest
     /// $dest = call $func
     Call(Register, Symbol, Vec<Register>),
+    /// A phi node
+    /// $dest = φ($lhs,$rhs)
+    Phi(Register, Register, Register),
     StatementStart,
 
     /// $dest = val
     StoreI(Register, Value),
     /// $dest = val
     Store(Register, Register),
-
     /// $dest = op $val
     Unary(Register, Register, UnaryOp),
-
-    Return(Register),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -150,8 +149,8 @@ pub enum Value {
     Float(f64),
     /// One of many registers
     Register(Register),
-    /// get the offset of the provided register $0(reg)
-    OffsetRegister(Register, i64),
+    /// A stack allocated array of size whatever
+    Array(usize),
     ///  Contents of a word of memory at address
     Mem(Vec<u8>),
 
@@ -244,6 +243,34 @@ impl Register {
         match self {
             Register::Register(reg) => Register::Offset(*reg, offset),
             Register::Offset(reg, _) => Register::Offset(*reg, offset),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn named(symbol:Symbol) -> Register {
+        Register::Named(symbol)
+    }
+
+    pub fn pretty(&self, symbols: &Symbols<()>) -> String {
+        match self {
+            Register::Register(ref v) => format!( "%t{}", v),
+            Register::Offset(ref v, offset) => format!("(%{}){}", v, offset),
+            Register::Named(ref v) => format!("%{}", symbols.name(*v)),
+        }
+    }
+}
+
+impl BlockEnd {
+    pub fn pretty(&self, symbols: &Symbols<()>) -> String {
+        match *self {
+            BlockEnd::End => format!( "end"),
+            BlockEnd::Jump(ref id) => format!( "goto {}", id),
+            BlockEnd::Return(ref id) => format!( "return {}", id.pretty(symbols)),
+            BlockEnd::Branch(ref v, ref t_branch, ref f_branch) => {
+                format!( "branch {} {} {}", v, t_branch, f_branch)
+            }
+
+            BlockEnd::Link(ref link) => format!( "next {}", link),
         }
     }
 }
@@ -280,7 +307,6 @@ impl Instruction {
         let mut used = IndexSet::new();
         use Instruction::*;
         match self {
-            Array(..) => {}
             Binary(_, ref lhs, _, ref rhs) => {
                 used.insert(*lhs);
                 used.insert(*rhs);
@@ -305,10 +331,11 @@ impl Instruction {
 
             Unary(_, ref val, _) => {
                 used.insert(*val);
-            }
+            },
 
-            Return(ref val) => {
-                used.insert(*val);
+            Phi(_,ref lhs,ref rhs) => {
+                used.insert(*lhs);
+                used.insert(*rhs);
             }
         }
 
@@ -319,10 +346,6 @@ impl Instruction {
         let mut defined = IndexSet::new();
         use Instruction::*;
         match self {
-            Array(ref dest, _) => {
-                defined.insert(*dest);
-            }
-
             Binary(ref dest, _, _, _) => {
                 defined.insert(*dest);
             }
@@ -348,7 +371,9 @@ impl Instruction {
                 defined.insert(*dest);
             }
 
-            Return(_) => {}
+            Phi(ref dest,_,_) => {
+                defined.insert(*dest);
+            }
         }
 
         defined
@@ -357,8 +382,6 @@ impl Instruction {
     pub fn rewrite_uses(&mut self, old_reg: Register, new_reg: Register) {
         use Instruction::*;
         match self {
-            Array(_, _) => {}
-
             Binary(_, ref mut lhs, _, ref mut rhs) => {
                 if *lhs == old_reg {
                     *lhs = new_reg;
@@ -396,21 +419,19 @@ impl Instruction {
                 }
             }
 
-            Return(ref mut value) => {
-                if *value == old_reg {
-                    *value = new_reg
+            Phi(_,ref mut lhs,ref mut rhs) => {
+                 if *lhs == old_reg {
+                    *lhs = new_reg;
+                } else if *rhs == old_reg {
+                    *rhs = new_reg;
                 }
-            }
+            },
         }
     }
 
     pub fn rewrite_def(&mut self, new_reg: Register) {
         use Instruction::*;
         match self {
-            Array(ref mut dest, _) => {
-                *dest = new_reg;
-            }
-
             Binary(ref mut dest, _, _, _) => {
                 *dest = new_reg;
             }
@@ -436,7 +457,7 @@ impl Instruction {
                 *dest = new_reg;
             }
 
-            Return(_) => {}
+            _ => unimplemented!(),
         }
     }
 }
@@ -457,7 +478,7 @@ impl Display for Value {
             Value::Const(ref v) => write!(f, "{}", v),
             Value::Float(ref v) => write!(f, "{}", v),
             Value::Register(ref name) => write!(f, "{}", name),
-            Value::OffsetRegister(ref reg, ref val) => write!(f, "{}({})", val, reg),
+            Value::Array(ref len) => write!(f, "[_:{};]", len),
             Value::Bool(ref b) => write!(f, "{}", b),
             Value::Nil => write!(f, "nil"),
             Value::Mem(ref bytes) => {
@@ -519,8 +540,9 @@ impl Display for UnaryOp {
 impl Display for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Register::Register(ref v) => write!(f, "t{}", v),
-            Register::Offset(ref v, offset) => write!(f, "(t{}){}", v, offset),
+            Register::Register(ref v) => write!(f, "%t{}", v),
+            Register::Offset(ref v, offset) => write!(f, "(%{}){}", v, offset),
+            Register::Named(ref v) => write!(f, "%{}", v),
         }
     }
 }
@@ -528,8 +550,9 @@ impl Display for Register {
 impl Debug for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Register::Register(ref v) => write!(f, "t{}", v),
-            Register::Offset(ref v, offset) => write!(f, "(t{}){}", v, offset),
+            Register::Register(ref v) => write!(f, "%t{}", v),
+            Register::Offset(ref v, offset) => write!(f, "(%{}){}", v, offset),
+            Register::Named(ref v) => write!(f, "%{}", v),
         }
     }
 }
@@ -563,7 +586,6 @@ impl Display for BlockEnd {
 impl Display for Instruction {
     fn fmt(&self, out: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Instruction::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
             Instruction::StatementStart => write!(out, ""),
             Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => {
                 write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
@@ -574,7 +596,9 @@ impl Display for Instruction {
             Instruction::Unary(ref dest, ref source, ref op) => {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
-            Instruction::Return(ref label) => write!(out, "return @{}", label),
+            Instruction::Phi(ref dest, ref lhs, ref rhs) => {
+                write!(out, "{} <- φ({}{})", dest, lhs, rhs)
+            }
             Instruction::Call(ref dest, ref callee, ref args) => {
                 for arg in args {
                     write!(out, "arg: {}\n", arg)?;
@@ -613,7 +637,7 @@ impl Display for Size {
 impl Hash for Value {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            Value::Float(ref value) => {}
+            Value::Float(ref _value) => {}
 
             rest @ _ => rest.hash(state),
         }

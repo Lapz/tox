@@ -14,10 +14,12 @@ const GRAPHSTART: &'static str = r##"digraph {
     edge[fontsize=8 fontname="Verdana"];"##;
 
 impl Program {
-    fn viz<W: Write>(&self, out: &mut W, function: &Function) -> io::Result<()> {
+    fn viz<W: Write>(&self, out: &mut W, function: &Function,symbols:&Symbols<()>) -> io::Result<()> {
         write!(out, "{}", GRAPHSTART)?;
 
         let mut end = Vec::new();
+
+        let mut printer = crate::printer::Printer::new(symbols);
 
         for (id, block) in function.blocks.iter() {
             // if block.instructions.is_empty() {
@@ -27,10 +29,12 @@ impl Program {
             write!(out, "\n\t{} [label=\"{}\n", id.0, id)?;
 
             for inst in block.instructions.iter() {
-                write!(out, "\\l{}\n", inst)?;
+                 write!(out, "\\l")?;
+                printer.print_instructions(inst,out)?;
+                write!(out, "\n")?;
             }
 
-            write!(out, "\\l{}", block.end)?;
+            write!(out, "\\l{}\n", block.end.pretty(symbols))?;
             match block.end {
                 BlockEnd::Jump(to) => {
                     end.push(format!("{}->{}", id.0, to.0));
@@ -68,7 +72,7 @@ impl Program {
 
             let file_name = format!("graphviz/{}/{}.dot", name, name);
 
-            self.viz(&mut File::create(&file_name).unwrap(), function)?;
+            self.viz(&mut File::create(&file_name).unwrap(), function,symbols)?;
 
             let mut dot = Command::new("dot");
 

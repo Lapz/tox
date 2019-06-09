@@ -6,7 +6,7 @@ use std::cell::RefCell;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 use std::rc::Rc;
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Hash, Copy, Ord)]
 pub struct Symbol(pub u64);
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result {

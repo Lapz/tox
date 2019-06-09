@@ -33,7 +33,6 @@ impl AnalysisState {
         if id == block {
             return;
         }
-        
 
         match entry {
             Entry::Occupied(mut entry) => {
@@ -206,7 +205,7 @@ impl AnalysisState {
             .map(|(id, _)| *id)
             .collect::<IndexSet<_>>();
 
-        let first = function.blocks[0].0;
+        let first = *function.blocks.get_index(0).unwrap().0;
 
         self.dominator.insert(first, indexset!(first));
         // // intialise the each Domset to include all the nodes except the first
@@ -266,19 +265,14 @@ impl AnalysisState {
     }
 
     pub fn find_dominance_frontier(&mut self, function: &Function) {
-        
         for (id, _) in &function.blocks {
             self.frontier.insert(*id, IndexSet::new());
         }
 
-        for (id, _) in function.blocks.iter().rev() {
+        for (id, _) in function.blocks.iter() {
             if let Some(predecessors) = self.predecessors.get(id) {
                 if predecessors.len() >= 2 {
-
-                    println!("{:?}",predecessors);
-                  
                     for p in predecessors {
-                        
                         let mut runner = *p;
 
                         while runner != self.immediate_dominator(id).unwrap() {
@@ -339,7 +333,7 @@ mod test {
         let mut analysis = AnalysisState::new(&function);
 
         let expected_pred = indexmap!(
-            BlockID(1) => indexset!(BlockID(0)),
+            BlockID(1) => indexset!(BlockID(0),BlockID(3)),
             BlockID(2) => indexset!(BlockID(1)),
             BlockID(3) => indexset!(BlockID(2),BlockID(7)),
             BlockID(4) => indexset!(BlockID(3)),
@@ -439,7 +433,10 @@ mod test {
         example_cfg.push((b6, Block::new(vec![], BlockEnd::Jump(b7))));
         example_cfg.push((b8, Block::new(vec![], BlockEnd::Jump(b7))));
         example_cfg.push((b7, Block::new(vec![], BlockEnd::Jump(b3))));
-        example_cfg.push((b3, Block::new(vec![], BlockEnd::Jump(b4))));
+        example_cfg.push((
+            b3,
+            Block::new(vec![], BlockEnd::Branch(Register::new(), b4, b1)),
+        ));
         example_cfg.push((b4, Block::new(vec![], BlockEnd::End)));
 
         let mut function = Function::dummy();

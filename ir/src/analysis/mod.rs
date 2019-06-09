@@ -1,5 +1,5 @@
 mod analysis;
-// mod color;
+mod color;
 mod color2;
 mod dead_code;
 mod linear_scan;
@@ -58,19 +58,27 @@ pub struct AnalysisState {
     pub dominator: IndexMap<BlockID, IndexSet<BlockID>>,
     pub frontier: IndexMap<BlockID, IndexSet<BlockID>>,
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
+    pub ssa_blocks: IndexMap<Register, IndexSet<BlockID>>,
+    pub global_regs: IndexSet<Register>,
 }
 
 impl AnalysisState {
-    pub fn new(function: &Function) -> Self {
+    pub fn new(function: &mut Function) -> Self {
         let mut state = Self::default();
 
         state.init(&function);
         state.calculate_successors(function);
+       
         state.calulate_live_out(function);
-        state.calculate_live_now(function);
+        panic!();
+        
+        // state.calculate_live_now(function);
         state.find_dominance(function);
         state.find_dominance_frontier(function);
-        state.calculate_live_intervals(function);
+        // state.calculate_live_intervals(function);
+
+        state.find_global_names(function);
+        state.rewrite_code(function);
 
         state
     }
@@ -94,7 +102,7 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
                 }
             };
 
-            allocator.allocate()
+            // allocator.allocate()
 
             // function.registers = allocator.color;
             // function.stack_locs = allocator.mappings;

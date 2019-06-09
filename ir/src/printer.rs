@@ -71,23 +71,30 @@ impl<'a> Printer<'a> {
 
     pub fn print_instructions<T: Write>(&mut self, i: &Instruction, out: &mut T) -> io::Result<()> {
         match *i {
-            Instruction::Array(ref l, ref s) => write!(out, "{} <- [{}]", l, s),
             Instruction::StatementStart => write!(out, ""),
             Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => {
-                write!(out, "{} <- {} {} {}", res, lhs, op, rhs)
+                write!(out, "{} <- {} {} {}", res.pretty(&self.symbols), lhs.pretty(&self.symbols), op, rhs.pretty(&self.symbols))
             }
-            Instruction::Store(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Instruction::StoreI(ref dest, ref source) => write!(out, "{} <- {}", dest, source),
-            Instruction::Cast(ref dest, _, ref ty) => write!(out, "{} as {}", dest, ty),
+            Instruction::Store(ref dest, ref source) => {
+                write!(out, "{} <- {}", dest.pretty(&self.symbols), source.pretty(&self.symbols))
+            }
+            Instruction::StoreI(ref dest, ref source) => {
+                write!(out, "{} <- {}", dest.pretty(&self.symbols), source)
+            }
+            Instruction::Cast(ref dest, _, ref ty) => {
+                write!(out, "{} as {}", dest.pretty(&self.symbols), ty)
+            }
             Instruction::Unary(ref dest, ref source, ref op) => {
-                write!(out, "{} <- {}{}", dest, op, source)
+                write!(out, "{} <- {}{}", dest.pretty(&self.symbols), op, source.pretty(&self.symbols))
             }
-            Instruction::Return(ref label) => write!(out, "return @{}", label),
+            Instruction::Phi(ref dest, ref lhs, ref rhs) => {
+                write!(out, "{} <- φ({}{})", dest.pretty(&self.symbols), lhs.pretty(&self.symbols), rhs.pretty(&self.symbols))
+            }
             Instruction::Call(ref dest, ref callee, ref args) => {
-                write!(out, "{} <- call {} ", dest, callee)?;
+                write!(out, "{} <- call {} ", dest.pretty(&self.symbols), self.symbols.name(*callee))?;
 
                 for arg in args {
-                    write!(out, "{}\n", arg)?;
+                    write!(out, "{}\n", arg.pretty(&self.symbols))?;
                 }
 
                 write!(out, "")?;

@@ -70,7 +70,7 @@ impl<'a> Allocator<'a> {
 
     pub fn allocate(&mut self) {
         let mut mappings = IndexMap::new();
-        let mut blocks = Vec::new();
+        let mut blocks = IndexMap::new();
 
         std::mem::swap(&mut blocks, &mut self.function.blocks);
 

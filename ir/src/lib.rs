@@ -7,6 +7,7 @@ pub mod analysis;
 pub mod graphviz;
 pub mod instructions;
 pub mod printer;
+pub mod ssa;
 pub const POINTER_SIZE: usize = 8;
 pub const FUNCTION_SIZE: usize = 8;
 
