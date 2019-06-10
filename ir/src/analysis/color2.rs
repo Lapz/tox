@@ -171,7 +171,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn liveness_analysis(&mut self) {
-        self.state = AnalysisState::new(self.function);
+        // self.state = AnalysisState::new(self.function,self.symbols);
     }
 
     fn build(&mut self) {

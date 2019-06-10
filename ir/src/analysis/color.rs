@@ -115,7 +115,7 @@ impl<'a> Allocator<'a> {
             ALLOC_COUNTER += 1;
         }
 
-        self.state = AnalysisState::new(self.function);
+        self.state = AnalysisState::new(self.function,self.symbols);
 
         self.build_graph();
 

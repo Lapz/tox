@@ -45,10 +45,12 @@ impl<'a> Printer<'a> {
             let mut inst_counter = 0;
 
             for inst in block.instructions.iter() {
-                write!(out, "{}\t", inst_counter)?;
-                self.print_instructions(&inst, out)?;
-                inst_counter += 1;
-                write!(out, "\n")?;
+                if !inst.is_start() {
+                    write!(out, "\n{}\t", inst_counter)?;
+                    self.print_instructions(&inst, out)?;
+                    inst_counter += 1;
+                }
+                // write!(out, "\n")?;
             }
 
             match block.end {
@@ -72,26 +74,47 @@ impl<'a> Printer<'a> {
     pub fn print_instructions<T: Write>(&mut self, i: &Instruction, out: &mut T) -> io::Result<()> {
         match *i {
             Instruction::StatementStart => write!(out, ""),
-            Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => {
-                write!(out, "{} <- {} {} {}", res.pretty(&self.symbols), lhs.pretty(&self.symbols), op, rhs.pretty(&self.symbols))
-            }
-            Instruction::Store(ref dest, ref source) => {
-                write!(out, "{} <- {}", dest.pretty(&self.symbols), source.pretty(&self.symbols))
-            }
+            Instruction::Binary(ref res, ref lhs, ref op, ref rhs) => write!(
+                out,
+                "{} <- {} {} {}",
+                res.pretty(&self.symbols),
+                lhs.pretty(&self.symbols),
+                op,
+                rhs.pretty(&self.symbols)
+            ),
+            Instruction::Store(ref dest, ref source) => write!(
+                out,
+                "{} <- {}",
+                dest.pretty(&self.symbols),
+                source.pretty(&self.symbols)
+            ),
             Instruction::StoreI(ref dest, ref source) => {
                 write!(out, "{} <- {}", dest.pretty(&self.symbols), source)
             }
             Instruction::Cast(ref dest, _, ref ty) => {
                 write!(out, "{} as {}", dest.pretty(&self.symbols), ty)
             }
-            Instruction::Unary(ref dest, ref source, ref op) => {
-                write!(out, "{} <- {}{}", dest.pretty(&self.symbols), op, source.pretty(&self.symbols))
-            }
-            Instruction::Phi(ref dest, ref lhs, ref rhs) => {
-                write!(out, "{} <- φ({}{})", dest.pretty(&self.symbols), lhs.pretty(&self.symbols), rhs.pretty(&self.symbols))
-            }
+            Instruction::Unary(ref dest, ref source, ref op) => write!(
+                out,
+                "{} <- {}{}",
+                dest.pretty(&self.symbols),
+                op,
+                source.pretty(&self.symbols)
+            ),
+            Instruction::Phi(ref dest, ref lhs, ref rhs) => write!(
+                out,
+                "{} <- φ({},{})",
+                dest.pretty(&self.symbols),
+                lhs.pretty(&self.symbols),
+                rhs.pretty(&self.symbols)
+            ),
             Instruction::Call(ref dest, ref callee, ref args) => {
-                write!(out, "{} <- call {} ", dest.pretty(&self.symbols), self.symbols.name(*callee))?;
+                write!(
+                    out,
+                    "{} <- call {} ",
+                    dest.pretty(&self.symbols),
+                    self.symbols.name(*callee)
+                )?;
 
                 for arg in args {
                     write!(out, "{}\n", arg.pretty(&self.symbols))?;

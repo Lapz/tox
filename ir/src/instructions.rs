@@ -247,13 +247,21 @@ impl Register {
         }
     }
 
-    pub fn named(symbol:Symbol) -> Register {
+    pub fn named(symbol: Symbol) -> Register {
         Register::Named(symbol)
+    }
+
+    pub fn name(&self,symbols: &Symbols<()>) -> String {
+        match self {
+            Register::Register(ref v) => format!("{}", v),
+            Register::Offset(ref v, offset) => format!("{}", v),
+            Register::Named(ref v) => format!("{}", symbols.name(*v)),
+        }
     }
 
     pub fn pretty(&self, symbols: &Symbols<()>) -> String {
         match self {
-            Register::Register(ref v) => format!( "%t{}", v),
+            Register::Register(ref v) => format!("%t{}", v),
             Register::Offset(ref v, offset) => format!("(%{}){}", v, offset),
             Register::Named(ref v) => format!("%{}", symbols.name(*v)),
         }
@@ -263,14 +271,14 @@ impl Register {
 impl BlockEnd {
     pub fn pretty(&self, symbols: &Symbols<()>) -> String {
         match *self {
-            BlockEnd::End => format!( "end"),
-            BlockEnd::Jump(ref id) => format!( "goto {}", id),
-            BlockEnd::Return(ref id) => format!( "return {}", id.pretty(symbols)),
+            BlockEnd::End => format!("end"),
+            BlockEnd::Jump(ref id) => format!("goto {}", id),
+            BlockEnd::Return(ref id) => format!("return {}", id.pretty(symbols)),
             BlockEnd::Branch(ref v, ref t_branch, ref f_branch) => {
-                format!( "branch {} {} {}", v, t_branch, f_branch)
+                format!("branch {} {} {}", v, t_branch, f_branch)
             }
 
-            BlockEnd::Link(ref link) => format!( "next {}", link),
+            BlockEnd::Link(ref link) => format!("next {}", link),
         }
     }
 }
@@ -286,6 +294,31 @@ impl Instruction {
         match self {
             Instruction::Store(_, _) => true,
             _ => false,
+        }
+    }
+
+    pub fn is_start(&self) -> bool {
+        match self {
+            Instruction::StatementStart => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_phi(&self) -> bool {
+        match self {
+            Instruction::Phi(_,_,_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn rewrite_phi_name(&mut self,new:Register) {
+        match self {
+            Instruction::Phi(ref mut dest,_,_) => {
+                *dest = new;
+            },
+            _ => {
+
+            }
         }
     }
 
@@ -331,9 +364,9 @@ impl Instruction {
 
             Unary(_, ref val, _) => {
                 used.insert(*val);
-            },
+            }
 
-            Phi(_,ref lhs,ref rhs) => {
+            Phi(_, ref lhs, ref rhs) => {
                 used.insert(*lhs);
                 used.insert(*rhs);
             }
@@ -371,7 +404,7 @@ impl Instruction {
                 defined.insert(*dest);
             }
 
-            Phi(ref dest,_,_) => {
+            Phi(ref dest, _, _) => {
                 defined.insert(*dest);
             }
         }
@@ -419,13 +452,13 @@ impl Instruction {
                 }
             }
 
-            Phi(_,ref mut lhs,ref mut rhs) => {
-                 if *lhs == old_reg {
+            Phi(_, ref mut lhs, ref mut rhs) => {
+                if *lhs == old_reg {
                     *lhs = new_reg;
                 } else if *rhs == old_reg {
                     *rhs = new_reg;
                 }
-            },
+            }
         }
     }
 
@@ -467,6 +500,7 @@ impl PartialEq for Register {
         match (self, o) {
             (Register::Register(ref s), Register::Register(ref o)) => s == o,
             (Register::Offset(ref s, so), Register::Offset(ref o, ref oo)) => s == o && so == oo,
+            (Register::Named(ref s), Register::Named(ref o)) => s == o,
             _ => false,
         }
     }
@@ -597,7 +631,7 @@ impl Display for Instruction {
                 write!(out, "{} <- {}{}", dest, op, source)
             }
             Instruction::Phi(ref dest, ref lhs, ref rhs) => {
-                write!(out, "{} <- φ({}{})", dest, lhs, rhs)
+                write!(out, "{} <- φ({},{})", dest, lhs, rhs)
             }
             Instruction::Call(ref dest, ref callee, ref args) => {
                 for arg in args {

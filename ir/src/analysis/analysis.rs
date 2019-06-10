@@ -322,15 +322,15 @@ impl AnalysisState {
 mod test {
     use super::AnalysisState;
     use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
-    use indexmap::{indexmap, indexset};
+    use indexmap::{indexmap, indexset, IndexMap};
     use pretty_assertions::assert_eq;
 
     #[test]
 
     fn check_predecessors() {
-        let function = test_function();
+        let mut function = test_function();
 
-        let mut analysis = AnalysisState::new(&function);
+        let mut analysis = AnalysisState::new(&mut function);
 
         let expected_pred = indexmap!(
             BlockID(1) => indexset!(BlockID(0),BlockID(3)),
@@ -350,9 +350,9 @@ mod test {
 
     #[test]
     fn check_dominator() {
-        let function = test_function();
+        let mut function = test_function();
 
-        let analysis = AnalysisState::new(&function);
+        let analysis = AnalysisState::new(&mut function);
 
         let expected_dom = indexmap!(
             BlockID(0) => indexset!(BlockID(0)),
@@ -371,9 +371,9 @@ mod test {
 
     #[test]
     fn check_idom() {
-        let function = test_function();
+        let mut function = test_function();
 
-        let analysis = AnalysisState::new(&function);
+        let analysis = AnalysisState::new(&mut function);
 
         assert_eq!(analysis.immediate_dominator(&BlockID(0)), None);
         assert_eq!(analysis.immediate_dominator(&BlockID(1)), Some(BlockID(0)));
@@ -388,9 +388,9 @@ mod test {
 
     #[test]
     fn check_dom_frontier() {
-        let function = test_function();
+        let mut function = test_function();
 
-        let analysis = AnalysisState::new(&function);
+        let analysis = AnalysisState::new(&mut function);
 
         let expected_frontier = indexmap!(
             BlockID(0) => indexset!(),
@@ -408,7 +408,7 @@ mod test {
     }
 
     fn test_function() -> Function {
-        let mut example_cfg = Vec::new();
+        let mut example_cfg = IndexMap::new();
 
         let b0 = BlockID(0);
         let b1 = BlockID(1);
@@ -420,24 +420,24 @@ mod test {
         let b7 = BlockID(7);
         let b8 = BlockID(8);
 
-        example_cfg.push((b0, Block::new(vec![], BlockEnd::Jump(b1))));
-        example_cfg.push((
+        example_cfg.insert(b0, Block::new(vec![], BlockEnd::Jump(b1)));
+        example_cfg.insert(
             b1,
             Block::new(vec![], BlockEnd::Branch(Register::new(), b2, b5)),
-        ));
-        example_cfg.push((b2, Block::new(vec![], BlockEnd::Jump(b3))));
-        example_cfg.push((
+        );
+        example_cfg.insert(b2, Block::new(vec![], BlockEnd::Jump(b3)));
+        example_cfg.insert(
             b5,
             Block::new(vec![], BlockEnd::Branch(Register::new(), b6, b8)),
-        ));
-        example_cfg.push((b6, Block::new(vec![], BlockEnd::Jump(b7))));
-        example_cfg.push((b8, Block::new(vec![], BlockEnd::Jump(b7))));
-        example_cfg.push((b7, Block::new(vec![], BlockEnd::Jump(b3))));
-        example_cfg.push((
+        );
+        example_cfg.insert(b6, Block::new(vec![], BlockEnd::Jump(b7)));
+        example_cfg.insert(b8, Block::new(vec![], BlockEnd::Jump(b7)));
+        example_cfg.insert(b7, Block::new(vec![], BlockEnd::Jump(b3)));
+        example_cfg.insert(
             b3,
             Block::new(vec![], BlockEnd::Branch(Register::new(), b4, b1)),
-        ));
-        example_cfg.push((b4, Block::new(vec![], BlockEnd::End)));
+        );
+        example_cfg.insert(b4, Block::new(vec![], BlockEnd::End));
 
         let mut function = Function::dummy();
 
