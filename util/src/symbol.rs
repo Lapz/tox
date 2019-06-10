@@ -10,7 +10,7 @@ use std::rc::Rc;
 pub struct Symbol(pub u64);
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "Symbol {}", self.0)
+        write!(f, "s_{}", self.0)
     }
 }
 #[derive(Debug, Clone)]
