@@ -115,7 +115,7 @@ impl<'a> Allocator<'a> {
             ALLOC_COUNTER += 1;
         }
 
-        self.state = AnalysisState::new(self.function,self.symbols);
+        self.state = AnalysisState::new(self.function, self.symbols);
 
         self.build_graph();
 
@@ -717,11 +717,7 @@ impl<'a> Allocator<'a> {
 
         for spilled_node in &self.spilled_nodes {
             //allocate memory locations for each spilled_node.
-            let stack_loc = *self
-                .mappings
-                .entry(*spilled_node)
-                .or_insert(STACK_POINTER.offset_at(self.offset));
-            self.offset += POINTER_WIDTH;
+            let stack_loc = *self.mappings.entry(*spilled_node).or_insert(STACK_POINTER);
 
             println!(
                 "spilled reg {} is stored on the stack at {}",
@@ -744,7 +740,7 @@ impl<'a> Allocator<'a> {
                             && !self.spilled_before.contains(&used)
                         {
                             let new_temp = *old_to_new.entry(used).or_insert(Register::new());
-                            new_temps.insert(new_temp);
+                            // new_temps.insert(new_temp);
                             old_to_new.insert(used, new_temp);
 
                             println!(
@@ -755,7 +751,7 @@ impl<'a> Allocator<'a> {
                             before.insert((i, Instruction::Store(new_temp, used)));
                             instruction.rewrite_uses(used, new_temp);
 
-                            // self.spilled_before.insert(used);
+                            self.spilled_before.insert(used);
                         }
                     }
                 }
@@ -764,7 +760,7 @@ impl<'a> Allocator<'a> {
                         if self.spilled_nodes.contains(&def) && !self.spilled_before.contains(&def)
                         {
                             let new_temp = *old_to_new.entry(def).or_insert(Register::new());
-                            new_temps.insert(new_temp);
+
                             old_to_new.insert(def, new_temp);
 
                             println!(
@@ -774,7 +770,7 @@ impl<'a> Allocator<'a> {
 
                             after.insert((i + 1, Instruction::Store(def, new_temp)));
                             instruction.rewrite_def(new_temp);
-                            // self.spilled_before.insert(def);
+                            self.spilled_before.insert(def);
                         }
                     }
                 }
@@ -793,7 +789,6 @@ impl<'a> Allocator<'a> {
 
         self.spilled_nodes.clear();
 
-        self.initial.extend(self.colored_nodes.clone());
         self.initial.extend(new_temps);
 
         self.colored_nodes = IndexSet::new();

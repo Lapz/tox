@@ -56,7 +56,7 @@ macro_rules! hashmap {
 impl<'a> Allocator<'a> {
     pub fn new(symbols: &'a mut Symbols<()>, function: &'a mut Function) -> Self {
         Self {
-            state: AnalysisState::new(function,symbols),
+            state: AnalysisState::new(function, symbols),
             symbols,
             function,
             active: hashmap!(),

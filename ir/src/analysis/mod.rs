@@ -7,7 +7,7 @@ mod linear_scan;
 #[cfg(feature = "graphviz")]
 mod debug;
 #[cfg(not(feature = "linear_scan"))]
-use crate::analysis::color2::Allocator;
+use crate::analysis::color::Allocator;
 #[cfg(feature = "linear_scan")]
 use crate::analysis::linear_scan::Allocator;
 use crate::instructions::{BlockID, Function, Register};
@@ -60,12 +60,12 @@ pub struct AnalysisState {
     pub intervals: IndexMap<BlockID, IndexMap<Register, Interval>>,
     pub ssa_blocks: IndexMap<Register, IndexSet<BlockID>>,
     pub global_regs: IndexSet<Register>,
-    pub name_counter:IndexMap<Register,usize>,
-    pub stack_counter:IndexMap<Register,Vec<usize>>,
+    pub name_counter: IndexMap<Register, usize>,
+    pub stack_counter: IndexMap<Register, Vec<usize>>,
 }
 
 impl AnalysisState {
-    pub fn new(function: &mut Function,symbols: &mut Symbols<()>) -> Self {
+    pub fn new(function: &mut Function, symbols: &mut Symbols<()>) -> Self {
         let mut state = Self::default();
 
         state.init(&function);
@@ -74,14 +74,9 @@ impl AnalysisState {
         // state.calulate_live_out(function);
 
         // state.calculate_live_now(function);
-        state.find_dominance(function);
-        state.find_dominance_frontier(function);
+
         // state.calculate_live_intervals(function);
 
-        state.find_global_names(function);
-        state.rewrite_code(function);
-        state.rename_registers(function,symbols);
-        state.rename(BlockID(3),function,symbols);
         state
     }
 
@@ -122,9 +117,7 @@ pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Pro
         printer
             .print_function(&function, &mut File::create(file_name).unwrap())
             .unwrap();
-
-        
     }
-#[cfg(feature = "graphviz")]
+    #[cfg(feature = "graphviz")]
     p.graphviz(symbols).unwrap();
 }

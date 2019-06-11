@@ -251,9 +251,9 @@ impl Register {
         Register::Named(symbol)
     }
 
-    pub fn name(&self,symbols: &Symbols<()>) -> String {
+    pub fn name(&self, symbols: &Symbols<()>) -> String {
         match self {
-            Register::Register(ref v) => format!("{}", v),
+            Register::Register(ref v) => format!("t{}", v),
             Register::Offset(ref v, offset) => format!("{}", v),
             Register::Named(ref v) => format!("{}", symbols.name(*v)),
         }
@@ -306,19 +306,17 @@ impl Instruction {
 
     pub fn is_phi(&self) -> bool {
         match self {
-            Instruction::Phi(_,_,_) => true,
+            Instruction::Phi(_, _, _) => true,
             _ => false,
         }
     }
 
-    pub fn rewrite_phi_name(&mut self,new:Register) {
+    pub fn rewrite_phi_name(&mut self, new: Register) {
         match self {
-            Instruction::Phi(ref mut dest,_,_) => {
+            Instruction::Phi(ref mut dest, _, _) => {
                 *dest = new;
-            },
-            _ => {
-
             }
+            _ => {}
         }
     }
 
