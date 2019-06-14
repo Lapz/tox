@@ -12,8 +12,6 @@ use std::{
     process::Command,
 };
 
-
-
 impl AnalysisState {
     pub fn add_successors(&mut self, id: BlockID, block: BlockID) {
         let entry = self.successors.entry(id);
@@ -216,8 +214,8 @@ mod test {
     use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
     use indexmap::{indexmap, indexset, IndexMap};
     use pretty_assertions::assert_eq;
-    use util::symbol::{Symbols,SymbolFactory};
     use std::rc::Rc;
+    use util::symbol::{SymbolFactory, Symbols};
 
     #[test]
 
@@ -226,7 +224,7 @@ mod test {
 
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
-        let mut analysis = AnalysisState::new(&mut function,&mut symbols);
+        let mut analysis = AnalysisState::new(&mut function, &mut symbols);
 
         let expected_pred = indexmap!(
             BlockID(1) => indexset!(BlockID(0),BlockID(3)),

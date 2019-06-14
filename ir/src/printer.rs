@@ -38,6 +38,10 @@ impl<'a> Printer<'a> {
 
         write!(out, "\n{{\n")?;
 
+        for (symbol, _) in self.symbols.strings.mappings.borrow().iter() {
+            writeln!(out, "//{}\t{}", symbol, self.symbols.name(*symbol));
+        }
+
         write!(out, "start: {}\n", f.start_block)?;
 
         for (id, block) in f.blocks.iter() {

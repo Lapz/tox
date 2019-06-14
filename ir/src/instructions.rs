@@ -582,9 +582,9 @@ impl Display for Register {
 impl Debug for Register {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Register::Register(ref v) => write!(f, "%t{}", v),
-            Register::Offset(ref v, offset) => write!(f, "(%{}){}", v, offset),
-            Register::Named(ref v) => write!(f, "%{}", v),
+            Register::Register(ref v) => write!(f, "%t{:?}", v),
+            Register::Offset(ref v, offset) => write!(f, "(%{:?}){:?}", v, offset),
+            Register::Named(ref v) => write!(f, "%{:?}", v),
         }
     }
 }

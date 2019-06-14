@@ -1,15 +1,10 @@
 mod analysis;
 mod color;
-mod color2;
-mod dead_code;
-mod linear_scan;
+mod rewrite;
 
-#[cfg(feature = "graphviz")]
+// #[cfg(feature = "graphviz")]
 mod debug;
-#[cfg(not(feature = "linear_scan"))]
-use crate::analysis::color::Allocator;
-#[cfg(feature = "linear_scan")]
-use crate::analysis::linear_scan::Allocator;
+
 use crate::instructions::{BlockID, Function, Register};
 use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
@@ -71,7 +66,7 @@ impl AnalysisState {
         state.init(&function);
         state.calculate_successors(function);
 
-        // state.calulate_live_out(function);
+        state.calulate_live_out(function);
 
         // state.calculate_live_now(function);
 
@@ -88,18 +83,9 @@ impl AnalysisState {
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     for function in &mut p.functions {
         {
-            let mut allocator = {
-                #[cfg(feature = "graphviz")]
-                {
-                    linear_scan::Allocator::new(symbols, function)
-                }
-                #[cfg(not(feature = "graphviz"))]
-                {
-                    linear_scan::Allocator::new(symbols, function)
-                }
-            };
+            let mut allocator = color::Allocator::new(symbols, function);
 
-            // allocator.allocate()
+            allocator.allocate()
 
             // function.registers = allocator.color;
             // function.stack_locs = allocator.mappings;

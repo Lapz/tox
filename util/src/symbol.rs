@@ -16,12 +16,12 @@ impl Display for Symbol {
 #[derive(Debug, Clone)]
 pub struct SymbolFactory {
     next: RefCell<u64>,
-    mappings: RefCell<FnvHashMap<Symbol, String>>,
+    pub mappings: RefCell<FnvHashMap<Symbol, String>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Symbols<T: Clone> {
-    strings: Rc<SymbolFactory>,
+    pub strings: Rc<SymbolFactory>,
     table: FnvHashMap<Symbol, Vec<T>>,
     scopes: Vec<Option<Symbol>>,
 }

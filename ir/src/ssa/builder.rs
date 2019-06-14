@@ -350,22 +350,21 @@ pub fn ir_to_ssa(program: &mut Program, symbols: &mut Symbols<()>) {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::SSABuilder;
     use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
     use indexmap::{indexmap, indexset, IndexMap};
     use pretty_assertions::assert_eq;
-    use util::symbol::{Symbols,SymbolFactory};
     use std::rc::Rc;
+    use util::symbol::{SymbolFactory, Symbols};
 
     #[test]
     fn check_dominator() {
         let mut function = test_function();
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
-        let mut builder = SSABuilder::new(&mut function,&mut symbols);
+        let mut builder = SSABuilder::new(&mut function, &mut symbols);
 
         builder.find_dominance(&function);
 
@@ -389,7 +388,7 @@ mod test {
         let mut function = test_function();
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
-        let mut builder = SSABuilder::new(&mut function,&mut symbols);
+        let mut builder = SSABuilder::new(&mut function, &mut symbols);
         builder.find_dominance(&function);
 
         assert_eq!(builder.immediate_dominator(&BlockID(0)), None);
@@ -408,7 +407,7 @@ mod test {
         let mut function = test_function();
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
-        let mut builder = SSABuilder::new(&mut function,&mut symbols);
+        let mut builder = SSABuilder::new(&mut function, &mut symbols);
         builder.find_dominance(&function);
         builder.find_dominance_frontier(&function);
 
