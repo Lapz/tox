@@ -10,7 +10,7 @@ extern crate vm;
 
 mod ast;
 mod build_cfg;
-mod build_structs;
+// mod build_structs;
 mod codegen;
 mod ctx;
 mod infer;

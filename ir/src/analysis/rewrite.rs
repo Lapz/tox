@@ -94,7 +94,7 @@ impl<'a> crate::analysis::color::Allocator<'a> {
                     let new_reg = *self.old_to_new.entry(src).or_insert(Register::new());
                     instructions.push(Instruction::Store(new_reg, src));
                     instructions.push(Instruction::Store(dest, new_reg));
-                    // instructions.push(Instruction::Store(src,new_reg));
+                    instructions.push(Instruction::Store(src, new_reg));
                     new_temps.insert(new_reg);
                 } else {
                     instructions.push(Instruction::Store(dest, src));

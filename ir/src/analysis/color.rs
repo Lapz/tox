@@ -1,5 +1,5 @@
 use crate::analysis::AnalysisState;
-use crate::instructions::{BlockEnd, Function, Instruction, Register, STACK_POINTER};
+use crate::instructions::{BlockEnd, BlockID, Function, Instruction, Register, STACK_POINTER};
 use cfg_if::cfg_if;
 use indexmap::{indexmap, indexset, IndexMap, IndexSet};
 use std::cmp::Ordering;
@@ -72,6 +72,7 @@ pub struct Allocator<'a> {
     pub(crate) offsets: IndexMap<Register, usize>,
     pub(crate) symbols: &'a mut Symbols<()>,
     pub(crate) old_to_new: IndexMap<Register, Register>,
+    spilled_scratch_temps: IndexSet<Register>,
 }
 
 impl<'a> Allocator<'a> {
@@ -105,6 +106,7 @@ impl<'a> Allocator<'a> {
             offsets: IndexMap::new(),
             offset: 0,
             old_to_new: IndexMap::new(),
+            spilled_scratch_temps: IndexSet::new(),
         };
 
         allocator.init_initial();
@@ -144,8 +146,6 @@ impl<'a> Allocator<'a> {
 
         self.assign_colors();
 
-        println!("{:?}", self.color);
-
         self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
 
         if !self.spilled_nodes.is_empty() {
@@ -156,6 +156,13 @@ impl<'a> Allocator<'a> {
 
     fn init_initial(&mut self) {
         // TODO ADD FUNCTION PARAM
+
+        for (i, reg) in self.function.params.iter().enumerate() {
+            self.color.insert(*reg, i);
+            self.degree.insert(*reg, 0);
+            self.adj_list.insert(*reg, IndexSet::new());
+        }
+
         for (_, block) in &self.function.blocks {
             for instruction in &block.instructions {
                 let used = instruction.used();
@@ -203,6 +210,14 @@ impl<'a> Allocator<'a> {
         self.state = AnalysisState::new(self.function, self.symbols);
     }
 
+    fn is_spillable(&self, reg: &Register) -> bool {
+        if self.spilled_scratch_temps.contains(reg) {
+            false
+        } else {
+            true
+        }
+    }
+
     fn build(&mut self) {
         let mut function: Function = Function::dummy();
 
@@ -211,9 +226,10 @@ impl<'a> Allocator<'a> {
         for (id, block) in &function.blocks {
             let mut live = self.state.live_out[id].clone();
 
-            for instruction in &block.instructions {
+            for instruction in block.instructions.iter().rev() {
                 let use_ = instruction.used();
                 let def = instruction.def();
+                println!("{} live {:?}", id, live);
 
                 if instruction.is_move() {
                     live = live.difference(&use_).cloned().collect::<IndexSet<_>>();
@@ -245,7 +261,7 @@ impl<'a> Allocator<'a> {
                 live = use_
                     .union(&(live.difference(&def).cloned().collect::<IndexSet<_>>()))
                     .cloned()
-                    .collect::<IndexSet<_>>()
+                    .collect::<IndexSet<_>>();
             }
         }
 
@@ -270,6 +286,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn make_work_list(&mut self) {
+        println!("initial: {:?}", self.initial);
         while !self.initial.is_empty() {
             let n = self.initial.pop().unwrap();
 
@@ -469,7 +486,7 @@ impl<'a> Allocator<'a> {
             self.decrement_degree(t);
         }
 
-        if self.degree[&u] >= K && self.freeze_work_list.contains(&u) {
+        if *self.degree.get(&u).unwrap_or(&0) >= K && self.freeze_work_list.contains(&u) {
             self.freeze_work_list.remove(&u);
             self.spill_work_list.insert(u);
         }
@@ -510,15 +527,23 @@ impl<'a> Allocator<'a> {
         println!("select spill called");
         let mut costs = indexmap!();
 
+        let mut spill_work_list = IndexSet::new();
+
         for node in &self.spill_work_list {
+            if !self.is_spillable(node) {
+                println!(" {} is not spillable", node);
+                continue;
+            }
+
             costs.insert(*node, self.spill_cost(node));
+            spill_work_list.insert(*node);
         }
 
-        self.spill_work_list
-            .sort_by(|a, b| costs[a].partial_cmp(&costs[b]).unwrap_or(Ordering::Less));
+        spill_work_list.sort_by(|a, b| costs[a].partial_cmp(&costs[b]).unwrap_or(Ordering::Less));
 
-        let register = self.spill_work_list.swap_remove_index(0).unwrap(); // to di add a heuristic to get this
-
+        let register = spill_work_list.swap_remove_index(0).unwrap(); // to di add a heuristic to get this
+                                                                      //
+        self.spill_work_list.remove(&register);
         self.simplify_work_list.insert(register);
 
         self.freeze_moves(register);
@@ -546,6 +571,7 @@ impl<'a> Allocator<'a> {
         println!("assign colours");
 
         let mut ok_colors = (0..=K - 1).collect::<IndexSet<_>>();
+
         while !self.select_stack.is_empty() {
             let n = self.select_stack.pop().unwrap();
 
@@ -583,10 +609,18 @@ impl<'a> Allocator<'a> {
         let mut new_temps: IndexSet<Register> = IndexSet::new();
 
         // mapping of old to new
+        //
+        println!("spilled nodes{:?}", self.spilled_nodes);
 
         for spilled_node in &self.spilled_nodes {
             // allocate memory locations for each spilled_node.
 
+            // self.function
+            //     .blocks
+            //     .get_mut(&BlockID(0))
+            //     .unwrap()
+            //     .instructions
+            //     .insert(0, Instruction::Store(*spilled_node, STACK_POINTER));
             self.offsets.insert(*spilled_node, self.offset);
             self.offset += POINTER_WIDTH;
         }
@@ -602,7 +636,8 @@ impl<'a> Allocator<'a> {
 
             std::mem::swap(&mut instructions, &mut block.instructions);
 
-            for (i, instruction) in instructions.into_iter().enumerate() {
+            for instruction in instructions.into_iter() {
+                println!("{:?}", new_instructions);
                 self.rewrite_instruction(instruction, &mut new_instructions, &mut new_temps);
             }
 
@@ -614,19 +649,19 @@ impl<'a> Allocator<'a> {
         let file_name = format!(
             "graphviz/{name}/{name}_alloc_{count}.tox",
             name = self.symbols.name(self.function.name),
-            count = unsafe {
-                ALLOC_COUNTER
-            },
+            count = unsafe { ALLOC_COUNTER },
         );
 
         let mut printer = crate::printer::Printer::new(&self.symbols);
 
         printer
-            .print_function(&self.function, &mut std::fs::File::create(file_name).unwrap())
+            .print_function(
+                &self.function,
+                &mut std::fs::File::create(file_name).unwrap(),
+            )
             .unwrap();
 
         self.spilled_nodes.clear();
-        
 
         self.initial = self
             .colored_nodes
@@ -642,6 +677,7 @@ impl<'a> Allocator<'a> {
 
         self.colored_nodes = IndexSet::new();
         self.coalesced_nodes = IndexSet::new();
-        // panic!()
+        self.spilled_scratch_temps.extend(new_temps.iter());
+        self.old_to_new.clear();
     }
 }

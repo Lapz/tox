@@ -1,5 +1,5 @@
 use crate::analysis::{AnalysisState, Interval};
-use crate::instructions::{BlockEnd, BlockID, Function};
+use crate::instructions::{BlockEnd, BlockID, Function, Register};
 use indexmap::map::Entry;
 use indexmap::{indexset, IndexMap, IndexSet};
 #[cfg(feature = "graphviz")]
@@ -74,18 +74,46 @@ impl AnalysisState {
     /// Initialize the set of used and defined regsiters for a basic block
     pub fn init(&mut self, function: &Function) {
         for (id, block) in &function.blocks {
-            let mut used = IndexSet::new(); // variables used before they are defined
-            let mut defined = IndexSet::new(); // All variables defined in the block
+            let mut gen = IndexSet::new(); // variables used before they are defined
+            let mut kill = IndexSet::new(); // All variables defined in the block
 
             for inst in block.instructions.iter().rev() {
                 use crate::instructions::Instruction::*;
-                used.extend(inst.used());
-                defined.extend(inst.def());
+                gen.extend(inst.used());
+                kill.extend(inst.def());
             }
 
-            self.used_defined.entry(*id).or_insert((used, defined));
+            self.gen_kill.entry(*id).or_insert((gen, kill));
         }
     }
+
+    fn live_in(&mut self, id: &BlockID) -> IndexSet<Register> {
+        let (gen, kill) = self.gen_kill[id].clone();
+
+        gen.union(
+            &self.live_out[id]
+                .difference(&kill)
+                .cloned()
+                .collect::<IndexSet<_>>(),
+        )
+        .cloned()
+        .collect::<IndexSet<_>>()
+    }
+
+    fn live_out(&mut self, id: &BlockID) -> IndexSet<Register> {
+        if let Some(successors) = self.successors.get(id) {
+            let mut new_out = IndexSet::new();
+
+            for suc in successors {
+                new_out.extend(self.live_in.get(suc).clone().unwrap_or(&IndexSet::new()))
+            }
+
+            new_out
+        } else {
+            IndexSet::new()
+        }
+    }
+
     pub fn calulate_live_out(&mut self, function: &Function) {
         let mut changed = true;
 
@@ -110,27 +138,27 @@ impl AnalysisState {
             changed = false;
 
             for (id, _) in function.blocks.iter().rev() {
-                let old_in = self.live_in[id].clone();
-                let old_out = self.live_out[id].clone();
+                let old_in = self.live_in(id);
+                let old_out = self.live_out(id);
 
-                let (used, defined) = self.used_defined[id].clone();
+                let (gen, kill) = self.gen_kill[id].clone();
 
                 #[cfg(feature = "prettytable")]
                 {
                     data.push(vec![
                         id.to_string(),
-                        format!("{:?}", used),
-                        format!("{:?}", defined),
+                        format!("{:?}", gen),
+                        format!("{:?}", kill),
                         format!("{:?}", self.successors.get(id).unwrap_or(&IndexSet::new())),
                         format!("{:?}", &self.live_in[id]),
                         format!("{:?}", &self.live_out[id]),
                     ]);
                 }
 
-                *self.live_in.get_mut(id).unwrap() = used
+                *self.live_in.get_mut(id).unwrap() = gen
                     .union(
-                        &old_out
-                            .difference(&defined)
+                        &self.live_out[id]
+                            .difference(&kill)
                             .cloned()
                             .collect::<IndexSet<_>>(),
                     )
@@ -211,7 +239,9 @@ impl AnalysisState {
 #[cfg(test)]
 mod test {
     use super::AnalysisState;
-    use crate::instructions::{Block, BlockEnd, BlockID, Function, Program, Register};
+    use crate::instructions::{
+        BinaryOp, Block, BlockEnd, BlockID, Function, Instruction, Register, Value,
+    };
     use indexmap::{indexmap, indexset, IndexMap};
     use pretty_assertions::assert_eq;
     use std::rc::Rc;
@@ -279,5 +309,72 @@ mod test {
         function.blocks = example_cfg;
 
         function
+    }
+
+    #[test]
+    fn liveness_works() {
+        let b1 = BlockID(1);
+        let b2 = BlockID(2);
+        let b3 = BlockID(3);
+        let b4 = BlockID(4);
+
+        let a = Register::new();
+        let b = Register::new();
+        let c = Register::new();
+        let d = Register::new();
+        let x = Register::new();
+        let t1 = Register::new();
+        let t2 = Register::new();
+
+        let mut example_cfg = IndexMap::new();
+
+        example_cfg.insert(
+            b1,
+            Block::new(
+                vec![
+                    Instruction::StoreI(a, Value::Const(3)),
+                    Instruction::StoreI(b, Value::Const(5)),
+                    Instruction::StoreI(d, Value::Const(4)),
+                    Instruction::StoreI(x, Value::Const(100)),
+                    Instruction::Binary(t1, a, BinaryOp::Gt, b),
+                ],
+                BlockEnd::Branch(t1, b2, b3),
+            ),
+        );
+        example_cfg.insert(
+            b2,
+            Block::new(
+                vec![
+                    Instruction::Binary(t1, a, BinaryOp::Plus, b),
+                    Instruction::StoreI(d, Value::Const(4)),
+                ],
+                BlockEnd::Jump(b4),
+            ),
+        );
+        example_cfg.insert(
+            b3,
+            Block::new(
+                vec![
+                    Instruction::StoreI(c, Value::Const(4)),
+                    Instruction::Binary(t2, a, BinaryOp::Mul, d),
+                    Instruction::Binary(t2, t2, BinaryOp::Plus, c),
+                ],
+                BlockEnd::Return(t2),
+            ),
+        );
+
+        example_cfg.insert(b4, Block::new(vec![], BlockEnd::End));
+
+        println!("{:#?}", example_cfg);
+        let mut function = Function::dummy();
+
+        function.blocks = example_cfg;
+
+        let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
+
+        let mut analysis = AnalysisState::new(&mut function, &mut symbols);
+
+        println!("{:?} {:?}", analysis.live_in[&b1], indexset!(a, b, d, t1));
+        assert_eq!(analysis.live_out[&b1], indexset!(a, b, d, t1));
     }
 }
