@@ -13,42 +13,56 @@ impl<'a> crate::analysis::color::Allocator<'a> {
         instructions: &mut Vec<Instruction>,
         new_temps: &mut IndexSet<Register>,
     ) {
+        let mut spilling_dest = false;
+        let mut spill_dest = None;
+        let orig_dest = *instruction.def().get_index(0).unwrap();
+
         match instruction {
             Instruction::Binary(dest, lhs, op, rhs) => {
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
+                } else {
+                    dest
+                };
+
                 match (
                     self.spilled_nodes.contains(&lhs),
                     self.spilled_nodes.contains(&rhs),
                 ) {
                     (true, true) => {
-                        let new_lhs = *self.old_to_new.entry(lhs).or_insert(Register::new());
-                        let new_rhs = *self.old_to_new.entry(rhs).or_insert(Register::new());
+                        let new_lhs = self.new_name(lhs);
+                        let new_rhs = self.new_name(rhs);
 
                         new_temps.insert(new_lhs);
                         new_temps.insert(new_rhs);
 
-                        instructions.push(Instruction::Store(new_lhs, lhs)); //re
-                        instructions.push(Instruction::Store(new_rhs, rhs));
-                        instructions.push(Instruction::Binary(dest, new_lhs, op, new_rhs));
-                        instructions.push(Instruction::Store(lhs, new_lhs));
-                        instructions.push(Instruction::Store(rhs, new_lhs));
+                        instructions
+                            .push(Instruction::Store(new_lhs, self.spill_mem_location[&lhs])); //re
+                        instructions
+                            .push(Instruction::Store(new_rhs, self.spill_mem_location[&rhs]));
+                        instructions.push(Instruction::Binary(new_dest, new_lhs, op, new_rhs));
                     }
                     (true, false) => {
-                        let new_lhs = *self.old_to_new.entry(lhs).or_insert(Register::new());
+                        let new_lhs = self.new_name(lhs);
+
                         new_temps.insert(new_lhs);
 
-                        instructions.push(Instruction::Store(new_lhs, lhs)); //re
-                        instructions.push(Instruction::Binary(dest, new_lhs, op, rhs));
-                        instructions.push(Instruction::Store(lhs, new_lhs));
+                        instructions
+                            .push(Instruction::Store(new_lhs, self.spill_mem_location[&lhs])); //re
+                        instructions.push(Instruction::Binary(new_dest, new_lhs, op, rhs));
                     }
 
                     (false, true) => {
-                        let new_rhs = *self.old_to_new.entry(rhs).or_insert(Register::new());
+                        let new_rhs = self.new_name(rhs);
 
                         new_temps.insert(new_rhs);
 
-                        instructions.push(Instruction::Store(new_rhs, rhs));
-                        instructions.push(Instruction::Binary(dest, lhs, op, new_rhs));
-                        instructions.push(Instruction::Store(rhs, new_rhs));
+                        instructions
+                            .push(Instruction::Store(new_rhs, self.spill_mem_location[&rhs]));
+                        instructions.push(Instruction::Binary(new_dest, lhs, op, new_rhs));
                     }
 
                     _ => {}
@@ -56,16 +70,27 @@ impl<'a> crate::analysis::color::Allocator<'a> {
             }
 
             Instruction::Call(dest, name, args) => {
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
+                } else {
+                    dest
+                };
+
                 let mut new_args = Vec::new();
 
                 for reg in args {
                     if self.spilled_nodes.contains(&reg) {
-                        let new_reg = *self.old_to_new.entry(reg).or_insert(Register::new());
+                        let new_reg = self.new_name(reg);
+
                         new_args.push(new_reg);
 
                         new_temps.insert(new_reg);
 
-                        instructions.push(Instruction::Store(new_reg, reg));
+                        instructions
+                            .push(Instruction::Store(new_reg, self.spill_mem_location[&reg]));
                     } else {
                         new_args.push(reg);
                     }
@@ -75,47 +100,84 @@ impl<'a> crate::analysis::color::Allocator<'a> {
             }
 
             Instruction::Cast(dest, src, size) => {
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
+                } else {
+                    dest
+                };
+
                 if self.spilled_nodes.contains(&src) {
-                    let new_reg = *self.old_to_new.entry(src).or_insert(Register::new());
-                    instructions.push(Instruction::Store(new_reg, src));
-                    instructions.push(Instruction::Cast(dest, new_reg, size));
-                    instructions.push(Instruction::Store(src, new_reg));
+                    let new_reg = self.new_name(src);
+                    instructions.push(Instruction::Store(new_reg, self.spill_mem_location[&src]));
+                    instructions.push(Instruction::Cast(new_dest, new_reg, size));
 
                     new_temps.insert(new_reg);
                 } else {
-                    instructions.push(Instruction::Cast(dest, src, size));
+                    instructions.push(Instruction::Cast(new_dest, src, size));
                 };
             }
 
             Instruction::Phi(_, _, _) | Instruction::StatementStart => {}
 
             Instruction::Store(dest, src) => {
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
+                } else {
+                    dest
+                };
                 if self.spilled_nodes.contains(&src) {
-                    let new_reg = *self.old_to_new.entry(src).or_insert(Register::new());
-                    instructions.push(Instruction::Store(new_reg, src));
-                    instructions.push(Instruction::Store(dest, new_reg));
-                    instructions.push(Instruction::Store(src, new_reg));
+                    let new_reg = self.new_name(src);
+                    instructions.push(Instruction::Store(new_reg, self.spill_mem_location[&src]));
+                    instructions.push(Instruction::Store(new_dest, new_reg));
+
                     new_temps.insert(new_reg);
                 } else {
-                    instructions.push(Instruction::Store(dest, src));
+                    instructions.push(Instruction::Store(new_dest, src));
                 };
             }
 
-            Instruction::StoreI(..) => {
-                instructions.push(instruction);
+            Instruction::StoreI(dest, value) => {
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
+                } else {
+                    dest
+                };
+
+                instructions.push(Instruction::StoreI(new_dest, value));
             }
 
             Instruction::Unary(dest, src, op) => {
-                if self.spilled_nodes.contains(&src) {
-                    let new_reg = *self.old_to_new.entry(src).or_insert(Register::new());
-                    new_temps.insert(new_reg);
-                    instructions.push(Instruction::Store(new_reg, src));
-                    instructions.push(Instruction::Unary(dest, new_reg, op));
-                    instructions.push(Instruction::Store(src, new_reg));
+                let new_dest = if self.spilled_nodes.contains(&dest) {
+                    spilling_dest = true;
+                    let reg = Register::new();
+                    spill_dest = Some(reg);
+                    reg
                 } else {
-                    instructions.push(Instruction::Unary(dest, src, op));
+                    dest
+                };
+
+                if self.spilled_nodes.contains(&src) {
+                    let new_reg = self.new_name(src);
+                    new_temps.insert(new_reg);
+                    instructions.push(Instruction::Store(new_reg, self.spill_mem_location[&src]));
+                    instructions.push(Instruction::Unary(new_dest, new_reg, op));
+                } else {
+                    instructions.push(Instruction::Unary(new_dest, src, op));
                 };
             }
+        }
+
+        if spilling_dest {
+            instructions.push(Instruction::Store(spill_dest.unwrap(), orig_dest))
         }
     }
 }

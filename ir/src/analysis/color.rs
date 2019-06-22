@@ -73,6 +73,10 @@ pub struct Allocator<'a> {
     pub(crate) symbols: &'a mut Symbols<()>,
     pub(crate) old_to_new: IndexMap<Register, Register>,
     spilled_scratch_temps: IndexSet<Register>,
+    /// A mapping of spilled node and the mem location on where the spilled
+    /// node is placed
+    pub(crate) spill_mem_location: IndexMap<Register, Register>,
+    pub name_counter: IndexMap<Register, usize>,
 }
 
 impl<'a> Allocator<'a> {
@@ -107,6 +111,8 @@ impl<'a> Allocator<'a> {
             offset: 0,
             old_to_new: IndexMap::new(),
             spilled_scratch_temps: IndexSet::new(),
+            spill_mem_location: IndexMap::new(),
+            name_counter: IndexMap::new(),
         };
 
         allocator.init_initial();
@@ -157,11 +163,11 @@ impl<'a> Allocator<'a> {
     fn init_initial(&mut self) {
         // TODO ADD FUNCTION PARAM
 
-        for (i, reg) in self.function.params.iter().enumerate() {
-            self.color.insert(*reg, i);
-            self.degree.insert(*reg, 0);
-            self.adj_list.insert(*reg, IndexSet::new());
-        }
+        // for (i, reg) in self.function.params.iter().enumerate() {
+        //     self.color.insert(*reg, i);
+        //     self.degree.insert(*reg, 0);
+        //     self.adj_list.insert(*reg, IndexSet::new());
+        // }
 
         for (_, block) in &self.function.blocks {
             for instruction in &block.instructions {
@@ -216,6 +222,16 @@ impl<'a> Allocator<'a> {
         } else {
             true
         }
+    }
+
+    pub(crate) fn new_name(&mut self, n: Register) -> Register {
+        let i = *self.name_counter.entry(n).or_insert(0);
+
+        self.name_counter[&n] += 1;
+
+        let name = n.name(self.symbols);
+
+        Register::Named(self.symbols.symbol(&format!("{}_{}", name, i)))
     }
 
     fn build(&mut self) {

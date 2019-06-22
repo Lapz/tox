@@ -78,39 +78,23 @@ impl AnalysisState {
             let mut kill = IndexSet::new(); // All variables defined in the block
 
             for inst in block.instructions.iter().rev() {
-                use crate::instructions::Instruction::*;
                 gen.extend(inst.used());
                 kill.extend(inst.def());
             }
 
-            self.gen_kill.entry(*id).or_insert((gen, kill));
-        }
-    }
-
-    fn live_in(&mut self, id: &BlockID) -> IndexSet<Register> {
-        let (gen, kill) = self.gen_kill[id].clone();
-
-        gen.union(
-            &self.live_out[id]
-                .difference(&kill)
-                .cloned()
-                .collect::<IndexSet<_>>(),
-        )
-        .cloned()
-        .collect::<IndexSet<_>>()
-    }
-
-    fn live_out(&mut self, id: &BlockID) -> IndexSet<Register> {
-        if let Some(successors) = self.successors.get(id) {
-            let mut new_out = IndexSet::new();
-
-            for suc in successors {
-                new_out.extend(self.live_in.get(suc).clone().unwrap_or(&IndexSet::new()))
+            match block.end {
+                BlockEnd::Branch(cond, _, _) => {
+                    gen.insert(cond);
+                }
+                BlockEnd::Return(value) => {
+                    gen.insert(value);
+                }
+                BlockEnd::Jump(_) => (),
+                BlockEnd::Link(_) => (),
+                BlockEnd::End => {}
             }
 
-            new_out
-        } else {
-            IndexSet::new()
+            self.gen_kill.insert(*id, (gen, kill));
         }
     }
 
@@ -138,8 +122,8 @@ impl AnalysisState {
             changed = false;
 
             for (id, _) in function.blocks.iter().rev() {
-                let old_in = self.live_in(id);
-                let old_out = self.live_out(id);
+                let old_in = self.live_in[id].clone();
+                let old_out = self.live_out[id].clone();
 
                 let (gen, kill) = self.gen_kill[id].clone();
 
@@ -173,7 +157,7 @@ impl AnalysisState {
                     }
 
                     *self.live_out.get_mut(id).unwrap() = new_out;
-                }
+                };
 
                 if !(old_in == self.live_in[id] && old_out == self.live_out[id]) {
                     changed = true;
@@ -313,57 +297,78 @@ mod test {
 
     #[test]
     fn liveness_works() {
+        //         a←0
+        // L1 :b←a+1
+        // c←c+b a←b∗2
+        // if a < N goto L1 return c
         let b1 = BlockID(1);
         let b2 = BlockID(2);
         let b3 = BlockID(3);
         let b4 = BlockID(4);
+        let b5 = BlockID(5);
+        let b6 = BlockID(6);
 
         let a = Register::new();
+        println!("{}", a);
         let b = Register::new();
+        println!("{}", b);
         let c = Register::new();
-        let d = Register::new();
-        let x = Register::new();
+        println!("{}", c);
+
+        // let x = Register::new();
         let t1 = Register::new();
         let t2 = Register::new();
+        let t3 = Register::new();
 
         let mut example_cfg = IndexMap::new();
 
         example_cfg.insert(
             b1,
             Block::new(
-                vec![
-                    Instruction::StoreI(a, Value::Const(3)),
-                    Instruction::StoreI(b, Value::Const(5)),
-                    Instruction::StoreI(d, Value::Const(4)),
-                    Instruction::StoreI(x, Value::Const(100)),
-                    Instruction::Binary(t1, a, BinaryOp::Gt, b),
-                ],
-                BlockEnd::Branch(t1, b2, b3),
+                vec![Instruction::StoreI(a, Value::Const(0))],
+                BlockEnd::Jump(b2),
             ),
         );
         example_cfg.insert(
             b2,
             Block::new(
                 vec![
-                    Instruction::Binary(t1, a, BinaryOp::Plus, b),
-                    Instruction::StoreI(d, Value::Const(4)),
+                    Instruction::StoreI(t1, Value::Const(1)),
+                    Instruction::Binary(b, a, BinaryOp::Plus, t1),
                 ],
-                BlockEnd::Jump(b4),
+                BlockEnd::Jump(b3),
             ),
         );
         example_cfg.insert(
             b3,
             Block::new(
+                vec![Instruction::Binary(c, c, BinaryOp::Plus, b)],
+                BlockEnd::Jump(b4),
+            ),
+        );
+        example_cfg.insert(
+            b4,
+            Block::new(
                 vec![
-                    Instruction::StoreI(c, Value::Const(4)),
-                    Instruction::Binary(t2, a, BinaryOp::Mul, d),
-                    Instruction::Binary(t2, t2, BinaryOp::Plus, c),
+                    Instruction::StoreI(t2, Value::Const(2)),
+                    Instruction::Binary(a, b, BinaryOp::Mul, t2),
                 ],
-                BlockEnd::Return(t2),
+                BlockEnd::Jump(b5),
             ),
         );
 
-        example_cfg.insert(b4, Block::new(vec![], BlockEnd::End));
+        example_cfg.insert(
+            b5,
+            Block::new(
+                vec![
+                    Instruction::StoreI(t3, Value::Const(4)),
+                    Instruction::Binary(t3, a, BinaryOp::Lt, t3),
+                ],
+                BlockEnd::Branch(t3, b2, b6),
+            ),
+        );
+
+        example_cfg.insert(b6, Block::new(vec![], BlockEnd::Return(c)));
 
         println!("{:#?}", example_cfg);
         let mut function = Function::dummy();
@@ -374,7 +379,10 @@ mod test {
 
         let mut analysis = AnalysisState::new(&mut function, &mut symbols);
 
-        println!("{:?} {:?}", analysis.live_in[&b1], indexset!(a, b, d, t1));
-        assert_eq!(analysis.live_out[&b1], indexset!(a, b, d, t1));
+        println!("{:?}", analysis.successors);
+
+        println!("{:?}", analysis.live_in[&b1]);
+        assert_eq!(analysis.live_in[&b6], indexset!(c));
+        assert_eq!(analysis.live_out[&b1], indexset!(a, c));
     }
 }
