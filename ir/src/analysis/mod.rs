@@ -1,5 +1,6 @@
 mod analysis;
 mod color;
+mod graph;
 mod rewrite;
 
 // #[cfg(feature = "graphviz")]

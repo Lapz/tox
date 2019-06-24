@@ -129,6 +129,15 @@ impl<'a> Allocator<'a> {
 
         self.build();
 
+        println!("{:?}",self.degree);
+
+
+        unsafe {
+             if ALLOC_COUNTER == 2 {
+                 panic!();
+             }
+        }
+
         self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
 
         self.make_work_list();
@@ -156,6 +165,10 @@ impl<'a> Allocator<'a> {
 
         if !self.spilled_nodes.is_empty() {
             self.rewrite_program();
+            self.degree.clear();
+            self.adj_list.clear();
+            self.adj_set.clear();
+            self.init_initial();
             self.allocate();
         }
     }
@@ -548,7 +561,7 @@ impl<'a> Allocator<'a> {
         for node in &self.spill_work_list {
             if !self.is_spillable(node) {
                 println!(" {} is not spillable", node);
-                continue;
+                // continue;
             }
 
             costs.insert(*node, self.spill_cost(node));
@@ -631,15 +644,12 @@ impl<'a> Allocator<'a> {
         for spilled_node in &self.spilled_nodes {
             // allocate memory locations for each spilled_node.
 
-            // self.function
-            //     .blocks
-            //     .get_mut(&BlockID(0))
-            //     .unwrap()
-            //     .instructions
-            //     .insert(0, Instruction::Store(*spilled_node, STACK_POINTER));
+            self.spill_mem_location.insert(*spilled_node,Register::new());
             self.offsets.insert(*spilled_node, self.offset);
             self.offset += POINTER_WIDTH;
         }
+
+        println!("mem_locs {:?}",self.spill_mem_location);
 
         let mut blocks = IndexMap::new();
 
@@ -652,8 +662,9 @@ impl<'a> Allocator<'a> {
 
             std::mem::swap(&mut instructions, &mut block.instructions);
 
+            
+
             for instruction in instructions.into_iter() {
-                println!("{:?}", new_instructions);
                 self.rewrite_instruction(instruction, &mut new_instructions, &mut new_temps);
             }
 

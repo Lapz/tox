@@ -15,7 +15,7 @@ impl<'a> crate::analysis::color::Allocator<'a> {
     ) {
         let mut spilling_dest = false;
         let mut spill_dest = None;
-        let orig_dest = *instruction.def().get_index(0).unwrap();
+        let orig_dest = instruction.def().get_index(0).cloned();
 
         match instruction {
             Instruction::Binary(dest, lhs, op, rhs) => {
@@ -96,7 +96,7 @@ impl<'a> crate::analysis::color::Allocator<'a> {
                     }
                 }
 
-                instructions.push(Instruction::Call(dest, name, new_args));
+                instructions.push(Instruction::Call(new_dest, name, new_args));
             }
 
             Instruction::Cast(dest, src, size) => {
@@ -142,17 +142,9 @@ impl<'a> crate::analysis::color::Allocator<'a> {
                 };
             }
 
-            Instruction::StoreI(dest, value) => {
-                let new_dest = if self.spilled_nodes.contains(&dest) {
-                    spilling_dest = true;
-                    let reg = Register::new();
-                    spill_dest = Some(reg);
-                    reg
-                } else {
-                    dest
-                };
+            Instruction::StoreI(..) => {
+               instructions.push(instruction);
 
-                instructions.push(Instruction::StoreI(new_dest, value));
             }
 
             Instruction::Unary(dest, src, op) => {
@@ -177,7 +169,7 @@ impl<'a> crate::analysis::color::Allocator<'a> {
         }
 
         if spilling_dest {
-            instructions.push(Instruction::Store(spill_dest.unwrap(), orig_dest))
+            instructions.push(Instruction::Store(spill_dest.unwrap(), orig_dest.unwrap()))
         }
     }
 }
