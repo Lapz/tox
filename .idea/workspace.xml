@@ -6,30 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="a38aa197-107e-4fff-8c86-4e4e5815a73d" name="Default" comment="Added if statements">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/graphviz/main/main.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/graphviz/main/main_after_reg.tox" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ir.tox" beforeDir="false" afterPath="$PROJECT_DIR$/ir.tox" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ir.toxafter_reg" beforeDir="false" afterPath="$PROJECT_DIR$/ir.toxafter_reg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ir/src/analysis/color.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/analysis/color.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test.tox" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="ComposerSettings">
-    <execution>
-      <executable />
-    </execution>
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="isMigrated" value="true" />
@@ -43,28 +31,10 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="696">
-              <caret line="29" selection-end-line="29" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ir.tox">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="600">
-              <caret line="25" column="4" lean-forward="true" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/foo.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="725">
-              <caret line="67" selection-start-line="67" selection-end-line="67" />
+            <state relative-caret-position="425">
+              <caret line="25" column="4" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
             </state>
           </provider>
         </entry>
@@ -72,12 +42,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ir/src/analysis/color.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1107">
-              <caret line="696" lean-forward="true" selection-start-line="696" selection-end-line="696" />
-              <folding>
-                <element signature="e#13726#13727#0" expanded="true" />
-                <element signature="e#13771#13772#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="736">
+              <caret line="647" selection-start-line="647" selection-end-line="647" />
             </state>
           </provider>
         </entry>
@@ -85,8 +51,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tox/src/main.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="58" column="26" lean-forward="true" selection-start-line="58" selection-start-column="26" selection-end-line="58" selection-end-column="26" />
+            <state relative-caret-position="782">
+              <caret line="46" selection-start-line="46" selection-end-line="46" />
             </state>
           </provider>
         </entry>
@@ -94,8 +60,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="15" column="8" lean-forward="true" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="18" />
+            <state relative-caret-position="255">
+              <caret line="15" column="8" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -103,8 +69,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$USER_HOME$/.cargo/registry/src/github.com-1ecc6299db9ec823/indexmap-1.0.2/src/set.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-456">
-              <caret line="176" column="32" lean-forward="true" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
+            <state relative-caret-position="2567">
+              <caret line="176" column="32" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
               <folding>
                 <element signature="e#4818#4819#0" expanded="true" />
                 <element signature="e#4869#4870#0" expanded="true" />
@@ -114,19 +80,9 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png">
-          <provider selected="true" editor-type-id="images" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main.png">
-          <provider selected="true" editor-type-id="images" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tests/test.tox">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="528">
+            <state relative-caret-position="374">
               <caret line="22" column="3" selection-start-line="22" selection-start-column="3" selection-end-line="23" />
             </state>
           </provider>
@@ -250,10 +206,14 @@
   <component name="MacroExpansionManager">
     <option name="directoryName" value="MkJkpGSC" />
   </component>
+  <component name="PhpServers">
+    <servers />
+  </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="953" />
+    <option name="x" value="706" />
+    <option name="y" value="23" />
     <option name="width" value="974" />
-    <option name="height" value="1047" />
+    <option name="height" value="965" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -261,6 +221,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -300,27 +262,12 @@
               <item name="tox" type="b2602c69:ProjectViewProjectNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
               <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="graphviz" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="graphviz" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="tox" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
-              <item name="tox" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -510,6 +457,9 @@
       <workItem from="1559498336692" duration="293000" />
       <workItem from="1559499513521" duration="3132000" />
       <workItem from="1559503876434" duration="1042000" />
+      <workItem from="1560621779941" duration="435000" />
+      <workItem from="1560841592223" duration="1493000" />
+      <workItem from="1561015116182" duration="43000" />
     </task>
     <task id="LOCAL-00001" summary="Added push and pop">
       <created>1535643193060</created>
@@ -553,7 +503,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="55576000" />
+    <option name="totallyTimeSpent" value="57547000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -565,13 +515,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="953" y="0" width="974" height="1047" extended-state="0" />
+    <frame x="706" y="23" width="974" height="965" extended-state="0" />
     <layout>
       <window_info id="Structure" order="0" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="1" />
       <window_info id="Designer" order="2" />
       <window_info id="UI Designer" order="3" />
-      <window_info content_ui="combo" id="Project" order="4" visible="true" weight="0.25273523" />
+      <window_info active="true" content_ui="combo" id="Project" order="4" visible="true" weight="0.26824033" />
       <window_info id="Learn" order="5" weight="0.32840237" />
       <window_info id="Capture Tool" order="6" />
       <window_info id="Favorites" order="7" side_tool="true" />
@@ -811,15 +761,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_4.png" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_3.png" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_6.png" />
     <entry file="file://$PROJECT_DIR$/ir/src/graphviz.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1480">
@@ -827,27 +771,39 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_2.png" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_7.png" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_5.png" />
     <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_9.png" />
-    <entry file="file://$PROJECT_DIR$/tests/test.tox">
+    <entry file="file://$PROJECT_DIR$/foo.txt" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main.png" />
+    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png" />
+    <entry file="file://$PROJECT_DIR$/ir.tox">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="528">
-          <caret line="22" column="3" selection-start-line="22" selection-start-column="3" selection-end-line="23" />
+        <state relative-caret-position="425">
+          <caret line="25" column="4" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tox/src/main.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="782">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="8" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="9" />
         </state>
       </provider>
     </entry>
     <entry file="file://$USER_HOME$/.cargo/registry/src/github.com-1ecc6299db9ec823/indexmap-1.0.2/src/set.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-456">
-          <caret line="176" column="32" lean-forward="true" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
+        <state relative-caret-position="2567">
+          <caret line="176" column="32" selection-start-line="175" selection-end-line="176" selection-end-column="32" />
           <folding>
             <element signature="e#4818#4819#0" expanded="true" />
             <element signature="e#4869#4870#0" expanded="true" />
@@ -855,55 +811,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/foo.txt">
+    <entry file="file://$PROJECT_DIR$/tests/test.tox">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="725">
-          <caret line="67" selection-start-line="67" selection-end-line="67" />
+        <state relative-caret-position="374">
+          <caret line="22" column="3" selection-start-line="22" selection-start-column="3" selection-end-line="23" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ir.tox">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="600">
-          <caret line="25" column="4" lean-forward="true" selection-start-line="25" selection-start-column="4" selection-end-line="25" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ir.toxafter_reg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="15" column="8" lean-forward="true" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_after_reg.tox">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="696">
-          <caret line="29" selection-end-line="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/src/main.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="58" column="26" lean-forward="true" selection-start-line="58" selection-start-column="26" selection-end-line="58" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tox/graphviz/main/main_reg_1.png">
-      <provider selected="true" editor-type-id="images" />
     </entry>
     <entry file="file://$PROJECT_DIR$/ir/src/analysis/color.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1107">
-          <caret line="696" lean-forward="true" selection-start-line="696" selection-end-line="696" />
-          <folding>
-            <element signature="e#13726#13727#0" expanded="true" />
-            <element signature="e#13771#13772#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="736">
+          <caret line="647" selection-start-line="647" selection-end-line="647" />
         </state>
       </provider>
     </entry>

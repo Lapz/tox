@@ -1,0 +1,63 @@
+function main(%t5,%t4)
+{
+//s_5	main
+//s_4	fopen
+//s_7	int
+//s_6	a
+//s_1	random
+//s_3	read
+//s_2	clock
+//s_13	nil
+//s_12	float
+//s_15	d_0
+//s_14	bool
+//s_9	d
+//s_8	b
+//s_11	str
+//s_10	e
+//s_21	t7_1
+//s_20	e_1
+//s_23	d_2
+//s_22	d_1
+//s_17	t4_0
+//s_16	e_0
+//s_19	t8_0
+//s_18	t7_0
+//s_25	e_2
+//s_24	t11_0
+//s_27	t11_1
+//s_26	e_3
+start: label_0
+label_0:
+0	%d_0 <- 0
+1	%t14 <- %d_0
+2	%t4_0 <- %t17
+3	%t16 <- %e_0
+4	%e_0 <- %t4_0
+	goto label_1
+label_1:
+0	%t7_0 <- 0
+1	%t7_1 <- %t13
+2	%e_1 <- %t16
+3	%t13 <- %t7_0
+4	%t12 <- %t8_0
+5	%t8_0 <- %e_1 > %t7_1
+	branch %t8 label_2 label_3
+label_2:
+0	%d_1 <- %t14
+1	%t9 <- %d_1 + %t5
+2	%d_2 <- %t9
+3	%e_2 <- %t16
+4	%t14 <- %d_2
+5	%t11_1 <- %t15
+6	%t10 <- 1
+7	%t15 <- %t11_0
+8	%t16 <- %e_3
+9	%t11_0 <- %e_2 - %t10
+10	%e_3 <- %t11_1
+	goto label_1
+label_3:
+	return %s_9
+label_4:
+	end
+}

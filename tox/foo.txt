@@ -1,0 +1,190 @@
+initial: {%Symbol(9), %t4, %Symbol(10), %t7, %t8, %t5, %t9, %t10, %t11}
+colaesce called
+u:%s_9 v:%t9
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_10 v:%t11
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_10 v:%t4
+sw:true mw:true fw:false spw:false
+freeze called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:false mw:true fw:true spw:true
+simplify called
+sw:false mw:true fw:true spw:true
+simplify called
+sw:false mw:true fw:true spw:true
+simplify called
+sw:true mw:true fw:true spw:true
+assign colours
+spilled nodes{%t8, %t7, %Symbol(9), %t11, %Symbol(10), %t4}
+mem_locs {%t8: %t12, %t7: %t13, %Symbol(9): %t14, %t11: %t15, %Symbol(10): %t16, %t4: %t17}
+initial: {%t10, %t9, %t5, %Symbol(15), %t14, %t17, %Symbol(17), %Symbol(16), %t16, %Symbol(18), %t13, %Symbol(21), %Symbol(20), %Symbol(19), %t12, %t8, %Symbol(22), %Symbol(23), %Symbol(25), %t15, %Symbol(27), %Symbol(24), %Symbol(26), %Symbol(9)}
+colaesce called
+u:%s_22 v:%t14
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_23 v:%t9
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_25 v:%t16
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t14 v:%s_23
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_27 v:%t15
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t15 v:%s_24
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t16 v:%s_26
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_26 v:%s_27
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_21 v:%t13
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_20 v:%t16
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t13 v:%s_18
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t12 v:%s_19
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t14 v:%s_15
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_17 v:%t17
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%t16 v:%s_16
+sw:true mw:false fw:false spw:false
+colaesce called
+u:%s_16 v:%s_17
+sw:true mw:true fw:false spw:false
+freeze called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:true mw:true fw:true spw:false
+select spill called
+sw:false mw:true fw:true spw:false
+simplify called
+sw:false mw:false fw:true spw:false
+simplify called
+sw:false mw:false fw:false spw:true
+simplify called
+sw:false mw:false fw:false spw:true
+simplify called
+sw:true mw:false fw:false spw:true
+colaesce called
+u:%s_23 v:%t9
+sw:false mw:true fw:false spw:true
+simplify called
+sw:true mw:true fw:false spw:true
+freeze called
+sw:false mw:true fw:false spw:true
+simplify called
+sw:true mw:true fw:false spw:true
+freeze called
+sw:false mw:true fw:true spw:true
+simplify called
+sw:true mw:true fw:true spw:true
+assign colours
+spilled nodes{%Symbol(22), %t15, %t10, %Symbol(19), %Symbol(20), %Symbol(21), %t13, %Symbol(18), %Symbol(27), %Symbol(24), %Symbol(26), %t14, %t16, %Symbol(15), %Symbol(17), %Symbol(16), %t12, %t17}
+mem_locs {%t8: %t12, %t7: %t13, %Symbol(9): %t14, %t11: %t15, %Symbol(10): %t16, %t4: %t17, %Symbol(22): %t18, %t15: %t19, %t10: %t20, %Symbol(19): %t21, %Symbol(20): %t22, %Symbol(21): %t23, %t13: %t24, %Symbol(18): %t25, %Symbol(27): %t26, %Symbol(24): %t27, %Symbol(26): %t28, %t14: %t29, %t16: %t30, %Symbol(15): %t31, %Symbol(17): %t32, %Symbol(16): %t33, %t12: %t34, %t17: %t35}

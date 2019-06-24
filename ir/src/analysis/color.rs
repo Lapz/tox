@@ -129,13 +129,12 @@ impl<'a> Allocator<'a> {
 
         self.build();
 
-        println!("{:?}",self.degree);
-
+        // println!("{:?}", self.degree);
 
         unsafe {
-             if ALLOC_COUNTER == 2 {
-                 panic!();
-             }
+            if ALLOC_COUNTER == 2 {
+                // panic!();
+            }
         }
 
         self.dump_debug(self.function.name, unsafe { ALLOC_COUNTER });
@@ -152,6 +151,14 @@ impl<'a> Allocator<'a> {
             } else if !self.spill_work_list.is_empty() {
                 self.select_spill()
             }
+
+            println!(
+                "sw:{} mw:{} fw:{} spw:{}",
+                self.simplify_work_list.is_empty(),
+                self.work_list_moves.is_empty(),
+                self.freeze_work_list.is_empty(),
+                self.spill_work_list.is_empty()
+            );
 
             !(self.simplify_work_list.is_empty()
                 && self.work_list_moves.is_empty()
@@ -176,11 +183,11 @@ impl<'a> Allocator<'a> {
     fn init_initial(&mut self) {
         // TODO ADD FUNCTION PARAM
 
-        // for (i, reg) in self.function.params.iter().enumerate() {
-        //     self.color.insert(*reg, i);
-        //     self.degree.insert(*reg, 0);
-        //     self.adj_list.insert(*reg, IndexSet::new());
-        // }
+        for (i, reg) in self.function.params.iter().enumerate() {
+            self.color.insert(*reg, i);
+            self.degree.insert(*reg, 0);
+            self.adj_list.insert(*reg, IndexSet::new());
+        }
 
         for (_, block) in &self.function.blocks {
             for instruction in &block.instructions {
@@ -258,7 +265,6 @@ impl<'a> Allocator<'a> {
             for instruction in block.instructions.iter().rev() {
                 let use_ = instruction.used();
                 let def = instruction.def();
-                println!("{} live {:?}", id, live);
 
                 if instruction.is_move() {
                     live = live.difference(&use_).cloned().collect::<IndexSet<_>>();
@@ -382,9 +388,7 @@ impl<'a> Allocator<'a> {
     fn decrement_degree(&mut self, m: Node) {
         let d = self.degree[&m];
 
-        if d != 0 {
-            self.degree[&m] -= 1;
-        }
+        self.degree[&m] -= 1;
 
         if d == K {
             let mut nodes = self.adjacent(m);
@@ -644,31 +648,58 @@ impl<'a> Allocator<'a> {
         for spilled_node in &self.spilled_nodes {
             // allocate memory locations for each spilled_node.
 
-            self.spill_mem_location.insert(*spilled_node,Register::new());
+            self.spill_mem_location
+                .insert(*spilled_node, Register::new());
             self.offsets.insert(*spilled_node, self.offset);
             self.offset += POINTER_WIDTH;
         }
 
-        println!("mem_locs {:?}",self.spill_mem_location);
+        println!("mem_locs {:?}", self.spill_mem_location);
 
         let mut blocks = IndexMap::new();
 
         std::mem::swap(&mut blocks, &mut self.function.blocks);
 
         for (_, block) in blocks.iter_mut() {
-            let mut new_instructions = Vec::new();
+            let mut before = Vec::new(); // index to place instruction before
+            let mut after = Vec::new(); // index to place instructions after
+            for (i, instruction) in block.instructions.iter_mut().enumerate() {
+                let defs = instruction.def();
+                let uses = instruction.used();
 
-            let mut instructions = Vec::new();
+                for def in defs {
+                    if self.spilled_nodes.contains(&def) {
+                        let new_def = self.new_name(def);
 
-            std::mem::swap(&mut instructions, &mut block.instructions);
+                        instruction.rewrite_def(new_def);
+                        after.push((i, new_def, def));
+                    }
+                }
 
-            
-
-            for instruction in instructions.into_iter() {
-                self.rewrite_instruction(instruction, &mut new_instructions, &mut new_temps);
+                for used in uses {
+                    if self.spilled_nodes.contains(&used) {
+                        let new_use = self.new_name(used);
+                        instruction.rewrite_uses(used, new_use);
+                        before.push((i, new_use, used));
+                    }
+                }
             }
 
-            std::mem::swap(&mut block.instructions, &mut new_instructions);
+            let offset = before.len(); // how much to offset the after index;
+
+            for (index, reg, original) in before {
+                block.instructions.insert(
+                    index,
+                    Instruction::Store(reg, self.spill_mem_location[&original]),
+                )
+            }
+
+            for (index, reg, original) in after {
+                block.instructions.insert(
+                    index + offset + 1,
+                    Instruction::Store(self.spill_mem_location[&original], reg),
+                )
+            }
         }
 
         std::mem::swap(&mut blocks, &mut self.function.blocks);
