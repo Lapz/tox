@@ -45,6 +45,8 @@ impl Analysis {
 
 #[derive(Debug, Clone, Default)]
 pub struct AnalysisState {
+    pub gen: IndexMap<BlockID, IndexSet<Register>>,
+    pub kill: IndexMap<BlockID, IndexSet<Register>>,
     pub gen_kill: IndexMap<BlockID, (IndexSet<Register>, IndexSet<Register>)>,
     pub successors: IndexMap<BlockID, IndexSet<BlockID>>,
     pub predecessors: IndexMap<BlockID, IndexSet<BlockID>>,

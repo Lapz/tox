@@ -94,7 +94,8 @@ impl AnalysisState {
                 BlockEnd::End => {}
             }
 
-            self.gen_kill.insert(*id, (gen, kill));
+            self.gen.insert(*id, gen);
+            self.kill.insert(*id, kill);
         }
     }
 
@@ -122,10 +123,9 @@ impl AnalysisState {
             changed = false;
 
             for (id, _) in function.blocks.iter().rev() {
-                let old_in = self.live_in[id].clone();
                 let old_out = self.live_out[id].clone();
 
-                let (gen, kill) = self.gen_kill[id].clone();
+                let (gen, kill) = (self.gen[id].clone(), self.kill[id].clone());
 
                 #[cfg(feature = "prettytable")]
                 {
@@ -153,13 +153,23 @@ impl AnalysisState {
                     let mut new_out = IndexSet::new();
 
                     for suc in successors {
-                        new_out.extend(self.live_in.get(suc).clone().unwrap_or(&IndexSet::new()))
+                        new_out.extend(
+                            self.gen[suc]
+                                .union(
+                                    &self.live_out[suc]
+                                        .intersection(&self.kill[suc])
+                                        .cloned()
+                                        .collect::<IndexSet<_>>(),
+                                )
+                                .cloned()
+                                .collect::<IndexSet<_>>(),
+                        )
                     }
 
                     *self.live_out.get_mut(id).unwrap() = new_out;
                 };
 
-                if !(old_in == self.live_in[id] && old_out == self.live_out[id]) {
+                if !(old_out == self.live_out[id]) {
                     changed = true;
                 }
             }
@@ -301,88 +311,78 @@ mod test {
         // L1 :b←a+1
         // c←c+b a←b∗2
         // if a < N goto L1 return c
+        let b0 = BlockID(0);
         let b1 = BlockID(1);
         let b2 = BlockID(2);
         let b3 = BlockID(3);
         let b4 = BlockID(4);
         let b5 = BlockID(5);
         let b6 = BlockID(6);
+        let b7 = BlockID(7);
+        let b8 = BlockID(8);
 
         let a = Register::new();
-        println!("{}", a);
         let b = Register::new();
-        println!("{}", b);
         let c = Register::new();
-        println!("{}", c);
+        let d = Register::new();
+        let i = Register::new();
+        let y = Register::new();
+        let z = Register::new();
 
-        // let x = Register::new();
-        let t1 = Register::new();
-        let t2 = Register::new();
-        let t3 = Register::new();
-
-        let mut example_cfg = IndexMap::new();
-
-        example_cfg.insert(
-            b1,
-            Block::new(
-                vec![Instruction::StoreI(a, Value::Const(0))],
-                BlockEnd::Jump(b2),
-            ),
-        );
-        example_cfg.insert(
-            b2,
-            Block::new(
-                vec![
-                    Instruction::StoreI(t1, Value::Const(1)),
-                    Instruction::Binary(b, a, BinaryOp::Plus, t1),
-                ],
-                BlockEnd::Jump(b3),
-            ),
-        );
-        example_cfg.insert(
-            b3,
-            Block::new(
-                vec![Instruction::Binary(c, c, BinaryOp::Plus, b)],
-                BlockEnd::Jump(b4),
-            ),
-        );
-        example_cfg.insert(
-            b4,
-            Block::new(
-                vec![
-                    Instruction::StoreI(t2, Value::Const(2)),
-                    Instruction::Binary(a, b, BinaryOp::Mul, t2),
-                ],
-                BlockEnd::Jump(b5),
-            ),
+        let gen = indexmap!(
+            b0 => indexset!(),
+            b1 => indexset!(),
+            b2 => indexset!(),
+            b3 => indexset!(a,b,c,d,i),
+            b4 => indexset!(),
+            b5 => indexset!(),
+            b6 => indexset!(),
+            b7 => indexset!(),
+            b8 => indexset!(),
         );
 
-        example_cfg.insert(
-            b5,
-            Block::new(
-                vec![
-                    Instruction::StoreI(t3, Value::Const(4)),
-                    Instruction::Binary(t3, a, BinaryOp::Lt, t3),
-                ],
-                BlockEnd::Branch(t3, b2, b6),
-            ),
+        let kill = indexmap!(
+            b0 => indexset!(i),
+            b1 => indexset!(a,c),
+            b2 => indexset!(b,c,d),
+            b3 => indexset!(y,z,i),
+            b4 => indexset!(),
+            b5 => indexset!(a,d),
+            b6 => indexset!(d),
+            b7 => indexset!(b),
+            b8 => indexset!(c),
         );
 
-        example_cfg.insert(b6, Block::new(vec![], BlockEnd::Return(c)));
-
-        println!("{:#?}", example_cfg);
-        let mut function = Function::dummy();
-
-        function.blocks = example_cfg;
+        let mut function = test_function();
 
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
         let mut analysis = AnalysisState::new(&mut function, &mut symbols);
 
-        println!("{:?}", analysis.successors);
+        analysis.gen = gen;
+        analysis.kill = kill;
 
-        println!("{:?}", analysis.live_in[&b1]);
-        assert_eq!(analysis.live_in[&b6], indexset!(c));
-        assert_eq!(analysis.live_out[&b1], indexset!(a, c));
+        analysis.calulate_live_out(&function);
+
+        analysis.live_out.sort_keys();
+
+        for (_, live_out) in analysis.live_out.iter_mut() {
+            live_out.sort();
+        }
+
+        assert_eq!(
+            analysis.live_out,
+            indexmap!(
+                b0 => indexset!(i),
+                b1 => indexset!(a,c,i),
+                b2 => indexset!(a,b,c,d,i),
+                b3 => indexset!(i),
+                b4 => indexset!(),
+                b5 => indexset!(a,c,d,i),
+                b6 => indexset!(a,c,d,i),
+                b7 => indexset!(a,b,c,d,i),
+                b8 => indexset!(a,c,d,i),
+            )
+        );
     }
 }
