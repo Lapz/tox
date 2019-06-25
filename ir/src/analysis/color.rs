@@ -304,7 +304,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn add_edge(&mut self, u: Node, v: Node) {
-        if !self.adj_set.contains(&(u, v)) && u != v {
+        if !self.adj_set.contains(&(u, v)) || !self.adj_set.contains(&(v, u)) && u != v {
             self.adj_set.insert((u, v));
             self.adj_set.insert((v, u));
 
@@ -325,7 +325,7 @@ impl<'a> Allocator<'a> {
         while !self.initial.is_empty() {
             let n = self.initial.pop().unwrap();
 
-            if *self.degree.get(&n).unwrap_or(&0) >= K {
+            if self.degree[&n] >= K {
                 self.spill_work_list.insert(n);
             } else if self.move_related(n) {
                 self.freeze_work_list.insert(n);
@@ -603,12 +603,12 @@ impl<'a> Allocator<'a> {
     fn assign_colors(&mut self) {
         println!("assign colours");
 
-        let mut ok_colors = (0..=K - 1).collect::<IndexSet<_>>();
+        let mut ok_colors = (0..K - 1).collect::<IndexSet<_>>();
 
         while !self.select_stack.is_empty() {
             let n = self.select_stack.pop().unwrap();
 
-            for w in self.adj_list.get(&n).unwrap_or(&IndexSet::new()) {
+            for w in &self.adj_list[&n] {
                 let coloured = self
                     .colored_nodes
                     .union(&self.pre_colored)
@@ -632,6 +632,11 @@ impl<'a> Allocator<'a> {
                 self.color.insert(n, c);
 
                 ok_colors.insert(c);
+            }
+
+            for n in &self.coalesced_nodes {
+                let c = self.color[&self.get_alias(*n)];
+                self.color.insert(*n, c);
             }
         }
     }

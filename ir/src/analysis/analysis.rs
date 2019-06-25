@@ -82,20 +82,22 @@ impl AnalysisState {
                 kill.extend(inst.def());
             }
 
-            match block.end {
-                BlockEnd::Branch(cond, _, _) => {
-                    gen.insert(cond);
-                }
-                BlockEnd::Return(value) => {
-                    gen.insert(value);
-                }
-                BlockEnd::Jump(_) => (),
-                BlockEnd::Link(_) => (),
-                BlockEnd::End => {}
-            }
+            // match block.end {
+            //     BlockEnd::Branch(cond, _, _) => {
+            //         gen.insert(cond);
+            //     }
+            //     BlockEnd::Return(value) => {
+            //         gen.insert(value);
+            //     }
+            //     BlockEnd::Jump(_) => (),
+            //     BlockEnd::Link(_) => (),
+            //     BlockEnd::End => {}
+            // }
 
             self.gen.insert(*id, gen);
             self.kill.insert(*id, kill);
+            self.live_in.insert(*id, IndexSet::new());
+            self.live_out.insert(*id, IndexSet::new());
         }
     }
 
@@ -119,11 +121,14 @@ impl AnalysisState {
             ]);
         }
 
+        println!("{:?}", self.gen);
+
         while changed {
             changed = false;
 
             for (id, _) in function.blocks.iter().rev() {
                 let old_out = self.live_out[id].clone();
+                let old_in = self.live_in[id].clone();
 
                 let (gen, kill) = (self.gen[id].clone(), self.kill[id].clone());
 
@@ -153,23 +158,13 @@ impl AnalysisState {
                     let mut new_out = IndexSet::new();
 
                     for suc in successors {
-                        new_out.extend(
-                            self.gen[suc]
-                                .union(
-                                    &self.live_out[suc]
-                                        .intersection(&self.kill[suc])
-                                        .cloned()
-                                        .collect::<IndexSet<_>>(),
-                                )
-                                .cloned()
-                                .collect::<IndexSet<_>>(),
-                        )
+                        new_out.extend(self.live_in[suc].clone())
                     }
 
                     *self.live_out.get_mut(id).unwrap() = new_out;
                 };
 
-                if !(old_out == self.live_out[id]) {
+                if !(old_in == self.live_in[id] && old_out == self.live_out[id]) {
                     changed = true;
                 }
             }
@@ -311,49 +306,51 @@ mod test {
         // L1 :b←a+1
         // c←c+b a←b∗2
         // if a < N goto L1 return c
-        let b0 = BlockID(0);
+        //
+        let mut example_cfg = IndexMap::new();
+
         let b1 = BlockID(1);
         let b2 = BlockID(2);
         let b3 = BlockID(3);
         let b4 = BlockID(4);
         let b5 = BlockID(5);
         let b6 = BlockID(6);
-        let b7 = BlockID(7);
-        let b8 = BlockID(8);
 
         let a = Register::new();
         let b = Register::new();
         let c = Register::new();
-        let d = Register::new();
-        let i = Register::new();
-        let y = Register::new();
-        let z = Register::new();
 
         let gen = indexmap!(
-            b0 => indexset!(),
             b1 => indexset!(),
-            b2 => indexset!(),
-            b3 => indexset!(a,b,c,d,i),
-            b4 => indexset!(),
-            b5 => indexset!(),
-            b6 => indexset!(),
-            b7 => indexset!(),
-            b8 => indexset!(),
+            b2 => indexset!(a),
+            b3 => indexset!(b,c),
+            b4 => indexset!(b),
+            b5 => indexset!(a),
+            b6 => indexset!(c),
         );
 
         let kill = indexmap!(
-            b0 => indexset!(i),
-            b1 => indexset!(a,c),
-            b2 => indexset!(b,c,d),
-            b3 => indexset!(y,z,i),
-            b4 => indexset!(),
-            b5 => indexset!(a,d),
-            b6 => indexset!(d),
-            b7 => indexset!(b),
-            b8 => indexset!(c),
+            b1 => indexset!(a),
+            b2 => indexset!(b),
+            b3 => indexset!(c),
+            b4 => indexset!(a),
+            b5 => indexset!(),
+            b6 => indexset!(),
         );
 
-        let mut function = test_function();
+        example_cfg.insert(b1, Block::new(vec![], BlockEnd::Jump(b2)));
+        example_cfg.insert(b2, Block::new(vec![], BlockEnd::Jump(b3)));
+        example_cfg.insert(b3, Block::new(vec![], BlockEnd::Jump(b4)));
+        example_cfg.insert(b4, Block::new(vec![], BlockEnd::Jump(b5)));
+        example_cfg.insert(
+            b5,
+            Block::new(vec![], BlockEnd::Branch(Register::new(), b2, b6)),
+        );
+        example_cfg.insert(b6, Block::new(vec![], BlockEnd::End));
+
+        let mut function = Function::dummy();
+
+        function.blocks = example_cfg;
 
         let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
 
@@ -365,23 +362,35 @@ mod test {
         analysis.calulate_live_out(&function);
 
         analysis.live_out.sort_keys();
+        analysis.live_in.sort_keys();
 
         for (_, live_out) in analysis.live_out.iter_mut() {
             live_out.sort();
         }
 
+        println!("{:?}", analysis.live_in);
+
+        assert_eq!(
+            analysis.live_in,
+            indexmap!(
+                b1 => indexset!(c),
+                b2 => indexset!(a,c),
+                b3 => indexset!(b,c),
+                b4 => indexset!(b,c),
+                b5 => indexset!(a,c),
+                b6 => indexset!(c),
+            )
+        );
+
         assert_eq!(
             analysis.live_out,
             indexmap!(
-                b0 => indexset!(i),
-                b1 => indexset!(a,c,i),
-                b2 => indexset!(a,b,c,d,i),
-                b3 => indexset!(i),
-                b4 => indexset!(),
-                b5 => indexset!(a,c,d,i),
-                b6 => indexset!(a,c,d,i),
-                b7 => indexset!(a,b,c,d,i),
-                b8 => indexset!(a,c,d,i),
+                b1 => indexset!(a,c),
+                b2 => indexset!(b,c),
+                b3 => indexset!(b,c),
+                b4 => indexset!(a,c),
+                b5 => indexset!(a,c),
+                b6 => indexset!(),
             )
         );
     }
