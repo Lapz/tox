@@ -143,8 +143,7 @@ impl<'a> crate::analysis::color::Allocator<'a> {
             }
 
             Instruction::StoreI(..) => {
-               instructions.push(instruction);
-
+                instructions.push(instruction);
             }
 
             Instruction::Unary(dest, src, op) => {

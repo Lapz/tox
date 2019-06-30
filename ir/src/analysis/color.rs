@@ -642,7 +642,7 @@ impl<'a> Allocator<'a> {
     }
 
     fn rewrite_program(&mut self) {
-        use crate::instructions::{Instruction::*, Value, POINTER_WIDTH};
+        use crate::instructions::{BinaryOp, Instruction::*, Value, POINTER_WIDTH};
 
         let mut new_temps: IndexSet<Register> = IndexSet::new();
 
@@ -652,7 +652,7 @@ impl<'a> Allocator<'a> {
 
         for spilled_node in &self.spilled_nodes {
             // allocate memory locations for each spilled_node.
-
+            //
             self.spill_mem_location
                 .insert(*spilled_node, Register::new());
             self.offsets.insert(*spilled_node, self.offset);

@@ -3,7 +3,6 @@ use crate::instructions::{BlockEnd, BlockID, Function, Instruction, Program, Reg
 use indexmap::map::Entry;
 use indexmap::{indexset, IndexMap, IndexSet};
 use util::symbol::Symbols;
-
 #[derive(Debug)]
 pub struct SSABuilder<'a> {
     pub successors: IndexMap<BlockID, IndexSet<BlockID>>,
@@ -43,8 +42,10 @@ impl<'a> SSABuilder<'a> {
     pub fn build_ssa(&mut self, function: &mut Function) {
         self.find_dominance(function);
         self.find_dominance_frontier(function);
+
         self.find_global_names(function);
         self.rewrite_code(function);
+        self.dominator_tree(function);
         self.rename_registers(function);
         self.rename(BlockID(0), function);
     }
@@ -159,6 +160,47 @@ impl<'a> SSABuilder<'a> {
         self.frontier.sort_keys();
     }
 
+    /// Calculate the dominator tree. Instead of the flowgraph we will traverse using the dom tree
+    fn dominator_tree(&mut self, function: &Function) {
+        for (id, _) in &function.blocks {
+            self.predecessors.insert(*id, IndexSet::new());
+            self.successors.insert(*id, IndexSet::new());
+
+            if let Some(idom) = self.immediate_dominator(id) {
+                self.predecessors[id].insert(idom);
+                self.successors[&idom].insert(*id);
+            }
+        }
+
+        // #[cfg(feature = "graphviz")]
+        {
+            use crate::graphviz::GRAPHSTART;
+            use std::io::{self, Write};
+            let mut out = &mut std::io::stdout();
+            write!(out, "{}", GRAPHSTART);
+
+            let mut end = Vec::new();
+
+            for (id, block) in function.blocks.iter() {
+                write!(out, "\n\t{} [label=\"{}\"]", id.0, id);
+
+                // for suc in &self.successors[id] {
+                //     end.push(format!("{}->{}", suc.0, id.0))
+                // }
+
+                for pred in &self.predecessors[id] {
+                    end.push(format!("{}->{}", id.0, pred.0))
+                }
+            }
+
+            for e in end {
+                write!(out, "\n\t{}", e);
+            }
+
+            write!(out, "\n}}");
+        }
+    }
+
     pub fn find_global_names(&mut self, function: &Function) {
         for (id, block) in &function.blocks {
             let mut var_kill = IndexSet::new();
@@ -195,10 +237,10 @@ impl<'a> SSABuilder<'a> {
         let mut inserted_phi_nodes = IndexMap::new();
 
         for name in &self.global_regs {
-            let mut worklist = self.ssa_blocks[name].clone();
-            println!("{:?}", worklist);
+            let mut work_list = self.ssa_blocks[name].clone();
+            println!("{:?}", work_list);
 
-            for block_b in worklist.clone() {
+            for block_b in work_list.clone() {
                 for block_d in &self.frontier[&block_b] {
                     if !inserted_phi_nodes
                         .entry(block_d)
@@ -212,102 +254,75 @@ impl<'a> SSABuilder<'a> {
                             .instructions
                             .insert(0, Instruction::Phi(*name, *name, *name));
                         inserted_phi_nodes.get_mut(block_d).unwrap().insert(*name);
-                        worklist.insert(*block_d);
+                        work_list.insert(*block_d);
                     }
                 }
             }
         }
     }
-    pub fn rename_registers(&mut self, function: &mut Function) {
+
+    fn rename_registers(&mut self, function: &mut Function) {
         for name in &self.global_regs {
             self.name_counter.insert(*name, 0);
             self.stack_counter.insert(*name, vec![0]);
         }
+
+        for (_, block) in &function.blocks {
+            for instruction in &block.instructions {
+                for name in instruction.used().union(&instruction.def()) {
+                    self.name_counter.insert(*name, 0);
+                    self.stack_counter.insert(*name, vec![0]);
+                }
+            }
+        }
+    }
+
+    fn latest_register(&mut self, reg: Register) -> Register {
+        println!("{:?}", reg);
+        Register::Named(self.symbols.symbol(&format!(
+            "{}_{}",
+            reg,
+            *self.stack_counter[&reg].last().unwrap()
+        )))
     }
 
     pub fn rename(&mut self, b: BlockID, function: &mut Function) {
         for instruction in &mut function.blocks[&b].instructions {
             if instruction.is_phi() {
-                let x = instruction.def().pop().unwrap();
-                instruction.rewrite_phi_name(self.new_name(x));
-            } else {
-                match instruction {
-                    Instruction::Binary(ref mut x, ref mut y, _, ref mut z) => {
-                        *y = Register::Named(self.symbols.symbol(&format!(
-                            "{}_{}",
-                            y,
-                            self.stack_counter.entry(*y).or_insert(Vec::new()).last().unwrap()
-                        )));
-                        *z = Register::Named(self.symbols.symbol(&format!(
-                            "{}_{}",
-                            z,
-                            self.stack_counter.entry(*z).or_insert(Vec::new()).last().unwrap()
-                        )));
-                        *x = self.new_name(*x);
-                    }
-                    Instruction::Call(ref mut dest, _, _) => {
-                        *dest = self.new_name(*dest);
-                    }
-                    Instruction::Cast(ref mut dest, ref mut val, _) => {
-                        *val = Register::Named(self.symbols.symbol(&format!(
-                            "{}_{}",
-                            val,
-                            self.stack_counter.entry(*val).or_insert(Vec::new()).last().unwrap()
-                        )));
-                        *dest = self.new_name(*dest);
-                    }
-                    Instruction::Unary(ref mut dest, ref mut val, _) => {
-                        *val = Register::Named(self.symbols.symbol(&format!(
-                            "{}_{}",
-                            val,
-                            self.stack_counter.entry(*val).or_insert(Vec::new()).last().unwrap()
-                        )));
-                        *dest = self.new_name(*dest);
-                    }
-
-                    Instruction::Store(ref mut dest, ref mut val) => {
-                        *val = Register::Named(self.symbols.symbol(&format!(
-                            "{}_{}",
-                            val,
-                            self.stack_counter.entry(*val).or_insert(Vec::new()).last().unwrap()
-                        )));
-                        *dest = self.new_name(*dest);
-                    }
-                    Instruction::StoreI(ref mut dest, _) => {
-                        // *val =
-                        *dest = self.new_name(*dest);
-                    }
-                    _ => (),
+                if let Instruction::Phi(ref mut dest, _, _) = instruction {
+                    *dest = self.new_name(*dest);
                 }
             }
         }
 
-        if let Some(successors) = self.successors.get(&b) {
-            for suc in successors {
-                for instruction in &mut function.blocks[suc].instructions {
-                    if instruction.is_phi() {
-                        match instruction {
-                            Instruction::Phi(_, ref mut lhs, ref mut rhs) => {
-                                *lhs = Register::Named(self.symbols.symbol(&format!(
-                                    "{}_{}",
-                                    lhs,
-                                    self.stack_counter[lhs].last().unwrap()
-                                )));
-                                *rhs = Register::Named(self.symbols.symbol(&format!(
-                                    "{}_{}",
-                                    rhs,
-                                    self.stack_counter[rhs].last().unwrap()
-                                )));
-                            }
+        for instruction in &mut function.blocks[&b].instructions {
+            if !instruction.is_phi() {
+                for used in instruction.used() {
+                    instruction.rewrite_uses(used, self.latest_register(used))
+                }
 
-                            _ => (),
+                for def in instruction.def() {
+                    instruction.rewrite_def(self.new_name(def))
+                }
+            }
+        }
+
+        if let Some(successors) = self.successors.get(&b).cloned() {
+            for suc in &successors {
+                if self.predecessors[suc].contains(&b) {
+                    for instruction in &mut function.blocks[suc].instructions {
+                        if let Instruction::Phi(ref mut dest, ref mut lhs, ref mut rhs) =
+                            instruction
+                        {
+                            *lhs = self.latest_register(*lhs);
+                            *rhs = self.latest_register(*rhs);
                         }
                     }
                 }
             }
         }
 
-        if let Some(successors) = self.dominator.get(&b).cloned() {
+        if let Some(successors) = self.successors.get(&b).cloned() {
             for suc in successors {
                 if suc != b {
                     self.rename(suc, function);
@@ -318,24 +333,20 @@ impl<'a> SSABuilder<'a> {
         for instruction in &function.blocks[&b].instructions {
             let mut def = instruction.def();
 
-            if def.is_empty() {
-                continue;
-            }
-
-            let x = def.pop().unwrap();
-
-            if self.stack_counter.contains_key(&x) {
-                self.stack_counter[&x].pop();
+            for def in def {
+                if self.stack_counter.contains_key(&def) {
+                    self.stack_counter[&def].pop();
+                }
             }
         }
     }
 
     fn new_name(&mut self, n: Register) -> Register {
-        let i = *self.name_counter.entry(n).or_insert(0);
-
         self.name_counter[&n] += 1;
 
-        self.stack_counter.entry(n).or_insert(Vec::new()).push(i);
+        let i = self.name_counter[&n];
+
+        self.stack_counter[&n].push(i);
 
         let name = n.name(self.symbols);
 
@@ -424,6 +435,44 @@ mod test {
         );
 
         assert_eq!(builder.frontier, expected_frontier);
+    }
+
+    #[test]
+    fn check_dom_tree() {
+        let mut function = test_function();
+        let mut symbols = Symbols::new(Rc::new(SymbolFactory::new()));
+
+        let mut builder = SSABuilder::new(&mut function, &mut symbols);
+        builder.find_dominance(&function);
+        builder.find_dominance_frontier(&function);
+        builder.dominator_tree(&function);
+
+        let expected_successors = indexmap!(
+            BlockID(0) => indexset!(BlockID(1)),
+            BlockID(1) => indexset!(BlockID(2),BlockID(3),BlockID(5)),
+            BlockID(2) => indexset!(),
+            BlockID(3) => indexset!(BlockID(4)),
+            BlockID(4) => indexset!(),
+            BlockID(5) => indexset!(BlockID(6),BlockID(7),BlockID(8)),
+            BlockID(6) => indexset!(),
+            BlockID(7) => indexset!(),
+            BlockID(8) => indexset!(),
+        );
+
+        let expected_predecessors = indexmap!(
+            BlockID(0) => indexset!(),
+            BlockID(1) => indexset!(BlockID(0)),
+            BlockID(2) => indexset!(BlockID(1)),
+            BlockID(3) => indexset!(BlockID(1)),
+            BlockID(4) => indexset!(BlockID(3)),
+            BlockID(5) => indexset!(BlockID(1)),
+            BlockID(6) => indexset!(BlockID(5)),
+            BlockID(7) => indexset!(BlockID(5)),
+            BlockID(8) => indexset!(BlockID(5)),
+        );
+
+        assert_eq!(builder.successors, expected_successors);
+        assert_eq!(builder.predecessors, expected_predecessors);
     }
 
     fn test_function() -> Function {

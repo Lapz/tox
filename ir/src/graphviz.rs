@@ -7,7 +7,7 @@ use std::io::{self, Write};
 use std::process::Command;
 use util::symbol::Symbols;
 
-const GRAPHSTART: &'static str = r##"digraph {
+pub const GRAPHSTART: &'static str = r##"digraph {
     rankdir=TD; ordering=out;
     color="#efefef";
     node[shape=box style=filled fontsize=8 fontname="Verdana" fillcolor="#efefef"];

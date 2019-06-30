@@ -584,7 +584,7 @@ impl Debug for Register {
         match self {
             Register::Register(ref v) => write!(f, "%t{:?}", v),
             Register::Offset(ref v, offset) => write!(f, "(%{:?}){:?}", v, offset),
-            Register::Named(ref v) => write!(f, "%{:?}", v),
+            Register::Named(ref v) => write!(f, "%{}", v),
         }
     }
 }

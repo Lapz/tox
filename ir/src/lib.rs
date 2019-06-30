@@ -3,7 +3,7 @@
 #[cfg(feature = "prettytable")]
 extern crate text_tables;
 pub mod analysis;
-#[cfg(feature = "graphviz")]
+// #[cfg(feature = "graphviz")]
 pub mod graphviz;
 pub mod instructions;
 pub mod printer;

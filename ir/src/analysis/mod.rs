@@ -86,14 +86,9 @@ impl AnalysisState {
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     for function in &mut p.functions {
         {
-            let mut allocator = color::Allocator::new(symbols, function);
+            let mut builder = crate::ssa::SSABuilder::new(function, symbols);
 
-            allocator.allocate()
-
-            // function.registers = allocator.color;
-            // function.stack_locs = allocator.mappings;
-
-            // println!("{:?}", allocator)
+            builder.build_ssa(function);
         }
 
         let file_name = format!(
