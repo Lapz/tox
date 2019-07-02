@@ -101,7 +101,7 @@ impl AnalysisState {
         }
     }
 
-    pub fn calulate_live_out(&mut self, function: &Function) {
+    pub fn calculate_live_out(&mut self, function: &Function) {
         let mut changed = true;
 
         #[cfg(feature = "prettytable")]
@@ -120,8 +120,6 @@ impl AnalysisState {
                 "in".into(),
             ]);
         }
-
-        println!("{:?}", self.gen);
 
         while changed {
             changed = false;
@@ -198,11 +196,9 @@ impl AnalysisState {
         for (id, block) in &function.blocks {
             self.intervals.insert(*id, IndexMap::new());
             for (i, instruction) in block.instructions.iter().enumerate() {
-                for reg in &self.live_out[id] {
+                for reg in instruction.used().union(&instruction.def()) {
                     if let Some(ref mut interval) = self.intervals[id].get_mut(reg) {
-                        if instruction.used().contains(reg) || instruction.def().contains(reg) {
-                            interval.end = i;
-                        }
+                        interval.end = i;
                     } else {
                         self.intervals[id].insert(*reg, Interval { start: i, end: i });
                     };
@@ -359,7 +355,7 @@ mod test {
         analysis.gen = gen;
         analysis.kill = kill;
 
-        analysis.calulate_live_out(&function);
+        analysis.calculate_live_out(&function);
 
         analysis.live_out.sort_keys();
         analysis.live_in.sort_keys();
@@ -367,8 +363,6 @@ mod test {
         for (_, live_out) in analysis.live_out.iter_mut() {
             live_out.sort();
         }
-
-        println!("{:?}", analysis.live_in);
 
         assert_eq!(
             analysis.live_in,

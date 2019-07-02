@@ -1,6 +1,7 @@
 mod analysis;
 mod color;
 mod graph;
+mod linear;
 mod rewrite;
 
 // #[cfg(feature = "graphviz")]
@@ -69,11 +70,9 @@ impl AnalysisState {
         state.init(&function);
         state.calculate_successors(function);
 
-        state.calulate_live_out(function);
+        state.calculate_live_out(function);
 
-        // state.calculate_live_now(function);
-
-        // state.calculate_live_intervals(function);
+        state.calculate_live_intervals(function);
 
         state
     }
@@ -86,9 +85,12 @@ impl AnalysisState {
 pub fn optimizations(symbols: &mut Symbols<()>, p: &mut crate::instructions::Program) {
     for function in &mut p.functions {
         {
-            let mut allocator = color::Allocator::new(symbols, function);
+            let mut allocator = linear::Allocator::new(function, symbols);
 
-            allocator.allocate()
+            allocator.allocate(function);
+
+            println!("alloc {:#?}", allocator.allocated);
+            println!("spills {:#?}", allocator.location);
 
             // function.registers = allocator.color;
             // function.stack_locs = allocator.mappings;
