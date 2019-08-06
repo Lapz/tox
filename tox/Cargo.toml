@@ -1,0 +1,16 @@
+[package]
+name = "tox"
+version = "0.1.0"
+authors = ["Lenard Pratt <l3np27@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+codespan = "0.3.0"
+itertools= "*"
+rowan ="*"
+teraron = "0.1.0"
+syntax={path="../syntax",version="*"}
+parser={path="../parser",version="*"}
+[dev-dependencies]
+insta = "0.8.2"
