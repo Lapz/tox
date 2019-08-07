@@ -84,6 +84,7 @@ Grammar(
     ],
     nodes: [
         "ITEM_LIST",
+        "ITEM",
         //defintions
         "SOURCE_FILE",
         "CLASS_DEF",

@@ -1,128 +1,131 @@
 #[macro_export]
-
 macro_rules! T {
     (break) => {
-        $crate::token::SyntaxKind::BREAK
+        $crate::SyntaxKind::BREAK
     };
     (continue) => {
-        $crate::token::SyntaxKind::CONTINUE
+        $crate::SyntaxKind::CONTINUE
     };
     (do) => {
-        $crate::token::SyntaxKind::DO
+        $crate::SyntaxKind::DO
     };
     (return) => {
-        $crate::token::SyntaxKind::RETURN
+        $crate::SyntaxKind::RETURN
     };
     (print) => {
-        $crate::token::SyntaxKind::PRINT
+        $crate::SyntaxKind::PRINT
     };
     (class) => {
-        $crate::token::SyntaxKind::CLASS
+        $crate::SyntaxKind::CLASS
     };
     (true) => {
-        $crate::token::SyntaxKind::TRUE
+        $crate::SyntaxKind::TRUE
     };
     (false) => {
-        $crate::token::SyntaxKind::FALSE
+        $crate::SyntaxKind::FALSE
     };
     (extends) => {
-        $crate::token::SyntaxKind::EXTENDS
+        $crate::SyntaxKind::EXTENDS
     };
     (extern) => {
-        $crate::token::SyntaxKind::EXPORT
+        $crate::SyntaxKind::EXTERN_KW
     };
     (match) => {
-        $crate::token::SyntaxKind::MATCH
+        $crate::SyntaxKind::MATCH
     };
     (else) => {
-        $crate::token::SyntaxKind::ELSE
+        $crate::SyntaxKind::ELSE
     };
     (if) => {
-        $crate::token::SyntaxKind::IF
+        $crate::SyntaxKind::IF
     };
     (let) => {
-        $crate::token::SyntaxKind::LET
+        $crate::SyntaxKind::LET
     };
 
     ("{") => {
-        $crate::token::SyntaxKind::L_CURLY_
+        $crate::SyntaxKind::L_CURLY
+    };
+
+    (,) => {
+        $crate::SyntaxKind::COMMA
     };
     ("}") => {
-        $crate::token::SyntaxKind::R_CURLY
+        $crate::SyntaxKind::R_CURLY
     };
     ("[") => {
-        $crate::token::SyntaxKind::L_SQUARE
+        $crate::SyntaxKind::L_SQUARE
     };
     ("]") => {
-        $crate::token::SyntaxKind::R_SQUARE
+        $crate::SyntaxKind::R_SQUARE
     };
     ("(") => {
-        $crate::token::SyntaxKind::L_PAREN
+        $crate::SyntaxKind::L_PAREN
     };
     (")") => {
-        $crate::token::SyntaxKind::R_PAREN
+        $crate::SyntaxKind::R_PAREN
     };
 
     (=) => {
-        $crate::token::SyntaxKind::ASSIGN
+        $crate::SyntaxKind::ASSIGN
     };
     (:) => {
-        $crate::token::SyntaxKind::COLON
+        $crate::SyntaxKind::COLON
     };
     (.) => {
-        $crate::token::SyntaxKind::DOT
+        $crate::SyntaxKind::DOT
     };
     (;) => {
-        $crate::token::SyntaxKind::SEMICOLON
+        $crate::SyntaxKind::SEMICOLON
     };
     (+=) => {
-        $crate::token::SyntaxKind::PLUS_ASSIGN
+        $crate::SyntaxKind::PLUS_ASSIGN
     };
     (!) => {
-        $crate::token::SyntaxKind::BANG
+        $crate::SyntaxKind::BANG
     };
     ("//") => {
-        $crate::token::SyntaxKind::COMMENT
+        $crate::SyntaxKind::COMMENT
     };
 
     (+) => {
-        $crate::token::SyntaxKind::PLUS
+        $crate::SyntaxKind::PLUS
     };
     (-) => {
-        $crate::token::SyntaxKind::MINUS
+        $crate::SyntaxKind::MINUS
     };
     (*) => {
-        $crate::token::SyntaxKind::STAR
+        $crate::SyntaxKind::STAR
     };
     (/) => {
-        $crate::token::SyntaxKind::SLASH
+        $crate::SyntaxKind::SLASH
     };
 
     (&&) => {
-        $crate::token::SyntaxKind::AND
+        $crate::SyntaxKind::AND
     };
     (==) => {
-        $crate::token::SyntaxKind::EQUAL_EQUAL
+        $crate::SyntaxKind::EQUAL_EQUAL
     };
     (=>) => {
-        $crate::token::SyntaxKind::FAT_ARROW
+        $crate::SyntaxKind::FAT_ARROW
     };
     (<) => {
-        $crate::token::SyntaxKind::LESS
+        $crate::SyntaxKind::LESS
     };
     (<=) => {
-        $crate::token::SyntaxKind::LESS_EQUAL
+        $crate::SyntaxKind::LESS_EQUAL
     };
     (>) => {
-        $crate::token::SyntaxKind::GREATER
+        $crate::SyntaxKind::R_ANGLE
     };
     (>=) => {
-        $crate::token::SyntaxKind::GREATER_EQUAL
+        $crate::SyntaxKind::GREATER_EQUAL
     };
     (!=) => {
-        $crate::token::SyntaxKind::BANG_EQUAL
+        $crate::SyntaxKind::BANG_EQUAL
     };
     (||) => {
-        $crate::token::SyntaxKind::OR
+        $crate::SyntaxKind::OR
     };
 }

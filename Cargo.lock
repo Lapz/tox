@@ -735,6 +735,7 @@ dependencies = [
 name = "syntax"
 version = "0.1.0"
 dependencies = [
+ "insta 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rowan 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -807,7 +808,9 @@ dependencies = [
  "codespan 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "insta 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parser 0.1.0",
  "rowan 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syntax 0.1.0",
  "teraron 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

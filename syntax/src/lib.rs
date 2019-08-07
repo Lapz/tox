@@ -4,10 +4,11 @@ mod pos;
 mod token;
 mod traits;
 
-pub use ast::{SyntaxKind, *};
+pub use ast::SyntaxKind;
 pub use lexer::Lexer;
 pub use pos::Span;
 pub use token::Token;
+pub use traits::AstNode;
 
 pub type SyntaxNode = rowan::SyntaxNode<ToxLang>;
 #[allow(unused)]

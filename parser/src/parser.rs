@@ -1,9 +1,16 @@
+mod function;
+mod params;
 mod source_file;
+mod type_params;
 
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::collections::VecDeque;
 use std::iter::Peekable;
-use syntax::{Span, SyntaxKind, Token};
+use syntax::{
+    Span,
+    SyntaxKind::{self, *},
+    Token,
+};
 pub struct Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
@@ -50,8 +57,35 @@ where
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, msg: T) {
         if self.peek(|t| t == expected) {
         } else {
+            self.error("")
         }
 
+        self.bump();
+    }
+
+    fn expected(&mut self, expected: SyntaxKind) -> bool {
+        if self.peek(|t| t == expected) {
+            self.bump();
+            true
+        } else {
+            self.error("");
+            false
+        }
+    }
+
+    fn current(&self) -> SyntaxKind {
+        self.lookahead
+            .as_ref()
+            .map(|token| token.value.kind)
+            .unwrap_or(ERROR)
+    }
+
+    fn at(&self, check: SyntaxKind) -> bool {
+        self.current() == check
+    }
+
+    fn error(&mut self, err: &str) {
+        //TODO report error
         self.bump();
     }
 
@@ -67,5 +101,11 @@ where
             }
             None => {}
         }
+    }
+
+    fn ident(&mut self) {
+        self.start_node(IDENT);
+        self.bump();
+        self.finish_node()
     }
 }
