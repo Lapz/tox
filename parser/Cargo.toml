@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 syntax={path="../syntax",version="*"}
 rowan="*"
+[dev-dependencies]
+insta = "0.8.2"
+pretty_assertions = "0.6.1"

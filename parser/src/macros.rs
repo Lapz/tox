@@ -129,3 +129,38 @@ macro_rules! T {
         $crate::SyntaxKind::OR
     };
 }
+
+#[macro_export]
+macro_rules! test_parser {
+    ($f_name:ident,$test:expr) => {
+        #[test]
+        fn $f_name() {
+            let parser_output = parse($test).parse_program();
+
+            let dir = format!("test_data/{}", module_path!());
+            let dir = std::path::Path::new(&dir);
+
+            if !dir.exists() {
+                std::fs::create_dir(dir).unwrap();
+            }
+
+            let path = format!("test_data/{}/{}.txt", module_path!(), stringify!($f_name));
+
+            let path = std::path::Path::new(&path);
+
+            if path.exists() {
+                pretty_assertions::assert_eq!(
+                    $crate::utils::dump_debug(&parser_output),
+                    $crate::utils::test_data(path.to_str().unwrap())
+                )
+            } else {
+                println!("{:?}", path);
+                write!(
+                    &mut std::fs::File::create(path).unwrap(),
+                    "{}",
+                    $crate::utils::dump_debug(&parser_output)
+                );
+            }
+        }
+    };
+}

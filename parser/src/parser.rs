@@ -1,5 +1,6 @@
 mod function;
 mod params;
+mod pattern;
 mod source_file;
 mod type_params;
 

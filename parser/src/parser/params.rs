@@ -18,14 +18,7 @@ where
         self.bump();
 
         while !self.at(EOF) && !self.at(T![")"]) {
-            match self.current() {
-                IDENT => self.func_param(),
-
-                ident => {
-                    println!("{:?}", ident);
-                    self.error("Expected a type param")
-                }
-            }
+            self.func_param();
 
             if !self.at(T![")"]) && !self.expected(T![,]) {
                 break;
@@ -38,7 +31,7 @@ where
 
     fn func_param(&mut self) {
         self.start_node(PARAM);
-        self.ident();
+        self.parse_pattern(false);
         self.expect(COLON, "Expected `:`");
         self.ident();
         self.finish_node();
