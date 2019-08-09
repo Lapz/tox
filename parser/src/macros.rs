@@ -154,7 +154,6 @@ macro_rules! test_parser {
                     $crate::utils::test_data(path.to_str().unwrap())
                 )
             } else {
-                println!("{:?}", path);
                 write!(
                     &mut std::fs::File::create(path).unwrap(),
                     "{}",

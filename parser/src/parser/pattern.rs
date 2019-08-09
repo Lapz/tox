@@ -69,20 +69,7 @@ mod test {
 
     test_parser! {parse_placeholder_pattern,"fn main(_:i32) {}"}
 
-    // #[test]
-
-    // fn parse_placeholder_pattern() {
-    //     let parser_output = parse("fn main(_:i32) {}").parse_program();
-
-    //     assert_debug_snapshot_matches!(
-    //         dump_debug(&parser_output),
-    //         test_data("parse_placeholder_pattern")
-    //     )
-    // }
-
-    // fn parse_tuple_pattern() {
-    //     let parser_output = parse("fn main((x,y):i32) {}").parse_program();
-    // }
+    test_parser! {parse_tuple_pattern,"fn main((x,y):i32) {}"}
 
     fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
         let mut lexer = Lexer::new(input);
