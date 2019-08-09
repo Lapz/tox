@@ -90,7 +90,6 @@ Grammar(
         "CLASS_DEF",
         "ENUM_DEF",
         "FN_DEF",
-        "RET_TYPE",
         "EXTERN_IMPORT_DEF",
         "TYPE_ALIAS_DEF",
         //patterns
@@ -99,9 +98,11 @@ Grammar(
         "TUPLE_PAT",
         "LITERAL_PAT",
         //types
-        "FN_POINTER_TYPE",
+        "FN_TYPE",
         "PAREN_TYPE",
         "ARRAY_TYPE",
+        "IDENT_TYPE",
+        "RET_TYPE",
         //atoms,
         "ARRAY_EXPR",
         "CALL_EXPR",
@@ -206,12 +207,13 @@ Grammar(
 
         "ArrayType": ( options: ["TypeRef", "Expr"] ),
         "ParenType": (options: ["TypeRef"]),
-        "FnPointerType": (options: ["ParamList", "RetType"]),
+        "IdentType": (options: ["TypeRef"]),
+        "FnType": (options: ["ParamList", "RetType"]),
 
         "TypeRef":(enum:[
             "ParenType",
             "ArrayType",
-            "FnPointerType"
+            "FnType"
         ]),
 
         "ClosureExpr": (

@@ -92,20 +92,22 @@ pub enum SyntaxKind {
     IDENT,
     COMMENT,
     ITEM_LIST,
+    ITEM,
     SOURCE_FILE,
     CLASS_DEF,
     ENUM_DEF,
     FN_DEF,
-    RET_TYPE,
     EXTERN_IMPORT_DEF,
     TYPE_ALIAS_DEF,
     BIND_PAT,
     PLACEHOLDER_PAT,
     TUPLE_PAT,
     LITERAL_PAT,
-    FN_POINTER_TYPE,
+    FN_TYPE,
     PAREN_TYPE,
     ARRAY_TYPE,
+    IDENT_TYPE,
+    RET_TYPE,
     ARRAY_EXPR,
     CALL_EXPR,
     CAST_EXPR,
@@ -883,27 +885,27 @@ impl FnDef {
     }
 }
 
-// FnPointerType
+// FnType
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnPointerType {
+pub struct FnType {
     pub(crate) syntax: SyntaxNode,
 }
 
-impl AstNode for FnPointerType {
+impl AstNode for FnType {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-            FN_POINTER_TYPE => true,
+            FN_TYPE => true,
             _ => false,
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(FnPointerType { syntax }) } else { None }
+        if Self::can_cast(syntax.kind()) { Some(FnType { syntax }) } else { None }
     }
     fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
 
 
-impl FnPointerType {
+impl FnType {
     pub fn param_list(&self) -> Option<ParamList> {
         child_opt(self)
     }
@@ -944,6 +946,32 @@ impl ForExpr {
     }
 
     pub fn increment(&self) -> Option<Expr> {
+        child_opt(self)
+    }
+}
+
+// IdentType
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct IdentType {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for IdentType {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            IDENT_TYPE => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(IdentType { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl IdentType {
+    pub fn type_ref(&self) -> Option<TypeRef> {
         child_opt(self)
     }
 }
@@ -1829,7 +1857,7 @@ pub struct TypeRef {
 impl AstNode for TypeRef {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-             | PAREN_TYPE | ARRAY_TYPE | FN_POINTER_TYPE => true,
+             | PAREN_TYPE | ARRAY_TYPE | FN_TYPE => true,
             _ => false,
         }
     }
@@ -1844,7 +1872,7 @@ impl AstNode for TypeRef {
 pub enum TypeRefKind {
     ParenType(ParenType),
     ArrayType(ArrayType),
-    FnPointerType(FnPointerType),
+    FnType(FnType),
 }
 impl From<ParenType> for TypeRef {
     fn from(n: ParenType) -> TypeRef { TypeRef { syntax: n.syntax } }
@@ -1852,15 +1880,15 @@ impl From<ParenType> for TypeRef {
 impl From<ArrayType> for TypeRef {
     fn from(n: ArrayType) -> TypeRef { TypeRef { syntax: n.syntax } }
 }
-impl From<FnPointerType> for TypeRef {
-    fn from(n: FnPointerType) -> TypeRef { TypeRef { syntax: n.syntax } }
+impl From<FnType> for TypeRef {
+    fn from(n: FnType) -> TypeRef { TypeRef { syntax: n.syntax } }
 }
 impl TypeRef {
     pub fn kind(&self) -> TypeRefKind {
         match self.syntax.kind() {
             PAREN_TYPE => TypeRefKind::ParenType(ParenType::cast(self.syntax.clone()).unwrap()),
             ARRAY_TYPE => TypeRefKind::ArrayType(ArrayType::cast(self.syntax.clone()).unwrap()),
-            FN_POINTER_TYPE => TypeRefKind::FnPointerType(FnPointerType::cast(self.syntax.clone()).unwrap()),
+            FN_TYPE => TypeRefKind::FnType(FnType::cast(self.syntax.clone()).unwrap()),
             _ => unreachable!(),
         }
     }

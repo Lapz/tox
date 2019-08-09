@@ -33,7 +33,7 @@ where
         self.start_node(PARAM);
         self.parse_pattern(false);
         self.expect(COLON, "Expected `:`");
-        self.ident();
+        self.parse_type();
         self.finish_node();
     }
 }

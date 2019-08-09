@@ -54,10 +54,10 @@ macro_rules! T {
         $crate::SyntaxKind::R_CURLY
     };
     ("[") => {
-        $crate::SyntaxKind::L_SQUARE
+        $crate::SyntaxKind::L_BRACK
     };
     ("]") => {
-        $crate::SyntaxKind::R_SQUARE
+        $crate::SyntaxKind::R_BRACK
     };
     ("(") => {
         $crate::SyntaxKind::L_PAREN
@@ -127,6 +127,10 @@ macro_rules! T {
     };
     (||) => {
         $crate::SyntaxKind::OR
+    };
+
+    (->) => {
+        $crate::SyntaxKind::FRETURN
     };
 }
 
