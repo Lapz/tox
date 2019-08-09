@@ -71,6 +71,10 @@ mod test {
 
     test_parser! {parse_tuple_pattern,"fn main((x,y):i32) {}"}
 
+    test_parser! {parse_binding_pattern,"fn main((x:i32) {}"}
+
+    test_parser! {parse_nested_tuple_pattern,"fn main((x,(y,_)):i32) {}"}
+
     fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
         let mut lexer = Lexer::new(input);
         let parser = Parser::new(lexer.lex().into_iter(), input);

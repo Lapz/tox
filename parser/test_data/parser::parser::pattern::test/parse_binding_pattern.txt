@@ -1,0 +1,19 @@
+SOURCE_FILE@[0; 16)
+  ITEM_LIST@[0; 16)
+    FN_DEF@[0; 16)
+      FN_KW@[0; 2) "fn"
+      IDENT@[2; 6) "main"
+      PARAM_LIST@[6; 16)
+        L_PAREN@[6; 7) "("
+        PARAM@[7; 16)
+          TUPLE_PAT@[7; 14)
+            L_PAREN@[7; 8) "("
+            PLACEHOLDER_PAT@[8; 9)
+              IDENT@[8; 9)
+                IDENT@[8; 9) "x"
+            COLON@[9; 10) ":"
+            IDENT@[10; 13) "i32"
+            R_PAREN@[13; 14) ")"
+          L_CURLY@[14; 15) "{"
+          R_CURLY@[15; 16) "}"
+          IDENT@[16; 16)
