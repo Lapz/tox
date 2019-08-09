@@ -14,7 +14,10 @@ where
             L_BRACK => self.parse_array_type(),
             L_PAREN => self.parse_paren_type(),
             FN_KW => self.parse_fn_type(),
-            _ => self.error("Expected a type parameter"),
+            e => {
+                println!("{:?}", e);
+                self.error("Expected a type parameter  ")
+            }
         };
     }
 
@@ -32,7 +35,7 @@ where
 
         self.parse_type();
 
-        self.expect(T!["]"], "Expected `[`");
+        self.expect(T!["]"], "Expected `]`");
 
         self.finish_node();
     }
@@ -76,4 +79,14 @@ where
 
         self.finish_node();
     }
+}
+
+#[cfg(test)]
+mod test {
+    test_parser! {parse_fn_type,"fn main(_:fn(i32,i32) -> i32) {}"}
+    test_parser! {parse_fn_tuple_type,"fn main(_:fn((i32,i32)) -> i32) {}"}
+    test_parser! {parse_ident_type,"fn main(x:i32) {}"}
+    test_parser! {parse_array_type,"fn main(x:[i32]) {}"}
+    test_parser! {parse_array_tuple_type,"fn main(x:[(i32,i32)]) {}"}
+    test_parser! {parse_tuple_type,"fn main(x:(i32,i32)) {}"}
 }

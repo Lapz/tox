@@ -1,0 +1,27 @@
+SOURCE_FILE@[0; 27)
+  ITEM_LIST@[0; 27)
+    FN_DEF@[0; 27)
+      FN_KW@[0; 2) "fn"
+      IDENT@[2; 6) "main"
+      PARAM_LIST@[6; 27)
+        L_PAREN@[6; 7) "("
+        PARAM@[7; 26)
+          PLACEHOLDER_PAT@[7; 8)
+            UNDERSCORE@[7; 8) "_"
+          COLON@[8; 9) ":"
+          FN_TYPE@[9; 26)
+            FN_KW@[9; 11) "fn"
+            L_PAREN@[11; 12) "("
+            PAREN_TYPE@[12; 21)
+              L_PAREN@[12; 13) "("
+              IDENT_TYPE@[13; 16)
+                IDENT@[13; 16) "i32"
+              COMMA@[16; 17) ","
+              IDENT_TYPE@[17; 20)
+                IDENT@[17; 20) "i32"
+              R_PAREN@[20; 21) ")"
+            R_PAREN@[21; 22) ")"
+            FRETURN@[22; 23) "-"
+            IDENT_TYPE@[23; 26)
+              IDENT@[23; 26) "i32"
+        R_PAREN@[26; 27) ")"

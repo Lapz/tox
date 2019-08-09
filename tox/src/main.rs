@@ -6,7 +6,7 @@ use syntax::{AstNode, Lexer};
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let mut input = "fn main((x,y):(i32,i32)) {}";
+    let mut input = "fn main((x,y):fn(i32,i32) -> void) {}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 

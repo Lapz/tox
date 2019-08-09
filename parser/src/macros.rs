@@ -139,7 +139,8 @@ macro_rules! test_parser {
     ($f_name:ident,$test:expr) => {
         #[test]
         fn $f_name() {
-            let parser_output = parse($test).parse_program();
+            use std::io::Write;
+            let parser_output = $crate::utils::parse($test).parse_program();
 
             let dir = format!("test_data/{}", module_path!());
             let dir = std::path::Path::new(&dir);

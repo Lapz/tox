@@ -59,7 +59,7 @@ where
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, msg: T) {
         if self.peek(|t| t == expected) {
         } else {
-            self.error("")
+            panic!("Expected {:?} found {:?}", expected, self.current())
         }
 
         self.bump();

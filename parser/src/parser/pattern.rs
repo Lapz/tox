@@ -1,13 +1,7 @@
-use crate::ast::*;
-use crate::macros::*;
 use crate::parser::Parser;
-use rowan::GreenNodeBuilder;
+use crate::T;
 
-use crate::{
-    AstNode, Span,
-    SyntaxKind::{self, *},
-    SyntaxNode, Token,
-};
+use crate::{Span, SyntaxKind::*, Token};
 
 impl<'a, I> Parser<'a, I>
 where
@@ -35,12 +29,12 @@ where
 
         while !self.at(EOF) && !self.at(T![")"]) {
             self.parse_pattern(allow_literal);
-            if !self.at(T![>]) && !self.expected(T![,]) {
+            if !self.at(T![")"]) && !self.expected(T![,]) {
                 break;
             }
         }
 
-        self.expect(T![")"], "Expected `>` to close type params");
+        self.expect(T![")"], "Expected `)` to close type params");
         self.finish_node();
     }
 
@@ -59,26 +53,11 @@ where
 
 #[cfg(test)]
 mod test {
-
-    use crate::utils::dump_debug;
-    use crate::{Parser, Span, Token};
-    use insta::assert_debug_snapshot_matches;
-    use std::io::Write;
-    use std::vec::IntoIter;
-    use syntax::Lexer;
-
     test_parser! {parse_placeholder_pattern,"fn main(_:i32) {}"}
 
     test_parser! {parse_tuple_pattern,"fn main((x,y):i32) {}"}
 
-    test_parser! {parse_binding_pattern,"fn main((x:i32) {}"}
+    test_parser! {parse_binding_pattern,"fn main(x:i32) {}"}
 
     test_parser! {parse_nested_tuple_pattern,"fn main((x,(y,_)):i32) {}"}
-
-    fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
-        let mut lexer = Lexer::new(input);
-        let parser = Parser::new(lexer.lex().into_iter(), input);
-
-        parser
-    }
 }
