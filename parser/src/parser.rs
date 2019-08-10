@@ -2,6 +2,7 @@ mod function;
 mod params;
 mod pattern;
 mod source_file;
+mod type_alias;
 mod type_params;
 mod types;
 mod visibility;

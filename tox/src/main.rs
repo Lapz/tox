@@ -37,12 +37,12 @@ fn main() {
     //     )
     // }
 
-    match teraron::generate(
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
-        teraron::Mode::Overwrite,
-    ) {
-        Ok(_) => println!("ok"),
-        Err(e) => println!("{:?}", e),
-    };
+    // match teraron::generate(
+    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
+    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
+    //     teraron::Mode::Overwrite,
+    // ) {
+    //     Ok(_) => println!("ok"),
+    //     Err(e) => println!("{:?}", e),
+    // };
 }

@@ -1,0 +1,8 @@
+SOURCE_FILE@[0; 12)
+  TYPE_ALIAS_DEF@[0; 12)
+    TYPE_KW@[0; 4) "type"
+    IDENT@[4; 7) "Foo"
+    EQ@[7; 8) "="
+    IDENT_TYPE@[8; 11)
+      IDENT@[8; 11) "i32"
+    SEMI@[11; 12) ";"

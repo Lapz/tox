@@ -132,6 +132,10 @@ macro_rules! T {
     (->) => {
         $crate::SyntaxKind::FRETURN
     };
+
+    (fn) => {
+        $crate::SyntaxKind::FN_KW
+    };
 }
 
 #[macro_export]

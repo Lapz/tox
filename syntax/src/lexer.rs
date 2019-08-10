@@ -142,6 +142,15 @@ impl<'a> Lexer<'a> {
                     }
                 }
 
+                '=' => {
+                    if self.peek(|ch| ch == '=') {
+                        self.advance();
+                        spans(SyntaxKind::EQEQ, start, start.shift('='))
+                    } else {
+                        span(SyntaxKind::EQ, start)
+                    }
+                }
+
                 '>' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();

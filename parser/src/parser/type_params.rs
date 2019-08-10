@@ -32,6 +32,8 @@ where
             }
         }
 
+        println!("current {:?}", self.lookahead);
+
         self.expect(T![>], "Expected `>` to close type params");
         self.finish_node()
     }

@@ -16,7 +16,19 @@ where
     pub fn parse_program(&mut self) -> SourceFile {
         self.start_node(SOURCE_FILE);
 
-        self.parse_function();
+        while !self.at(EOF) && !self.at(ERROR) {
+            if self.peek(|t| t == T![fn]) {
+                self.parse_function()
+            }
+            match self.current() {
+                TYPE_KW => self.parse_type_alias(),
+                FN_KW => self.parse_function(),
+                e => {
+                    println!("{:?}", e);
+                    self.error("Expected `fn`| `type` | `enum` | `class`| extern`")
+                }
+            }
+        }
 
         self.finish_node();
 
