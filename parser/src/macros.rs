@@ -163,7 +163,8 @@ macro_rules! test_parser {
                     &mut std::fs::File::create(path).unwrap(),
                     "{}",
                     $crate::utils::dump_debug(&parser_output)
-                );
+                )
+                .unwrap();
             }
         }
     };
