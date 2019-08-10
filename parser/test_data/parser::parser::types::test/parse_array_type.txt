@@ -1,18 +1,17 @@
 SOURCE_FILE@[0; 15)
-  ITEM_LIST@[0; 15)
-    FN_DEF@[0; 15)
-      FN_KW@[0; 2) "fn"
-      IDENT@[2; 6) "main"
-      PARAM_LIST@[6; 15)
-        L_PAREN@[6; 7) "("
-        PARAM@[7; 14)
-          PLACEHOLDER_PAT@[7; 8)
-            IDENT@[7; 8)
-              IDENT@[7; 8) "x"
-          COLON@[8; 9) ":"
-          ARRAY_TYPE@[9; 14)
-            L_BRACK@[9; 10) "["
-            IDENT_TYPE@[10; 13)
-              IDENT@[10; 13) "i32"
-            R_BRACK@[13; 14) "]"
-        R_PAREN@[14; 15) ")"
+  FN_DEF@[0; 15)
+    FN_KW@[0; 2) "fn"
+    IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 15)
+      L_PAREN@[6; 7) "("
+      PARAM@[7; 14)
+        PLACEHOLDER_PAT@[7; 8)
+          IDENT@[7; 8)
+            IDENT@[7; 8) "x"
+        COLON@[8; 9) ":"
+        ARRAY_TYPE@[9; 14)
+          L_BRACK@[9; 10) "["
+          IDENT_TYPE@[10; 13)
+            IDENT@[10; 13) "i32"
+          R_BRACK@[13; 14) "]"
+      R_PAREN@[14; 15) ")"

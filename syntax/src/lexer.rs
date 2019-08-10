@@ -321,7 +321,7 @@ fn look_up_identifier(id: &str) -> SyntaxKind {
         "as" => SyntaxKind::AS_KW,
         "match" => SyntaxKind::MATCH_KW,
         "enum" => SyntaxKind::ENUM_KW,
-        "extern" => SyntaxKind::EXTERN_KW,
+        "export" => SyntaxKind::EXPORT_KW,
         // Functions and vars
         "fn" => SyntaxKind::FN_KW,
         "let" => SyntaxKind::LET_KW,

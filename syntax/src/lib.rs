@@ -8,7 +8,7 @@ pub use ast::SyntaxKind;
 pub use lexer::Lexer;
 pub use pos::Span;
 pub use token::Token;
-pub use traits::AstNode;
+pub use traits::*;
 
 pub type SyntaxNode = rowan::SyntaxNode<ToxLang>;
 #[allow(unused)]

@@ -65,7 +65,7 @@ Grammar(
         "or",
         "and",
         "void",
-        "extern",
+        "export",
         "import",
         "from",
         "print",
@@ -83,8 +83,6 @@ Grammar(
         "COMMENT",
     ],
     nodes: [
-        "ITEM_LIST",
-        "ITEM",
         //defintions
         "SOURCE_FILE",
         "CLASS_DEF",
@@ -140,7 +138,7 @@ Grammar(
         "POS_FIELD_DEF_LIST",
         "POS_FIELD_DEF",
         "ENUM_VARIANT_LIST",
-
+        "VISIBILITY",
         "LITERAL",
         "NAME",
         "NAME_REF",
@@ -157,16 +155,7 @@ Grammar(
     ],
     ast: {
         "SourceFile": (
-            collections:[
-                ["items","ItemList"]
-            ],
-            traits: ["FnDefOwner"]
-        ),
-        "ItemList": (
-            collections:[["items","Item"]],
-        ),
-        "Item":(
-            enum: ["FnDef","TypeAliasDef","EnumDef","ClassDef","ExternImportDef"]
+            traits: ["FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner"]
         ),
         "FnDef":(
             traits: [

@@ -12,8 +12,8 @@ where
     pub(crate) fn parse_function(&mut self) {
         self.start_node(FN_DEF);
 
-        if self.peek(|t| t == T![extern]) {
-            self.bump();
+        if self.peek(|t| t == T![export]) {
+            self.parse_visibility();
         }
 
         self.expect(FN_KW, "Expected `fn`");
@@ -32,4 +32,9 @@ where
 
         self.finish_node()
     }
+}
+
+#[cfg(test)]
+mod test {
+    test_parser! {parse_function,"fn main() {}"}
 }

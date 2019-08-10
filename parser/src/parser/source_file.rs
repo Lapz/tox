@@ -16,11 +16,8 @@ where
     pub fn parse_program(&mut self) -> SourceFile {
         self.start_node(SOURCE_FILE);
 
-        self.start_node(ITEM_LIST);
-
         self.parse_function();
 
-        self.finish_node();
         self.finish_node();
 
         let mut _builder = GreenNodeBuilder::new();

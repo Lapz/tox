@@ -94,6 +94,29 @@ pub trait FnDefOwner: AstNode {
     }
 }
 
+pub trait TypeAliasDefOwner: AstNode {
+    fn type_alias(&self) -> AstChildren<ast::TypeAliasDef> {
+        children(self)
+    }
+}
+
+pub trait EnumDefOwner: AstNode {
+    fn enums(&self) -> AstChildren<ast::EnumDef> {
+        children(self)
+    }
+}
+
+pub trait ClassDefOwner: AstNode {
+    fn classes(&self) -> AstChildren<ast::ClassDef> {
+        children(self)
+    }
+}
+
+pub trait ExternImportDefOwner: AstNode {
+    fn imports(&self) -> AstChildren<ast::ExternImportDef> {
+        children(self)
+    }
+}
 pub trait TypeParamsOwner: AstNode {
     fn type_param_list(&self) -> Option<ast::TypeParamList> {
         child_opt(self)

@@ -4,6 +4,7 @@ mod pattern;
 mod source_file;
 mod type_params;
 mod types;
+mod visibility;
 
 use rowan::{GreenNode, GreenNodeBuilder};
 use std::collections::VecDeque;

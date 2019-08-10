@@ -1,0 +1,9 @@
+SOURCE_FILE@[0; 14)
+  FN_DEF@[0; 14)
+    VISIBILITY@[0; 6)
+      EXPORT_KW@[0; 6) "export"
+    FN_KW@[6; 8) "fn"
+    IDENT@[8; 12) "main"
+    PARAM_LIST@[12; 14)
+      L_PAREN@[12; 13) "("
+      R_PAREN@[13; 14) ")"

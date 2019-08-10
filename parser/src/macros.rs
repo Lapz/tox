@@ -27,8 +27,8 @@ macro_rules! T {
     (extends) => {
         $crate::SyntaxKind::EXTENDS
     };
-    (extern) => {
-        $crate::SyntaxKind::EXTERN_KW
+    (export) => {
+        $crate::SyntaxKind::EXPORT_KW
     };
     (match) => {
         $crate::SyntaxKind::MATCH
