@@ -149,11 +149,7 @@ macro_rules! test_parser {
     ($f_name:ident,$test:expr) => {
         #[test]
         fn $f_name() {
-            use std::io::Write;
             let parser_output = $crate::utils::parse($test).parse_program();
-
-            let path = format!("test_data/{}/{}", module_path!(), stringify!($f_name));
-
             insta::assert_snapshot_matches!($crate::utils::dump_debug(&parser_output));
         }
     };

@@ -28,8 +28,6 @@ where
             self.parse_func_params();
         }
 
-        // self.parse_block();
-
         self.finish_node()
     }
 }
