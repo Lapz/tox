@@ -9,10 +9,10 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_function(&mut self) {
+    pub(crate) fn parse_function(&mut self, has_visibility: bool) {
         self.start_node(FN_DEF);
 
-        if self.peek(|t| t == T![export]) {
+        if has_visibility {
             self.parse_visibility();
         }
 
@@ -20,11 +20,11 @@ where
 
         self.expect(IDENT, "Expected and identifier");
 
-        if self.peek(|t| t == L_ANGLE) {
-            self.parse_type_params();
+        if self.is_ahead(|t| t == L_ANGLE) {
+            self.parse_type_params(false);
         }
 
-        if self.peek(|t| t == T!["("]) {
+        if self.is_ahead(|t| t == T!["("]) {
             self.parse_func_params();
         }
 

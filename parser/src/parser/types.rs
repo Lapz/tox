@@ -24,7 +24,15 @@ where
     fn parse_ident_type(&mut self) {
         self.start_node(IDENT_TYPE);
 
-        self.expect(IDENT, "Expected an identifier/type");
+        if self.matches(vec![T![nil], IDENT]) {
+            self.bump();
+        } else {
+            self.error("Expected an identifier or `nil`")
+        }
+
+        if self.is_ahead(|t| t == T![<]) {
+            self.parse_type_params(false);
+        }
 
         self.finish_node();
     }
@@ -71,7 +79,7 @@ where
 
         self.expect(T![")"], "Expected `)`");
 
-        if self.peek(|t| t == T![->]) {
+        if self.is_ahead(|t| t == T![->]) {
             self.bump();
 
             self.parse_type();

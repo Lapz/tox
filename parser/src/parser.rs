@@ -41,13 +41,20 @@ where
         }
     }
 
-    pub(crate) fn peek<F>(&self, mut check: F) -> bool
+    pub(crate) fn is_ahead<F>(&self, mut check: F) -> bool
     where
         F: FnMut(SyntaxKind) -> bool,
     {
         self.lookahead
             .as_ref()
             .map_or(false, |token| check(token.value.kind))
+    }
+
+    pub(crate) fn peek(&mut self) -> SyntaxKind {
+        self.iter
+            .peek()
+            .as_ref()
+            .map_or(SyntaxKind::EOF, |token| token.value.kind)
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
@@ -59,7 +66,7 @@ where
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, msg: T) {
-        if self.peek(|t| t == expected) {
+        if self.is_ahead(|t| t == expected) {
         } else {
             panic!("Expected {:?} found {:?}", expected, self.current())
         }
@@ -68,7 +75,7 @@ where
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
-        if self.peek(|t| t == expected) {
+        if self.is_ahead(|t| t == expected) {
             self.bump();
             true
         } else {
@@ -86,6 +93,15 @@ where
 
     fn at(&self, check: SyntaxKind) -> bool {
         self.current() == check
+    }
+
+    fn matches(&self, kind: Vec<SyntaxKind>) -> bool {
+        for kind in kind {
+            if (kind == self.current()) {
+                return true;
+            }
+        }
+        false
     }
 
     fn error(&mut self, err: &str) {

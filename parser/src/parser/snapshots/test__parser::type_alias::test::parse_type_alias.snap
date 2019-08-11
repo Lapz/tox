@@ -1,3 +1,9 @@
+---
+created: "2019-08-11T16:03:20.262334Z"
+creator: insta@0.8.2
+source: parser/src/parser/type_alias.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
 SOURCE_FILE@[0; 12)
   TYPE_ALIAS_DEF@[0; 12)
     TYPE_KW@[0; 4) "type"
@@ -6,3 +12,4 @@ SOURCE_FILE@[0; 12)
     IDENT_TYPE@[8; 11)
       IDENT@[8; 11) "i32"
     SEMI@[11; 12) ";"
+

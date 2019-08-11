@@ -6,7 +6,7 @@ use syntax::{AstNode, FnDefOwner, Lexer, VisibilityOwner};
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let mut input = "export fn main((x,y):fn(i32,i32) -> void) {}";
+    let mut input = "fn main(_:fn(i32,i32) -> i32) {}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 

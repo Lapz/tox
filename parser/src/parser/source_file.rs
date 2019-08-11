@@ -17,15 +17,19 @@ where
         self.start_node(SOURCE_FILE);
 
         while !self.at(EOF) && !self.at(ERROR) {
-            if self.peek(|t| t == T![fn]) {
-                self.parse_function()
-            }
-            match self.current() {
-                TYPE_KW => self.parse_type_alias(),
-                FN_KW => self.parse_function(),
-                e => {
-                    println!("{:?}", e);
-                    self.error("Expected `fn`| `type` | `enum` | `class`| extern`")
+            let has_visibility = self.has_visibility();
+
+            if has_visibility {
+                match self.peek() {
+                    T![type] => self.parse_type_alias(has_visibility),
+                    T![fn] => self.parse_function(has_visibility),
+                    _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
+                }
+            } else {
+                match self.current() {
+                    T![type] => self.parse_type_alias(has_visibility),
+                    T![fn] => self.parse_function(has_visibility),
+                    _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
                 }
             }
         }
@@ -41,5 +45,12 @@ where
         let root = SyntaxNode::new_root(green);
 
         SourceFile::cast(root).unwrap()
+    }
+
+    fn has_visibility(&self) -> bool {
+        match self.current() {
+            T![export] => true,
+            _ => false,
+        }
     }
 }

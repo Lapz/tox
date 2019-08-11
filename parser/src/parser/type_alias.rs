@@ -8,10 +8,10 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_type_alias(&mut self) {
+    pub(crate) fn parse_type_alias(&mut self, has_visibility: bool) {
         self.start_node(TYPE_ALIAS_DEF);
 
-        if self.peek(|t| t == T![export]) {
+        if has_visibility {
             self.parse_visibility();
         }
 
@@ -19,8 +19,8 @@ where
 
         self.expect(IDENT, "Expected an identifier");
 
-        if self.peek(|t| t == L_ANGLE) {
-            self.parse_type_params();
+        if self.is_ahead(|t| t == L_ANGLE) {
+            self.parse_type_params(true);
         }
 
         self.expect(EQ, "Expected `=`");
@@ -36,5 +36,5 @@ where
 #[cfg(test)]
 mod test {
     test_parser! {parse_type_alias,"type Foo = i32;"}
-    test_parser! {parse_type_alias_params,"type ParseResult<T> = Result<T,void>;"}
+    test_parser! {parse_type_alias_params,"type ParseResult<T> = Result<T,nil>;"}
 }

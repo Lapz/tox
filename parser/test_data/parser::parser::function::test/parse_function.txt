@@ -1,7 +1,0 @@
-SOURCE_FILE@[0; 8)
-  FN_DEF@[0; 8)
-    FN_KW@[0; 2) "fn"
-    IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
