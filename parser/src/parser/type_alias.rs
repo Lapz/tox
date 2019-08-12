@@ -17,7 +17,7 @@ where
 
         self.expect(TYPE_KW, "Expected `type`");
 
-        self.expect(IDENT, "Expected an identifier");
+        self.ident();
 
         if self.is_ahead(|t| t == L_ANGLE) {
             self.parse_type_params(true);

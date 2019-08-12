@@ -1,0 +1,48 @@
+---
+created: "2019-08-11T21:50:37.800584Z"
+creator: insta@0.8.2
+source: parser/src/parser/enums.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 38)
+  ENUM_DEF@[0; 38)
+    ENUM_KW@[0; 4) "enum"
+    NAME@[4; 7)
+      IDENT@[4; 7) "Foo"
+    ENUM_VARIANT_LIST@[7; 38)
+      L_CURLY@[7; 8) "{"
+      ENUM_VARIANT@[8; 16)
+        NAME@[8; 9)
+          IDENT@[8; 9) "A"
+        L_PAREN@[9; 10) "("
+        ARRAY_TYPE@[10; 15)
+          L_BRACK@[10; 11) "["
+          IDENT_TYPE@[11; 14)
+            IDENT@[11; 14) "i32"
+          R_BRACK@[14; 15) "]"
+        R_PAREN@[15; 16) ")"
+      COMMA@[16; 17) ","
+      ENUM_VARIANT@[17; 23)
+        NAME@[17; 18)
+          IDENT@[17; 18) "B"
+        L_PAREN@[18; 19) "("
+        IDENT_TYPE@[19; 22)
+          IDENT@[19; 22) "i32"
+        R_PAREN@[22; 23) ")"
+      COMMA@[23; 24) ","
+      ENUM_VARIANT@[24; 36)
+        NAME@[24; 25)
+          IDENT@[24; 25) "C"
+        L_PAREN@[25; 26) "("
+        PAREN_TYPE@[26; 35)
+          L_PAREN@[26; 27) "("
+          IDENT_TYPE@[27; 30)
+            IDENT@[27; 30) "i32"
+          COMMA@[30; 31) ","
+          IDENT_TYPE@[31; 34)
+            IDENT@[31; 34) "i32"
+          R_PAREN@[34; 35) ")"
+        R_PAREN@[35; 36) ")"
+      COMMA@[36; 37) ","
+      R_CURLY@[37; 38) "}"
+

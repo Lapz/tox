@@ -1,13 +1,9 @@
 use crate::ast::*;
-use crate::macros::*;
 use crate::parser::Parser;
+use crate::T;
 use rowan::GreenNodeBuilder;
 
-use crate::{
-    AstNode, Span,
-    SyntaxKind::{self, *},
-    SyntaxNode, Token,
-};
+use crate::{AstNode, Span, SyntaxKind::*, SyntaxNode, Token};
 
 impl<'a, I> Parser<'a, I>
 where
@@ -23,12 +19,14 @@ where
                 match self.peek() {
                     T![type] => self.parse_type_alias(has_visibility),
                     T![fn] => self.parse_function(has_visibility),
+                    T![enum] => self.parse_enum(has_visibility),
                     _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
                 }
             } else {
                 match self.current() {
                     T![type] => self.parse_type_alias(has_visibility),
                     T![fn] => self.parse_function(has_visibility),
+                    T![enum] => self.parse_enum(has_visibility),
                     _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
                 }
             }

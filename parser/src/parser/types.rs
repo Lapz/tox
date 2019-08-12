@@ -10,10 +10,10 @@ where
 {
     pub(crate) fn parse_type(&mut self) {
         match self.current() {
-            IDENT => self.parse_ident_type(),
-            L_BRACK => self.parse_array_type(),
-            L_PAREN => self.parse_paren_type(),
-            FN_KW => self.parse_fn_type(),
+            IDENT | T![void] => self.parse_ident_type(),
+            T!["["] => self.parse_array_type(),
+            T!["("] => self.parse_paren_type(),
+            T![fn] => self.parse_fn_type(),
             e => {
                 println!("{:?}", e);
                 self.error("Expected a type parameter  ")

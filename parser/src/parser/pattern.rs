@@ -9,8 +9,8 @@ where
 {
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {
         match self.current() {
-            L_PAREN => self.parse_tuple_pattern(allow_literal),
-            UNDERSCORE => self.parse_placeholder_pattern(),
+            T!["("] => self.parse_tuple_pattern(allow_literal),
+            T![_] => self.parse_placeholder_pattern(),
             IDENT => self.parse_binding_pattern(),
             _ => {
                 if allow_literal {
@@ -40,7 +40,7 @@ where
 
     fn parse_placeholder_pattern(&mut self) {
         self.start_node(PLACEHOLDER_PAT);
-        self.expect(UNDERSCORE, "Expected `_`");
+        self.expect(T![_], "Expected `_`");
         self.finish_node();
     }
 

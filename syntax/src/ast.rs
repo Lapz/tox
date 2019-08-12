@@ -21,70 +21,70 @@ pub enum SyntaxKind {
     // but never end up in the final tree
     #[doc(hidden)]
     EOF,
-    SEMI,
-    COMMA,
-    L_PAREN,
-    R_PAREN,
-    L_CURLY,
-    R_CURLY,
-    L_BRACK,
-    R_BRACK,
-    L_ANGLE,
-    R_ANGLE,
-    AMP,
-    PIPE,
-    PLUS,
-    STAR,
-    SLASH,
-    CARET,
-    PERCENT,
-    UNDERSCORE,
-    EXPONENTIAL,
-    DOT,
-    QUESTION,
-    MINUS,
-    FRETURN,
-    COLON,
-    COLON_COLON,
-    EQ,
-    EQEQ,
-    FAT_ARROW,
-    EXCL,
-    NEQ,
-    LTEQ,
-    GTEQ,
-    PLUSEQ,
-    MINUSEQ,
-    STAREQ,
-    SLASHEQ,
-    AMPAMP,
-    PIPEPIPE,
-    CLASS_KW,
-    EXTENDS_KW,
-    TYPE_KW,
-    AS_KW,
-    MATCH_KW,
-    ENUM_KW,
-    FN_KW,
-    LET_KW,
-    IF_KW,
-    ELSE_KW,
-    FOR_KW,
-    WHILE_KW,
-    RETURN_KW,
-    BREAK_KW,
-    CONTINUE_KW,
-    DO_KW,
-    TRUE_KW,
-    FALSE_KW,
-    OR_KW,
-    AND_KW,
-    VOID_KW,
-    EXPORT_KW,
-    IMPORT_KW,
-    FROM_KW,
-    PRINT_KW,
-    NIL_KW,
+    SEMI, // ;
+    COMMA, // ,
+    L_PAREN, // (
+    R_PAREN, // )
+    L_CURLY, // {
+    R_CURLY, // }
+    L_BRACK, // [
+    R_BRACK, // ]
+    L_ANGLE, // <
+    R_ANGLE, // >
+    AMP, // &
+    PIPE, // |
+    PLUS, // +
+    STAR, // *
+    SLASH, // /
+    CARET, // ^
+    PERCENT, // %
+    UNDERSCORE, // _
+    EXPONENTIAL, // ^
+    DOT, // .
+    QUESTION, // ?
+    MINUS, // -
+    FRETURN, // ->
+    COLON, // :
+    COLON_COLON, // ::
+    EQ, // =
+    EQEQ, // ==
+    FAT_ARROW, // =>
+    EXCL, // !
+    NEQ, // !=
+    LTEQ, // <=
+    GTEQ, // >=
+    PLUSEQ, // +=
+    MINUSEQ, // -=
+    STAREQ, // *=
+    SLASHEQ, // /=
+    AMPAMP, // &&
+    PIPEPIPE, // ||
+    CLASS_KW, // class
+    EXTENDS_KW, // extends
+    TYPE_KW, // type
+    AS_KW, // as
+    MATCH_KW, // match
+    ENUM_KW, // enum
+    FN_KW, // fn
+    LET_KW, // let
+    IF_KW, // if
+    ELSE_KW, // else
+    FOR_KW, // for
+    WHILE_KW, // while
+    RETURN_KW, // return
+    BREAK_KW, // break
+    CONTINUE_KW, // continue
+    DO_KW, // do
+    TRUE_KW, // true
+    FALSE_KW, // false
+    OR_KW, // or
+    AND_KW, // and
+    VOID_KW, // void
+    EXPORT_KW, // export
+    IMPORT_KW, // import
+    FROM_KW, // from
+    PRINT_KW, // print
+    NIL_KW, // nil
     INT_NUMBER,
     FLOAT_NUMBER,
     CHAR,

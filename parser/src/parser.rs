@@ -1,3 +1,5 @@
+mod classes;
+mod enums;
 mod function;
 mod params;
 mod pattern;
@@ -6,8 +8,7 @@ mod type_alias;
 mod type_params;
 mod types;
 mod visibility;
-
-use rowan::{GreenNode, GreenNodeBuilder};
+use rowan::GreenNodeBuilder;
 use std::collections::VecDeque;
 use std::iter::Peekable;
 use syntax::{
@@ -68,7 +69,12 @@ where
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, msg: T) {
         if self.is_ahead(|t| t == expected) {
         } else {
-            panic!("Expected {:?} found {:?}", expected, self.current())
+            // panic!(
+            //     "Expected {:?} found {:?} ahead is {:?}",
+            //     expected,
+            //     self.current(),
+            //     self.peek()
+            // )
         }
 
         self.bump();
@@ -88,7 +94,7 @@ where
         self.lookahead
             .as_ref()
             .map(|token| token.value.kind)
-            .unwrap_or(ERROR)
+            .unwrap_or(EOF)
     }
 
     fn at(&self, check: SyntaxKind) -> bool {
@@ -97,7 +103,7 @@ where
 
     fn matches(&self, kind: Vec<SyntaxKind>) -> bool {
         for kind in kind {
-            if (kind == self.current()) {
+            if kind == self.current() {
                 return true;
             }
         }
@@ -124,8 +130,8 @@ where
     }
 
     fn ident(&mut self) {
-        self.start_node(IDENT);
-        self.bump();
+        self.start_node(NAME);
+        self.expect(IDENT, "Expected an identifier");
         self.finish_node()
     }
 }

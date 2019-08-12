@@ -18,9 +18,9 @@ where
 
         self.expect(FN_KW, "Expected `fn`");
 
-        self.expect(IDENT, "Expected and identifier");
+        self.ident();
 
-        if self.is_ahead(|t| t == L_ANGLE) {
+        if self.is_ahead(|t| t == T![<]) {
             self.parse_type_params(false);
         }
 

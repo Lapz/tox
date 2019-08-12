@@ -1,12 +1,12 @@
 use codespan::{CodeMap, FileMap, FileName, Span};
 use parser::Parser;
 use rowan::SmolStr;
-use syntax::{AstNode, FnDefOwner, Lexer, VisibilityOwner};
+use syntax::{ArgListOwner, AstNode, FnDefOwner, Lexer, VisibilityOwner};
 
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let mut input = "fn main(_:fn(i32,i32) -> i32) {}";
+    let mut input = "fn main(a:i32,b:i32){}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
@@ -37,12 +37,12 @@ fn main() {
     //     )
     // }
 
-    // match teraron::generate(
-    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
-    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
-    //     teraron::Mode::Overwrite,
-    // ) {
-    //     Ok(_) => println!("ok"),
-    //     Err(e) => println!("{:?}", e),
-    // };
+    match teraron::generate(
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
+        teraron::Mode::Overwrite,
+    ) {
+        Ok(_) => println!("ok"),
+        Err(e) => println!("{:?}", e),
+    };
 }

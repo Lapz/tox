@@ -24,6 +24,12 @@ macro_rules! T {
     (false) => {
         $crate::SyntaxKind::FALSE
     };
+    (enum) => {
+        $crate::SyntaxKind::ENUM_KW
+    };
+    (void) => {
+        $crate::SyntaxKind::VOID_KW
+    };
     (extends) => {
         $crate::SyntaxKind::EXTENDS
     };
@@ -78,7 +84,10 @@ macro_rules! T {
         $crate::SyntaxKind::DOT
     };
     (;) => {
-        $crate::SyntaxKind::SEMICOLON
+        $crate::SyntaxKind::SEMI
+    };
+    (_) => {
+        $crate::SyntaxKind::UNDERSCORE
     };
     (+=) => {
         $crate::SyntaxKind::PLUS_ASSIGN
