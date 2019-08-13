@@ -448,6 +448,7 @@ impl AstNode for ClassDef {
 
 impl traits::NameOwner for ClassDef {}
 impl traits::TypeParamsOwner for ClassDef {}
+impl traits::FnDefOwner for ClassDef {}
 impl ClassDef {}
 
 // ClassLit
@@ -1617,6 +1618,7 @@ impl AstNode for SourceFile {
 }
 
 
+impl traits::ClassDefOwner for SourceFile {}
 impl traits::FnDefOwner for SourceFile {}
 impl traits::TypeAliasDefOwner for SourceFile {}
 impl traits::EnumDefOwner for SourceFile {}

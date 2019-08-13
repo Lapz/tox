@@ -155,7 +155,7 @@ Grammar(
     ],
     ast: {
         "SourceFile": (
-            traits: ["FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner"]
+            traits: ["ClassDefOwner","FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner"]
         ),
         "FnDef":(
             traits: [
@@ -172,6 +172,7 @@ Grammar(
             traits: [
                 "NameOwner",
                 "TypeParamsOwner",
+                "FnDefOwner",
             ]
         ),
         "NamedFieldDefList": (collections: [["fields", "NamedFieldDef"]]),
