@@ -28,6 +28,17 @@ where
             self.parse_func_params();
         }
 
+        if self.is_ahead(|t| t == T![->]) {
+            self.parse_return_type();
+        }
+
+        self.finish_node()
+    }
+
+    fn parse_return_type(&mut self) {
+        self.start_node(RET_TYPE);
+        self.expect(T![->], "Expected `->`");
+        self.parse_type();
         self.finish_node()
     }
 }

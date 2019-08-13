@@ -20,6 +20,7 @@ where
                     T![type] => self.parse_type_alias(has_visibility),
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
+                    T![class] => self.parse_class(has_visibility),
                     _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
                 }
             } else {
@@ -27,6 +28,7 @@ where
                     T![type] => self.parse_type_alias(has_visibility),
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
+                    T![class] => self.parse_class(has_visibility),
                     _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
                 }
             }
@@ -45,7 +47,7 @@ where
         SourceFile::cast(root).unwrap()
     }
 
-    fn has_visibility(&self) -> bool {
+    pub(crate) fn has_visibility(&self) -> bool {
         match self.current() {
             T![export] => true,
             _ => false,

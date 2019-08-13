@@ -6,7 +6,7 @@ use syntax::{ArgListOwner, AstNode, FnDefOwner, Lexer, VisibilityOwner};
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let mut input = "fn main(a:i32,b:i32){}";
+    let input = "class Person { name:String; surname:String;}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
@@ -21,9 +21,9 @@ fn main() {
     //
     println!("{:#?}", file);
 
-    let func = file.functions().nth(0).unwrap();
+    // let func = file.functions().nth(0).unwrap();
 
-    println!("{:?}", func.visibility());
+    // println!("{:?}", func.visibility());
     // println!("{:?}", file.items().kind());
 
     // for token in lexer.lex() {

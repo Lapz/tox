@@ -16,7 +16,7 @@ macro_rules! T {
         $crate::SyntaxKind::PRINT
     };
     (class) => {
-        $crate::SyntaxKind::CLASS
+        $crate::SyntaxKind::CLASS_KW
     };
     (true) => {
         $crate::SyntaxKind::TRUE

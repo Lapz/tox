@@ -112,6 +112,7 @@ where
 
     fn error(&mut self, err: &str) {
         //TODO report error
+
         self.bump();
     }
 

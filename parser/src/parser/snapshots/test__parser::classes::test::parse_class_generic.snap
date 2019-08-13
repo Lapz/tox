@@ -1,0 +1,24 @@
+---
+created: "2019-08-13T22:01:19.967656Z"
+creator: insta@0.8.2
+source: parser/src/parser/classes.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 18)
+  CLASS_DEF@[0; 18)
+    CLASS_KW@[0; 5) "class"
+    NAME@[5; 11)
+      IDENT@[5; 11) "Result"
+    TYPE_PARAM_LIST@[11; 16)
+      L_ANGLE@[11; 12) "<"
+      TYPE_PARAM@[12; 13)
+        NAME@[12; 13)
+          IDENT@[12; 13) "T"
+      COMMA@[13; 14) ","
+      TYPE_PARAM@[14; 15)
+        NAME@[14; 15)
+          IDENT@[14; 15) "E"
+      R_ANGLE@[15; 16) ">"
+    L_CURLY@[16; 17) "{"
+    R_CURLY@[17; 18) "}"
+
