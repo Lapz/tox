@@ -92,6 +92,7 @@ pub enum SyntaxKind {
     ERROR,
     IDENT,
     COMMENT,
+    BLOCK,
     SOURCE_FILE,
     CLASS_DEF,
     ENUM_DEF,

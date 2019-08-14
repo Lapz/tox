@@ -84,6 +84,7 @@ Grammar(
     ],
     nodes: [
         //defintions
+        "BLOCK",
         "SOURCE_FILE",
         "CLASS_DEF",
         "ENUM_DEF",
@@ -123,6 +124,7 @@ Grammar(
         "RETURN_EXPR",
         "CLOSURE_EXPR",
         "PAREN_EXPR",
+        
 
         "MATCH_EXPR",
         "MATCH_ARM_LIST",
