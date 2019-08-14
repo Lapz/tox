@@ -54,10 +54,6 @@ where
                     }
                 }
             }
-
-            // if !self.at(T!["}"]) && !self.expected(T![,]) {
-            //     break;
-            // }
         }
 
         self.expect(T!["}"], "Expected `}`");
