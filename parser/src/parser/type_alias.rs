@@ -15,7 +15,7 @@ where
             self.parse_visibility();
         }
 
-        self.expect(TYPE_KW, "Expected `type`");
+        self.expect(T![type], "Expected `type`");
 
         self.ident();
 

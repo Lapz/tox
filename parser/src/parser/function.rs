@@ -16,7 +16,7 @@ where
             self.parse_visibility();
         }
 
-        self.expect(FN_KW, "Expected `fn`");
+        self.expect(T![fn], "Expected `fn`");
 
         self.ident();
 

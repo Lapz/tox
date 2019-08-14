@@ -15,7 +15,7 @@ where
             self.parse_visibility();
         }
 
-        self.expect(ENUM_KW, "Expected `enum`");
+        self.expect(T![enum], "Expected `enum`");
 
         self.ident();
 

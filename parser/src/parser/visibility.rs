@@ -10,7 +10,7 @@ where
     pub(crate) fn parse_visibility(&mut self) {
         self.start_node(VISIBILITY);
 
-        self.expect(EXPORT_KW, "Expected `export`");
+        self.expect(T![export], "Expected `export`");
 
         self.finish_node();
     }
