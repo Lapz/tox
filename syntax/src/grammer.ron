@@ -173,6 +173,7 @@ Grammar(
                 "NameOwner",
                 "TypeParamsOwner",
                 "FnDefOwner",
+                "NamedFieldsOwner",
             ]
         ),
         "NamedFieldDefList": (collections: [["fields", "NamedFieldDef"]]),

@@ -88,6 +88,12 @@ pub trait ArgListOwner: AstNode {
     }
 }
 
+pub trait NamedFieldsOwner: AstNode {
+    fn fields(&self) -> AstChildren<ast::NamedFieldDef> {
+        children(self)
+    }
+}
+
 pub trait FnDefOwner: AstNode {
     fn functions(&self) -> AstChildren<ast::FnDef> {
         children(self)
