@@ -1,11 +1,11 @@
 ---
-created: "2019-08-11T21:50:37.801565Z"
+created: "2019-08-14T07:46:23.490814Z"
 creator: insta@0.8.2
 source: parser/src/parser/type_alias.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 33)
-  TYPE_ALIAS_DEF@[0; 33)
+SOURCE_FILE@[0; 34)
+  TYPE_ALIAS_DEF@[0; 34)
     TYPE_KW@[0; 4) "type"
     NAME@[4; 15)
       IDENT@[4; 15) "ParseResult"
@@ -15,17 +15,17 @@ SOURCE_FILE@[0; 33)
         IDENT@[16; 17) "T"
       R_ANGLE@[17; 18) ">"
     EQ@[18; 19) "="
-    IDENT_TYPE@[19; 32)
+    IDENT_TYPE@[19; 33)
       IDENT@[19; 25) "Result"
-      TYPE_PARAM_LIST@[25; 32)
+      TYPE_PARAM_LIST@[25; 33)
         L_ANGLE@[25; 26) "<"
         TYPE_PARAM@[26; 27)
           NAME@[26; 27)
             IDENT@[26; 27) "T"
         COMMA@[27; 28) ","
-        TYPE_PARAM@[28; 31)
-          NAME@[28; 31)
-            NIL_KW@[28; 31) "nil"
-        R_ANGLE@[31; 32) ">"
-    SEMI@[32; 33) ";"
+        TYPE_PARAM@[28; 32)
+          NAME@[28; 32)
+            VOID_KW@[28; 32) "void"
+        R_ANGLE@[32; 33) ">"
+    SEMI@[33; 34) ";"
 

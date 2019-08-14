@@ -1,12 +1,14 @@
 use codespan::{CodeMap, FileMap, FileName, Span};
 use parser::Parser;
 use rowan::SmolStr;
-use syntax::{ArgListOwner, AstNode, ClassDefOwner, FnDefOwner, Lexer, VisibilityOwner};
+use syntax::{
+    ArgListOwner, AstNode, ClassDefOwner, FnDefOwner, Lexer, TypeAscriptionOwner, VisibilityOwner,
+};
 
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "class Person { name:String; surname:String; export fn foo() {} }";
+    let input = "fn main(a:i32,b:i32) {}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
@@ -21,7 +23,13 @@ fn main() {
     //
     println!("{:#?}", file);
 
-    let func = file.classes().nth(0).unwrap().functions().nth(0).unwrap();
+    let func = file.functions().nth(0).unwrap();
+
+    if let Some(params) = func.param_list() {
+        for param in params.params() {
+            println!("{:?}", param.ascribed_type());
+        }
+    }
 
     println!("{:?}", func.visibility());
 

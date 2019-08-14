@@ -85,6 +85,7 @@ pub enum SyntaxKind {
     FROM_KW, // from
     PRINT_KW, // print
     NIL_KW, // nil
+    SELF_KW, // self
     INT_NUMBER,
     FLOAT_NUMBER,
     CHAR,
@@ -150,6 +151,7 @@ pub enum SyntaxKind {
     TYPE_PARAM,
     PARAM_LIST,
     PARAM,
+    SELF_PARAM,
     ARG_LIST,
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
@@ -1776,7 +1778,7 @@ pub struct TypeRef {
 impl AstNode for TypeRef {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-             | PAREN_TYPE | ARRAY_TYPE | FN_TYPE => true,
+             | PAREN_TYPE | ARRAY_TYPE | FN_TYPE | IDENT_TYPE => true,
             _ => false,
         }
     }
@@ -1792,6 +1794,7 @@ pub enum TypeRefKind {
     ParenType(ParenType),
     ArrayType(ArrayType),
     FnType(FnType),
+    IdentType(IdentType),
 }
 impl From<ParenType> for TypeRef {
     fn from(n: ParenType) -> TypeRef { TypeRef { syntax: n.syntax } }
@@ -1802,12 +1805,16 @@ impl From<ArrayType> for TypeRef {
 impl From<FnType> for TypeRef {
     fn from(n: FnType) -> TypeRef { TypeRef { syntax: n.syntax } }
 }
+impl From<IdentType> for TypeRef {
+    fn from(n: IdentType) -> TypeRef { TypeRef { syntax: n.syntax } }
+}
 impl TypeRef {
     pub fn kind(&self) -> TypeRefKind {
         match self.syntax.kind() {
             PAREN_TYPE => TypeRefKind::ParenType(ParenType::cast(self.syntax.clone()).unwrap()),
             ARRAY_TYPE => TypeRefKind::ArrayType(ArrayType::cast(self.syntax.clone()).unwrap()),
             FN_TYPE => TypeRefKind::FnType(FnType::cast(self.syntax.clone()).unwrap()),
+            IDENT_TYPE => TypeRefKind::IdentType(IdentType::cast(self.syntax.clone()).unwrap()),
             _ => unreachable!(),
         }
     }

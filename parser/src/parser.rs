@@ -5,7 +5,7 @@ mod function;
 mod params;
 mod pattern;
 mod source_file;
-mod statements;
+
 mod type_alias;
 mod type_params;
 mod types;

@@ -1,11 +1,11 @@
 ---
-created: "2019-08-11T21:50:37.841067Z"
+created: "2019-08-14T07:43:27.754334Z"
 creator: insta@0.8.2
 source: parser/src/parser/visibility.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 14)
-  FN_DEF@[0; 14)
+SOURCE_FILE@[0; 16)
+  FN_DEF@[0; 16)
     VISIBILITY@[0; 6)
       EXPORT_KW@[0; 6) "export"
     FN_KW@[6; 8) "fn"
@@ -14,4 +14,7 @@ SOURCE_FILE@[0; 14)
     PARAM_LIST@[12; 14)
       L_PAREN@[12; 13) "("
       R_PAREN@[13; 14) ")"
+    BLOCK@[14; 16)
+      L_CURLY@[14; 15) "{"
+      R_CURLY@[15; 16) "}"
 

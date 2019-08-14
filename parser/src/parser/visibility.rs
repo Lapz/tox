@@ -37,5 +37,5 @@ mod test {
         assert!(func.visibility().is_none())
     }
 
-    test_parser! {parse_pub_function,"export fn main()"}
+    test_parser! {parse_pub_function,"export fn main() {}"}
 }

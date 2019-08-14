@@ -1,5 +1,3 @@
-
-
 use crate::parser::Parser;
 
 use crate::{Span, SyntaxKind::*, Token};
@@ -10,7 +8,7 @@ where
 {
     pub(crate) fn parse_type(&mut self) {
         match self.current() {
-            IDENT | T![void] => self.parse_ident_type(),
+            IDENT | T![void] | T![self] => self.parse_ident_type(),
             T!["["] => self.parse_array_type(),
             T!["("] => self.parse_paren_type(),
             T![fn] => self.parse_fn_type(),
@@ -24,10 +22,10 @@ where
     fn parse_ident_type(&mut self) {
         self.start_node(IDENT_TYPE);
 
-        if self.matches(vec![T![nil], IDENT]) {
+        if self.matches(vec![T![void], IDENT, T![self]]) {
             self.bump();
         } else {
-            self.error("Expected an identifier or `nil`")
+            self.error("Expected an identifier or `void`")
         }
 
         if self.is_ahead(|t| t == T![<]) {

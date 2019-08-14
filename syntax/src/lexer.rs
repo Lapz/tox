@@ -2,7 +2,6 @@ use crate::ast::SyntaxKind;
 use crate::pos::{CharPosition, Position, Span};
 use crate::token::Token;
 
-
 pub type LexerResult<T> = Result<T, ()>;
 
 pub struct Lexer<'a> {
@@ -332,6 +331,7 @@ fn look_up_identifier(id: &str) -> SyntaxKind {
         "enum" => SyntaxKind::ENUM_KW,
         "export" => SyntaxKind::EXPORT_KW,
         "void" => SyntaxKind::VOID_KW,
+        "self" => SyntaxKind::SELF_KW,
         // Functions and vars
         "fn" => SyntaxKind::FN_KW,
         "let" => SyntaxKind::LET_KW,
@@ -370,7 +370,6 @@ mod test {
 
     use super::{Lexer, SyntaxKind};
     use insta::assert_debug_snapshot_matches;
-    
 
     #[test]
     fn it_works() {

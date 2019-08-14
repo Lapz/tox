@@ -70,6 +70,7 @@ Grammar(
         "from",
         "print",
         "nil",
+        "self",
     ],
     literals: [
         "INT_NUMBER",
@@ -152,6 +153,7 @@ Grammar(
         "TYPE_PARAM",
         "PARAM_LIST",
         "PARAM",
+        "SELF_PARAM",
         "ARG_LIST",
         
     ],
@@ -206,7 +208,8 @@ Grammar(
         "TypeRef":(enum:[
             "ParenType",
             "ArrayType",
-            "FnType"
+            "FnType",
+            "IdentType",
         ]),
 
         "ClosureExpr": (

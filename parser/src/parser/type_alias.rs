@@ -36,5 +36,5 @@ where
 #[cfg(test)]
 mod test {
     test_parser! {parse_type_alias,"type Foo = i32;"}
-    test_parser! {parse_type_alias_params,"type ParseResult<T> = Result<T,nil>;"}
+    test_parser! {parse_type_alias_params,"type ParseResult<T> = Result<T,void>;"}
 }

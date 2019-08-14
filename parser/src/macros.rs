@@ -24,6 +24,9 @@ macro_rules! T {
     (false) => {
         $crate::SyntaxKind::FALSE
     };
+    (self) => {
+        $crate::SyntaxKind::SELF_KW
+    };
     (enum) => {
         $crate::SyntaxKind::ENUM_KW
     };
