@@ -1,5 +1,5 @@
 ---
-created: "2019-08-14T07:39:50.556565Z"
+created: "2019-08-14T10:24:04.530794Z"
 creator: insta@0.8.2
 source: parser/src/parser/pattern.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -14,13 +14,13 @@ SOURCE_FILE@[0; 23)
       PARAM@[7; 20)
         TUPLE_PAT@[7; 16)
           L_PAREN@[7; 8) "("
-          PLACEHOLDER_PAT@[8; 9)
+          BIND_PAT@[8; 9)
             NAME@[8; 9)
               IDENT@[8; 9) "x"
           COMMA@[9; 10) ","
           TUPLE_PAT@[10; 15)
             L_PAREN@[10; 11) "("
-            PLACEHOLDER_PAT@[11; 12)
+            BIND_PAT@[11; 12)
               NAME@[11; 12)
                 IDENT@[11; 12) "y"
             COMMA@[12; 13) ","

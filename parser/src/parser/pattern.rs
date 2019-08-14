@@ -10,8 +10,8 @@ where
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {
         match self.current() {
             T!["("] => self.parse_tuple_pattern(allow_literal),
-            T![_] => self.parse_placeholder_pattern(),
             IDENT => self.parse_binding_pattern(),
+            T![_] => self.parse_placeholder_pattern(),
             _ => {
                 if allow_literal {
                     // self.parse_literal()
@@ -45,7 +45,7 @@ where
     }
 
     fn parse_binding_pattern(&mut self) {
-        self.start_node(PLACEHOLDER_PAT);
+        self.start_node(BIND_PAT);
         self.ident();
         self.finish_node();
     }
