@@ -1,4 +1,3 @@
-
 use crate::T;
 
 use crate::parser::Parser;
@@ -31,6 +30,8 @@ where
         if self.is_ahead(|t| t == T![->]) {
             self.parse_return_type();
         }
+
+        self.parse_block();
 
         self.finish_node()
     }

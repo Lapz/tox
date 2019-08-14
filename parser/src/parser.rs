@@ -71,12 +71,12 @@ where
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
         if self.is_ahead(|t| t == expected) {
         } else {
-            // panic!(
-            //     "Expected {:?} found {:?} ahead is {:?}",
-            //     expected,
-            //     self.current(),
-            //     self.peek()
-            // )
+            panic!(
+                "Expected {:?} found {:?} ahead is {:?}",
+                expected,
+                self.current(),
+                self.peek()
+            )
         }
 
         self.bump();
