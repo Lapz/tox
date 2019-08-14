@@ -1,7 +1,7 @@
 use crate::ast::SyntaxKind;
 use crate::pos::{CharPosition, Position, Span};
 use crate::token::Token;
-use rowan::SmolStr;
+
 
 pub type LexerResult<T> = Result<T, ()>;
 
@@ -368,9 +368,9 @@ fn spans(token: SyntaxKind, start: Position, end: Position) -> Span<Token> {
 #[cfg(test)]
 mod test {
 
-    use super::{Lexer, SyntaxKind, Token};
+    use super::{Lexer, SyntaxKind};
     use insta::assert_debug_snapshot_matches;
-    use SyntaxKind::*;
+    
 
     #[test]
     fn it_works() {

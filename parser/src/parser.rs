@@ -68,7 +68,7 @@ where
         self.builder.finish_node();
     }
 
-    fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, msg: T) {
+    fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
         if self.is_ahead(|t| t == expected) {
         } else {
             // panic!(
@@ -112,7 +112,7 @@ where
         false
     }
 
-    fn error(&mut self, err: &str) {
+    fn error(&mut self, _err: &str) {
         //TODO report error
 
         self.bump();
