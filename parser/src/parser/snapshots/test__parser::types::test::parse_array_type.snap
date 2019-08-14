@@ -1,11 +1,11 @@
 ---
-created: "2019-08-11T21:50:37.840693Z"
+created: "2019-08-14T07:39:50.558562Z"
 creator: insta@0.8.2
 source: parser/src/parser/types.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
 SOURCE_FILE@[0; 17)
-  FN_DEF@[0; 15)
+  FN_DEF@[0; 17)
     FN_KW@[0; 2) "fn"
     NAME@[2; 6)
       IDENT@[2; 6) "main"
@@ -22,6 +22,7 @@ SOURCE_FILE@[0; 17)
             IDENT@[10; 13) "i32"
           R_BRACK@[13; 14) "]"
       R_PAREN@[14; 15) ")"
-  L_CURLY@[15; 16) "{"
-  R_CURLY@[16; 17) "}"
+    BLOCK@[15; 17)
+      L_CURLY@[15; 16) "{"
+      R_CURLY@[16; 17) "}"
 

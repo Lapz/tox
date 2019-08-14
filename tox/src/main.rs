@@ -6,7 +6,7 @@ use syntax::{ArgListOwner, AstNode, ClassDefOwner, FnDefOwner, Lexer, Visibility
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "class Person { name:String; surname:String; export fn foo()}";
+    let input = "class Person { name:String; surname:String; export fn foo() {} }";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
