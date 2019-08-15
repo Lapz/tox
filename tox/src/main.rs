@@ -27,6 +27,7 @@ fn main() {
 
     if let Some(params) = func.param_list() {
         for param in params.params() {
+            println!("{:?}", param.pat());
             println!("{:?}", param.ascribed_type());
         }
     }

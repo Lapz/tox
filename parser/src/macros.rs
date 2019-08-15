@@ -1,10 +1,10 @@
 #[macro_export]
 macro_rules! T {
     (break) => {
-        $crate::SyntaxKind::BREAK
+        $crate::SyntaxKind::BREAK_KW
     };
     (continue) => {
-        $crate::SyntaxKind::CONTINUE
+        $crate::SyntaxKind::CONTINUE_KW
     };
     (do) => {
         $crate::SyntaxKind::DO
