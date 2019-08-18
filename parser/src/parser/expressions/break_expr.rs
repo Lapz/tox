@@ -18,4 +18,6 @@ where
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    test_parser!{parse_break_expr,"fn main() {continue;}"}
+}
