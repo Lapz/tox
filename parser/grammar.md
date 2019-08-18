@@ -58,7 +58,7 @@ fn_type: "fn" "(" type ((",")? type)* ")" "->" type;
 ### Func Params
 
 ```text
-func_params: "(" ((",")? func_param)* ")"
+func_params: "(" ((",")? func_param)* ")";
 func_param: pattern ":" type ;
 ```
 
@@ -73,15 +73,41 @@ return_type: "->" type;
 ### Enum Variants
 
 ```text
-enum_variants: "{" ((",")? enum_variant)* "}"
+enum_variants: "{" ((",")? enum_variant)* "}";
 enum_variant: ident ("(" (",")? type ")")? ;
 ```
- 
+
 ## Classes
 
 ### Class Body
 
 ```text
-class_body: "{" named_field* | fnDef* "}"
+class_body: "{" named_field* | fnDef* "}";
 named_field: ident ":" type ";" ;
+```
+
+## Block
+
+```text
+block: "{" (let_stmt | expression)* "}";
+```
+
+## Let
+
+```text
+let_stmt: "let" pattern ":" type (";" | "=" expression) "}";
+```
+
+## Expression
+
+```text
+expressions: array_expr| if_expr | break_expr| continue_expr| while_expr| for_expr| match_expr|do_expr| return;
+```
+
+## Utils
+
+```text
+ident: alpha (alpha|digit)*;
+alpha: "a" ... "z" | "A" ... "Z" | "_" ;
+digit: "0" ... "9" ;
 ```
