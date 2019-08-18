@@ -58,7 +58,7 @@ where
     }
 
     fn parse_enum_variant_types(&mut self) {
-        self.bump();
+        self.bump(); // Eat the "("
         while !self.at(EOF) && !self.at(T![")"]) {
             self.parse_type();
 
