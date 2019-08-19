@@ -9,9 +9,11 @@ mod block;
 mod break_expr;
 mod continue_expr;
 mod literal;
+mod unary;
 
 pub use binary::BinaryParselet;
 pub use literal::LiteralParselet;
+pub use unary::UnaryParselet;
 
 impl<'a, I> Parser<'a, I>
 where

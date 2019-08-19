@@ -50,6 +50,8 @@ where
         };
 
         parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);
+        parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
+        parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.infix(
             RuleToken::Plus,
             &expressions::BinaryParselet(Precedence::Term),

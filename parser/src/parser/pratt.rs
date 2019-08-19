@@ -49,7 +49,7 @@ pub enum RuleToken {
     Star,
     Literal,
     None,
-    Bang,
+    Excl,
     Comparison,
     Equality,
     This,
@@ -81,6 +81,8 @@ impl Rule for SyntaxKind {
                 RuleToken::Literal
             }
             T![+] => RuleToken::Plus,
+            T![!] => RuleToken::Excl,
+            T![-] => RuleToken::Minus,
             _ => RuleToken::None,
         }
     }
