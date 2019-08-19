@@ -19,10 +19,10 @@ macro_rules! T {
         $crate::SyntaxKind::CLASS_KW
     };
     (true) => {
-        $crate::SyntaxKind::TRUE
+        $crate::SyntaxKind::TRUE_KW
     };
     (false) => {
-        $crate::SyntaxKind::FALSE
+        $crate::SyntaxKind::FALSE_KW
     };
     (self) => {
         $crate::SyntaxKind::SELF_KW
@@ -93,10 +93,10 @@ macro_rules! T {
         $crate::SyntaxKind::UNDERSCORE
     };
     (+=) => {
-        $crate::SyntaxKind::PLUS_ASSIGN
+        $crate::SyntaxKind::PLUSEQ
     };
     (!) => {
-        $crate::SyntaxKind::BANG
+        $crate::SyntaxKind::EXCL
     };
     ("//") => {
         $crate::SyntaxKind::COMMENT
@@ -116,10 +116,10 @@ macro_rules! T {
     };
 
     (&&) => {
-        $crate::SyntaxKind::AND
+        $crate::SyntaxKind::AMPAMP
     };
     (==) => {
-        $crate::SyntaxKind::EQUAL_EQUAL
+        $crate::SyntaxKind::EQEQ
     };
     (=>) => {
         $crate::SyntaxKind::FAT_ARROW
@@ -128,19 +128,29 @@ macro_rules! T {
         $crate::SyntaxKind::L_ANGLE
     };
     (<=) => {
-        $crate::SyntaxKind::LESS_EQUAL
+        $crate::SyntaxKind::LTEQ
     };
     (>) => {
         $crate::SyntaxKind::R_ANGLE
     };
     (>=) => {
-        $crate::SyntaxKind::GREATER_EQUAL
+        $crate::SyntaxKind::GTEQ
     };
     (!=) => {
-        $crate::SyntaxKind::BANG_EQUAL
+        $crate::SyntaxKind::NEQ
+    };
+
+    (-=) => {
+        $crate::SyntaxKind::MINUSEQ
+    };
+    (*=) => {
+        $crate::SyntaxKind::STAREQ
+    };
+    (/=) => {
+        $crate::SyntaxKind::SLASHEQ
     };
     (||) => {
-        $crate::SyntaxKind::OR
+        $crate::SyntaxKind::PIPEPIPE
     };
 
     (->) => {

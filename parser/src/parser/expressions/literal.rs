@@ -14,7 +14,7 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for LiteralParselet {
         I: Iterator<Item = Span<Token>>,
     {
         match parser.current() {
-            INT_NUMBER  | FLOAT_NUMBER | STRING | NIL_KW |TRUE_KW |FALSE_KW => {
+            INT_NUMBER  | FLOAT_NUMBER | STRING | T![nil] |T![true]|T![false] => {
                 parser.start_node(LITERAL);
                 parser.bump();
                 parser.finish_node();

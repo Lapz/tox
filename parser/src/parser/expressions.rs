@@ -4,23 +4,23 @@ use crate::parser::{
     SyntaxKind::*,
 };
 use crate::{Span, Token};
+mod binary;
 mod block;
 mod break_expr;
 mod continue_expr;
 mod literal;
 
+pub use binary::BinaryParselet;
 pub use literal::LiteralParselet;
-
-#[derive(Debug)]
-pub struct UnaryParselet;
 
 impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
     pub(crate) fn parse_expression(&mut self, precedence: Precedence) {
-        self.start_node(EXPR_STMT);
-        let mut token = self.current();
+        let check_point = self.builder.checkpoint();
+
+        let token = self.current();
         let mut rule = token.rule();
 
         let parser = self.prefix.get(&rule);
@@ -34,23 +34,21 @@ where
 
         parser.parse(self);
 
-        // while precedence <= self.precedence() {
-        //     {
-        //         let token = self.peek();
-        //         rule = token.rule();
-        //     }
+        while precedence <= self.precedence() {
+            {
+                let token = self.current();
+                rule = token.rule();
+            }
 
-        //     let parser = self.infix.get(&rule);
+            let parser = self.infix.get(&rule);
 
-        //     let parser = if parser.is_some() {
-        //         parser.unwrap();
-        //     } else {
-        //         break;
-        //     };
+            let parser = if parser.is_some() {
+                parser.unwrap()
+            } else {
+                break;
+            };
 
-        //     parser.parse(self);
-        // }
-
-        self.finish_node()
+            parser.parse(self, check_point);
+        }
     }
 }

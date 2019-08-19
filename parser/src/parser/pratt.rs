@@ -20,7 +20,7 @@ pub trait InfixParser<I>: Debug
 where
     I: Iterator<Item = Span<Token>>,
 {
-    fn parse(&self, parser: &mut Parser<I>);
+    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint);
     fn pred(&self) -> Precedence;
 }
 
@@ -77,7 +77,10 @@ impl Precedence {
 impl Rule for SyntaxKind {
     fn rule(&self) -> RuleToken {
         match self {
-            INT_NUMBER | FLOAT_NUMBER | STRING | NIL_KW | TRUE_KW | FALSE_KW => RuleToken::Literal,
+            INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] => {
+                RuleToken::Literal
+            }
+            T![+] => RuleToken::Plus,
             _ => RuleToken::None,
         }
     }

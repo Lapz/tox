@@ -16,7 +16,11 @@ where
         while !self.at(EOF) && !self.at(T!["}"]) {
             match self.current() {
                 LET_KW => unimplemented!(),
-                _ => self.parse_expression(Precedence::Primary),
+                _ => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_expression(Precedence::Assignment);
+                    self.finish_node();
+                }
             }
 
             self.expect(SEMI, "Expected a `;`");

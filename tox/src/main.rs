@@ -8,7 +8,7 @@ use syntax::{
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "fn main(a:i32,b:i32) {1.0;2.0;2;\"abc\";}";
+    let input = "fn main(a:i32,b:i32) {1.0+2.0+3.0;}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
