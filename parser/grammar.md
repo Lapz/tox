@@ -37,7 +37,6 @@ type_param: ident ;
 
 ```text
 pattern: tuple_pattern | binding_pattern | placeholder_pattern | literal_pattern ;
-
 tuple_pattern: "(" pattern ((",")? pattern)* ")" ;
 placeholder_pattern: "_";
 literal_pattern: literal;

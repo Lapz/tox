@@ -4,14 +4,16 @@ mod expressions;
 mod function;
 mod params;
 mod pattern;
+mod pratt;
 mod source_file;
 
 mod type_alias;
 mod type_params;
 mod types;
 mod visibility;
+use pratt::{InfixParser, PrefixParser, Rule, RuleToken};
 use rowan::GreenNodeBuilder;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::iter::Peekable;
 use syntax::{
     Span,
@@ -27,6 +29,8 @@ where
     past_tokens: VecDeque<Span<Token>>,
     lookahead: Option<Span<Token>>,
     iter: Peekable<I>,
+    prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
+    infix: HashMap<RuleToken, &'a dyn InfixParser<I>>,
 }
 
 impl<'a, I> Parser<'a, I>
@@ -35,13 +39,23 @@ where
 {
     pub fn new(iter: I, input: &'a str) -> Self {
         let mut iter = iter.peekable();
-        Parser {
+        let mut parser = Parser {
             lookahead: iter.next(),
             builder: GreenNodeBuilder::new(),
             past_tokens: VecDeque::new(),
+            prefix: HashMap::new(),
+            infix: HashMap::new(),
             iter,
             input,
-        }
+        };
+
+        parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);
+
+        parser
+    }
+
+    fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser<I>) {
+        self.prefix.insert(rule, parser);
     }
 
     pub(crate) fn is_ahead<F>(&self, mut check: F) -> bool
@@ -67,6 +81,10 @@ where
     fn finish_node(&mut self) {
         self.builder.finish_node();
     }
+
+    // fn precedence(&self) -> Precedence {
+    //     let token = self
+    // }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
         if self.is_ahead(|t| t == expected) {

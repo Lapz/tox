@@ -1,6 +1,6 @@
 use crate::T;
 
-use crate::parser::Parser;
+use crate::parser::{pratt::Precedence, Parser};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -13,7 +13,14 @@ where
 
         self.expect(T!["{"], "Expected `{`");
 
-        while !self.at(EOF) && !self.at(T!["}"]) {}
+        while !self.at(EOF) && !self.at(T!["}"]) {
+            match self.current() {
+                LET_KW => unimplemented!(),
+                _ => self.parse_expression(Precedence::Primary),
+            }
+
+            self.expect(SEMI, "Expected a `;`");
+        }
 
         self.expect(T!["}"], "Expected `}`");
 
