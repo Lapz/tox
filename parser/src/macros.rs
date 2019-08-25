@@ -43,13 +43,13 @@ macro_rules! T {
         $crate::SyntaxKind::MATCH
     };
     (else) => {
-        $crate::SyntaxKind::ELSE
+        $crate::SyntaxKind::ELSE_KW
     };
     (if) => {
-        $crate::SyntaxKind::IF
+        $crate::SyntaxKind::IF_KW
     };
     (let) => {
-        $crate::SyntaxKind::LET
+        $crate::SyntaxKind::LET_KW
     };
     (type) => {
         $crate::SyntaxKind::TYPE_KW

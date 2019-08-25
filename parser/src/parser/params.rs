@@ -9,6 +9,7 @@ where
 {
     pub(crate) fn parse_func_params(&mut self) {
         self.start_node(PARAM_LIST);
+
         self.bump();
 
         while !self.at(EOF) && !self.at(T![")"]) {
@@ -20,6 +21,7 @@ where
         }
 
         self.expect(T![")"], "Expected `)` to close type params");
+
         self.finish_node()
     }
 

@@ -19,15 +19,15 @@ where
 
         self.ident();
 
-        if self.is_ahead(|t| t == T![<]) {
+        if self.current() == T![<] {
             self.parse_type_params(false);
         }
 
-        if self.is_ahead(|t| t == T!["("]) {
+        if self.current() == T!["("] {
             self.parse_func_params();
         }
 
-        if self.is_ahead(|t| t == T![->]) {
+        if self.current() == T![->] {
             self.parse_return_type();
         }
 

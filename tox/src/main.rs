@@ -8,19 +8,12 @@ use syntax::{
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "fn main(a:i32,b:i32) {!!true;}";
+    let input = "fn main<T>(a:i32,b:i32) -> i32 {if true {} else if false {} else {};}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
     let file = parser.parse_program();
-    // println!("{:?}",);
-    // println!("{:?}", parser.past_tokens);
-    // println!("{:?}", parser.bump());
-    // println!("{:?}", parser.past_tokens);
-    // println!("{:?}", parser.bump());
-    // println!("{:?}", parser.past_tokens);
-    // println!("{:?}", parser.bump());
-    //
+
     println!("{:#?}", file);
 
     let func = file.functions().nth(0).unwrap();
