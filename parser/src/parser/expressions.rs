@@ -11,6 +11,7 @@ mod continue_expr;
 mod do_expr;
 mod for_expr;
 mod if_expr;
+mod let_expr;
 mod literal;
 mod return_expr;
 mod unary;

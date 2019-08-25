@@ -20,7 +20,7 @@ where
         if self.at(T![;]) {
             self.bump()
         } else if self.at(T![let]) {
-            // self.parse_let_expr();
+            self.parse_let_expr();
         } else {
             self.parse_expression(Precedence::Assignment);
             self.expect(T![;], "Expected `;`");
