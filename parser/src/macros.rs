@@ -1,5 +1,8 @@
 #[macro_export]
 macro_rules! T {
+    (while) => {
+        $crate::SyntaxKind::WHILE_KW
+    };
     (break) => {
         $crate::SyntaxKind::BREAK_KW
     };
@@ -7,10 +10,10 @@ macro_rules! T {
         $crate::SyntaxKind::CONTINUE_KW
     };
     (do) => {
-        $crate::SyntaxKind::DO
+        $crate::SyntaxKind::DO_KW
     };
     (return) => {
-        $crate::SyntaxKind::RETURN
+        $crate::SyntaxKind::RETURN_KW
     };
     (print) => {
         $crate::SyntaxKind::PRINT
