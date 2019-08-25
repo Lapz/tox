@@ -12,6 +12,7 @@ mod do_expr;
 mod if_expr;
 mod literal;
 mod unary;
+mod while_expr;
 
 pub use binary::BinaryParselet;
 pub use literal::LiteralParselet;

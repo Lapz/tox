@@ -18,6 +18,7 @@ where
                 T![let] => unimplemented!(),
                 T![if] => self.parse_if_expr(),
                 T![do] => self.parse_do_expr(),
+                T![while] => self.parse_while_expr(),
                 _ => {
                     self.start_node(EXPR_STMT);
                     self.parse_expression(Precedence::Assignment);
