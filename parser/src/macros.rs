@@ -84,7 +84,7 @@ macro_rules! T {
     };
 
     (=) => {
-        $crate::SyntaxKind::ASSIGN
+        $crate::SyntaxKind::EQ
     };
     (:) => {
         $crate::SyntaxKind::COLON

@@ -1,0 +1,24 @@
+---
+created: "2019-08-25T20:39:32.378223Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/let_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 17)
+  FN_DEF@[0; 17)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 6)
+      IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 8)
+      L_PAREN@[6; 7) "("
+      R_PAREN@[7; 8) ")"
+    BLOCK@[8; 17)
+      L_CURLY@[8; 9) "{"
+      LET_STMT@[9; 15)
+        LET_KW@[9; 12) "let"
+        BIND_PAT@[12; 15)
+          NAME@[12; 15)
+            IDENT@[12; 15) "foo"
+      SEMI@[15; 16) ";"
+      R_CURLY@[16; 17) "}"
+

@@ -1,0 +1,30 @@
+---
+created: "2019-08-25T20:31:07.678720Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/binary.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 22)
+  FN_DEF@[0; 22)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 6)
+      IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 8)
+      L_PAREN@[6; 7) "("
+      R_PAREN@[7; 8) ")"
+    BLOCK@[8; 22)
+      L_CURLY@[8; 9) "{"
+      EXPR_STMT@[9; 20)
+        BIN_EXPR@[9; 20)
+          BIN_EXPR@[9; 16)
+            LITERAL@[9; 12)
+              FLOAT_NUMBER@[9; 12) "1.0"
+            PLUS@[12; 13) "+"
+            LITERAL@[13; 16)
+              FLOAT_NUMBER@[13; 16) "2.0"
+          PLUS@[16; 17) "+"
+          LITERAL@[17; 20)
+            FLOAT_NUMBER@[17; 20) "2.0"
+      SEMI@[20; 21) ";"
+      R_CURLY@[21; 22) "}"
+

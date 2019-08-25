@@ -49,6 +49,5 @@ where
 }
 
 mod test {
-    test_parser! {parse_empty_expr,"fn main() {for(;;;) {}}"}
-    test_parser! {parse_empty_return_expr,"fn main() {return;}"}
+    test_parser! {parse_empty_for_expr,"fn main() {for(;;;) {}}"}
 }

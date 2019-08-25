@@ -1,0 +1,29 @@
+---
+created: "2019-08-25T20:31:07.728070Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/unary.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 18)
+  FN_DEF@[0; 18)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 6)
+      IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 8)
+      L_PAREN@[6; 7) "("
+      R_PAREN@[7; 8) ")"
+    BLOCK@[8; 18)
+      L_CURLY@[8; 9) "{"
+      EXPR_STMT@[9; 14)
+        PREFIX_EXPR@[9; 14)
+          EXCL@[9; 10) "!"
+          LITERAL@[10; 14)
+            TRUE_KW@[10; 14) "true"
+      SEMI@[14; 15) ";"
+      EXPR_STMT@[15; 17)
+        PREFIX_EXPR@[15; 17)
+          MINUS@[15; 16) "-"
+          LITERAL@[16; 17)
+            INT_NUMBER@[16; 17) "1"
+      R_CURLY@[17; 18) "}"
+

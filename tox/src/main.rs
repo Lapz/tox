@@ -8,7 +8,7 @@ use syntax::{
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "fn main<T>(a:i32,b:i32) -> i32 {if true {} else if false {} else {};}";
+    let input = "type ParseResult<T> = Result<T,void>;";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
@@ -16,16 +16,16 @@ fn main() {
 
     println!("{:#?}", file);
 
-    let func = file.functions().nth(0).unwrap();
+    // let func = file.functions().nth(0).unwrap();
 
-    if let Some(params) = func.param_list() {
-        for param in params.params() {
-            println!("{:?}", param.pat());
-            println!("{:?}", param.ascribed_type());
-        }
-    }
+    // if let Some(params) = func.param_list() {
+    //     for param in params.params() {
+    //         println!("{:?}", param.pat());
+    //         println!("{:?}", param.ascribed_type());
+    //     }
+    // }
 
-    println!("{:?}", func.visibility());
+    // println!("{:?}", func.visibility());
 
     // for token in lexer.lex() {
     //     println!(

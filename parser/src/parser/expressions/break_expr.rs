@@ -19,5 +19,5 @@ where
 
 #[cfg(test)]
 mod test {
-    test_parser! {parse_break_expr,"fn main() {continue;}"}
+    test_parser! {parse_break_expr,"fn main() {break;}"}
 }
