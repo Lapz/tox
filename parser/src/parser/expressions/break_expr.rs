@@ -8,7 +8,7 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_break(&mut self) {
+    pub(crate) fn parse_break_expr(&mut self) {
         self.start_node(BREAK_EXPR);
 
         self.expect(T![break], "Expected `break`");
@@ -19,5 +19,5 @@ where
 
 #[cfg(test)]
 mod test {
-    test_parser!{parse_break_expr,"fn main() {continue;}"}
+    test_parser! {parse_break_expr,"fn main() {continue;}"}
 }

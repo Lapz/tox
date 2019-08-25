@@ -20,6 +20,9 @@ where
                 T![do] => self.parse_do_expr(),
                 T![while] => self.parse_while_expr(),
                 T![return] => self.parse_return_expr(),
+                T![break] => self.parse_break_expr(),
+                T![continue] => self.parse_continue_expr(),
+                T![for] => self.parse_for_expr(),
                 _ => {
                     self.start_node(EXPR_STMT);
                     self.parse_expression(Precedence::Assignment);

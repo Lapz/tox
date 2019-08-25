@@ -3,6 +3,9 @@ macro_rules! T {
     (while) => {
         $crate::SyntaxKind::WHILE_KW
     };
+    (for) => {
+        $crate::SyntaxKind::FOR_KW
+    };
     (break) => {
         $crate::SyntaxKind::BREAK_KW
     };
