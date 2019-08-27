@@ -79,7 +79,6 @@ pub enum SyntaxKind {
     FALSE_KW, // false
     OR_KW, // or
     AND_KW, // and
-    VOID_KW, // void
     EXPORT_KW, // export
     IMPORT_KW, // import
     FROM_KW, // from

@@ -64,7 +64,6 @@ Grammar(
         "false",
         "or",
         "and",
-        "void",
         "export",
         "import",
         "from",

@@ -36,9 +36,7 @@ macro_rules! T {
     (enum) => {
         $crate::SyntaxKind::ENUM_KW
     };
-    (void) => {
-        $crate::SyntaxKind::VOID_KW
-    };
+  
     (extends) => {
         $crate::SyntaxKind::EXTENDS
     };
