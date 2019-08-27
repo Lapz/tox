@@ -36,7 +36,7 @@ macro_rules! T {
     (enum) => {
         $crate::SyntaxKind::ENUM_KW
     };
-  
+
     (extends) => {
         $crate::SyntaxKind::EXTENDS
     };

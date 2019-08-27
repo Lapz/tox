@@ -28,8 +28,12 @@ where
     fn func_param(&mut self) {
         self.start_node(PARAM);
         self.parse_pattern(false);
-        self.expect(T![:], "Expected `:`");
-        self.parse_type();
+
+        if self.at(T![:]) {
+            self.expect(T![:], "Expected `:`");
+            self.parse_type();
+        }
+
         self.finish_node();
     }
 }

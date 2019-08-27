@@ -1,8 +1,6 @@
 use crate::AstNode;
 use crate::{Parser, Span, Token};
 
-
-
 use std::vec::IntoIter;
 use syntax::Lexer;
 pub fn dump_debug<T: AstNode>(item: &T) -> String {

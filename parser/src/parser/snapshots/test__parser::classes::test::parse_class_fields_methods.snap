@@ -1,5 +1,5 @@
 ---
-created: "2019-08-14T07:47:46.350748Z"
+created: "2019-08-27T19:27:30.462074Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -24,19 +24,17 @@ SOURCE_FILE@[0; 55)
       IDENT_TYPE@[32; 38)
         IDENT@[32; 38) "String"
       SEMI@[38; 39) ";"
-    FN_DEF@[39; 55)
+    FN_DEF@[39; 54)
       FN_KW@[39; 41) "fn"
       NAME@[41; 46)
         IDENT@[41; 46) "hello"
-      PARAM_LIST@[46; 55)
+      PARAM_LIST@[46; 52)
         L_PAREN@[46; 47) "("
-        PARAM@[47; 53)
-          PLACEHOLDER_PAT@[47; 51)
-            NAME@[47; 51)
-              IDENT@[47; 51) "self"
-          R_PAREN@[51; 52) ")"
-          L_CURLY@[52; 53) "{"
+        PARAM@[47; 51)
+          SELF_KW@[47; 51) "self"
+        R_PAREN@[51; 52) ")"
+      BLOCK@[52; 54)
+        L_CURLY@[52; 53) "{"
         R_CURLY@[53; 54) "}"
-        R_CURLY@[54; 55) "}"
-      BLOCK@[55; 55)
+    R_CURLY@[54; 55) "}"
 

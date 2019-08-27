@@ -8,7 +8,7 @@ use syntax::{
 pub type ParseResult<T> = Result<T, ()>;
 
 fn main() {
-    let input = "type ParseResult<T> = Result<T,void>;";
+    let input = "class Person { name:String; surname:String; fn hello(self) {}}";
     let mut lexer = Lexer::new(input);
     let mut parser = Parser::new(lexer.lex().into_iter(), input);
 
