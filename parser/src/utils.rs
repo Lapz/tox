@@ -10,6 +10,5 @@ pub fn dump_debug<T: AstNode>(item: &T) -> String {
 pub fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
     let mut lexer = Lexer::new(input);
     let parser = Parser::new(lexer.lex().into_iter(), input);
-
     parser
 }

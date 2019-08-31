@@ -83,6 +83,7 @@ impl Rule for SyntaxKind {
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,
+            T!["("] => RuleToken::LParen,
             _ => RuleToken::None,
         }
     }

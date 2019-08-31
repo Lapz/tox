@@ -10,6 +10,7 @@ mod break_expr;
 mod continue_expr;
 mod do_expr;
 mod for_expr;
+mod grouping;
 mod if_expr;
 mod let_expr;
 mod literal;
@@ -18,6 +19,7 @@ mod unary;
 mod while_expr;
 
 pub use binary::BinaryParselet;
+pub use grouping::GroupingParselet;
 pub use literal::LiteralParselet;
 pub use unary::UnaryParselet;
 
