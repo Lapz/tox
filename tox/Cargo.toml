@@ -10,6 +10,7 @@ codespan = "0.3.0"
 itertools= "*"
 rowan ="*"
 teraron = "0.1.0"
+structopt = "0.3"
 syntax={path="../syntax",version="*"}
 parser={path="../parser",version="*"}
 [dev-dependencies]
