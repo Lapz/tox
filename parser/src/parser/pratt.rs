@@ -77,14 +77,18 @@ impl Precedence {
 impl Rule for SyntaxKind {
     fn rule(&self) -> RuleToken {
         match self {
-            INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] => {
+            INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] | IDENT => {
                 RuleToken::Literal
             }
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
-            _ => RuleToken::None,
+            T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
+            this => {
+                println!("{:?}", self);
+                RuleToken::None
+            }
         }
     }
 }

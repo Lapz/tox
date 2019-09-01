@@ -53,9 +53,26 @@ where
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
         parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.prefix(RuleToken::LParen, &expressions::GroupingParselet);
+
         parser.infix(
             RuleToken::Plus,
             &expressions::BinaryParselet(Precedence::Term),
+        );
+        parser.infix(
+            RuleToken::Minus,
+            &expressions::BinaryParselet(Precedence::Term),
+        );
+        parser.infix(
+            RuleToken::Slash,
+            &expressions::BinaryParselet(Precedence::Term),
+        );
+        parser.infix(
+            RuleToken::Star,
+            &expressions::BinaryParselet(Precedence::Term),
+        );
+        parser.infix(
+            RuleToken::Comparison,
+            &expressions::BinaryParselet(Precedence::Comparison),
         );
         parser
     }
