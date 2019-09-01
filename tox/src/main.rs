@@ -89,12 +89,12 @@ fn main() -> std::io::Result<()> {
         run(command, &input, &mut stdout)?
     }
 
-    let input = "fn main() { 1 + (1+10);}";
-    let mut lexer = Lexer::new(input);
-    let mut parser = Parser::new(lexer.lex().into_iter(), input);
-    let file = parser.parse_program();
+    // let input = "fn main() { 1 + (1+10);}";
+    // let mut lexer = Lexer::new(input);
+    // let mut parser = Parser::new(lexer.lex().into_iter(), input);
+    // let file = parser.parse_program();
 
-    println!("{:#?}", file);
+    // println!("{:#?}", file);
 
     // let func = file.functions().nth(0).unwrap();
 

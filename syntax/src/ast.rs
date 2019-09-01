@@ -115,6 +115,7 @@ pub enum SyntaxKind {
     FIELD_EXPR,
     BIN_EXPR,
     PREFIX_EXPR,
+    TUPLE_EXPR,
     IF_EXPR,
     WHILE_EXPR,
     CONDITION,

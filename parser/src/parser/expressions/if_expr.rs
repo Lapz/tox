@@ -17,8 +17,6 @@ where
 
         self.parse_expression(Precedence::Assignment);
 
-        println!("{:?}", self.current());
-
         self.parse_block();
 
         if self.current() == T![else] {

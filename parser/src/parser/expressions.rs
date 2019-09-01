@@ -15,6 +15,7 @@ mod if_expr;
 mod let_expr;
 mod literal;
 mod return_expr;
+mod tuple_expr;
 mod unary;
 mod while_expr;
 

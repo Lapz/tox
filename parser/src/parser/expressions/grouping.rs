@@ -15,9 +15,22 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
     {
         parser.start_node(PAREN_EXPR);
 
+        let checkpoint = parser.checkpoint();
+
         parser.bump(); // Eats the `(`
 
         parser.parse_expression(Precedence::Assignment);
+
+        if parser.at(T![,]) {
+            parser.bump();
+            parser.start_node_at(checkpoint, TUPLE_EXPR);
+            while !parser.at(EOF) && !parser.at(T![")"]) {
+                parser.parse_expression(Precedence::Assignment);
+                if !parser.at(T![")"]) && !parser.expected(T![,]) {
+                    break;
+                }
+            }
+        }
 
         parser.expect(T![")"], "Expected `)`");
 

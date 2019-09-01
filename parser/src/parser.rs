@@ -26,7 +26,7 @@ where
 {
     input: &'a str,
     pub builder: GreenNodeBuilder,
-    past_tokens: VecDeque<Span<Token>>,
+    pub past_tokens: VecDeque<Span<Token>>,
     lookahead: Option<Span<Token>>,
     iter: Peekable<I>,
     prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
@@ -101,6 +101,10 @@ where
         self.infix.insert(rule, parser);
     }
 
+    fn checkpoint(&self) -> rowan::Checkpoint {
+        self.builder.checkpoint()
+    }
+
     pub(crate) fn is_ahead<F>(&self, mut check: F) -> bool
     where
         F: FnMut(SyntaxKind) -> bool,
@@ -158,7 +162,6 @@ where
             self.bump();
             true
         } else {
-            self.error("");
             false
         }
     }

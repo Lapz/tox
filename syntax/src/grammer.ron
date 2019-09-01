@@ -110,6 +110,7 @@ Grammar(
         "FIELD_EXPR",
         "BIN_EXPR",
         "PREFIX_EXPR",
+        "TUPLE_EXPR",
 
         //stms
         "IF_EXPR",

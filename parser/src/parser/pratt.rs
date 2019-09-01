@@ -87,10 +87,7 @@ impl Rule for SyntaxKind {
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,
-            this => {
-                println!("{:?}", self);
-                RuleToken::None
-            }
+            _ => RuleToken::None,
         }
     }
 }
