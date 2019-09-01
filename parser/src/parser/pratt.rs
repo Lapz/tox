@@ -51,10 +51,10 @@ pub enum RuleToken {
     None,
     Excl,
     Comparison,
-    Equality,
+    EqEq,
     This,
-    And,
-    Or,
+    AmpAmp,
+    PipePipe,
 }
 
 impl Precedence {
@@ -85,6 +85,8 @@ impl Rule for SyntaxKind {
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
+            T![&&] => RuleToken::AmpAmp,
+            T![||] => RuleToken::PipePipe,
             this => {
                 println!("{:?}", self);
                 RuleToken::None

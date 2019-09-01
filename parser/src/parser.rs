@@ -74,6 +74,22 @@ where
             RuleToken::Comparison,
             &expressions::BinaryParselet(Precedence::Comparison),
         );
+
+        parser.infix(
+            RuleToken::AmpAmp,
+            &expressions::BinaryParselet(Precedence::And),
+        );
+
+        parser.infix(
+            RuleToken::PipePipe,
+            &expressions::BinaryParselet(Precedence::Or),
+        );
+
+        parser.infix(
+            RuleToken::EqEq,
+            &expressions::BinaryParselet(Precedence::Equality),
+        );
+
         parser
     }
 
