@@ -162,7 +162,12 @@ where
             self.bump();
             true
         } else {
-            false
+            panic!(
+                "Expected {:?} found {:?} ahead is {:?}",
+                expected,
+                self.current(),
+                self.peek()
+            )
         }
     }
 

@@ -13,17 +13,18 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
     where
         I: Iterator<Item = Span<Token>>,
     {
-        parser.start_node(PAREN_EXPR);
-
         let checkpoint = parser.checkpoint();
+
+        let mut seen_comma = false;
 
         parser.bump(); // Eats the `(`
 
         parser.parse_expression(Precedence::Assignment);
 
         if parser.at(T![,]) {
+            seen_comma = true;
             parser.bump();
-            parser.start_node_at(checkpoint, TUPLE_EXPR);
+
             while !parser.at(EOF) && !parser.at(T![")"]) {
                 parser.parse_expression(Precedence::Assignment);
                 if !parser.at(T![")"]) && !parser.expected(T![,]) {
@@ -33,6 +34,12 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
         }
 
         parser.expect(T![")"], "Expected `)`");
+
+        if seen_comma {
+            parser.start_node_at(checkpoint, TUPLE_EXPR);
+        } else {
+            parser.start_node_at(checkpoint, PAREN_EXPR)
+        }
 
         parser.finish_node();
     }
