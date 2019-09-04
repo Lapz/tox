@@ -44,3 +44,9 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
         parser.finish_node();
     }
 }
+
+#[cfg(test)]
+mod test {
+    test_parser! {parse_grouping_expr,"fn main() {(1+10-1);}"}
+    test_parser! {parse_tuple_expr,"fn main() {(1,2,3,4);}"}
+}

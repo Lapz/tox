@@ -1,0 +1,33 @@
+---
+created: "2019-09-04T08:32:25.881384Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/grouping.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 19)
+  FN_DEF@[0; 19)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 6)
+      IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 8)
+      L_PAREN@[6; 7) "("
+      R_PAREN@[7; 8) ")"
+    BLOCK@[8; 19)
+      L_CURLY@[8; 9) "{"
+      EXPR_STMT@[9; 17)
+        PAREN_EXPR@[9; 17)
+          L_PAREN@[9; 10) "("
+          BIN_EXPR@[10; 16)
+            BIN_EXPR@[10; 14)
+              LITERAL@[10; 11)
+                INT_NUMBER@[10; 11) "1"
+              PLUS@[11; 12) "+"
+              LITERAL@[12; 14)
+                INT_NUMBER@[12; 14) "10"
+            MINUS@[14; 15) "-"
+            LITERAL@[15; 16)
+              INT_NUMBER@[15; 16) "1"
+          R_PAREN@[16; 17) ")"
+      SEMI@[17; 18) ";"
+      R_CURLY@[18; 19) "}"
+
