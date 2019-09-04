@@ -1,6 +1,7 @@
 [workspace]
 members=[
+    "errors",
     "parser",
     "syntax",
-    "tox"
+    "tox",
 ]
