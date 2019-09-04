@@ -1,6 +1,10 @@
 use crate::ast::SyntaxKind;
-use crate::pos::{CharPosition, Position, Span};
+
 use crate::token::Token;
+use errors::{
+    pos::{CharPosition, Position, Span},
+    Files, Reporter,
+};
 
 pub type LexerResult<T> = Result<T, ()>;
 
@@ -9,21 +13,21 @@ pub struct Lexer<'a> {
     chars: CharPosition<'a>,
     /// The character ahead
     lookahead: Option<(Position, char)>,
-
+    reporter: Reporter,
     past_tokens: Vec<Span<Token>>,
-
     start: Position,
     end: Position,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(input: &'a str, reporter: Reporter) -> Self {
         let mut chars = CharPosition::new(input);
         let end = chars.pos;
 
         Self {
             lookahead: chars.next(),
             input,
+            reporter,
             chars,
             start: end,
             end,
@@ -367,46 +371,66 @@ fn spans(token: SyntaxKind, start: Position, end: Position) -> Span<Token> {
 #[cfg(test)]
 mod test {
 
-    use super::{Lexer, SyntaxKind};
+    use super::{Files, Lexer, Reporter, SyntaxKind};
     use insta::assert_debug_snapshot_matches;
+
+    fn setup_reporter(input: &str) -> Reporter {
+        let mut files = Files::new();
+        let file_id = files.add("test", input);
+
+        let reporter = Reporter::new(files, file_id);
+        reporter
+    }
 
     #[test]
     fn it_works() {
-        let tokens = Lexer::new("fn main() {print('hello')}").lex();
+        let input = "fn main() {print('hello')}";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }
     #[test]
     fn lex_int() {
-        let tokens = Lexer::new("12,34,,45,67,89,0").lex();
+        let input = "12,34,,45,67,89,0";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }
 
     #[test]
     fn lex_floats() {
-        let tokens = Lexer::new("12.34,45.67,89.10").lex();
+        let input = "12.34,45.67,89.10";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }
 
     #[test]
     fn lex_block_comments() {
-        let tokens = Lexer::new("12 /*this is a comment */ 34").lex();
+        let input = "12 /*this is a comment */ 34";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }
 
     #[test]
     fn lex_nested_block_comments() {
-        let tokens = Lexer::new("/*this /*is a nested */  comment */").lex();
+        let input = "/*this /*is a nested */  comment */";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }
 
     #[test]
     fn lex_line_comment() {
-        let tokens = Lexer::new("12 // this is a line comment").lex();
+        let input = "12 // this is a line comment";
+        let reporter = setup_reporter(&input);
+        let tokens = Lexer::new(input, reporter).lex();
 
         assert_debug_snapshot_matches!(tokens)
     }

@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 rowan = "*"
 itertools="*"
+errors = {path="../errors"}
 
 [dev-dependencies]
 insta = "0.8.2"
