@@ -62,6 +62,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    fn error(
+        &mut self,
+        message: impl Into<String>,
+        additional_info: impl Into<String>,
+        span: (Position, Position),
+    ) {
+        self.reporter.error(message, additional_info, span)
+    }
+
     /// Advances the input return the current position and the char we are at
     pub(crate) fn advance(&mut self) -> Option<(Position, char)> {
         match self.lookahead {
@@ -222,7 +231,15 @@ impl<'a> Lexer<'a> {
                 ch if ch.is_numeric() => self.number(start),
                 ch if is_letter_ch(ch) => self.identifier(start),
                 ch if ch.is_whitespace() => continue,
-                _ => span(SyntaxKind::ERROR, start),
+                ch => {
+                    println!("{:?}", start);
+                    self.error(
+                        "Unknown character",
+                        format!("Unknown character `{}`", ch),
+                        (start, start),
+                    );
+                    spans(SyntaxKind::ERROR, start, start.shift(ch))
+                }
             };
         }
 

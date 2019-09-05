@@ -12,6 +12,7 @@ rowan ="*"
 teraron = "0.1.0"
 structopt = "0.3"
 syntax={path="../syntax",version="*"}
+errors= {path="../errors",version="*"}
 parser={path="../parser",version="*"}
 [dev-dependencies]
 insta = "0.8.2"

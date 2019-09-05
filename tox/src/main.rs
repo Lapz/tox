@@ -14,19 +14,27 @@ use syntax::{
 pub type ParseResult<T> = Result<T, ()>;
 
 pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
-    let mut lexer = Lexer::new(source);
+    let mut files = errors::Files::new();
+    let file_id = files.add("testing", source);
+    let reporter = errors::Reporter::new(files, file_id);
+    let mut lexer = Lexer::new(source, reporter.clone());
     let mut parser = Parser::new(lexer.lex().into_iter(), source);
     let source_file = parser.parse_program();
-
+    reporter.emit()?;
     write!(out, "{}", dump_debug(&source_file))?;
     Ok(())
 }
 
 pub fn lex<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
-    let tokens = Lexer::new(source).lex();
+    let mut files = errors::Files::new();
+    let file_id = files.add("testing", source);
+    let reporter = errors::Reporter::new(files, file_id);
+    let tokens = Lexer::new(source, reporter.clone()).lex();
+    reporter.emit()?;
     for token in tokens {
-        writeln!(out, "{:?}", token.value)?
+        writeln!(out, "{:#?}", token)?
     }
+
     Ok(())
 }
 

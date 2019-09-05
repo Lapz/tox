@@ -11,12 +11,12 @@ mod type_alias;
 mod type_params;
 mod types;
 mod visibility;
+use crate::Span;
 use pratt::{InfixParser, Precedence, PrefixParser, Rule as _, RuleToken};
 use rowan::GreenNodeBuilder;
 use std::collections::{HashMap, VecDeque};
 use std::iter::Peekable;
 use syntax::{
-    Span,
     SyntaxKind::{self, *},
     Token,
 };
