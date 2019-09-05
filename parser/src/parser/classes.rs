@@ -39,19 +39,13 @@ where
                 match self.peek() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(has_visibility),
-                    e => {
-                        println!("{:?}", e);
-                        self.error("Expected an identifier | `pub` | `fn` ")
-                    }
+                    e => self.error("Expected an identifier | `pub` | `fn` "),
                 }
             } else {
                 match self.current() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(has_visibility),
-                    e => {
-                        println!("{:?}", e);
-                        self.error("Expected an identifier | `pub` | `fn` ")
-                    }
+                    e => self.error("Expected an identifier | `pub` | `fn` "),
                 }
             }
         }

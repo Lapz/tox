@@ -232,7 +232,6 @@ impl<'a> Lexer<'a> {
                 ch if is_letter_ch(ch) => self.identifier(start),
                 ch if ch.is_whitespace() => continue,
                 ch => {
-                    println!("{:?}", start);
                     self.error(
                         "Unknown character",
                         format!("Unknown character `{}`", ch),

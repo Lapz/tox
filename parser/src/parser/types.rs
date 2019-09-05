@@ -12,10 +12,7 @@ where
             T!["["] => self.parse_array_type(),
             T!["("] => self.parse_paren_type(),
             T![fn] => self.parse_fn_type(),
-            e => {
-                println!("{:?}", e);
-                self.error("Expected a type parameter  ")
-            }
+            e => self.error("Expected a type parameter  "),
         };
     }
 
