@@ -12,7 +12,13 @@ where
     pub(crate) fn parse_unary_op(&mut self) {
         match self.current() {
             T![-] | T![!] => self.bump(),
-            _ => self.error("Expected an operator"),
+            _ => self.error(
+                "Expected one of `-` | `!`",
+                format!(
+                    "Expected one of `-` | `!` but instead found `{:?}`",
+                    self.current_string()
+                ),
+            ),
         }
     }
 }

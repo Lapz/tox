@@ -36,7 +36,13 @@ where
         let parser = self.prefix.get(&rule);
 
         let parser = if parser.is_none() {
-            self.error("Expected an expression instead found `{}`");
+            self.error(
+                "Expected an expression",
+                format!(
+                    "Expected an expression but instead found `{}`",
+                    self.current_string()
+                ),
+            );
             return;
         } else {
             parser.unwrap()
@@ -55,10 +61,23 @@ where
             let parser = if parser.is_some() {
                 parser.unwrap()
             } else {
+                self.error(
+                    "Expected an expression",
+                    format!(
+                        "Expected an expression but instead found `{}`",
+                        self.current_string()
+                    ),
+                );
                 break;
             };
 
+            println!("{:?}", parser);
+
             parser.parse(self, check_point);
+        }
+
+        if precedence == Precedence::None {
+            self.recover();
         }
     }
 }

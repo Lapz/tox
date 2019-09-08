@@ -30,7 +30,7 @@ where
             | T![-=]
             | T![*=]
             | T![/=] => self.bump(),
-            _ => self.error("Expected an operator"),
+            _ => self.error("Expected an operator",format!("Expected one of `-` | `+` |`*`| `/` | `&&` | `||` | `<` | `>` | `==` | `!` | `!=` | `>=` | `<=` | `+=` | `-=` | `*=` | `/=`  instead found `{}`",self.current_string())),
         }
     }
 }

@@ -12,11 +12,17 @@ where
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),
             T![_] => self.parse_placeholder_pattern(),
-            _ => {
+            e => {
                 if allow_literal {
                     // self.parse_literal()
                 } else {
-                    self.error("Expected a literal pattern")
+                    self.error(
+                        "Expected a literal pattern",
+                        format!(
+                            "Expected a literal pattern instead found `{}`",
+                            self.current_string()
+                        ),
+                    )
                 }
             }
         }

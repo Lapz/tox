@@ -20,7 +20,7 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for LiteralParselet {
                 parser.finish_node();
             }
 
-            _ => parser.error("Expected `{{int}}` or `{{nil}}` or `{{true|false}}` or `{{ident}}` or `{{string}}` found `{}`")
+            _ => parser.error("Expected `{{int}}` or `{{nil}}` or `{{true|false}}` or `{{ident}}` or `{{string}}`",format!("Expected `{{int}}` or `{{nil}}` or `{{true|false}}` or `{{ident}}` or `{{string}}` found `{}`",parser.current_string()))
         }
     }
 }

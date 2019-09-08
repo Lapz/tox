@@ -12,7 +12,13 @@ where
             T!["["] => self.parse_array_type(),
             T!["("] => self.parse_paren_type(),
             T![fn] => self.parse_fn_type(),
-            e => self.error("Expected a type parameter  "),
+            _ => self.error(
+                "Expected a type parameter",
+                format!(
+                    "Expected a type parameter but instead found `{}`",
+                    self.current_string()
+                ),
+            ),
         };
     }
 
@@ -22,7 +28,13 @@ where
         if self.matches(vec![IDENT, T![self]]) {
             self.bump();
         } else {
-            self.error("Expected an identifier or `void`")
+            self.error(
+                "Expected an identifier or `void`",
+                format!(
+                    "Expected an identifier or `void` but instead found `{}`",
+                    self.current_string()
+                ),
+            )
         }
 
         if self.is_ahead(|t| t == T![<]) {

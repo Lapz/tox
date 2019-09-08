@@ -21,7 +21,9 @@ where
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
                     T![class] => self.parse_class(has_visibility),
-                    _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
+                    _ => {
+                        self.recover();
+                    }
                 }
             } else {
                 match self.current() {
@@ -29,7 +31,9 @@ where
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
                     T![class] => self.parse_class(has_visibility),
-                    _ => self.error("Expected `fn`| `type` | `enum` | `class`| extern`"),
+                    _ => {
+                        self.recover();
+                    }
                 }
             }
         }

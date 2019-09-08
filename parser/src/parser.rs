@@ -12,6 +12,7 @@ mod type_params;
 mod types;
 mod visibility;
 use crate::Span;
+use errors::{pos::Position, Reporter};
 use pratt::{InfixParser, Precedence, PrefixParser, Rule as _, RuleToken};
 use rowan::GreenNodeBuilder;
 use std::collections::{HashMap, VecDeque};
@@ -27,6 +28,7 @@ where
     input: &'a str,
     pub builder: GreenNodeBuilder,
     pub past_tokens: VecDeque<Span<Token>>,
+    reporter: Reporter,
     lookahead: Option<Span<Token>>,
     iter: Peekable<I>,
     prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
@@ -37,7 +39,7 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub fn new(iter: I, input: &'a str) -> Self {
+    pub fn new(iter: I, reporter: Reporter, input: &'a str) -> Self {
         let mut iter = iter.peekable();
         let mut parser = Parser {
             lookahead: iter.next(),
@@ -45,6 +47,7 @@ where
             past_tokens: VecDeque::new(),
             prefix: HashMap::new(),
             infix: HashMap::new(),
+            reporter,
             iter,
             input,
         };
@@ -133,6 +136,46 @@ where
         self.builder.finish_node();
     }
 
+    fn recover(&mut self) {
+        while !self.at(T![;]) || !self.at(T!["}"]) || !self.at(T![")"]) || !self.at(EOF) {
+            self.bump();
+
+            if self.at(SyntaxKind::EOF) {
+                break;
+            }
+        }
+    }
+
+    fn error(&mut self, message: impl Into<String>, additional_info: impl Into<String>) {
+        self.start_node(SyntaxKind::ERROR);
+
+        self.recover();
+
+        self.reporter
+            .error(message, additional_info, self.current_span());
+        self.finish_node()
+    }
+
+    fn current_span(&self) -> (Position, Position) {
+        self.lookahead
+            .as_ref()
+            .map(|token| (token.start, token.end))
+            .unwrap_or_else(|| {
+                let token = self.past_tokens.front().unwrap();
+                (token.start, token.end)
+            })
+    }
+
+    fn current_string(&self) -> &str {
+        self.lookahead
+            .as_ref()
+            .map(|token| {
+                &self.input[token.start.absolute as usize
+                    ..token.start.absolute as usize + token.value.len as usize]
+            })
+            .unwrap_or("")
+    }
+
     fn precedence(&self) -> Precedence {
         let token = self.current();
 
@@ -145,16 +188,17 @@ where
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
         if self.is_ahead(|t| t == expected) {
+            self.bump();
         } else {
-            panic!(
-                "Expected {:?} found {:?} ahead is {:?}",
-                expected,
-                self.current(),
-                self.peek()
-            )
+            self.error(
+                format!("Expected `{}`", expected.text()),
+                format!(
+                    "Expected `{}` but instead found `{}`",
+                    expected.text(),
+                    self.current().text()
+                ),
+            );
         }
-
-        self.bump();
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
@@ -162,12 +206,21 @@ where
             self.bump();
             true
         } else {
-            panic!(
-                "Expected {:?} found {:?} ahead is {:?}",
-                expected,
-                self.current(),
-                self.peek()
-            )
+            self.error(
+                format!("Expected `{}`", expected.text()),
+                format!(
+                    "Expected `{}` but instead found `{}` ",
+                    expected.text(),
+                    self.current_string()
+                ),
+            );
+            false
+            // panic!(
+            //     "Expected {:?} found {:?} ahead is {:?}",
+            //     expected,
+            //     self.current(),
+            //     self.peek()
+            // )
         }
     }
 
@@ -189,12 +242,6 @@ where
             }
         }
         false
-    }
-
-    fn error(&mut self, _err: &str) {
-        //TODO report error
-
-        self.bump();
     }
 
     pub fn bump(&mut self) {

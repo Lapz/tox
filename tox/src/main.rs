@@ -18,7 +18,7 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     let file_id = files.add("testing", source);
     let reporter = errors::Reporter::new(files, file_id);
     let mut lexer = Lexer::new(source, reporter.clone());
-    let mut parser = Parser::new(lexer.lex().into_iter(), source);
+    let mut parser = Parser::new(lexer.lex().into_iter(), reporter.clone(), source);
     let source_file = parser.parse_program();
     reporter.emit()?;
     write!(out, "{}", dump_debug(&source_file))?;
@@ -126,14 +126,14 @@ fn main() -> std::io::Result<()> {
     //     )
     // }
 
-    // match teraron::generate(
-    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
-    //     std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
-    //     teraron::Mode::Overwrite,
-    // ) {
-    //     Ok(_) => println!("ok"),
-    //     Err(e) => println!("{:?}", e),
-    // };
+    match teraron::generate(
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
+        teraron::Mode::Overwrite,
+    ) {
+        Ok(_) => println!("ok"),
+        Err(e) => println!("{:?}", e),
+    };
 
     Ok(())
 }
