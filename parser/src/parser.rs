@@ -137,13 +137,19 @@ where
     }
 
     fn recover(&mut self) {
-        while !self.at(T![;]) || !self.at(T!["}"]) || !self.at(T![")"]) || !self.at(EOF) {
-            self.bump();
-
-            if self.at(SyntaxKind::EOF) {
-                break;
-            }
+        if self.at(T!["{"]) || self.at(T!["}"]) {
+            return;
         }
+
+        self.bump();
+    }
+
+    fn recover_until(&mut self, token: SyntaxKind) {
+        while !self.at(token) {
+            self.bump()
+        }
+
+        self.bump(); // eat the token as well
     }
 
     fn error(&mut self, message: impl Into<String>, additional_info: impl Into<String>) {
@@ -153,6 +159,22 @@ where
 
         self.reporter
             .error(message, additional_info, self.current_span());
+        self.finish_node()
+    }
+
+    fn error_until(
+        &mut self,
+        message: impl Into<String>,
+        additional_info: impl Into<String>,
+        token: SyntaxKind,
+    ) {
+        self.start_node(SyntaxKind::ERROR);
+
+        self.reporter
+            .error(message, additional_info, self.current_span());
+
+        self.recover_until(token);
+
         self.finish_node()
     }
 
@@ -206,21 +228,16 @@ where
             self.bump();
             true
         } else {
-            self.error(
+            self.error_until(
                 format!("Expected `{}`", expected.text()),
                 format!(
                     "Expected `{}` but instead found `{}` ",
                     expected.text(),
                     self.current_string()
                 ),
+                expected,
             );
             false
-            // panic!(
-            //     "Expected {:?} found {:?} ahead is {:?}",
-            //     expected,
-            //     self.current(),
-            //     self.peek()
-            // )
         }
     }
 
@@ -245,6 +262,9 @@ where
     }
 
     pub fn bump(&mut self) {
+        if self.at(SyntaxKind::EOF) {
+            return;
+        }
         let token = self.lookahead.take();
         match token {
             Some(token) => {
