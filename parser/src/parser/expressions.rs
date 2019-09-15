@@ -1,7 +1,6 @@
 use crate::parser::{
     pratt::{Precedence, Rule},
     Parser,
-    SyntaxKind::*,
 };
 use crate::{Span, Token};
 mod binary;

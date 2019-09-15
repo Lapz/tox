@@ -3,5 +3,6 @@ members=[
     "errors",
     "parser",
     "syntax",
+    "semant",
     "tox",
 ]

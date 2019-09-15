@@ -12,7 +12,7 @@ where
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),
             T![_] => self.parse_placeholder_pattern(),
-            e => {
+            _ => {
                 if allow_literal {
                     // self.parse_literal()
                 } else {

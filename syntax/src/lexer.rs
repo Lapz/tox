@@ -37,6 +37,7 @@ impl<'a> Lexer<'a> {
 
     pub fn lex(&mut self) -> Vec<Span<Token>> {
         let mut tokens = Vec::new();
+
         if self.input.is_empty() {
             return Vec::new();
         }
