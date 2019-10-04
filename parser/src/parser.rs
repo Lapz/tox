@@ -56,6 +56,12 @@ where
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
         parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.prefix(RuleToken::LParen, &expressions::GroupingParselet);
+        // parser.prefix(RuleToken::)
+        //
+        parser.infix(
+            RuleToken::LParen,
+            &expressions::CallParselet(Precedence::Call),
+        );
 
         parser.infix(
             RuleToken::Plus,
