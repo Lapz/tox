@@ -1,15 +1,17 @@
-use crate::hir::FunctionId;
-use std::collections::HashMap;
+use crate::hir::{FunctionId, FunctionMap};
+
 pub struct Context {
-    functions: HashMap<(), ()>,
+    functions: FunctionMap,
 }
 
 impl Context {
     pub fn new() -> Self {
         Context {
-            functions: HashMap::new(),
+            functions: FunctionMap::new(),
         }
     }
 
-    pub fn add_function(name: unimplemented!()) -> FunctionId {}
+    pub fn add_function() -> FunctionId {
+        unimplemented!()
+    }
 }

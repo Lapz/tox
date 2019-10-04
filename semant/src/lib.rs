@@ -2,6 +2,8 @@ mod ctx;
 mod hir;
 mod lower;
 
+use syntax::SyntaxNode;
+
 #[cfg(test)]
 mod tests {
     #[test]
