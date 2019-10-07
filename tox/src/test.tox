@@ -1,3 +1,6 @@
 fn main(a:i32) {
     a(1,2);
+    
 }
+
+ fn hello(self) {}

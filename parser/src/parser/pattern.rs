@@ -11,6 +11,7 @@ where
         match self.current() {
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),
+            T![self] => self.bump(),
             T![_] => self.parse_placeholder_pattern(),
             _ => {
                 if allow_literal {
