@@ -53,6 +53,7 @@ where
         };
 
         parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);
+        parser.prefix(RuleToken::Ident,&expressions::IdentParselet);
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
         parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.prefix(RuleToken::LParen, &expressions::GroupingParselet);

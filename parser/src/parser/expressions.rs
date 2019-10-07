@@ -11,6 +11,7 @@ mod continue_expr;
 mod do_expr;
 mod for_expr;
 mod grouping;
+mod ident;
 mod if_expr;
 mod let_expr;
 mod literal;
@@ -21,6 +22,7 @@ mod while_expr;
 pub use binary::BinaryParselet;
 pub use call_expr::CallParselet;
 pub use grouping::GroupingParselet;
+pub use ident::IdentParselet;
 pub use literal::LiteralParselet;
 pub use unary::UnaryParselet;
 
@@ -70,8 +72,6 @@ where
                 );
                 break;
             };
-
-            println!("{:?}", parser);
 
             parser.parse(self, check_point);
         }

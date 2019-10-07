@@ -58,6 +58,9 @@ macro_rules! T {
     (type) => {
         $crate::SyntaxKind::TYPE_KW
     };
+    (::) => {
+        $crate::SyntaxKind::COLON_COLON
+    };
     ("{") => {
         $crate::SyntaxKind::L_CURLY
     };

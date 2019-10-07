@@ -42,6 +42,7 @@ pub enum Precedence {
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
 pub enum RuleToken {
     LParen,
+    Ident,
     LBracket,
     Minus,
     Plus,
@@ -77,9 +78,10 @@ impl Precedence {
 impl Rule for SyntaxKind {
     fn rule(&self) -> RuleToken {
         match self {
-            INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] | IDENT => {
+            INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] => {
                 RuleToken::Literal
-            }
+            },
+            IDENT => RuleToken::Ident,
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,

@@ -1,0 +1,31 @@
+---
+created: "2019-10-07T09:48:30.108781Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/call_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 17)
+  FN_DEF@[0; 17)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 6)
+      IDENT@[2; 6) "main"
+    PARAM_LIST@[6; 8)
+      L_PAREN@[6; 7) "("
+      R_PAREN@[7; 8) ")"
+    BLOCK@[8; 17)
+      L_CURLY@[8; 9) "{"
+      EXPR_STMT@[9; 15)
+        CALL_EXPR@[9; 15)
+          NAME@[9; 10)
+            IDENT@[9; 10) "a"
+          ARG_LIST@[10; 15)
+            L_PAREN@[10; 11) "("
+            LITERAL@[11; 12)
+              INT_NUMBER@[11; 12) "1"
+            COMMA@[12; 13) ","
+            LITERAL@[13; 14)
+              INT_NUMBER@[13; 14) "2"
+            R_PAREN@[14; 15) ")"
+      SEMI@[15; 16) ";"
+      R_CURLY@[16; 17) "}"
+
