@@ -310,6 +310,7 @@ impl SyntaxKind {
 
 
 // ArgList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ArgList {
     pub(crate) syntax: SyntaxNode,
@@ -336,6 +337,7 @@ impl ArgList {
 }
 
 // ArrayExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ArrayExpr {
     pub(crate) syntax: SyntaxNode,
@@ -362,6 +364,7 @@ impl ArrayExpr {
 }
 
 // ArrayType
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ArrayType {
     pub(crate) syntax: SyntaxNode,
@@ -392,6 +395,7 @@ impl ArrayType {
 }
 
 // BinExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BinExpr {
     pub(crate) syntax: SyntaxNode,
@@ -414,6 +418,7 @@ impl AstNode for BinExpr {
 impl BinExpr {}
 
 // BindPat
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BindPat {
     pub(crate) syntax: SyntaxNode,
@@ -437,6 +442,7 @@ impl traits::NameOwner for BindPat {}
 impl BindPat {}
 
 // Block
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Block {
     pub(crate) syntax: SyntaxNode,
@@ -467,6 +473,7 @@ impl Block {
 }
 
 // BlockExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BlockExpr {
     pub(crate) syntax: SyntaxNode,
@@ -493,6 +500,7 @@ impl BlockExpr {
 }
 
 // BreakExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BreakExpr {
     pub(crate) syntax: SyntaxNode,
@@ -515,6 +523,7 @@ impl AstNode for BreakExpr {
 impl BreakExpr {}
 
 // CallExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CallExpr {
     pub(crate) syntax: SyntaxNode,
@@ -542,6 +551,7 @@ impl CallExpr {
 }
 
 // CastExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CastExpr {
     pub(crate) syntax: SyntaxNode,
@@ -572,6 +582,7 @@ impl CastExpr {
 }
 
 // ClassDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClassDef {
     pub(crate) syntax: SyntaxNode,
@@ -598,6 +609,7 @@ impl traits::NamedFieldsOwner for ClassDef {}
 impl ClassDef {}
 
 // ClassLit
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClassLit {
     pub(crate) syntax: SyntaxNode,
@@ -624,6 +636,7 @@ impl ClassLit {
 }
 
 // ClosureExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ClosureExpr {
     pub(crate) syntax: SyntaxNode,
@@ -654,6 +667,7 @@ impl ClosureExpr {
 }
 
 // Condition
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Condition {
     pub(crate) syntax: SyntaxNode,
@@ -684,6 +698,7 @@ impl Condition {
 }
 
 // ContinueExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ContinueExpr {
     pub(crate) syntax: SyntaxNode,
@@ -706,6 +721,7 @@ impl AstNode for ContinueExpr {
 impl ContinueExpr {}
 
 // EnumDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct EnumDef {
     pub(crate) syntax: SyntaxNode,
@@ -733,6 +749,7 @@ impl EnumDef {
 }
 
 // EnumVariant
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct EnumVariant {
     pub(crate) syntax: SyntaxNode,
@@ -760,6 +777,7 @@ impl EnumVariant {
 }
 
 // EnumVariantList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct EnumVariantList {
     pub(crate) syntax: SyntaxNode,
@@ -786,11 +804,125 @@ impl EnumVariantList {
 }
 
 // Expr
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Expr {
-    pub(crate) syntax: SyntaxNode,
-}
 
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum Expr {
+            ArrayExpr(ArrayExpr),
+            ParenExpr(ParenExpr),
+            ClosureExpr(ClosureExpr),
+            IfExpr(IfExpr),
+            ForExpr(ForExpr),
+            WhileExpr(WhileExpr),
+            ContinueExpr(ContinueExpr),
+            BreakExpr(BreakExpr),
+            BlockExpr(BlockExpr),
+            ReturnExpr(ReturnExpr),
+            MatchExpr(MatchExpr),
+            ClassLit(ClassLit),
+            CallExpr(CallExpr),
+            IndexExpr(IndexExpr),
+            FieldExpr(FieldExpr),
+            CastExpr(CastExpr),
+            PrefixExpr(PrefixExpr),
+            BinExpr(BinExpr),
+            Literal(Literal),
+    }
+        impl From<ArrayExpr> for Expr {
+            fn from(n: ArrayExpr) -> Expr { 
+                Expr::ArrayExpr(n)
+            }
+        }
+        impl From<ParenExpr> for Expr {
+            fn from(n: ParenExpr) -> Expr { 
+                Expr::ParenExpr(n)
+            }
+        }
+        impl From<ClosureExpr> for Expr {
+            fn from(n: ClosureExpr) -> Expr { 
+                Expr::ClosureExpr(n)
+            }
+        }
+        impl From<IfExpr> for Expr {
+            fn from(n: IfExpr) -> Expr { 
+                Expr::IfExpr(n)
+            }
+        }
+        impl From<ForExpr> for Expr {
+            fn from(n: ForExpr) -> Expr { 
+                Expr::ForExpr(n)
+            }
+        }
+        impl From<WhileExpr> for Expr {
+            fn from(n: WhileExpr) -> Expr { 
+                Expr::WhileExpr(n)
+            }
+        }
+        impl From<ContinueExpr> for Expr {
+            fn from(n: ContinueExpr) -> Expr { 
+                Expr::ContinueExpr(n)
+            }
+        }
+        impl From<BreakExpr> for Expr {
+            fn from(n: BreakExpr) -> Expr { 
+                Expr::BreakExpr(n)
+            }
+        }
+        impl From<BlockExpr> for Expr {
+            fn from(n: BlockExpr) -> Expr { 
+                Expr::BlockExpr(n)
+            }
+        }
+        impl From<ReturnExpr> for Expr {
+            fn from(n: ReturnExpr) -> Expr { 
+                Expr::ReturnExpr(n)
+            }
+        }
+        impl From<MatchExpr> for Expr {
+            fn from(n: MatchExpr) -> Expr { 
+                Expr::MatchExpr(n)
+            }
+        }
+        impl From<ClassLit> for Expr {
+            fn from(n: ClassLit) -> Expr { 
+                Expr::ClassLit(n)
+            }
+        }
+        impl From<CallExpr> for Expr {
+            fn from(n: CallExpr) -> Expr { 
+                Expr::CallExpr(n)
+            }
+        }
+        impl From<IndexExpr> for Expr {
+            fn from(n: IndexExpr) -> Expr { 
+                Expr::IndexExpr(n)
+            }
+        }
+        impl From<FieldExpr> for Expr {
+            fn from(n: FieldExpr) -> Expr { 
+                Expr::FieldExpr(n)
+            }
+        }
+        impl From<CastExpr> for Expr {
+            fn from(n: CastExpr) -> Expr { 
+                Expr::CastExpr(n)
+            }
+        }
+        impl From<PrefixExpr> for Expr {
+            fn from(n: PrefixExpr) -> Expr { 
+                Expr::PrefixExpr(n)
+            }
+        }
+        impl From<BinExpr> for Expr {
+            fn from(n: BinExpr) -> Expr { 
+                Expr::BinExpr(n)
+            }
+        }
+        impl From<Literal> for Expr {
+            fn from(n: Literal) -> Expr { 
+                Expr::Literal(n)
+            }
+        }
 impl AstNode for Expr {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
@@ -799,121 +931,59 @@ impl AstNode for Expr {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(Expr { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ExprKind {
-    ArrayExpr(ArrayExpr),
-    ParenExpr(ParenExpr),
-    ClosureExpr(ClosureExpr),
-    IfExpr(IfExpr),
-    ForExpr(ForExpr),
-    WhileExpr(WhileExpr),
-    ContinueExpr(ContinueExpr),
-    BreakExpr(BreakExpr),
-    BlockExpr(BlockExpr),
-    ReturnExpr(ReturnExpr),
-    MatchExpr(MatchExpr),
-    ClassLit(ClassLit),
-    CallExpr(CallExpr),
-    IndexExpr(IndexExpr),
-    FieldExpr(FieldExpr),
-    CastExpr(CastExpr),
-    PrefixExpr(PrefixExpr),
-    BinExpr(BinExpr),
-    Literal(Literal),
-}
-impl From<ArrayExpr> for Expr {
-    fn from(n: ArrayExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ParenExpr> for Expr {
-    fn from(n: ParenExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ClosureExpr> for Expr {
-    fn from(n: ClosureExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<IfExpr> for Expr {
-    fn from(n: IfExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ForExpr> for Expr {
-    fn from(n: ForExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<WhileExpr> for Expr {
-    fn from(n: WhileExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ContinueExpr> for Expr {
-    fn from(n: ContinueExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<BreakExpr> for Expr {
-    fn from(n: BreakExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<BlockExpr> for Expr {
-    fn from(n: BlockExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ReturnExpr> for Expr {
-    fn from(n: ReturnExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<MatchExpr> for Expr {
-    fn from(n: MatchExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<ClassLit> for Expr {
-    fn from(n: ClassLit) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<CallExpr> for Expr {
-    fn from(n: CallExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<IndexExpr> for Expr {
-    fn from(n: IndexExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<FieldExpr> for Expr {
-    fn from(n: FieldExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<CastExpr> for Expr {
-    fn from(n: CastExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<PrefixExpr> for Expr {
-    fn from(n: PrefixExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<BinExpr> for Expr {
-    fn from(n: BinExpr) -> Expr { Expr { syntax: n.syntax } }
-}
-impl From<Literal> for Expr {
-    fn from(n: Literal) -> Expr { Expr { syntax: n.syntax } }
-}
-impl Expr {
-    pub fn kind(&self) -> ExprKind {
-        match self.syntax.kind() {
-            ARRAY_EXPR => ExprKind::ArrayExpr(ArrayExpr::cast(self.syntax.clone()).unwrap()),
-            PAREN_EXPR => ExprKind::ParenExpr(ParenExpr::cast(self.syntax.clone()).unwrap()),
-            CLOSURE_EXPR => ExprKind::ClosureExpr(ClosureExpr::cast(self.syntax.clone()).unwrap()),
-            IF_EXPR => ExprKind::IfExpr(IfExpr::cast(self.syntax.clone()).unwrap()),
-            FOR_EXPR => ExprKind::ForExpr(ForExpr::cast(self.syntax.clone()).unwrap()),
-            WHILE_EXPR => ExprKind::WhileExpr(WhileExpr::cast(self.syntax.clone()).unwrap()),
-            CONTINUE_EXPR => ExprKind::ContinueExpr(ContinueExpr::cast(self.syntax.clone()).unwrap()),
-            BREAK_EXPR => ExprKind::BreakExpr(BreakExpr::cast(self.syntax.clone()).unwrap()),
-            BLOCK_EXPR => ExprKind::BlockExpr(BlockExpr::cast(self.syntax.clone()).unwrap()),
-            RETURN_EXPR => ExprKind::ReturnExpr(ReturnExpr::cast(self.syntax.clone()).unwrap()),
-            MATCH_EXPR => ExprKind::MatchExpr(MatchExpr::cast(self.syntax.clone()).unwrap()),
-            CLASS_LIT => ExprKind::ClassLit(ClassLit::cast(self.syntax.clone()).unwrap()),
-            CALL_EXPR => ExprKind::CallExpr(CallExpr::cast(self.syntax.clone()).unwrap()),
-            INDEX_EXPR => ExprKind::IndexExpr(IndexExpr::cast(self.syntax.clone()).unwrap()),
-            FIELD_EXPR => ExprKind::FieldExpr(FieldExpr::cast(self.syntax.clone()).unwrap()),
-            CAST_EXPR => ExprKind::CastExpr(CastExpr::cast(self.syntax.clone()).unwrap()),
-            PREFIX_EXPR => ExprKind::PrefixExpr(PrefixExpr::cast(self.syntax.clone()).unwrap()),
-            BIN_EXPR => ExprKind::BinExpr(BinExpr::cast(self.syntax.clone()).unwrap()),
-            LITERAL => ExprKind::Literal(Literal::cast(self.syntax.clone()).unwrap()),
-            _ => unreachable!(),
+        return match syntax.kind() {
+             
+            | ARRAY_EXPR  => Some(Expr::ArrayExpr(ArrayExpr {syntax})), 
+            | PAREN_EXPR  => Some(Expr::ParenExpr(ParenExpr {syntax})), 
+            | CLOSURE_EXPR  => Some(Expr::ClosureExpr(ClosureExpr {syntax})), 
+            | IF_EXPR  => Some(Expr::IfExpr(IfExpr {syntax})), 
+            | FOR_EXPR  => Some(Expr::ForExpr(ForExpr {syntax})), 
+            | WHILE_EXPR  => Some(Expr::WhileExpr(WhileExpr {syntax})), 
+            | CONTINUE_EXPR  => Some(Expr::ContinueExpr(ContinueExpr {syntax})), 
+            | BREAK_EXPR  => Some(Expr::BreakExpr(BreakExpr {syntax})), 
+            | BLOCK_EXPR  => Some(Expr::BlockExpr(BlockExpr {syntax})), 
+            | RETURN_EXPR  => Some(Expr::ReturnExpr(ReturnExpr {syntax})), 
+            | MATCH_EXPR  => Some(Expr::MatchExpr(MatchExpr {syntax})), 
+            | CLASS_LIT  => Some(Expr::ClassLit(ClassLit {syntax})), 
+            | CALL_EXPR  => Some(Expr::CallExpr(CallExpr {syntax})), 
+            | INDEX_EXPR  => Some(Expr::IndexExpr(IndexExpr {syntax})), 
+            | FIELD_EXPR  => Some(Expr::FieldExpr(FieldExpr {syntax})), 
+            | CAST_EXPR  => Some(Expr::CastExpr(CastExpr {syntax})), 
+            | PREFIX_EXPR  => Some(Expr::PrefixExpr(PrefixExpr {syntax})), 
+            | BIN_EXPR  => Some(Expr::BinExpr(BinExpr {syntax})), 
+            | LITERAL  => Some(Expr::Literal(Literal {syntax})),_ => None
         }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+             
+                Expr::ArrayExpr(kind)  => &kind.syntax, 
+                Expr::ParenExpr(kind)  => &kind.syntax, 
+                Expr::ClosureExpr(kind)  => &kind.syntax, 
+                Expr::IfExpr(kind)  => &kind.syntax, 
+                Expr::ForExpr(kind)  => &kind.syntax, 
+                Expr::WhileExpr(kind)  => &kind.syntax, 
+                Expr::ContinueExpr(kind)  => &kind.syntax, 
+                Expr::BreakExpr(kind)  => &kind.syntax, 
+                Expr::BlockExpr(kind)  => &kind.syntax, 
+                Expr::ReturnExpr(kind)  => &kind.syntax, 
+                Expr::MatchExpr(kind)  => &kind.syntax, 
+                Expr::ClassLit(kind)  => &kind.syntax, 
+                Expr::CallExpr(kind)  => &kind.syntax, 
+                Expr::IndexExpr(kind)  => &kind.syntax, 
+                Expr::FieldExpr(kind)  => &kind.syntax, 
+                Expr::CastExpr(kind)  => &kind.syntax, 
+                Expr::PrefixExpr(kind)  => &kind.syntax, 
+                Expr::BinExpr(kind)  => &kind.syntax, 
+                Expr::Literal(kind)  => &kind.syntax,}
+    
     }
 }
 
 impl Expr {}
 
 // ExprStmt
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ExprStmt {
     pub(crate) syntax: SyntaxNode,
@@ -940,6 +1010,7 @@ impl ExprStmt {
 }
 
 // ExternImportDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ExternImportDef {
     pub(crate) syntax: SyntaxNode,
@@ -966,6 +1037,7 @@ impl ExternImportDef {
 }
 
 // FieldExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FieldExpr {
     pub(crate) syntax: SyntaxNode,
@@ -996,6 +1068,7 @@ impl FieldExpr {
 }
 
 // FnDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnDef {
     pub(crate) syntax: SyntaxNode,
@@ -1033,6 +1106,7 @@ impl FnDef {
 }
 
 // FnType
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnType {
     pub(crate) syntax: SyntaxNode,
@@ -1063,6 +1137,7 @@ impl FnType {
 }
 
 // ForExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ForExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1098,6 +1173,7 @@ impl ForExpr {
 }
 
 // IdentType
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IdentType {
     pub(crate) syntax: SyntaxNode,
@@ -1124,6 +1200,7 @@ impl IdentType {
 }
 
 // IfExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IfExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1150,6 +1227,7 @@ impl IfExpr {
 }
 
 // IndexExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IndexExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1172,6 +1250,7 @@ impl AstNode for IndexExpr {
 impl IndexExpr {}
 
 // LetStmt
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LetStmt {
     pub(crate) syntax: SyntaxNode,
@@ -1203,6 +1282,7 @@ impl LetStmt {
 }
 
 // Literal
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Literal {
     pub(crate) syntax: SyntaxNode,
@@ -1225,6 +1305,7 @@ impl AstNode for Literal {
 impl Literal {}
 
 // LiteralPat
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LiteralPat {
     pub(crate) syntax: SyntaxNode,
@@ -1251,6 +1332,7 @@ impl LiteralPat {
 }
 
 // MatchArm
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MatchArm {
     pub(crate) syntax: SyntaxNode,
@@ -1281,6 +1363,7 @@ impl MatchArm {
 }
 
 // MatchArmList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MatchArmList {
     pub(crate) syntax: SyntaxNode,
@@ -1307,6 +1390,7 @@ impl MatchArmList {
 }
 
 // MatchExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MatchExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1337,6 +1421,7 @@ impl MatchExpr {
 }
 
 // Name
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Name {
     pub(crate) syntax: SyntaxNode,
@@ -1359,6 +1444,7 @@ impl AstNode for Name {
 impl Name {}
 
 // NameRef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NameRef {
     pub(crate) syntax: SyntaxNode,
@@ -1381,6 +1467,7 @@ impl AstNode for NameRef {
 impl NameRef {}
 
 // NamedField
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NamedField {
     pub(crate) syntax: SyntaxNode,
@@ -1411,6 +1498,7 @@ impl NamedField {
 }
 
 // NamedFieldDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NamedFieldDef {
     pub(crate) syntax: SyntaxNode,
@@ -1435,6 +1523,7 @@ impl traits::TypeAscriptionOwner for NamedFieldDef {}
 impl NamedFieldDef {}
 
 // NamedFieldDefList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NamedFieldDefList {
     pub(crate) syntax: SyntaxNode,
@@ -1461,6 +1550,7 @@ impl NamedFieldDefList {
 }
 
 // NamedFieldList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NamedFieldList {
     pub(crate) syntax: SyntaxNode,
@@ -1487,6 +1577,7 @@ impl NamedFieldList {
 }
 
 // Param
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Param {
     pub(crate) syntax: SyntaxNode,
@@ -1514,6 +1605,7 @@ impl Param {
 }
 
 // ParamList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ParamList {
     pub(crate) syntax: SyntaxNode,
@@ -1540,6 +1632,7 @@ impl ParamList {
 }
 
 // ParenExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ParenExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1566,6 +1659,7 @@ impl ParenExpr {
 }
 
 // ParenType
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ParenType {
     pub(crate) syntax: SyntaxNode,
@@ -1592,11 +1686,35 @@ impl ParenType {
 }
 
 // Pat
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Pat {
-    pub(crate) syntax: SyntaxNode,
-}
 
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum Pat {
+            BindPat(BindPat),
+            PlaceholderPat(PlaceholderPat),
+            TuplePat(TuplePat),
+            LiteralPat(LiteralPat),
+    }
+        impl From<BindPat> for Pat {
+            fn from(n: BindPat) -> Pat { 
+                Pat::BindPat(n)
+            }
+        }
+        impl From<PlaceholderPat> for Pat {
+            fn from(n: PlaceholderPat) -> Pat { 
+                Pat::PlaceholderPat(n)
+            }
+        }
+        impl From<TuplePat> for Pat {
+            fn from(n: TuplePat) -> Pat { 
+                Pat::TuplePat(n)
+            }
+        }
+        impl From<LiteralPat> for Pat {
+            fn from(n: LiteralPat) -> Pat { 
+                Pat::LiteralPat(n)
+            }
+        }
 impl AstNode for Pat {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
@@ -1605,46 +1723,29 @@ impl AstNode for Pat {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(Pat { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PatKind {
-    BindPat(BindPat),
-    PlaceholderPat(PlaceholderPat),
-    TuplePat(TuplePat),
-    LiteralPat(LiteralPat),
-}
-impl From<BindPat> for Pat {
-    fn from(n: BindPat) -> Pat { Pat { syntax: n.syntax } }
-}
-impl From<PlaceholderPat> for Pat {
-    fn from(n: PlaceholderPat) -> Pat { Pat { syntax: n.syntax } }
-}
-impl From<TuplePat> for Pat {
-    fn from(n: TuplePat) -> Pat { Pat { syntax: n.syntax } }
-}
-impl From<LiteralPat> for Pat {
-    fn from(n: LiteralPat) -> Pat { Pat { syntax: n.syntax } }
-}
-impl Pat {
-    pub fn kind(&self) -> PatKind {
-        match self.syntax.kind() {
-            BIND_PAT => PatKind::BindPat(BindPat::cast(self.syntax.clone()).unwrap()),
-            PLACEHOLDER_PAT => PatKind::PlaceholderPat(PlaceholderPat::cast(self.syntax.clone()).unwrap()),
-            TUPLE_PAT => PatKind::TuplePat(TuplePat::cast(self.syntax.clone()).unwrap()),
-            LITERAL_PAT => PatKind::LiteralPat(LiteralPat::cast(self.syntax.clone()).unwrap()),
-            _ => unreachable!(),
+        return match syntax.kind() {
+             
+            | BIND_PAT  => Some(Pat::BindPat(BindPat {syntax})), 
+            | PLACEHOLDER_PAT  => Some(Pat::PlaceholderPat(PlaceholderPat {syntax})), 
+            | TUPLE_PAT  => Some(Pat::TuplePat(TuplePat {syntax})), 
+            | LITERAL_PAT  => Some(Pat::LiteralPat(LiteralPat {syntax})),_ => None
         }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+             
+                Pat::BindPat(kind)  => &kind.syntax, 
+                Pat::PlaceholderPat(kind)  => &kind.syntax, 
+                Pat::TuplePat(kind)  => &kind.syntax, 
+                Pat::LiteralPat(kind)  => &kind.syntax,}
+    
     }
 }
 
 impl Pat {}
 
 // PlaceholderPat
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlaceholderPat {
     pub(crate) syntax: SyntaxNode,
@@ -1667,6 +1768,7 @@ impl AstNode for PlaceholderPat {
 impl PlaceholderPat {}
 
 // PrefixExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PrefixExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1693,6 +1795,7 @@ impl PrefixExpr {
 }
 
 // RetType
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RetType {
     pub(crate) syntax: SyntaxNode,
@@ -1719,6 +1822,7 @@ impl RetType {
 }
 
 // ReturnExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ReturnExpr {
     pub(crate) syntax: SyntaxNode,
@@ -1745,6 +1849,7 @@ impl ReturnExpr {
 }
 
 // SourceFile
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SourceFile {
     pub(crate) syntax: SyntaxNode,
@@ -1772,11 +1877,23 @@ impl traits::ExternImportDefOwner for SourceFile {}
 impl SourceFile {}
 
 // Stmt
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Stmt {
-    pub(crate) syntax: SyntaxNode,
-}
 
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum Stmt {
+            ExprStmt(ExprStmt),
+            LetStmt(LetStmt),
+    }
+        impl From<ExprStmt> for Stmt {
+            fn from(n: ExprStmt) -> Stmt { 
+                Stmt::ExprStmt(n)
+            }
+        }
+        impl From<LetStmt> for Stmt {
+            fn from(n: LetStmt) -> Stmt { 
+                Stmt::LetStmt(n)
+            }
+        }
 impl AstNode for Stmt {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
@@ -1785,36 +1902,25 @@ impl AstNode for Stmt {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(Stmt { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum StmtKind {
-    ExprStmt(ExprStmt),
-    LetStmt(LetStmt),
-}
-impl From<ExprStmt> for Stmt {
-    fn from(n: ExprStmt) -> Stmt { Stmt { syntax: n.syntax } }
-}
-impl From<LetStmt> for Stmt {
-    fn from(n: LetStmt) -> Stmt { Stmt { syntax: n.syntax } }
-}
-impl Stmt {
-    pub fn kind(&self) -> StmtKind {
-        match self.syntax.kind() {
-            EXPR_STMT => StmtKind::ExprStmt(ExprStmt::cast(self.syntax.clone()).unwrap()),
-            LET_STMT => StmtKind::LetStmt(LetStmt::cast(self.syntax.clone()).unwrap()),
-            _ => unreachable!(),
+        return match syntax.kind() {
+             
+            | EXPR_STMT  => Some(Stmt::ExprStmt(ExprStmt {syntax})), 
+            | LET_STMT  => Some(Stmt::LetStmt(LetStmt {syntax})),_ => None
         }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+             
+                Stmt::ExprStmt(kind)  => &kind.syntax, 
+                Stmt::LetStmt(kind)  => &kind.syntax,}
+    
     }
 }
 
 impl Stmt {}
 
 // TuplePat
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TuplePat {
     pub(crate) syntax: SyntaxNode,
@@ -1841,6 +1947,7 @@ impl TuplePat {
 }
 
 // TypeAliasDef
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TypeAliasDef {
     pub(crate) syntax: SyntaxNode,
@@ -1863,6 +1970,7 @@ impl AstNode for TypeAliasDef {
 impl TypeAliasDef {}
 
 // TypeParam
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TypeParam {
     pub(crate) syntax: SyntaxNode,
@@ -1886,6 +1994,7 @@ impl traits::NameOwner for TypeParam {}
 impl TypeParam {}
 
 // TypeParamList
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TypeParamList {
     pub(crate) syntax: SyntaxNode,
@@ -1912,11 +2021,35 @@ impl TypeParamList {
 }
 
 // TypeRef
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct TypeRef {
-    pub(crate) syntax: SyntaxNode,
-}
 
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum TypeRef {
+            ParenType(ParenType),
+            ArrayType(ArrayType),
+            FnType(FnType),
+            IdentType(IdentType),
+    }
+        impl From<ParenType> for TypeRef {
+            fn from(n: ParenType) -> TypeRef { 
+                TypeRef::ParenType(n)
+            }
+        }
+        impl From<ArrayType> for TypeRef {
+            fn from(n: ArrayType) -> TypeRef { 
+                TypeRef::ArrayType(n)
+            }
+        }
+        impl From<FnType> for TypeRef {
+            fn from(n: FnType) -> TypeRef { 
+                TypeRef::FnType(n)
+            }
+        }
+        impl From<IdentType> for TypeRef {
+            fn from(n: IdentType) -> TypeRef { 
+                TypeRef::IdentType(n)
+            }
+        }
 impl AstNode for TypeRef {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
@@ -1925,46 +2058,29 @@ impl AstNode for TypeRef {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(TypeRef { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TypeRefKind {
-    ParenType(ParenType),
-    ArrayType(ArrayType),
-    FnType(FnType),
-    IdentType(IdentType),
-}
-impl From<ParenType> for TypeRef {
-    fn from(n: ParenType) -> TypeRef { TypeRef { syntax: n.syntax } }
-}
-impl From<ArrayType> for TypeRef {
-    fn from(n: ArrayType) -> TypeRef { TypeRef { syntax: n.syntax } }
-}
-impl From<FnType> for TypeRef {
-    fn from(n: FnType) -> TypeRef { TypeRef { syntax: n.syntax } }
-}
-impl From<IdentType> for TypeRef {
-    fn from(n: IdentType) -> TypeRef { TypeRef { syntax: n.syntax } }
-}
-impl TypeRef {
-    pub fn kind(&self) -> TypeRefKind {
-        match self.syntax.kind() {
-            PAREN_TYPE => TypeRefKind::ParenType(ParenType::cast(self.syntax.clone()).unwrap()),
-            ARRAY_TYPE => TypeRefKind::ArrayType(ArrayType::cast(self.syntax.clone()).unwrap()),
-            FN_TYPE => TypeRefKind::FnType(FnType::cast(self.syntax.clone()).unwrap()),
-            IDENT_TYPE => TypeRefKind::IdentType(IdentType::cast(self.syntax.clone()).unwrap()),
-            _ => unreachable!(),
+        return match syntax.kind() {
+             
+            | PAREN_TYPE  => Some(TypeRef::ParenType(ParenType {syntax})), 
+            | ARRAY_TYPE  => Some(TypeRef::ArrayType(ArrayType {syntax})), 
+            | FN_TYPE  => Some(TypeRef::FnType(FnType {syntax})), 
+            | IDENT_TYPE  => Some(TypeRef::IdentType(IdentType {syntax})),_ => None
         }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+             
+                TypeRef::ParenType(kind)  => &kind.syntax, 
+                TypeRef::ArrayType(kind)  => &kind.syntax, 
+                TypeRef::FnType(kind)  => &kind.syntax, 
+                TypeRef::IdentType(kind)  => &kind.syntax,}
+    
     }
 }
 
 impl TypeRef {}
 
 // Visibility
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Visibility {
     pub(crate) syntax: SyntaxNode,
@@ -1987,6 +2103,7 @@ impl AstNode for Visibility {
 impl Visibility {}
 
 // WhileExpr
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct WhileExpr {
     pub(crate) syntax: SyntaxNode,

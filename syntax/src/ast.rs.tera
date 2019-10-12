@@ -67,6 +67,7 @@ impl SyntaxKind {
 
 {% for node, methods in ast %}
 // {{ node }}
+{% if not methods.enum%}
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct {{ node }} {
     pub(crate) syntax: SyntaxNode,
@@ -88,28 +89,48 @@ impl AstNode for {{ node }} {
     }
     fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
-
+{% endif%}
 {% if methods.enum %}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum {{ node }}Kind {
-{%- for kind in methods.enum %}
-    {{ kind }}({{ kind }}),
-{%- endfor %}
-}
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub enum {{ node }} {
+        {%- for kind in methods.enum %}
+            {{ kind }}({{ kind }}),
+        {%- endfor %}
+    }
 
-{%- for kind in methods.enum %}
-impl From<{{ kind }}> for {{ node }} {
-    fn from(n: {{ kind }}) -> {{ node }} { {{ node }} { syntax: n.syntax } }
-}
-{%- endfor %}
-impl {{ node }} {
-    pub fn kind(&self) -> {{ node }}Kind {
-        match self.syntax.kind() {
-            {%- for kind in methods.enum %}
-            {{ kind | SCREAM }} => {{ node }}Kind::{{ kind }}({{ kind }}::cast(self.syntax.clone()).unwrap()),
-            {%- endfor %}
-            _ => unreachable!(),
+    {%- for kind in methods.enum %}
+        impl From<{{ kind }}> for {{ node }} {
+            fn from(n: {{ kind }}) -> {{ node }} { 
+                {{ node }}::{{kind}}(n)
+            }
         }
+    {%- endfor %}
+impl AstNode for {{ node }} {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            {%- if methods.enum %}
+            {% for kind in methods.enum %} | {{ kind | SCREAM }} {%- endfor -%}
+            {% else %}
+            {{ node | SCREAM }}
+            {%- endif %} => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        return match syntax.kind() {
+            {% for kind in methods.enum %} 
+            | {{ kind | SCREAM }}  => Some({{node}}::{{kind}}({{kind}} {syntax})),
+            {%- endfor -%}
+            _ => None
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+            {% for kind in methods.enum %} 
+                {{node}}::{{ kind}}(kind)  => &kind.syntax,
+            {%- endfor -%}
+        }
+    
     }
 }
 {% endif %}
