@@ -40,8 +40,6 @@ pub fn fopen(args: *const Value) -> Value {
 
     use std::io::Read;
 
-    println!("{:?}", path);
-
     ::std::fs::File::open(path)
         .unwrap()
         .read_to_string(&mut input)

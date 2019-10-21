@@ -549,7 +549,9 @@ impl<'a> Builder<'a> {
                 let name = self.symbols.name(*callee);
 
                 match name.as_str() {
-                    "clock" | "rand" => self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8),
+                    "clock" | "random" | "read" | "fopen" => {
+                        self.emit_bytes(opcode::CALLNATIVE, callee.0 as u8)
+                    }
                     _ => {
                         self.emit_bytes(opcode::CALL, callee.0 as u8);
                         self.emit_byte(args.len() as u8)

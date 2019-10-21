@@ -52,6 +52,12 @@ impl<'a> CompileCtx<'a> {
                 ],
                 Type::App(TypeCon::Int, vec![]),
             );
+            add_builtin("read", vec![], Type::App(TypeCon::Str, vec![]));
+            add_builtin(
+                "fopen",
+                vec![Type::App(TypeCon::Str, vec![])],
+                Type::App(TypeCon::Str, vec![]),
+            );
         }
 
         CompileCtx {

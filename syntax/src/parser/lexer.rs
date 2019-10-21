@@ -352,7 +352,7 @@ fn spans(token: TokenType, start: Position, end: Position) -> Spanned<Token> {
 
 #[inline]
 fn is_letter_ch(ch: char) -> bool {
-    ch.is_alphanumeric()
+    ch.is_alphanumeric() || ch == '_'
 }
 
 #[inline]
