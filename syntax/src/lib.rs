@@ -6,6 +6,7 @@ mod traits;
 
 pub use ast::SyntaxKind;
 pub use lexer::Lexer;
+pub use rowan::SmolStr;
 pub use token::Token;
 pub use traits::*;
 

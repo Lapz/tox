@@ -1191,6 +1191,7 @@ dependencies = [
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parser 0.1.0",
  "rowan 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "semant 0.1.0",
  "structopt 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntax 0.1.0",
  "teraron 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

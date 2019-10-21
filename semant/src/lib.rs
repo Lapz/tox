@@ -1,7 +1,9 @@
 mod ctx;
+mod db;
 mod hir;
 mod lower;
 
+pub use lower::lower_ast;
 use syntax::SyntaxNode;
 
 #[cfg(test)]

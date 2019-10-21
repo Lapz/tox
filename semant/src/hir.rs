@@ -1,6 +1,6 @@
 use crate::SyntaxNode;
 use std::collections::HashMap;
-use syntax::{ast, AstNode, AstPtr};
+use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr};
 
 pub struct Ctx {
     functions: FunctionMap,
@@ -14,21 +14,41 @@ impl Ctx {
     }
 
     pub(crate) fn add_function(&mut self, fn_def: ast::FnDef) -> FunctionId {
-        self.functions.add_function(fn_def)
+        unimplemented!()
+        // self.functions.add_function(fn_def)
     }
 }
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct Id(u32);
+macro_rules! create_intern_key {
+    ($name:ident) => {
+        #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+        pub struct $name(salsa::InternId);
+        impl salsa::InternKey for $name {
+            fn from_intern_id(v: salsa::InternId) -> Self {
+                $name(v)
+            }
+            fn as_intern_id(&self) -> salsa::InternId {
+                self.0
+            }
+        }
+    };
+}
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Name(SmolStr);
 
-impl Id {
-    pub fn new(id: u32) -> Self {
-        Id(id)
+impl Name {
+    pub fn missing() -> Self {
+        Name(SmolStr::new("missing name"))
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct FunctionId(pub Id);
+impl From<ast::Name> for Name {
+    fn from(name: ast::Name) -> Name {
+        Name(text_of_first_token(name.syntax()).clone())
+    }
+}
 
+create_intern_key!(FunctionId);
+#[derive(Debug)]
 pub struct Function {
     id: FunctionId,
 }
@@ -56,19 +76,19 @@ impl FunctionMap {
         }
     }
 
-    pub fn add_function(&mut self, fn_def: ast::FnDef) -> FunctionId {
-        let id = FunctionId(Id::new(self.id_counter));
+    // pub fn add_function(&mut self, fn_def: ast::FnDef) -> FunctionId {
+    //     let id = FunctionId(Id::new(self.id_counter));
 
-        self.id_counter += 1;
+    //     self.id_counter += 1;
 
-        let function = Function::new(id);
+    //     let function = Function::new(id);
 
-        self.functions.insert(id, function);
+    //     self.functions.insert(id, function);
 
-        self.nodes.insert(id, AstPtr::new(&fn_def));
+    //     self.nodes.insert(id, AstPtr::new(&fn_def));
 
-        id
-    }
+    //     id
+    // }
 }
 
 impl Function {
@@ -85,3 +105,26 @@ impl Function {
 
     fn infer() {}
 }
+
+create_intern_key!(ClassId);
+create_intern_key!(EnumId);
+create_intern_key!(TypeAliasId);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ExprId(u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PatId(pub u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NameId(u32);
+
+#[derive(Debug, Clone)]
+pub enum Pattern {
+    Bind { name: Name },
+    Placeholder,
+    Tuple(Vec<PatId>),
+    Literal(ExprId),
+}
+
+pub enum Literal {}

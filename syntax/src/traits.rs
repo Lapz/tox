@@ -152,6 +152,15 @@ pub fn children<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> AstChildren<C> {
     AstChildren::new(parent.syntax())
 }
 
+pub fn text_of_first_token(node: &SyntaxNode) -> &SmolStr {
+    node.green()
+        .children()
+        .first()
+        .and_then(|it| it.as_token())
+        .unwrap()
+        .text()
+}
+
 pub trait TypeAscriptionOwner: AstNode {
     fn ascribed_type(&self) -> Option<ast::TypeRef> {
         child_opt(self)

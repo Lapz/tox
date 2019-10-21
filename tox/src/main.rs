@@ -4,6 +4,7 @@ use crate::cli::{Cli, Commands};
 use codespan::{CodeMap, FileMap, FileName, Span};
 use parser::{dump_debug, Parser};
 use rowan::SmolStr;
+use semant::lower_ast;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use structopt::StructOpt as _;
@@ -22,6 +23,8 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     let source_file = parser.parse_program();
     reporter.emit()?;
     write!(out, "{}", dump_debug(&source_file))?;
+
+    lower_ast(source_file);
     Ok(())
 }
 
