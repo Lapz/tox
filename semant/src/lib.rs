@@ -3,7 +3,9 @@ mod db;
 mod hir;
 mod lower;
 
+pub use db::DatabaseImpl;
 pub use lower::lower_ast;
+pub use salsa;
 use syntax::SyntaxNode;
 
 #[cfg(test)]

@@ -1,33 +1,22 @@
+use crate::db::HirDatabase;
 use crate::hir::{self, Ctx};
 use std::collections::HashMap;
-use syntax::{ast, AstNode, FnDefOwner, NameOwner, TypeAscriptionOwner};
-// pub struct FunctionData {
-//     names: HashMap<NameId, hir::Name>,
-//     patterns: HashMap<PatternId, hir::Pattern>,
-//     expressions: HashMap<ExprId, hir::Expression>,
-// }
+use syntax::{
+    ast, child, children, AstNode, FnDefOwner, NameOwner, TypeAscriptionOwner, TypesOwner,
+};
 
-#[derive(Debug, Clone, Default)]
-pub(crate) struct FunctionDataCollector {
-    name_id_count: u32,
-    pattern_id_count: u32,
-    expr_id_count: u32,
-    patterns: HashMap<hir::PatId, hir::Pattern>,
-    // expressions: HashMap<hir::ExprId, hir::Expression>,
+#[derive(Debug, Default)]
+pub(crate) struct FunctionDataCollector<DB> {
+    db: DB,
+    params: Vec<hir::Param>, // expressions: HashMap<hir::ExprId, hir::Expr>,
 }
 
-impl FunctionDataCollector {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn add_pattern(&mut self, pat: hir::Pattern) -> hir::PatId {
-        let id = hir::PatId(self.pattern_id_count);
-
-        self.pattern_id_count += 1;
-
-        self.patterns.insert(id, pat);
-        id
+impl<'a, DB> FunctionDataCollector<&'a DB>
+where
+    DB: HirDatabase,
+{
+    pub fn add_param(&mut self, param: hir::Param) {
+        self.params.push(param)
     }
 
     pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> hir::PatId {
@@ -49,39 +38,87 @@ impl FunctionDataCollector {
             ast::Pat::LiteralPat(literal) => unimplemented!(),
         };
 
-        self.add_pattern(pattern)
+        self.db.intern_pattern(pattern)
     }
+
+    pub(crate) fn lower_param(&mut self, param: ast::Param) {
+        let pat = self.lower_pattern(param.pat().unwrap());
+
+        let ty = self.lower_type(param.ascribed_type().unwrap());
+
+        self.add_param(hir::Param { pat, ty })
+    }
+
+    pub(crate) fn lower_type(&mut self, ty: ast::TypeRef) -> hir::TypeId {
+        match ty {
+            ast::TypeRef::ParenType(paren_ty) => {
+                let mut types = Vec::new();
+
+                for c in paren_ty.types() {
+                    types.push(self.lower_type(c))
+                }
+
+                self.db.intern_type(hir::Type::ParenType(types))
+            }
+            ast::TypeRef::ArrayType(array_ty) => {
+                let ty = self.lower_type(array_ty.type_ref().unwrap());
+
+                self.db.intern_type(hir::Type::ArrayType { ty, size: None })
+            }
+            ast::TypeRef::IdentType(ident_ty) => {
+                let name: hir::Name = ident_ty.into();
+
+                self.db
+                    .intern_type(hir::Type::Ident(self.db.intern_name(name)))
+            }
+
+            ast::TypeRef::FnType(fn_ty) => {
+                let mut params = Vec::new();
+
+                for param in fn_ty.types() {
+                    params.push(self.lower_type(param))
+                }
+
+                let ret = fn_ty
+                    .ret_type()
+                    .and_then(|ret| ret.type_ref().map(|ty| self.lower_type(ty)));
+
+                self.db.intern_type(hir::Type::FnType { params, ret })
+            }
+        }
+    }
+
+    pub(crate) fn lower(mut self, params: Option<ast::ParamList>) {}
 }
 
-pub fn lower_ast(source: ast::SourceFile) {
+pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut errors::Reporter) {
     let mut ctx = Ctx::new();
 
     for function in source.functions() {
-        let mut collector = FunctionDataCollector::new();
+        let mut collector = FunctionDataCollector {
+            db,
+
+            params: Vec::new(),
+        };
+
         let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
-        // let mut params = Vec::new();
+
         if let Some(param_list) = function.param_list() {
             for param in param_list.params() {
-                if let Some(p) = param.pat() {
-                    collector.lower_pattern(p);
-                }
+                reporter.warn(
+                    "this is a test",
+                    "testing",
+                    (
+                        param.syntax().text_range().start(),
+                        param.syntax().text_range().end(),
+                    ),
+                );
+                collector.lower_param(param);
             }
         }
 
         println!("{:#?}", collector);
     }
-}
-
-pub(crate) fn lower_param(param: ast::Param) {
-    let pat = param.pat();
-
-    let ty = param.ascribed_type();
-
-    println!(
-        "{:?} {:?}",
-        pat.map(|p| p.syntax().text()),
-        ty.map(|p| p.syntax().text()),
-    );
 }
 
 pub(crate) fn lower_pat(pat: ast::Pat) {}

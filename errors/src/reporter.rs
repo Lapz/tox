@@ -42,9 +42,9 @@ impl Reporter {
         &mut self,
         message: impl Into<String>,
         additional_info: impl Into<String>,
-        span: (Position, Position),
+        span: (impl Into<u32>, impl Into<u32>),
     ) {
-        let span = Span::new(span.0.absolute, span.1.absolute);
+        let span = Span::new(span.0.into(), span.1.into());
         let label = Label::new(self.file, span, message);
         let diagnostic = Diagnostic::new_warning(additional_info, label);
         self.diagnostics.borrow_mut().push(diagnostic)
@@ -60,5 +60,9 @@ impl Reporter {
         }
 
         Ok(())
+    }
+
+    pub fn has_errors(&self) -> bool {
+        !self.diagnostics.borrow().is_empty()
     }
 }

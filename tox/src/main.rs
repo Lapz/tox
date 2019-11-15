@@ -4,7 +4,7 @@ use crate::cli::{Cli, Commands};
 use codespan::{CodeMap, FileMap, FileName, Span};
 use parser::{dump_debug, Parser};
 use rowan::SmolStr;
-use semant::lower_ast;
+use semant::{lower_ast, DatabaseImpl};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use structopt::StructOpt as _;
@@ -21,10 +21,19 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     let mut lexer = Lexer::new(source, reporter.clone());
     let mut parser = Parser::new(lexer.lex().into_iter(), reporter.clone(), source);
     let source_file = parser.parse_program();
+
     reporter.emit()?;
+    write!(out, "{}", source_file.syntax().text())?;
     write!(out, "{}", dump_debug(&source_file))?;
 
-    lower_ast(source_file);
+    let db = DatabaseImpl::default();
+
+    if !reporter.has_errors() {
+        lower_ast(source_file, &db, &mut reporter.clone());
+    }
+
+    reporter.emit()?;
+
     Ok(())
 }
 
@@ -130,12 +139,12 @@ fn main() -> std::io::Result<()> {
     // }
 
     match teraron::generate(
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/ast.rs.tera"),
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/syntax/syntax/src/grammer.ron"),
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/tox-rewrite/syntax/src/ast.rs.tera"),
+        std::path::Path::new("/Users/lenardpratt/Projects/Rust/tox-rewrite/syntax/src/grammer.ron"),
         teraron::Mode::Overwrite,
     ) {
         Ok(_) => println!("ok"),
-        Err(e) => println!("{:?}", e),
+        Err(e) => println!("terra error {:?}", e),
     };
 
     Ok(())

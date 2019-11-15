@@ -1,4 +1,4 @@
-use crate::parser::Parser;
+use crate::parser::{Parser, Precedence};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -50,6 +50,11 @@ where
 
         self.parse_type();
 
+        if self.at(T![;]) {
+            self.bump();
+            self.parse_expression(Precedence::Primary)
+        }
+
         self.expect(T!["]"], "Expected `]`");
 
         self.finish_node();
@@ -87,9 +92,10 @@ where
         self.expect(T![")"], "Expected `)`");
 
         if self.is_ahead(|t| t == T![->]) {
+            self.start_node(RET_TYPE);
             self.bump();
-
             self.parse_type();
+            self.finish_node();
         }
 
         self.finish_node();

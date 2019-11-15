@@ -46,6 +46,9 @@ pub trait InternDatabase {
     fn intern_function(&self, fn_def: ast::FnDef) -> hir::FunctionId;
 
     #[salsa::interned]
+    fn intern_name(&self, name: hir::Name) -> hir::NameId;
+
+    #[salsa::interned]
     fn intern_class(&self, class_def: ast::ClassDef) -> hir::ClassId;
 
     #[salsa::interned]
@@ -53,10 +56,28 @@ pub trait InternDatabase {
 
     #[salsa::interned]
     fn intern_type_alias(&self, type_alias_def: ast::TypeAliasDef) -> hir::TypeAliasId;
+
+    #[salsa::interned]
+    fn intern_pattern(&self, pat: hir::Pattern) -> hir::PatId;
+
+    #[salsa::interned]
+    fn intern_type(&self, ty: hir::Type) -> hir::TypeId;
 }
 
 #[salsa::query_group(HirDatabaseStorage)]
-pub trait HirDatabase: std::fmt::Debug {
+pub trait HirDatabase: std::fmt::Debug + InternDatabase {
     #[salsa::input]
-    fn function_data(&self, fn_id: FunctionId) -> Arc<Function>;
+    fn function_data(&self, fn_id: hir::FunctionId) -> Arc<hir::Function>;
+}
+
+#[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]
+#[derive(Debug, Default)]
+pub struct DatabaseImpl {
+    runtime: salsa::Runtime<DatabaseImpl>,
+}
+
+impl salsa::Database for DatabaseImpl {
+    fn salsa_runtime(&self) -> &salsa::Runtime<DatabaseImpl> {
+        &self.runtime
+    }
 }

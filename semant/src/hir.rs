@@ -1,7 +1,7 @@
+use crate::db;
 use crate::SyntaxNode;
 use std::collections::HashMap;
 use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr};
-
 pub struct Ctx {
     functions: FunctionMap,
 }
@@ -41,6 +41,12 @@ impl Name {
     }
 }
 
+impl From<ast::IdentType> for Name {
+    fn from(name: ast::IdentType) -> Name {
+        Name(text_of_first_token(name.syntax()).clone())
+    }
+}
+
 impl From<ast::Name> for Name {
     fn from(name: ast::Name) -> Name {
         Name(text_of_first_token(name.syntax()).clone())
@@ -51,6 +57,14 @@ create_intern_key!(FunctionId);
 #[derive(Debug)]
 pub struct Function {
     id: FunctionId,
+    name: NameId,
+    params: Vec<Param>,
+}
+
+#[derive(Debug)]
+pub struct Param {
+    pub(crate) pat: PatId,
+    pub(crate) ty: TypeId,
 }
 
 pub(crate) struct FunctionMap {
@@ -92,11 +106,15 @@ impl FunctionMap {
 }
 
 impl Function {
-    fn new(id: FunctionId) -> Self {
-        Function { id }
+    fn new(id: FunctionId, name: NameId) -> Self {
+        Function {
+            id,
+            name,
+            params: Vec::new(),
+        }
     }
-    fn name(&self, ctx: &Ctx) -> ast::Name {
-        unimplemented!()
+    fn name(&self, db: &impl db::HirDatabase) -> Name {
+        db.lookup_intern_name(db.function_data(self.id).name)
     }
 
     fn body() {}
@@ -109,17 +127,14 @@ impl Function {
 create_intern_key!(ClassId);
 create_intern_key!(EnumId);
 create_intern_key!(TypeAliasId);
+create_intern_key!(NameId);
+create_intern_key!(TypeId);
+create_intern_key!(PatId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExprId(u32);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PatId(pub u32);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NameId(u32);
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
     Bind { name: Name },
     Placeholder,
@@ -127,4 +142,21 @@ pub enum Pattern {
     Literal(ExprId),
 }
 
+#[derive(Debug)]
 pub enum Literal {}
+
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+pub enum Type {
+    ParenType(Vec<TypeId>),
+    /// An array type with no supplied size is assumed to be dynamic in growth
+    /// If the size is present the array has a static size
+    ArrayType {
+        ty: TypeId,
+        size: Option<usize>,
+    },
+    FnType {
+        params: Vec<TypeId>,
+        ret: Option<TypeId>,
+    },
+    Ident(NameId),
+}

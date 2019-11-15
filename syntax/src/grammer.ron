@@ -81,6 +81,7 @@ Grammar(
         "ERROR",
         "IDENT",
         "COMMENT",
+        "WHITESPACE"
     ],
     nodes: [
         //defintions
@@ -97,6 +98,7 @@ Grammar(
         "TUPLE_PAT",
         "LITERAL_PAT",
         //types
+        "TYPE_REF",
         "FN_TYPE",
         "PAREN_TYPE",
         "ARRAY_TYPE",
@@ -201,9 +203,9 @@ Grammar(
         "EnumVariant": ( traits: ["NameOwner"], options: ["Expr"] ),
 
         "ArrayType": ( options: ["TypeRef", "Expr"] ),
-        "ParenType": (options: ["TypeRef"]),
+        "ParenType": (traits:["TypesOwner"],options: ["TypeRef"],),
         "IdentType": (options: ["TypeRef"]),
-        "FnType": (options: ["ParamList", "RetType"]),
+        "FnType": (options: ["ParamList", "RetType"],traits:["TypesOwner"]),
 
         "TypeRef":(enum:[
             "ParenType",

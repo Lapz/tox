@@ -148,6 +148,10 @@ pub fn child_opt<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> Option<C> {
     children(parent).next()
 }
 
+pub fn child<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> C {
+    children(parent).next().unwrap()
+}
+
 pub fn children<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> AstChildren<C> {
     AstChildren::new(parent.syntax())
 }
@@ -229,5 +233,11 @@ pub trait ExternImportDefOwner: AstNode {
 pub trait TypeParamsOwner: AstNode {
     fn type_param_list(&self) -> Option<ast::TypeParamList> {
         child_opt(self)
+    }
+}
+
+pub trait TypesOwner: AstNode {
+    fn types(&self) -> AstChildren<ast::TypeRef> {
+        children(self)
     }
 }

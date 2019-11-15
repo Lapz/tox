@@ -92,6 +92,7 @@ pub enum SyntaxKind {
     ERROR,
     IDENT,
     COMMENT,
+    WHITESPACE,
     BLOCK,
     SOURCE_FILE,
     CLASS_DEF,
@@ -103,6 +104,7 @@ pub enum SyntaxKind {
     PLACEHOLDER_PAT,
     TUPLE_PAT,
     LITERAL_PAT,
+    TYPE_REF,
     FN_TYPE,
     PAREN_TYPE,
     ARRAY_TYPE,
@@ -241,6 +243,7 @@ impl SyntaxKind {
             ERROR => "ERROR",
             IDENT => "IDENT",
             COMMENT => "COMMENT",
+            WHITESPACE => "WHITESPACE",
             BLOCK => "BLOCK",
             SOURCE_FILE => "SOURCE_FILE",
             CLASS_DEF => "CLASS_DEF",
@@ -252,6 +255,7 @@ impl SyntaxKind {
             PLACEHOLDER_PAT => "PLACEHOLDER_PAT",
             TUPLE_PAT => "TUPLE_PAT",
             LITERAL_PAT => "LITERAL_PAT",
+            TYPE_REF => "TYPE_REF",
             FN_TYPE => "FN_TYPE",
             PAREN_TYPE => "PAREN_TYPE",
             ARRAY_TYPE => "ARRAY_TYPE",
@@ -1126,6 +1130,7 @@ impl AstNode for FnType {
 }
 
 
+impl traits::TypesOwner for FnType {}
 impl FnType {
     pub fn param_list(&self) -> Option<ParamList> {
         child_opt(self)
@@ -1679,6 +1684,7 @@ impl AstNode for ParenType {
 }
 
 
+impl traits::TypesOwner for ParenType {}
 impl ParenType {
     pub fn type_ref(&self) -> Option<TypeRef> {
         child_opt(self)

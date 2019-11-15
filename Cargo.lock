@@ -952,6 +952,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "semant"
 version = "0.1.0"
 dependencies = [
+ "errors 0.1.0",
  "salsa 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntax 0.1.0",
 ]
