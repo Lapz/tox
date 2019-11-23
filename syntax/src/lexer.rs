@@ -231,7 +231,7 @@ impl<'a> Lexer<'a> {
 
                 ch if ch.is_numeric() => self.number(start),
                 ch if is_letter_ch(ch) => self.identifier(start),
-                ch if ch.is_whitespace() => continue,
+                ch if ch.is_whitespace() => spans(SyntaxKind::WHITESPACE, start, start.shift(ch)),
                 ch => {
                     self.error(
                         "Unknown character",

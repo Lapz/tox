@@ -12,6 +12,10 @@ where
             T!["["] => self.parse_array_type(),
             T!["("] => self.parse_paren_type(),
             T![fn] => self.parse_fn_type(),
+            WHITESPACE => {
+                self.bump();
+                self.parse_type()
+            }
             _ => self.error(
                 "Expected a type parameter",
                 format!(

@@ -33,6 +33,7 @@ where
     pub(crate) fn parse_expression(&mut self, precedence: Precedence) {
         let check_point = self.builder.checkpoint();
         let token = self.current();
+
         let mut rule = token.rule();
 
         let parser = self.prefix.get(&rule);

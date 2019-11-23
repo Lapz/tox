@@ -132,10 +132,16 @@ where
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
+        while self.at(SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
         self.builder.start_node(kind.into())
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
+        while self.at(SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
         self.builder.start_node_at(checkpoint, kind.into())
     }
 
@@ -216,6 +222,10 @@ where
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
+        while self.is_ahead(|t| t == SyntaxKind::WHITESPACE) || self.at(SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
+
         if self.is_ahead(|t| t == expected) {
             self.bump();
         } else {
@@ -231,6 +241,10 @@ where
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
+        while self.is_ahead(|t| t == SyntaxKind::WHITESPACE) || self.at(SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
+
         if self.is_ahead(|t| t == expected) {
             self.bump();
             true
@@ -273,6 +287,7 @@ where
             return;
         }
         let token = self.lookahead.take();
+
         match token {
             Some(token) => {
                 let text = &self.input[token.start.absolute as usize

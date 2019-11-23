@@ -23,6 +23,12 @@ where
                 T![break] => self.parse_break_expr(),
                 T![continue] => self.parse_continue_expr(),
                 T![for] => self.parse_for_expr(),
+                WHITESPACE => {
+                    while self.at(WHITESPACE) {
+                        self.bump();
+                    }
+                    continue;
+                }
                 _ => {
                     self.start_node(EXPR_STMT);
                     self.parse_expression(Precedence::Assignment);
