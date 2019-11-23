@@ -2,7 +2,7 @@ use crate::db::HirDatabase;
 use crate::hir::{self, Ctx};
 use std::collections::HashMap;
 use syntax::{
-    ast, child, children, AstNode, FnDefOwner, NameOwner, TypeAscriptionOwner, TypesOwner,
+    ast, child, children, AstNode, FnDefOwner, NameOwner, TypeAscriptionOwner, TypesOwner,TypeParamsOwner
 };
 
 #[derive(Debug, Default)]
@@ -87,13 +87,9 @@ where
             }
         }
     }
-
-    pub(crate) fn lower(mut self, params: Option<ast::ParamList>) {}
 }
 
 pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut errors::Reporter) {
-    let mut ctx = Ctx::new();
-
     for function in source.functions() {
         let mut collector = FunctionDataCollector {
             db,
@@ -102,6 +98,20 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
         };
 
         let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
+
+
+        if let Some(type_params_list) = function.type_param_list() {
+            for type_param in type_params_list.type_params() {
+                // reporter.warn(
+                //     "this is a test",
+                //     "testing",
+                //     (
+                //         param.syntax().text_range().start(),
+                //         param.syntax().text_range().end(),
+                //     ),
+                // );
+            }
+        }
 
         if let Some(param_list) = function.param_list() {
             for param in param_list.params() {
@@ -113,6 +123,9 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
                         param.syntax().text_range().end(),
                     ),
                 );
+
+
+                db.set
                 collector.lower_param(param);
             }
         }
@@ -120,5 +133,3 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
         println!("{:#?}", collector);
     }
 }
-
-pub(crate) fn lower_pat(pat: ast::Pat) {}

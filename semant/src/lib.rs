@@ -2,6 +2,7 @@ mod ctx;
 mod db;
 mod hir;
 mod lower;
+mod ty;
 
 pub use db::DatabaseImpl;
 pub use lower::lower_ast;

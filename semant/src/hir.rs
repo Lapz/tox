@@ -113,13 +113,16 @@ impl Function {
             params: Vec::new(),
         }
     }
+
     fn name(&self, db: &impl db::HirDatabase) -> Name {
         db.lookup_intern_name(db.function_data(self.id).name)
     }
 
     fn body() {}
 
-    fn ty() {}
+    fn ty(&self, db: &impl db::HirDatabase) {
+        // db.look_up()
+    }
 
     fn infer() {}
 }

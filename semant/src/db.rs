@@ -1,5 +1,6 @@
 use crate::hir;
 use crate::hir::{Function, FunctionId};
+use crate::ty;
 use salsa;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -68,6 +69,9 @@ pub trait InternDatabase {
 pub trait HirDatabase: std::fmt::Debug + InternDatabase {
     #[salsa::input]
     fn function_data(&self, fn_id: hir::FunctionId) -> Arc<hir::Function>;
+
+    #[salsa::input]
+    fn type_var(&self, id: hir::TypeId) -> ty::TypeVar;
 }
 
 #[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]
