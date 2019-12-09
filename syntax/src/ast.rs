@@ -1973,6 +1973,7 @@ impl AstNode for TypeAliasDef {
 }
 
 
+impl traits::TypeParamsOwner for TypeAliasDef {}
 impl TypeAliasDef {}
 
 // TypeParam

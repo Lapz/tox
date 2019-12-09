@@ -189,7 +189,11 @@ Grammar(
                 "TypeAscriptionOwner",    
             ]
         ),
-        "TypeAliasDef":(),
+        "TypeAliasDef":(
+            traits: [
+                "TypeParamsOwner"
+            ]
+        ),
         "ExternImportDef":(
             options: [["imports","Name"]]
         ),
