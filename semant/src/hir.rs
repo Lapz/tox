@@ -1,7 +1,22 @@
+pub(crate) mod function;
+
 use crate::db;
 use crate::SyntaxNode;
+pub(crate) use function::FunctionAstMap;
 use std::collections::HashMap;
-use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr};
+use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, TextRange};
+pub type Span = TextRange;
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct TypeParamId(pub(crate) u64);
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ParamId(pub(crate) u64);
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+
+pub struct StmtId(pub(crate) u64);
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+
+pub struct BodyId(pub(crate) u64);
 pub struct Ctx {
     functions: FunctionMap,
 }
@@ -65,6 +80,11 @@ pub struct Function {
 pub struct Param {
     pub(crate) pat: PatId,
     pub(crate) ty: TypeId,
+}
+
+#[derive(Debug)]
+pub struct TypeParam {
+    pub(crate) name: NameId,
 }
 
 pub(crate) struct FunctionMap {

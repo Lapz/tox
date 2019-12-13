@@ -10,3 +10,4 @@ edition = "2018"
 syntax= {path="../syntax"}
 salsa = "*"
 errors = {path="../errors"}
+indexmap = "1.3.0"

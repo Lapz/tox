@@ -16,7 +16,9 @@ where
 
         while !self.at(EOF) && !self.at(T![>]) {
             if allow_types {
+                self.start_node(TYPE_PARAM);
                 self.parse_type();
+                self.finish_node();
             } else {
                 self.type_param();
             }

@@ -1,5 +1,5 @@
 type Foo<K,V> = i32;
-fn main(a:i32,b:(i32,[i32;4])) {
+fn main<T,V>(a:i32,b:(i32,[i32;4])) {
     a(1,2);
 }
 
