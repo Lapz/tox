@@ -80,7 +80,7 @@ impl Rule for SyntaxKind {
         match self {
             INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] => {
                 RuleToken::Literal
-            },
+            }
             IDENT => RuleToken::Ident,
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,

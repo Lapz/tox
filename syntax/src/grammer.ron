@@ -332,7 +332,6 @@ Grammar(
             enum: ["ExprStmt", "LetStmt"],
         ),
         "Block": (
-            options: [ "Expr" ],
             collections: [
                 ["statements", "Stmt"],
             ],

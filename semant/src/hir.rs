@@ -155,7 +155,7 @@ create_intern_key!(TypeId);
 create_intern_key!(PatId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ExprId(u32);
+pub struct ExprId(pub(crate) u32);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
@@ -182,4 +182,8 @@ pub enum Type {
         ret: Option<TypeId>,
     },
     Ident(NameId),
+}
+
+pub enum Expr {
+    ArrayExpr(Vec<ExprId>),
 }

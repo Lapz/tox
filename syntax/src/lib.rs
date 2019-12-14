@@ -1,12 +1,12 @@
 pub mod ast;
 mod lexer;
 
+mod ast_ext;
 mod token;
 mod traits;
-
 pub use ast::SyntaxKind;
 pub use lexer::Lexer;
-pub use rowan::{SmolStr,TextRange};
+pub use rowan::{SmolStr, TextRange};
 pub use token::Token;
 pub use traits::*;
 

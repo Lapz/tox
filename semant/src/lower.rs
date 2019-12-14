@@ -2,8 +2,8 @@ use crate::db::HirDatabase;
 use crate::hir::{self};
 use std::collections::HashMap;
 use syntax::{
-    ast, child, children, AstNode, AstPtr, FnDefOwner, NameOwner, TypeAscriptionOwner,
-    TypeParamsOwner, TypesOwner,
+    ast, child, children, text_of_first_token, AstNode, AstPtr, ExprsOwner, FnDefOwner, NameOwner,
+    TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
 };
 
 #[derive(Debug)]
@@ -14,6 +14,7 @@ pub(crate) struct FunctionDataCollector<DB> {
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
+    reporter: errors::Reporter,
 }
 
 impl<'a, DB> FunctionDataCollector<&'a DB>
@@ -128,6 +129,53 @@ where
             }
         }
     }
+
+    pub fn lower_stmt(&mut self, stmt: ast::Stmt) {
+        match stmt {
+            ast::Stmt::LetStmt(let_stmt) => {
+                let pattern = self.lower_pattern(let_stmt.pat().unwrap());
+
+                let mut expr: Option<hir::ExprId> = None;
+
+                let expr = if let Some(initializer) = let_stmt.initializer() {
+                    Some(self.lower_expr(initializer))
+                } else {
+                    None
+                };
+                // let expr = s
+            }
+            ast::Stmt::ExprStmt(expr_stmt) => {
+                if let Some(expr) = expr_stmt.expr() {
+                    self.lower_expr(expr);
+                }
+            }
+        }
+    }
+
+    pub fn lower_expr(&mut self, expr: ast::Expr) -> hir::ExprId {
+        match expr {
+            ast::Expr::ArrayExpr(ref array) => {
+                hir::Expr::ArrayExpr(array.exprs().map(|expr| self.lower_expr(expr)).collect());
+            }
+            ast::Expr::BinExpr(ref bin_expr) => {
+                let lhs = self.lower_expr();
+                for sub_expr in bin_expr.exprs() {
+                    let span = sub_expr.syntax().text_range();
+
+                    println!("{}", text_of_first_token(&sub_expr.syntax()));
+                    self.reporter.warn(
+                        "this is a binary expr",
+                        "I am a sub expr",
+                        (span.start(), span.end()),
+                    );
+                }
+            }
+
+            _ => (),
+        }
+
+        hir::ExprId(0)
+    }
 }
 
 pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut errors::Reporter) {
@@ -139,6 +187,7 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
             params: Vec::new(),
             type_params: Vec::new(),
             ast_map: hir::FunctionAstMap::default(),
+            reporter: reporter.clone(),
         };
 
         let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
@@ -161,9 +210,11 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
             reporter.warn("this is a body", "I am a body", (span.start(), span.end()));
 
             for statement in body.statements() {
-                let span = body.syntax().text_range();
+                let span = statement.syntax().text_range();
 
                 reporter.warn("this is a stmt", "I am a stmt", (span.start(), span.end()));
+
+                collector.lower_stmt(statement)
             }
         }
 
@@ -174,7 +225,5 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
             "I am a function",
             (span.start(), span.end()),
         );
-
-        println!("{:#?}", collector);
     }
 }

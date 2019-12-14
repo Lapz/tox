@@ -13,15 +13,20 @@ where
             IDENT => self.parse_binding_pattern(),
             T![self] => self.bump(),
             T![_] => self.parse_placeholder_pattern(),
-            _ => {
+            WHITESPACE => {
+                self.bump();
+                self.parse_pattern(allow_literal)
+            }
+            e => {
                 if allow_literal {
                     // self.parse_literal()
                 } else {
                     self.error(
                         "Expected a literal pattern",
                         format!(
-                            "Expected a literal pattern instead found `{}`",
-                            self.current_string()
+                            "Expected a literal pattern instead found `{}` {:?}",
+                            self.current_string(),
+                            e
                         ),
                     )
                 }

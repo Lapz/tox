@@ -23,7 +23,7 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     let source_file = parser.parse_program();
 
     reporter.emit()?;
-    write!(out, "{}", source_file.syntax().text())?;
+    // write!(out, "{}", source_file.syntax().text())?;
     write!(out, "{}", dump_debug(&source_file))?;
 
     let db = DatabaseImpl::default();
