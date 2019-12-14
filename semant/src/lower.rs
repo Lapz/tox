@@ -2,7 +2,7 @@ use crate::db::HirDatabase;
 use crate::hir::{self};
 use std::collections::HashMap;
 use syntax::{
-    ast, child, children, text_of_first_token, AstNode, AstPtr, ExprsOwner, FnDefOwner, NameOwner,
+    ast, child, children, text_of_first_token, AstNode, AstPtr, FnDefOwner, NameOwner,
     TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
 };
 
@@ -155,20 +155,24 @@ where
     pub fn lower_expr(&mut self, expr: ast::Expr) -> hir::ExprId {
         match expr {
             ast::Expr::ArrayExpr(ref array) => {
-                hir::Expr::ArrayExpr(array.exprs().map(|expr| self.lower_expr(expr)).collect());
+                hir::Expr::Array(array.exprs().map(|expr| self.lower_expr(expr)).collect());
             }
             ast::Expr::BinExpr(ref bin_expr) => {
-                let lhs = self.lower_expr();
-                for sub_expr in bin_expr.exprs() {
-                    let span = sub_expr.syntax().text_range();
+                let lhs = self.lower_expr(bin_expr.lhs().unwrap());
+                let rhs = self.lower_expr(bin_expr.rhs().unwrap());
 
-                    println!("{}", text_of_first_token(&sub_expr.syntax()));
-                    self.reporter.warn(
-                        "this is a binary expr",
-                        "I am a sub expr",
-                        (span.start(), span.end()),
-                    );
-                }
+                let op = bin_expr.op_kind().unwrap(); // TODO: Handle unknown binary ops
+
+                // for sub_expr in bin_expr.exprs() {
+                //     let span = sub_expr.syntax().text_range();
+
+                //     println!("{}", text_of_first_token(&sub_expr.syntax()));
+                //     self.reporter.warn(
+                //         "this is a binary expr",
+                //         "I am a sub expr",
+                //         (span.start(), span.end()),
+                //     );
+                // }
             }
 
             _ => (),

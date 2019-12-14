@@ -1,4 +1,4 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::pratt::{InfixParser, Precedence};
 use crate::parser::Parser;

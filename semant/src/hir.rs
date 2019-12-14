@@ -1,10 +1,10 @@
 pub(crate) mod function;
 
 use crate::db;
-use crate::SyntaxNode;
+
 pub(crate) use function::FunctionAstMap;
 use std::collections::HashMap;
-use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, TextRange};
+use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, SyntaxKind, TextRange, T};
 pub type Span = TextRange;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeParamId(pub(crate) u64);
@@ -185,5 +185,53 @@ pub enum Type {
 }
 
 pub enum Expr {
-    ArrayExpr(Vec<ExprId>),
+    Array(Vec<ExprId>),
+    Binary { lhs: ExprId, op: BinOp, rhs: ExprId },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BinOp {
+    Plus,
+    Minus,
+    Mult,
+    Div,
+    And,
+    Or,
+    LessThan,
+    GreaterThan,
+    EqualEqual,
+    Excl,
+    NotEqual,
+    LessThanEqual,
+    GreaterThanEqual,
+    PlusEqual,
+    MinusEqual,
+    MultEqual,
+    DivEqual,
+}
+
+impl BinOp {
+    fn from(kind: SyntaxKind) -> Option<BinOp> {
+        let op = match kind {
+            T![-] => BinOp::Minus,
+            T![+] => BinOp::Plus,
+            T![*] => BinOp::Mult,
+            T![/] => BinOp::Div,
+            T![&&] => BinOp::And,
+            T![||] => BinOp::Or,
+            T![<] => BinOp::LessThan,
+            T![>] => BinOp::GreaterThan,
+            T![==] => BinOp::EqualEqual,
+            T![!] => BinOp::Excl,
+            T![!=] => BinOp::NotEqual,
+            T![<=] => BinOp::LessThanEqual,
+            T![>=] => BinOp::GreaterThanEqual,
+            T![+=] => BinOp::PlusEqual,
+            T![-=] => BinOp::MinusEqual,
+            T![*=] => BinOp::MultEqual,
+            T![/=] => BinOp::DivEqual,
+            _ => return None,
+        };
+        Some(op)
+    }
 }

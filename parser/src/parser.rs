@@ -19,7 +19,7 @@ use std::collections::{HashMap, VecDeque};
 use std::iter::Peekable;
 use syntax::{
     SyntaxKind::{self, *},
-    Token,
+    Token, T,
 };
 pub struct Parser<'a, I>
 where

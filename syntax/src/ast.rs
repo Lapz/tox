@@ -470,10 +470,6 @@ impl Block {
     pub fn statements(&self) -> impl Iterator<Item = Stmt> {
         children(self)
     }
-
-    pub fn expr(&self) -> Option<Expr> {
-        child_opt(self)
-    }
 }
 
 // BlockExpr

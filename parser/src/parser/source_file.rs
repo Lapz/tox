@@ -1,7 +1,7 @@
 use crate::ast::*;
 use crate::parser::Parser;
-use crate::T;
 use rowan::GreenNodeBuilder;
+use syntax::T;
 
 use crate::{AstNode, Span, SyntaxKind::*, SyntaxNode, Token};
 

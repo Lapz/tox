@@ -1,16 +1,16 @@
 use crate::ast;
-use crate::children;
+use crate::{children, AstNode};
 
 impl ast::BinExpr {
-    pub(crate) fn lhs(&self) -> Option<ast::BinExpr> {
+    pub fn lhs(&self) -> Option<ast::Expr> {
         children(self).nth(0)
     }
 
-    pub(crate) fn rhs(&self) -> Option<ast::BinExpr> {
+    pub fn rhs(&self) -> Option<ast::Expr> {
         children(self).nth(1)
     }
 
-    pub(crate) fn op_kind(&self) -> Option<BinOp> {
+    pub fn op_kind(&self) -> Option<BinOp> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|it| it.into_token())
@@ -41,6 +41,7 @@ impl ast::BinExpr {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum BinOp {
     Plus,
     Minus,
