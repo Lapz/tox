@@ -15,16 +15,48 @@ where
 
         while !self.at(EOF) && !self.at(T!["}"]) {
             match self.current() {
-                T![let] => self.parse_let_expr(),
-                T![if] => self.parse_if_expr(),
-                T![do] => self.parse_do_expr(),
-                T![while] => self.parse_while_expr(),
-                T![return] => self.parse_return_expr(),
-                T![break] => self.parse_break_expr(),
-                T![continue] => self.parse_continue_expr(),
-                T![for] => self.parse_for_expr(),
-                WHITESPACE => {
-                    while self.at(WHITESPACE) {
+                T![let] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_let_expr();
+                    self.finish_node();
+                }
+                T![if] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_if_expr();
+                    self.finish_node();
+                }
+                T![do] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_do_expr();
+                    self.finish_node();
+                }
+                T![while] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_while_expr();
+                    self.finish_node();
+                }
+                T![return] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_return_expr();
+                    self.finish_node();
+                }
+                T![break] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_break_expr();
+                    self.finish_node();
+                }
+                T![continue] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_continue_expr();
+                    self.finish_node();
+                }
+                T![for] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_for_expr();
+                    self.finish_node();
+                }
+                pat @ WHITESPACE | pat @ T!["//"] => {
+                    while self.at(pat) {
                         self.bump();
                     }
                     continue;

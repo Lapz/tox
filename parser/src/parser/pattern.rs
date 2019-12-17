@@ -1,4 +1,4 @@
-use crate::parser::Parser;
+use crate::parser::{Parser, Precedence};
 use syntax::T;
 
 use crate::{Span, SyntaxKind::*, Token};
@@ -19,7 +19,9 @@ where
             }
             e => {
                 if allow_literal {
-                    // self.parse_literal()
+                    self.start_node(LITERAL_PAT);
+                    self.parse_expression(Precedence::Primary);
+                    self.finish_node()
                 } else {
                     self.error(
                         "Expected a literal pattern",

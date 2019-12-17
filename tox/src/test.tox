@@ -1,8 +1,16 @@
 type Foo<K,V> = i32;
 fn main<T,V>(a:i32,b:(i32,[i32;4])) {
-    a(1,2);
-    1+2+3;
-    let x;
+    // a(1,2)(10,10);
+    // 1+2+3;
+    a+c;
+    
+    while (a<b) {
+
+    };
+    
+    for(let i=x;i<b;i+c) {
+        i;
+    };
 }
 
 

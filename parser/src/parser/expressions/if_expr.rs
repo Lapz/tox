@@ -15,7 +15,7 @@ where
 
         self.expect(T![if], "Expected `if`");
 
-        self.parse_expression(Precedence::Assignment);
+        self.parse_pattern(true);
 
         self.parse_block();
 

@@ -3,6 +3,7 @@ use crate::parser::{
     Parser,
 };
 use crate::{Span, Token};
+use syntax::T;
 mod binary;
 mod block;
 mod break_expr;
@@ -32,6 +33,11 @@ where
 {
     pub(crate) fn parse_expression(&mut self, precedence: Precedence) {
         let check_point = self.builder.checkpoint();
+
+        while self.at(syntax::SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
+
         let token = self.current();
 
         let mut rule = token.rule();
@@ -78,7 +84,7 @@ where
         }
 
         if precedence == Precedence::None {
-            self.recover();
+            self.recover_until(T![;]);
         }
     }
 }

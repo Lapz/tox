@@ -139,7 +139,7 @@ where
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
-        while self.at(SyntaxKind::WHITESPACE) {
+        while self.at(SyntaxKind::WHITESPACE) || self.at(T!["//"]) {
             self.bump()
         }
         self.builder.start_node_at(checkpoint, kind.into())
@@ -147,14 +147,17 @@ where
 
     fn finish_node(&mut self) {
         self.builder.finish_node();
+        while self.at(SyntaxKind::WHITESPACE) || self.at(T!["//"]) {
+            self.bump()
+        }
     }
 
     fn recover(&mut self) {
-        if self.at(T!["{"]) || self.at(T!["}"]) {
-            return;
+        match self.current() {
+            T!["{"] => self.recover_until(T!["}"]),
+            T!["}"] => self.recover_until(T![;]),
+            _ => self.bump(),
         }
-
-        self.bump();
     }
 
     fn recover_until(&mut self, token: SyntaxKind) {

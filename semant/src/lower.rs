@@ -2,8 +2,8 @@ use crate::db::HirDatabase;
 use crate::hir::{self};
 use std::collections::HashMap;
 use syntax::{
-    ast, child, children, text_of_first_token, AstNode, AstPtr, FnDefOwner, NameOwner,
-    TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
+    ast, child, children, text_of_first_token, ArgListOwner, AstNode, AstPtr, FnDefOwner,
+    LoopBodyOwner, NameOwner, SyntaxNodePtr, TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
 };
 
 #[derive(Debug)]
@@ -11,6 +11,8 @@ pub(crate) struct FunctionDataCollector<DB> {
     db: DB,
     type_param_count: u64,
     param_id_count: u64,
+    stmt_id_count: u64,
+    expr_id_count: u64,
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
@@ -42,6 +44,48 @@ where
         self.ast_map.insert_param(id, param, AstPtr::new(ast_node));
 
         self.params.push(id);
+    }
+
+    pub fn add_stmt(&mut self, ast_node: &ast::Stmt, stmt: hir::Stmt) -> hir::StmtId {
+        let current = self.stmt_id_count;
+
+        self.stmt_id_count += 1;
+
+        let id = hir::StmtId(current);
+
+        self.ast_map.insert_stmt(id, stmt, AstPtr::new(ast_node));
+
+        id
+    }
+
+    pub fn expr_to_stmt(&mut self, expr: hir::ExprId) -> hir::StmtId {
+        let node = self.ast_map.get_expr_ptr(expr);
+
+        let current = self.stmt_id_count;
+
+        self.stmt_id_count += 1;
+
+        let id = hir::StmtId(current);
+
+        self.ast_map.insert_stmt(
+            id,
+            hir::Stmt::Expr(expr),
+            AstPtr::from_ptr(node.syntax_node_ptr()),
+        );
+
+        id
+    }
+
+    pub fn add_expr(&mut self, ast_node: &ast::Expr, expr: hir::Expr) -> hir::ExprId {
+        let current = self.expr_id_count;
+
+        self.expr_id_count += 1;
+
+        let id = hir::ExprId(current);
+
+        self.ast_map.insert_expr(id, expr, AstPtr::new(ast_node));
+
+        id
     }
 
     pub fn add_type_param(&mut self, ast_node: &ast::TypeParam, type_param: hir::TypeParam) {
@@ -130,55 +174,146 @@ where
         }
     }
 
-    pub fn lower_stmt(&mut self, stmt: ast::Stmt) {
-        match stmt {
-            ast::Stmt::LetStmt(let_stmt) => {
-                let pattern = self.lower_pattern(let_stmt.pat().unwrap());
+    pub fn lower_stmt(&mut self, node: ast::Stmt) -> hir::StmtId {
+        let hir_stmt = match node {
+            ast::Stmt::LetStmt(ref let_stmt) => {
+                let pat = self.lower_pattern(let_stmt.pat().unwrap());
 
-                let mut expr: Option<hir::ExprId> = None;
-
-                let expr = if let Some(initializer) = let_stmt.initializer() {
+                let initializer = if let Some(initializer) = let_stmt.initializer() {
                     Some(self.lower_expr(initializer))
                 } else {
                     None
                 };
-                // let expr = s
+
+                hir::Stmt::Let { pat, initializer }
             }
-            ast::Stmt::ExprStmt(expr_stmt) => {
-                if let Some(expr) = expr_stmt.expr() {
-                    self.lower_expr(expr);
-                }
+            ast::Stmt::ExprStmt(ref expr_stmt) => {
+                hir::Stmt::Expr(self.lower_expr(expr_stmt.expr().unwrap()))
             }
-        }
+        };
+
+        self.add_stmt(&node, hir_stmt)
     }
 
-    pub fn lower_expr(&mut self, expr: ast::Expr) -> hir::ExprId {
-        match expr {
+    pub fn lower_expr(&mut self, node: ast::Expr) -> hir::ExprId {
+        let expr = match node {
             ast::Expr::ArrayExpr(ref array) => {
-                hir::Expr::Array(array.exprs().map(|expr| self.lower_expr(expr)).collect());
+                hir::Expr::Array(array.exprs().map(|expr| self.lower_expr(expr)).collect())
             }
             ast::Expr::BinExpr(ref bin_expr) => {
                 let lhs = self.lower_expr(bin_expr.lhs().unwrap());
                 let rhs = self.lower_expr(bin_expr.rhs().unwrap());
 
-                let op = bin_expr.op_kind().unwrap(); // TODO: Handle unknown binary ops
+                let op = hir::BinOp::from_kind(bin_expr.op_kind().unwrap()).unwrap(); // TODO fix the unwraps
 
-                // for sub_expr in bin_expr.exprs() {
-                //     let span = sub_expr.syntax().text_range();
+                hir::Expr::Binary { lhs, op, rhs }
+            }
+            ast::Expr::BlockExpr(ref block) => hir::Expr::Block(
+                block
+                    .block()
+                    .unwrap()
+                    .statements()
+                    .map(|st| self.lower_stmt(st))
+                    .collect(),
+            ),
 
-                //     println!("{}", text_of_first_token(&sub_expr.syntax()));
-                //     self.reporter.warn(
-                //         "this is a binary expr",
-                //         "I am a sub expr",
-                //         (span.start(), span.end()),
-                //     );
-                // }
+            ast::Expr::BreakExpr(_) => hir::Expr::Break,
+            ast::Expr::CallExpr(ref call_expr) => {
+                println!("adasc{:?}", call_expr.expr());
+                let args = if let Some(arg_list) = call_expr.arg_list() {
+                    arg_list.args().map(|arg| self.lower_expr(arg)).collect()
+                } else {
+                    Vec::new()
+                };
+
+                hir::Expr::Call { args }
+            }
+            ast::Expr::CastExpr(ref cast_expr) => {
+                let ty = self.lower_type(cast_expr.type_ref().unwrap());
+                let expr = self.lower_expr(cast_expr.expr().unwrap());
+
+                hir::Expr::Cast { expr, ty }
+            }
+            ast::Expr::ClassLit(ref class_lit) => unimplemented!(),
+            ast::Expr::ClosureExpr(ref closure_expr) => unimplemented!(),
+            ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
+            ast::Expr::FieldExpr(ref field_expr) => unimplemented!(),
+            ast::Expr::ForExpr(ref for_expr) => {
+                let init = self.lower_expr(for_expr.init().unwrap());
+                let cond = self.lower_expr(for_expr.cond().unwrap());
+                let increment = self.lower_expr(for_expr.increment().unwrap());
+
+                let mut body = for_expr
+                    .loop_body()
+                    .unwrap()
+                    .statements()
+                    .map(|st| self.lower_stmt(st))
+                    .collect::<Vec<_>>();
+
+                body.push(self.expr_to_stmt(increment));
+
+                let while_expr = self.add_expr(&node, hir::Expr::While { cond, body });
+
+                hir::Expr::Block(vec![self.expr_to_stmt(init), self.expr_to_stmt(while_expr)])
+            }
+            ast::Expr::IdentExpr(ref ident_expr) => {
+                hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
+            }
+            ast::Expr::IfExpr(ref if_expr) => unimplemented!(),
+            ast::Expr::IndexExpr(ref index_expr) => {
+                let callee = index_expr;
+                unimplemented!()
             }
 
-            _ => (),
-        }
+            ast::Expr::Literal(ref literal_expr) => {
+                unimplemented!();
+            }
+            ast::Expr::MatchExpr(ref match_expr) => unimplemented!(),
+            ast::Expr::ParenExpr(ref paren_expr) => {
+                let expr = paren_expr.expr().unwrap();
 
-        hir::ExprId(0)
+                hir::Expr::Paren(self.lower_expr(expr))
+            }
+            ast::Expr::PrefixExpr(ref prefix_expr) => {
+                let op = hir::UnaryOp::from_kind(prefix_expr.op_kind().unwrap()).unwrap(); // TODO fix the unwraps
+                let expr = self.lower_expr(prefix_expr.expr().unwrap());
+
+                hir::Expr::Unary { op, expr }
+            }
+            ast::Expr::ReturnExpr(ref return_expr) => {
+                let id = if let Some(expr) = return_expr.expr() {
+                    Some(self.lower_expr(expr))
+                } else {
+                    None
+                };
+
+                hir::Expr::Return(id)
+            }
+
+            ast::Expr::WhileExpr(ref while_expr) => {
+                let cond = self.lower_expr(while_expr.condition().unwrap().expr().unwrap());
+
+                let body = while_expr
+                    .loop_body()
+                    .unwrap()
+                    .statements()
+                    .map(|st| self.lower_stmt(st))
+                    .collect::<Vec<_>>();
+
+                hir::Expr::While { cond, body }
+            }
+        };
+
+        let id = self.add_expr(&node, expr);
+
+        let span = self.ast_map.get_expr_ptr(id).syntax_node_ptr().range();
+
+        self.reporter.warn(
+            "this is an expr",
+            &format!("I am a {:?} expr", node.syntax().kind()),
+            (span.start(), span.end()),
+        );
+        id
     }
 }
 
@@ -188,6 +323,8 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
             db,
             param_id_count: 0,
             type_param_count: 0,
+            stmt_id_count: 0,
+            expr_id_count: 0,
             params: Vec::new(),
             type_params: Vec::new(),
             ast_map: hir::FunctionAstMap::default(),
@@ -218,7 +355,7 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
 
                 reporter.warn("this is a stmt", "I am a stmt", (span.start(), span.end()));
 
-                collector.lower_stmt(statement)
+                collector.lower_stmt(statement);
             }
         }
 

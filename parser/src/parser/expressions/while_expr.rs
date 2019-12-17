@@ -15,7 +15,9 @@ where
 
         self.expect(T![while], "Expected `while`");
 
+        self.start_node(CONDITION);
         self.parse_expression(Precedence::Assignment);
+        self.finish_node();
 
         self.parse_block();
 

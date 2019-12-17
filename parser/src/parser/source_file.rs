@@ -21,6 +21,10 @@ where
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
                     T![class] => self.parse_class(has_visibility),
+                    T!["//"] => {
+                        self.bump();
+                        continue;
+                    }
                     _ => {
                         self.recover();
                     }
@@ -31,7 +35,12 @@ where
                     T![fn] => self.parse_function(has_visibility),
                     T![enum] => self.parse_enum(has_visibility),
                     T![class] => self.parse_class(has_visibility),
-                    _ => {
+                    T!["//"] => {
+                        self.bump();
+                        continue;
+                    }
+                    e => {
+                        println!("{:?}", e);
                         self.recover();
                     }
                 }

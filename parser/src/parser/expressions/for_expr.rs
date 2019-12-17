@@ -21,6 +21,7 @@ where
             self.bump()
         } else if self.at(T![let]) {
             self.parse_let_expr();
+            self.expect(T![;], "Expected `;`");
         } else {
             self.parse_expression(Precedence::Assignment);
             self.expect(T![;], "Expected `;`");
@@ -37,7 +38,6 @@ where
             self.bump()
         } else {
             self.parse_expression(Precedence::Assignment);
-            self.expect(T![;], "Expected `;`");
         }
 
         self.expect(T![")"], "Expect `)`");

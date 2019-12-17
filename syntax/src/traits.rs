@@ -95,6 +95,13 @@ impl<N: AstNode> AstPtr<N> {
         }
     }
 
+    pub fn from_ptr(ptr: SyntaxNodePtr) -> AstPtr<N> {
+        AstPtr {
+            raw: ptr,
+            _ty: PhantomData,
+        }
+    }
+
     pub fn to_node(self, root: &SyntaxNode) -> N {
         let syntax_node = self.raw.to_node(root);
         N::cast(syntax_node).unwrap()

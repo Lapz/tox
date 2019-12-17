@@ -118,6 +118,7 @@ pub enum SyntaxKind {
     BIN_EXPR,
     PREFIX_EXPR,
     TUPLE_EXPR,
+    IDENT_EXPR,
     IF_EXPR,
     WHILE_EXPR,
     CONDITION,
@@ -269,6 +270,7 @@ impl SyntaxKind {
             BIN_EXPR => "BIN_EXPR",
             PREFIX_EXPR => "PREFIX_EXPR",
             TUPLE_EXPR => "TUPLE_EXPR",
+            IDENT_EXPR => "IDENT_EXPR",
             IF_EXPR => "IF_EXPR",
             WHILE_EXPR => "WHILE_EXPR",
             CONDITION => "CONDITION",
@@ -809,6 +811,7 @@ impl EnumVariantList {
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum Expr {
             ArrayExpr(ArrayExpr),
+            IdentExpr(IdentExpr),
             ParenExpr(ParenExpr),
             ClosureExpr(ClosureExpr),
             IfExpr(IfExpr),
@@ -831,6 +834,11 @@ impl EnumVariantList {
         impl From<ArrayExpr> for Expr {
             fn from(n: ArrayExpr) -> Expr { 
                 Expr::ArrayExpr(n)
+            }
+        }
+        impl From<IdentExpr> for Expr {
+            fn from(n: IdentExpr) -> Expr { 
+                Expr::IdentExpr(n)
             }
         }
         impl From<ParenExpr> for Expr {
@@ -926,7 +934,7 @@ impl EnumVariantList {
 impl AstNode for Expr {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-             | ARRAY_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL => true,
+             | ARRAY_EXPR | IDENT_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL => true,
             _ => false,
         }
     }
@@ -934,6 +942,7 @@ impl AstNode for Expr {
         return match syntax.kind() {
              
             | ARRAY_EXPR  => Some(Expr::ArrayExpr(ArrayExpr {syntax})), 
+            | IDENT_EXPR  => Some(Expr::IdentExpr(IdentExpr {syntax})), 
             | PAREN_EXPR  => Some(Expr::ParenExpr(ParenExpr {syntax})), 
             | CLOSURE_EXPR  => Some(Expr::ClosureExpr(ClosureExpr {syntax})), 
             | IF_EXPR  => Some(Expr::IfExpr(IfExpr {syntax})), 
@@ -958,6 +967,7 @@ impl AstNode for Expr {
         match self {
              
                 Expr::ArrayExpr(kind)  => &kind.syntax, 
+                Expr::IdentExpr(kind)  => &kind.syntax, 
                 Expr::ParenExpr(kind)  => &kind.syntax, 
                 Expr::ClosureExpr(kind)  => &kind.syntax, 
                 Expr::IfExpr(kind)  => &kind.syntax, 
@@ -1172,6 +1182,30 @@ impl ForExpr {
         child_opt(self)
     }
 }
+
+// IdentExpr
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct IdentExpr {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for IdentExpr {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            IDENT_EXPR => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(IdentExpr { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl traits::NameOwner for IdentExpr {}
+impl IdentExpr {}
 
 // IdentType
 

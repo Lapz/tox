@@ -1,5 +1,9 @@
 use crate::ast;
-use crate::{children, AstNode};
+use crate::{
+    children, AstNode,
+    SyntaxKind::{self, *},
+    SyntaxNode,
+};
 
 impl ast::BinExpr {
     pub fn lhs(&self) -> Option<ast::Expr> {
@@ -10,54 +14,31 @@ impl ast::BinExpr {
         children(self).nth(1)
     }
 
-    pub fn op_kind(&self) -> Option<BinOp> {
+    pub fn op_kind(&self) -> Option<SyntaxKind> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|it| it.into_token())
-            .find_map(|c| {
-                let op = match c.kind() {
-                    T![-] => BinOp::Minus,
-                    T![+] => BinOp::Plus,
-                    T![*] => BinOp::Mult,
-                    T![/] => BinOp::Div,
-                    T![&&] => BinOp::And,
-                    T![||] => BinOp::Or,
-                    T![<] => BinOp::LessThan,
-                    T![>] => BinOp::GreaterThan,
-                    T![==] => BinOp::EqualEqual,
-                    T![!] => BinOp::Excl,
-                    T![!=] => BinOp::NotEqual,
-                    T![<=] => BinOp::LessThanEqual,
-                    T![>=] => BinOp::GreaterThanEqual,
-                    T![+=] => BinOp::PlusEqual,
-                    T![-=] => BinOp::MinusEqual,
-                    T![*=] => BinOp::MultEqual,
-                    T![/=] => BinOp::DivEqual,
-                    _ => return None,
-                };
-
-                Some(op)
-            })
+            .find_map(|c| return Some(c.kind()))
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum BinOp {
-    Plus,
-    Minus,
-    Mult,
-    Div,
-    And,
-    Or,
-    LessThan,
-    GreaterThan,
-    EqualEqual,
-    Excl,
-    NotEqual,
-    LessThanEqual,
-    GreaterThanEqual,
-    PlusEqual,
-    MinusEqual,
-    MultEqual,
-    DivEqual,
+impl ast::PrefixExpr {
+    pub fn op_kind(&self) -> Option<SyntaxKind> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|it| it.into_token())
+            .find_map(|c| return Some(c.kind()))
+    }
+}
+
+impl ast::Stmt {
+    pub fn from_expr(syntax: SyntaxNode) -> Option<ast::Stmt> {
+        return match syntax.kind() {
+            ARRAY_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR
+            | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT
+            | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR
+            | LITERAL => Some(ast::Stmt::ExprStmt(ast::ExprStmt { syntax })),
+            _ => None,
+        };
+    }
 }

@@ -12,6 +12,7 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
     where
         I: Iterator<Item = Span<Token>>,
     {
+        parser.start_node(IDENT_EXPR);
         parser.start_node(NAME);
 
         parser.expect(IDENT, "Expected an identifer");
@@ -21,6 +22,7 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
             parser.parse_type_params(true);
         };
 
+        parser.finish_node();
         parser.finish_node();
     }
 }

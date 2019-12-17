@@ -83,7 +83,9 @@ macro_rules! T {
     (")") => {
         $crate::SyntaxKind::R_PAREN
     };
-
+    ("//") => {
+        $crate::SyntaxKind::COMMENT
+    };
     (=) => {
         $crate::SyntaxKind::EQ
     };

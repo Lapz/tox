@@ -11,7 +11,7 @@ pub struct TypeParamId(pub(crate) u64);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ParamId(pub(crate) u64);
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 
 pub struct StmtId(pub(crate) u64);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -155,7 +155,7 @@ create_intern_key!(TypeId);
 create_intern_key!(PatId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ExprId(pub(crate) u32);
+pub struct ExprId(pub(crate) u64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
@@ -184,9 +184,30 @@ pub enum Type {
     Ident(NameId),
 }
 
+#[derive(Debug, Clone)]
+pub enum Stmt {
+    Let {
+        pat: PatId,
+        initializer: Option<ExprId>,
+    },
+    Expr(ExprId),
+}
+#[derive(Debug, Clone)]
 pub enum Expr {
     Array(Vec<ExprId>),
     Binary { lhs: ExprId, op: BinOp, rhs: ExprId },
+    Block(Vec<StmtId>),
+    Break,
+    Call { args: Vec<ExprId> },
+    Cast { expr: ExprId, ty: TypeId },
+    Continue,
+    If { cond: ExprId },
+    Ident(NameId),
+    While { cond: ExprId, body: Vec<StmtId> },
+
+    Paren(ExprId),
+    Unary { op: UnaryOp, expr: ExprId },
+    Return(Option<ExprId>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -209,9 +230,26 @@ pub enum BinOp {
     MultEqual,
     DivEqual,
 }
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOp {
+    Minus,
+    Excl,
+}
+
+impl UnaryOp {
+    pub(crate) fn from_kind(kind: SyntaxKind) -> Option<UnaryOp> {
+        let op = match kind {
+            T![-] => UnaryOp::Minus,
+            T![!] => UnaryOp::Excl,
+            _ => return None,
+        };
+
+        Some(op)
+    }
+}
 
 impl BinOp {
-    fn from(kind: SyntaxKind) -> Option<BinOp> {
+    pub(crate) fn from_kind(kind: SyntaxKind) -> Option<BinOp> {
         let op = match kind {
             T![-] => BinOp::Minus,
             T![+] => BinOp::Plus,

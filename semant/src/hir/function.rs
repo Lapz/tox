@@ -1,4 +1,6 @@
-use super::{BodyId, ExprId, Param, ParamId, PatId, Span, StmtId, TypeParam, TypeParamId};
+use super::{
+    BodyId, Expr, ExprId, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
+};
 use indexmap::IndexMap;
 use syntax::{ast, AstPtr};
 
@@ -11,11 +13,15 @@ pub(crate) struct Function {
 
 #[derive(Debug, Default)]
 pub(crate) struct FunctionAstMap {
+    body: Option<AstPtr<ast::Block>>,
     hir_to_params: IndexMap<ParamId, Param>,
     ast_to_params: IndexMap<ParamId, AstPtr<ast::Param>>,
-    body: Option<AstPtr<ast::Block>>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
     ast_to_type_params: IndexMap<TypeParamId, AstPtr<ast::TypeParam>>,
+    hir_to_stmt: IndexMap<StmtId, Stmt>,
+    ast_to_stmt: IndexMap<StmtId, AstPtr<ast::Stmt>>,
+    hir_to_expr: IndexMap<ExprId, Expr>,
+    ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
 }
 
 impl FunctionAstMap {
@@ -32,6 +38,20 @@ impl FunctionAstMap {
     ) {
         self.hir_to_type_params.insert(id, param);
         self.ast_to_type_params.insert(id, node);
+    }
+
+    pub fn insert_stmt(&mut self, id: StmtId, stmt: Stmt, node: AstPtr<ast::Stmt>) {
+        self.hir_to_stmt.insert(id, stmt);
+        self.ast_to_stmt.insert(id, node);
+    }
+
+    pub fn insert_expr(&mut self, id: ExprId, expr: Expr, node: AstPtr<ast::Expr>) {
+        self.hir_to_expr.insert(id, expr);
+        self.ast_to_expr.insert(id, node);
+    }
+
+    pub fn get_expr_ptr(&self, id: ExprId) -> AstPtr<ast::Expr> {
+        self.ast_to_expr[&id]
     }
 }
 
