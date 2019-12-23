@@ -28,7 +28,7 @@ impl Ctx {
         }
     }
 
-    pub(crate) fn add_function(&mut self, fn_def: ast::FnDef) -> FunctionId {
+    pub(crate) fn add_function(&mut self, _fn_def: ast::FnDef) -> FunctionId {
         unimplemented!()
         // self.functions.add_function(fn_def)
     }
@@ -140,7 +140,7 @@ impl Function {
 
     fn body() {}
 
-    fn ty(&self, db: &impl db::HirDatabase) {
+    fn ty(&self, _db: &impl db::HirDatabase) {
         // db.look_up()
     }
 

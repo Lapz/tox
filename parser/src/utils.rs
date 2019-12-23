@@ -1,8 +1,11 @@
 use crate::AstNode;
+#[cfg(test)]
 use crate::{Parser, Span, Token};
-
+#[cfg(test)]
 use std::vec::IntoIter;
+#[cfg(test)]
 use syntax::Lexer;
+
 pub fn dump_debug<T: AstNode>(item: &T) -> String {
     format!("{:#?}", item.syntax())
 }

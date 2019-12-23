@@ -3,7 +3,7 @@ mod cli;
 use crate::cli::{Cli, Commands};
 
 use parser::{dump_debug, Parser};
-use rowan::SmolStr;
+
 use semant::{lower_ast, DatabaseImpl};
 use std::fs::File;
 use std::io::{self, Read, Write};

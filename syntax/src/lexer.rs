@@ -3,7 +3,7 @@ use crate::ast::SyntaxKind;
 use crate::token::Token;
 use errors::{
     pos::{CharPosition, Position, Span},
-    Files, Reporter,
+    Reporter,
 };
 
 pub type LexerResult<T> = Result<T, ()>;
@@ -388,7 +388,8 @@ fn spans(token: SyntaxKind, start: Position, end: Position) -> Span<Token> {
 #[cfg(test)]
 mod test {
 
-    use super::{Files, Lexer, Reporter, SyntaxKind};
+    use super::{Lexer, Reporter};
+    use errors::Files;
     use insta::assert_debug_snapshot_matches;
 
     fn setup_reporter(input: &str) -> Reporter {

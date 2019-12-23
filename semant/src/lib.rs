@@ -7,7 +7,7 @@ mod ty;
 pub use db::DatabaseImpl;
 pub use lower::lower_ast;
 pub use salsa;
-use syntax::SyntaxNode;
+
 
 #[cfg(test)]
 mod tests {

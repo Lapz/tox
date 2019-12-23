@@ -1,5 +1,5 @@
 use crate::hir;
-use crate::hir::{Function, FunctionId};
+
 use crate::ty;
 use salsa;
 use std::collections::HashMap;

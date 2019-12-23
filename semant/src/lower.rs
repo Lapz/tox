@@ -1,6 +1,6 @@
 use crate::db::HirDatabase;
 use crate::hir::{self};
-use std::collections::HashMap;
+
 use syntax::{
     ast, child, children, text_of_first_token, ArgListOwner, AstNode, AstPtr, FnDefOwner,
     LoopBodyOwner, NameOwner, SyntaxNodePtr, TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
@@ -236,10 +236,10 @@ where
 
                 hir::Expr::Cast { expr, ty }
             }
-            ast::Expr::ClassLit(ref class_lit) => unimplemented!(),
-            ast::Expr::ClosureExpr(ref closure_expr) => unimplemented!(),
+            ast::Expr::ClassLit(ref _class_lit) => unimplemented!(),
+            ast::Expr::ClosureExpr(ref _closure_expr) => unimplemented!(),
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
-            ast::Expr::FieldExpr(ref field_expr) => unimplemented!(),
+            ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),
             ast::Expr::ForExpr(ref for_expr) => {
                 let init = self.lower_expr(for_expr.init().unwrap());
                 let cond = self.lower_expr(for_expr.cond().unwrap());
@@ -261,7 +261,7 @@ where
             ast::Expr::IdentExpr(ref ident_expr) => {
                 hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
             }
-            ast::Expr::IfExpr(ref if_expr) => unimplemented!(),
+            ast::Expr::IfExpr(ref _if_expr) => unimplemented!(),
             ast::Expr::IndexExpr(ref index_expr) => {
                 let base = self.lower_expr(index_expr.base().unwrap());
                 let index = self.lower_expr(index_expr.index().unwrap());
@@ -272,7 +272,7 @@ where
                 let literal = hir::Literal::from_token(literal_expr.token_kind());
                 hir::Expr::Literal(self.db.intern_literal(literal))
             }
-            ast::Expr::MatchExpr(ref match_expr) => unimplemented!(),
+            ast::Expr::MatchExpr(ref _match_expr) => unimplemented!(),
             ast::Expr::ParenExpr(ref paren_expr) => {
                 let expr = paren_expr.expr().unwrap();
 
@@ -335,7 +335,7 @@ pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut 
             reporter: reporter.clone(),
         };
 
-        let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
+        let _name: Option<crate::hir::Name> = function.name().map(|name| name.into());
 
         if let Some(type_params_list) = function.type_param_list() {
             for type_param in type_params_list.type_params() {

@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::pratt::{Precedence, PrefixParser};
+use crate::parser::pratt::{PrefixParser};
 use crate::parser::Parser;
 use crate::{Span, SyntaxKind::*, Token};
 
