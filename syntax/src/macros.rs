@@ -24,6 +24,9 @@ macro_rules! T {
     (class) => {
         $crate::SyntaxKind::CLASS_KW
     };
+    (match) => {
+        $crate::SyntaxKind::MATCH_KW
+    };
     (true) => {
         $crate::SyntaxKind::TRUE_KW
     };
@@ -161,7 +164,9 @@ macro_rules! T {
     (||) => {
         $crate::SyntaxKind::PIPEPIPE
     };
-
+    (|) => {
+        $crate::SyntaxKind::PIPE
+    };
     (->) => {
         $crate::SyntaxKind::FRETURN
     };

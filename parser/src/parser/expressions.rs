@@ -17,6 +17,7 @@ mod if_expr;
 mod index_expr;
 mod let_expr;
 mod literal;
+mod match_expr;
 mod return_expr;
 mod unary;
 mod while_expr;

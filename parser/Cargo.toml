@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 syntax={path="../syntax",version="*"}
 errors = {path="../errors"}
-rowan="*"
+rowan="0.8.2"
 [dev-dependencies]
 insta = "0.8.2"
 pretty_assertions = "0.6.1"

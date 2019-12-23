@@ -159,6 +159,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         spans(SyntaxKind::EQEQ, start, start.shift('='))
+                    } else if self.peek(|ch| ch == '>') {
+                        self.advance();
+                        spans(SyntaxKind::FAT_ARROW, start, start.shift('>'))
                     } else {
                         span(SyntaxKind::EQ, start)
                     }

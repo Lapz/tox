@@ -277,7 +277,9 @@ Grammar(
         "BlockExpr": (
             options: [ "Block" ]
         ),
-
+        "TupleExpr":(
+            collections: [ ["exprs", "Expr"] ],
+        ),
         "Expr": (
             enum: [
                 "ArrayExpr",
@@ -300,6 +302,7 @@ Grammar(
                 "PrefixExpr",
                 "BinExpr",
                 "Literal",
+                "TupleExpr",
             ],
         ),
         "Visibility": (),

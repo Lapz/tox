@@ -26,7 +26,7 @@ where
     I: Iterator<Item = Span<Token>>,
 {
     input: &'a str,
-    pub builder: GreenNodeBuilder,
+    pub builder: GreenNodeBuilder<'static>,
     pub past_tokens: VecDeque<Span<Token>>,
     reporter: Reporter,
     lookahead: Option<Span<Token>>,

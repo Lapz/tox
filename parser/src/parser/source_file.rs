@@ -56,9 +56,7 @@ where
         let green = _builder.finish();
 
         let root = SyntaxNode::new_root(green);
-
-        // println!("{:?}", FnDef::cast(root).unwrap().syntax().text());
-
+        println!("{:?}", root.kind());
         // unimplemented!()
 
         SourceFile::cast(root).unwrap()

@@ -124,6 +124,11 @@ pub enum Pattern {
     Literal(LiteralId),
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MatchArm {
+    pub(crate) pats: Vec<PatId>,
+    pub(crate) expr: ExprId,
+}
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Literal {
     String(SmolStr),
@@ -173,8 +178,10 @@ pub enum Expr {
     While { cond: ExprId, body: Vec<StmtId> },
     Literal(LiteralId),
     Paren(ExprId),
+    Tuple(Vec<ExprId>),
     Unary { op: UnaryOp, expr: ExprId },
     Return(Option<ExprId>),
+    Match { expr: ExprId, arms: Vec<MatchArm> },
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

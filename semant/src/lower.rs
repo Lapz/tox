@@ -279,7 +279,27 @@ where
                 let literal = hir::Literal::from_token(literal_expr.token_kind());
                 hir::Expr::Literal(self.db.intern_literal(literal))
             }
-            ast::Expr::MatchExpr(ref _match_expr) => unimplemented!(),
+            ast::Expr::MatchExpr(ref match_expr) => {
+                let expr = self.lower_expr(match_expr.expr().unwrap());
+
+                hir::Expr::Match {
+                    expr,
+                    arms: match_expr
+                        .match_arm_list()
+                        .unwrap()
+                        .arms()
+                        .map(|match_arm| {
+                            let pats = match_arm
+                                .pats()
+                                .map(|pat| self.lower_pattern(pat))
+                                .collect();
+
+                            let expr = self.lower_expr(match_arm.expr().unwrap());
+                            hir::MatchArm { pats, expr }
+                        })
+                        .collect(),
+                }
+            }
             ast::Expr::ParenExpr(ref paren_expr) => {
                 let expr = paren_expr.expr().unwrap();
 
@@ -312,6 +332,14 @@ where
                     .collect::<Vec<_>>();
 
                 hir::Expr::While { cond, body }
+            }
+            ast::Expr::TupleExpr(ref tuple_expr) => {
+                let exprs = tuple_expr
+                    .exprs()
+                    .map(|expr| self.lower_expr(expr))
+                    .collect();
+
+                hir::Expr::Tuple(exprs)
             }
         };
 

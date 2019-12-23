@@ -830,6 +830,7 @@ impl EnumVariantList {
             PrefixExpr(PrefixExpr),
             BinExpr(BinExpr),
             Literal(Literal),
+            TupleExpr(TupleExpr),
     }
         impl From<ArrayExpr> for Expr {
             fn from(n: ArrayExpr) -> Expr { 
@@ -931,10 +932,15 @@ impl EnumVariantList {
                 Expr::Literal(n)
             }
         }
+        impl From<TupleExpr> for Expr {
+            fn from(n: TupleExpr) -> Expr { 
+                Expr::TupleExpr(n)
+            }
+        }
 impl AstNode for Expr {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-             | ARRAY_EXPR | IDENT_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL => true,
+             | ARRAY_EXPR | IDENT_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL | TUPLE_EXPR => true,
             _ => false,
         }
     }
@@ -960,7 +966,8 @@ impl AstNode for Expr {
             | CAST_EXPR  => Some(Expr::CastExpr(CastExpr {syntax})), 
             | PREFIX_EXPR  => Some(Expr::PrefixExpr(PrefixExpr {syntax})), 
             | BIN_EXPR  => Some(Expr::BinExpr(BinExpr {syntax})), 
-            | LITERAL  => Some(Expr::Literal(Literal {syntax})),_ => None
+            | LITERAL  => Some(Expr::Literal(Literal {syntax})), 
+            | TUPLE_EXPR  => Some(Expr::TupleExpr(TupleExpr {syntax})),_ => None
         }
     }
     fn syntax(&self) -> &SyntaxNode {  
@@ -985,7 +992,8 @@ impl AstNode for Expr {
                 Expr::CastExpr(kind)  => &kind.syntax, 
                 Expr::PrefixExpr(kind)  => &kind.syntax, 
                 Expr::BinExpr(kind)  => &kind.syntax, 
-                Expr::Literal(kind)  => &kind.syntax,}
+                Expr::Literal(kind)  => &kind.syntax, 
+                Expr::TupleExpr(kind)  => &kind.syntax,}
     
     }
 }
@@ -1954,6 +1962,33 @@ impl AstNode for Stmt {
 }
 
 impl Stmt {}
+
+// TupleExpr
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TupleExpr {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for TupleExpr {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            TUPLE_EXPR => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(TupleExpr { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl TupleExpr {
+    pub fn exprs(&self) -> impl Iterator<Item = Expr> {
+        children(self)
+    }
+}
 
 // TuplePat
 

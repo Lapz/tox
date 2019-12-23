@@ -166,8 +166,8 @@ pub fn children<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> AstChildren<C> {
 pub fn text_of_first_token(node: &SyntaxNode) -> &SmolStr {
     node.green()
         .children()
-        .first()
-        .and_then(|it| it.as_token())
+        .next()
+        .and_then(|it| it.into_token())
         .unwrap()
         .text()
 }

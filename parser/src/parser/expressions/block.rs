@@ -55,6 +55,11 @@ where
                     self.parse_for_expr();
                     self.finish_node();
                 }
+                T![match] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_match_expr();
+                    self.finish_node();
+                }
                 pat @ WHITESPACE | pat @ T!["//"] => {
                     while self.at(pat) {
                         self.bump();
