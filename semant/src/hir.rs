@@ -154,6 +154,8 @@ create_intern_key!(NameId);
 create_intern_key!(TypeId);
 create_intern_key!(PatId);
 
+create_intern_key!(LiteralId);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExprId(pub(crate) u64);
 
@@ -162,11 +164,18 @@ pub enum Pattern {
     Bind { name: Name },
     Placeholder,
     Tuple(Vec<PatId>),
-    Literal(ExprId),
+    Literal(LiteralId),
 }
 
-#[derive(Debug)]
-pub enum Literal {}
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+pub enum Literal {
+    String(SmolStr),
+    Nil,
+    True,
+    False,
+    Int(SmolStr),
+    Float(SmolStr),
+}
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Type {
@@ -198,13 +207,14 @@ pub enum Expr {
     Binary { lhs: ExprId, op: BinOp, rhs: ExprId },
     Block(Vec<StmtId>),
     Break,
-    Call { args: Vec<ExprId> },
+    Call { callee: ExprId, args: Vec<ExprId> },
     Cast { expr: ExprId, ty: TypeId },
     Continue,
     If { cond: ExprId },
     Ident(NameId),
+    Index { base: ExprId, index: ExprId },
     While { cond: ExprId, body: Vec<StmtId> },
-
+    Literal(LiteralId),
     Paren(ExprId),
     Unary { op: UnaryOp, expr: ExprId },
     Return(Option<ExprId>),
@@ -271,5 +281,22 @@ impl BinOp {
             _ => return None,
         };
         Some(op)
+    }
+}
+
+impl Literal {
+    pub(crate) fn from_token(token: syntax::SyntaxToken) -> Literal {
+        use syntax::SyntaxKind::*;
+        let text = token.text().clone();
+        let kind = token.kind();
+        match kind {
+            INT_NUMBER => Literal::Int(text),
+            STRING => Literal::String(text),
+            FLOAT_NUMBER => Literal::Float(text),
+            T![true] => Literal::True,
+            T![false] => Literal::False,
+            T![nil] => Literal::Nil,
+            _ => unreachable!(),
+        }
     }
 }

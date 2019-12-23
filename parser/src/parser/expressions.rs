@@ -14,6 +14,7 @@ mod for_expr;
 mod grouping;
 mod ident;
 mod if_expr;
+mod index_expr;
 mod let_expr;
 mod literal;
 mod return_expr;
@@ -24,6 +25,7 @@ pub use binary::BinaryParselet;
 pub use call_expr::CallParselet;
 pub use grouping::GroupingParselet;
 pub use ident::IdentParselet;
+pub use index_expr::IndexParselet;
 pub use literal::LiteralParselet;
 pub use unary::UnaryParselet;
 

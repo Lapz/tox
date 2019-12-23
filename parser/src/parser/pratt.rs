@@ -87,6 +87,7 @@ impl Rule for SyntaxKind {
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
+            T!["["] => RuleToken::LBracket,
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,

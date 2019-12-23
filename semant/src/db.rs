@@ -63,6 +63,9 @@ pub trait InternDatabase {
 
     #[salsa::interned]
     fn intern_type(&self, ty: hir::Type) -> hir::TypeId;
+
+    #[salsa::interned]
+    fn intern_literal(&self, lit: hir::Literal) -> hir::LiteralId;
 }
 
 #[salsa::query_group(HirDatabaseStorage)]

@@ -1,6 +1,6 @@
 use crate::ast;
 use crate::{
-    children, AstNode,
+    children, AstChildren, AstNode,
     SyntaxKind::{self, *},
     SyntaxNode,
 };
@@ -28,6 +28,37 @@ impl ast::PrefixExpr {
             .children_with_tokens()
             .filter_map(|it| it.into_token())
             .find_map(|c| return Some(c.kind()))
+    }
+}
+
+impl ast::IndexExpr {
+    pub fn base(&self) -> Option<ast::Expr> {
+        children(self).nth(0)
+    }
+
+    pub fn index(&self) -> Option<ast::Expr> {
+        children(self).nth(1)
+    }
+}
+
+impl ast::IfExpr {
+    fn blocks(&self) -> AstChildren<ast::BlockExpr> {
+        children(self)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LiteralKind {
+    String,
+    Nil,
+    IntNumber,
+    FloatNumber,
+    Bool,
+}
+
+impl ast::Literal {
+    pub fn token_kind(&self) -> crate::SyntaxToken {
+        self.syntax().first_token().unwrap()
     }
 }
 

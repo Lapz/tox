@@ -115,7 +115,9 @@ where
                     .map(|pat| self.lower_pattern(pat))
                     .collect::<Vec<_>>(),
             ),
-            ast::Pat::LiteralPat(literal) => unimplemented!(),
+            ast::Pat::LiteralPat(literal) => crate::hir::Pattern::Literal(self.db.intern_literal(
+                hir::Literal::from_token(literal.literal().unwrap().token_kind()),
+            )),
         };
 
         self.db.intern_pattern(pattern)
@@ -219,14 +221,14 @@ where
 
             ast::Expr::BreakExpr(_) => hir::Expr::Break,
             ast::Expr::CallExpr(ref call_expr) => {
-                println!("adasc{:?}", call_expr.expr());
+                let callee = self.lower_expr(call_expr.expr().unwrap());
                 let args = if let Some(arg_list) = call_expr.arg_list() {
                     arg_list.args().map(|arg| self.lower_expr(arg)).collect()
                 } else {
                     Vec::new()
                 };
 
-                hir::Expr::Call { args }
+                hir::Expr::Call { callee, args }
             }
             ast::Expr::CastExpr(ref cast_expr) => {
                 let ty = self.lower_type(cast_expr.type_ref().unwrap());
@@ -261,12 +263,14 @@ where
             }
             ast::Expr::IfExpr(ref if_expr) => unimplemented!(),
             ast::Expr::IndexExpr(ref index_expr) => {
-                let callee = index_expr;
-                unimplemented!()
+                let base = self.lower_expr(index_expr.base().unwrap());
+                let index = self.lower_expr(index_expr.index().unwrap());
+                hir::Expr::Index { base, index }
             }
 
             ast::Expr::Literal(ref literal_expr) => {
-                unimplemented!();
+                let literal = hir::Literal::from_token(literal_expr.token_kind());
+                hir::Expr::Literal(self.db.intern_literal(literal))
             }
             ast::Expr::MatchExpr(ref match_expr) => unimplemented!(),
             ast::Expr::ParenExpr(ref paren_expr) => {

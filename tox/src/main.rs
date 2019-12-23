@@ -1,7 +1,7 @@
 mod cli;
 
 use crate::cli::{Cli, Commands};
-use codespan::{CodeMap, FileMap, FileName, Span};
+
 use parser::{dump_debug, Parser};
 use rowan::SmolStr;
 use semant::{lower_ast, DatabaseImpl};

@@ -65,6 +65,11 @@ where
         );
 
         parser.infix(
+            RuleToken::LBracket,
+            &expressions::IndexParselet(Precedence::Call),
+        );
+
+        parser.infix(
             RuleToken::Plus,
             &expressions::BinaryParselet(Precedence::Term),
         );
