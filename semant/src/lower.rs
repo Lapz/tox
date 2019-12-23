@@ -2,8 +2,8 @@ use crate::db::HirDatabase;
 use crate::hir::{self};
 
 use syntax::{
-    ast, child, children, text_of_first_token, ArgListOwner, AstNode, AstPtr, FnDefOwner,
-    LoopBodyOwner, NameOwner, SyntaxNodePtr, TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
+    ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
+    TypeParamsOwner, TypesOwner,
 };
 
 #[derive(Debug)]
