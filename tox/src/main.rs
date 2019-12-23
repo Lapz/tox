@@ -27,7 +27,7 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     let db = DatabaseImpl::default();
 
     if !reporter.has_errors() {
-        lower_ast(source_file, &db, &mut reporter.clone());
+        lower_ast(source_file, &db);
     }
 
     reporter.emit()?;

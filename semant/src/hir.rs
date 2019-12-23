@@ -2,7 +2,7 @@ pub(crate) mod function;
 
 use crate::db;
 
-pub(crate) use function::FunctionAstMap;
+pub(crate) use function::{Function, FunctionAstMap};
 use std::collections::HashMap;
 use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, SyntaxKind, TextRange, T};
 pub type Span = TextRange;
@@ -17,22 +17,7 @@ pub struct StmtId(pub(crate) u64);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 
 pub struct BodyId(pub(crate) u64);
-pub struct Ctx {
-    functions: FunctionMap,
-}
 
-impl Ctx {
-    pub fn new() -> Self {
-        Ctx {
-            functions: FunctionMap::new(),
-        }
-    }
-
-    pub(crate) fn add_function(&mut self, _fn_def: ast::FnDef) -> FunctionId {
-        unimplemented!()
-        // self.functions.add_function(fn_def)
-    }
-}
 macro_rules! create_intern_key {
     ($name:ident) => {
         #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -69,20 +54,14 @@ impl From<ast::Name> for Name {
 }
 
 create_intern_key!(FunctionId);
-#[derive(Debug)]
-pub struct Function {
-    id: FunctionId,
-    name: NameId,
-    params: Vec<Param>,
-}
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Param {
     pub(crate) pat: PatId,
     pub(crate) ty: TypeId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct TypeParam {
     pub(crate) name: NameId,
 }
@@ -123,28 +102,6 @@ impl FunctionMap {
 
     //     id
     // }
-}
-
-impl Function {
-    fn new(id: FunctionId, name: NameId) -> Self {
-        Function {
-            id,
-            name,
-            params: Vec::new(),
-        }
-    }
-
-    fn name(&self, db: &impl db::HirDatabase) -> Name {
-        db.lookup_intern_name(db.function_data(self.id).name)
-    }
-
-    fn body() {}
-
-    fn ty(&self, _db: &impl db::HirDatabase) {
-        // db.look_up()
-    }
-
-    fn infer() {}
 }
 
 create_intern_key!(ClassId);
@@ -193,7 +150,7 @@ pub enum Type {
     Ident(NameId),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Stmt {
     Let {
         pat: PatId,
@@ -201,7 +158,7 @@ pub enum Stmt {
     },
     Expr(ExprId),
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Array(Vec<ExprId>),
     Binary { lhs: ExprId, op: BinOp, rhs: ExprId },
@@ -220,7 +177,7 @@ pub enum Expr {
     Return(Option<ExprId>),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum BinOp {
     Plus,
     Minus,
@@ -240,7 +197,7 @@ pub enum BinOp {
     MultEqual,
     DivEqual,
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum UnaryOp {
     Minus,
     Excl,

@@ -1,19 +1,21 @@
 use super::{
-    BodyId, Expr, ExprId, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
+    BodyId, Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
 };
 use indexmap::IndexMap;
 use syntax::{ast, AstPtr};
 
-pub(crate) struct Function {
+#[derive(Debug, Eq, PartialEq)]
+pub struct Function {
+    pub(crate) name: Name,
+    pub(crate) map: FunctionAstMap,
     pub(crate) params: Vec<ParamId>,
     pub(crate) type_params: Vec<TypeParamId>,
-    pub(crate) body: Option<BodyId>,
+    pub(crate) body: Option<Vec<StmtId>>,
     pub(crate) span: Span,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Eq, PartialEq)]
 pub(crate) struct FunctionAstMap {
-    body: Option<AstPtr<ast::Block>>,
     hir_to_params: IndexMap<ParamId, Param>,
     ast_to_params: IndexMap<ParamId, AstPtr<ast::Param>>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,

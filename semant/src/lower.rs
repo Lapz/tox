@@ -1,5 +1,6 @@
 use crate::db::HirDatabase;
 use crate::hir::{self};
+use std::sync::Arc;
 
 use syntax::{
     ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
@@ -16,22 +17,28 @@ pub(crate) struct FunctionDataCollector<DB> {
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
-    reporter: errors::Reporter,
 }
 
 impl<'a, DB> FunctionDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub fn finish(self) -> hir::function::Function {
+    pub fn finish(
+        self,
+        name: hir::Name,
+        body: Option<Vec<hir::StmtId>>,
+        span: hir::Span,
+    ) -> hir::Function {
         let params = self.params;
         let type_params = self.type_params;
-
+        let map = self.ast_map;
         hir::function::Function {
+            name,
+            map,
             params,
             type_params,
-            body: None,
-            span: unimplemented!(),
+            body,
+            span,
         }
     }
     pub fn add_param(&mut self, ast_node: &ast::Param, param: hir::Param) {
@@ -312,63 +319,56 @@ where
 
         let span = self.ast_map.get_expr_ptr(id).syntax_node_ptr().range();
 
-        self.reporter.warn(
-            "this is an expr",
-            &format!("I am a {:?} expr", node.syntax().kind()),
-            (span.start(), span.end()),
-        );
         id
     }
 }
 
-pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase, reporter: &mut errors::Reporter) {
+pub(crate) fn lower_function_query(
+    db: &impl HirDatabase,
+    function: ast::FnDef,
+) -> Arc<hir::Function> {
+    let mut collector = FunctionDataCollector {
+        db,
+        param_id_count: 0,
+        type_param_count: 0,
+        stmt_id_count: 0,
+        expr_id_count: 0,
+        params: Vec::new(),
+        type_params: Vec::new(),
+        ast_map: hir::FunctionAstMap::default(),
+    };
+
+    let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
+
+    if let Some(type_params_list) = function.type_param_list() {
+        for type_param in type_params_list.type_params() {
+            collector.lower_type_param(type_param);
+        }
+    }
+
+    if let Some(param_list) = function.param_list() {
+        for param in param_list.params() {
+            collector.lower_param(param);
+        }
+    }
+
+    let body = if let Some(body) = function.body() {
+        Some(
+            body.statements()
+                .map(|statement| collector.lower_stmt(statement))
+                .collect(),
+        )
+    } else {
+        None
+    };
+
+    let span = function.syntax().text_range();
+
+    Arc::new(collector.finish(name.unwrap(), body, span))
+}
+
+pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase) {
     for function in source.functions() {
-        let mut collector = FunctionDataCollector {
-            db,
-            param_id_count: 0,
-            type_param_count: 0,
-            stmt_id_count: 0,
-            expr_id_count: 0,
-            params: Vec::new(),
-            type_params: Vec::new(),
-            ast_map: hir::FunctionAstMap::default(),
-            reporter: reporter.clone(),
-        };
-
-        let _name: Option<crate::hir::Name> = function.name().map(|name| name.into());
-
-        if let Some(type_params_list) = function.type_param_list() {
-            for type_param in type_params_list.type_params() {
-                collector.lower_type_param(type_param);
-            }
-        }
-
-        if let Some(param_list) = function.param_list() {
-            for param in param_list.params() {
-                collector.lower_param(param);
-            }
-        }
-
-        if let Some(body) = function.body() {
-            let span = body.syntax().text_range();
-
-            reporter.warn("this is a body", "I am a body", (span.start(), span.end()));
-
-            for statement in body.statements() {
-                let span = statement.syntax().text_range();
-
-                reporter.warn("this is a stmt", "I am a stmt", (span.start(), span.end()));
-
-                collector.lower_stmt(statement);
-            }
-        }
-
-        let span = function.syntax().text_range();
-
-        reporter.warn(
-            "this is a function",
-            "I am a function",
-            (span.start(), span.end()),
-        );
+        db.lower_function(function);
     }
 }

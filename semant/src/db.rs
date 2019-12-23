@@ -32,8 +32,6 @@ impl SourceRoot {
 //     #[salsa::input]
 //     fn file_text(&self, file_id: FileId) -> Arc<String>;
 
-//     #[salsa::invoke(parse_query)]
-//     fn parse(&self, file_id: FileId) -> ast::SourceFile;
 //     #[salsa::input]
 //     fn source_root(&self, id: SourceRootId) -> Arc<SourceRoot>;
 // }
@@ -75,6 +73,9 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase {
 
     #[salsa::input]
     fn type_var(&self, id: hir::TypeId) -> ty::TypeVar;
+
+    #[salsa::invoke(crate::lower::lower_function_query)]
+    fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
 }
 
 #[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]

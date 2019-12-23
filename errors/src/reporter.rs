@@ -3,7 +3,8 @@ use codespan::{FileId, Files, Span};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term::{
     emit,
-    termcolor::{ColorChoice, StandardStream}, Config,
+    termcolor::{ColorChoice, StandardStream},
+    Config,
 };
 use std::cell::RefCell;
 use std::io::{self};
