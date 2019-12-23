@@ -8,9 +8,7 @@ use semant::{lower_ast, DatabaseImpl};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use structopt::StructOpt as _;
-use syntax::{
-    ArgListOwner, AstNode, ClassDefOwner, FnDefOwner, Lexer, TypeAscriptionOwner, VisibilityOwner,
-};
+use syntax::Lexer;
 
 pub type ParseResult<T> = Result<T, ()>;
 

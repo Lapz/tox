@@ -47,15 +47,6 @@ impl ast::IfExpr {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum LiteralKind {
-    String,
-    Nil,
-    IntNumber,
-    FloatNumber,
-    Bool,
-}
-
 impl ast::Literal {
     pub fn token_kind(&self) -> crate::SyntaxToken {
         self.syntax().first_token().unwrap()
