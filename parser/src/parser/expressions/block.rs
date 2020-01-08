@@ -16,9 +16,9 @@ where
         while !self.at(EOF) && !self.at(T!["}"]) {
             match self.current() {
                 T![let] => {
-                    self.start_node(EXPR_STMT);
+                    // self.start_node(EXPR_STMT);
                     self.parse_let_expr();
-                    self.finish_node();
+                    // self.finish_node();
                 }
                 T![if] => {
                     self.start_node(EXPR_STMT);
