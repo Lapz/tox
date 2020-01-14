@@ -1,1 +1,5 @@
-fn main() { match (a,b) { x => 10,1 =>3};}
+
+
+fn main() { 
+    let x= 10;    
+}

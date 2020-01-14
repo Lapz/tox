@@ -68,14 +68,10 @@ pub trait InternDatabase {
 
 #[salsa::query_group(HirDatabaseStorage)]
 pub trait HirDatabase: std::fmt::Debug + InternDatabase {
-    #[salsa::input]
-    fn function_data(&self, fn_id: hir::FunctionId) -> Arc<hir::Function>;
-
-    #[salsa::input]
-    fn type_var(&self, id: hir::TypeId) -> ty::TypeVar;
-
     #[salsa::invoke(crate::lower::lower_function_query)]
     fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
+    #[salsa::invoke(crate::lower::lower_type_alias_query)]
+    fn lower_type_alias(&self, alias: ast::TypeAliasDef) -> Arc<()>;
 }
 
 #[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]

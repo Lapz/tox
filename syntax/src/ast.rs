@@ -162,7 +162,7 @@ pub enum SyntaxKind {
 }
 
 
-impl From<SyntaxKind> for rowan::cursor::SyntaxKind {
+impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         Self(kind as u16)
     }
@@ -2038,6 +2038,7 @@ impl AstNode for TypeAliasDef {
 }
 
 
+impl traits::NameOwner for TypeAliasDef {}
 impl traits::TypeParamsOwner for TypeAliasDef {}
 impl TypeAliasDef {}
 

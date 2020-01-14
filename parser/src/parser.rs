@@ -21,6 +21,7 @@ use syntax::{
     SyntaxKind::{self, *},
     Token, T,
 };
+
 pub struct Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
@@ -137,10 +138,11 @@ where
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(kind.into());
+
         while self.at(SyntaxKind::WHITESPACE) {
             self.bump()
         }
-        self.builder.start_node(kind.into())
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {

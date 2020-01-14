@@ -3,8 +3,8 @@ use crate::hir::{self};
 use std::sync::Arc;
 
 use syntax::{
-    ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
-    TypeParamsOwner, TypesOwner,
+    ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAliasDefOwner,
+    TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
 };
 
 #[derive(Debug)]
@@ -345,8 +345,6 @@ where
 
         let id = self.add_expr(&node, expr);
 
-        let span = self.ast_map.get_expr_ptr(id).syntax_node_ptr().range();
-
         id
     }
 }
@@ -395,7 +393,16 @@ pub(crate) fn lower_function_query(
     Arc::new(collector.finish(name.unwrap(), body, span))
 }
 
+pub(crate) fn lower_type_alias_query(db: &impl HirDatabase, alias: ast::TypeAliasDef) -> Arc<()> {
+    // let name = alias.
+    unimplemented!()
+}
+
 pub fn lower_ast(source: ast::SourceFile, db: &impl HirDatabase) {
+    for type_alias in source.type_alias() {
+        db.lower_type_alias(type_alias);
+    }
+
     for function in source.functions() {
         db.lower_function(function);
     }
