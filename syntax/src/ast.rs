@@ -2040,7 +2040,11 @@ impl AstNode for TypeAliasDef {
 
 impl traits::NameOwner for TypeAliasDef {}
 impl traits::TypeParamsOwner for TypeAliasDef {}
-impl TypeAliasDef {}
+impl TypeAliasDef {
+    pub fn type_ref(&self) -> Option<TypeRef> {
+        child_opt(self)
+    }
+}
 
 // TypeParam
 

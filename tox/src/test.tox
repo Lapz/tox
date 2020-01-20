@@ -1,4 +1,4 @@
-
+type ParserResult<T> = Result<T,i32>;
 
 fn main() { 
     let x= 10;    

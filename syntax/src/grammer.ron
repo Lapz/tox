@@ -194,7 +194,8 @@ Grammar(
             traits: [
                 "NameOwner",
                 "TypeParamsOwner"
-            ]
+            ],
+            options: ["TypeRef"]
         ),
         "ExternImportDef":(
             options: [["imports","Name"]]

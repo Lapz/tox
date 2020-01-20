@@ -1,7 +1,9 @@
 use crate::hir;
 
+use crate::ctx;
 use crate::ty;
 use salsa;
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -38,9 +40,6 @@ impl SourceRoot {
 
 #[salsa::query_group(InternDatabaseStorage)]
 pub trait InternDatabase {
-    // #[salsa::interned]
-    // fn intern_name(&self, ast_nane: ast::Name) -> hir::Name;
-
     #[salsa::interned]
     fn intern_function(&self, fn_def: ast::FnDef) -> hir::FunctionId;
 
@@ -67,17 +66,33 @@ pub trait InternDatabase {
 }
 
 #[salsa::query_group(HirDatabaseStorage)]
-pub trait HirDatabase: std::fmt::Debug + InternDatabase {
+pub trait HirDatabase: std::fmt::Debug + InternDatabase + HirDBExt {
     #[salsa::invoke(crate::lower::lower_function_query)]
     fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
     #[salsa::invoke(crate::lower::lower_type_alias_query)]
-    fn lower_type_alias(&self, alias: ast::TypeAliasDef) -> Arc<()>;
+    fn lower_type_alias(&self, alias: ast::TypeAliasDef) -> Arc<hir::TypeAlias>;
 }
 
 #[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]
 #[derive(Debug, Default)]
 pub struct DatabaseImpl {
     runtime: salsa::Runtime<DatabaseImpl>,
+    ctx: RefCell<ctx::Ctx>,
+}
+
+pub trait HirDBExt {
+    fn ctx(&self) -> Ref<ctx::Ctx>;
+    fn ctx_mut(&self) -> RefMut<ctx::Ctx>;
+}
+
+impl HirDBExt for DatabaseImpl {
+    fn ctx(&self) -> Ref<ctx::Ctx> {
+        self.ctx.borrow()
+    }
+
+    fn ctx_mut(&self) -> RefMut<ctx::Ctx> {
+        self.ctx.borrow_mut()
+    }
 }
 
 impl salsa::Database for DatabaseImpl {

@@ -1,24 +1,20 @@
 use crate::db::HirDatabase;
 use crate::hir;
 use crate::ty;
-use syntax::{
-    ast, children, AstNode, FnDefOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
-};
+use std::sync::Arc;
 
-pub fn infer_alias(db: &impl HirDatabase, alias: ast::TypeAliasDef) -> hir::TypeAliasId {
-    if let Some(type_param_list) = alias.type_param_list() {
-        let mut poly_tvs = Vec::new();
+pub fn infer_alias(db: &impl HirDatabase, alias: hir::TypeAlias) -> Arc<Result<(), ()>> {
+    let mut poly_tvs = Vec::new();
 
-        for type_param in type_param_list.type_params() {
-            let tv = ty::TypeVar::new();
-            let ty = ty::Ty::Var(tv);
-            poly_tvs.push(tv);
-        }
+    for type_param in &alias.type_params {
+        let tv = db.ctx_mut().tv();
+        let ty = ty::Ty::Var(tv);
 
-        // ty::Ty::Generic(poly_tvs, db.infer_ty())
+        let name = db.lookup(alias).get_map();
+
+        db.ctx_mut().add_type(type_param, ty);
+        poly_tvs.push(tv);
     }
-    // else {
-    // }
 
     unimplemented!()
 }

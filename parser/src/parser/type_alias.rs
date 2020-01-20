@@ -20,7 +20,7 @@ where
         self.ident();
 
         if self.is_ahead(|t| t == L_ANGLE) {
-            self.parse_type_params(true);
+            self.parse_type_params(false);
         }
 
         self.expect(EQ, "Expected `=`");

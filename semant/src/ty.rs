@@ -11,6 +11,12 @@ static mut TYPEVAR_COUNT: u32 = 0;
 static mut UNIQUE_COUNT: u32 = 0;
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum VarEntry {
+    Var(Ty),
+    Fun { ty: Ty },
+}
+
+#[derive(Debug, Clone, PartialEq)]
 /// A type constructor
 pub enum TypeCon {
     /// Used to represent a function
