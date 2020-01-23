@@ -112,7 +112,7 @@ where
                 let name: crate::hir::Name = binding
                     .name()
                     .map(|n| n.into())
-                    .unwrap_or(crate::hir::Name::missing());
+                    .unwrap_or_else(crate::hir::Name::missing);
                 crate::hir::Pattern::Bind { name }
             }
             ast::Pat::PlaceholderPat(_) => crate::hir::Pattern::Placeholder,

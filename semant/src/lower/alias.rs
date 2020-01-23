@@ -4,8 +4,7 @@ use crate::hir;
 use std::sync::Arc;
 
 use syntax::{
-    ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAliasDefOwner,
-    TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
+    ast, AstNode, AstPtr, NameOwner, TypeParamsOwner, TypesOwner,
 };
 #[derive(Debug)]
 pub(crate) struct TypeAliasDataCollector<DB> {

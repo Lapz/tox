@@ -168,7 +168,7 @@ where
     }
 
     fn recover_until(&mut self, token: SyntaxKind) {
-        while !self.lookahead.is_none() && !self.at(token) {
+        while self.lookahead.is_some() && !self.at(token) {
             self.bump();
         }
 

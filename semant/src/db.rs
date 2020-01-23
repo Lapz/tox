@@ -1,7 +1,7 @@
 use crate::hir;
 
 use crate::ctx;
-use crate::ty;
+
 use salsa;
 use std::cell::{Ref, RefCell, RefMut};
 use std::collections::HashMap;

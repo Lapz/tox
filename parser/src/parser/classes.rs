@@ -86,7 +86,7 @@ mod test {
     fn test_class_fields() {
         let source_file = parse("class Person { name:String; surname:String;}").parse_program();
 
-        let class = source_file.classes().nth(0).unwrap();
+        let class = source_file.classes().next().unwrap();
 
         assert_eq!(class.fields().count(), 2)
     }

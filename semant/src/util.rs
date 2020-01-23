@@ -35,7 +35,7 @@ impl<K: Hash + Eq + Copy, V: Clone> StackedMap<K, V> {
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
-        let depth = self.scopes.len();
+        let _depth = self.scopes.len();
 
         self.table.get(key).and_then(|vec| vec.last())
     }

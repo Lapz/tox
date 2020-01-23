@@ -1,10 +1,10 @@
 pub(crate) mod function;
 
-use crate::db;
+
 
 pub(crate) use function::{Function, FunctionAstMap};
-use std::collections::HashMap;
-use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, SyntaxKind, TextRange, T};
+
+use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 pub type Span = TextRange;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeParamId(pub(crate) u64);

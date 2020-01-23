@@ -945,7 +945,7 @@ impl AstNode for Expr {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        return match syntax.kind() {
+        match syntax.kind() {
              
             | ARRAY_EXPR  => Some(Expr::ArrayExpr(ArrayExpr {syntax})), 
             | IDENT_EXPR  => Some(Expr::IdentExpr(IdentExpr {syntax})), 
@@ -1767,7 +1767,7 @@ impl AstNode for Pat {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        return match syntax.kind() {
+        match syntax.kind() {
              
             | BIND_PAT  => Some(Pat::BindPat(BindPat {syntax})), 
             | PLACEHOLDER_PAT  => Some(Pat::PlaceholderPat(PlaceholderPat {syntax})), 
@@ -1946,7 +1946,7 @@ impl AstNode for Stmt {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        return match syntax.kind() {
+        match syntax.kind() {
              
             | EXPR_STMT  => Some(Stmt::ExprStmt(ExprStmt {syntax})), 
             | LET_STMT  => Some(Stmt::LetStmt(LetStmt {syntax})),_ => None
@@ -2135,7 +2135,7 @@ impl AstNode for TypeRef {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        return match syntax.kind() {
+        match syntax.kind() {
              
             | PAREN_TYPE  => Some(TypeRef::ParenType(ParenType {syntax})), 
             | ARRAY_TYPE  => Some(TypeRef::ArrayType(ArrayType {syntax})), 

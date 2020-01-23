@@ -1,8 +1,8 @@
-use crate::db;
+
 use crate::hir;
 use crate::ty;
 use crate::util::StackedMap;
-use errors::Reporter;
+
 use std::default::Default;
 
 #[derive(Debug)]

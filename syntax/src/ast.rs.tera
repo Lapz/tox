@@ -117,7 +117,7 @@ impl AstNode for {{ node }} {
         }
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
-        return match syntax.kind() {
+        match syntax.kind() {
             {% for kind in methods.enum %} 
             | {{ kind | SCREAM }}  => Some({{node}}::{{kind}}({{kind}} {syntax})),
             {%- endfor -%}

@@ -24,7 +24,7 @@ mod test {
     fn test_visibility() {
         let source_file = parse("export fn main(){}").parse_program();
 
-        let func = source_file.functions().nth(0).unwrap();
+        let func = source_file.functions().next().unwrap();
 
         assert!(func.visibility().is_some())
     }
@@ -32,7 +32,7 @@ mod test {
     fn test_visibility_not_present() {
         let source_file = parse("fn main(){}").parse_program();
 
-        let func = source_file.functions().nth(0).unwrap();
+        let func = source_file.functions().next().unwrap();
 
         assert!(func.visibility().is_none())
     }

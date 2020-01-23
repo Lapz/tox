@@ -1,5 +1,5 @@
 use super::{
-    BodyId, Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
+    Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
 };
 use indexmap::IndexMap;
 use syntax::{ast, AstPtr};
