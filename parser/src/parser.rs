@@ -298,15 +298,12 @@ where
         }
         let token = self.lookahead.take();
 
-        match token {
-            Some(token) => {
-                let text = &self.input[token.start.absolute as usize
-                    ..token.start.absolute as usize + token.value.len as usize];
-                self.builder.token(token.value.kind.into(), text.into());
-                self.past_tokens.push_front(token);
-                self.lookahead = self.iter.next()
-            }
-            None => {}
+        if let Some(token) = token {
+            let text = &self.input[token.start.absolute as usize
+                ..token.start.absolute as usize + token.value.len as usize];
+            self.builder.token(token.value.kind.into(), text.into());
+            self.past_tokens.push_front(token);
+            self.lookahead = self.iter.next()
         }
     }
 

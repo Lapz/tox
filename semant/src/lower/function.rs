@@ -343,9 +343,7 @@ where
             }
         };
 
-        let id = self.add_expr(&node, expr);
-
-        id
+        self.add_expr(&node, expr)
     }
 }
 

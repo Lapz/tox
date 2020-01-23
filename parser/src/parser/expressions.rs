@@ -47,7 +47,9 @@ where
 
         let parser = self.prefix.get(&rule);
 
-        let parser = if parser.is_none() {
+        let parser = if let Some(parser) = parser {
+            parser
+        } else {
             self.error(
                 "Expected an expression",
                 format!(
@@ -56,8 +58,6 @@ where
                 ),
             );
             return;
-        } else {
-            parser.unwrap()
         };
 
         parser.parse(self);

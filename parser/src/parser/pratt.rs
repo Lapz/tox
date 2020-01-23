@@ -60,8 +60,8 @@ pub enum RuleToken {
 }
 
 impl Precedence {
-    pub fn higher(&self) -> Precedence {
-        match *self {
+    pub fn higher(self) -> Precedence {
+        match self {
             Precedence::None | Precedence::Assignment => Precedence::Or,
             Precedence::Or => Precedence::And,
             Precedence::And => Precedence::Equality,
