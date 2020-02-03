@@ -1,14 +1,16 @@
 ---
-created: "2019-08-13T22:01:19.967543Z"
+created: "2020-02-03T16:29:14.697644Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 10)
-  CLASS_DEF@[0; 10)
+SOURCE_FILE@[0; 12)
+  CLASS_DEF@[0; 12)
     CLASS_KW@[0; 5) "class"
-    NAME@[5; 8)
-      IDENT@[5; 8) "Foo"
-    L_CURLY@[8; 9) "{"
-    R_CURLY@[9; 10) "}"
+    NAME@[5; 9)
+      WHITESPACE@[5; 6) " "
+      IDENT@[6; 9) "Foo"
+    WHITESPACE@[9; 10) " "
+    L_CURLY@[10; 11) "{"
+    R_CURLY@[11; 12) "}"
 

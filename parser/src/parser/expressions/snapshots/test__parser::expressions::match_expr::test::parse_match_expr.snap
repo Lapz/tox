@@ -1,5 +1,5 @@
 ---
-created: "2019-12-23T20:42:31.311033Z"
+created: "2020-02-03T16:29:14.825499Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/match_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 40)
   FN_DEF@[0; 40)
     FN_KW@[0; 2) "fn"
-    WHITESPACE@[2; 3) " "
-    NAME@[3; 7)
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
       IDENT@[3; 7) "main"
     PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
@@ -33,24 +33,26 @@ SOURCE_FILE@[0; 40)
             R_PAREN@[22; 23) ")"
             WHITESPACE@[23; 24) " "
           L_CURLY@[24; 25) "{"
-          WHITESPACE@[25; 26) " "
-          MATCH_ARM_LIST@[26; 37)
-            BIND_PAT@[26; 28)
-              NAME@[26; 27)
-                IDENT@[26; 27) "x"
-              WHITESPACE@[27; 28) " "
-            FAT_ARROW@[28; 29) "="
-            WHITESPACE@[29; 30) " "
-            LITERAL@[30; 32)
-              INT_NUMBER@[30; 32) "10"
+          MATCH_ARM_LIST@[25; 37)
+            WHITESPACE@[25; 26) " "
+            MATCH_ARM@[26; 32)
+              BIND_PAT@[26; 28)
+                NAME@[26; 27)
+                  IDENT@[26; 27) "x"
+                WHITESPACE@[27; 28) " "
+              FAT_ARROW@[28; 29) "="
+              WHITESPACE@[29; 30) " "
+              LITERAL@[30; 32)
+                INT_NUMBER@[30; 32) "10"
             COMMA@[32; 33) ","
-            LITERAL_PAT@[33; 35)
-              LITERAL@[33; 34)
-                INT_NUMBER@[33; 34) "1"
-              WHITESPACE@[34; 35) " "
-            FAT_ARROW@[35; 36) "="
-            LITERAL@[36; 37)
-              INT_NUMBER@[36; 37) "3"
+            MATCH_ARM@[33; 37)
+              LITERAL_PAT@[33; 35)
+                LITERAL@[33; 34)
+                  INT_NUMBER@[33; 34) "1"
+                WHITESPACE@[34; 35) " "
+              FAT_ARROW@[35; 36) "="
+              LITERAL@[36; 37)
+                INT_NUMBER@[36; 37) "3"
           R_CURLY@[37; 38) "}"
       SEMI@[38; 39) ";"
       R_CURLY@[39; 40) "}"

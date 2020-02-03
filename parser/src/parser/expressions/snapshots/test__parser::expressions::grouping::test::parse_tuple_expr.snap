@@ -1,34 +1,36 @@
 ---
-created: "2019-09-04T08:32:25.881353Z"
+created: "2020-02-03T16:29:14.774441Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/grouping.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 20)
-  FN_DEF@[0; 20)
+SOURCE_FILE@[0; 22)
+  FN_DEF@[0; 22)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
-    BLOCK@[8; 20)
-      L_CURLY@[8; 9) "{"
-      EXPR_STMT@[9; 18)
-        TUPLE_EXPR@[9; 18)
-          L_PAREN@[9; 10) "("
-          LITERAL@[10; 11)
-            INT_NUMBER@[10; 11) "1"
-          COMMA@[11; 12) ","
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK@[10; 22)
+      L_CURLY@[10; 11) "{"
+      EXPR_STMT@[11; 20)
+        TUPLE_EXPR@[11; 20)
+          L_PAREN@[11; 12) "("
           LITERAL@[12; 13)
-            INT_NUMBER@[12; 13) "2"
+            INT_NUMBER@[12; 13) "1"
           COMMA@[13; 14) ","
           LITERAL@[14; 15)
-            INT_NUMBER@[14; 15) "3"
+            INT_NUMBER@[14; 15) "2"
           COMMA@[15; 16) ","
           LITERAL@[16; 17)
-            INT_NUMBER@[16; 17) "4"
-          R_PAREN@[17; 18) ")"
-      SEMI@[18; 19) ";"
-      R_CURLY@[19; 20) "}"
+            INT_NUMBER@[16; 17) "3"
+          COMMA@[17; 18) ","
+          LITERAL@[18; 19)
+            INT_NUMBER@[18; 19) "4"
+          R_PAREN@[19; 20) ")"
+      SEMI@[20; 21) ";"
+      R_CURLY@[21; 22) "}"
 

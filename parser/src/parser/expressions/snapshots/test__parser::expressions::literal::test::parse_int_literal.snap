@@ -1,22 +1,24 @@
 ---
-created: "2019-08-25T20:31:07.680514Z"
+created: "2020-02-03T16:29:14.825340Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/literal.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 12)
-  FN_DEF@[0; 12)
+SOURCE_FILE@[0; 14)
+  FN_DEF@[0; 14)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
-    BLOCK@[8; 12)
-      L_CURLY@[8; 9) "{"
-      EXPR_STMT@[9; 10)
-        LITERAL@[9; 10)
-          INT_NUMBER@[9; 10) "1"
-      SEMI@[10; 11) ";"
-      R_CURLY@[11; 12) "}"
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK@[10; 14)
+      L_CURLY@[10; 11) "{"
+      EXPR_STMT@[11; 12)
+        LITERAL@[11; 12)
+          INT_NUMBER@[11; 12) "1"
+      SEMI@[12; 13) ";"
+      R_CURLY@[13; 14) "}"
 

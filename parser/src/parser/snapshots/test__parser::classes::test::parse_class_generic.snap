@@ -1,24 +1,26 @@
 ---
-created: "2019-08-13T22:01:19.967656Z"
+created: "2020-02-03T16:29:14.697670Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 18)
-  CLASS_DEF@[0; 18)
+SOURCE_FILE@[0; 20)
+  CLASS_DEF@[0; 20)
     CLASS_KW@[0; 5) "class"
-    NAME@[5; 11)
-      IDENT@[5; 11) "Result"
-    TYPE_PARAM_LIST@[11; 16)
-      L_ANGLE@[11; 12) "<"
-      TYPE_PARAM@[12; 13)
-        NAME@[12; 13)
-          IDENT@[12; 13) "T"
-      COMMA@[13; 14) ","
-      TYPE_PARAM@[14; 15)
-        NAME@[14; 15)
-          IDENT@[14; 15) "E"
-      R_ANGLE@[15; 16) ">"
-    L_CURLY@[16; 17) "{"
-    R_CURLY@[17; 18) "}"
+    NAME@[5; 12)
+      WHITESPACE@[5; 6) " "
+      IDENT@[6; 12) "Result"
+    TYPE_PARAM_LIST@[12; 17)
+      L_ANGLE@[12; 13) "<"
+      TYPE_PARAM@[13; 14)
+        NAME@[13; 14)
+          IDENT@[13; 14) "T"
+      COMMA@[14; 15) ","
+      TYPE_PARAM@[15; 16)
+        NAME@[15; 16)
+          IDENT@[15; 16) "E"
+      R_ANGLE@[16; 17) ">"
+    WHITESPACE@[17; 18) " "
+    L_CURLY@[18; 19) "{"
+    R_CURLY@[19; 20) "}"
 
