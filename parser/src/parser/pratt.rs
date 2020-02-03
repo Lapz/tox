@@ -50,6 +50,7 @@ pub enum RuleToken {
     Slash,
     Star,
     Literal,
+    Pipe,
     None,
     Excl,
     Comparison,
@@ -91,6 +92,7 @@ impl Rule for SyntaxKind {
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,
+            T![|] => RuleToken::Pipe,
             _ => RuleToken::None,
         }
     }

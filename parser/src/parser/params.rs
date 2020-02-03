@@ -25,7 +25,7 @@ where
         self.finish_node()
     }
 
-    fn func_param(&mut self) {
+    pub(crate) fn func_param(&mut self) {
         self.start_node(PARAM);
         self.parse_pattern(false);
 

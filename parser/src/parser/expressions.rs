@@ -8,6 +8,7 @@ mod binary;
 mod block;
 mod break_expr;
 mod call_expr;
+mod closure_expr;
 mod continue_expr;
 mod do_expr;
 mod for_expr;
@@ -24,6 +25,7 @@ mod while_expr;
 
 pub use binary::BinaryParselet;
 pub use call_expr::CallParselet;
+pub use closure_expr::ClosureParselet;
 pub use grouping::GroupingParselet;
 pub use ident::IdentParselet;
 pub use index_expr::IndexParselet;

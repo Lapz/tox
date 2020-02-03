@@ -13,7 +13,7 @@ where
     pub(crate) fn parse_do_expr(&mut self) {
         self.start_node(DO_EXPR);
 
-        self.expect(T![do], "Expected `if`");
+        self.expect(T![do], "Expected `do`");
 
         self.parse_block();
 
