@@ -1,5 +1,8 @@
 #[macro_export]
 macro_rules! T {
+    () => {
+        $crate::SyntaxKind::WHITESPACE
+    };
     (while) => {
         $crate::SyntaxKind::WHILE_KW
     };

@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:29:14.739213Z"
+created: "2020-02-03T16:51:35.825674Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/closure_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -46,37 +46,40 @@ SOURCE_FILE@[0; 82)
               NAME@[31; 32)
                 IDENT@[31; 32) "y"
           PIPE@[32; 33) "|"
-          BLOCK@[33; 76)
-            WHITESPACE@[33; 34) " "
-            ERROR@[34; 35)
-              FRETURN@[34; 35) "-"
-            WHITESPACE@[35; 36) " "
-            EXPR_STMT@[36; 40)
-              IDENT_EXPR@[36; 40)
-                NAME@[36; 39)
-                  IDENT@[36; 39) "i32"
-                WHITESPACE@[39; 40) " "
-            ERROR@[40; 65)
-              L_CURLY@[40; 41) "{"
-              WHITESPACE@[41; 42) "\n"
-              WHITESPACE@[42; 43) " "
-              WHITESPACE@[43; 44) " "
-              WHITESPACE@[44; 45) " "
-              WHITESPACE@[45; 46) " "
-              WHITESPACE@[46; 47) " "
-              WHITESPACE@[47; 48) " "
-              WHITESPACE@[48; 49) " "
-              WHITESPACE@[49; 50) " "
-              WHITESPACE@[50; 51) " "
-              WHITESPACE@[51; 52) " "
-              WHITESPACE@[52; 53) " "
-              WHITESPACE@[53; 54) " "
-              RETURN_KW@[54; 60) "return"
-              WHITESPACE@[60; 61) " "
-              IDENT@[61; 62) "x"
-              PLUS@[62; 63) "+"
-              IDENT@[63; 64) "y"
-              SEMI@[64; 65) ";"
+          WHITESPACE@[33; 34) " "
+          FRETURN@[34; 35) "-"
+          WHITESPACE@[35; 36) " "
+          IDENT_TYPE@[36; 39)
+            IDENT@[36; 39) "i32"
+          WHITESPACE@[39; 40) " "
+          BLOCK@[40; 76)
+            L_CURLY@[40; 41) "{"
+            WHITESPACE@[41; 42) "\n"
+            WHITESPACE@[42; 43) " "
+            WHITESPACE@[43; 44) " "
+            WHITESPACE@[44; 45) " "
+            WHITESPACE@[45; 46) " "
+            WHITESPACE@[46; 47) " "
+            WHITESPACE@[47; 48) " "
+            WHITESPACE@[48; 49) " "
+            WHITESPACE@[49; 50) " "
+            WHITESPACE@[50; 51) " "
+            WHITESPACE@[51; 52) " "
+            WHITESPACE@[52; 53) " "
+            WHITESPACE@[53; 54) " "
+            EXPR_STMT@[54; 64)
+              RETURN_EXPR@[54; 64)
+                RETURN_KW@[54; 60) "return"
+                BIN_EXPR@[60; 64)
+                  WHITESPACE@[60; 61) " "
+                  IDENT_EXPR@[61; 62)
+                    NAME@[61; 62)
+                      IDENT@[61; 62) "x"
+                  PLUS@[62; 63) "+"
+                  IDENT_EXPR@[63; 64)
+                    NAME@[63; 64)
+                      IDENT@[63; 64) "y"
+            SEMI@[64; 65) ";"
             WHITESPACE@[65; 66) " "
             WHITESPACE@[66; 67) "\n"
             WHITESPACE@[67; 68) " "

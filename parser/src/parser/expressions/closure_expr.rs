@@ -27,6 +27,15 @@ where
 
         self.expect(T![|], "Expected `|`");
 
+        while self.at(T![]) {
+            self.bump();
+        }
+
+        if self.at(T![->]) {
+            self.expect(T![->], "Expected `->`");
+            self.parse_type();
+        }
+
         self.parse_block();
 
         self.finish_node()
