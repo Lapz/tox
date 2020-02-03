@@ -1,5 +1,5 @@
 type ParserResult<T> = Result<T,i32>;
 
-fn main() { 
+export fn main() { 
     let x= 10;    
 }

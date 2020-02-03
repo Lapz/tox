@@ -8,12 +8,8 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_function(&mut self, has_visibility: bool) {
-        self.start_node(FN_DEF);
-
-        if has_visibility {
-            self.parse_visibility();
-        }
+    pub(crate) fn parse_function(&mut self, checkpoint: rowan::Checkpoint) {
+        self.start_node_at(checkpoint, FN_DEF);
 
         self.expect(T![fn], "Expected `fn`");
 
@@ -32,8 +28,6 @@ where
         }
 
         self.parse_block();
-
-        // println!("{:?}", self.builder.kind());
 
         self.finish_node()
     }

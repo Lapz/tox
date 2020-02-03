@@ -30,6 +30,7 @@ where
     pub builder: GreenNodeBuilder<'static>,
     pub past_tokens: VecDeque<Span<Token>>,
     reporter: Reporter,
+
     lookahead: Option<Span<Token>>,
     iter: Peekable<I>,
     prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
@@ -298,6 +299,12 @@ where
             }
         }
         false
+    }
+
+    fn skip_whitespace(&mut self) {
+        while self.at(SyntaxKind::WHITESPACE) {
+            self.bump()
+        }
     }
 
     pub fn bump(&mut self) {

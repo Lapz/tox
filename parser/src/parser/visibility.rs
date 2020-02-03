@@ -38,4 +38,7 @@ mod test {
     }
 
     test_parser! {parse_pub_function,"export fn main() {}"}
+    test_parser! {parse_pub_alias,"export type Foo=i32;"}
+    test_parser! {parse_pub_enum,"export enum Bar{};"}
+    test_parser! {parse_pub_class,"export class Foo{ bar:string;};"}
 }

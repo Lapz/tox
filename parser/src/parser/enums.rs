@@ -8,12 +8,8 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_enum(&mut self, has_visibility: bool) {
-        self.start_node(ENUM_DEF);
-
-        if has_visibility {
-            self.parse_visibility();
-        }
+    pub(crate) fn parse_enum(&mut self, checkpoint: rowan::Checkpoint) {
+        self.start_node_at(checkpoint, ENUM_DEF);
 
         self.expect(T![enum], "Expected `enum`");
 

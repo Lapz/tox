@@ -13,14 +13,22 @@ where
         self.start_node(SOURCE_FILE);
 
         while !self.at(EOF) && !self.at(ERROR) {
+            self.skip_whitespace();
+
             let has_visibility = self.has_visibility();
 
             if has_visibility {
-                match self.peek() {
-                    T![type] => self.parse_type_alias(has_visibility),
-                    T![fn] => self.parse_function(has_visibility),
-                    T![enum] => self.parse_enum(has_visibility),
-                    T![class] => self.parse_class(has_visibility),
+                let checkpoint = self.checkpoint();
+                self.parse_visibility();
+                self.skip_whitespace();
+
+                match self.current() {
+                    T![type] => self.parse_type_alias(checkpoint),
+                    T![fn] => {
+                        self.parse_function(checkpoint);
+                    }
+                    T![enum] => self.parse_enum(checkpoint),
+                    T![class] => self.parse_class(checkpoint),
                     T!["//"] => {
                         self.bump();
                         continue;
@@ -30,17 +38,19 @@ where
                     }
                 }
             } else {
+                let checkpoint = self.checkpoint();
                 match self.current() {
-                    T![type] => self.parse_type_alias(has_visibility),
-                    T![fn] => self.parse_function(has_visibility),
-                    T![enum] => self.parse_enum(has_visibility),
-                    T![class] => self.parse_class(has_visibility),
+                    T![type] => self.parse_type_alias(checkpoint),
+                    T![fn] => {
+                        self.parse_function(checkpoint);
+                    }
+                    T![enum] => self.parse_enum(checkpoint),
+                    T![class] => self.parse_class(checkpoint),
                     T!["//"] => {
                         self.bump();
                         continue;
                     }
-                    e => {
-                        println!("{:?}", e);
+                    _ => {
                         self.recover();
                     }
                 }
@@ -57,7 +67,6 @@ where
 
         let root = SyntaxNode::new_root(green);
         println!("{:?}", root.text());
-    
 
         SourceFile::cast(root).unwrap()
     }

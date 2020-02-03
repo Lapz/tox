@@ -8,12 +8,8 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_class(&mut self, has_visibility: bool) {
-        self.start_node(CLASS_DEF);
-
-        if has_visibility {
-            self.parse_visibility();
-        }
+    pub(crate) fn parse_class(&mut self, checkpoint: rowan::Checkpoint) {
+        self.start_node_at(checkpoint, CLASS_DEF);
 
         self.expect(CLASS_KW, "Expected `class`");
 
@@ -36,9 +32,13 @@ where
             let has_visibility = self.has_visibility();
 
             if has_visibility {
-                match self.peek() {
+                let checkpoint = self.checkpoint();
+                self.parse_visibility();
+                self.skip_whitespace();
+
+                match self.current() {
                     IDENT => self.parse_named_field(),
-                    T![fn] => self.parse_function(has_visibility),
+                    T![fn] => self.parse_function(checkpoint),
                     T![] => {
                         self.bump();
                         continue;
@@ -52,9 +52,10 @@ where
                     ),
                 }
             } else {
+                let checkpoint = self.checkpoint();
                 match self.current() {
                     IDENT => self.parse_named_field(),
-                    T![fn] => self.parse_function(has_visibility),
+                    T![fn] => self.parse_function(checkpoint),
                     T![] => {
                         self.bump();
                         continue;
@@ -71,8 +72,6 @@ where
         }
 
         self.expect(T!["}"], "Expected `}`");
-
-        // self.finish_node();
     }
 
     fn parse_named_field(&mut self) {
