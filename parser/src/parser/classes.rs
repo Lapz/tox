@@ -39,6 +39,10 @@ where
                 match self.peek() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(has_visibility),
+                    T![] => {
+                        self.bump();
+                        continue;
+                    }
                     _ => self.error(
                         "Expected an identifier | `pub` | `fn` ",
                         format!(
@@ -51,6 +55,10 @@ where
                 match self.current() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(has_visibility),
+                    T![] => {
+                        self.bump();
+                        continue;
+                    }
                     _ => self.error(
                         "Expected an identifier | `pub` | `fn` ",
                         format!(

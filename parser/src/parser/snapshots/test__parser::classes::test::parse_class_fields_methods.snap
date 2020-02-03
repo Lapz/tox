@@ -1,40 +1,47 @@
 ---
-created: "2019-08-27T19:27:30.462074Z"
+created: "2020-02-03T17:09:38.226283Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 55)
-  CLASS_DEF@[0; 55)
+SOURCE_FILE@[0; 62)
+  CLASS_DEF@[0; 62)
     CLASS_KW@[0; 5) "class"
-    NAME@[5; 11)
-      IDENT@[5; 11) "Person"
-    L_CURLY@[11; 12) "{"
-    NAMED_FIELD_DEF@[12; 24)
-      NAME@[12; 16)
-        IDENT@[12; 16) "name"
-      COLON@[16; 17) ":"
-      IDENT_TYPE@[17; 23)
-        IDENT@[17; 23) "String"
-      SEMI@[23; 24) ";"
-    NAMED_FIELD_DEF@[24; 39)
-      NAME@[24; 31)
-        IDENT@[24; 31) "surname"
-      COLON@[31; 32) ":"
-      IDENT_TYPE@[32; 38)
-        IDENT@[32; 38) "String"
-      SEMI@[38; 39) ";"
-    FN_DEF@[39; 54)
-      FN_KW@[39; 41) "fn"
-      NAME@[41; 46)
-        IDENT@[41; 46) "hello"
-      PARAM_LIST@[46; 52)
-        L_PAREN@[46; 47) "("
-        PARAM@[47; 51)
-          SELF_KW@[47; 51) "self"
-        R_PAREN@[51; 52) ")"
-      BLOCK@[52; 54)
-        L_CURLY@[52; 53) "{"
-        R_CURLY@[53; 54) "}"
-    R_CURLY@[54; 55) "}"
+    NAME@[5; 12)
+      WHITESPACE@[5; 6) " "
+      IDENT@[6; 12) "Person"
+    WHITESPACE@[12; 13) " "
+    L_CURLY@[13; 14) "{"
+    WHITESPACE@[14; 15) " "
+    NAMED_FIELD_DEF@[15; 27)
+      NAME@[15; 19)
+        IDENT@[15; 19) "name"
+      COLON@[19; 20) ":"
+      IDENT_TYPE@[20; 26)
+        IDENT@[20; 26) "String"
+      SEMI@[26; 27) ";"
+    WHITESPACE@[27; 28) " "
+    NAMED_FIELD_DEF@[28; 43)
+      NAME@[28; 35)
+        IDENT@[28; 35) "surname"
+      COLON@[35; 36) ":"
+      IDENT_TYPE@[36; 42)
+        IDENT@[36; 42) "String"
+      SEMI@[42; 43) ";"
+    WHITESPACE@[43; 44) " "
+    FN_DEF@[44; 61)
+      FN_KW@[44; 46) "fn"
+      NAME@[46; 52)
+        WHITESPACE@[46; 47) " "
+        IDENT@[47; 52) "hello"
+      PARAM_LIST@[52; 58)
+        L_PAREN@[52; 53) "("
+        PARAM@[53; 57)
+          SELF_KW@[53; 57) "self"
+        R_PAREN@[57; 58) ")"
+      WHITESPACE@[58; 59) " "
+      BLOCK@[59; 61)
+        L_CURLY@[59; 60) "{"
+        R_CURLY@[60; 61) "}"
+    R_CURLY@[61; 62) "}"
 
