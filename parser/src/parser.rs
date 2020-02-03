@@ -122,10 +122,17 @@ where
         self.builder.checkpoint()
     }
 
-    pub(crate) fn is_ahead<F>(&self, mut check: F) -> bool
+    pub(crate) fn is_ahead<F>(&mut self, mut check: F) -> bool
     where
         F: FnMut(SyntaxKind) -> bool,
     {
+        while self
+            .lookahead
+            .as_ref()
+            .map_or(false, |token| token.value.kind == T![])
+        {
+            self.bump()
+        }
         self.lookahead
             .as_ref()
             .map_or(false, |token| check(token.value.kind))

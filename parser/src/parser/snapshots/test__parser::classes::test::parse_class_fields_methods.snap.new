@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:35:33.225635Z"
+created: "2020-02-03T17:02:50.027544Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"

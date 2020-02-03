@@ -82,7 +82,8 @@ where
 
     fn parse_fn_type(&mut self) {
         self.start_node(FN_TYPE);
-        self.bump(); //Eat `fn`
+
+        self.expect(T![fn], "Expected `fn`");
 
         self.expect(T!["("], "Expected `(`");
 
