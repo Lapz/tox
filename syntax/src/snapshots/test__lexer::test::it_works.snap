@@ -1,0 +1,200 @@
+---
+created: "2020-02-03T20:29:32.731520Z"
+creator: insta@0.8.2
+source: syntax/src/lexer.rs
+expression: tokens
+---
+[
+    Span {
+        value: Token {
+            kind: FN_KW,
+            len: 2,
+        },
+        start: Position {
+            column: 1,
+            line: 1,
+            absolute: 0,
+        },
+        end: Position {
+            column: 3,
+            line: 1,
+            absolute: 2,
+        },
+    },
+    Span {
+        value: Token {
+            kind: WHITESPACE,
+            len: 1,
+        },
+        start: Position {
+            column: 3,
+            line: 1,
+            absolute: 2,
+        },
+        end: Position {
+            column: 4,
+            line: 1,
+            absolute: 3,
+        },
+    },
+    Span {
+        value: Token {
+            kind: IDENT,
+            len: 4,
+        },
+        start: Position {
+            column: 4,
+            line: 1,
+            absolute: 3,
+        },
+        end: Position {
+            column: 8,
+            line: 1,
+            absolute: 7,
+        },
+    },
+    Span {
+        value: Token {
+            kind: L_PAREN,
+            len: 1,
+        },
+        start: Position {
+            column: 8,
+            line: 1,
+            absolute: 7,
+        },
+        end: Position {
+            column: 8,
+            line: 1,
+            absolute: 7,
+        },
+    },
+    Span {
+        value: Token {
+            kind: R_PAREN,
+            len: 1,
+        },
+        start: Position {
+            column: 9,
+            line: 1,
+            absolute: 8,
+        },
+        end: Position {
+            column: 9,
+            line: 1,
+            absolute: 8,
+        },
+    },
+    Span {
+        value: Token {
+            kind: WHITESPACE,
+            len: 1,
+        },
+        start: Position {
+            column: 10,
+            line: 1,
+            absolute: 9,
+        },
+        end: Position {
+            column: 11,
+            line: 1,
+            absolute: 10,
+        },
+    },
+    Span {
+        value: Token {
+            kind: L_CURLY,
+            len: 1,
+        },
+        start: Position {
+            column: 11,
+            line: 1,
+            absolute: 10,
+        },
+        end: Position {
+            column: 11,
+            line: 1,
+            absolute: 10,
+        },
+    },
+    Span {
+        value: Token {
+            kind: PRINT_KW,
+            len: 5,
+        },
+        start: Position {
+            column: 12,
+            line: 1,
+            absolute: 11,
+        },
+        end: Position {
+            column: 17,
+            line: 1,
+            absolute: 16,
+        },
+    },
+    Span {
+        value: Token {
+            kind: L_PAREN,
+            len: 1,
+        },
+        start: Position {
+            column: 17,
+            line: 1,
+            absolute: 16,
+        },
+        end: Position {
+            column: 17,
+            line: 1,
+            absolute: 16,
+        },
+    },
+    Span {
+        value: Token {
+            kind: STRING,
+            len: 7,
+        },
+        start: Position {
+            column: 18,
+            line: 1,
+            absolute: 17,
+        },
+        end: Position {
+            column: 25,
+            line: 1,
+            absolute: 24,
+        },
+    },
+    Span {
+        value: Token {
+            kind: R_PAREN,
+            len: 1,
+        },
+        start: Position {
+            column: 25,
+            line: 1,
+            absolute: 24,
+        },
+        end: Position {
+            column: 25,
+            line: 1,
+            absolute: 24,
+        },
+    },
+    Span {
+        value: Token {
+            kind: R_CURLY,
+            len: 1,
+        },
+        start: Position {
+            column: 26,
+            line: 1,
+            absolute: 25,
+        },
+        end: Position {
+            column: 26,
+            line: 1,
+            absolute: 25,
+        },
+    },
+]

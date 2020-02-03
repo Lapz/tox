@@ -405,7 +405,7 @@ mod test {
 
     #[test]
     fn it_works() {
-        let input = "fn main() {print('hello')}";
+        let input = "fn main() {print(\"hello\")}";
         let reporter = setup_reporter(&input);
         let tokens = Lexer::new(input, reporter).lex();
 
