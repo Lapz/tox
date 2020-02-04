@@ -3,8 +3,8 @@ use crate::hir::{self};
 use std::sync::Arc;
 
 use syntax::{
-    ast, ArgListOwner, AstNode, AstPtr, FnDefOwner, LoopBodyOwner, NameOwner, TypeAliasDefOwner,
-    TypeAscriptionOwner, TypeParamsOwner, TypesOwner,
+    ast, ArgListOwner, AstNode, AstPtr, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
+    TypeParamsOwner, TypesOwner,
 };
 
 #[derive(Debug)]

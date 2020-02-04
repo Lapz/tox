@@ -164,13 +164,6 @@ where
             .map_or(false, |token| check(token.value.kind))
     }
 
-    pub(crate) fn peek(&mut self) -> SyntaxKind {
-        self.iter
-            .peek()
-            .as_ref()
-            .map_or(SyntaxKind::EOF, |token| token.value.kind)
-    }
-
     fn start_node(&mut self, kind: SyntaxKind) {
         self.builder.start_node(kind.into());
 
