@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::pratt::{PrefixParser};
+use crate::parser::pratt::PrefixParser;
 use crate::parser::Parser;
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -24,5 +24,15 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
 
         parser.finish_node();
         parser.finish_node();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    test_parser! {
+        parse_ident_expr,"fn main(){a;}"
+    }
+    test_parser! {
+        parse_generic_ident_expr,"fn main(){a::<i32>;}"
     }
 }

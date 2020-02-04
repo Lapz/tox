@@ -35,7 +35,8 @@ where
         }
 
         if self.at(T![;]) {
-            self.bump()
+            self.bump();
+        } else if self.at(T![")"]) {
         } else {
             self.parse_expression(Precedence::Assignment);
         }
@@ -50,4 +51,13 @@ where
 
 mod test {
     test_parser! {parse_empty_for_expr,"fn main() {for(;;;) {}}"}
+    test_parser! {parse_for_expr,"
+                    fn main() {
+                        for(let x = 10; x< 10; x=x+1) {
+                            println(\"it works \")
+                        };}"
+    }
+    test_parser! {parse_for_no_incr,"fn main() { for (let x=10;x<10;;){};}"}
+    test_parser! {parse_for_no_cond,"fn main() { for (let x=10;;x+=10){};}"}
+    test_parser! {parse_for_no_init,"fn main() { for (;x<10;x+=10){};}"}
 }

@@ -54,8 +54,12 @@ pub enum RuleToken {
     None,
     Excl,
     Comparison,
+    Eq,
     EqEq,
-    This,
+    PlusEq,
+    MinusEq,
+    StarEq,
+    SlashEq,
     AmpAmp,
     PipePipe,
 }
@@ -84,6 +88,11 @@ impl Rule for SyntaxKind {
                 RuleToken::Literal
             }
             IDENT => RuleToken::Ident,
+            T![=] => RuleToken::Eq,
+            T![+=] => RuleToken::PlusEq,
+            T![-=] => RuleToken::MinusEq,
+            T![/=] => RuleToken::SlashEq,
+            T![*=] => RuleToken::MinusEq,
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,

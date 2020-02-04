@@ -71,6 +71,7 @@ where
                     }
                     continue;
                 }
+                T!["{"] => self.parse_block(),
                 _ => {
                     self.start_node(EXPR_STMT);
                     self.parse_expression(Precedence::Assignment);
@@ -90,4 +91,12 @@ where
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    test_parser! {parse_free_block, "fn main() {{};}"}
+    test_parser! {parse_nested_block,"fn main() {{ {};};}"}
+    test_parser! {parse_block_with_statements,"fn main() {{
+        let x = 10;
+        break;
+        continue;
+    }}"}
+}

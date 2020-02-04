@@ -4,6 +4,7 @@ use crate::parser::{
 };
 use crate::{Span, Token};
 use syntax::T;
+
 mod binary;
 mod block;
 mod break_expr;
@@ -23,6 +24,7 @@ mod return_expr;
 mod unary;
 mod while_expr;
 
+
 pub use binary::BinaryParselet;
 pub use call_expr::CallParselet;
 pub use closure_expr::ClosureParselet;
@@ -31,7 +33,6 @@ pub use ident::IdentParselet;
 pub use index_expr::IndexParselet;
 pub use literal::LiteralParselet;
 pub use unary::UnaryParselet;
-
 impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,

@@ -1,0 +1,40 @@
+---
+created: "2020-02-04T13:33:35.641735Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/while_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 41)
+  FN_DEF@[0; 41)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    BLOCK@[9; 41)
+      L_CURLY@[9; 10) "{"
+      EXPR_STMT@[10; 40)
+        WHILE_EXPR@[10; 40)
+          WHILE_KW@[10; 15) "while"
+          CONDITION@[15; 21)
+            WHITESPACE@[15; 16) " "
+            LITERAL@[16; 20)
+              TRUE_KW@[16; 20) "true"
+            WHITESPACE@[20; 21) " "
+          BLOCK@[21; 40)
+            L_CURLY@[21; 22) "{"
+            EXPR_STMT@[22; 39)
+              CALL_EXPR@[22; 39)
+                IDENT_EXPR@[22; 27)
+                  NAME@[22; 27)
+                    IDENT@[22; 27) "print"
+                ARG_LIST@[27; 39)
+                  L_PAREN@[27; 28) "("
+                  LITERAL@[28; 38)
+                    STRING@[28; 38) "\"it works\""
+                  R_PAREN@[38; 39) ")"
+            R_CURLY@[39; 40) "}"
+      R_CURLY@[40; 41) "}"
+

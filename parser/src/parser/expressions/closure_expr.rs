@@ -4,7 +4,7 @@ use crate::parser::Parser;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-use crate::parser::{Precedence, PrefixParser};
+use crate::parser::PrefixParser;
 
 #[derive(Debug)]
 pub struct ClosureParselet;

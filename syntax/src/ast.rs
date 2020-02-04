@@ -82,7 +82,6 @@ pub enum SyntaxKind {
     EXPORT_KW, // export
     IMPORT_KW, // import
     FROM_KW, // from
-    PRINT_KW, // print
     NIL_KW, // nil
     SELF_KW, // self
     INT_NUMBER,
@@ -234,7 +233,6 @@ impl SyntaxKind {
             EXPORT_KW => "export",
             IMPORT_KW => "import",
             FROM_KW => "from",
-            PRINT_KW => "print",
             NIL_KW => "nil",
             SELF_KW => "self",
             INT_NUMBER => "INT_NUMBER",

@@ -1,0 +1,66 @@
+---
+created: "2020-02-04T13:30:24.322971Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/do_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 48)
+  FN_DEF@[0; 48)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK@[10; 48)
+      L_CURLY@[10; 11) "{"
+      WHITESPACE@[11; 12) " "
+      EXPR_STMT@[12; 46)
+        DO_EXPR@[12; 46)
+          DO_KW@[12; 14) "do"
+          BLOCK@[14; 35)
+            WHITESPACE@[14; 15) " "
+            L_CURLY@[15; 16) "{"
+            EXPR_STMT@[16; 26)
+              CALL_EXPR@[16; 26)
+                IDENT_EXPR@[16; 23)
+                  NAME@[16; 23)
+                    IDENT@[16; 23) "println"
+                ARG_LIST@[23; 26)
+                  L_PAREN@[23; 24) "("
+                  IDENT_EXPR@[24; 25)
+                    NAME@[24; 25)
+                      IDENT@[24; 25) "x"
+                  R_PAREN@[25; 26) ")"
+            SEMI@[26; 27) ";"
+            WHITESPACE@[27; 28) " "
+            EXPR_STMT@[28; 33)
+              BIN_EXPR@[28; 33)
+                IDENT_EXPR@[28; 29)
+                  NAME@[28; 29)
+                    IDENT@[28; 29) "x"
+                EQ@[29; 30) "="
+                BIN_EXPR@[30; 33)
+                  IDENT_EXPR@[30; 31)
+                    NAME@[30; 31)
+                      IDENT@[30; 31) "x"
+                  PLUS@[31; 32) "+"
+                  LITERAL@[32; 33)
+                    INT_NUMBER@[32; 33) "1"
+            SEMI@[33; 34) ";"
+            R_CURLY@[34; 35) "}"
+          WHITESPACE@[35; 36) " "
+          WHILE_KW@[36; 41) "while"
+          BIN_EXPR@[41; 46)
+            WHITESPACE@[41; 42) " "
+            IDENT_EXPR@[42; 43)
+              NAME@[42; 43)
+                IDENT@[42; 43) "x"
+            L_ANGLE@[43; 44) "<"
+            LITERAL@[44; 46)
+              INT_NUMBER@[44; 46) "10"
+      SEMI@[46; 47) ";"
+      R_CURLY@[47; 48) "}"
+

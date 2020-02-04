@@ -24,3 +24,8 @@ where
         self.finish_node()
     }
 }
+
+#[cfg(test)]
+mod test {
+    test_parser! {parse_do_expr,"fn main() { do {println(x); x=x+1;} while x<10;}"}
+}

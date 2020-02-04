@@ -21,6 +21,7 @@ where
             |T![>]
             // | T![^]
             // | T![%]
+            | T![=]
             | T![==]
             | T![!]
             | T![!=]
@@ -60,4 +61,6 @@ impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for BinaryParselet {
 mod test {
     test_parser! {parse_bin_expr,"fn main() {1+1;}"}
     test_parser! {parse_wrapped_bin_expr_literal,"fn main() {1.0+2.0+2.0;}"}
+    test_parser! {parse_assign_bin_expr_,"fn main() {x=10;x+=10;x-=10;x/=10;x*=10;}"}
+    test_parser! {parse_chained_assign_bin_expr_,"fn main() {x=10=10=2=3;}"}
 }

@@ -73,6 +73,31 @@ where
         );
 
         parser.infix(
+            RuleToken::Eq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::PlusEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::StarEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::MinusEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::SlashEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
             RuleToken::Plus,
             &expressions::BinaryParselet(Precedence::Term),
         );

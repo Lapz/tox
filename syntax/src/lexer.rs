@@ -348,7 +348,6 @@ fn look_up_identifier(id: &str) -> SyntaxKind {
         // Class
         "class" => SyntaxKind::CLASS_KW,
         "extends" => SyntaxKind::EXTENDS_KW,
-        "print" => SyntaxKind::PRINT_KW,
         "type" => SyntaxKind::TYPE_KW,
         "as" => SyntaxKind::AS_KW,
         "match" => SyntaxKind::MATCH_KW,

@@ -67,7 +67,6 @@ Grammar(
         "export",
         "import",
         "from",
-        "print",
         "nil",
         "self",
     ],
