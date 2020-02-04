@@ -62,6 +62,12 @@ where
         parser.prefix(RuleToken::Pipe, &expressions::ClosureParselet);
         // parser.prefix(RuleToken::)
         //
+
+        parser.infix(
+            RuleToken::LBrace,
+            &expressions::RecordParselet(Precedence::Call),
+        );
+
         parser.infix(
             RuleToken::LParen,
             &expressions::CallParselet(Precedence::Call),
@@ -72,6 +78,10 @@ where
             &expressions::IndexParselet(Precedence::Call),
         );
 
+        parser.infix(
+            RuleToken::Dot,
+            &expressions::FieldParselet(Precedence::Call),
+        );
         parser.infix(
             RuleToken::Eq,
             &expressions::BinaryParselet(Precedence::Assignment),

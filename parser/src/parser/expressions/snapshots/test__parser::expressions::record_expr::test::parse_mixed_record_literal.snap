@@ -1,0 +1,47 @@
+---
+created: "2020-02-04T16:01:04.240769Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/record_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 59)
+  FN_DEF@[0; 59)
+    FN_KW@[0; 2) "fn"
+    NAME@[2; 7)
+      WHITESPACE@[2; 3) " "
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK@[10; 59)
+      L_CURLY@[10; 11) "{"
+      WHITESPACE@[11; 12) " "
+      EXPR_STMT@[12; 57)
+        RECORD_LITERAL_EXPR@[12; 57)
+          IDENT_EXPR@[12; 15)
+            NAME@[12; 15)
+              IDENT@[12; 15) "foo"
+          RECORD_LITERAL_FIELD_LIST@[15; 57)
+            L_CURLY@[15; 16) "{"
+            RECORD_LITERAL_FIELD@[16; 34)
+              WHITESPACE@[16; 17) " "
+              IDENT@[17; 25) "longhand"
+              COLON@[25; 26) ":"
+              IDENT_EXPR@[26; 34)
+                NAME@[26; 34)
+                  IDENT@[26; 34) "longhand"
+            COMMA@[34; 35) ","
+            RECORD_LITERAL_FIELD@[35; 46)
+              IDENT@[35; 46) "longymclong"
+            COMMA@[46; 47) ","
+            RECORD_LITERAL_FIELD@[47; 56)
+              IDENT@[47; 51) "long"
+              COLON@[51; 52) ":"
+              IDENT_EXPR@[52; 56)
+                NAME@[52; 56)
+                  IDENT@[52; 56) "long"
+            R_CURLY@[56; 57) "}"
+      SEMI@[57; 58) ";"
+      R_CURLY@[58; 59) "}"
+

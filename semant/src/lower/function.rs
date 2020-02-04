@@ -243,7 +243,7 @@ where
 
                 hir::Expr::Cast { expr, ty }
             }
-            ast::Expr::ClassLit(ref _class_lit) => unimplemented!(),
+            ast::Expr::RecordLiteralExpr(ref _record_lit) => unimplemented!(),
             ast::Expr::ClosureExpr(ref _closure_expr) => unimplemented!(),
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
             ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),

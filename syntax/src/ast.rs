@@ -140,8 +140,9 @@ pub enum SyntaxKind {
     ENUM_VARIANT,
     NAMED_FIELD_DEF_LIST,
     NAMED_FIELD_DEF,
-    POS_FIELD_DEF_LIST,
-    POS_FIELD_DEF,
+    RECORD_LITERAL_FIELD_LIST,
+    RECORD_LITERAL_FIELD,
+    RECORD_LITERAL_EXPR,
     ENUM_VARIANT_LIST,
     VISIBILITY,
     LITERAL,
@@ -291,8 +292,9 @@ impl SyntaxKind {
             ENUM_VARIANT => "ENUM_VARIANT",
             NAMED_FIELD_DEF_LIST => "NAMED_FIELD_DEF_LIST",
             NAMED_FIELD_DEF => "NAMED_FIELD_DEF",
-            POS_FIELD_DEF_LIST => "POS_FIELD_DEF_LIST",
-            POS_FIELD_DEF => "POS_FIELD_DEF",
+            RECORD_LITERAL_FIELD_LIST => "RECORD_LITERAL_FIELD_LIST",
+            RECORD_LITERAL_FIELD => "RECORD_LITERAL_FIELD",
+            RECORD_LITERAL_EXPR => "RECORD_LITERAL_EXPR",
             ENUM_VARIANT_LIST => "ENUM_VARIANT_LIST",
             VISIBILITY => "VISIBILITY",
             LITERAL => "LITERAL",
@@ -608,33 +610,6 @@ impl traits::FnDefOwner for ClassDef {}
 impl traits::NamedFieldsOwner for ClassDef {}
 impl ClassDef {}
 
-// ClassLit
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ClassLit {
-    pub(crate) syntax: SyntaxNode,
-}
-
-impl AstNode for ClassLit {
-    fn can_cast(kind: SyntaxKind) -> bool {
-        match kind {
-            CLASS_LIT => true,
-            _ => false,
-        }
-    }
-    fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(ClassLit { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-impl ClassLit {
-    pub fn named_field_list(&self) -> Option<NamedFieldList> {
-        child_opt(self)
-    }
-}
-
 // ClosureExpr
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -820,7 +795,7 @@ impl EnumVariantList {
             BlockExpr(BlockExpr),
             ReturnExpr(ReturnExpr),
             MatchExpr(MatchExpr),
-            ClassLit(ClassLit),
+            RecordLiteralExpr(RecordLiteralExpr),
             CallExpr(CallExpr),
             IndexExpr(IndexExpr),
             FieldExpr(FieldExpr),
@@ -890,9 +865,9 @@ impl EnumVariantList {
                 Expr::MatchExpr(n)
             }
         }
-        impl From<ClassLit> for Expr {
-            fn from(n: ClassLit) -> Expr { 
-                Expr::ClassLit(n)
+        impl From<RecordLiteralExpr> for Expr {
+            fn from(n: RecordLiteralExpr) -> Expr { 
+                Expr::RecordLiteralExpr(n)
             }
         }
         impl From<CallExpr> for Expr {
@@ -938,7 +913,7 @@ impl EnumVariantList {
 impl AstNode for Expr {
     fn can_cast(kind: SyntaxKind) -> bool {
         match kind {
-             | ARRAY_EXPR | IDENT_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | CLASS_LIT | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL | TUPLE_EXPR => true,
+             | ARRAY_EXPR | IDENT_EXPR | PAREN_EXPR | CLOSURE_EXPR | IF_EXPR | FOR_EXPR | WHILE_EXPR | CONTINUE_EXPR | BREAK_EXPR | BLOCK_EXPR | RETURN_EXPR | MATCH_EXPR | RECORD_LITERAL_EXPR | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR | LITERAL | TUPLE_EXPR => true,
             _ => false,
         }
     }
@@ -957,7 +932,7 @@ impl AstNode for Expr {
             | BLOCK_EXPR  => Some(Expr::BlockExpr(BlockExpr {syntax})), 
             | RETURN_EXPR  => Some(Expr::ReturnExpr(ReturnExpr {syntax})), 
             | MATCH_EXPR  => Some(Expr::MatchExpr(MatchExpr {syntax})), 
-            | CLASS_LIT  => Some(Expr::ClassLit(ClassLit {syntax})), 
+            | RECORD_LITERAL_EXPR  => Some(Expr::RecordLiteralExpr(RecordLiteralExpr {syntax})), 
             | CALL_EXPR  => Some(Expr::CallExpr(CallExpr {syntax})), 
             | INDEX_EXPR  => Some(Expr::IndexExpr(IndexExpr {syntax})), 
             | FIELD_EXPR  => Some(Expr::FieldExpr(FieldExpr {syntax})), 
@@ -983,7 +958,7 @@ impl AstNode for Expr {
                 Expr::BlockExpr(kind)  => &kind.syntax, 
                 Expr::ReturnExpr(kind)  => &kind.syntax, 
                 Expr::MatchExpr(kind)  => &kind.syntax, 
-                Expr::ClassLit(kind)  => &kind.syntax, 
+                Expr::RecordLiteralExpr(kind)  => &kind.syntax, 
                 Expr::CallExpr(kind)  => &kind.syntax, 
                 Expr::IndexExpr(kind)  => &kind.syntax, 
                 Expr::FieldExpr(kind)  => &kind.syntax, 
@@ -1832,6 +1807,34 @@ impl AstNode for PrefixExpr {
 
 impl PrefixExpr {
     pub fn expr(&self) -> Option<Expr> {
+        child_opt(self)
+    }
+}
+
+// RecordLiteralExpr
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct RecordLiteralExpr {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for RecordLiteralExpr {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            RECORD_LITERAL_EXPR => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(RecordLiteralExpr { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl traits::NamedFieldsOwner for RecordLiteralExpr {}
+impl RecordLiteralExpr {
+    pub fn named_field_list(&self) -> Option<NamedFieldList> {
         child_opt(self)
     }
 }

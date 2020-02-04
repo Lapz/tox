@@ -43,7 +43,9 @@ pub enum Precedence {
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
 pub enum RuleToken {
     LParen,
+    LBrace,
     Ident,
+    Dot,
     LBracket,
     Minus,
     Plus,
@@ -89,6 +91,7 @@ impl Rule for SyntaxKind {
             }
             IDENT => RuleToken::Ident,
             T![=] => RuleToken::Eq,
+            T![.] => RuleToken::Dot,
             T![+=] => RuleToken::PlusEq,
             T![-=] => RuleToken::MinusEq,
             T![/=] => RuleToken::SlashEq,
@@ -98,6 +101,7 @@ impl Rule for SyntaxKind {
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
             T!["["] => RuleToken::LBracket,
+            T!["{"] => RuleToken::LBrace,
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,

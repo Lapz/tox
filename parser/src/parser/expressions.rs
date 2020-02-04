@@ -12,6 +12,7 @@ mod call_expr;
 mod closure_expr;
 mod continue_expr;
 mod do_expr;
+mod field_expr;
 mod for_expr;
 mod grouping;
 mod ident;
@@ -20,19 +21,22 @@ mod index_expr;
 mod let_expr;
 mod literal;
 mod match_expr;
+mod record_expr;
 mod return_expr;
 mod unary;
 mod while_expr;
 
-
 pub use binary::BinaryParselet;
 pub use call_expr::CallParselet;
 pub use closure_expr::ClosureParselet;
+pub use field_expr::FieldParselet;
 pub use grouping::GroupingParselet;
 pub use ident::IdentParselet;
 pub use index_expr::IndexParselet;
 pub use literal::LiteralParselet;
+pub use record_expr::RecordParselet;
 pub use unary::UnaryParselet;
+
 impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
