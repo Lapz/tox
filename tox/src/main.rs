@@ -4,7 +4,7 @@ use crate::cli::{Cli, Commands};
 
 use parser::{dump_debug, Parser};
 
-use semant::{lower_ast, DatabaseImpl};
+// use semant::{lower_ast, DatabaseImpl};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use structopt::StructOpt as _;
@@ -24,10 +24,10 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
     // write!(out, "{}", source_file.syntax().text())?;
     write!(out, "{}", dump_debug(&source_file))?;
 
-    let db = DatabaseImpl::default();
+    // let db = DatabaseImpl::default();
 
     if !reporter.has_errors() {
-        lower_ast(source_file, &db);
+        // lower_ast(source_file, &db);
     }
 
     reporter.emit()?;
