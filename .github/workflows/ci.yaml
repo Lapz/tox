@@ -54,6 +54,12 @@ jobs:
           command: test
           args: --no-run
 
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+
       - name: Test
         uses: actions-rs/cargo@v1
         with:
