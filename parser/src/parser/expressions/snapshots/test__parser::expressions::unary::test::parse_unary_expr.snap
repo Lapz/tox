@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:29:14.873012Z"
+created: "2020-02-06T15:57:27.675976Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/unary.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -14,18 +14,19 @@ SOURCE_FILE@[0; 20)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
     WHITESPACE@[9; 10) " "
-    BLOCK@[10; 20)
-      L_CURLY@[10; 11) "{"
-      EXPR_STMT@[11; 16)
-        PREFIX_EXPR@[11; 16)
-          EXCL@[11; 12) "!"
-          LITERAL@[12; 16)
-            TRUE_KW@[12; 16) "true"
-      SEMI@[16; 17) ";"
-      EXPR_STMT@[17; 19)
-        PREFIX_EXPR@[17; 19)
-          MINUS@[17; 18) "-"
-          LITERAL@[18; 19)
-            INT_NUMBER@[18; 19) "1"
-      R_CURLY@[19; 20) "}"
+    BLOCK_EXPR@[10; 20)
+      BLOCK@[10; 20)
+        L_CURLY@[10; 11) "{"
+        EXPR_STMT@[11; 16)
+          PREFIX_EXPR@[11; 16)
+            EXCL@[11; 12) "!"
+            LITERAL@[12; 16)
+              TRUE_KW@[12; 16) "true"
+        SEMI@[16; 17) ";"
+        EXPR_STMT@[17; 19)
+          PREFIX_EXPR@[17; 19)
+            MINUS@[17; 18) "-"
+            LITERAL@[18; 19)
+              INT_NUMBER@[18; 19) "1"
+        R_CURLY@[19; 20) "}"
 

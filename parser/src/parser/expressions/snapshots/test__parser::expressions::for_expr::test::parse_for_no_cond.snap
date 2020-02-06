@@ -1,5 +1,5 @@
 ---
-created: "2020-02-04T13:28:27.115615Z"
+created: "2020-02-06T15:57:27.590588Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/for_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -14,36 +14,38 @@ SOURCE_FILE@[0; 36)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
     WHITESPACE@[9; 10) " "
-    BLOCK@[10; 36)
-      L_CURLY@[10; 11) "{"
-      WHITESPACE@[11; 12) " "
-      EXPR_STMT@[12; 34)
-        FOR_EXPR@[12; 34)
-          FOR_KW@[12; 15) "for"
-          WHITESPACE@[15; 16) " "
-          L_PAREN@[16; 17) "("
-          LET_STMT@[17; 25)
-            LET_KW@[17; 20) "let"
-            WHITESPACE@[20; 21) " "
-            BIND_PAT@[21; 22)
-              NAME@[21; 22)
-                IDENT@[21; 22) "x"
-            EQ@[22; 23) "="
-            LITERAL@[23; 25)
-              INT_NUMBER@[23; 25) "10"
-          SEMI@[25; 26) ";"
-          SEMI@[26; 27) ";"
-          BIN_EXPR@[27; 31)
-            IDENT_EXPR@[27; 28)
-              NAME@[27; 28)
-                IDENT@[27; 28) "x"
-            PLUSEQ@[28; 29) "+"
-            LITERAL@[29; 31)
-              INT_NUMBER@[29; 31) "10"
-          R_PAREN@[31; 32) ")"
-          BLOCK@[32; 34)
-            L_CURLY@[32; 33) "{"
-            R_CURLY@[33; 34) "}"
-      SEMI@[34; 35) ";"
-      R_CURLY@[35; 36) "}"
+    BLOCK_EXPR@[10; 36)
+      BLOCK@[10; 36)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 12) " "
+        EXPR_STMT@[12; 34)
+          FOR_EXPR@[12; 34)
+            FOR_KW@[12; 15) "for"
+            WHITESPACE@[15; 16) " "
+            L_PAREN@[16; 17) "("
+            LET_STMT@[17; 25)
+              LET_KW@[17; 20) "let"
+              WHITESPACE@[20; 21) " "
+              BIND_PAT@[21; 22)
+                NAME@[21; 22)
+                  IDENT@[21; 22) "x"
+              EQ@[22; 23) "="
+              LITERAL@[23; 25)
+                INT_NUMBER@[23; 25) "10"
+            SEMI@[25; 26) ";"
+            SEMI@[26; 27) ";"
+            BIN_EXPR@[27; 31)
+              IDENT_EXPR@[27; 28)
+                NAME@[27; 28)
+                  IDENT@[27; 28) "x"
+              PLUSEQ@[28; 29) "+"
+              LITERAL@[29; 31)
+                INT_NUMBER@[29; 31) "10"
+            R_PAREN@[31; 32) ")"
+            BLOCK_EXPR@[32; 34)
+              BLOCK@[32; 34)
+                L_CURLY@[32; 33) "{"
+                R_CURLY@[33; 34) "}"
+        SEMI@[34; 35) ";"
+        R_CURLY@[35; 36) "}"
 

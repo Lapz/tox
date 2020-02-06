@@ -1,5 +1,5 @@
 ---
-created: "2020-02-04T16:01:04.240862Z"
+created: "2020-02-06T15:57:27.659188Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/record_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -14,38 +14,39 @@ SOURCE_FILE@[0; 71)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
     WHITESPACE@[9; 10) " "
-    BLOCK@[10; 71)
-      L_CURLY@[10; 11) "{"
-      WHITESPACE@[11; 12) " "
-      EXPR_STMT@[12; 69)
-        RECORD_LITERAL_EXPR@[12; 69)
-          IDENT_EXPR@[12; 15)
-            NAME@[12; 15)
-              IDENT@[12; 15) "foo"
-          RECORD_LITERAL_FIELD_LIST@[15; 69)
-            L_CURLY@[15; 16) "{"
-            RECORD_LITERAL_FIELD@[16; 34)
-              WHITESPACE@[16; 17) " "
-              IDENT@[17; 25) "longhand"
-              COLON@[25; 26) ":"
-              IDENT_EXPR@[26; 34)
-                NAME@[26; 34)
-                  IDENT@[26; 34) "longhand"
-            COMMA@[34; 35) ","
-            RECORD_LITERAL_FIELD@[35; 44)
-              IDENT@[35; 39) "long"
-              COLON@[39; 40) ":"
-              IDENT_EXPR@[40; 44)
-                NAME@[40; 44)
-                  IDENT@[40; 44) "long"
-            COMMA@[44; 45) ","
-            RECORD_LITERAL_FIELD@[45; 68)
-              IDENT@[45; 56) "longymclong"
-              COLON@[56; 57) ":"
-              IDENT_EXPR@[57; 68)
-                NAME@[57; 68)
-                  IDENT@[57; 68) "longymclong"
-            R_CURLY@[68; 69) "}"
-      SEMI@[69; 70) ";"
-      R_CURLY@[70; 71) "}"
+    BLOCK_EXPR@[10; 71)
+      BLOCK@[10; 71)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 12) " "
+        EXPR_STMT@[12; 69)
+          RECORD_LITERAL_EXPR@[12; 69)
+            IDENT_EXPR@[12; 15)
+              NAME@[12; 15)
+                IDENT@[12; 15) "foo"
+            RECORD_LITERAL_FIELD_LIST@[15; 69)
+              L_CURLY@[15; 16) "{"
+              RECORD_LITERAL_FIELD@[16; 34)
+                WHITESPACE@[16; 17) " "
+                IDENT@[17; 25) "longhand"
+                COLON@[25; 26) ":"
+                IDENT_EXPR@[26; 34)
+                  NAME@[26; 34)
+                    IDENT@[26; 34) "longhand"
+              COMMA@[34; 35) ","
+              RECORD_LITERAL_FIELD@[35; 44)
+                IDENT@[35; 39) "long"
+                COLON@[39; 40) ":"
+                IDENT_EXPR@[40; 44)
+                  NAME@[40; 44)
+                    IDENT@[40; 44) "long"
+              COMMA@[44; 45) ","
+              RECORD_LITERAL_FIELD@[45; 68)
+                IDENT@[45; 56) "longymclong"
+                COLON@[56; 57) ":"
+                IDENT_EXPR@[57; 68)
+                  NAME@[57; 68)
+                    IDENT@[57; 68) "longymclong"
+              R_CURLY@[68; 69) "}"
+        SEMI@[69; 70) ";"
+        R_CURLY@[70; 71) "}"
 

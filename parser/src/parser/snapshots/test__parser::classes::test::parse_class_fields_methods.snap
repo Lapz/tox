@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T17:09:38.226283Z"
+created: "2020-02-06T15:57:27.532473Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -40,8 +40,9 @@ SOURCE_FILE@[0; 62)
           SELF_KW@[53; 57) "self"
         R_PAREN@[57; 58) ")"
       WHITESPACE@[58; 59) " "
-      BLOCK@[59; 61)
-        L_CURLY@[59; 60) "{"
-        R_CURLY@[60; 61) "}"
+      BLOCK_EXPR@[59; 61)
+        BLOCK@[59; 61)
+          L_CURLY@[59; 60) "{"
+          R_CURLY@[60; 61) "}"
     R_CURLY@[61; 62) "}"
 
