@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T20:29:32.731520Z"
+created: "2020-02-06T15:09:43.507602Z"
 creator: insta@0.8.2
 source: syntax/src/lexer.rs
 expression: tokens
@@ -119,7 +119,7 @@ expression: tokens
     },
     Span {
         value: Token {
-            kind: PRINT_KW,
+            kind: IDENT,
             len: 5,
         },
         start: Position {
