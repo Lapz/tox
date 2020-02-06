@@ -11,6 +11,15 @@ pub enum ElseBranch {
     IfExpr(ast::IfExpr),
 }
 
+impl ElseBranch {
+    pub fn expr(self) -> ast::Expr {
+        match self {
+            ElseBranch::Block(e) => ast::Expr::from(e),
+            ElseBranch::IfExpr(e) => ast::Expr::from(e),
+        }
+    }
+}
+
 impl ast::BinExpr {
     pub fn lhs(&self) -> Option<ast::Expr> {
         children(self).next()

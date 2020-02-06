@@ -2,6 +2,6 @@ type ParserResult<T> = Result<T,i32>;
 
 export fn main()  { 
     let x= 10;
-    if foo {foo{ longhand:longhand,longymclong,long:long}}};
+   if true {print("good")} else {print("bad")};
    
 }

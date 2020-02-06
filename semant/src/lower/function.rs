@@ -268,7 +268,21 @@ where
             ast::Expr::IdentExpr(ref ident_expr) => {
                 hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
             }
-            ast::Expr::IfExpr(ref _if_expr) => unimplemented!(),
+            ast::Expr::IfExpr(ref if_expr) => {
+                let cond = self.lower_expr(if_expr.condition().unwrap().expr().unwrap());
+                let then_branch = self.lower_expr(ast::Expr::from(if_expr.then_branch().unwrap()));
+                let else_branch = if let Some(else_branch) = if_expr.else_branch() {
+                    Some(self.lower_expr(else_branch.expr()))
+                } else {
+                    None
+                };
+
+                hir::Expr::If {
+                    cond,
+                    then_branch,
+                    else_branch,
+                }
+            }
             ast::Expr::IndexExpr(ref index_expr) => {
                 let base = self.lower_expr(index_expr.base().unwrap());
                 let index = self.lower_expr(index_expr.index().unwrap());

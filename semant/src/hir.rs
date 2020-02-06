@@ -1,7 +1,5 @@
 pub(crate) mod function;
 
-
-
 pub(crate) use function::{Function, FunctionAstMap};
 
 use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
@@ -135,22 +133,48 @@ pub enum Stmt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Array(Vec<ExprId>),
-    Binary { lhs: ExprId, op: BinOp, rhs: ExprId },
+    Binary {
+        lhs: ExprId,
+        op: BinOp,
+        rhs: ExprId,
+    },
     Block(Vec<StmtId>),
     Break,
-    Call { callee: ExprId, args: Vec<ExprId> },
-    Cast { expr: ExprId, ty: TypeId },
+    Call {
+        callee: ExprId,
+        args: Vec<ExprId>,
+    },
+    Cast {
+        expr: ExprId,
+        ty: TypeId,
+    },
     Continue,
-    If { cond: ExprId },
+    If {
+        cond: ExprId,
+        then_branch: ExprId,
+        else_branch: Option<ExprId>,
+    },
     Ident(NameId),
-    Index { base: ExprId, index: ExprId },
-    While { cond: ExprId, body: Vec<StmtId> },
+    Index {
+        base: ExprId,
+        index: ExprId,
+    },
+    While {
+        cond: ExprId,
+        body: Vec<StmtId>,
+    },
     Literal(LiteralId),
     Paren(ExprId),
     Tuple(Vec<ExprId>),
-    Unary { op: UnaryOp, expr: ExprId },
+    Unary {
+        op: UnaryOp,
+        expr: ExprId,
+    },
     Return(Option<ExprId>),
-    Match { expr: ExprId, arms: Vec<MatchArm> },
+    Match {
+        expr: ExprId,
+        arms: Vec<MatchArm>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

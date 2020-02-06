@@ -13,6 +13,6 @@ structopt = "0.3"
 syntax={path="../syntax",version="*"}
 errors= {path="../errors",version="*"}
 parser={path="../parser",version="*"}
-# semant = {path="../semant"}
+semant = {path="../semant"}
 [dev-dependencies]
 insta = "0.8.2"

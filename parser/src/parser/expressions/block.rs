@@ -9,6 +9,7 @@ where
     I: Iterator<Item = Span<Token>>,
 {
     pub(crate) fn parse_block(&mut self) {
+        self.start_node(BLOCK_EXPR);
         self.start_node(BLOCK);
 
         self.expect(T!["{"], "Expected `{`");
@@ -86,6 +87,7 @@ where
 
         self.expect(T!["}"], "Expected `}`");
 
+        self.finish_node();
         self.finish_node()
     }
 }

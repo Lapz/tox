@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Precedence, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -13,8 +13,9 @@ where
 
         self.expect(T![if], "Expected `if`");
 
-        self.parse_pattern(true);
-
+        self.start_node(CONDITION);
+        self.parse_expression(Precedence::Assignment, Restrictions::no_records());
+        self.finish_node();
         self.parse_block();
 
         if self.current() == T![else] {
