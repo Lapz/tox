@@ -92,7 +92,7 @@ where
             };
 
             if restrictions.forbid_record && rule == RuleToken::LBrace {
-                continue;
+                break;
             }
             parser.parse(self, check_point);
         }
