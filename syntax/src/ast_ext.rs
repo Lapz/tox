@@ -1,9 +1,15 @@
 use crate::ast;
 use crate::{
-    children, AstChildren, AstNode,
+    child_opt, children, AstChildren, AstNode,
     SyntaxKind::{self, *},
     SyntaxNode,
 };
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ElseBranch {
+    Block(ast::BlockExpr),
+    IfExpr(ast::IfExpr),
+}
 
 impl ast::BinExpr {
     pub fn lhs(&self) -> Option<ast::Expr> {
@@ -42,7 +48,21 @@ impl ast::IndexExpr {
 }
 
 impl ast::IfExpr {
-    fn blocks(&self) -> AstChildren<ast::BlockExpr> {
+    pub fn then_branch(&self) -> Option<ast::BlockExpr> {
+        self.blocks().nth(0)
+    }
+    pub fn else_branch(&self) -> Option<ElseBranch> {
+        let res = match self.blocks().nth(1) {
+            Some(block) => ElseBranch::Block(block),
+            None => {
+                let elif: ast::IfExpr = child_opt(self)?;
+                ElseBranch::IfExpr(elif)
+            }
+        };
+        Some(res)
+    }
+
+    pub fn blocks(&self) -> AstChildren<ast::BlockExpr> {
         children(self)
     }
 }
