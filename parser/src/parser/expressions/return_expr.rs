@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -20,7 +20,7 @@ where
             return;
         }
 
-        self.parse_expression(Precedence::Assignment);
+        self.parse_expression(Precedence::Assignment, Restrictions::default());
 
         self.finish_node()
     }

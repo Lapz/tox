@@ -1,4 +1,4 @@
-use crate::parser::{Parser, Precedence};
+use crate::parser::{Parser, Precedence, Restrictions};
 use crate::{Span, SyntaxKind::*, Token};
 use syntax::T;
 
@@ -56,7 +56,7 @@ where
 
         if self.at(T![;]) {
             self.bump();
-            self.parse_expression(Precedence::Primary)
+            self.parse_expression(Precedence::Primary, Restrictions::default())
         }
 
         self.expect(T!["]"], "Expected `]`");

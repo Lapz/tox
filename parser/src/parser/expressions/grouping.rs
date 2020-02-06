@@ -1,7 +1,7 @@
 use syntax::T;
 
 use crate::parser::pratt::{Precedence, PrefixParser};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -19,14 +19,14 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
 
         parser.bump(); // Eats the `(`
 
-        parser.parse_expression(Precedence::Assignment);
+        parser.parse_expression(Precedence::Assignment, Restrictions::default());
 
         if parser.at(T![,]) {
             seen_comma = true;
             parser.bump();
 
             while !parser.at(EOF) && !parser.at(T![")"]) {
-                parser.parse_expression(Precedence::Assignment);
+                parser.parse_expression(Precedence::Assignment, Restrictions::default());
                 if !parser.at(T![")"]) && !parser.expected(T![,]) {
                     break;
                 }

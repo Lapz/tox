@@ -1,7 +1,7 @@
 use syntax::T;
 
 use crate::parser::pratt::{InfixParser, Precedence};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -51,7 +51,7 @@ impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for BinaryParselet {
 
         parser.parse_op();
 
-        parser.parse_expression(self.0.higher());
+        parser.parse_expression(self.0.higher(), Restrictions::default());
 
         parser.finish_node();
     }

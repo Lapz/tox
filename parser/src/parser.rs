@@ -5,8 +5,8 @@ mod function;
 mod params;
 mod pattern;
 mod pratt;
+mod restrictions;
 mod source_file;
-
 mod type_alias;
 mod type_params;
 mod types;
@@ -14,6 +14,7 @@ mod visibility;
 use crate::Span;
 use errors::{pos::Position, Reporter};
 use pratt::{InfixParser, Precedence, PrefixParser, Rule as _, RuleToken};
+use restrictions::Restrictions;
 use rowan::GreenNodeBuilder;
 use std::collections::{HashMap, VecDeque};
 use std::iter::Peekable;

@@ -1,7 +1,7 @@
 use syntax::T;
 
 use crate::parser::pratt::{InfixParser, Precedence};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -14,7 +14,7 @@ impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for IndexParselet {
 
         parser.expect(T!["["], "Expected `[`");
 
-        parser.parse_expression(Precedence::Assignment);
+        parser.parse_expression(Precedence::Assignment, Restrictions::default());
 
         parser.expect(T!["]"], "Expected `]`");
 

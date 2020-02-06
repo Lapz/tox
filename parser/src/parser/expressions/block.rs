@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::{pratt::Precedence, Parser};
+use crate::parser::{pratt::Precedence, Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -74,7 +74,7 @@ where
                 T!["{"] => self.parse_block(),
                 _ => {
                     self.start_node(EXPR_STMT);
-                    self.parse_expression(Precedence::Assignment);
+                    self.parse_expression(Precedence::Assignment, Restrictions::default());
                     self.finish_node();
                 }
             }

@@ -1,8 +1,9 @@
 use crate::parser::{
-    pratt::{Precedence, Rule},
-    Parser,
+    pratt::{Precedence, Rule, RuleToken},
+    Parser, Restrictions,
 };
 use crate::{Span, Token};
+
 use syntax::T;
 
 mod binary;
@@ -41,7 +42,7 @@ impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
 {
-    pub(crate) fn parse_expression(&mut self, precedence: Precedence) {
+    pub(crate) fn parse_expression(&mut self, precedence: Precedence, restrictions: Restrictions) {
         let check_point = self.builder.checkpoint();
 
         while self.at(syntax::SyntaxKind::WHITESPACE) {
@@ -90,6 +91,9 @@ where
                 break;
             };
 
+            if restrictions.forbid_record && rule == RuleToken::LBrace {
+                continue;
+            }
             parser.parse(self, check_point);
         }
 

@@ -1,7 +1,7 @@
 use syntax::T;
 
 use crate::parser::pratt::{Precedence, PrefixParser};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -34,7 +34,7 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for UnaryParselet {
 
         parser.parse_unary_op();
 
-        parser.parse_expression(Precedence::Unary);
+        parser.parse_expression(Precedence::Unary, Restrictions::default());
 
         parser.finish_node();
     }

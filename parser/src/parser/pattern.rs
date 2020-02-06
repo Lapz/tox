@@ -1,4 +1,4 @@
-use crate::parser::{Parser, Precedence};
+use crate::parser::{Parser, Precedence, Restrictions};
 use syntax::T;
 
 use crate::{Span, SyntaxKind::*, Token};
@@ -20,7 +20,7 @@ where
             e => {
                 if allow_literal {
                     self.start_node(LITERAL_PAT);
-                    self.parse_expression(Precedence::Primary);
+                    self.parse_expression(Precedence::Primary, Restrictions::default());
                     self.finish_node()
                 } else {
                     self.error(

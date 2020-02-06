@@ -3,6 +3,7 @@ use crate::{
     SyntaxKind::{self, *},
     Token,
 };
+use std::any::Any;
 use std::fmt::Debug;
 use syntax::T;
 
@@ -11,13 +12,13 @@ use crate::parser::Parser;
 pub trait Rule {
     fn rule(&self) -> RuleToken;
 }
-pub trait PrefixParser<I>: Debug
+pub trait PrefixParser<I>: Debug + Any
 where
     I: Iterator<Item = Span<Token>>,
 {
     fn parse(&self, parser: &mut Parser<I>);
 }
-pub trait InfixParser<I>: Debug
+pub trait InfixParser<I>: Debug + Any
 where
     I: Iterator<Item = Span<Token>>,
 {

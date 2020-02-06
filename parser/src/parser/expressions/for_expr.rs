@@ -1,10 +1,7 @@
 use syntax::T;
 
-use crate::parser::Parser;
-
+use crate::parser::{Parser, Precedence, Restrictions};
 use crate::{Span, SyntaxKind::*, Token};
-
-use crate::parser::Precedence;
 
 impl<'a, I> Parser<'a, I>
 where
@@ -23,14 +20,14 @@ where
             self.parse_let_expr();
             self.expect(T![;], "Expected `;`");
         } else {
-            self.parse_expression(Precedence::Assignment);
+            self.parse_expression(Precedence::Assignment, Restrictions::default());
             self.expect(T![;], "Expected `;`");
         }
 
         if self.at(T![;]) {
             self.bump()
         } else {
-            self.parse_expression(Precedence::Comparison);
+            self.parse_expression(Precedence::Comparison, Restrictions::default());
             self.expect(T![;], "Expected `;`");
         }
 
@@ -38,7 +35,7 @@ where
             self.bump();
         } else if self.at(T![")"]) {
         } else {
-            self.parse_expression(Precedence::Assignment);
+            self.parse_expression(Precedence::Assignment, Restrictions::default());
         }
 
         self.expect(T![")"], "Expect `)`");

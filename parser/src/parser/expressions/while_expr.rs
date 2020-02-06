@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -16,7 +16,7 @@ where
         self.expect(T![while], "Expected `while`");
 
         self.start_node(CONDITION);
-        self.parse_expression(Precedence::Assignment);
+        self.parse_expression(Precedence::Assignment, Restrictions::no_records());
         self.finish_node();
 
         self.parse_block();
@@ -27,5 +27,6 @@ where
 
 #[cfg(test)]
 mod test {
+    test_parser! {parse_empty_while_expr,"fn main(){while true {print(\"it works\")}}"}
     test_parser! {parse_while_expr,"fn main(){while true {print(\"it works\")}}"}
 }

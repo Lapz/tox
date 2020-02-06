@@ -1,6 +1,6 @@
 use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
@@ -15,7 +15,7 @@ where
 
         self.expect(T![match], "Expected `match`");
 
-        self.parse_expression(Precedence::Call); // TODO Forbid struct literal
+        self.parse_expression(Precedence::Call, Restrictions::no_records()); // TODO Forbid struct literal
 
         self.expect(T!["{"], "Expected `}`");
 
@@ -48,7 +48,7 @@ where
         if self.at(T!["{"]) {
             self.parse_block()
         } else {
-            self.parse_expression(Precedence::Call)
+            self.parse_expression(Precedence::Call, Restrictions::default())
         }
         self.finish_node();
     }
