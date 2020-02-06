@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
     env:
       RUSTFLAGS: -D warnings
       CARGO_INCREMENTAL: 0
@@ -21,14 +21,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v1
-
-      # We need to disable the existing toolchain to avoid updating rust-docs
-      # which takes a long time. The fastest way to do this is to rename the
-      # existing folder, as deleting it takes about as much time as not doing
-      # anything and just updating rust-docs.
-      - name: Rename existing rust toolchain (Windows)
-        if: matrix.os == 'windows-latest'
-        run: Rename-Item C:\Users\runneradmin\.rustup\toolchains\stable-x86_64-pc-windows-msvc C:\Users\runneradmin\.rustup\toolchains\stable-x86_64-pc-windows-msvc.old
 
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
