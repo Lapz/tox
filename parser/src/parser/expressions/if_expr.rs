@@ -4,8 +4,6 @@ use crate::parser::Parser;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-
-
 impl<'a, I> Parser<'a, I>
 where
     I: Iterator<Item = Span<Token>>,
