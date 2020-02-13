@@ -3,6 +3,8 @@ members=[
     "errors",
     "parser",
     "syntax",
-    # "semant",
+    "semant",
+    "tools",
     "tox",
 ]
+default-members=["tox"]

@@ -136,14 +136,5 @@ fn main() -> std::io::Result<()> {
     //     )
     // }
 
-    match teraron::generate(
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/tox-rewrite/syntax/src/ast.rs.tera"),
-        std::path::Path::new("/Users/lenardpratt/Projects/Rust/tox-rewrite/syntax/src/grammer.ron"),
-        teraron::Mode::Overwrite,
-    ) {
-        Ok(_) => println!("ok"),
-        Err(e) => println!("terra error {:?}", e),
-    };
-
     Ok(())
 }

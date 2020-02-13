@@ -244,7 +244,11 @@ where
                 hir::Expr::Cast { expr, ty }
             }
             ast::Expr::RecordLiteralExpr(ref _record_lit) => unimplemented!(),
-            ast::Expr::ClosureExpr(ref _closure_expr) => unimplemented!(),
+            ast::Expr::ClosureExpr(ref closure_expr) => {
+                // let args = closure_expr.a
+
+                unimplemented!()
+            }
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
             ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),
             ast::Expr::ForExpr(ref for_expr) => {

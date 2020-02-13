@@ -631,6 +631,7 @@ impl AstNode for ClosureExpr {
 }
 
 
+impl traits::ArgListOwner for ClosureExpr {}
 impl ClosureExpr {
     pub fn param_list(&self) -> Option<ParamList> {
         child_opt(self)

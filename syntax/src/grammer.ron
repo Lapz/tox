@@ -225,7 +225,8 @@ Grammar(
             options: [
                 "ParamList",
                 ["body","Expr"]
-            ]
+            ],
+            traits: ["ArgListOwner"]
         ),
         "IfExpr": (
             options: [ "Condition" ]
