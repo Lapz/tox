@@ -170,7 +170,7 @@ Grammar(
                 "TypeParamsOwner",
                 "VisibilityOwner",
             ],
-            options: ["ParamList",["body","Block"],"RetType"],
+            options: ["ParamList",["body","BlockExpr"],"RetType"],
         ),
         "RetType":(
             options:["TypeRef"]

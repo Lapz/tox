@@ -14,6 +14,7 @@ pub(crate) struct FunctionDataCollector<DB> {
     param_id_count: u64,
     stmt_id_count: u64,
     expr_id_count: u64,
+    block_id_count: u64,
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
@@ -32,15 +33,19 @@ where
         let params = self.params;
         let type_params = self.type_params;
         let map = self.ast_map;
-        hir::function::Function {
+        let f = hir::function::Function {
             name,
             map,
             params,
             type_params,
             body,
             span,
-        }
+        };
+        println!("{:#?}", f);
+
+        f
     }
+
     pub fn add_param(&mut self, ast_node: &ast::Param, param: hir::Param) {
         let current = self.param_id_count;
 
@@ -91,6 +96,18 @@ where
         let id = hir::ExprId(current);
 
         self.ast_map.insert_expr(id, expr, AstPtr::new(ast_node));
+
+        id
+    }
+
+    pub fn add_block(&mut self, ast_node: &ast::Block, block: hir::Block) -> hir::BlockId {
+        let current = self.block_id_count;
+
+        self.block_id_count += 1;
+
+        let id = hir::BlockId(current);
+
+        self.ast_map.insert_block(id, block, AstPtr::new(ast_node));
 
         id
     }
@@ -217,14 +234,19 @@ where
 
                 hir::Expr::Binary { lhs, op, rhs }
             }
-            ast::Expr::BlockExpr(ref block) => hir::Expr::Block(
-                block
-                    .block()
-                    .unwrap()
-                    .statements()
-                    .map(|st| self.lower_stmt(st))
-                    .collect(),
-            ),
+            ast::Expr::BlockExpr(ref block) => {
+                let node = block.block().unwrap();
+                let block = hir::Block(
+                    block
+                        .block()
+                        .unwrap()
+                        .statements()
+                        .map(|st| self.lower_stmt(st))
+                        .collect(),
+                );
+
+                hir::Expr::Block(self.add_block(&node, block))
+            }
 
             ast::Expr::BreakExpr(_) => hir::Expr::Break,
             ast::Expr::CallExpr(ref call_expr) => {
@@ -256,18 +278,25 @@ where
                 let cond = self.lower_expr(for_expr.cond().unwrap());
                 let increment = self.lower_expr(for_expr.increment().unwrap());
 
-                let mut body = for_expr
-                    .loop_body()
-                    .unwrap()
+                let loop_body = for_expr.loop_body().unwrap().block().unwrap();
+                let mut body = loop_body
                     .statements()
                     .map(|st| self.lower_stmt(st))
                     .collect::<Vec<_>>();
 
                 body.push(self.expr_to_stmt(increment));
 
+                let body_block = hir::Block(body);
+
+                let body = self.add_block(&loop_body, body_block);
+
                 let while_expr = self.add_expr(&node, hir::Expr::While { cond, body });
 
-                hir::Expr::Block(vec![self.expr_to_stmt(init), self.expr_to_stmt(while_expr)])
+                let block =
+                    hir::Block(vec![self.expr_to_stmt(init), self.expr_to_stmt(while_expr)]);
+                let block = self.add_block(&loop_body, block);
+
+                hir::Expr::Block(block)
             }
             ast::Expr::IdentExpr(ref ident_expr) => {
                 hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
@@ -342,12 +371,15 @@ where
             ast::Expr::WhileExpr(ref while_expr) => {
                 let cond = self.lower_expr(while_expr.condition().unwrap().expr().unwrap());
 
-                let body = while_expr
-                    .loop_body()
-                    .unwrap()
-                    .statements()
-                    .map(|st| self.lower_stmt(st))
-                    .collect::<Vec<_>>();
+                let loop_body = while_expr.loop_body().unwrap().block().unwrap();
+                let mut block = hir::Block(
+                    loop_body
+                        .statements()
+                        .map(|st| self.lower_stmt(st))
+                        .collect::<Vec<_>>(),
+                );
+
+                let body = self.add_block(&loop_body, block);
 
                 hir::Expr::While { cond, body }
             }
@@ -375,6 +407,7 @@ pub(crate) fn lower_function_query(
         type_param_count: 0,
         stmt_id_count: 0,
         expr_id_count: 0,
+        block_id_count: 0,
         params: Vec::new(),
         type_params: Vec::new(),
         ast_map: hir::FunctionAstMap::default(),
@@ -396,7 +429,9 @@ pub(crate) fn lower_function_query(
 
     let body = if let Some(body) = function.body() {
         Some(
-            body.statements()
+            body.block()
+                .unwrap()
+                .statements()
                 .map(|statement| collector.lower_stmt(statement))
                 .collect(),
         )

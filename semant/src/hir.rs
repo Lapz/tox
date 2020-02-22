@@ -2,8 +2,16 @@ pub(crate) mod function;
 
 pub(crate) use function::{Function, FunctionAstMap};
 
+use std::sync::Arc;
 use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 pub type Span = TextRange;
+
+#[derive(Debug, Default)]
+pub struct Program {
+    pub(crate) functions: Vec<Arc<Function>>,
+    pub(crate) type_alias: Vec<Arc<TypeAlias>>,
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeParamId(pub(crate) u64);
 
@@ -83,6 +91,9 @@ pub struct TypeAlias {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExprId(pub(crate) u64);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BlockId(pub(crate) u64);
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
     Bind { name: Name },
@@ -130,6 +141,10 @@ pub enum Stmt {
     },
     Expr(ExprId),
 }
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Block(pub Vec<StmtId>);
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     Array(Vec<ExprId>),
@@ -138,7 +153,7 @@ pub enum Expr {
         op: BinOp,
         rhs: ExprId,
     },
-    Block(Vec<StmtId>),
+    Block(BlockId),
     Break,
     Call {
         callee: ExprId,
@@ -161,7 +176,7 @@ pub enum Expr {
     },
     While {
         cond: ExprId,
-        body: Vec<StmtId>,
+        body: BlockId,
     },
     Literal(LiteralId),
     Paren(ExprId),

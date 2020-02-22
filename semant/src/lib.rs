@@ -3,6 +3,7 @@ mod db;
 mod hir;
 mod infer;
 mod lower;
+mod resolver;
 mod ty;
 mod util;
 

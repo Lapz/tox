@@ -1088,7 +1088,7 @@ impl FnDef {
         child_opt(self)
     }
 
-    pub fn body(&self) -> Option<Block> {
+    pub fn body(&self) -> Option<BlockExpr> {
         child_opt(self)
     }
 

@@ -1,5 +1,6 @@
 use super::{
-    Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
+    Block, BlockId, Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam,
+    TypeParamId,
 };
 use indexmap::IndexMap;
 use syntax::{ast, AstPtr};
@@ -24,6 +25,8 @@ pub(crate) struct FunctionAstMap {
     ast_to_stmt: IndexMap<StmtId, AstPtr<ast::Stmt>>,
     hir_to_expr: IndexMap<ExprId, Expr>,
     ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
+    hir_to_block: IndexMap<BlockId, Block>,
+    ast_to_block: IndexMap<BlockId, AstPtr<ast::Block>>,
 }
 
 impl FunctionAstMap {
@@ -50,6 +53,11 @@ impl FunctionAstMap {
     pub fn insert_expr(&mut self, id: ExprId, expr: Expr, node: AstPtr<ast::Expr>) {
         self.hir_to_expr.insert(id, expr);
         self.ast_to_expr.insert(id, node);
+    }
+
+    pub fn insert_block(&mut self, id: BlockId, block: Block, node: AstPtr<ast::Block>) {
+        self.hir_to_block.insert(id, block);
+        self.ast_to_block.insert(id, node);
     }
 
     pub fn get_expr_ptr(&self, id: ExprId) -> AstPtr<ast::Expr> {

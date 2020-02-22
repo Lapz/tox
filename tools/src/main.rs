@@ -8,6 +8,7 @@ fn generate_syntax(
 ) -> Result<(), Box<dyn std::error::Error>> {
     teraron::generate(template, grammar, teraron::Mode::Overwrite)
 }
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut opts = Cli::from_args();
 
