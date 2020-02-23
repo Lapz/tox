@@ -6,7 +6,7 @@ use std::sync::Arc;
 use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 pub type Span = TextRange;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Eq, PartialEq, Clone, Hash)]
 pub struct Program {
     pub(crate) functions: Vec<Arc<Function>>,
     pub(crate) type_alias: Vec<Arc<TypeAlias>>,
@@ -47,6 +47,12 @@ impl Name {
     }
 }
 
+impl std::fmt::Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl From<ast::IdentType> for Name {
     fn from(name: ast::IdentType) -> Name {
         Name(text_of_first_token(name.syntax()).clone())
@@ -61,13 +67,13 @@ impl From<ast::Name> for Name {
 
 create_intern_key!(FunctionId);
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Param {
     pub(crate) pat: PatId,
     pub(crate) ty: TypeId,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct TypeParam {
     pub(crate) name: NameId,
 }
@@ -80,7 +86,7 @@ create_intern_key!(TypeId);
 create_intern_key!(PatId);
 create_intern_key!(LiteralId);
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct TypeAlias {
     pub(crate) name: Name,
     pub(crate) type_params: Vec<TypeParamId>,
@@ -102,7 +108,7 @@ pub enum Pattern {
     Literal(LiteralId),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MatchArm {
     pub(crate) pats: Vec<PatId>,
     pub(crate) expr: ExprId,
@@ -133,7 +139,7 @@ pub enum Type {
     Ident(NameId),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Stmt {
     Let {
         pat: PatId,
@@ -142,10 +148,10 @@ pub enum Stmt {
     Expr(ExprId),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Block(pub Vec<StmtId>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
     Array(Vec<ExprId>),
     Binary {
@@ -192,7 +198,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum BinOp {
     Plus,
     Minus,
@@ -212,7 +218,7 @@ pub enum BinOp {
     MultEqual,
     DivEqual,
 }
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum UnaryOp {
     Minus,
     Excl,

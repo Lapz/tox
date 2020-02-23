@@ -71,6 +71,10 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + HirDBExt {
     fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
     #[salsa::invoke(crate::lower::lower_type_alias_query)]
     fn lower_type_alias(&self, alias: ast::TypeAliasDef) -> Arc<hir::TypeAlias>;
+    #[salsa::invoke(crate::lower::lower_ast_query)]
+    fn lower_ast(&self, source: ast::SourceFile) -> Arc<hir::Program>;
+    #[salsa::invoke(crate::resolver::resolve_program_query)]
+    fn resolve_program(&self, program: Arc<hir::Program>, reporter: errors::Reporter) -> ();
 }
 
 #[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]

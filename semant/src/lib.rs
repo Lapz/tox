@@ -7,8 +7,7 @@ mod resolver;
 mod ty;
 mod util;
 
-pub use db::DatabaseImpl;
-pub use lower::lower_ast;
+pub use db::{DatabaseImpl, HirDatabase};
 pub use salsa;
 
 #[cfg(test)]

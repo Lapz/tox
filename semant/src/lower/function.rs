@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use syntax::{
     ast, ArgListOwner, AstNode, AstPtr, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
-    TypeParamsOwner, TypesOwner,
+    TypeParamsOwner, TypesOwner, VisibilityOwner,
 };
 
 #[derive(Debug)]
@@ -26,6 +26,7 @@ where
 {
     pub fn finish(
         self,
+        exported: bool,
         name: hir::Name,
         body: Option<Vec<hir::StmtId>>,
         span: hir::Span,
@@ -33,17 +34,16 @@ where
         let params = self.params;
         let type_params = self.type_params;
         let map = self.ast_map;
-        let f = hir::function::Function {
+        let name = self.db.intern_name(name);
+        hir::function::Function {
+            exported,
             name,
             map,
             params,
             type_params,
             body,
             span,
-        };
-        println!("{:#?}", f);
-
-        f
+        }
     }
 
     pub fn add_param(&mut self, ast_node: &ast::Param, param: hir::Param) {
@@ -413,6 +413,8 @@ pub(crate) fn lower_function_query(
         ast_map: hir::FunctionAstMap::default(),
     };
 
+    let exported = function.visibility().is_some();
+
     let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
 
     if let Some(type_params_list) = function.type_param_list() {
@@ -441,5 +443,5 @@ pub(crate) fn lower_function_query(
 
     let span = function.syntax().text_range();
 
-    Arc::new(collector.finish(name.unwrap(), body, span))
+    Arc::new(collector.finish(exported, name.unwrap(), body, span))
 }

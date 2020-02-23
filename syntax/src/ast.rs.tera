@@ -91,7 +91,7 @@ impl AstNode for {{ node }} {
 }
 {% endif%}
 {% if methods.enum %}
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum {{ node }} {
         {%- for kind in methods.enum %}
             {{ kind }}({{ kind }}),

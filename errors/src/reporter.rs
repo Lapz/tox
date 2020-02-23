@@ -1,4 +1,3 @@
-use crate::pos::Position;
 use codespan::{FileId, Files, Span};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term::{
@@ -7,18 +6,20 @@ use codespan_reporting::term::{
     Config,
 };
 use std::cell::RefCell;
+use std::hash::{Hash, Hasher};
 use std::io::{self};
 use std::rc::Rc;
+use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reporter {
-    files: Files,
+    files: Files<Arc<str>>,
     file: FileId,
     diagnostics: Rc<RefCell<Vec<Diagnostic>>>,
 }
 
 impl Reporter {
-    pub fn new(files: Files, file: FileId) -> Self {
+    pub fn new(files: Files<Arc<str>>, file: FileId) -> Self {
         Self {
             file,
             files,
@@ -30,9 +31,9 @@ impl Reporter {
         &mut self,
         message: impl Into<String>,
         additional_info: impl Into<String>,
-        span: (Position, Position),
+        span: (impl Into<u32>, impl Into<u32>),
     ) {
-        let span = Span::new(span.0.absolute, span.1.absolute);
+        let span = Span::new(span.0.into(), span.1.into());
         let label = Label::new(self.file, span, message);
         let diagnostic = Diagnostic::new_error(additional_info, label);
         self.diagnostics.borrow_mut().push(diagnostic)
@@ -66,3 +67,19 @@ impl Reporter {
         !self.diagnostics.borrow().is_empty()
     }
 }
+
+impl Hash for Reporter {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.file.hash(state);
+        self.files.hash(state);
+        self.diagnostics.borrow().hash(state);
+    }
+}
+
+// impl PartialEq for Reporter {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.file == other.file
+//             && self.files == other.files
+//             && &self.diagnostics.borrow() == other.diagnostics.borrow()
+//     }
+// }

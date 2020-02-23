@@ -1,13 +1,16 @@
 use super::{
-    Block, BlockId, Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam,
+    Block, BlockId, Expr, ExprId, NameId, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam,
     TypeParamId,
 };
 use indexmap::IndexMap;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use syntax::{ast, AstPtr};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Function {
-    pub(crate) name: Name,
+    pub(crate) exported: bool,
+    pub(crate) name: NameId,
     pub(crate) map: FunctionAstMap,
     pub(crate) params: Vec<ParamId>,
     pub(crate) type_params: Vec<TypeParamId>,
@@ -89,3 +92,37 @@ index_data!(FunctionAstMap, hir_to_type_params, TypeParamId, TypeParam);
 index_data!(BodyMap, exprs, ExprId, AstPtr<ast::Expr>);
 index_data!(BodyMap, stmts, StmtId, AstPtr<ast::Stmt>);
 index_data!(BodyMap, pattern, PatId, AstPtr<ast::Pat>);
+
+macro_rules! hash {
+    ($state:expr => $( $field:expr ),*) => {
+        {
+            $(
+            $state.write_u64(
+            $field
+                .values()
+                .map(|kv| {
+                    let mut h = DefaultHasher::new();
+                    kv.hash(&mut h);
+                    h.finish()
+                })
+                .fold(0, u64::wrapping_add),
+            );
+        )*
+        }
+    };
+
+}
+
+impl Hash for FunctionAstMap {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        hash!(state => self.hir_to_params,
+            self.ast_to_type_params,
+            self.hir_to_stmt,
+            self.ast_to_stmt,
+            self.hir_to_expr,
+            self.ast_to_expr,
+            self.hir_to_block,
+            self.ast_to_block
+        )
+    }
+}

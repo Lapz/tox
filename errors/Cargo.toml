@@ -7,6 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-codespan = "0.4.1"
-codespan-reporting = "0.4.1"
+codespan = {version="0.7.0",git="https://github.com/Lapz/codespan"}
+codespan-reporting = {version="0.7.0",git="https://github.com/Lapz/codespan"}
 itertools="*"

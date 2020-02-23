@@ -4,7 +4,7 @@ use crate::cli::{Cli, Commands};
 
 use parser::{dump_debug, Parser};
 
-use semant::{lower_ast, DatabaseImpl};
+use semant::{DatabaseImpl, HirDatabase};
 use std::fs::File;
 use std::io::{self, Read, Write};
 use structopt::StructOpt as _;
@@ -14,7 +14,7 @@ pub type ParseResult<T> = Result<T, ()>;
 
 pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
     let mut files = errors::Files::new();
-    let file_id = files.add("testing", source);
+    let file_id = files.add("testing", source.into());
     let reporter = errors::Reporter::new(files, file_id);
     let mut lexer = Lexer::new(source, reporter.clone());
     let mut parser = Parser::new(lexer.lex().into_iter(), reporter.clone(), source);
@@ -26,9 +26,14 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
 
     let db = DatabaseImpl::default();
 
-    if !reporter.has_errors() {
-        lower_ast(source_file, &db);
-    }
+    let program = if reporter.has_errors() {
+        reporter.emit()?;
+        return Ok(());
+    } else {
+        db.lower_ast(source_file)
+    };
+
+    db.resolve_program(program.clone(), reporter.clone());
 
     reporter.emit()?;
 
@@ -37,7 +42,7 @@ pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()
 
 pub fn lex<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
     let mut files = errors::Files::new();
-    let file_id = files.add("testing", source);
+    let file_id = files.add("testing", source.into());
     let reporter = errors::Reporter::new(files, file_id);
     let tokens = Lexer::new(source, reporter.clone()).lex();
     reporter.emit()?;

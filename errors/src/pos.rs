@@ -75,3 +75,9 @@ impl<'a> Iterator for CharPosition<'a> {
         })
     }
 }
+
+impl Into<u32> for Position {
+    fn into(self) -> u32 {
+        self.absolute
+    }
+}

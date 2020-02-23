@@ -782,7 +782,7 @@ impl EnumVariantList {
 // Expr
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Expr {
             ArrayExpr(ArrayExpr),
             IdentExpr(IdentExpr),
@@ -1706,7 +1706,7 @@ impl ParenType {
 // Pat
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Pat {
             BindPat(BindPat),
             PlaceholderPat(PlaceholderPat),
@@ -1925,7 +1925,7 @@ impl SourceFile {}
 // Stmt
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Stmt {
             ExprStmt(ExprStmt),
             LetStmt(LetStmt),
@@ -2102,7 +2102,7 @@ impl TypeParamList {
 // TypeRef
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum TypeRef {
             ParenType(ParenType),
             ArrayType(ArrayType),
