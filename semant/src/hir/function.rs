@@ -18,8 +18,9 @@ pub struct Function {
     pub(crate) span: Span,
 }
 
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub(crate) struct FunctionAstMap {
+    ast_to_pattern: IndexMap<PatId, AstPtr<ast::Pat>>,
     hir_to_params: IndexMap<ParamId, Param>,
     ast_to_params: IndexMap<ParamId, AstPtr<ast::Param>>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
@@ -63,8 +64,20 @@ impl FunctionAstMap {
         self.ast_to_block.insert(id, node);
     }
 
+    pub fn insert_pat(&mut self, id: PatId, node: AstPtr<ast::Pat>) {
+        self.ast_to_pattern.insert(id, node);
+    }
+
     pub fn get_expr_ptr(&self, id: ExprId) -> AstPtr<ast::Expr> {
         self.ast_to_expr[&id]
+    }
+
+    pub(crate) fn stmt(&self, id: &StmtId) -> &Stmt {
+        self.hir_to_stmt.get(id).unwrap()
+    }
+
+    pub(crate) fn pattern_span(&self, id: &PatId) -> Span {
+        self.ast_to_pattern[id].syntax_node_ptr().range()
     }
 }
 
@@ -124,5 +137,15 @@ impl Hash for FunctionAstMap {
             self.hir_to_block,
             self.ast_to_block
         )
+    }
+}
+
+impl Function {
+    pub(crate) fn body(&self) -> &Option<Vec<StmtId>> {
+        &self.body
+    }
+
+    pub(crate) fn map(&self) -> &FunctionAstMap {
+        &self.map
     }
 }

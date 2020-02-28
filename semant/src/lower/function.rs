@@ -58,6 +58,10 @@ where
         self.params.push(id);
     }
 
+    fn add_pat(&mut self, id: hir::PatId, ast_node: &ast::Pat) {
+        self.ast_map.insert_pat(id, AstPtr::new(ast_node))
+    }
+
     pub fn add_stmt(&mut self, ast_node: &ast::Stmt, stmt: hir::Stmt) -> hir::StmtId {
         let current = self.stmt_id_count;
 
@@ -126,10 +130,12 @@ where
     pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> hir::PatId {
         let pattern = match &pat {
             ast::Pat::BindPat(binding) => {
-                let name: crate::hir::Name = binding
-                    .name()
-                    .map(|n| n.into())
-                    .unwrap_or_else(crate::hir::Name::missing);
+                let name = self.db.intern_name(
+                    binding
+                        .name()
+                        .map(|n| n.into())
+                        .unwrap_or_else(crate::hir::Name::missing),
+                );
                 crate::hir::Pattern::Bind { name }
             }
             ast::Pat::PlaceholderPat(_) => crate::hir::Pattern::Placeholder,
@@ -144,7 +150,11 @@ where
             )),
         };
 
-        self.db.intern_pattern(pattern)
+        let id = self.db.intern_pattern(pattern);
+
+        self.add_pat(id, &pat);
+
+        id
     }
 
     pub(crate) fn lower_param(&mut self, param: ast::Param) {

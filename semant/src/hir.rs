@@ -67,13 +67,13 @@ impl From<ast::Name> for Name {
 
 create_intern_key!(FunctionId);
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Param {
     pub(crate) pat: PatId,
     pub(crate) ty: TypeId,
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TypeParam {
     pub(crate) name: NameId,
 }
@@ -102,7 +102,7 @@ pub struct BlockId(pub(crate) u64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
-    Bind { name: Name },
+    Bind { name: NameId },
     Placeholder,
     Tuple(Vec<PatId>),
     Literal(LiteralId),
