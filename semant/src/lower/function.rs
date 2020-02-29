@@ -286,7 +286,7 @@ where
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
             ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),
             ast::Expr::ForExpr(ref for_expr) => {
-                let init = self.lower_expr(for_expr.init().unwrap());
+                let init = self.lower_stmt(for_expr.init().unwrap());
                 let cond = self.lower_expr(for_expr.cond().unwrap());
                 let increment = self.lower_expr(for_expr.increment().unwrap());
 
@@ -304,8 +304,10 @@ where
 
                 let while_expr = self.add_expr(&node, hir::Expr::While { cond, body });
 
-                let block =
-                    hir::Block(vec![self.expr_to_stmt(init), self.expr_to_stmt(while_expr)]);
+                let block = hir::Block(vec![init, self.expr_to_stmt(while_expr)]);
+
+                println!("{:?}", block);
+
                 let block = self.add_block(&loop_body, block);
 
                 hir::Expr::Block(block)

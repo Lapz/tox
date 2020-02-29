@@ -206,7 +206,6 @@ where
 
             hir::Stmt::Expr(expr) => self.resolve_expression(function, ast_map, expr),
         }
-        // let stmt = self.db.lookup_intern_statement(stmt);
     }
 
     pub(crate) fn resolve_expression(

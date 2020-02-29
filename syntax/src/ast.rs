@@ -1151,19 +1151,7 @@ impl AstNode for ForExpr {
 
 
 impl traits::LoopBodyOwner for ForExpr {}
-impl ForExpr {
-    pub fn init(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-
-    pub fn cond(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-
-    pub fn increment(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-}
+impl ForExpr {}
 
 // IdentExpr
 

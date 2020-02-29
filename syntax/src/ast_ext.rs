@@ -20,6 +20,20 @@ impl ElseBranch {
     }
 }
 
+impl ast::ForExpr {
+    pub fn init(&self) -> Option<ast::Stmt> {
+        children(self).next()
+    }
+
+    pub fn cond(&self) -> Option<ast::Expr> {
+        children(self).nth(1)
+    }
+
+    pub fn increment(&self) -> Option<ast::Expr> {
+        children(self).nth(2)
+    }
+}
+
 impl ast::BinExpr {
     pub fn lhs(&self) -> Option<ast::Expr> {
         children(self).next()
