@@ -11,7 +11,7 @@ use std::io::{self};
 use std::rc::Rc;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Reporter {
     files: Files<Arc<str>>,
     file: FileId,
@@ -73,6 +73,15 @@ impl Hash for Reporter {
         self.file.hash(state);
         self.files.hash(state);
         self.diagnostics.borrow().hash(state);
+    }
+}
+
+impl std::fmt::Debug for Reporter {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("Reporter")
+            .field("files", &self.files)
+            .field("file", &self.file)
+            .finish()
     }
 }
 
