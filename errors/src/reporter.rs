@@ -56,7 +56,7 @@ impl Reporter {
         let mut writer = writer.lock();
         let config = Config::default();
 
-        for diagnostic in &*self.diagnostics.borrow() {
+        while let Some(diagnostic) = self.diagnostics.borrow_mut().pop() {
             emit(&mut writer, &config, &self.files, &diagnostic)?
         }
 

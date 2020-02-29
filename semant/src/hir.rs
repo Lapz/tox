@@ -13,6 +13,9 @@ pub struct Program {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PatId(pub(crate) u64);
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeParamId(pub(crate) u64);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -83,7 +86,6 @@ create_intern_key!(EnumId);
 create_intern_key!(TypeAliasId);
 create_intern_key!(NameId);
 create_intern_key!(TypeId);
-create_intern_key!(PatId);
 create_intern_key!(LiteralId);
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -208,8 +210,9 @@ pub enum BinOp {
     Or,
     LessThan,
     GreaterThan,
-    EqualEqual,
     Excl,
+    Equal,
+    EqualEqual,
     NotEqual,
     LessThanEqual,
     GreaterThanEqual,
@@ -243,6 +246,7 @@ impl BinOp {
             T![+] => BinOp::Plus,
             T![*] => BinOp::Mult,
             T![/] => BinOp::Div,
+            T![=] => BinOp::Equal,
             T![&&] => BinOp::And,
             T![||] => BinOp::Or,
             T![<] => BinOp::LessThan,
@@ -256,6 +260,7 @@ impl BinOp {
             T![-=] => BinOp::MinusEqual,
             T![*=] => BinOp::MultEqual,
             T![/=] => BinOp::DivEqual,
+
             _ => return None,
         };
         Some(op)

@@ -1,6 +1,6 @@
 use super::{
-    Block, BlockId, Expr, ExprId, NameId, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam,
-    TypeParamId,
+    Block, BlockId, Expr, ExprId, NameId, Param, ParamId, PatId, Pattern, Span, Stmt, StmtId,
+    TypeParam, TypeParamId,
 };
 use indexmap::IndexMap;
 use std::collections::hash_map::DefaultHasher;
@@ -21,6 +21,7 @@ pub struct Function {
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub(crate) struct FunctionAstMap {
     ast_to_pattern: IndexMap<PatId, AstPtr<ast::Pat>>,
+    hir_to_pattern: IndexMap<PatId, Pattern>,
     hir_to_params: IndexMap<ParamId, Param>,
     ast_to_params: IndexMap<ParamId, AstPtr<ast::Param>>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
@@ -64,7 +65,8 @@ impl FunctionAstMap {
         self.ast_to_block.insert(id, node);
     }
 
-    pub fn insert_pat(&mut self, id: PatId, node: AstPtr<ast::Pat>) {
+    pub fn insert_pat(&mut self, id: PatId, pat: Pattern, node: AstPtr<ast::Pat>) {
+        self.hir_to_pattern.insert(id, pat);
         self.ast_to_pattern.insert(id, node);
     }
 
@@ -74,6 +76,22 @@ impl FunctionAstMap {
 
     pub(crate) fn stmt(&self, id: &StmtId) -> &Stmt {
         self.hir_to_stmt.get(id).unwrap()
+    }
+
+    pub(crate) fn expr(&self, id: &ExprId) -> &Expr {
+        self.hir_to_expr.get(id).unwrap()
+    }
+
+    pub(crate) fn expr_span(&self, id: &ExprId) -> Span {
+        self.ast_to_expr[id].syntax_node_ptr().range()
+    }
+
+    pub(crate) fn block(&self, id: &BlockId) -> &Block {
+        self.hir_to_block.get(id).unwrap()
+    }
+
+    pub(crate) fn pat(&self, id: &PatId) -> &Pattern {
+        &self.hir_to_pattern[id]
     }
 
     pub(crate) fn pattern_span(&self, id: &PatId) -> Span {

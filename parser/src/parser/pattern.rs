@@ -61,7 +61,7 @@ where
     fn parse_binding_pattern(&mut self) {
         self.start_node(BIND_PAT);
         self.ident();
-        self.finish_node();
+        self.finish_no_ws();
     }
 }
 

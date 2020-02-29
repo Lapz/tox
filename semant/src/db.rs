@@ -56,9 +56,6 @@ pub trait InternDatabase {
     fn intern_type_alias(&self, type_alias_def: ast::TypeAliasDef) -> hir::TypeAliasId;
 
     #[salsa::interned]
-    fn intern_pattern(&self, pat: hir::Pattern) -> hir::PatId;
-
-    #[salsa::interned]
     fn intern_type(&self, ty: hir::Type) -> hir::TypeId;
 
     #[salsa::interned]

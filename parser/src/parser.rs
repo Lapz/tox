@@ -189,6 +189,10 @@ where
         self.builder.start_node_at(checkpoint, kind.into())
     }
 
+    fn finish_no_ws(&mut self) {
+        self.builder.finish_node();
+    }
+
     fn finish_node(&mut self) {
         self.builder.finish_node();
         while self.at(SyntaxKind::WHITESPACE) || self.at(T!["//"]) {
@@ -353,6 +357,6 @@ where
     fn ident(&mut self) {
         self.start_node(NAME);
         self.expect(IDENT, "Expected an identifier");
-        self.finish_node()
+        self.finish_no_ws()
     }
 }

@@ -15,6 +15,7 @@ pub(crate) struct FunctionDataCollector<DB> {
     stmt_id_count: u64,
     expr_id_count: u64,
     block_id_count: u64,
+    pat_id_count: u64,
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
@@ -58,8 +59,13 @@ where
         self.params.push(id);
     }
 
-    fn add_pat(&mut self, id: hir::PatId, ast_node: &ast::Pat) {
-        self.ast_map.insert_pat(id, AstPtr::new(ast_node))
+    fn add_pat(&mut self, ast_node: &ast::Pat, pat: hir::Pattern) -> hir::PatId {
+        let current = self.pat_id_count;
+        self.pat_id_count += 1;
+        let id = hir::PatId(current);
+        self.ast_map.insert_pat(id, pat, AstPtr::new(ast_node));
+
+        id
     }
 
     pub fn add_stmt(&mut self, ast_node: &ast::Stmt, stmt: hir::Stmt) -> hir::StmtId {
@@ -150,11 +156,7 @@ where
             )),
         };
 
-        let id = self.db.intern_pattern(pattern);
-
-        self.add_pat(id, &pat);
-
-        id
+        self.add_pat(&pat, pattern)
     }
 
     pub(crate) fn lower_param(&mut self, param: ast::Param) {
@@ -418,6 +420,7 @@ pub(crate) fn lower_function_query(
         stmt_id_count: 0,
         expr_id_count: 0,
         block_id_count: 0,
+        pat_id_count: 0,
         params: Vec::new(),
         type_params: Vec::new(),
         ast_map: hir::FunctionAstMap::default(),
