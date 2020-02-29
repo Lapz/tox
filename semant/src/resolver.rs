@@ -341,6 +341,7 @@ where
         } // check for ident name in function/local scope
 
         if !self.table.contains(*name) {
+            //  check for external import global level
             let msg = format!(
                 "Use of undefined variable `{}`",
                 self.db.lookup_intern_name(*name)

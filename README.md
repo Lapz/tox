@@ -6,6 +6,9 @@ It's built using salsa and rowan. The design is inspired by rust-analazyer along
 
 ## TODO
 
-[ ] Parsing
-[ ] Fix ast reperesentation of record literal
-[ ] Add a tratir for record literal fields
+[-] Parsing
+[-] Fix ast reperesentation of record literal
+[-] Add a tratir for record literal fields
+[ ] Add an immutable scoped map
+[ ] Add import syntax
+[ ] Resolve external imports
