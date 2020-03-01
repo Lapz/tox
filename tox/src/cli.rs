@@ -60,7 +60,7 @@ impl Cli {
                 if let Some(ref output) = self.output {
                     write!(&mut File::open(output)?, "{}", dump_debug(&source_file))?;
                 } else {
-                    println!("{:#?}", dump_debug(&source_file));
+                    println!("{}", dump_debug(&source_file));
                 }
             }
 

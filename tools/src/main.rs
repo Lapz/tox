@@ -10,7 +10,7 @@ fn generate_syntax(
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut opts = Cli::from_args();
+    let opts = Cli::from_args();
 
     let command = if opts.syntax {
         Commands::GenAst
