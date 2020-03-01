@@ -7,7 +7,7 @@ mod resolver;
 mod ty;
 mod util;
 
-pub use db::{DatabaseImpl, HirDatabase, HirDatabaseStorage, InternDatabaseStorage};
+pub use db::{HirDatabase, HirDatabaseStorage, InternDatabaseStorage};
 pub use salsa;
 
 #[cfg(test)]

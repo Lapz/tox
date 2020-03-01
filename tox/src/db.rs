@@ -1,7 +1,8 @@
-use crate::read_file;
 use errors::FileId;
 use parser::FilesExt;
 use std::default::Default;
+use std::fs::File;
+use std::io::{self, Read};
 use std::path::PathBuf;
 use std::sync::Arc;
 #[salsa::database(
@@ -9,10 +10,20 @@ use std::sync::Arc;
     semant::InternDatabaseStorage,
     parser::ParseDatabaseStorage
 )]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DatabaseImpl {
     runtime: salsa::Runtime<DatabaseImpl>,
     files: errors::Files<Arc<str>>,
+}
+
+pub(crate) trait Diagnostics {
+    fn emit(&self) -> io::Result<()>;
+}
+
+impl Diagnostics for DatabaseImpl {
+    fn emit(&self) -> io::Result<()> {
+        Ok(())
+    }
 }
 
 impl FilesExt for DatabaseImpl {
@@ -36,11 +47,12 @@ impl salsa::Database for DatabaseImpl {
     }
 }
 
-impl Default for DatabaseImpl {
-    fn default() -> Self {
-        Self {
-            runtime: Default::default(),
-            files: errors::Files::<Arc<str>>::new(),
-        }
-    }
+fn read_file(name: &PathBuf) -> io::Result<String> {
+    let mut file = File::open(name)?;
+
+    let mut contents = String::new();
+
+    file.read_to_string(&mut contents)?;
+
+    Ok(contents)
 }

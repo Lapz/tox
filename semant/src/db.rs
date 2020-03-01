@@ -1,42 +1,8 @@
 use crate::hir;
 
-use crate::ctx;
-
 use salsa;
-use std::cell::{Ref, RefCell, RefMut};
-use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use syntax::ast;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FileId(pub u32);
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SourceRootId(pub u32);
-
-#[derive(Default, Clone, Debug, PartialEq, Eq)]
-pub struct SourceRoot {
-    files: HashMap<PathBuf, FileId>,
-}
-
-impl SourceRoot {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn insert_file(&mut self, path: PathBuf, file_id: FileId) {
-        self.files.insert(path, file_id);
-    }
-}
-
-// #[salsa::query_group(SourceDatabaseStorage)]
-// pub trait SourceDatabase: std::fmt::Debug {
-//     #[salsa::input]
-//     fn file_text(&self, file_id: FileId) -> Arc<String>;
-
-//     #[salsa::input]
-//     fn source_root(&self, id: SourceRootId) -> Arc<SourceRoot>;
-// }
 
 #[salsa::query_group(InternDatabaseStorage)]
 pub trait InternDatabase {
@@ -72,42 +38,4 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase {
     fn lower_ast(&self, source: ast::SourceFile) -> Arc<hir::Program>;
     #[salsa::invoke(crate::resolver::resolve_program_query)]
     fn resolve_program(&self, program: Arc<hir::Program>, reporter: errors::Reporter) -> ();
-}
-
-#[salsa::database(InternDatabaseStorage, HirDatabaseStorage)]
-#[derive(Debug, Default)]
-pub struct DatabaseImpl {
-    runtime: salsa::Runtime<DatabaseImpl>,
-    files: errors::Files<Arc<str>>,
-    ctx: RefCell<ctx::Ctx>,
-}
-
-pub trait HirDBExt {
-    fn ctx(&self) -> Ref<ctx::Ctx>;
-    fn ctx_mut(&self) -> RefMut<ctx::Ctx>;
-    fn add_file(&mut self, path: PathBuf, source: &str) -> errors::FileId;
-}
-
-impl HirDBExt for DatabaseImpl {
-    fn ctx(&self) -> Ref<ctx::Ctx> {
-        self.ctx.borrow()
-    }
-
-    fn ctx_mut(&self) -> RefMut<ctx::Ctx> {
-        self.ctx.borrow_mut()
-    }
-
-    fn add_file(&mut self, path: PathBuf, source: &str) -> errors::FileId {
-        self.files.add(path, source.into())
-    }
-}
-
-impl salsa::Database for DatabaseImpl {
-    fn salsa_runtime(&self) -> &salsa::Runtime<DatabaseImpl> {
-        &self.runtime
-    }
-
-    fn salsa_runtime_mut(&mut self) -> &mut salsa::Runtime<DatabaseImpl> {
-        &mut self.runtime
-    }
 }
