@@ -4,7 +4,7 @@ use structopt::StructOpt;
 #[structopt(name = "tox")]
 pub struct Cli {
     /// The source code file to be ran
-    pub source: Option<PathBuf>,
+    pub source: Vec<PathBuf>,
     /// The file where the ast/ir will be outputted
     #[structopt(short, long, parse(from_os_str))]
     pub output: Option<PathBuf>,

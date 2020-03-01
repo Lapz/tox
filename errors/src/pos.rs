@@ -81,3 +81,9 @@ impl Into<u32> for Position {
         self.absolute
     }
 }
+
+impl Into<usize> for Position {
+    fn into(self) -> usize {
+        self.absolute as usize
+    }
+}

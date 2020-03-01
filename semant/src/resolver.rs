@@ -129,7 +129,8 @@ where
                 self.db.lookup_intern_name(name)
             );
 
-            self.reporter.warn(msg, "", (span.start(), span.end()))
+            self.reporter
+                .warn(msg, "", (span.start().to_usize(), span.end().to_usize()))
         }
 
         self.table.function_data_mut(function).scopes[index].insert(name, State::Declared);
@@ -178,7 +179,11 @@ where
         if self.table.contains(id) {
             let name = self.db.lookup_intern_name(id);
             let message = format!("The name `{}` is defined multiple times", name);
-            self.reporter.error(message, "", (span.start(), span.end()));
+            self.reporter.error(
+                message,
+                "",
+                (span.start().to_usize(), span.end().to_usize()),
+            );
         } else {
             self.table.insert_name(id, level, exported);
             self.insert_function_data(id, FunctionData::new());
@@ -269,7 +274,8 @@ where
                         self.db.lookup_intern_name(*name)
                     );
 
-                    self.reporter.error(msg, "", (span.start(), span.end()))
+                    self.reporter
+                        .error(msg, "", (span.start().to_usize(), span.end().to_usize()))
                 }
 
                 self.resolve_local(function, ast_map, name, true, span);
@@ -347,7 +353,10 @@ where
                 self.db.lookup_intern_name(*name)
             );
 
-            self.reporter.error(msg, "", (span.start(), span.end()))
+            println!("{:?} {:?}", span.start().to_usize(), span.end().to_usize());
+
+            self.reporter
+                .error(msg, "", (span.start().to_usize(), span.end().to_usize()))
         }
     }
 

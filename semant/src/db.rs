@@ -63,7 +63,7 @@ pub trait InternDatabase {
 }
 
 #[salsa::query_group(HirDatabaseStorage)]
-pub trait HirDatabase: std::fmt::Debug + InternDatabase + HirDBExt {
+pub trait HirDatabase: std::fmt::Debug + InternDatabase {
     #[salsa::invoke(crate::lower::lower_function_query)]
     fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
     #[salsa::invoke(crate::lower::lower_type_alias_query)]
@@ -78,12 +78,14 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + HirDBExt {
 #[derive(Debug, Default)]
 pub struct DatabaseImpl {
     runtime: salsa::Runtime<DatabaseImpl>,
+    files: errors::Files<Arc<str>>,
     ctx: RefCell<ctx::Ctx>,
 }
 
 pub trait HirDBExt {
     fn ctx(&self) -> Ref<ctx::Ctx>;
     fn ctx_mut(&self) -> RefMut<ctx::Ctx>;
+    fn add_file(&mut self, path: PathBuf, source: &str) -> errors::FileId;
 }
 
 impl HirDBExt for DatabaseImpl {
@@ -93,6 +95,10 @@ impl HirDBExt for DatabaseImpl {
 
     fn ctx_mut(&self) -> RefMut<ctx::Ctx> {
         self.ctx.borrow_mut()
+    }
+
+    fn add_file(&mut self, path: PathBuf, source: &str) -> errors::FileId {
+        self.files.add(path, source.into())
     }
 }
 

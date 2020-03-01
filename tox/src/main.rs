@@ -1,70 +1,81 @@
 mod cli;
+mod db;
 
 use crate::cli::{Cli, Commands};
+use crate::db::DatabaseImpl;
 
-use parser::{dump_debug, Parser};
+use parser::{dump_debug, FilesExt, ParseDatabase, Parser};
 
-use semant::{DatabaseImpl, HirDatabase};
+use semant::HirDatabase;
 use std::fs::File;
 use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use structopt::StructOpt as _;
 use syntax::Lexer;
 
 pub type ParseResult<T> = Result<T, ()>;
 
-pub fn parse<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
-    let mut files = errors::Files::new();
-    let file_id = files.add("testing", source.into());
-    let reporter = errors::Reporter::new(files, file_id);
-    let mut lexer = Lexer::new(source, reporter.clone());
-    let mut parser = Parser::new(lexer.lex().into_iter(), reporter.clone(), source);
-    let source_file = parser.parse_program();
+pub fn parse<W: std::io::Write>(files: &[PathBuf], out: &mut W) -> std::io::Result<()> {
+    let mut db = DatabaseImpl::default();
 
-    reporter.emit()?;
-    // write!(out, "{}", source_file.syntax().text())?;
-    write!(out, "{}", dump_debug(&source_file))?;
+    for file in files {
+        let handle = db.load_file(file);
 
-    let db = DatabaseImpl::default();
+        let program = db.parse(handle);
+    }
 
-    let program = if reporter.has_errors() {
-        reporter.emit()?;
-        return Ok(());
-    } else {
-        db.lower_ast(source_file)
-    };
+    // for source in
+    // let mut files = errors::Files::new();
+    // let file_id = files.add("testing", source.into());
+    // let reporter = errors::Reporter::new(files, file_id);
+    // let mut lexer = Lexer::new(source, reporter.clone());
+    // let mut parser = Parser::new(lexer.lex().into_iter(), reporter.clone(), source);
+    // let source_file = parser.parse_program();
 
-    db.resolve_program(program.clone(), reporter.clone());
+    // reporter.emit()?;
+    // // write!(out, "{}", source_file.syntax().text())?;
+    // write!(out, "{}", dump_debug(&source_file))?;
 
-    reporter.emit()?;
+    // let program = if reporter.has_errors() {
+    //     reporter.emit()?;
+    //     return Ok(());
+    // } else {
+    //     db.lower_ast(source_file)
+    // };
+
+    // db.resolve_program(program.clone(), reporter.clone());
+
+    // reporter.emit()?;
 
     Ok(())
 }
 
-pub fn lex<W: std::io::Write>(source: &str, out: &mut W) -> std::io::Result<()> {
-    let mut files = errors::Files::new();
-    let file_id = files.add("testing", source.into());
-    let reporter = errors::Reporter::new(files, file_id);
-    let tokens = Lexer::new(source, reporter.clone()).lex();
-    reporter.emit()?;
-    for token in tokens {
-        writeln!(out, "{:#?}", token)?
-    }
+pub fn lex<W: std::io::Write>(sources: &[PathBuf], out: &mut W) -> std::io::Result<()> {
+    unimplemented!();
+    // let mut files = errors::Files::new();
+    // let file_id = files.add("testing", source.into());
+    // let reporter = errors::Reporter::new(files, file_id);
+    // let tokens = Lexer::new(source, reporter.clone()).lex();
+    // reporter.emit()?;
+    // for token in tokens {
+    //     writeln!(out, "{:#?}", token)?
+    // }
 
     Ok(())
 }
 
 pub fn run<W: std::io::Write>(
     command: Commands,
-    source: &str,
+    sources: &[PathBuf],
     output: &mut W,
 ) -> std::io::Result<()> {
     match command {
-        Commands::Lex => lex(source, output),
-        Commands::Parse => parse(source, output),
+        Commands::Lex => lex(sources, output),
+        Commands::Parse => parse(sources, output),
     }
 }
 
-pub fn read_file(name: std::path::PathBuf) -> std::io::Result<String> {
+pub fn read_file(name: &std::path::PathBuf) -> std::io::Result<String> {
     let mut file = File::open(name)?;
 
     let mut contents = String::new();
@@ -82,11 +93,14 @@ pub fn read_stdin() -> std::io::Result<String> {
     Ok(input)
 }
 
-pub fn get_input(source: Option<std::path::PathBuf>) -> std::io::Result<String> {
-    if let Some(source) = source {
-        read_file(source)
+pub fn get_input(sources: Vec<std::path::PathBuf>) -> std::io::Result<Vec<String>> {
+    if sources.is_empty() {
+        Ok(vec![read_stdin()?])
     } else {
-        read_stdin()
+        Ok(sources
+            .iter()
+            .map(|source| read_file(source).expect("Coudln't read a file"))
+            .collect())
     }
 }
 
@@ -102,7 +116,6 @@ fn main() -> std::io::Result<()> {
         Commands::Parse
     };
 
-    let input = get_input(input)?;
     if let Some(output) = output {
         run(command, &input, &mut File::open(output)?)?
     } else {
