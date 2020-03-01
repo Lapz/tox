@@ -1,4 +1,4 @@
-use crate::db::DatabaseImpl;
+use crate::db::{DatabaseImpl, Diagnostics};
 
 use parser::{dump_debug, FilesExt, ParseDatabase};
 use semant::HirDatabase;
@@ -34,6 +34,8 @@ impl Cli {
                 Ok(source_file) => source_file,
                 Err(more_errors) => {
                     errors.extend(more_errors);
+
+                    db.emit(&mut errors)?;
                     continue;
                 }
             };
@@ -48,8 +50,8 @@ impl Cli {
 
             let source_file = match db.parse(handle) {
                 Ok(source_file) => source_file,
-                Err(more_errors) => {
-                    errors.extend(more_errors);
+                Err(ref mut more_errors) => {
+                    db.emit(more_errors)?;
                     continue;
                 }
             };
@@ -64,8 +66,8 @@ impl Cli {
 
             let _hir = match db.lower(handle) {
                 Ok(program) => program,
-                Err(more_errors) => {
-                    errors.extend(more_errors);
+                Err(ref mut more_errors) => {
+                    db.emit(more_errors)?;
                     continue;
                 }
             };
@@ -74,9 +76,10 @@ impl Cli {
                 Ok(_) => {}
                 Err(more_errors) => {
                     errors.extend(more_errors);
-                    continue;
                 }
             }
+
+            db.emit(&mut errors)?;
         }
 
         Ok(())

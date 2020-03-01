@@ -95,6 +95,10 @@ where
         self.table
     }
 
+    fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
     fn begin_scope(&mut self, function: hir::NameId) {
         let data = self.table.function_data_mut(function);
         data.scopes.push(HashMap::new())
@@ -343,8 +347,6 @@ where
                 self.db.lookup_intern_name(*name)
             );
 
-            println!("{:?} {:?}", span.start().to_usize(), span.end().to_usize());
-
             self.reporter
                 .error(msg, "", (span.start().to_usize(), span.end().to_usize()))
         }
@@ -397,7 +399,7 @@ pub fn resolve_program_query(db: &impl HirDatabase, file: FileId) -> WithError<(
 
     let mut collector = ResolverDataCollector {
         db,
-        reporter: reporter.clone(),
+        reporter,
         table: FileTable::new(),
     };
 
@@ -419,6 +421,9 @@ pub fn resolve_program_query(db: &impl HirDatabase, file: FileId) -> WithError<(
             collector.resolve_statement(function.name, ast_map, statement)
         }
     }
+
+    let reporter = collector.reporter();
+    // println!("{:?}", reporter.diagnostics);
 
     if reporter.has_errors() {
         Err(reporter.finish())

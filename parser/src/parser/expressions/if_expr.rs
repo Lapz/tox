@@ -29,7 +29,6 @@ where
         self.bump(); // eat the `else`
         self.skip_whitespace();
         if self.current() == T![if] {
-            println!("a");
             self.parse_if_expr()
         } else {
             self.parse_block();

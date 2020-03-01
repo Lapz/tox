@@ -147,6 +147,10 @@ where
         parser
     }
 
+    pub fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
     fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser<I>) {
         self.prefix.insert(rule, parser);
     }

@@ -306,8 +306,6 @@ where
 
                 let block = hir::Block(vec![init, self.expr_to_stmt(while_expr)]);
 
-                println!("{:?}", block);
-
                 let block = self.add_block(&loop_body, block);
 
                 hir::Expr::Block(block)
