@@ -1,5 +1,5 @@
 ---
-created: "2020-02-06T15:57:27.619536Z"
+created: "2020-03-01T23:46:21.275517Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/let_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 39)
   FN_DEF@[0; 39)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 7)
-      WHITESPACE@[2; 3) " "
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
       IDENT@[3; 7) "main"
     PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
@@ -20,10 +20,10 @@ SOURCE_FILE@[0; 39)
         LET_STMT@[11; 23)
           LET_KW@[11; 14) "let"
           WHITESPACE@[14; 15) " "
-          BIND_PAT@[15; 19)
+          BIND_PAT@[15; 18)
             NAME@[15; 18)
               IDENT@[15; 18) "foo"
-            WHITESPACE@[18; 19) " "
+          WHITESPACE@[18; 19) " "
           EQ@[19; 20) "="
           WHITESPACE@[20; 21) " "
           LITERAL@[21; 23)
@@ -33,10 +33,10 @@ SOURCE_FILE@[0; 39)
         LET_STMT@[25; 38)
           LET_KW@[25; 28) "let"
           WHITESPACE@[28; 29) " "
-          BIND_PAT@[29; 33)
+          BIND_PAT@[29; 32)
             NAME@[29; 32)
               IDENT@[29; 32) "bar"
-            WHITESPACE@[32; 33) " "
+          WHITESPACE@[32; 33) " "
           EQ@[33; 34) "="
           WHITESPACE@[34; 35) " "
           LITERAL@[35; 38)

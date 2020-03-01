@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:29:14.698739Z"
+created: "2020-03-01T23:46:21.176361Z"
 creator: insta@0.8.2
 source: parser/src/parser/enums.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 32)
   ENUM_DEF@[0; 32)
     ENUM_KW@[0; 4) "enum"
-    NAME@[4; 11)
-      WHITESPACE@[4; 5) " "
+    WHITESPACE@[4; 5) " "
+    NAME@[5; 11)
       IDENT@[5; 11) "Result"
     TYPE_PARAM_LIST@[11; 16)
       L_ANGLE@[11; 12) "<"
@@ -23,8 +23,8 @@ SOURCE_FILE@[0; 32)
     WHITESPACE@[16; 17) " "
     ENUM_VARIANT_LIST@[17; 32)
       L_CURLY@[17; 18) "{"
-      ENUM_VARIANT@[18; 24)
-        WHITESPACE@[18; 19) " "
+      WHITESPACE@[18; 19) " "
+      ENUM_VARIANT@[19; 24)
         NAME@[19; 21)
           IDENT@[19; 21) "Ok"
         L_PAREN@[21; 22) "("

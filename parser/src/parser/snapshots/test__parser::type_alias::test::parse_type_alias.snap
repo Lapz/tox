@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:29:14.874727Z"
+created: "2020-03-01T23:46:21.330472Z"
 creator: insta@0.8.2
 source: parser/src/parser/type_alias.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 15)
   TYPE_ALIAS_DEF@[0; 15)
     TYPE_KW@[0; 4) "type"
-    NAME@[4; 8)
-      WHITESPACE@[4; 5) " "
+    WHITESPACE@[4; 5) " "
+    NAME@[5; 8)
       IDENT@[5; 8) "Foo"
     WHITESPACE@[8; 9) " "
     EQ@[9; 10) "="

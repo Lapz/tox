@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T16:29:14.697670Z"
+created: "2020-03-01T23:46:21.176310Z"
 creator: insta@0.8.2
 source: parser/src/parser/classes.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 20)
   CLASS_DEF@[0; 20)
     CLASS_KW@[0; 5) "class"
-    NAME@[5; 12)
-      WHITESPACE@[5; 6) " "
+    WHITESPACE@[5; 6) " "
+    NAME@[6; 12)
       IDENT@[6; 12) "Result"
     TYPE_PARAM_LIST@[12; 17)
       L_ANGLE@[12; 13) "<"

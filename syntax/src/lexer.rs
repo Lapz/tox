@@ -402,7 +402,7 @@ mod test {
         let mut files = Files::new();
         let file_id = files.add("test", input);
 
-        let reporter = Reporter::new(files, file_id);
+        let reporter = Reporter::new(file_id);
         reporter
     }
 

@@ -14,7 +14,7 @@ pub fn dump_debug<T: AstNode>(item: &T) -> String {
 pub fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
     let mut files = errors::Files::new();
     let file_id = files.add("testing", input);
-    let reporter = errors::Reporter::new(files, file_id);
+    let reporter = errors::Reporter::new(file_id);
     let mut lexer = Lexer::new(input, reporter.clone());
     Parser::new(lexer.lex().into_iter(), reporter, input)
 }

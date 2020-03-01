@@ -1,5 +1,5 @@
 ---
-created: "2020-02-06T15:56:36.765567Z"
+created: "2020-03-01T23:46:21.258930Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/if_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 31)
   FN_DEF@[0; 31)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 7)
-      WHITESPACE@[2; 3) " "
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
       IDENT@[3; 7) "main"
     PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
@@ -21,8 +21,8 @@ SOURCE_FILE@[0; 31)
         EXPR_STMT@[12; 30)
           IF_EXPR@[12; 30)
             IF_KW@[12; 14) "if"
-            CONDITION@[14; 20)
-              WHITESPACE@[14; 15) " "
+            WHITESPACE@[14; 15) " "
+            CONDITION@[15; 20)
               LITERAL@[15; 19)
                 TRUE_KW@[15; 19) "true"
               WHITESPACE@[19; 20) " "

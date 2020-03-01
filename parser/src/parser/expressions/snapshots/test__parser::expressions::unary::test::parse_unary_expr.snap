@@ -1,5 +1,5 @@
 ---
-created: "2020-02-06T15:57:27.675976Z"
+created: "2020-03-01T23:46:21.302755Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/unary.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -7,8 +7,8 @@ expression: "crate::utils::dump_debug(&parser_output)"
 SOURCE_FILE@[0; 20)
   FN_DEF@[0; 20)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 7)
-      WHITESPACE@[2; 3) " "
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
       IDENT@[3; 7) "main"
     PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("

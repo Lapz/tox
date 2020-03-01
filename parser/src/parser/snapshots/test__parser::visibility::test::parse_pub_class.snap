@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T20:26:04.539240Z"
+created: "2020-03-01T23:46:21.344586Z"
 creator: insta@0.8.2
 source: parser/src/parser/visibility.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -10,8 +10,8 @@ SOURCE_FILE@[0; 31)
       EXPORT_KW@[0; 6) "export"
     WHITESPACE@[6; 7) " "
     CLASS_KW@[7; 12) "class"
-    NAME@[12; 16)
-      WHITESPACE@[12; 13) " "
+    WHITESPACE@[12; 13) " "
+    NAME@[13; 16)
       IDENT@[13; 16) "Foo"
     L_CURLY@[16; 17) "{"
     WHITESPACE@[17; 18) " "
