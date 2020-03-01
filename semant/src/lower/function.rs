@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use syntax::{
     ast, ArgListOwner, AstNode, AstPtr, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
-    TypeParamsOwner, TypesOwner,
+    TypeParamsOwner, TypesOwner, VisibilityOwner,
 };
 
 #[derive(Debug)]
@@ -14,6 +14,8 @@ pub(crate) struct FunctionDataCollector<DB> {
     param_id_count: u64,
     stmt_id_count: u64,
     expr_id_count: u64,
+    block_id_count: u64,
+    pat_id_count: u64,
     ast_map: hir::FunctionAstMap,
     params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<hir::TypeParamId>,
@@ -25,6 +27,7 @@ where
 {
     pub fn finish(
         self,
+        exported: bool,
         name: hir::Name,
         body: Option<Vec<hir::StmtId>>,
         span: hir::Span,
@@ -32,7 +35,9 @@ where
         let params = self.params;
         let type_params = self.type_params;
         let map = self.ast_map;
+        let name = self.db.intern_name(name);
         hir::function::Function {
+            exported,
             name,
             map,
             params,
@@ -41,6 +46,7 @@ where
             span,
         }
     }
+
     pub fn add_param(&mut self, ast_node: &ast::Param, param: hir::Param) {
         let current = self.param_id_count;
 
@@ -51,6 +57,15 @@ where
         self.ast_map.insert_param(id, param, AstPtr::new(ast_node));
 
         self.params.push(id);
+    }
+
+    fn add_pat(&mut self, ast_node: &ast::Pat, pat: hir::Pattern) -> hir::PatId {
+        let current = self.pat_id_count;
+        self.pat_id_count += 1;
+        let id = hir::PatId(current);
+        self.ast_map.insert_pat(id, pat, AstPtr::new(ast_node));
+
+        id
     }
 
     pub fn add_stmt(&mut self, ast_node: &ast::Stmt, stmt: hir::Stmt) -> hir::StmtId {
@@ -95,6 +110,18 @@ where
         id
     }
 
+    pub fn add_block(&mut self, ast_node: &ast::Block, block: hir::Block) -> hir::BlockId {
+        let current = self.block_id_count;
+
+        self.block_id_count += 1;
+
+        let id = hir::BlockId(current);
+
+        self.ast_map.insert_block(id, block, AstPtr::new(ast_node));
+
+        id
+    }
+
     pub fn add_type_param(&mut self, ast_node: &ast::TypeParam, type_param: hir::TypeParam) {
         let current = self.type_param_count;
 
@@ -109,10 +136,12 @@ where
     pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> hir::PatId {
         let pattern = match &pat {
             ast::Pat::BindPat(binding) => {
-                let name: crate::hir::Name = binding
-                    .name()
-                    .map(|n| n.into())
-                    .unwrap_or_else(crate::hir::Name::missing);
+                let name = self.db.intern_name(
+                    binding
+                        .name()
+                        .map(|n| n.into())
+                        .unwrap_or_else(crate::hir::Name::missing),
+                );
                 crate::hir::Pattern::Bind { name }
             }
             ast::Pat::PlaceholderPat(_) => crate::hir::Pattern::Placeholder,
@@ -127,7 +156,7 @@ where
             )),
         };
 
-        self.db.intern_pattern(pattern)
+        self.add_pat(&pat, pattern)
     }
 
     pub(crate) fn lower_param(&mut self, param: ast::Param) {
@@ -217,14 +246,19 @@ where
 
                 hir::Expr::Binary { lhs, op, rhs }
             }
-            ast::Expr::BlockExpr(ref block) => hir::Expr::Block(
-                block
-                    .block()
-                    .unwrap()
-                    .statements()
-                    .map(|st| self.lower_stmt(st))
-                    .collect(),
-            ),
+            ast::Expr::BlockExpr(ref block) => {
+                let node = block.block().unwrap();
+                let block = hir::Block(
+                    block
+                        .block()
+                        .unwrap()
+                        .statements()
+                        .map(|st| self.lower_stmt(st))
+                        .collect(),
+                );
+
+                hir::Expr::Block(self.add_block(&node, block))
+            }
 
             ast::Expr::BreakExpr(_) => hir::Expr::Break,
             ast::Expr::CallExpr(ref call_expr) => {
@@ -244,7 +278,7 @@ where
                 hir::Expr::Cast { expr, ty }
             }
             ast::Expr::RecordLiteralExpr(ref _record_lit) => unimplemented!(),
-            ast::Expr::ClosureExpr(ref closure_expr) => {
+            ast::Expr::ClosureExpr(ref _closure_expr) => {
                 // let args = closure_expr.a
 
                 unimplemented!()
@@ -252,22 +286,29 @@ where
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
             ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),
             ast::Expr::ForExpr(ref for_expr) => {
-                let init = self.lower_expr(for_expr.init().unwrap());
+                let init = self.lower_stmt(for_expr.init().unwrap());
                 let cond = self.lower_expr(for_expr.cond().unwrap());
                 let increment = self.lower_expr(for_expr.increment().unwrap());
 
-                let mut body = for_expr
-                    .loop_body()
-                    .unwrap()
+                let loop_body = for_expr.loop_body().unwrap().block().unwrap();
+                let mut body = loop_body
                     .statements()
                     .map(|st| self.lower_stmt(st))
                     .collect::<Vec<_>>();
 
                 body.push(self.expr_to_stmt(increment));
 
+                let body_block = hir::Block(body);
+
+                let body = self.add_block(&loop_body, body_block);
+
                 let while_expr = self.add_expr(&node, hir::Expr::While { cond, body });
 
-                hir::Expr::Block(vec![self.expr_to_stmt(init), self.expr_to_stmt(while_expr)])
+                let block = hir::Block(vec![init, self.expr_to_stmt(while_expr)]);
+
+                let block = self.add_block(&loop_body, block);
+
+                hir::Expr::Block(block)
             }
             ast::Expr::IdentExpr(ref ident_expr) => {
                 hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
@@ -342,12 +383,15 @@ where
             ast::Expr::WhileExpr(ref while_expr) => {
                 let cond = self.lower_expr(while_expr.condition().unwrap().expr().unwrap());
 
-                let body = while_expr
-                    .loop_body()
-                    .unwrap()
-                    .statements()
-                    .map(|st| self.lower_stmt(st))
-                    .collect::<Vec<_>>();
+                let loop_body = while_expr.loop_body().unwrap().block().unwrap();
+                let block = hir::Block(
+                    loop_body
+                        .statements()
+                        .map(|st| self.lower_stmt(st))
+                        .collect::<Vec<_>>(),
+                );
+
+                let body = self.add_block(&loop_body, block);
 
                 hir::Expr::While { cond, body }
             }
@@ -367,7 +411,7 @@ where
 
 pub(crate) fn lower_function_query(
     db: &impl HirDatabase,
-    function: ast::FnDef,
+    fun_id: hir::FunctionId,
 ) -> Arc<hir::Function> {
     let mut collector = FunctionDataCollector {
         db,
@@ -375,10 +419,16 @@ pub(crate) fn lower_function_query(
         type_param_count: 0,
         stmt_id_count: 0,
         expr_id_count: 0,
+        block_id_count: 0,
+        pat_id_count: 0,
         params: Vec::new(),
         type_params: Vec::new(),
         ast_map: hir::FunctionAstMap::default(),
     };
+
+    let function = db.lookup_intern_function(fun_id);
+
+    let exported = function.visibility().is_some();
 
     let name: Option<crate::hir::Name> = function.name().map(|name| name.into());
 
@@ -396,7 +446,9 @@ pub(crate) fn lower_function_query(
 
     let body = if let Some(body) = function.body() {
         Some(
-            body.statements()
+            body.block()
+                .unwrap()
+                .statements()
                 .map(|statement| collector.lower_stmt(statement))
                 .collect(),
         )
@@ -406,5 +458,5 @@ pub(crate) fn lower_function_query(
 
     let span = function.syntax().text_range();
 
-    Arc::new(collector.finish(name.unwrap(), body, span))
+    Arc::new(collector.finish(exported, name.unwrap(), body, span))
 }

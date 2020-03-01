@@ -147,6 +147,10 @@ where
         parser
     }
 
+    pub fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
     fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser<I>) {
         self.prefix.insert(rule, parser);
     }
@@ -176,11 +180,10 @@ where
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(kind.into());
-
         while self.at(SyntaxKind::WHITESPACE) {
             self.bump()
         }
+        self.builder.start_node(kind.into());
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
@@ -188,6 +191,10 @@ where
             self.bump()
         }
         self.builder.start_node_at(checkpoint, kind.into())
+    }
+
+    fn finish_no_ws(&mut self) {
+        self.builder.finish_node();
     }
 
     fn finish_node(&mut self) {
@@ -343,8 +350,8 @@ where
         let token = self.lookahead.take();
 
         if let Some(token) = token {
-            let text = &self.input[token.start.absolute as usize
-                ..token.start.absolute as usize + token.value.len as usize];
+            let text = &self.input
+                [token.start.absolute as usize..(token.start.absolute + token.value.len) as usize];
             self.builder.token(token.value.kind.into(), text.into());
             self.past_tokens.push_front(token);
             self.lookahead = self.iter.next()
@@ -354,6 +361,6 @@ where
     fn ident(&mut self) {
         self.start_node(NAME);
         self.expect(IDENT, "Expected an identifier");
-        self.finish_node()
+        self.finish_no_ws()
     }
 }

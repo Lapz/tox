@@ -170,7 +170,7 @@ Grammar(
                 "TypeParamsOwner",
                 "VisibilityOwner",
             ],
-            options: ["ParamList",["body","Block"],"RetType"],
+            options: ["ParamList",["body","BlockExpr"],"RetType"],
         ),
         "RetType":(
             options:["TypeRef"]
@@ -232,12 +232,7 @@ Grammar(
             options: [ "Condition" ]
         ),
         "ForExpr": (
-            traits: ["LoopBodyOwner"],
-            options: [
-                ["init","Expr"],
-                ["cond","Expr"],
-                ["increment", "Expr"],
-            ]
+            traits: ["LoopBodyOwner"]
         ),
         "WhileExpr": (
             traits: ["LoopBodyOwner"],

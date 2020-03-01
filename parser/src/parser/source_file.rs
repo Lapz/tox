@@ -66,7 +66,6 @@ where
         let green = _builder.finish();
 
         let root = SyntaxNode::new_root(green);
-        println!("{:?}", root.text());
 
         SourceFile::cast(root).unwrap()
     }

@@ -1,12 +1,16 @@
 use super::{
-    Expr, ExprId, Name, Param, ParamId, PatId, Span, Stmt, StmtId, TypeParam, TypeParamId,
+    Block, BlockId, Expr, ExprId, NameId, Param, ParamId, PatId, Pattern, Span, Stmt, StmtId,
+    TypeParam, TypeParamId,
 };
 use indexmap::IndexMap;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use syntax::{ast, AstPtr};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Function {
-    pub(crate) name: Name,
+    pub(crate) exported: bool,
+    pub(crate) name: NameId,
     pub(crate) map: FunctionAstMap,
     pub(crate) params: Vec<ParamId>,
     pub(crate) type_params: Vec<TypeParamId>,
@@ -14,8 +18,10 @@ pub struct Function {
     pub(crate) span: Span,
 }
 
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub(crate) struct FunctionAstMap {
+    ast_to_pattern: IndexMap<PatId, AstPtr<ast::Pat>>,
+    hir_to_pattern: IndexMap<PatId, Pattern>,
     hir_to_params: IndexMap<ParamId, Param>,
     ast_to_params: IndexMap<ParamId, AstPtr<ast::Param>>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
@@ -24,6 +30,8 @@ pub(crate) struct FunctionAstMap {
     ast_to_stmt: IndexMap<StmtId, AstPtr<ast::Stmt>>,
     hir_to_expr: IndexMap<ExprId, Expr>,
     ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
+    hir_to_block: IndexMap<BlockId, Block>,
+    ast_to_block: IndexMap<BlockId, AstPtr<ast::Block>>,
 }
 
 impl FunctionAstMap {
@@ -52,8 +60,42 @@ impl FunctionAstMap {
         self.ast_to_expr.insert(id, node);
     }
 
+    pub fn insert_block(&mut self, id: BlockId, block: Block, node: AstPtr<ast::Block>) {
+        self.hir_to_block.insert(id, block);
+        self.ast_to_block.insert(id, node);
+    }
+
+    pub fn insert_pat(&mut self, id: PatId, pat: Pattern, node: AstPtr<ast::Pat>) {
+        self.hir_to_pattern.insert(id, pat);
+        self.ast_to_pattern.insert(id, node);
+    }
+
     pub fn get_expr_ptr(&self, id: ExprId) -> AstPtr<ast::Expr> {
         self.ast_to_expr[&id]
+    }
+
+    pub(crate) fn stmt(&self, id: &StmtId) -> &Stmt {
+        self.hir_to_stmt.get(id).unwrap()
+    }
+
+    pub(crate) fn expr(&self, id: &ExprId) -> &Expr {
+        self.hir_to_expr.get(id).unwrap()
+    }
+
+    pub(crate) fn expr_span(&self, id: &ExprId) -> Span {
+        self.ast_to_expr[id].syntax_node_ptr().range()
+    }
+
+    pub(crate) fn block(&self, id: &BlockId) -> &Block {
+        self.hir_to_block.get(id).unwrap()
+    }
+
+    pub(crate) fn pat(&self, id: &PatId) -> &Pattern {
+        &self.hir_to_pattern[id]
+    }
+
+    pub(crate) fn pattern_span(&self, id: &PatId) -> Span {
+        self.ast_to_pattern[id].syntax_node_ptr().range()
     }
 }
 
@@ -81,3 +123,47 @@ index_data!(FunctionAstMap, hir_to_type_params, TypeParamId, TypeParam);
 index_data!(BodyMap, exprs, ExprId, AstPtr<ast::Expr>);
 index_data!(BodyMap, stmts, StmtId, AstPtr<ast::Stmt>);
 index_data!(BodyMap, pattern, PatId, AstPtr<ast::Pat>);
+
+macro_rules! hash {
+    ($state:expr => $( $field:expr ),*) => {
+        {
+            $(
+            $state.write_u64(
+            $field
+                .values()
+                .map(|kv| {
+                    let mut h = DefaultHasher::new();
+                    kv.hash(&mut h);
+                    h.finish()
+                })
+                .fold(0, u64::wrapping_add),
+            );
+        )*
+        }
+    };
+
+}
+
+impl Hash for FunctionAstMap {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        hash!(state => self.hir_to_params,
+            self.ast_to_type_params,
+            self.hir_to_stmt,
+            self.ast_to_stmt,
+            self.hir_to_expr,
+            self.ast_to_expr,
+            self.hir_to_block,
+            self.ast_to_block
+        )
+    }
+}
+
+impl Function {
+    pub(crate) fn body(&self) -> &Option<Vec<StmtId>> {
+        &self.body
+    }
+
+    pub(crate) fn map(&self) -> &FunctionAstMap {
+        &self.map
+    }
+}

@@ -35,6 +35,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
     pub fn lex(&mut self) -> Vec<Span<Token>> {
         let mut tokens = Vec::new();
 

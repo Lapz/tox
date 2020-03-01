@@ -782,7 +782,7 @@ impl EnumVariantList {
 // Expr
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Expr {
             ArrayExpr(ArrayExpr),
             IdentExpr(IdentExpr),
@@ -1088,7 +1088,7 @@ impl FnDef {
         child_opt(self)
     }
 
-    pub fn body(&self) -> Option<Block> {
+    pub fn body(&self) -> Option<BlockExpr> {
         child_opt(self)
     }
 
@@ -1151,19 +1151,7 @@ impl AstNode for ForExpr {
 
 
 impl traits::LoopBodyOwner for ForExpr {}
-impl ForExpr {
-    pub fn init(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-
-    pub fn cond(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-
-    pub fn increment(&self) -> Option<Expr> {
-        child_opt(self)
-    }
-}
+impl ForExpr {}
 
 // IdentExpr
 
@@ -1706,7 +1694,7 @@ impl ParenType {
 // Pat
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Pat {
             BindPat(BindPat),
             PlaceholderPat(PlaceholderPat),
@@ -1925,7 +1913,7 @@ impl SourceFile {}
 // Stmt
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum Stmt {
             ExprStmt(ExprStmt),
             LetStmt(LetStmt),
@@ -2102,7 +2090,7 @@ impl TypeParamList {
 // TypeRef
 
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
     pub enum TypeRef {
             ParenType(ParenType),
             ArrayType(ArrayType),
