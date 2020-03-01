@@ -1,4 +1,4 @@
-use errors::FileId;
+use errors::{emit, ColorChoice, Config, Diagnostic, FileId, StandardStream};
 use parser::FilesExt;
 use std::default::Default;
 use std::fs::File;
@@ -14,14 +14,23 @@ use std::sync::Arc;
 pub struct DatabaseImpl {
     runtime: salsa::Runtime<DatabaseImpl>,
     files: errors::Files<Arc<str>>,
+    diagnostics: Vec<Diagnostic<FileId>>,
 }
 
 pub(crate) trait Diagnostics {
-    fn emit(&self) -> io::Result<()>;
+    fn emit(&self, diagnostics: &mut Vec<Diagnostic<FileId>>) -> io::Result<()>;
 }
 
 impl Diagnostics for DatabaseImpl {
-    fn emit(&self) -> io::Result<()> {
+    fn emit(&self, diagnostics: &mut Vec<Diagnostic<FileId>>) -> io::Result<()> {
+        let writer = StandardStream::stderr(ColorChoice::Auto);
+        let mut writer = writer.lock();
+        let config = Config::default();
+
+        while let Some(diagnostic) = diagnostics.pop() {
+            emit(&mut writer, &config, &self.files, &diagnostic)?
+        }
+
         Ok(())
     }
 }

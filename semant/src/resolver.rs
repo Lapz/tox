@@ -278,7 +278,7 @@ where
                         .error(msg, "", (span.start().to_usize(), span.end().to_usize()))
                 }
 
-                self.resolve_local(function, ast_map, name, true, span);
+                self.resolve_local(function, name, true, span);
             }
             hir::Expr::Index { base, index } => {
                 self.resolve_expression(function, ast_map, base);
@@ -326,7 +326,6 @@ where
     pub(crate) fn resolve_local(
         &mut self,
         function: hir::NameId,
-        ast_map: &hir::FunctionAstMap,
         name: &hir::NameId,
         is_read: bool,
         span: hir::Span,

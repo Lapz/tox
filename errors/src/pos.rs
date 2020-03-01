@@ -19,7 +19,7 @@ pub struct Position {
     pub absolute: ByteIndex,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Span<T> {
     pub value: T,
     pub start: Position,

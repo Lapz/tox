@@ -278,7 +278,7 @@ where
                 hir::Expr::Cast { expr, ty }
             }
             ast::Expr::RecordLiteralExpr(ref _record_lit) => unimplemented!(),
-            ast::Expr::ClosureExpr(ref closure_expr) => {
+            ast::Expr::ClosureExpr(ref _closure_expr) => {
                 // let args = closure_expr.a
 
                 unimplemented!()
@@ -386,7 +386,7 @@ where
                 let cond = self.lower_expr(while_expr.condition().unwrap().expr().unwrap());
 
                 let loop_body = while_expr.loop_body().unwrap().block().unwrap();
-                let mut block = hir::Block(
+                let block = hir::Block(
                     loop_body
                         .statements()
                         .map(|st| self.lower_stmt(st))

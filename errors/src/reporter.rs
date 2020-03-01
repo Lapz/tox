@@ -1,4 +1,4 @@
-use codespan::{FileId, Files, Span};
+use codespan::{FileId, Files};
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::term::{
     emit,
@@ -23,6 +23,16 @@ impl Reporter {
             file,
             diagnostics: Rc::new(RefCell::new(Vec::new())),
         }
+    }
+
+    pub fn finish(self) -> Vec<Diagnostic<FileId>> {
+        let mut diagnostics = Vec::new();
+
+        while let Some(diagnostic) = self.diagnostics.borrow_mut().pop() {
+            diagnostics.push(diagnostic);
+        }
+
+        diagnostics
     }
 
     pub fn error(
