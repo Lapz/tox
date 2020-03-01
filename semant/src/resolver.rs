@@ -1,8 +1,11 @@
 use crate::db::HirDatabase;
 use crate::hir;
-use errors::Reporter;
+use errors::{FileId, Reporter, WithError};
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 #[derive(Debug)]
 pub(crate) struct ResolverDataCollector<DB> {
@@ -11,13 +14,7 @@ pub(crate) struct ResolverDataCollector<DB> {
     reporter: Reporter,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) enum Level {
-    Global,
-    Block(hir::BlockId),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum State {
     Declared,
     Defined,
@@ -30,7 +27,7 @@ pub(crate) struct Scopes {
     len: usize,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionData {
     scopes: Vec<HashMap<hir::NameId, State>>,
     locals: HashMap<hir::NameId, usize>,
@@ -48,9 +45,9 @@ impl FunctionData {
         self.scopes.len() - 1
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FileTable {
-    symbol_level: HashMap<hir::NameId, Level>,
+    symbol_level: HashSet<hir::NameId>,
     symbol_exports: HashMap<hir::NameId, bool>,
     function_data: HashMap<hir::NameId, FunctionData>,
 }
@@ -59,7 +56,7 @@ impl FileTable {
     pub fn new() -> Self {
         Self {
             symbol_exports: HashMap::default(),
-            symbol_level: HashMap::default(),
+            symbol_level: HashSet::default(),
             function_data: HashMap::default(),
         }
     }
@@ -77,11 +74,11 @@ impl FileTable {
     }
 
     pub fn contains(&self, id: hir::NameId) -> bool {
-        self.symbol_level.contains_key(&id)
+        self.symbol_level.contains(&id)
     }
 
-    pub(crate) fn insert_name(&mut self, id: hir::NameId, level: Level, exported: bool) {
-        self.symbol_level.insert(id, level);
+    pub(crate) fn insert_name(&mut self, id: hir::NameId, exported: bool) {
+        self.symbol_level.insert(id);
         self.symbol_exports.insert(id, exported);
     }
 
@@ -169,13 +166,7 @@ where
         self.table.insert_function_data(id, data);
     }
 
-    pub(crate) fn insert_top_level(
-        &mut self,
-        id: hir::NameId,
-        level: Level,
-        exported: bool,
-        span: hir::Span,
-    ) {
+    pub(crate) fn insert_top_level(&mut self, id: hir::NameId, exported: bool, span: hir::Span) {
         if self.table.contains(id) {
             let name = self.db.lookup_intern_name(id);
             let message = format!("The name `{}` is defined multiple times", name);
@@ -185,7 +176,7 @@ where
                 (span.start().to_usize(), span.end().to_usize()),
             );
         } else {
-            self.table.insert_name(id, level, exported);
+            self.table.insert_name(id, exported);
             self.insert_function_data(id, FunctionData::new());
         }
     }
@@ -380,37 +371,33 @@ where
     }
 }
 
-pub fn resolve_imports(
-    db: &impl HirDatabase,
-    program: Arc<hir::Program>,
-    reporter: Reporter,
-) -> Arc<FileTable> {
+pub fn resolve_imports_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<FileTable>> {
+    let program = db.lower(file)?;
+    let reporter = Reporter::new(file);
     let mut collector = ResolverDataCollector {
         db,
-        reporter,
+        reporter: reporter.clone(),
         table: FileTable::new(),
     };
 
     for function in &program.functions {
-        collector.insert_top_level(
-            function.name,
-            Level::Global,
-            function.exported,
-            function.span,
-        )
+        collector.insert_top_level(function.name, function.exported, function.span)
     }
 
-    Arc::new(collector.table())
+    if reporter.has_errors() {
+        Err(reporter.finish())
+    } else {
+        Ok(Arc::new(collector.table()))
+    }
 }
 
-pub fn resolve_program_query(
-    db: &impl HirDatabase,
-    program: Arc<hir::Program>,
-    reporter: Reporter,
-) -> () {
+pub fn resolve_program_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
+    let program = db.lower(file)?;
+    let reporter = Reporter::new(file);
+
     let mut collector = ResolverDataCollector {
         db,
-        reporter,
+        reporter: reporter.clone(),
         table: FileTable::new(),
     };
 
@@ -418,12 +405,7 @@ pub fn resolve_program_query(
     // use forward declarations
 
     for function in &program.functions {
-        collector.insert_top_level(
-            function.name,
-            Level::Global,
-            function.exported,
-            function.span,
-        )
+        collector.insert_top_level(function.name, function.exported, function.span)
     }
 
     for function in &program.functions {
@@ -436,7 +418,11 @@ pub fn resolve_program_query(
         for statement in function.body().as_ref().unwrap() {
             collector.resolve_statement(function.name, ast_map, statement)
         }
+    }
 
-        // let block = db.lookup_intern_block()
+    if reporter.has_errors() {
+        Err(reporter.finish())
+    } else {
+        Ok(())
     }
 }

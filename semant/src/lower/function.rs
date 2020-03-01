@@ -413,7 +413,7 @@ where
 
 pub(crate) fn lower_function_query(
     db: &impl HirDatabase,
-    function: ast::FnDef,
+    fun_id: hir::FunctionId,
 ) -> Arc<hir::Function> {
     let mut collector = FunctionDataCollector {
         db,
@@ -427,6 +427,8 @@ pub(crate) fn lower_function_query(
         type_params: Vec::new(),
         ast_map: hir::FunctionAstMap::default(),
     };
+
+    let function = db.lookup_intern_function(fun_id);
 
     let exported = function.visibility().is_some();
 

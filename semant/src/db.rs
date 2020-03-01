@@ -1,5 +1,6 @@
-use crate::hir;
-
+use crate::{hir, resolver::FileTable};
+use errors::{FileId, WithError};
+use parser::ParseDatabase;
 use salsa;
 use std::sync::Arc;
 use syntax::ast;
@@ -29,13 +30,15 @@ pub trait InternDatabase {
 }
 
 #[salsa::query_group(HirDatabaseStorage)]
-pub trait HirDatabase: std::fmt::Debug + InternDatabase {
+pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
     #[salsa::invoke(crate::lower::lower_function_query)]
-    fn lower_function(&self, function: ast::FnDef) -> Arc<hir::Function>;
+    fn lower_function(&self, function: hir::FunctionId) -> Arc<hir::Function>;
     #[salsa::invoke(crate::lower::lower_type_alias_query)]
-    fn lower_type_alias(&self, alias: ast::TypeAliasDef) -> Arc<hir::TypeAlias>;
-    #[salsa::invoke(crate::lower::lower_ast_query)]
-    fn lower_ast(&self, source: ast::SourceFile) -> Arc<hir::Program>;
+    fn lower_type_alias(&self, alias: hir::TypeAliasId) -> Arc<hir::TypeAlias>;
+    #[salsa::invoke(crate::lower::lower_query)]
+    fn lower(&self, file: FileId) -> WithError<Arc<hir::Program>>;
+    #[salsa::invoke(crate::resolver::resolve_imports_query)]
+    fn resolve_imports(&self, file: FileId) -> WithError<Arc<FileTable>>;
     #[salsa::invoke(crate::resolver::resolve_program_query)]
-    fn resolve_program(&self, program: Arc<hir::Program>, reporter: errors::Reporter) -> ();
+    fn resolve_program(&self, file: FileId) -> WithError<()>;
 }

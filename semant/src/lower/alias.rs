@@ -3,9 +3,7 @@ use crate::hir;
 
 use std::sync::Arc;
 
-use syntax::{
-    ast, AstNode, AstPtr, NameOwner, TypeParamsOwner, TypesOwner,
-};
+use syntax::{ast, AstNode, AstPtr, NameOwner, TypeParamsOwner, TypesOwner};
 #[derive(Debug)]
 pub(crate) struct TypeAliasDataCollector<DB> {
     db: DB,
@@ -85,8 +83,9 @@ where
 }
 pub(crate) fn lower_type_alias_query(
     db: &impl HirDatabase,
-    alias: ast::TypeAliasDef,
+    alias_id: hir::TypeAliasId,
 ) -> Arc<hir::TypeAlias> {
+    let alias = db.lookup_intern_type_alias(alias_id);
     let name = alias.name().unwrap().into();
     let mut collector = TypeAliasDataCollector {
         db,
