@@ -1,10 +1,7 @@
 use crate::AstNode;
 #[cfg(test)]
-use crate::{Parser, Span, Token};
-#[cfg(test)]
-use std::sync::Arc;
-#[cfg(test)]
-use std::vec::IntoIter;
+use crate::Parser;
+
 #[cfg(test)]
 use syntax::{ast::SourceFile, Lexer};
 

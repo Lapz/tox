@@ -72,7 +72,7 @@ impl ast::IndexExpr {
 
 impl ast::IfExpr {
     pub fn then_branch(&self) -> Option<ast::BlockExpr> {
-        self.blocks().nth(0)
+        self.blocks().next()
     }
     pub fn else_branch(&self) -> Option<ElseBranch> {
         let res = match self.blocks().nth(1) {

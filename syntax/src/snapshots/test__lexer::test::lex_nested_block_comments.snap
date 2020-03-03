@@ -1,5 +1,5 @@
 ---
-created: "2020-02-03T20:27:01.173621Z"
+created: "2020-03-03T19:49:23.986125Z"
 creator: insta@0.8.2
 source: syntax/src/lexer.rs
 expression: tokens
@@ -14,6 +14,22 @@ expression: tokens
             column: 1,
             line: 1,
             absolute: 0,
+        },
+        end: Position {
+            column: 36,
+            line: 1,
+            absolute: 35,
+        },
+    },
+    Span {
+        value: Token {
+            kind: EOF,
+            len: 1,
+        },
+        start: Position {
+            column: 36,
+            line: 1,
+            absolute: 35,
         },
         end: Position {
             column: 36,

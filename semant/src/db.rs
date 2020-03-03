@@ -1,7 +1,7 @@
 use crate::{hir, resolver::FileTable};
 use errors::{FileId, WithError};
 use parser::ParseDatabase;
-use salsa;
+
 use std::sync::Arc;
 use syntax::ast;
 

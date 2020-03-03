@@ -1,7 +1,7 @@
 use errors::pos::Span;
 use errors::FileId;
 use errors::WithError;
-use salsa;
+
 use std::path::PathBuf;
 use std::sync::Arc;
 use syntax::ast::SourceFile;
