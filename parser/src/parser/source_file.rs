@@ -3,7 +3,7 @@ use crate::parser::Parser;
 use rowan::GreenNodeBuilder;
 use syntax::T;
 
-use crate::{AstNode, Span, SyntaxKind::*, SyntaxNode, Token};
+use crate::{AstNode, SyntaxKind::*, SyntaxNode};
 
 impl<'a> Parser<'a> {
     pub fn parse_program(&mut self) -> SourceFile {

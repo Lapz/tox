@@ -1,8 +1,4 @@
-use crate::{
-    Span,
-    SyntaxKind::{self, *},
-    Token,
-};
+use crate::SyntaxKind::{self, *};
 use std::any::Any;
 use std::fmt::Debug;
 use syntax::T;
