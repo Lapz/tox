@@ -1,25 +1,18 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::Parser;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    pub(crate) fn parse_enum(&mut self, has_visibility: bool) {
-        self.start_node(ENUM_DEF);
-
-        if has_visibility {
-            self.parse_visibility();
-        }
+impl<'a> Parser<'a> {
+    pub(crate) fn parse_enum(&mut self, checkpoint: rowan::Checkpoint) {
+        self.start_node_at(checkpoint, ENUM_DEF);
 
         self.expect(T![enum], "Expected `enum`");
 
         self.ident();
 
-        if self.is_ahead(|t| t == T![<]) {
+        if self.at(T![<]) {
             self.parse_type_params(false);
         }
 
@@ -50,7 +43,7 @@ where
 
         self.ident();
 
-        if self.is_ahead(|t| t == T!["("]) {
+        if self.at(T!["("]) {
             self.parse_enum_variant_types()
         }
 

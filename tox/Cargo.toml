@@ -6,13 +6,11 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-codespan = "0.3.0"
-itertools= "*"
-rowan ="*"
-teraron = "0.1.0"
+salsa ="^0.14.1"
 structopt = "0.3"
 syntax={path="../syntax",version="*"}
 errors= {path="../errors",version="*"}
 parser={path="../parser",version="*"}
+semant = {path="../semant"}
 [dev-dependencies]
 insta = "0.8.2"

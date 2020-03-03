@@ -1,14 +1,11 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::pratt::{InfixParser, Precedence};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_op(&mut self) {
         match self.current() {
             T![-]
@@ -21,6 +18,7 @@ where
             |T![>]
             // | T![^]
             // | T![%]
+            | T![=]
             | T![==]
             | T![!]
             | T![!=]
@@ -37,20 +35,17 @@ where
 #[derive(Debug)]
 pub struct BinaryParselet(pub Precedence);
 
-impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for BinaryParselet {
+impl InfixParser for BinaryParselet {
     fn pred(&self) -> Precedence {
         self.0
     }
 
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+    fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, BIN_EXPR);
 
         parser.parse_op();
 
-        parser.parse_expression(self.0.higher());
+        parser.parse_expression(self.0.higher(), Restrictions::default());
 
         parser.finish_node();
     }
@@ -60,4 +55,6 @@ impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for BinaryParselet {
 mod test {
     test_parser! {parse_bin_expr,"fn main() {1+1;}"}
     test_parser! {parse_wrapped_bin_expr_literal,"fn main() {1.0+2.0+2.0;}"}
+    test_parser! {parse_assign_bin_expr_,"fn main() {x=10;x+=10;x-=10;x/=10;x*=10;}"}
+    test_parser! {parse_chained_assign_bin_expr_,"fn main() {x=10=10=2=3;}"}
 }

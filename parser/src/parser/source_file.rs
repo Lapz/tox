@@ -1,14 +1,11 @@
 use crate::ast::*;
 use crate::parser::Parser;
-use crate::T;
 use rowan::GreenNodeBuilder;
+use syntax::T;
 
-use crate::{AstNode, Span, SyntaxKind::*, SyntaxNode, Token};
+use crate::{AstNode, SyntaxKind::*, SyntaxNode};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub fn parse_program(&mut self) -> SourceFile {
         self.start_node(SOURCE_FILE);
 
@@ -16,21 +13,37 @@ where
             let has_visibility = self.has_visibility();
 
             if has_visibility {
-                match self.peek() {
-                    T![type] => self.parse_type_alias(has_visibility),
-                    T![fn] => self.parse_function(has_visibility),
-                    T![enum] => self.parse_enum(has_visibility),
-                    T![class] => self.parse_class(has_visibility),
+                let checkpoint = self.checkpoint();
+                self.parse_visibility();
+
+                match self.current() {
+                    T![type] => self.parse_type_alias(checkpoint),
+                    T![fn] => {
+                        self.parse_function(checkpoint);
+                    }
+                    T![enum] => self.parse_enum(checkpoint),
+                    T![class] => self.parse_class(checkpoint),
+                    T!["//"] => {
+                        self.bump();
+                        continue;
+                    }
                     _ => {
                         self.recover();
                     }
                 }
             } else {
+                let checkpoint = self.checkpoint();
                 match self.current() {
-                    T![type] => self.parse_type_alias(has_visibility),
-                    T![fn] => self.parse_function(has_visibility),
-                    T![enum] => self.parse_enum(has_visibility),
-                    T![class] => self.parse_class(has_visibility),
+                    T![type] => self.parse_type_alias(checkpoint),
+                    T![fn] => {
+                        self.parse_function(checkpoint);
+                    }
+                    T![enum] => self.parse_enum(checkpoint),
+                    T![class] => self.parse_class(checkpoint),
+                    T!["//"] => {
+                        self.bump();
+                        continue;
+                    }
                     _ => {
                         self.recover();
                     }
@@ -48,14 +61,10 @@ where
 
         let root = SyntaxNode::new_root(green);
 
-        // println!("{:?}", FnDef::cast(root).unwrap().syntax().text());
-
-        // unimplemented!()
-
         SourceFile::cast(root).unwrap()
     }
 
-    pub(crate) fn has_visibility(&self) -> bool {
+    pub(crate) fn has_visibility(&mut self) -> bool {
         match self.current() {
             T![export] => true,
             _ => false,

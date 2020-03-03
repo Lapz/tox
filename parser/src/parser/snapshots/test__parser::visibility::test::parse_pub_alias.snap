@@ -1,0 +1,20 @@
+---
+created: "2020-03-03T19:30:54.666414Z"
+creator: insta@0.8.2
+source: parser/src/parser/visibility.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 20)
+  TYPE_ALIAS_DEF@[0; 20)
+    VISIBILITY@[0; 7)
+      EXPORT_KW@[0; 6) "export"
+      WHITESPACE@[6; 7) " "
+    TYPE_KW@[7; 11) "type"
+    WHITESPACE@[11; 12) " "
+    NAME@[12; 15)
+      IDENT@[12; 15) "Foo"
+    EQ@[15; 16) "="
+    IDENT_TYPE@[16; 19)
+      IDENT@[16; 19) "i32"
+    SEMI@[19; 20) ";"
+

@@ -1,0 +1,32 @@
+---
+created: "2020-03-01T23:46:21.246201Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/ident.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 19)
+  FN_DEF@[0; 19)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    BLOCK_EXPR@[9; 19)
+      BLOCK@[9; 19)
+        L_CURLY@[9; 10) "{"
+        EXPR_STMT@[10; 17)
+          IDENT_EXPR@[10; 17)
+            NAME@[10; 17)
+              IDENT@[10; 11) "a"
+              COLON_COLON@[11; 12) ":"
+              TYPE_PARAM_LIST@[12; 17)
+                L_ANGLE@[12; 13) "<"
+                TYPE_PARAM@[13; 16)
+                  IDENT_TYPE@[13; 16)
+                    IDENT@[13; 16) "i32"
+                R_ANGLE@[16; 17) ">"
+        SEMI@[17; 18) ";"
+        R_CURLY@[18; 19) "}"
+

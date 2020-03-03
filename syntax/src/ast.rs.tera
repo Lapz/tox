@@ -25,13 +25,13 @@ pub enum SyntaxKind {
     EOF,
 
 {%- for t in concat(a=single_byte_tokens, b=multi_byte_tokens) %}
-    {{t.1}}, // {{t.0}}
+    {{t.1}}, // {{t.0}} {{loop.index0}}
 {%- endfor -%}
 {% for kw in concat(a=keywords) %}
-    {{kw | upper}}_KW, // {{kw}}
+    {{kw | upper}}_KW, // {{kw}} {{loop.index0 + 38 }}
 {%- endfor -%}
 {% for t in concat(a=literals, b=tokens, c=nodes) %}
-    {{t}},
+    {{t}}, // {{loop.index0 + 63 }}
 {%- endfor %}
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
@@ -39,7 +39,7 @@ pub enum SyntaxKind {
 }
 
 
-impl From<SyntaxKind> for rowan::cursor::SyntaxKind {
+impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         Self(kind as u16)
     }
@@ -63,10 +63,19 @@ impl SyntaxKind {
             _ => ""
         }
     }
+
+    pub fn is_trivia(&self) -> bool {
+        use SyntaxKind::*;
+        match self {
+            COMMENT | WHITESPACE => true,
+            _ => false,
+        }
+    }
 }
 
 {% for node, methods in ast %}
 // {{ node }}
+{% if not methods.enum%}
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct {{ node }} {
     pub(crate) syntax: SyntaxNode,
@@ -88,28 +97,48 @@ impl AstNode for {{ node }} {
     }
     fn syntax(&self) -> &SyntaxNode { &self.syntax }
 }
-
+{% endif%}
 {% if methods.enum %}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum {{ node }}Kind {
-{%- for kind in methods.enum %}
-    {{ kind }}({{ kind }}),
-{%- endfor %}
-}
+    #[derive(Debug, Clone, PartialEq, Eq,Hash)]
+    pub enum {{ node }} {
+        {%- for kind in methods.enum %}
+            {{ kind }}({{ kind }}),
+        {%- endfor %}
+    }
 
-{%- for kind in methods.enum %}
-impl From<{{ kind }}> for {{ node }} {
-    fn from(n: {{ kind }}) -> {{ node }} { {{ node }} { syntax: n.syntax } }
-}
-{%- endfor %}
-impl {{ node }} {
-    pub fn kind(&self) -> {{ node }}Kind {
-        match self.syntax.kind() {
-            {%- for kind in methods.enum %}
-            {{ kind | SCREAM }} => {{ node }}Kind::{{ kind }}({{ kind }}::cast(self.syntax.clone()).unwrap()),
-            {%- endfor %}
-            _ => unreachable!(),
+    {%- for kind in methods.enum %}
+        impl From<{{ kind }}> for {{ node }} {
+            fn from(n: {{ kind }}) -> {{ node }} { 
+                {{ node }}::{{kind}}(n)
+            }
         }
+    {%- endfor %}
+impl AstNode for {{ node }} {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            {%- if methods.enum %}
+            {% for kind in methods.enum %} | {{ kind | SCREAM }} {%- endfor -%}
+            {% else %}
+            {{ node | SCREAM }}
+            {%- endif %} => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            {% for kind in methods.enum %} 
+            | {{ kind | SCREAM }}  => Some({{node}}::{{kind}}({{kind}} {syntax})),
+            {%- endfor -%}
+            _ => None
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {  
+        match self {
+            {% for kind in methods.enum %} 
+                {{node}}::{{ kind}}(kind)  => &kind.syntax,
+            {%- endfor -%}
+        }
+    
     }
 }
 {% endif %}

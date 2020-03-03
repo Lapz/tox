@@ -1,32 +1,29 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::pratt::{Precedence, PrefixParser};
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 #[derive(Debug)]
 pub struct GroupingParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for GroupingParselet {
+    fn parse(&self, parser: &mut Parser) {
         let checkpoint = parser.checkpoint();
 
         let mut seen_comma = false;
 
         parser.bump(); // Eats the `(`
 
-        parser.parse_expression(Precedence::Assignment);
+        parser.parse_expression(Precedence::Assignment, Restrictions::default());
 
         if parser.at(T![,]) {
             seen_comma = true;
             parser.bump();
 
             while !parser.at(EOF) && !parser.at(T![")"]) {
-                parser.parse_expression(Precedence::Assignment);
+                parser.parse_expression(Precedence::Assignment, Restrictions::default());
                 if !parser.at(T![")"]) && !parser.expected(T![,]) {
                     break;
                 }

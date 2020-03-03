@@ -1,12 +1,10 @@
-use crate::parser::Parser;
+use crate::parser::{Parser, Precedence, Restrictions};
+use crate::SyntaxKind::*;
+use syntax::T;
 
-use crate::{Span, SyntaxKind::*, Token};
-
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_type(&mut self) {
+        self.eat_trivias();
         match self.current() {
             IDENT | T![self] => self.parse_ident_type(),
             T!["["] => self.parse_array_type(),
@@ -37,7 +35,7 @@ where
             )
         }
 
-        if self.is_ahead(|t| t == T![<]) {
+        if self.at(T![<]) {
             self.parse_type_params(false);
         }
 
@@ -49,6 +47,11 @@ where
         self.bump(); //Eat `[`
 
         self.parse_type();
+
+        if self.at(T![;]) {
+            self.bump();
+            self.parse_expression(Precedence::Primary, Restrictions::default())
+        }
 
         self.expect(T!["]"], "Expected `]`");
 
@@ -73,7 +76,8 @@ where
 
     fn parse_fn_type(&mut self) {
         self.start_node(FN_TYPE);
-        self.bump(); //Eat `fn`
+
+        self.expect(T![fn], "Expected `fn`");
 
         self.expect(T!["("], "Expected `(`");
 
@@ -86,10 +90,11 @@ where
 
         self.expect(T![")"], "Expected `)`");
 
-        if self.is_ahead(|t| t == T![->]) {
+        if self.at(T![->]) {
+            self.start_node(RET_TYPE);
             self.bump();
-
             self.parse_type();
+            self.finish_node();
         }
 
         self.finish_node();

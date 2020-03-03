@@ -1,33 +1,36 @@
 ---
-created: "2019-09-04T08:32:25.881384Z"
+created: "2020-03-03T19:30:54.465045Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/grouping.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 19)
-  FN_DEF@[0; 19)
+SOURCE_FILE@[0; 21)
+  FN_DEF@[0; 21)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
-    BLOCK@[8; 19)
-      L_CURLY@[8; 9) "{"
-      EXPR_STMT@[9; 17)
-        PAREN_EXPR@[9; 17)
-          L_PAREN@[9; 10) "("
-          BIN_EXPR@[10; 16)
-            BIN_EXPR@[10; 14)
-              LITERAL@[10; 11)
-                INT_NUMBER@[10; 11) "1"
-              PLUS@[11; 12) "+"
-              LITERAL@[12; 14)
-                INT_NUMBER@[12; 14) "10"
-            MINUS@[14; 15) "-"
-            LITERAL@[15; 16)
-              INT_NUMBER@[15; 16) "1"
-          R_PAREN@[16; 17) ")"
-      SEMI@[17; 18) ";"
-      R_CURLY@[18; 19) "}"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 10)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+      WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 21)
+      BLOCK@[10; 21)
+        L_CURLY@[10; 11) "{"
+        EXPR_STMT@[11; 19)
+          PAREN_EXPR@[11; 19)
+            L_PAREN@[11; 12) "("
+            BIN_EXPR@[12; 18)
+              BIN_EXPR@[12; 16)
+                LITERAL@[12; 13)
+                  INT_NUMBER@[12; 13) "1"
+                PLUS@[13; 14) "+"
+                LITERAL@[14; 16)
+                  INT_NUMBER@[14; 16) "10"
+              MINUS@[16; 17) "-"
+              LITERAL@[17; 18)
+                INT_NUMBER@[17; 18) "1"
+            R_PAREN@[18; 19) ")"
+        SEMI@[19; 20) ";"
+        R_CURLY@[20; 21) "}"
 

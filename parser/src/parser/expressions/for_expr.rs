@@ -1,15 +1,9 @@
-use crate::T;
+use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Precedence, Restrictions};
+use crate::SyntaxKind::*;
 
-use crate::{Span, SyntaxKind::*, Token};
-
-use crate::parser::Precedence;
-
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_for_expr(&mut self) {
         self.start_node(FOR_EXPR);
 
@@ -21,23 +15,24 @@ where
             self.bump()
         } else if self.at(T![let]) {
             self.parse_let_expr();
+            self.expect(T![;], "Expected `;`");
         } else {
-            self.parse_expression(Precedence::Assignment);
+            self.parse_expression(Precedence::Assignment, Restrictions::default());
             self.expect(T![;], "Expected `;`");
         }
 
         if self.at(T![;]) {
             self.bump()
         } else {
-            self.parse_expression(Precedence::Comparison);
+            self.parse_expression(Precedence::Comparison, Restrictions::default());
             self.expect(T![;], "Expected `;`");
         }
 
         if self.at(T![;]) {
-            self.bump()
+            self.bump();
+        } else if self.at(T![")"]) {
         } else {
-            self.parse_expression(Precedence::Assignment);
-            self.expect(T![;], "Expected `;`");
+            self.parse_expression(Precedence::Assignment, Restrictions::default());
         }
 
         self.expect(T![")"], "Expect `)`");
@@ -50,4 +45,13 @@ where
 
 mod test {
     test_parser! {parse_empty_for_expr,"fn main() {for(;;;) {}}"}
+    test_parser! {parse_for_expr,"
+                    fn main() {
+                        for(let x = 10; x< 10; x=x+1) {
+                            println(\"it works \")
+                        };}"
+    }
+    test_parser! {parse_for_no_incr,"fn main() { for (let x=10;x<10;;){};}"}
+    test_parser! {parse_for_no_cond,"fn main() { for (let x=10;;x+=10){};}"}
+    test_parser! {parse_for_no_init,"fn main() { for (;x<10;x+=10){};}"}
 }

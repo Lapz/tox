@@ -1,4 +1,3 @@
-use codespan::{self};
 use itertools::multipeek;
 use itertools::structs::MultiPeek;
 use std::str::Chars;
@@ -20,7 +19,7 @@ pub struct Position {
     pub absolute: ByteIndex,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span<T> {
     pub value: T,
     pub start: Position,
@@ -74,5 +73,17 @@ impl<'a> Iterator for CharPosition<'a> {
             self.pos = self.pos.shift(ch);
             (pos, ch)
         })
+    }
+}
+
+impl Into<u32> for Position {
+    fn into(self) -> u32 {
+        self.absolute
+    }
+}
+
+impl Into<usize> for Position {
+    fn into(self) -> usize {
+        self.absolute as usize
     }
 }

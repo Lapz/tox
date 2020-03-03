@@ -1,17 +1,12 @@
 use crate::parser::Parser;
-use crate::T;
+use syntax::T;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_visibility(&mut self) {
         self.start_node(VISIBILITY);
-
         self.expect(T![export], "Expected `export`");
-
         self.finish_node();
     }
 }
@@ -22,20 +17,23 @@ mod test {
     use syntax::{FnDefOwner, VisibilityOwner};
     #[test]
     fn test_visibility() {
-        let source_file = parse("export fn main(){}").parse_program();
+        let source_file = parse("export fn main(){}");
 
-        let func = source_file.functions().nth(0).unwrap();
+        let func = source_file.functions().next().unwrap();
 
         assert!(func.visibility().is_some())
     }
     #[test]
     fn test_visibility_not_present() {
-        let source_file = parse("fn main(){}").parse_program();
+        let source_file = parse("fn main(){}");
 
-        let func = source_file.functions().nth(0).unwrap();
+        let func = source_file.functions().next().unwrap();
 
         assert!(func.visibility().is_none())
     }
 
     test_parser! {parse_pub_function,"export fn main() {}"}
+    test_parser! {parse_pub_alias,"export type Foo=i32;"}
+    test_parser! {parse_pub_enum,"export enum Bar{};"}
+    test_parser! {parse_pub_class,"export class Foo{ bar:string;};"}
 }

@@ -95,6 +95,13 @@ impl<N: AstNode> AstPtr<N> {
         }
     }
 
+    pub fn from_ptr(ptr: SyntaxNodePtr) -> AstPtr<N> {
+        AstPtr {
+            raw: ptr,
+            _ty: PhantomData,
+        }
+    }
+
     pub fn to_node(self, root: &SyntaxNode) -> N {
         let syntax_node = self.raw.to_node(root);
         N::cast(syntax_node).unwrap()
@@ -148,8 +155,21 @@ pub fn child_opt<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> Option<C> {
     children(parent).next()
 }
 
+pub fn child<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> C {
+    children(parent).next().unwrap()
+}
+
 pub fn children<P: AstNode + ?Sized, C: AstNode>(parent: &P) -> AstChildren<C> {
     AstChildren::new(parent.syntax())
+}
+
+pub fn text_of_first_token(node: &SyntaxNode) -> &SmolStr {
+    node.green()
+        .children()
+        .next()
+        .and_then(|it| it.into_token())
+        .unwrap()
+        .text()
 }
 
 pub trait TypeAscriptionOwner: AstNode {
@@ -171,7 +191,7 @@ pub trait VisibilityOwner: AstNode {
 }
 
 pub trait LoopBodyOwner: AstNode {
-    fn loop_body(&self) -> Option<ast::Block> {
+    fn loop_body(&self) -> Option<ast::BlockExpr> {
         child_opt(self)
     }
 }
@@ -220,5 +240,11 @@ pub trait ExternImportDefOwner: AstNode {
 pub trait TypeParamsOwner: AstNode {
     fn type_param_list(&self) -> Option<ast::TypeParamList> {
         child_opt(self)
+    }
+}
+
+pub trait TypesOwner: AstNode {
+    fn types(&self) -> AstChildren<ast::TypeRef> {
+        children(self)
     }
 }

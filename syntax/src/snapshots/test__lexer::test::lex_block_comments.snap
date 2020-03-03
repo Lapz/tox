@@ -1,0 +1,104 @@
+---
+created: "2020-03-03T19:49:23.986614Z"
+creator: insta@0.8.2
+source: syntax/src/lexer.rs
+expression: tokens
+---
+[
+    Span {
+        value: Token {
+            kind: INT_NUMBER,
+            len: 2,
+        },
+        start: Position {
+            column: 1,
+            line: 1,
+            absolute: 0,
+        },
+        end: Position {
+            column: 3,
+            line: 1,
+            absolute: 2,
+        },
+    },
+    Span {
+        value: Token {
+            kind: WHITESPACE,
+            len: 1,
+        },
+        start: Position {
+            column: 3,
+            line: 1,
+            absolute: 2,
+        },
+        end: Position {
+            column: 4,
+            line: 1,
+            absolute: 3,
+        },
+    },
+    Span {
+        value: Token {
+            kind: COMMENT,
+            len: 22,
+        },
+        start: Position {
+            column: 4,
+            line: 1,
+            absolute: 3,
+        },
+        end: Position {
+            column: 26,
+            line: 1,
+            absolute: 25,
+        },
+    },
+    Span {
+        value: Token {
+            kind: WHITESPACE,
+            len: 1,
+        },
+        start: Position {
+            column: 26,
+            line: 1,
+            absolute: 25,
+        },
+        end: Position {
+            column: 27,
+            line: 1,
+            absolute: 26,
+        },
+    },
+    Span {
+        value: Token {
+            kind: INT_NUMBER,
+            len: 2,
+        },
+        start: Position {
+            column: 27,
+            line: 1,
+            absolute: 26,
+        },
+        end: Position {
+            column: 29,
+            line: 1,
+            absolute: 28,
+        },
+    },
+    Span {
+        value: Token {
+            kind: EOF,
+            len: 1,
+        },
+        start: Position {
+            column: 29,
+            line: 1,
+            absolute: 28,
+        },
+        end: Position {
+            column: 29,
+            line: 1,
+            absolute: 28,
+        },
+    },
+]

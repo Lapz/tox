@@ -1,0 +1,69 @@
+---
+created: "2020-03-03T19:30:54.421710Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/closure_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 82)
+  FN_DEF@[0; 82)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 10)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+      WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 82)
+      BLOCK@[10; 82)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 20) "\n        "
+        LET_STMT@[20; 81)
+          LET_KW@[20; 23) "let"
+          WHITESPACE@[23; 24) " "
+          BIND_PAT@[24; 26)
+            NAME@[24; 26)
+              IDENT@[24; 25) "a"
+              WHITESPACE@[25; 26) " "
+          EQ@[26; 27) "="
+          WHITESPACE@[27; 28) " "
+          CLOSURE_EXPR@[28; 81)
+            PIPE@[28; 29) "|"
+            PARAM@[29; 30)
+              BIND_PAT@[29; 30)
+                NAME@[29; 30)
+                  IDENT@[29; 30) "x"
+            COMMA@[30; 31) ","
+            PARAM@[31; 32)
+              BIND_PAT@[31; 32)
+                NAME@[31; 32)
+                  IDENT@[31; 32) "y"
+            PIPE@[32; 33) "|"
+            WHITESPACE@[33; 34) " "
+            FRETURN@[34; 35) "-"
+            WHITESPACE@[35; 36) " "
+            IDENT_TYPE@[36; 40)
+              IDENT@[36; 39) "i32"
+              WHITESPACE@[39; 40) " "
+            BLOCK_EXPR@[40; 81)
+              BLOCK@[40; 81)
+                L_CURLY@[40; 41) "{"
+                WHITESPACE@[41; 54) "\n            "
+                EXPR_STMT@[54; 64)
+                  RETURN_EXPR@[54; 64)
+                    RETURN_KW@[54; 60) "return"
+                    WHITESPACE@[60; 61) " "
+                    BIN_EXPR@[61; 64)
+                      IDENT_EXPR@[61; 62)
+                        NAME@[61; 62)
+                          IDENT@[61; 62) "x"
+                      PLUS@[62; 63) "+"
+                      IDENT_EXPR@[63; 64)
+                        NAME@[63; 64)
+                          IDENT@[63; 64) "y"
+                SEMI@[64; 65) ";"
+                WHITESPACE@[65; 75) " \n        "
+                R_CURLY@[75; 76) "}"
+                WHITESPACE@[76; 81) "\n    "
+        R_CURLY@[81; 82) "}"
+

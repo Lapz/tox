@@ -1,35 +1,45 @@
 ---
-created: "2019-08-25T20:39:32.378422Z"
+created: "2020-03-03T19:30:54.508704Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/let_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 30)
-  FN_DEF@[0; 30)
+SOURCE_FILE@[0; 39)
+  FN_DEF@[0; 39)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
-    BLOCK@[8; 30)
-      L_CURLY@[8; 9) "{"
-      LET_STMT@[9; 18)
-        LET_KW@[9; 12) "let"
-        BIND_PAT@[12; 15)
-          NAME@[12; 15)
-            IDENT@[12; 15) "foo"
-        EQ@[15; 16) "="
-        LITERAL@[16; 18)
-          INT_NUMBER@[16; 18) "10"
-      SEMI@[18; 19) ";"
-      LET_STMT@[19; 29)
-        LET_KW@[19; 22) "let"
-        BIND_PAT@[22; 25)
-          NAME@[22; 25)
-            IDENT@[22; 25) "bar"
-        EQ@[25; 26) "="
-        LITERAL@[26; 29)
-          STRING@[26; 29) "\"a\""
-      R_CURLY@[29; 30) "}"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 10)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+      WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 39)
+      BLOCK@[10; 39)
+        L_CURLY@[10; 11) "{"
+        LET_STMT@[11; 23)
+          LET_KW@[11; 14) "let"
+          WHITESPACE@[14; 15) " "
+          BIND_PAT@[15; 19)
+            NAME@[15; 19)
+              IDENT@[15; 18) "foo"
+              WHITESPACE@[18; 19) " "
+          EQ@[19; 20) "="
+          WHITESPACE@[20; 21) " "
+          LITERAL@[21; 23)
+            INT_NUMBER@[21; 23) "10"
+        SEMI@[23; 24) ";"
+        WHITESPACE@[24; 25) " "
+        LET_STMT@[25; 38)
+          LET_KW@[25; 28) "let"
+          WHITESPACE@[28; 29) " "
+          BIND_PAT@[29; 33)
+            NAME@[29; 33)
+              IDENT@[29; 32) "bar"
+              WHITESPACE@[32; 33) " "
+          EQ@[33; 34) "="
+          WHITESPACE@[34; 35) " "
+          LITERAL@[35; 38)
+            STRING@[35; 38) "\"a\""
+        R_CURLY@[38; 39) "}"
 

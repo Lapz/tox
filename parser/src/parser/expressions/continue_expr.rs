@@ -1,13 +1,10 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::Parser;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_continue_expr(&mut self) {
         self.start_node(CONTINUE_EXPR);
 

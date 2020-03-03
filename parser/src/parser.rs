@@ -5,8 +5,8 @@ mod function;
 mod params;
 mod pattern;
 mod pratt;
+mod restrictions;
 mod source_file;
-
 mod type_alias;
 mod type_params;
 mod types;
@@ -14,41 +14,47 @@ mod visibility;
 use crate::Span;
 use errors::{pos::Position, Reporter};
 use pratt::{InfixParser, Precedence, PrefixParser, Rule as _, RuleToken};
-use rowan::GreenNodeBuilder;
-use std::collections::{HashMap, VecDeque};
-use std::iter::Peekable;
+use restrictions::Restrictions;
+use rowan::{GreenNodeBuilder, TextRange, TextUnit};
+use std::collections::HashMap;
+use std::mem::replace;
 use syntax::{
     SyntaxKind::{self, *},
-    Token,
+    Token, T,
 };
-pub struct Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    input: &'a str,
-    pub builder: GreenNodeBuilder,
-    pub past_tokens: VecDeque<Span<Token>>,
-    reporter: Reporter,
-    lookahead: Option<Span<Token>>,
-    iter: Peekable<I>,
-    prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
-    infix: HashMap<RuleToken, &'a dyn InfixParser<I>>,
+
+#[derive(Debug)]
+enum State {
+    PendingStart,
+    Normal,
+    PendingFinish,
 }
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    pub fn new(iter: I, reporter: Reporter, input: &'a str) -> Self {
-        let mut iter = iter.peekable();
+pub struct Parser<'a> {
+    input: &'a str,
+    current: &'a Span<Token>,
+    state: State,
+    pub builder: GreenNodeBuilder<'static>,
+    reporter: Reporter,
+    text_pos: TextUnit,
+    tokens: &'a [Span<Token>],
+    token_pos: usize,
+    prefix: HashMap<RuleToken, &'a dyn PrefixParser>,
+    infix: HashMap<RuleToken, &'a dyn InfixParser>,
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a [Span<Token>], reporter: Reporter, input: &'a str) -> Self {
         let mut parser = Parser {
-            lookahead: iter.next(),
+            current: &tokens[0],
+            tokens,
+            state: State::PendingStart,
+            token_pos: 0,
+            text_pos: 0.into(),
             builder: GreenNodeBuilder::new(),
-            past_tokens: VecDeque::new(),
             prefix: HashMap::new(),
             infix: HashMap::new(),
             reporter,
-            iter,
             input,
         };
 
@@ -57,11 +63,50 @@ where
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
         parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.prefix(RuleToken::LParen, &expressions::GroupingParselet);
-        // parser.prefix(RuleToken::)
-        //
+        parser.prefix(RuleToken::Pipe, &expressions::ClosureParselet);
+
+        parser.infix(
+            RuleToken::LBrace,
+            &expressions::RecordParselet(Precedence::Call),
+        );
+
         parser.infix(
             RuleToken::LParen,
             &expressions::CallParselet(Precedence::Call),
+        );
+
+        parser.infix(
+            RuleToken::LBracket,
+            &expressions::IndexParselet(Precedence::Call),
+        );
+
+        parser.infix(
+            RuleToken::Dot,
+            &expressions::FieldParselet(Precedence::Call),
+        );
+        parser.infix(
+            RuleToken::Eq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::PlusEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::StarEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::MinusEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
+        );
+
+        parser.infix(
+            RuleToken::SlashEq,
+            &expressions::BinaryParselet(Precedence::Assignment),
         );
 
         parser.infix(
@@ -103,11 +148,15 @@ where
         parser
     }
 
-    fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser<I>) {
+    pub fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
+    fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser) {
         self.prefix.insert(rule, parser);
     }
 
-    fn infix(&mut self, rule: RuleToken, parser: &'a dyn pratt::InfixParser<I>) {
+    fn infix(&mut self, rule: RuleToken, parser: &'a dyn pratt::InfixParser) {
         self.infix.insert(rule, parser);
     }
 
@@ -115,44 +164,83 @@ where
         self.builder.checkpoint()
     }
 
-    pub(crate) fn is_ahead<F>(&self, mut check: F) -> bool
-    where
-        F: FnMut(SyntaxKind) -> bool,
-    {
-        self.lookahead
-            .as_ref()
-            .map_or(false, |token| check(token.value.kind))
-    }
-
-    pub(crate) fn peek(&mut self) -> SyntaxKind {
-        self.iter
-            .peek()
-            .as_ref()
-            .map_or(SyntaxKind::EOF, |token| token.value.kind)
+    fn lookahead(&self) -> Option<&Span<Token>> {
+        self.tokens.get(self.token_pos + 1)
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(kind.into())
+        match replace(&mut self.state, State::Normal) {
+            State::PendingStart => {
+                self.builder.start_node(kind.into());
+                // No need to attach trivias to previous node: there is no
+                // previous node.
+                return;
+            }
+            State::PendingFinish => (),
+            State::Normal => (),
+        }
+
+        let n_trivias = self.tokens[self.token_pos..]
+            .iter()
+            .take_while(|token| token.value.kind.is_trivia())
+            .count();
+
+        let leading_trivias = &self.tokens[self.token_pos..self.token_pos + n_trivias];
+        let mut trivia_end: TextUnit = self.text_pos
+            + leading_trivias
+                .iter()
+                .map(|it| TextUnit::from(it.value.len))
+                .sum::<TextUnit>();
+
+        let n_attached_trivias = {
+            let leading_trivias = leading_trivias.iter().rev().map(|it| {
+                let next_end = trivia_end - TextUnit::from(it.value.len);
+                let range = TextRange::from_to(next_end, trivia_end);
+                trivia_end = next_end;
+                (it.value.kind, &self.input[range])
+            });
+            n_attached_trivias(kind, leading_trivias)
+        };
+
+        self.eat_n_trivias(n_trivias - n_attached_trivias);
+
+        self.builder.start_node(kind.into());
+
+        self.eat_n_trivias(n_attached_trivias)
+    }
+
+    fn eat_n_trivias(&mut self, n: usize) {
+        for _ in 0..n {
+            let token = &self.tokens[self.token_pos];
+            assert!(token.value.kind.is_trivia());
+            self.add_token(token);
+        }
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
-        self.builder.start_node_at(checkpoint, kind.into())
+        self.builder.start_node_at(checkpoint, kind.into());
     }
 
     fn finish_node(&mut self) {
-        self.builder.finish_node();
+        match replace(&mut self.state, State::PendingFinish) {
+            State::PendingFinish | State::Normal => {
+                self.eat_trivias();
+                self.builder.finish_node();
+            }
+            State::PendingStart => unreachable!(),
+        }
     }
 
     fn recover(&mut self) {
-        if self.at(T!["{"]) || self.at(T!["}"]) {
-            return;
+        match self.current() {
+            T!["{"] => self.recover_until(T!["}"]),
+            T!["}"] => self.recover_until(T![;]),
+            _ => self.bump(),
         }
-
-        self.bump();
     }
 
     fn recover_until(&mut self, token: SyntaxKind) {
-        while !self.lookahead.is_none() && !self.at(token) {
+        while self.lookahead().is_some() && !self.at(token) {
             self.bump();
         }
 
@@ -160,6 +248,8 @@ where
     }
 
     fn error(&mut self, message: impl Into<String>, additional_info: impl Into<String>) {
+        let message = message.into();
+        let additional_info = additional_info.into();
         self.start_node(SyntaxKind::ERROR);
 
         self.recover();
@@ -186,26 +276,17 @@ where
     }
 
     fn current_span(&self) -> (Position, Position) {
-        self.lookahead
-            .as_ref()
-            .map(|token| (token.start, token.end))
-            .unwrap_or_else(|| {
-                let token = self.past_tokens.front().unwrap();
-                (token.start, token.end)
-            })
+        (self.current.start, self.current.end)
     }
 
     fn current_string(&self) -> &str {
-        self.lookahead
-            .as_ref()
-            .map(|token| {
-                &self.input[token.start.absolute as usize
-                    ..token.start.absolute as usize + token.value.len as usize]
-            })
-            .unwrap_or("")
+        let token = self.current;
+
+        &self.input[token.start.absolute as usize
+            ..token.start.absolute as usize + token.value.len as usize]
     }
 
-    fn precedence(&self) -> Precedence {
+    fn precedence(&mut self) -> Precedence {
         let token = self.current();
 
         let rule = token.rule();
@@ -216,22 +297,23 @@ where
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
-        if self.is_ahead(|t| t == expected) {
+        if self.at(expected) {
             self.bump();
         } else {
+            let current = self.current();
             self.error(
                 format!("Expected `{}`", expected.text()),
                 format!(
                     "Expected `{}` but instead found `{}`",
                     expected.text(),
-                    self.current().text()
+                    current.text()
                 ),
             );
         }
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
-        if self.is_ahead(|t| t == expected) {
+        if self.at(expected) {
             self.bump();
             true
         } else {
@@ -248,18 +330,18 @@ where
         }
     }
 
-    fn current(&self) -> SyntaxKind {
-        self.lookahead
-            .as_ref()
-            .map(|token| token.value.kind)
-            .unwrap_or(EOF)
+    fn current(&mut self) -> SyntaxKind {
+        if self.current.value.kind.is_trivia() {
+            self.add_token(self.current);
+        }
+        self.current.value.kind
     }
 
-    fn at(&self, check: SyntaxKind) -> bool {
+    fn at(&mut self, check: SyntaxKind) -> bool {
         self.current() == check
     }
 
-    fn matches(&self, kind: Vec<SyntaxKind>) -> bool {
+    fn matches(&mut self, kind: Vec<SyntaxKind>) -> bool {
         for kind in kind {
             if kind == self.current() {
                 return true;
@@ -268,26 +350,68 @@ where
         false
     }
 
+    fn eat_trivias(&mut self) {
+        while let Some(&token) = self.tokens.get(self.token_pos) {
+            if !token.value.kind.is_trivia() {
+                break;
+            }
+            self.add_token(&token);
+        }
+    }
+
+    fn add_token(&mut self, token: &Span<Token>) {
+        let len = TextUnit::from(token.value.len);
+        let range = TextRange::offset_len((token.start.absolute as u32).into(), len);
+
+        let text = &self.input[range];
+
+        self.text_pos += len;
+        self.token_pos += 1;
+
+        self.current = &self.tokens[self.token_pos];
+        self.builder.token(token.value.kind.into(), text.into());
+    }
+
     pub fn bump(&mut self) {
         if self.at(SyntaxKind::EOF) {
             return;
         }
-        let token = self.lookahead.take();
-        match token {
-            Some(token) => {
-                let text = &self.input[token.start.absolute as usize
-                    ..token.start.absolute as usize + token.value.len as usize];
-                self.builder.token(token.value.kind.into(), text.into());
-                self.past_tokens.push_front(token);
-                self.lookahead = self.iter.next()
-            }
-            None => {}
-        }
+
+        self.add_token(self.current);
     }
 
     fn ident(&mut self) {
         self.start_node(NAME);
         self.expect(IDENT, "Expected an identifier");
         self.finish_node()
+    }
+}
+
+/// Taken from https://github.com/rust-analyzer/rust-analyzer/blob/918547dbe9a2907401102eba491ac25cebe1404d/crates/ra_syntax/src/parsing/text_tree_sink.rs
+/// All copyright goes to the rust-analyzer devs
+fn n_attached_trivias<'a>(
+    kind: SyntaxKind,
+    trivias: impl Iterator<Item = (SyntaxKind, &'a str)>,
+) -> usize {
+    use SyntaxKind::*;
+    match kind {
+        TYPE_ALIAS_DEF | CLASS_DEF | ENUM_DEF | ENUM_VARIANT | FN_DEF => {
+            let mut res = 0;
+            for (i, (kind, text)) in trivias.enumerate() {
+                match kind {
+                    WHITESPACE => {
+                        if text.contains("\n\n") {
+                            break;
+                        }
+                    }
+                    COMMENT => {
+                        res = i + 1;
+                    }
+                    _ => (),
+                }
+            }
+            res
+        }
+        _ => 0,
     }
 }

@@ -1,26 +1,18 @@
-use crate::{
-    Span,
-    SyntaxKind::{self, *},
-    Token,
-};
+use crate::SyntaxKind::{self, *};
+use std::any::Any;
 use std::fmt::Debug;
+use syntax::T;
 
 use crate::parser::Parser;
 
 pub trait Rule {
     fn rule(&self) -> RuleToken;
 }
-pub trait PrefixParser<I>: Debug
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    fn parse(&self, parser: &mut Parser<I>);
+pub trait PrefixParser {
+    fn parse(&self, parser: &mut Parser<'_>);
 }
-pub trait InfixParser<I>: Debug
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint);
+pub trait InfixParser: Debug + Any {
+    fn parse(&self, parser: &mut Parser<'_>, checkpoint: rowan::Checkpoint);
     fn pred(&self) -> Precedence;
 }
 
@@ -42,25 +34,32 @@ pub enum Precedence {
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
 pub enum RuleToken {
     LParen,
+    LBrace,
     Ident,
+    Dot,
     LBracket,
     Minus,
     Plus,
     Slash,
     Star,
     Literal,
+    Pipe,
     None,
     Excl,
     Comparison,
+    Eq,
     EqEq,
-    This,
+    PlusEq,
+    MinusEq,
+    StarEq,
+    SlashEq,
     AmpAmp,
     PipePipe,
 }
 
 impl Precedence {
-    pub fn higher(&self) -> Precedence {
-        match *self {
+    pub fn higher(self) -> Precedence {
+        match self {
             Precedence::None | Precedence::Assignment => Precedence::Or,
             Precedence::Or => Precedence::And,
             Precedence::And => Precedence::Equality,
@@ -80,15 +79,24 @@ impl Rule for SyntaxKind {
         match self {
             INT_NUMBER | FLOAT_NUMBER | STRING | T![nil] | T![true] | T![false] => {
                 RuleToken::Literal
-            },
+            }
             IDENT => RuleToken::Ident,
+            T![=] => RuleToken::Eq,
+            T![.] => RuleToken::Dot,
+            T![+=] => RuleToken::PlusEq,
+            T![-=] => RuleToken::MinusEq,
+            T![/=] => RuleToken::SlashEq,
+            T![*=] => RuleToken::MinusEq,
             T![+] => RuleToken::Plus,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
+            T!["["] => RuleToken::LBracket,
+            T!["{"] => RuleToken::LBrace,
             T![!=] | T![<] | T![>] | T![<=] | T![>=] => RuleToken::Comparison,
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,
+            T![|] => RuleToken::Pipe,
             _ => RuleToken::None,
         }
     }

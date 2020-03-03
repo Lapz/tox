@@ -67,7 +67,6 @@ Grammar(
         "export",
         "import",
         "from",
-        "print",
         "nil",
         "self",
     ],
@@ -81,6 +80,7 @@ Grammar(
         "ERROR",
         "IDENT",
         "COMMENT",
+        "WHITESPACE"
     ],
     nodes: [
         //defintions
@@ -97,6 +97,7 @@ Grammar(
         "TUPLE_PAT",
         "LITERAL_PAT",
         //types
+        "TYPE_REF",
         "FN_TYPE",
         "PAREN_TYPE",
         "ARRAY_TYPE",
@@ -111,6 +112,7 @@ Grammar(
         "BIN_EXPR",
         "PREFIX_EXPR",
         "TUPLE_EXPR",
+        "IDENT_EXPR",
 
         //stms
         "IF_EXPR",
@@ -138,8 +140,9 @@ Grammar(
         "ENUM_VARIANT",
         "NAMED_FIELD_DEF_LIST",
         "NAMED_FIELD_DEF",
-        "POS_FIELD_DEF_LIST",
-        "POS_FIELD_DEF",
+        "RECORD_LITERAL_FIELD_LIST",
+        "RECORD_LITERAL_FIELD",
+        "RECORD_LITERAL_EXPR",
         "ENUM_VARIANT_LIST",
         "VISIBILITY",
         "LITERAL",
@@ -167,7 +170,7 @@ Grammar(
                 "TypeParamsOwner",
                 "VisibilityOwner",
             ],
-            options: ["ParamList",["body","Block"],"RetType"],
+            options: ["ParamList",["body","BlockExpr"],"RetType"],
         ),
         "RetType":(
             options:["TypeRef"]
@@ -187,7 +190,13 @@ Grammar(
                 "TypeAscriptionOwner",    
             ]
         ),
-        "TypeAliasDef":(),
+        "TypeAliasDef":(
+            traits: [
+                "NameOwner",
+                "TypeParamsOwner"
+            ],
+            options: ["TypeRef"]
+        ),
         "ExternImportDef":(
             options: [["imports","Name"]]
         ),
@@ -201,9 +210,9 @@ Grammar(
         "EnumVariant": ( traits: ["NameOwner"], options: ["Expr"] ),
 
         "ArrayType": ( options: ["TypeRef", "Expr"] ),
-        "ParenType": (options: ["TypeRef"]),
+        "ParenType": (traits:["TypesOwner"],options: ["TypeRef"],),
         "IdentType": (options: ["TypeRef"]),
-        "FnType": (options: ["ParamList", "RetType"]),
+        "FnType": (options: ["ParamList", "RetType"],traits:["TypesOwner"]),
 
         "TypeRef":(enum:[
             "ParenType",
@@ -216,18 +225,14 @@ Grammar(
             options: [
                 "ParamList",
                 ["body","Expr"]
-            ]
+            ],
+            traits: ["ArgListOwner"]
         ),
         "IfExpr": (
             options: [ "Condition" ]
         ),
         "ForExpr": (
-            traits: ["LoopBodyOwner"],
-            options: [
-                ["init","Expr"],
-                ["cond","Expr"],
-                ["increment", "Expr"],
-            ]
+            traits: ["LoopBodyOwner"]
         ),
         "WhileExpr": (
             traits: ["LoopBodyOwner"],
@@ -247,7 +252,6 @@ Grammar(
             ],
             collections: [ [ "pats", "Pat" ] ],
         ),
-        "ClassLit": (options: ["NamedFieldList"]),
         "NamedFieldList": (
             collections: [ ["fields", "NamedField"] ]),
         "NamedField": (options: ["NameRef", "Expr"]),
@@ -257,6 +261,11 @@ Grammar(
         ),
         "ArrayExpr": (
             collections: [["exprs", "Expr"]]
+        ),
+        "IdentExpr":(traits: ["NameOwner"]),
+        "RecordLiteralExpr": (
+            options: ["NamedFieldList"],
+            traits: ["NamedFieldsOwner"]
         ),
         "IndexExpr": (),
         "ReturnExpr": (options: ["Expr"]),
@@ -269,10 +278,13 @@ Grammar(
         "BlockExpr": (
             options: [ "Block" ]
         ),
-
+        "TupleExpr":(
+            collections: [ ["exprs", "Expr"] ],
+        ),
         "Expr": (
             enum: [
                 "ArrayExpr",
+                "IdentExpr",
                 "ParenExpr",
                 "ClosureExpr",
                 "IfExpr",
@@ -283,7 +295,7 @@ Grammar(
                 "BlockExpr",
                 "ReturnExpr",
                 "MatchExpr",
-                "ClassLit",
+                "RecordLiteralExpr",
                 "CallExpr",
                 "IndexExpr",
                 "FieldExpr",
@@ -291,6 +303,7 @@ Grammar(
                 "PrefixExpr",
                 "BinExpr",
                 "Literal",
+                "TupleExpr",
             ],
         ),
         "Visibility": (),
@@ -326,7 +339,6 @@ Grammar(
             enum: ["ExprStmt", "LetStmt"],
         ),
         "Block": (
-            options: [ "Expr" ],
             collections: [
                 ["statements", "Stmt"],
             ],

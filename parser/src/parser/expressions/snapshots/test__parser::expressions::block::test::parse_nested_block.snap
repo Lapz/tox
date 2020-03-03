@@ -1,0 +1,32 @@
+---
+created: "2020-03-03T19:30:54.384129Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/block.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 19)
+  FN_DEF@[0; 19)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 10)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+      WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 19)
+      BLOCK@[10; 19)
+        L_CURLY@[10; 11) "{"
+        BLOCK_EXPR@[11; 17)
+          BLOCK@[11; 17)
+            L_CURLY@[11; 12) "{"
+            WHITESPACE@[12; 13) " "
+            BLOCK_EXPR@[13; 15)
+              BLOCK@[13; 15)
+                L_CURLY@[13; 14) "{"
+                R_CURLY@[14; 15) "}"
+            SEMI@[15; 16) ";"
+            R_CURLY@[16; 17) "}"
+        SEMI@[17; 18) ";"
+        R_CURLY@[18; 19) "}"
+

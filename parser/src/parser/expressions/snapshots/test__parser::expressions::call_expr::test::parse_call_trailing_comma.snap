@@ -1,32 +1,38 @@
 ---
-created: "2019-10-07T09:48:30.108711Z"
+created: "2020-03-03T19:30:54.421989Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/call_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 18)
-  FN_DEF@[0; 18)
+SOURCE_FILE@[0; 20)
+  FN_DEF@[0; 20)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 8)
-      L_PAREN@[6; 7) "("
-      R_PAREN@[7; 8) ")"
-    BLOCK@[8; 18)
-      L_CURLY@[8; 9) "{"
-      EXPR_STMT@[9; 16)
-        CALL_EXPR@[9; 16)
-          NAME@[9; 10)
-            IDENT@[9; 10) "a"
-          ARG_LIST@[10; 16)
-            L_PAREN@[10; 11) "("
-            NAME@[11; 12)
-              IDENT@[11; 12) "a"
-            COMMA@[12; 13) ","
-            NAME@[13; 14)
-              IDENT@[13; 14) "b"
-            COMMA@[14; 15) ","
-            R_PAREN@[15; 16) ")"
-      SEMI@[16; 17) ";"
-      R_CURLY@[17; 18) "}"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 10)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+      WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 20)
+      BLOCK@[10; 20)
+        L_CURLY@[10; 11) "{"
+        EXPR_STMT@[11; 18)
+          CALL_EXPR@[11; 18)
+            IDENT_EXPR@[11; 12)
+              NAME@[11; 12)
+                IDENT@[11; 12) "a"
+            ARG_LIST@[12; 18)
+              L_PAREN@[12; 13) "("
+              IDENT_EXPR@[13; 14)
+                NAME@[13; 14)
+                  IDENT@[13; 14) "a"
+              COMMA@[14; 15) ","
+              IDENT_EXPR@[15; 16)
+                NAME@[15; 16)
+                  IDENT@[15; 16) "b"
+              COMMA@[16; 17) ","
+              R_PAREN@[17; 18) ")"
+        SEMI@[18; 19) ";"
+        R_CURLY@[19; 20) "}"
 

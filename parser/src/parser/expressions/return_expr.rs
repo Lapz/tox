@@ -1,15 +1,12 @@
-use crate::T;
+use syntax::T;
 
-use crate::parser::Parser;
+use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 use crate::parser::Precedence;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_return_expr(&mut self) {
         self.start_node(RETURN_EXPR);
 
@@ -20,7 +17,7 @@ where
             return;
         }
 
-        self.parse_expression(Precedence::Assignment);
+        self.parse_expression(Precedence::Assignment, Restrictions::default());
 
         self.finish_node()
     }

@@ -3,7 +3,7 @@ use crate::ast::SyntaxKind;
 use crate::token::Token;
 use errors::{
     pos::{CharPosition, Position, Span},
-    Files, Reporter,
+    Reporter,
 };
 
 pub type LexerResult<T> = Result<T, ()>;
@@ -35,6 +35,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn reporter(self) -> Reporter {
+        self.reporter
+    }
+
     pub fn lex(&mut self) -> Vec<Span<Token>> {
         let mut tokens = Vec::new();
 
@@ -44,6 +48,7 @@ impl<'a> Lexer<'a> {
 
         while let Ok(token) = self.next() {
             if token.value.kind == SyntaxKind::EOF {
+                tokens.push(token);
                 break;
             }
             tokens.push(token);
@@ -159,6 +164,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
                         spans(SyntaxKind::EQEQ, start, start.shift('='))
+                    } else if self.peek(|ch| ch == '>') {
+                        self.advance();
+                        spans(SyntaxKind::FAT_ARROW, start, start.shift('>'))
                     } else {
                         span(SyntaxKind::EQ, start)
                     }
@@ -231,7 +239,10 @@ impl<'a> Lexer<'a> {
 
                 ch if ch.is_numeric() => self.number(start),
                 ch if is_letter_ch(ch) => self.identifier(start),
-                ch if ch.is_whitespace() => continue,
+                ch if ch.is_whitespace() => {
+                    let (end, _) = self.take_whilst(start, char::is_whitespace);
+                    spans(SyntaxKind::WHITESPACE, start, end)
+                }
                 ch => {
                     self.error(
                         "Unknown character",
@@ -345,7 +356,6 @@ fn look_up_identifier(id: &str) -> SyntaxKind {
         // Class
         "class" => SyntaxKind::CLASS_KW,
         "extends" => SyntaxKind::EXTENDS_KW,
-        "print" => SyntaxKind::PRINT_KW,
         "type" => SyntaxKind::TYPE_KW,
         "as" => SyntaxKind::AS_KW,
         "match" => SyntaxKind::MATCH_KW,
@@ -388,20 +398,21 @@ fn spans(token: SyntaxKind, start: Position, end: Position) -> Span<Token> {
 #[cfg(test)]
 mod test {
 
-    use super::{Files, Lexer, Reporter, SyntaxKind};
+    use super::{Lexer, Reporter};
+    use errors::Files;
     use insta::assert_debug_snapshot_matches;
 
     fn setup_reporter(input: &str) -> Reporter {
         let mut files = Files::new();
         let file_id = files.add("test", input);
 
-        let reporter = Reporter::new(files, file_id);
+        let reporter = Reporter::new(file_id);
         reporter
     }
 
     #[test]
     fn it_works() {
-        let input = "fn main() {print('hello')}";
+        let input = "fn main() {print(\"hello\")}";
         let reporter = setup_reporter(&input);
         let tokens = Lexer::new(input, reporter).lex();
 

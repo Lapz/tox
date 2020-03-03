@@ -4,5 +4,7 @@ members=[
     "parser",
     "syntax",
     "semant",
+    "tools",
     "tox",
 ]
+default-members=["tox"]

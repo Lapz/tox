@@ -1,17 +1,15 @@
-use crate::T;
+use syntax::T;
 
-use crate::parser::pratt::{Precedence, PrefixParser};
+use crate::parser::pratt::PrefixParser;
 use crate::parser::Parser;
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 #[derive(Debug)]
 pub struct IdentParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for IdentParselet {
+    fn parse(&self, parser: &mut Parser) {
+        parser.start_node(IDENT_EXPR);
         parser.start_node(NAME);
 
         parser.expect(IDENT, "Expected an identifer");
@@ -22,5 +20,16 @@ impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
         };
 
         parser.finish_node();
+        parser.finish_node();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    test_parser! {
+        parse_ident_expr,"fn main(){a;}"
+    }
+    test_parser! {
+        parse_generic_ident_expr,"fn main(){a::<i32>;}"
     }
 }

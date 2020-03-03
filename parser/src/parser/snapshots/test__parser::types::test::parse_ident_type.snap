@@ -1,25 +1,28 @@
 ---
-created: "2019-08-14T10:24:04.532818Z"
+created: "2020-03-03T19:30:54.665959Z"
 creator: insta@0.8.2
 source: parser/src/parser/types.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 15)
-  FN_DEF@[0; 15)
+SOURCE_FILE@[0; 17)
+  FN_DEF@[0; 17)
     FN_KW@[0; 2) "fn"
-    NAME@[2; 6)
-      IDENT@[2; 6) "main"
-    PARAM_LIST@[6; 13)
-      L_PAREN@[6; 7) "("
-      PARAM@[7; 12)
-        BIND_PAT@[7; 8)
-          NAME@[7; 8)
-            IDENT@[7; 8) "x"
-        COLON@[8; 9) ":"
-        IDENT_TYPE@[9; 12)
-          IDENT@[9; 12) "i32"
-      R_PAREN@[12; 13) ")"
-    BLOCK@[13; 15)
-      L_CURLY@[13; 14) "{"
-      R_CURLY@[14; 15) "}"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 15)
+      L_PAREN@[7; 8) "("
+      PARAM@[8; 13)
+        BIND_PAT@[8; 9)
+          NAME@[8; 9)
+            IDENT@[8; 9) "x"
+        COLON@[9; 10) ":"
+        IDENT_TYPE@[10; 13)
+          IDENT@[10; 13) "i32"
+      R_PAREN@[13; 14) ")"
+      WHITESPACE@[14; 15) " "
+    BLOCK_EXPR@[15; 17)
+      BLOCK@[15; 17)
+        L_CURLY@[15; 16) "{"
+        R_CURLY@[16; 17) "}"
 

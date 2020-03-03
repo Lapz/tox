@@ -1,18 +1,15 @@
-use crate::T;
+use syntax::T;
 
 use crate::parser::pratt::PrefixParser;
 use crate::parser::Parser;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 #[derive(Debug)]
 pub struct LiteralParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for LiteralParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for LiteralParselet {
+    fn parse(&self, parser: &mut Parser) {
         match parser.current() {
             INT_NUMBER  | FLOAT_NUMBER | STRING | T![nil] |T![true]|T![false] => {
                 parser.start_node(LITERAL);

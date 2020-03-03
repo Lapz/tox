@@ -1,27 +1,28 @@
-use crate::parser::Parser;
-use crate::T;
+use crate::parser::{Parser, Precedence, Restrictions};
+use syntax::T;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {
+        self.eat_trivias();
         match self.current() {
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),
             T![self] => self.bump(),
             T![_] => self.parse_placeholder_pattern(),
-            _ => {
+            e => {
                 if allow_literal {
-                    // self.parse_literal()
+                    self.start_node(LITERAL_PAT);
+                    self.parse_expression(Precedence::Primary, Restrictions::default());
+                    self.finish_node()
                 } else {
                     self.error(
                         "Expected a literal pattern",
                         format!(
-                            "Expected a literal pattern instead found `{}`",
-                            self.current_string()
+                            "Expected a literal pattern instead found `{}` {:?}",
+                            self.current_string(),
+                            e
                         ),
                     )
                 }
