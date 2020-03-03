@@ -2,7 +2,7 @@ use syntax::T;
 
 use crate::parser::Parser;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 use crate::parser::PrefixParser;
 

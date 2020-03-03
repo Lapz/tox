@@ -2,7 +2,6 @@ use crate::parser::{
     pratt::{Precedence, Rule, RuleToken},
     Parser, Restrictions,
 };
-use crate::{Span, Token};
 
 use syntax::T;
 

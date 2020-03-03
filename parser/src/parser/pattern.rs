@@ -1,7 +1,7 @@
 use crate::parser::{Parser, Precedence, Restrictions};
 use syntax::T;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {

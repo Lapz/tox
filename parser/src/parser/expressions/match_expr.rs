@@ -2,7 +2,7 @@ use syntax::T;
 
 use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 use crate::parser::Precedence;
 

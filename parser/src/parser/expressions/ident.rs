@@ -2,7 +2,7 @@ use syntax::T;
 
 use crate::parser::pratt::PrefixParser;
 use crate::parser::Parser;
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 #[derive(Debug)]
 pub struct IdentParselet;

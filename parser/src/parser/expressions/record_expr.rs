@@ -3,7 +3,7 @@ use syntax::T;
 use crate::parser::pratt::{InfixParser, Precedence};
 use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 #[derive(Debug)]
 pub struct RecordParselet(pub Precedence);

@@ -2,7 +2,7 @@ use syntax::T;
 
 use crate::parser::Parser;
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_class(&mut self, checkpoint: rowan::Checkpoint) {

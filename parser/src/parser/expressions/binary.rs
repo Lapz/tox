@@ -3,7 +3,7 @@ use syntax::T;
 use crate::parser::pratt::{InfixParser, Precedence};
 use crate::parser::{Parser, Restrictions};
 
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_op(&mut self) {

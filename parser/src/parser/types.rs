@@ -1,5 +1,5 @@
 use crate::parser::{Parser, Precedence, Restrictions};
-use crate::{Span, SyntaxKind::*, Token};
+use crate::{SyntaxKind::*, Token};
 use syntax::T;
 
 impl<'a> Parser<'a> {

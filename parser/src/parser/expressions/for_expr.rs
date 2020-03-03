@@ -1,11 +1,9 @@
 use syntax::T;
 
 use crate::parser::{Parser, Precedence, Restrictions};
-use crate::{Span, SyntaxKind::*, Token};
+use crate::SyntaxKind::*;
 
-impl<'a> Parser<'a>
-
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_for_expr(&mut self) {
         self.start_node(FOR_EXPR);
 
