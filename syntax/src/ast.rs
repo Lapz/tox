@@ -97,65 +97,66 @@ pub enum SyntaxKind {
     CLASS_DEF, // 73
     ENUM_DEF, // 74
     FN_DEF, // 75
-    EXTERN_IMPORT_DEF, // 76
+    IMPORT_DEF, // 76
     TYPE_ALIAS_DEF, // 77
-    BIND_PAT, // 78
-    PLACEHOLDER_PAT, // 79
-    TUPLE_PAT, // 80
-    LITERAL_PAT, // 81
-    TYPE_REF, // 82
-    FN_TYPE, // 83
-    PAREN_TYPE, // 84
-    ARRAY_TYPE, // 85
-    IDENT_TYPE, // 86
-    RET_TYPE, // 87
-    ARRAY_EXPR, // 88
-    CALL_EXPR, // 89
-    CAST_EXPR, // 90
-    INDEX_EXPR, // 91
-    FIELD_EXPR, // 92
-    BIN_EXPR, // 93
-    PREFIX_EXPR, // 94
-    TUPLE_EXPR, // 95
-    IDENT_EXPR, // 96
-    IF_EXPR, // 97
-    WHILE_EXPR, // 98
-    CONDITION, // 99
-    LOOP_EXPR, // 100
-    DO_EXPR, // 101
-    FOR_EXPR, // 102
-    CONTINUE_EXPR, // 103
-    BREAK_EXPR, // 104
-    BLOCK_EXPR, // 105
-    RETURN_EXPR, // 106
-    CLOSURE_EXPR, // 107
-    PAREN_EXPR, // 108
-    MATCH_EXPR, // 109
-    MATCH_ARM_LIST, // 110
-    MATCH_ARM, // 111
-    MATCH_GUARD, // 112
-    CLASS_LIT, // 113
-    NAMED_FIELD_LIST, // 114
-    NAMED_FIELD, // 115
-    ENUM_VARIANT, // 116
-    NAMED_FIELD_DEF_LIST, // 117
-    NAMED_FIELD_DEF, // 118
-    RECORD_LITERAL_FIELD_LIST, // 119
-    RECORD_LITERAL_FIELD, // 120
-    RECORD_LITERAL_EXPR, // 121
-    ENUM_VARIANT_LIST, // 122
-    VISIBILITY, // 123
-    LITERAL, // 124
-    NAME, // 125
-    NAME_REF, // 126
-    LET_STMT, // 127
-    EXPR_STMT, // 128
-    TYPE_PARAM_LIST, // 129
-    TYPE_PARAM, // 130
-    PARAM_LIST, // 131
-    PARAM, // 132
-    SELF_PARAM, // 133
-    ARG_LIST, // 134
+    IMPORT_SEGMENT, // 78
+    BIND_PAT, // 79
+    PLACEHOLDER_PAT, // 80
+    TUPLE_PAT, // 81
+    LITERAL_PAT, // 82
+    TYPE_REF, // 83
+    FN_TYPE, // 84
+    PAREN_TYPE, // 85
+    ARRAY_TYPE, // 86
+    IDENT_TYPE, // 87
+    RET_TYPE, // 88
+    ARRAY_EXPR, // 89
+    CALL_EXPR, // 90
+    CAST_EXPR, // 91
+    INDEX_EXPR, // 92
+    FIELD_EXPR, // 93
+    BIN_EXPR, // 94
+    PREFIX_EXPR, // 95
+    TUPLE_EXPR, // 96
+    IDENT_EXPR, // 97
+    IF_EXPR, // 98
+    WHILE_EXPR, // 99
+    CONDITION, // 100
+    LOOP_EXPR, // 101
+    DO_EXPR, // 102
+    FOR_EXPR, // 103
+    CONTINUE_EXPR, // 104
+    BREAK_EXPR, // 105
+    BLOCK_EXPR, // 106
+    RETURN_EXPR, // 107
+    CLOSURE_EXPR, // 108
+    PAREN_EXPR, // 109
+    MATCH_EXPR, // 110
+    MATCH_ARM_LIST, // 111
+    MATCH_ARM, // 112
+    MATCH_GUARD, // 113
+    CLASS_LIT, // 114
+    NAMED_FIELD_LIST, // 115
+    NAMED_FIELD, // 116
+    ENUM_VARIANT, // 117
+    NAMED_FIELD_DEF_LIST, // 118
+    NAMED_FIELD_DEF, // 119
+    RECORD_LITERAL_FIELD_LIST, // 120
+    RECORD_LITERAL_FIELD, // 121
+    RECORD_LITERAL_EXPR, // 122
+    ENUM_VARIANT_LIST, // 123
+    VISIBILITY, // 124
+    LITERAL, // 125
+    NAME, // 126
+    NAME_REF, // 127
+    LET_STMT, // 128
+    EXPR_STMT, // 129
+    TYPE_PARAM_LIST, // 130
+    TYPE_PARAM, // 131
+    PARAM_LIST, // 132
+    PARAM, // 133
+    SELF_PARAM, // 134
+    ARG_LIST, // 135
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
     __LAST,
@@ -249,8 +250,9 @@ impl SyntaxKind {
             CLASS_DEF => "CLASS_DEF",
             ENUM_DEF => "ENUM_DEF",
             FN_DEF => "FN_DEF",
-            EXTERN_IMPORT_DEF => "EXTERN_IMPORT_DEF",
+            IMPORT_DEF => "IMPORT_DEF",
             TYPE_ALIAS_DEF => "TYPE_ALIAS_DEF",
+            IMPORT_SEGMENT => "IMPORT_SEGMENT",
             BIND_PAT => "BIND_PAT",
             PLACEHOLDER_PAT => "PLACEHOLDER_PAT",
             TUPLE_PAT => "TUPLE_PAT",
@@ -1009,33 +1011,6 @@ impl ExprStmt {
     }
 }
 
-// ExternImportDef
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ExternImportDef {
-    pub(crate) syntax: SyntaxNode,
-}
-
-impl AstNode for ExternImportDef {
-    fn can_cast(kind: SyntaxKind) -> bool {
-        match kind {
-            EXTERN_IMPORT_DEF => true,
-            _ => false,
-        }
-    }
-    fn cast(syntax: SyntaxNode) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) { Some(ExternImportDef { syntax }) } else { None }
-    }
-    fn syntax(&self) -> &SyntaxNode { &self.syntax }
-}
-
-
-impl ExternImportDef {
-    pub fn imports(&self) -> Option<Name> {
-        child_opt(self)
-    }
-}
-
 // FieldExpr
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -1235,6 +1210,60 @@ impl AstNode for IfExpr {
 
 impl IfExpr {
     pub fn condition(&self) -> Option<Condition> {
+        child_opt(self)
+    }
+}
+
+// ImportDef
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ImportDef {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for ImportDef {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            IMPORT_DEF => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(ImportDef { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl ImportDef {
+    pub fn imports(&self) -> Option<Name> {
+        child_opt(self)
+    }
+}
+
+// ImportSegment
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ImportSegment {
+    pub(crate) syntax: SyntaxNode,
+}
+
+impl AstNode for ImportSegment {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        match kind {
+            IMPORT_SEGMENT => true,
+            _ => false,
+        }
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) { Some(ImportSegment { syntax }) } else { None }
+    }
+    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+}
+
+
+impl ImportSegment {
+    pub fn name(&self) -> Option<Name> {
         child_opt(self)
     }
 }

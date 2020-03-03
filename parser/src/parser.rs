@@ -2,6 +2,7 @@ mod classes;
 mod enums;
 mod expressions;
 mod function;
+mod imports;
 mod params;
 mod pattern;
 mod pratt;
@@ -296,7 +297,7 @@ impl<'a> Parser<'a> {
             .map_or(Precedence::None, |parser| parser.pred())
     }
 
-    fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
+    fn expect(&mut self, expected: SyntaxKind) {
         if self.at(expected) {
             self.bump();
         } else {
@@ -382,7 +383,7 @@ impl<'a> Parser<'a> {
 
     fn ident(&mut self) {
         self.start_node(NAME);
-        self.expect(IDENT, "Expected an identifier");
+        self.expect(IDENT);
         self.finish_node()
     }
 }

@@ -233,7 +233,7 @@ pub trait ClassDefOwner: AstNode {
 }
 
 pub trait ExternImportDefOwner: AstNode {
-    fn imports(&self) -> AstChildren<ast::ExternImportDef> {
+    fn imports(&self) -> AstChildren<ast::ImportDef> {
         children(self)
     }
 }

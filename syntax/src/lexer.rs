@@ -360,6 +360,7 @@ fn look_up_identifier(id: &str) -> SyntaxKind {
         "as" => SyntaxKind::AS_KW,
         "match" => SyntaxKind::MATCH_KW,
         "enum" => SyntaxKind::ENUM_KW,
+        "import" => SyntaxKind::IMPORT_KW,
         "export" => SyntaxKind::EXPORT_KW,
         "self" => SyntaxKind::SELF_KW,
         // Functions and vars
