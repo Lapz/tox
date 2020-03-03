@@ -1,5 +1,5 @@
 ---
-created: "2020-03-01T23:46:21.287483Z"
+created: "2020-03-03T19:30:54.559871Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/match_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -10,10 +10,10 @@ SOURCE_FILE@[0; 40)
     WHITESPACE@[2; 3) " "
     NAME@[3; 7)
       IDENT@[3; 7) "main"
-    PARAM_LIST@[7; 9)
+    PARAM_LIST@[7; 10)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
-    WHITESPACE@[9; 10) " "
+      WHITESPACE@[9; 10) " "
     BLOCK_EXPR@[10; 40)
       BLOCK@[10; 40)
         L_CURLY@[10; 11) "{"
@@ -37,10 +37,10 @@ SOURCE_FILE@[0; 40)
             WHITESPACE@[25; 26) " "
             MATCH_ARM_LIST@[26; 37)
               MATCH_ARM@[26; 32)
-                BIND_PAT@[26; 27)
-                  NAME@[26; 27)
+                BIND_PAT@[26; 28)
+                  NAME@[26; 28)
                     IDENT@[26; 27) "x"
-                WHITESPACE@[27; 28) " "
+                    WHITESPACE@[27; 28) " "
                 FAT_ARROW@[28; 29) "="
                 WHITESPACE@[29; 30) " "
                 LITERAL@[30; 32)
@@ -48,9 +48,9 @@ SOURCE_FILE@[0; 40)
               COMMA@[32; 33) ","
               MATCH_ARM@[33; 37)
                 LITERAL_PAT@[33; 35)
-                  LITERAL@[33; 34)
+                  LITERAL@[33; 35)
                     INT_NUMBER@[33; 34) "1"
-                  WHITESPACE@[34; 35) " "
+                    WHITESPACE@[34; 35) " "
                 FAT_ARROW@[35; 36) "="
                 LITERAL@[36; 37)
                   INT_NUMBER@[36; 37) "3"

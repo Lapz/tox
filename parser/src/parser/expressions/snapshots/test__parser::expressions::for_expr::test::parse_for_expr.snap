@@ -1,68 +1,24 @@
 ---
-created: "2020-02-06T15:57:27.592149Z"
+created: "2020-03-03T19:30:54.462605Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/for_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
 SOURCE_FILE@[0; 165)
-  WHITESPACE@[0; 1) "\n"
-  WHITESPACE@[1; 2) " "
-  WHITESPACE@[2; 3) " "
-  WHITESPACE@[3; 4) " "
-  WHITESPACE@[4; 5) " "
-  WHITESPACE@[5; 6) " "
-  WHITESPACE@[6; 7) " "
-  WHITESPACE@[7; 8) " "
-  WHITESPACE@[8; 9) " "
-  WHITESPACE@[9; 10) " "
-  WHITESPACE@[10; 11) " "
-  WHITESPACE@[11; 12) " "
-  WHITESPACE@[12; 13) " "
-  WHITESPACE@[13; 14) " "
-  WHITESPACE@[14; 15) " "
-  WHITESPACE@[15; 16) " "
-  WHITESPACE@[16; 17) " "
-  WHITESPACE@[17; 18) " "
-  WHITESPACE@[18; 19) " "
-  WHITESPACE@[19; 20) " "
-  WHITESPACE@[20; 21) " "
+  WHITESPACE@[0; 21) "\n                    "
   FN_DEF@[21; 165)
     FN_KW@[21; 23) "fn"
-    NAME@[23; 28)
-      WHITESPACE@[23; 24) " "
+    WHITESPACE@[23; 24) " "
+    NAME@[24; 28)
       IDENT@[24; 28) "main"
-    PARAM_LIST@[28; 30)
+    PARAM_LIST@[28; 31)
       L_PAREN@[28; 29) "("
       R_PAREN@[29; 30) ")"
-    WHITESPACE@[30; 31) " "
+      WHITESPACE@[30; 31) " "
     BLOCK_EXPR@[31; 165)
       BLOCK@[31; 165)
         L_CURLY@[31; 32) "{"
-        WHITESPACE@[32; 33) "\n"
-        WHITESPACE@[33; 34) " "
-        WHITESPACE@[34; 35) " "
-        WHITESPACE@[35; 36) " "
-        WHITESPACE@[36; 37) " "
-        WHITESPACE@[37; 38) " "
-        WHITESPACE@[38; 39) " "
-        WHITESPACE@[39; 40) " "
-        WHITESPACE@[40; 41) " "
-        WHITESPACE@[41; 42) " "
-        WHITESPACE@[42; 43) " "
-        WHITESPACE@[43; 44) " "
-        WHITESPACE@[44; 45) " "
-        WHITESPACE@[45; 46) " "
-        WHITESPACE@[46; 47) " "
-        WHITESPACE@[47; 48) " "
-        WHITESPACE@[48; 49) " "
-        WHITESPACE@[49; 50) " "
-        WHITESPACE@[50; 51) " "
-        WHITESPACE@[51; 52) " "
-        WHITESPACE@[52; 53) " "
-        WHITESPACE@[53; 54) " "
-        WHITESPACE@[54; 55) " "
-        WHITESPACE@[55; 56) " "
-        WHITESPACE@[56; 57) " "
+        WHITESPACE@[32; 57) "\n                     ..."
         EXPR_STMT@[57; 163)
           FOR_EXPR@[57; 163)
             FOR_KW@[57; 60) "for"
@@ -71,16 +27,16 @@ SOURCE_FILE@[0; 165)
               LET_KW@[61; 64) "let"
               WHITESPACE@[64; 65) " "
               BIND_PAT@[65; 67)
-                NAME@[65; 66)
+                NAME@[65; 67)
                   IDENT@[65; 66) "x"
-                WHITESPACE@[66; 67) " "
+                  WHITESPACE@[66; 67) " "
               EQ@[67; 68) "="
               WHITESPACE@[68; 69) " "
               LITERAL@[69; 71)
                 INT_NUMBER@[69; 71) "10"
             SEMI@[71; 72) ";"
-            BIN_EXPR@[72; 78)
-              WHITESPACE@[72; 73) " "
+            WHITESPACE@[72; 73) " "
+            BIN_EXPR@[73; 78)
               IDENT_EXPR@[73; 74)
                 NAME@[73; 74)
                   IDENT@[73; 74) "x"
@@ -89,8 +45,8 @@ SOURCE_FILE@[0; 165)
               LITERAL@[76; 78)
                 INT_NUMBER@[76; 78) "10"
             SEMI@[78; 79) ";"
-            BIN_EXPR@[79; 85)
-              WHITESPACE@[79; 80) " "
+            WHITESPACE@[79; 80) " "
+            BIN_EXPR@[80; 85)
               IDENT_EXPR@[80; 81)
                 NAME@[80; 81)
                   IDENT@[80; 81) "x"
@@ -103,74 +59,22 @@ SOURCE_FILE@[0; 165)
                 LITERAL@[84; 85)
                   INT_NUMBER@[84; 85) "1"
             R_PAREN@[85; 86) ")"
-            BLOCK_EXPR@[86; 163)
-              WHITESPACE@[86; 87) " "
+            WHITESPACE@[86; 87) " "
+            BLOCK_EXPR@[87; 163)
               BLOCK@[87; 163)
                 L_CURLY@[87; 88) "{"
-                WHITESPACE@[88; 89) "\n"
-                WHITESPACE@[89; 90) " "
-                WHITESPACE@[90; 91) " "
-                WHITESPACE@[91; 92) " "
-                WHITESPACE@[92; 93) " "
-                WHITESPACE@[93; 94) " "
-                WHITESPACE@[94; 95) " "
-                WHITESPACE@[95; 96) " "
-                WHITESPACE@[96; 97) " "
-                WHITESPACE@[97; 98) " "
-                WHITESPACE@[98; 99) " "
-                WHITESPACE@[99; 100) " "
-                WHITESPACE@[100; 101) " "
-                WHITESPACE@[101; 102) " "
-                WHITESPACE@[102; 103) " "
-                WHITESPACE@[103; 104) " "
-                WHITESPACE@[104; 105) " "
-                WHITESPACE@[105; 106) " "
-                WHITESPACE@[106; 107) " "
-                WHITESPACE@[107; 108) " "
-                WHITESPACE@[108; 109) " "
-                WHITESPACE@[109; 110) " "
-                WHITESPACE@[110; 111) " "
-                WHITESPACE@[111; 112) " "
-                WHITESPACE@[112; 113) " "
-                WHITESPACE@[113; 114) " "
-                WHITESPACE@[114; 115) " "
-                WHITESPACE@[115; 116) " "
-                WHITESPACE@[116; 117) " "
+                WHITESPACE@[88; 117) "\n                     ..."
                 EXPR_STMT@[117; 162)
                   CALL_EXPR@[117; 162)
                     IDENT_EXPR@[117; 124)
                       NAME@[117; 124)
                         IDENT@[117; 124) "println"
-                    ARG_LIST@[124; 137)
+                    ARG_LIST@[124; 162)
                       L_PAREN@[124; 125) "("
                       LITERAL@[125; 136)
                         STRING@[125; 136) "\"it works \""
                       R_PAREN@[136; 137) ")"
-                    WHITESPACE@[137; 138) "\n"
-                    WHITESPACE@[138; 139) " "
-                    WHITESPACE@[139; 140) " "
-                    WHITESPACE@[140; 141) " "
-                    WHITESPACE@[141; 142) " "
-                    WHITESPACE@[142; 143) " "
-                    WHITESPACE@[143; 144) " "
-                    WHITESPACE@[144; 145) " "
-                    WHITESPACE@[145; 146) " "
-                    WHITESPACE@[146; 147) " "
-                    WHITESPACE@[147; 148) " "
-                    WHITESPACE@[148; 149) " "
-                    WHITESPACE@[149; 150) " "
-                    WHITESPACE@[150; 151) " "
-                    WHITESPACE@[151; 152) " "
-                    WHITESPACE@[152; 153) " "
-                    WHITESPACE@[153; 154) " "
-                    WHITESPACE@[154; 155) " "
-                    WHITESPACE@[155; 156) " "
-                    WHITESPACE@[156; 157) " "
-                    WHITESPACE@[157; 158) " "
-                    WHITESPACE@[158; 159) " "
-                    WHITESPACE@[159; 160) " "
-                    WHITESPACE@[160; 161) " "
-                    WHITESPACE@[161; 162) " "
+                      WHITESPACE@[137; 162) "\n                     ..."
                 R_CURLY@[162; 163) "}"
         SEMI@[163; 164) ";"
         R_CURLY@[164; 165) "}"
