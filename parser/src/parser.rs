@@ -15,43 +15,46 @@ use crate::Span;
 use errors::{pos::Position, Reporter};
 use pratt::{InfixParser, Precedence, PrefixParser, Rule as _, RuleToken};
 use restrictions::Restrictions;
-use rowan::GreenNodeBuilder;
-use std::collections::{HashMap, VecDeque};
-use std::iter::Peekable;
+use rowan::{GreenNodeBuilder, TextRange, TextUnit};
+use std::collections::HashMap;
+use std::mem::replace;
 use syntax::{
     SyntaxKind::{self, *},
     Token, T,
 };
 
-pub struct Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    input: &'a str,
-    pub builder: GreenNodeBuilder<'static>,
-    pub past_tokens: VecDeque<Span<Token>>,
-    reporter: Reporter,
-
-    lookahead: Option<Span<Token>>,
-    iter: Peekable<I>,
-    prefix: HashMap<RuleToken, &'a dyn PrefixParser<I>>,
-    infix: HashMap<RuleToken, &'a dyn InfixParser<I>>,
+#[derive(Debug)]
+enum State {
+    PendingStart,
+    Normal,
+    PendingFinish,
 }
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    pub fn new(iter: I, reporter: Reporter, input: &'a str) -> Self {
-        let mut iter = iter.peekable();
+pub struct Parser<'a> {
+    input: &'a str,
+    current: &'a Span<Token>,
+    state: State,
+    pub builder: GreenNodeBuilder<'static>,
+    reporter: Reporter,
+    text_pos: TextUnit,
+    tokens: &'a [Span<Token>],
+    token_pos: usize,
+    prefix: HashMap<RuleToken, &'a dyn PrefixParser>,
+    infix: HashMap<RuleToken, &'a dyn InfixParser>,
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a [Span<Token>], reporter: Reporter, input: &'a str) -> Self {
         let mut parser = Parser {
-            lookahead: iter.next(),
+            current: &tokens[0],
+            tokens,
+            state: State::PendingStart,
+            token_pos: 0,
+            text_pos: 0.into(),
             builder: GreenNodeBuilder::new(),
-            past_tokens: VecDeque::new(),
             prefix: HashMap::new(),
             infix: HashMap::new(),
             reporter,
-            iter,
             input,
         };
 
@@ -151,11 +154,11 @@ where
         self.reporter
     }
 
-    fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser<I>) {
+    fn prefix(&mut self, rule: RuleToken, parser: &'a dyn pratt::PrefixParser) {
         self.prefix.insert(rule, parser);
     }
 
-    fn infix(&mut self, rule: RuleToken, parser: &'a dyn pratt::InfixParser<I>) {
+    fn infix(&mut self, rule: RuleToken, parser: &'a dyn pratt::InfixParser) {
         self.infix.insert(rule, parser);
     }
 
@@ -163,36 +166,73 @@ where
         self.builder.checkpoint()
     }
 
-    pub(crate) fn is_ahead<F>(&mut self, mut check: F) -> bool
-    where
-        F: FnMut(SyntaxKind) -> bool,
-    {
-        while self
-            .lookahead
-            .as_ref()
-            .map_or(false, |token| token.value.kind == T![])
-        {
-            self.bump()
-        }
-        self.lookahead
-            .as_ref()
-            .map_or(false, |token| check(token.value.kind))
+    fn lookahead(&self) -> Option<&Span<Token>> {
+        self.tokens.get(self.token_pos + 1)
     }
 
+    #[track_caller]
     fn start_node(&mut self, kind: SyntaxKind) {
+        match replace(&mut self.state, State::Normal) {
+            State::PendingStart => {
+                self.builder.start_node(kind.into());
+                // No need to attach trivias to previous node: there is no
+                // previous node.
+                return;
+            }
+            State::PendingFinish => (),
+            State::Normal => (),
+        }
+
+        let n_trivias = self.tokens[self.token_pos..]
+            .iter()
+            .take_while(|token| token.value.kind.is_trivia())
+            .count();
+
+        let leading_trivias = &self.tokens[self.token_pos..self.token_pos + n_trivias];
+        let mut trivia_end: TextUnit = self.text_pos
+            + leading_trivias
+                .iter()
+                .map(|it| TextUnit::from(it.value.len))
+                .sum::<TextUnit>();
+
+        let n_attached_trivias = {
+            let leading_trivias = leading_trivias.iter().rev().map(|it| {
+                let next_end = trivia_end - TextUnit::from(it.value.len);
+                let range = TextRange::from_to(next_end, trivia_end);
+                trivia_end = next_end;
+                (it.value.kind, &self.input[range])
+            });
+            n_attached_trivias(kind, leading_trivias)
+        };
+
+        self.eat_n_trivias(n_trivias - n_attached_trivias);
+
         self.builder.start_node(kind.into());
+
+        self.eat_n_trivias(n_attached_trivias)
     }
 
+    fn eat_n_trivias(&mut self, n: usize) {
+        for _ in 0..n {
+            let token = &self.tokens[self.token_pos];
+            assert!(token.value.kind.is_trivia());
+            self.add_token(token);
+        }
+    }
+    #[track_caller]
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
-        self.builder.start_node_at(checkpoint, kind.into())
+        self.builder.start_node_at(checkpoint, kind.into());
     }
-
-    fn finish_no_ws(&mut self) {
-        self.builder.finish_node();
-    }
-
+    #[track_caller]
     fn finish_node(&mut self) {
-        self.builder.finish_node();
+        match replace(&mut self.state, State::PendingFinish) {
+            State::PendingFinish => {
+                self.eat_trivias();
+                self.builder.finish_node();
+            }
+            State::PendingStart => unreachable!(),
+            State::Normal => {}
+        }
     }
 
     fn recover(&mut self) {
@@ -204,7 +244,7 @@ where
     }
 
     fn recover_until(&mut self, token: SyntaxKind) {
-        while self.lookahead.is_some() && !self.at(token) {
+        while self.lookahead().is_some() && !self.at(token) {
             self.bump();
         }
 
@@ -212,6 +252,9 @@ where
     }
 
     fn error(&mut self, message: impl Into<String>, additional_info: impl Into<String>) {
+        let message = message.into();
+        let additional_info = additional_info.into();
+        println!("{:?} {:?}", message, additional_info);
         self.start_node(SyntaxKind::ERROR);
 
         self.recover();
@@ -238,23 +281,14 @@ where
     }
 
     fn current_span(&self) -> (Position, Position) {
-        self.lookahead
-            .as_ref()
-            .map(|token| (token.start, token.end))
-            .unwrap_or_else(|| {
-                let token = self.past_tokens.front().unwrap();
-                (token.start, token.end)
-            })
+        (self.current.start, self.current.end)
     }
 
     fn current_string(&self) -> &str {
-        self.lookahead
-            .as_ref()
-            .map(|token| {
-                &self.input[token.start.absolute as usize
-                    ..token.start.absolute as usize + token.value.len as usize]
-            })
-            .unwrap_or("")
+        let token = self.current;
+
+        &self.input[token.start.absolute as usize
+            ..token.start.absolute as usize + token.value.len as usize]
     }
 
     fn precedence(&self) -> Precedence {
@@ -268,7 +302,8 @@ where
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
-        if self.is_ahead(|t| t == expected) {
+        self.eat_trivias();
+        if self.at(expected) {
             self.bump();
         } else {
             self.error(
@@ -283,7 +318,9 @@ where
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
-        if self.is_ahead(|t| t == expected) {
+        self.eat_trivias();
+
+        if self.at(expected) {
             self.bump();
             true
         } else {
@@ -301,13 +338,10 @@ where
     }
 
     fn current(&self) -> SyntaxKind {
-        self.lookahead
-            .as_ref()
-            .map(|token| token.value.kind)
-            .unwrap_or(EOF)
+        self.current.value.kind
     }
 
-    fn at(&self, check: SyntaxKind) -> bool {
+    fn at(&mut self, check: SyntaxKind) -> bool {
         self.current() == check
     }
 
@@ -320,24 +354,66 @@ where
         false
     }
 
+    fn eat_trivias(&mut self) {
+        while let Some(&token) = self.tokens.get(self.token_pos) {
+            if !token.value.kind.is_trivia() {
+                break;
+            }
+            self.add_token(&token);
+        }
+    }
+
+    fn add_token(&mut self, token: &Span<Token>) {
+        let len = TextUnit::from(token.value.len);
+        let range = TextRange::offset_len((token.start.absolute as u32).into(), len);
+
+        let text = &self.input[range];
+
+        self.text_pos += len;
+        self.token_pos += 1;
+
+        self.current = &self.tokens[self.token_pos];
+        self.builder.token(token.value.kind.into(), text.into());
+    }
+
     pub fn bump(&mut self) {
         if self.at(SyntaxKind::EOF) {
             return;
         }
-        let token = self.lookahead.take();
 
-        if let Some(token) = token {
-            let text = &self.input
-                [token.start.absolute as usize..(token.start.absolute + token.value.len) as usize];
-            self.builder.token(token.value.kind.into(), text.into());
-            self.past_tokens.push_front(token);
-            self.lookahead = self.iter.next()
-        }
+        self.add_token(self.current);
     }
 
     fn ident(&mut self) {
         self.start_node(NAME);
         self.expect(IDENT, "Expected an identifier");
         self.finish_node()
+    }
+}
+
+fn n_attached_trivias<'a>(
+    kind: SyntaxKind,
+    trivias: impl Iterator<Item = (SyntaxKind, &'a str)>,
+) -> usize {
+    use SyntaxKind::*;
+    match kind {
+        TYPE_ALIAS_DEF | CLASS_DEF | ENUM_DEF | ENUM_VARIANT | FN_DEF => {
+            let mut res = 0;
+            for (i, (kind, text)) in trivias.enumerate() {
+                match kind {
+                    WHITESPACE => {
+                        if text.contains("\n\n") {
+                            break;
+                        }
+                    }
+                    COMMENT => {
+                        res = i + 1;
+                    }
+                    _ => (),
+                }
+            }
+            res
+        }
+        _ => 0,
     }
 }

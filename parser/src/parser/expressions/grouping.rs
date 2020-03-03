@@ -8,11 +8,8 @@ use crate::{Span, SyntaxKind::*, Token};
 #[derive(Debug)]
 pub struct GroupingParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for GroupingParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for GroupingParselet {
+    fn parse(&self, parser: &mut Parser) {
         let checkpoint = parser.checkpoint();
 
         let mut seen_comma = false;

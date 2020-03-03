@@ -1,6 +1,6 @@
 use crate::ast::SyntaxKind;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: SyntaxKind,
     pub len: u32,

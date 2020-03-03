@@ -25,13 +25,13 @@ pub enum SyntaxKind {
     EOF,
 
 {%- for t in concat(a=single_byte_tokens, b=multi_byte_tokens) %}
-    {{t.1}}, // {{t.0}}
+    {{t.1}}, // {{t.0}} {{loop.index0}}
 {%- endfor -%}
 {% for kw in concat(a=keywords) %}
-    {{kw | upper}}_KW, // {{kw}}
+    {{kw | upper}}_KW, // {{kw}} {{loop.index0 + 38 }}
 {%- endfor -%}
 {% for t in concat(a=literals, b=tokens, c=nodes) %}
-    {{t}},
+    {{t}}, // {{loop.index0 + 63 }}
 {%- endfor %}
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
@@ -61,6 +61,14 @@ impl SyntaxKind {
         {%- endfor %}
         
             _ => ""
+        }
+    }
+
+    pub fn is_trivia(&self) -> bool {
+        use SyntaxKind::*;
+        match self {
+            COMMENT | WHITESPACE => true,
+            _ => false,
         }
     }
 }

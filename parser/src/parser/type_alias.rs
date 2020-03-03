@@ -4,10 +4,7 @@ use crate::parser::Parser;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_type_alias(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, TYPE_ALIAS_DEF);
 
@@ -15,7 +12,7 @@ where
 
         self.ident();
 
-        if self.is_ahead(|t| t == L_ANGLE) {
+        if self.at(L_ANGLE) {
             self.parse_type_params(false);
         }
 

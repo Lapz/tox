@@ -2,11 +2,9 @@ use crate::parser::{Parser, Precedence, Restrictions};
 use crate::{Span, SyntaxKind::*, Token};
 use syntax::T;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_type(&mut self) {
+        self.eat_trivias();
         match self.current() {
             IDENT | T![self] => self.parse_ident_type(),
             T!["["] => self.parse_array_type(),
@@ -37,7 +35,7 @@ where
             )
         }
 
-        if self.is_ahead(|t| t == T![<]) {
+        if self.at(T![<]) {
             self.parse_type_params(false);
         }
 
@@ -92,7 +90,7 @@ where
 
         self.expect(T![")"], "Expected `)`");
 
-        if self.is_ahead(|t| t == T![->]) {
+        if self.at(T![->]) {
             self.start_node(RET_TYPE);
             self.bump();
             self.parse_type();

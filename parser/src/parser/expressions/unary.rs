@@ -5,10 +5,7 @@ use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_unary_op(&mut self) {
         match self.current() {
             T![-] | T![!] => self.bump(),
@@ -25,11 +22,8 @@ where
 #[derive(Debug)]
 pub struct UnaryParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for UnaryParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for UnaryParselet {
+    fn parse(&self, parser: &mut Parser) {
         parser.start_node(PREFIX_EXPR);
 
         parser.parse_unary_op();

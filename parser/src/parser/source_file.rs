@@ -5,10 +5,7 @@ use syntax::T;
 
 use crate::{AstNode, Span, SyntaxKind::*, SyntaxNode, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub fn parse_program(&mut self) -> SourceFile {
         self.start_node(SOURCE_FILE);
 
@@ -62,9 +59,9 @@ where
 
         let green = _builder.finish();
 
-        // println!("{:#?}", green);
-
         let root = SyntaxNode::new_root(green);
+
+        println!("{:?}", root.text());
 
         SourceFile::cast(root).unwrap()
     }

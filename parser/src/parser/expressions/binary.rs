@@ -5,10 +5,7 @@ use crate::parser::{Parser, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_op(&mut self) {
         match self.current() {
             T![-]
@@ -38,15 +35,12 @@ where
 #[derive(Debug)]
 pub struct BinaryParselet(pub Precedence);
 
-impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for BinaryParselet {
+impl InfixParser for BinaryParselet {
     fn pred(&self) -> Precedence {
         self.0
     }
 
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+    fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, BIN_EXPR);
 
         parser.parse_op();

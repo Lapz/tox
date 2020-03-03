@@ -23,13 +23,13 @@ pub fn parse_query(db: &impl ParseDatabase, file: FileId) -> WithError<SourceFil
     let source = db.source(file);
 
     let tokens = db.lex(file)?;
-    let mut parser = Parser::new(tokens.into_iter(), reporter, source);
+    let mut parser = Parser::new(&tokens, reporter, source);
     let program = parser.parse_program();
     let reporter = parser.reporter();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(program)
-    }
+    // if reporter.has_errors() {
+    //     Err(reporter.finish())
+    // } else {
+    Ok(program)
+    // }
 }

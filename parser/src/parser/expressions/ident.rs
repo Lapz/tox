@@ -7,11 +7,8 @@ use crate::{Span, SyntaxKind::*, Token};
 #[derive(Debug)]
 pub struct IdentParselet;
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for IdentParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for IdentParselet {
+    fn parse(&self, parser: &mut Parser) {
         parser.start_node(IDENT_EXPR);
         parser.start_node(NAME);
 

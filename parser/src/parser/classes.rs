@@ -4,10 +4,7 @@ use crate::parser::Parser;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_class(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, CLASS_DEF);
 
@@ -15,7 +12,7 @@ where
 
         self.ident();
 
-        if self.is_ahead(|t| t == T![<]) {
+        if self.at(T![<]) {
             self.parse_type_params(false);
         }
 
@@ -25,7 +22,6 @@ where
     }
 
     fn parse_class_body(&mut self) {
-        // self.start_node()
         self.expect(T!["{"], "Expected `{`");
 
         while !self.at(EOF) && !self.at(T!["}"]) {
@@ -38,10 +34,7 @@ where
                 match self.current() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(checkpoint),
-                    T![] => {
-                        self.bump();
-                        continue;
-                    }
+
                     _ => self.error(
                         "Expected an identifier | `pub` | `fn` ",
                         format!(
@@ -55,10 +48,7 @@ where
                 match self.current() {
                     IDENT => self.parse_named_field(),
                     T![fn] => self.parse_function(checkpoint),
-                    T![] => {
-                        self.bump();
-                        continue;
-                    }
+
                     _ => self.error(
                         "Expected an identifier | `pub` | `fn` ",
                         format!(

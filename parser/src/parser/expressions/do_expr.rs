@@ -6,10 +6,7 @@ use crate::{Span, SyntaxKind::*, Token};
 
 use crate::parser::Precedence;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_do_expr(&mut self) {
         self.start_node(DO_EXPR);
 

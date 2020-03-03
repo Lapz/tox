@@ -21,141 +21,141 @@ pub enum SyntaxKind {
     // but never end up in the final tree
     #[doc(hidden)]
     EOF,
-    SEMI, // ;
-    COMMA, // ,
-    L_PAREN, // (
-    R_PAREN, // )
-    L_CURLY, // {
-    R_CURLY, // }
-    L_BRACK, // [
-    R_BRACK, // ]
-    L_ANGLE, // <
-    R_ANGLE, // >
-    AMP, // &
-    PIPE, // |
-    PLUS, // +
-    STAR, // *
-    SLASH, // /
-    CARET, // ^
-    PERCENT, // %
-    UNDERSCORE, // _
-    EXPONENTIAL, // ^
-    DOT, // .
-    QUESTION, // ?
-    MINUS, // -
-    FRETURN, // ->
-    COLON, // :
-    COLON_COLON, // ::
-    EQ, // =
-    EQEQ, // ==
-    FAT_ARROW, // =>
-    EXCL, // !
-    NEQ, // !=
-    LTEQ, // <=
-    GTEQ, // >=
-    PLUSEQ, // +=
-    MINUSEQ, // -=
-    STAREQ, // *=
-    SLASHEQ, // /=
-    AMPAMP, // &&
-    PIPEPIPE, // ||
-    CLASS_KW, // class
-    EXTENDS_KW, // extends
-    TYPE_KW, // type
-    AS_KW, // as
-    MATCH_KW, // match
-    ENUM_KW, // enum
-    FN_KW, // fn
-    LET_KW, // let
-    IF_KW, // if
-    ELSE_KW, // else
-    FOR_KW, // for
-    WHILE_KW, // while
-    RETURN_KW, // return
-    BREAK_KW, // break
-    CONTINUE_KW, // continue
-    DO_KW, // do
-    TRUE_KW, // true
-    FALSE_KW, // false
-    OR_KW, // or
-    AND_KW, // and
-    EXPORT_KW, // export
-    IMPORT_KW, // import
-    FROM_KW, // from
-    NIL_KW, // nil
-    SELF_KW, // self
-    INT_NUMBER,
-    FLOAT_NUMBER,
-    CHAR,
-    STRING,
-    ERROR,
-    IDENT,
-    COMMENT,
-    WHITESPACE,
-    BLOCK,
-    SOURCE_FILE,
-    CLASS_DEF,
-    ENUM_DEF,
-    FN_DEF,
-    EXTERN_IMPORT_DEF,
-    TYPE_ALIAS_DEF,
-    BIND_PAT,
-    PLACEHOLDER_PAT,
-    TUPLE_PAT,
-    LITERAL_PAT,
-    TYPE_REF,
-    FN_TYPE,
-    PAREN_TYPE,
-    ARRAY_TYPE,
-    IDENT_TYPE,
-    RET_TYPE,
-    ARRAY_EXPR,
-    CALL_EXPR,
-    CAST_EXPR,
-    INDEX_EXPR,
-    FIELD_EXPR,
-    BIN_EXPR,
-    PREFIX_EXPR,
-    TUPLE_EXPR,
-    IDENT_EXPR,
-    IF_EXPR,
-    WHILE_EXPR,
-    CONDITION,
-    LOOP_EXPR,
-    DO_EXPR,
-    FOR_EXPR,
-    CONTINUE_EXPR,
-    BREAK_EXPR,
-    BLOCK_EXPR,
-    RETURN_EXPR,
-    CLOSURE_EXPR,
-    PAREN_EXPR,
-    MATCH_EXPR,
-    MATCH_ARM_LIST,
-    MATCH_ARM,
-    MATCH_GUARD,
-    CLASS_LIT,
-    NAMED_FIELD_LIST,
-    NAMED_FIELD,
-    ENUM_VARIANT,
-    NAMED_FIELD_DEF_LIST,
-    NAMED_FIELD_DEF,
-    RECORD_LITERAL_FIELD_LIST,
-    RECORD_LITERAL_FIELD,
-    RECORD_LITERAL_EXPR,
-    ENUM_VARIANT_LIST,
-    VISIBILITY,
-    LITERAL,
-    NAME,
-    NAME_REF,
-    LET_STMT,
-    EXPR_STMT,
-    TYPE_PARAM_LIST,
-    TYPE_PARAM,
-    PARAM_LIST,
-    PARAM,
-    SELF_PARAM,
-    ARG_LIST,
+    SEMI, // ; 0
+    COMMA, // , 1
+    L_PAREN, // ( 2
+    R_PAREN, // ) 3
+    L_CURLY, // { 4
+    R_CURLY, // } 5
+    L_BRACK, // [ 6
+    R_BRACK, // ] 7
+    L_ANGLE, // < 8
+    R_ANGLE, // > 9
+    AMP, // & 10
+    PIPE, // | 11
+    PLUS, // + 12
+    STAR, // * 13
+    SLASH, // / 14
+    CARET, // ^ 15
+    PERCENT, // % 16
+    UNDERSCORE, // _ 17
+    EXPONENTIAL, // ^ 18
+    DOT, // . 19
+    QUESTION, // ? 20
+    MINUS, // - 21
+    FRETURN, // -> 22
+    COLON, // : 23
+    COLON_COLON, // :: 24
+    EQ, // = 25
+    EQEQ, // == 26
+    FAT_ARROW, // => 27
+    EXCL, // ! 28
+    NEQ, // != 29
+    LTEQ, // <= 30
+    GTEQ, // >= 31
+    PLUSEQ, // += 32
+    MINUSEQ, // -= 33
+    STAREQ, // *= 34
+    SLASHEQ, // /= 35
+    AMPAMP, // && 36
+    PIPEPIPE, // || 37
+    CLASS_KW, // class 38
+    EXTENDS_KW, // extends 39
+    TYPE_KW, // type 40
+    AS_KW, // as 41
+    MATCH_KW, // match 42
+    ENUM_KW, // enum 43
+    FN_KW, // fn 44
+    LET_KW, // let 45
+    IF_KW, // if 46
+    ELSE_KW, // else 47
+    FOR_KW, // for 48
+    WHILE_KW, // while 49
+    RETURN_KW, // return 50
+    BREAK_KW, // break 51
+    CONTINUE_KW, // continue 52
+    DO_KW, // do 53
+    TRUE_KW, // true 54
+    FALSE_KW, // false 55
+    OR_KW, // or 56
+    AND_KW, // and 57
+    EXPORT_KW, // export 58
+    IMPORT_KW, // import 59
+    FROM_KW, // from 60
+    NIL_KW, // nil 61
+    SELF_KW, // self 62
+    INT_NUMBER, // 63
+    FLOAT_NUMBER, // 64
+    CHAR, // 65
+    STRING, // 66
+    ERROR, // 67
+    IDENT, // 68
+    COMMENT, // 69
+    WHITESPACE, // 70
+    BLOCK, // 71
+    SOURCE_FILE, // 72
+    CLASS_DEF, // 73
+    ENUM_DEF, // 74
+    FN_DEF, // 75
+    EXTERN_IMPORT_DEF, // 76
+    TYPE_ALIAS_DEF, // 77
+    BIND_PAT, // 78
+    PLACEHOLDER_PAT, // 79
+    TUPLE_PAT, // 80
+    LITERAL_PAT, // 81
+    TYPE_REF, // 82
+    FN_TYPE, // 83
+    PAREN_TYPE, // 84
+    ARRAY_TYPE, // 85
+    IDENT_TYPE, // 86
+    RET_TYPE, // 87
+    ARRAY_EXPR, // 88
+    CALL_EXPR, // 89
+    CAST_EXPR, // 90
+    INDEX_EXPR, // 91
+    FIELD_EXPR, // 92
+    BIN_EXPR, // 93
+    PREFIX_EXPR, // 94
+    TUPLE_EXPR, // 95
+    IDENT_EXPR, // 96
+    IF_EXPR, // 97
+    WHILE_EXPR, // 98
+    CONDITION, // 99
+    LOOP_EXPR, // 100
+    DO_EXPR, // 101
+    FOR_EXPR, // 102
+    CONTINUE_EXPR, // 103
+    BREAK_EXPR, // 104
+    BLOCK_EXPR, // 105
+    RETURN_EXPR, // 106
+    CLOSURE_EXPR, // 107
+    PAREN_EXPR, // 108
+    MATCH_EXPR, // 109
+    MATCH_ARM_LIST, // 110
+    MATCH_ARM, // 111
+    MATCH_GUARD, // 112
+    CLASS_LIT, // 113
+    NAMED_FIELD_LIST, // 114
+    NAMED_FIELD, // 115
+    ENUM_VARIANT, // 116
+    NAMED_FIELD_DEF_LIST, // 117
+    NAMED_FIELD_DEF, // 118
+    RECORD_LITERAL_FIELD_LIST, // 119
+    RECORD_LITERAL_FIELD, // 120
+    RECORD_LITERAL_EXPR, // 121
+    ENUM_VARIANT_LIST, // 122
+    VISIBILITY, // 123
+    LITERAL, // 124
+    NAME, // 125
+    NAME_REF, // 126
+    LET_STMT, // 127
+    EXPR_STMT, // 128
+    TYPE_PARAM_LIST, // 129
+    TYPE_PARAM, // 130
+    PARAM_LIST, // 131
+    PARAM, // 132
+    SELF_PARAM, // 133
+    ARG_LIST, // 134
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
     __LAST,
@@ -310,6 +310,14 @@ impl SyntaxKind {
             ARG_LIST => "ARG_LIST",
         
             _ => ""
+        }
+    }
+
+    pub fn is_trivia(&self) -> bool {
+        use SyntaxKind::*;
+        match self {
+            COMMENT | WHITESPACE => true,
+            _ => false,
         }
     }
 }

@@ -1,3 +1,4 @@
+#![feature(track_caller)]
 #[macro_use]
 mod macros;
 mod db;

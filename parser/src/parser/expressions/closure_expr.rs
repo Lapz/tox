@@ -9,10 +9,7 @@ use crate::parser::PrefixParser;
 #[derive(Debug)]
 pub struct ClosureParselet;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_closure_expr(&mut self) {
         self.start_node(CLOSURE_EXPR);
 
@@ -27,10 +24,6 @@ where
 
         self.expect(T![|], "Expected `|`");
 
-        while self.at(T![]) {
-            self.bump();
-        }
-
         if self.at(T![->]) {
             self.expect(T![->], "Expected `->`");
             self.parse_type();
@@ -42,11 +35,8 @@ where
     }
 }
 
-impl<I: Iterator<Item = Span<Token>>> PrefixParser<I> for ClosureParselet {
-    fn parse(&self, parser: &mut Parser<I>)
-    where
-        I: Iterator<Item = Span<Token>>,
-    {
+impl PrefixParser for ClosureParselet {
+    fn parse(&self, parser: &mut Parser) {
         parser.parse_closure_expr();
     }
 }

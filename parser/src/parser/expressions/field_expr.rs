@@ -8,8 +8,8 @@ use crate::{Span, SyntaxKind::*, Token};
 #[derive(Debug)]
 pub struct FieldParselet(pub Precedence);
 
-impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for FieldParselet {
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint) {
+impl InfixParser for FieldParselet {
+    fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, FIELD_EXPR);
 
         parser.expect(T![.], "");

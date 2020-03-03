@@ -12,17 +12,11 @@ use crate::parser::Parser;
 pub trait Rule {
     fn rule(&self) -> RuleToken;
 }
-pub trait PrefixParser<I>: Debug + Any
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    fn parse(&self, parser: &mut Parser<I>);
+pub trait PrefixParser {
+    fn parse(&self, parser: &mut Parser<'_>);
 }
-pub trait InfixParser<I>: Debug + Any
-where
-    I: Iterator<Item = Span<Token>>,
-{
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint);
+pub trait InfixParser: Debug + Any {
+    fn parse(&self, parser: &mut Parser<'_>, checkpoint: rowan::Checkpoint);
     fn pred(&self) -> Precedence;
 }
 

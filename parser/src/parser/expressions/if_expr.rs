@@ -4,10 +4,7 @@ use crate::parser::{Parser, Precedence, Restrictions};
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_if_expr(&mut self) {
         self.start_node(IF_EXPR);
 

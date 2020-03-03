@@ -3,10 +3,7 @@ use syntax::T;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_func_params(&mut self) {
         self.start_node(PARAM_LIST);
 

@@ -8,8 +8,8 @@ use crate::{Span, SyntaxKind::*, Token};
 #[derive(Debug)]
 pub struct RecordParselet(pub Precedence);
 
-impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for RecordParselet {
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint) {
+impl InfixParser for RecordParselet {
+    fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, RECORD_LITERAL_EXPR);
 
         parser.start_node(RECORD_LITERAL_FIELD_LIST);
@@ -35,10 +35,7 @@ impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for RecordParselet {
     }
 }
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_record_field(&mut self) {
         self.start_node(RECORD_LITERAL_FIELD);
 

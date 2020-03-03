@@ -3,11 +3,9 @@ use syntax::T;
 
 use crate::{Span, SyntaxKind::*, Token};
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {
+        self.eat_trivias();
         match self.current() {
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),
@@ -57,7 +55,7 @@ where
     fn parse_binding_pattern(&mut self) {
         self.start_node(BIND_PAT);
         self.ident();
-        self.finish_no_ws();
+        self.finish_node();
     }
 }
 

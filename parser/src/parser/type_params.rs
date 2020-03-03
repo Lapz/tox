@@ -2,10 +2,7 @@ use crate::parser::Parser;
 use crate::{Span, SyntaxKind::*, Token};
 use syntax::T;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_type_params(&mut self, allow_types: bool) {
         self.start_node(TYPE_PARAM_LIST);
         self.bump();

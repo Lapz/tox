@@ -8,8 +8,8 @@ use crate::{Span, SyntaxKind::*, Token};
 #[derive(Debug)]
 pub struct CallParselet(pub Precedence);
 
-impl<I: Iterator<Item = Span<Token>>> InfixParser<I> for CallParselet {
-    fn parse(&self, parser: &mut Parser<I>, checkpoint: rowan::Checkpoint) {
+impl InfixParser for CallParselet {
+    fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, CALL_EXPR);
         parser.start_node(ARG_LIST);
 

@@ -38,12 +38,11 @@ pub use literal::LiteralParselet;
 pub use record_expr::RecordParselet;
 pub use unary::UnaryParselet;
 
-impl<'a, I> Parser<'a, I>
-where
-    I: Iterator<Item = Span<Token>>,
-{
+impl<'a> Parser<'a> {
     pub(crate) fn parse_expression(&mut self, precedence: Precedence, restrictions: Restrictions) {
         let check_point = self.builder.checkpoint();
+
+        self.eat_trivias();
 
         let token = self.current();
 
