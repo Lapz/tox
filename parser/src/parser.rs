@@ -388,6 +388,8 @@ impl<'a> Parser<'a> {
     }
 }
 
+/// Taken from https://github.com/rust-analyzer/rust-analyzer/blob/918547dbe9a2907401102eba491ac25cebe1404d/crates/ra_syntax/src/parsing/text_tree_sink.rs
+/// All copyright goes to the rust-analyzer devs
 fn n_attached_trivias<'a>(
     kind: SyntaxKind,
     trivias: impl Iterator<Item = (SyntaxKind, &'a str)>,
