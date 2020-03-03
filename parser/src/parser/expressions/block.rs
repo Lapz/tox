@@ -66,7 +66,7 @@ where
                     self.parse_closure_expr();
                     self.finish_node();
                 }
-                pat @ WHITESPACE | pat @ T!["//"] => {
+                pat @ T!["//"] => {
                     while self.at(pat) {
                         self.bump();
                     }

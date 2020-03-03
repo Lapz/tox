@@ -13,14 +13,11 @@ where
         self.start_node(SOURCE_FILE);
 
         while !self.at(EOF) && !self.at(ERROR) {
-            self.skip_whitespace();
-
             let has_visibility = self.has_visibility();
 
             if has_visibility {
                 let checkpoint = self.checkpoint();
                 self.parse_visibility();
-                self.skip_whitespace();
 
                 match self.current() {
                     T![type] => self.parse_type_alias(checkpoint),
@@ -64,6 +61,8 @@ where
         std::mem::swap(&mut self.builder, &mut _builder);
 
         let green = _builder.finish();
+
+        // println!("{:#?}", green);
 
         let root = SyntaxNode::new_root(green);
 

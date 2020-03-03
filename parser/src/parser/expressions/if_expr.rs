@@ -27,7 +27,7 @@ where
 
     fn parse_else(&mut self) {
         self.bump(); // eat the `else`
-        self.skip_whitespace();
+
         if self.current() == T![if] {
             self.parse_if_expr()
         } else {

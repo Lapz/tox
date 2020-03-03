@@ -34,7 +34,6 @@ where
             if has_visibility {
                 let checkpoint = self.checkpoint();
                 self.parse_visibility();
-                self.skip_whitespace();
 
                 match self.current() {
                     IDENT => self.parse_named_field(),

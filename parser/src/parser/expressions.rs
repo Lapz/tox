@@ -45,10 +45,6 @@ where
     pub(crate) fn parse_expression(&mut self, precedence: Precedence, restrictions: Restrictions) {
         let check_point = self.builder.checkpoint();
 
-        while self.at(syntax::SyntaxKind::WHITESPACE) {
-            self.bump()
-        }
-
         let token = self.current();
 
         let mut rule = token.rule();

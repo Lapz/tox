@@ -13,10 +13,6 @@ where
             IDENT => self.parse_binding_pattern(),
             T![self] => self.bump(),
             T![_] => self.parse_placeholder_pattern(),
-            WHITESPACE => {
-                self.bump();
-                self.parse_pattern(allow_literal)
-            }
             e => {
                 if allow_literal {
                     self.start_node(LITERAL_PAT);

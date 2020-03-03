@@ -180,16 +180,10 @@ where
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        while self.at(SyntaxKind::WHITESPACE) {
-            self.bump()
-        }
         self.builder.start_node(kind.into());
     }
 
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
-        while self.at(SyntaxKind::WHITESPACE) || self.at(T!["//"]) {
-            self.bump()
-        }
         self.builder.start_node_at(checkpoint, kind.into())
     }
 
@@ -199,9 +193,6 @@ where
 
     fn finish_node(&mut self) {
         self.builder.finish_node();
-        while self.at(SyntaxKind::WHITESPACE) || self.at(T!["//"]) {
-            self.bump()
-        }
     }
 
     fn recover(&mut self) {
@@ -277,10 +268,6 @@ where
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
-        while self.is_ahead(|t| t == SyntaxKind::WHITESPACE) || self.at(SyntaxKind::WHITESPACE) {
-            self.bump()
-        }
-
         if self.is_ahead(|t| t == expected) {
             self.bump();
         } else {
@@ -296,10 +283,6 @@ where
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
-        while self.is_ahead(|t| t == SyntaxKind::WHITESPACE) || self.at(SyntaxKind::WHITESPACE) {
-            self.bump()
-        }
-
         if self.is_ahead(|t| t == expected) {
             self.bump();
             true
@@ -337,12 +320,6 @@ where
         false
     }
 
-    fn skip_whitespace(&mut self) {
-        while self.at(SyntaxKind::WHITESPACE) {
-            self.bump()
-        }
-    }
-
     pub fn bump(&mut self) {
         if self.at(SyntaxKind::EOF) {
             return;
@@ -361,6 +338,6 @@ where
     fn ident(&mut self) {
         self.start_node(NAME);
         self.expect(IDENT, "Expected an identifier");
-        self.finish_no_ws()
+        self.finish_node()
     }
 }
