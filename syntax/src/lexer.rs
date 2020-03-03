@@ -5,7 +5,6 @@ use errors::{
     pos::{CharPosition, Position, Span},
     Reporter,
 };
-use std::collections::HashMap;
 
 pub type LexerResult<T> = Result<T, ()>;
 

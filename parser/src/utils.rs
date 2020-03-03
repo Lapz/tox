@@ -2,19 +2,22 @@ use crate::AstNode;
 #[cfg(test)]
 use crate::{Parser, Span, Token};
 #[cfg(test)]
+use std::sync::Arc;
+#[cfg(test)]
 use std::vec::IntoIter;
 #[cfg(test)]
-use syntax::Lexer;
+use syntax::{ast::SourceFile, Lexer};
 
 pub fn dump_debug<T: AstNode>(item: &T) -> String {
     format!("{:#?}", item.syntax())
 }
 
 #[cfg(test)]
-pub fn parse(input: &str) -> Parser<IntoIter<Span<Token>>> {
+pub fn parse<'a>(input: &'a str) -> SourceFile {
     let mut files = errors::Files::new();
     let file_id = files.add("testing", input);
     let reporter = errors::Reporter::new(file_id);
-    let mut lexer = Lexer::new(input, reporter.clone());
-    Parser::new(lexer.lex().into_iter(), reporter, input)
+    let tokens = Lexer::new(input, reporter.clone()).lex();
+
+    Parser::new(&tokens, reporter, input).parse_program()
 }

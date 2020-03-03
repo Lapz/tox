@@ -423,7 +423,6 @@ pub fn resolve_program_query(db: &impl HirDatabase, file: FileId) -> WithError<(
     }
 
     let reporter = collector.reporter();
-    // println!("{:?}", reporter.diagnostics);
 
     if reporter.has_errors() {
         Err(reporter.finish())

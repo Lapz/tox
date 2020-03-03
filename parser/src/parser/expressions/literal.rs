@@ -12,7 +12,6 @@ impl PrefixParser for LiteralParselet {
     fn parse(&self, parser: &mut Parser) {
         match parser.current() {
             INT_NUMBER  | FLOAT_NUMBER | STRING | T![nil] |T![true]|T![false] => {
-                
                 parser.start_node(LITERAL);
                 parser.bump();
                 parser.finish_node();

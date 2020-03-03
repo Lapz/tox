@@ -17,7 +17,7 @@ mod test {
     use syntax::{FnDefOwner, VisibilityOwner};
     #[test]
     fn test_visibility() {
-        let source_file = parse("export fn main(){}").parse_program();
+        let source_file = parse("export fn main(){}");
 
         let func = source_file.functions().next().unwrap();
 
@@ -25,7 +25,7 @@ mod test {
     }
     #[test]
     fn test_visibility_not_present() {
-        let source_file = parse("fn main(){}").parse_program();
+        let source_file = parse("fn main(){}");
 
         let func = source_file.functions().next().unwrap();
 

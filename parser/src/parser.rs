@@ -64,8 +64,6 @@ impl<'a> Parser<'a> {
         parser.prefix(RuleToken::Minus, &expressions::UnaryParselet);
         parser.prefix(RuleToken::LParen, &expressions::GroupingParselet);
         parser.prefix(RuleToken::Pipe, &expressions::ClosureParselet);
-        // parser.prefix(RuleToken::)
-        //
 
         parser.infix(
             RuleToken::LBrace,
@@ -226,12 +224,11 @@ impl<'a> Parser<'a> {
     #[track_caller]
     fn finish_node(&mut self) {
         match replace(&mut self.state, State::PendingFinish) {
-            State::PendingFinish => {
+            State::PendingFinish | State::Normal => {
                 self.eat_trivias();
                 self.builder.finish_node();
             }
             State::PendingStart => unreachable!(),
-            State::Normal => {}
         }
     }
 
@@ -254,7 +251,6 @@ impl<'a> Parser<'a> {
     fn error(&mut self, message: impl Into<String>, additional_info: impl Into<String>) {
         let message = message.into();
         let additional_info = additional_info.into();
-        println!("{:?} {:?}", message, additional_info);
         self.start_node(SyntaxKind::ERROR);
 
         self.recover();
@@ -291,7 +287,7 @@ impl<'a> Parser<'a> {
             ..token.start.absolute as usize + token.value.len as usize]
     }
 
-    fn precedence(&self) -> Precedence {
+    fn precedence(&mut self) -> Precedence {
         let token = self.current();
 
         let rule = token.rule();
@@ -302,24 +298,22 @@ impl<'a> Parser<'a> {
     }
 
     fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
-        self.eat_trivias();
         if self.at(expected) {
             self.bump();
         } else {
+            let current = self.current();
             self.error(
                 format!("Expected `{}`", expected.text()),
                 format!(
                     "Expected `{}` but instead found `{}`",
                     expected.text(),
-                    self.current().text()
+                    current.text()
                 ),
             );
         }
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
-        self.eat_trivias();
-
         if self.at(expected) {
             self.bump();
             true
@@ -337,7 +331,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn current(&self) -> SyntaxKind {
+    fn current(&mut self) -> SyntaxKind {
+        if self.current.value.kind.is_trivia() {
+            self.add_token(self.current);
+        }
         self.current.value.kind
     }
 
@@ -345,7 +342,7 @@ impl<'a> Parser<'a> {
         self.current() == check
     }
 
-    fn matches(&self, kind: Vec<SyntaxKind>) -> bool {
+    fn matches(&mut self, kind: Vec<SyntaxKind>) -> bool {
         for kind in kind {
             if kind == self.current() {
                 return true;

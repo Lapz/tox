@@ -27,9 +27,9 @@ pub fn parse_query(db: &impl ParseDatabase, file: FileId) -> WithError<SourceFil
     let program = parser.parse_program();
     let reporter = parser.reporter();
 
-    // if reporter.has_errors() {
-    //     Err(reporter.finish())
-    // } else {
-    Ok(program)
-    // }
+    if reporter.has_errors() {
+        Err(reporter.finish())
+    } else {
+        Ok(program)
+    }
 }

@@ -80,7 +80,7 @@ mod test {
     use syntax::{ClassDefOwner, NamedFieldsOwner};
     #[test]
     fn test_class_fields() {
-        let source_file = parse("class Person { name:String; surname:String;}").parse_program();
+        let source_file = parse("class Person { name:String; surname:String;}");
 
         let class = source_file.classes().next().unwrap();
 

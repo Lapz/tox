@@ -61,12 +61,10 @@ impl<'a> Parser<'a> {
 
         let root = SyntaxNode::new_root(green);
 
-        println!("{:?}", root.text());
-
         SourceFile::cast(root).unwrap()
     }
 
-    pub(crate) fn has_visibility(&self) -> bool {
+    pub(crate) fn has_visibility(&mut self) -> bool {
         match self.current() {
             T![export] => true,
             _ => false,

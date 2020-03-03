@@ -42,8 +42,6 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_expression(&mut self, precedence: Precedence, restrictions: Restrictions) {
         let check_point = self.builder.checkpoint();
 
-        self.eat_trivias();
-
         let token = self.current();
 
         let mut rule = token.rule();

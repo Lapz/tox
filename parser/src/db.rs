@@ -3,7 +3,7 @@ use errors::FileId;
 use errors::WithError;
 use salsa;
 use std::path::PathBuf;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use syntax::ast::SourceFile;
 use syntax::Token;
 
