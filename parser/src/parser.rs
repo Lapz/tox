@@ -168,7 +168,6 @@ impl<'a> Parser<'a> {
         self.tokens.get(self.token_pos + 1)
     }
 
-    #[track_caller]
     fn start_node(&mut self, kind: SyntaxKind) {
         match replace(&mut self.state, State::Normal) {
             State::PendingStart => {
@@ -217,11 +216,11 @@ impl<'a> Parser<'a> {
             self.add_token(token);
         }
     }
-    #[track_caller]
+
     fn start_node_at(&mut self, checkpoint: rowan::Checkpoint, kind: SyntaxKind) {
         self.builder.start_node_at(checkpoint, kind.into());
     }
-    #[track_caller]
+
     fn finish_node(&mut self) {
         match replace(&mut self.state, State::PendingFinish) {
             State::PendingFinish | State::Normal => {
