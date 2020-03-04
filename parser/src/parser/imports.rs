@@ -10,7 +10,13 @@ impl<'a> Parser<'a> {
 
         self.expect(T![import]);
 
-        self.parse_import_segment();
+        while !self.at(EOF) && !self.at(T![;]) {
+            self.parse_import_segment();
+
+            if !self.at(T![;]) && !self.expected(T![::]) {
+                break;
+            }
+        }
 
         self.expect(T![;]);
 
@@ -20,26 +26,20 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_import_segment(&mut self) {
         self.start_node(IMPORT_SEGMENT);
 
-        self.ident();
-
-        if self.at(T![::]) {
+        if self.at(T!["{"]) {
             self.bump();
 
-            if self.at(T!["{"]) {
-                self.bump();
+            while !self.at(EOF) && !self.at(T!["}"]) {
+                self.parse_import_segment();
 
-                while !self.at(EOF) && self.at(T!["}"]) {
-                    self.parse_import_segment();
-
-                    if !self.at(T!["}"]) && !self.expected(T![,]) {
-                        break;
-                    }
+                if !self.at(T!["}"]) && !self.expected(T![,]) {
+                    break;
                 }
-
-                self.expect(T!["}"]);
             }
 
-            self.parse_import_segment();
+            self.expect(T!["}"]);
+        } else if !self.at(T![;]) {
+            self.ident();
         }
 
         self.finish_node();

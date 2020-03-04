@@ -362,9 +362,11 @@ impl<'a> Parser<'a> {
 
     fn add_token(&mut self, token: &Span<Token>) {
         let len = TextUnit::from(token.value.len);
-        let range = TextRange::offset_len((token.start.absolute as u32).into(), len);
+        let range = TextRange::offset_len(token.start.absolute.into(), len);
 
         let text = &self.input[range];
+
+        println!("{:?}", text);
 
         self.text_pos += len;
         self.token_pos += 1;
