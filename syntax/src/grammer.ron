@@ -89,8 +89,9 @@ Grammar(
         "CLASS_DEF",
         "ENUM_DEF",
         "FN_DEF",
-        "EXTERN_IMPORT_DEF",
+        "IMPORT_DEF",
         "TYPE_ALIAS_DEF",
+        "IMPORT_SEGMENT",
         //patterns
         "BIND_PAT",
         "PLACEHOLDER_PAT",
@@ -197,7 +198,7 @@ Grammar(
             ],
             options: ["TypeRef"]
         ),
-        "ExternImportDef":(
+        "ImportDef":(
             options: [["imports","Name"]]
         ),
         "EnumDef":(
@@ -251,6 +252,11 @@ Grammar(
                 "Expr",
             ],
             collections: [ [ "pats", "Pat" ] ],
+        ),
+        "ImportSegment": (
+            options:[
+                "Name"
+            ]
         ),
         "NamedFieldList": (
             collections: [ ["fields", "NamedField"] ]),

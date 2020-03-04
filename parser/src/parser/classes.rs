@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_class(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, CLASS_DEF);
 
-        self.expect(CLASS_KW, "Expected `class`");
+        self.expect(CLASS_KW);
 
         self.ident();
 
@@ -22,7 +22,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_class_body(&mut self) {
-        self.expect(T!["{"], "Expected `{`");
+        self.expect(T!["{"]);
 
         while !self.at(EOF) && !self.at(T!["}"]) {
             let has_visibility = self.has_visibility();
@@ -60,15 +60,15 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T!["}"], "Expected `}`");
+        self.expect(T!["}"]);
     }
 
     fn parse_named_field(&mut self) {
         self.start_node(NAMED_FIELD_DEF);
         self.ident();
-        self.expect(T![:], "Expected `:`");
+        self.expect(T![:]);
         self.parse_type();
-        self.expect(T![;], "Expected `;`");
+        self.expect(T![;]);
         self.finish_node();
     }
 }

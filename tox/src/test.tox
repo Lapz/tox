@@ -1,3 +1,6 @@
+import foo::bar;
+import foo::Struct;
+
 type ParserResult<T> = Result<T,i32>;
 
 

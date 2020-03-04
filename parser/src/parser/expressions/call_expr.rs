@@ -13,7 +13,7 @@ impl InfixParser for CallParselet {
         parser.start_node_at(checkpoint, CALL_EXPR);
         parser.start_node(ARG_LIST);
 
-        parser.expect(T!["("], "Expected `(`");
+        parser.expect(T!["("]);
 
         while !parser.at(EOF) && !parser.at(T![")"]) {
             parser.parse_expression(Precedence::Assignment, Restrictions::default());
@@ -23,7 +23,7 @@ impl InfixParser for CallParselet {
             }
         }
 
-        parser.expect(T![")"], "Expected `)`");
+        parser.expect(T![")"]);
 
         parser.finish_node();
         parser.finish_node();

@@ -64,6 +64,9 @@ macro_rules! T {
     (type) => {
         $crate::SyntaxKind::TYPE_KW
     };
+    (import) => {
+        $crate::SyntaxKind::IMPORT_KW
+    };
     (::) => {
         $crate::SyntaxKind::COLON_COLON
     };

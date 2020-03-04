@@ -62,6 +62,10 @@ impl Position {
         self.absolute += ch.len_utf8() as u32;
         self
     }
+
+    pub fn span(self, ch: char) -> Self {
+        self.shift(ch).shift(ch)
+    }
 }
 
 impl<'a> Iterator for CharPosition<'a> {

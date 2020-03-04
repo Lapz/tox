@@ -9,7 +9,7 @@ impl<'a> Parser<'a> {
         self.start_node(BLOCK_EXPR);
         self.start_node(BLOCK);
 
-        self.expect(T!["{"], "Expected `{`");
+        self.expect(T!["{"]);
 
         while !self.at(EOF) && !self.at(T!["}"]) {
             self.eat_trivias();
@@ -84,7 +84,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T!["}"], "Expected `}`");
+        self.expect(T!["}"]);
 
         self.finish_node();
         self.finish_node()

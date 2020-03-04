@@ -7,25 +7,25 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_for_expr(&mut self) {
         self.start_node(FOR_EXPR);
 
-        self.expect(T![for], "Expected `for`");
+        self.expect(T![for]);
 
-        self.expect(T!["("], "Expected `(`");
+        self.expect(T!["("]);
 
         if self.at(T![;]) {
             self.bump()
         } else if self.at(T![let]) {
             self.parse_let_expr();
-            self.expect(T![;], "Expected `;`");
+            self.expect(T![;]);
         } else {
             self.parse_expression(Precedence::Assignment, Restrictions::default());
-            self.expect(T![;], "Expected `;`");
+            self.expect(T![;]);
         }
 
         if self.at(T![;]) {
             self.bump()
         } else {
             self.parse_expression(Precedence::Comparison, Restrictions::default());
-            self.expect(T![;], "Expected `;`");
+            self.expect(T![;]);
         }
 
         if self.at(T![;]) {
@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
             self.parse_expression(Precedence::Assignment, Restrictions::default());
         }
 
-        self.expect(T![")"], "Expect `)`");
+        self.expect(T![")"]);
 
         self.parse_block();
 

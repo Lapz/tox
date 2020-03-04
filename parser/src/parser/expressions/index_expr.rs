@@ -12,11 +12,11 @@ impl InfixParser for IndexParselet {
     fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, INDEX_EXPR);
 
-        parser.expect(T!["["], "Expected `[`");
+        parser.expect(T!["["]);
 
         parser.parse_expression(Precedence::Assignment, Restrictions::default());
 
-        parser.expect(T!["]"], "Expected `]`");
+        parser.expect(T!["]"]);
 
         parser.finish_node();
     }

@@ -11,42 +11,26 @@ impl<'a> Parser<'a> {
 
         while !self.at(EOF) && !self.at(ERROR) {
             let has_visibility = self.has_visibility();
+            let checkpoint = self.checkpoint();
 
             if has_visibility {
-                let checkpoint = self.checkpoint();
                 self.parse_visibility();
+            }
 
-                match self.current() {
-                    T![type] => self.parse_type_alias(checkpoint),
-                    T![fn] => {
-                        self.parse_function(checkpoint);
-                    }
-                    T![enum] => self.parse_enum(checkpoint),
-                    T![class] => self.parse_class(checkpoint),
-                    T!["//"] => {
-                        self.bump();
-                        continue;
-                    }
-                    _ => {
-                        self.recover();
-                    }
+            match self.current() {
+                T![type] => self.parse_type_alias(checkpoint),
+                T![fn] => {
+                    self.parse_function(checkpoint);
                 }
-            } else {
-                let checkpoint = self.checkpoint();
-                match self.current() {
-                    T![type] => self.parse_type_alias(checkpoint),
-                    T![fn] => {
-                        self.parse_function(checkpoint);
-                    }
-                    T![enum] => self.parse_enum(checkpoint),
-                    T![class] => self.parse_class(checkpoint),
-                    T!["//"] => {
-                        self.bump();
-                        continue;
-                    }
-                    _ => {
-                        self.recover();
-                    }
+                T![import] => self.parse_import(),
+                T![enum] => self.parse_enum(checkpoint),
+                T![class] => self.parse_class(checkpoint),
+                T!["//"] => {
+                    self.bump();
+                    continue;
+                }
+                _ => {
+                    self.recover();
                 }
             }
         }

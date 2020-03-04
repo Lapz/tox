@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_type_alias(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, TYPE_ALIAS_DEF);
 
-        self.expect(T![type], "Expected `type`");
+        self.expect(T![type]);
 
         self.ident();
 
@@ -16,11 +16,11 @@ impl<'a> Parser<'a> {
             self.parse_type_params(false);
         }
 
-        self.expect(EQ, "Expected `=`");
+        self.expect(EQ);
 
         self.parse_type();
 
-        self.expect(SEMI, "Expected `;`");
+        self.expect(SEMI);
 
         self.finish_node()
     }

@@ -2,6 +2,7 @@ mod classes;
 mod enums;
 mod expressions;
 mod function;
+mod imports;
 mod params;
 mod pattern;
 mod pratt;
@@ -282,8 +283,7 @@ impl<'a> Parser<'a> {
     fn current_string(&self) -> &str {
         let token = self.current;
 
-        &self.input[token.start.absolute as usize
-            ..token.start.absolute as usize + token.value.len as usize]
+        &self.input[token.start.absolute as usize..token.end.absolute as usize]
     }
 
     fn precedence(&mut self) -> Precedence {
@@ -296,7 +296,7 @@ impl<'a> Parser<'a> {
             .map_or(Precedence::None, |parser| parser.pred())
     }
 
-    fn expect<T: Into<String>>(&mut self, expected: SyntaxKind, _msg: T) {
+    fn expect(&mut self, expected: SyntaxKind) {
         if self.at(expected) {
             self.bump();
         } else {
@@ -310,6 +310,18 @@ impl<'a> Parser<'a> {
                 ),
             );
         }
+    }
+
+    fn expects(&mut self, expected: Vec<SyntaxKind>) -> bool {
+        for kind in expected {
+            let current = self.current();
+            if kind == current {
+                self.bump();
+                return true;
+            }
+        }
+
+        false
     }
 
     fn expected(&mut self, expected: SyntaxKind) -> bool {
@@ -361,7 +373,7 @@ impl<'a> Parser<'a> {
 
     fn add_token(&mut self, token: &Span<Token>) {
         let len = TextUnit::from(token.value.len);
-        let range = TextRange::offset_len((token.start.absolute as u32).into(), len);
+        let range = TextRange::offset_len(token.start.absolute.into(), len);
 
         let text = &self.input[range];
 
@@ -382,7 +394,7 @@ impl<'a> Parser<'a> {
 
     fn ident(&mut self) {
         self.start_node(NAME);
-        self.expect(IDENT, "Expected an identifier");
+        self.expect(IDENT);
         self.finish_node()
     }
 }

@@ -53,7 +53,7 @@ impl<'a> Parser<'a> {
             self.parse_expression(Precedence::Primary, Restrictions::default())
         }
 
-        self.expect(T!["]"], "Expected `]`");
+        self.expect(T!["]"]);
 
         self.finish_node();
     }
@@ -69,7 +69,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![")"], "Expected `)`");
+        self.expect(T![")"]);
 
         self.finish_node();
     }
@@ -77,9 +77,9 @@ impl<'a> Parser<'a> {
     fn parse_fn_type(&mut self) {
         self.start_node(FN_TYPE);
 
-        self.expect(T![fn], "Expected `fn`");
+        self.expect(T![fn]);
 
-        self.expect(T!["("], "Expected `(`");
+        self.expect(T!["("]);
 
         while !self.at(EOF) && !self.at(T![")"]) {
             self.parse_type();
@@ -88,7 +88,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![")"], "Expected `)`");
+        self.expect(T![")"]);
 
         if self.at(T![->]) {
             self.start_node(RET_TYPE);

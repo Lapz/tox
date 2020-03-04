@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_function(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, FN_DEF);
 
-        self.expect(T![fn], "Expected `fn`");
+        self.expect(T![fn]);
 
         self.ident();
 
@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
 
     fn parse_return_type(&mut self) {
         self.start_node(RET_TYPE);
-        self.expect(T![->], "Expected `->`");
+        self.expect(T![->]);
         self.parse_type();
         self.finish_node()
     }

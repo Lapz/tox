@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_continue_expr(&mut self) {
         self.start_node(CONTINUE_EXPR);
 
-        self.expect(T![continue], "Expected `continue`");
+        self.expect(T![continue]);
 
         self.finish_node()
     }

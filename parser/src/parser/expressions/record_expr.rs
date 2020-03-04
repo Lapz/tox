@@ -14,7 +14,7 @@ impl InfixParser for RecordParselet {
 
         parser.start_node(RECORD_LITERAL_FIELD_LIST);
 
-        parser.expect(T!["{"], "Expected `{`");
+        parser.expect(T!["{"]);
 
         while !parser.at(EOF) && !parser.at(T!["}"]) {
             parser.parse_record_field();
@@ -24,7 +24,7 @@ impl InfixParser for RecordParselet {
             }
         }
 
-        parser.expect(T!["}"], "Expected `}`");
+        parser.expect(T!["}"]);
         parser.finish_node();
 
         parser.finish_node();
@@ -39,7 +39,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_record_field(&mut self) {
         self.start_node(RECORD_LITERAL_FIELD);
 
-        self.expect(IDENT, "");
+        self.expect(IDENT);
 
         if self.at(T![:]) {
             self.bump();

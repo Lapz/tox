@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_enum(&mut self, checkpoint: rowan::Checkpoint) {
         self.start_node_at(checkpoint, ENUM_DEF);
 
-        self.expect(T![enum], "Expected `enum`");
+        self.expect(T![enum]);
 
         self.ident();
 
@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
     fn parse_enum_variants(&mut self) {
         self.start_node(ENUM_VARIANT_LIST);
 
-        self.expect(T!["{"], "Expected `{`");
+        self.expect(T!["{"]);
 
         while !self.at(EOF) && !self.at(T!["}"]) {
             self.parse_enum_variant();
@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T!["}"], "Expected `}`");
+        self.expect(T!["}"]);
 
         self.finish_node();
     }
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![")"], "Expected `>` to close type params");
+        self.expect(T![")"]);
     }
 }
 
