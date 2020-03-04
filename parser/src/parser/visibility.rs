@@ -6,7 +6,7 @@ use crate::SyntaxKind::*;
 impl<'a> Parser<'a> {
     pub(crate) fn parse_visibility(&mut self) {
         self.start_node(VISIBILITY);
-        self.expect(T![export], "Expected `export`");
+        self.expect(T![export]);
         self.finish_node();
     }
 }

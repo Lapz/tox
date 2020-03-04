@@ -21,7 +21,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![>], "Expected `>` to close type params");
+        self.expect(T![>]);
         self.finish_node()
     }
 

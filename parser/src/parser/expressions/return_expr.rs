@@ -10,7 +10,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_return_expr(&mut self) {
         self.start_node(RETURN_EXPR);
 
-        self.expect(T![return], "Expected `return`");
+        self.expect(T![return]);
 
         if self.current() == T![;] {
             self.finish_node();

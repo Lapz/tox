@@ -10,7 +10,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_while_expr(&mut self) {
         self.start_node(WHILE_EXPR);
 
-        self.expect(T![while], "Expected `while`");
+        self.expect(T![while]);
 
         self.start_node(CONDITION);
         self.parse_expression(Precedence::Assignment, Restrictions::no_records());

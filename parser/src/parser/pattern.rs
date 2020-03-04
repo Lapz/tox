@@ -42,13 +42,13 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![")"], "Expected `)` to close type params");
+        self.expect(T![")"]);
         self.finish_node();
     }
 
     fn parse_placeholder_pattern(&mut self) {
         self.start_node(PLACEHOLDER_PAT);
-        self.expect(T![_], "Expected `_`");
+        self.expect(T![_]);
         self.finish_node();
     }
 

@@ -10,7 +10,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_let_expr(&mut self) {
         self.start_node(LET_STMT);
 
-        self.expect(T![let], "Expected `for`");
+        self.expect(T![let]);
 
         self.parse_pattern(false);
 
@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
             return;
         }
 
-        self.expect(T![=], "");
+        self.expect(T![=]);
 
         if self.at(T!["{"]) {
             self.parse_block()

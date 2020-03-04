@@ -8,7 +8,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_if_expr(&mut self) {
         self.start_node(IF_EXPR);
 
-        self.expect(T![if], "Expected `if`");
+        self.expect(T![if]);
 
         self.start_node(CONDITION);
         self.parse_expression(Precedence::Assignment, Restrictions::no_records());

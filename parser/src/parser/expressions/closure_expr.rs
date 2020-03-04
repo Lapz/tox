@@ -13,7 +13,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_closure_expr(&mut self) {
         self.start_node(CLOSURE_EXPR);
 
-        self.expect(T![|], "Expected `|`");
+        self.expect(T![|]);
 
         while !self.at(EOF) && !self.at(T![|]) {
             self.func_param();
@@ -22,10 +22,10 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![|], "Expected `|`");
+        self.expect(T![|]);
 
         if self.at(T![->]) {
-            self.expect(T![->], "Expected `->`");
+            self.expect(T![->]);
             self.parse_type();
         }
 

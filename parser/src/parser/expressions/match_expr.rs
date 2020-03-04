@@ -10,15 +10,15 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_match_expr(&mut self) {
         self.start_node(MATCH_EXPR);
 
-        self.expect(T![match], "Expected `match`");
+        self.expect(T![match]);
 
         self.parse_expression(Precedence::Call, Restrictions::no_records()); // TODO Forbid struct literal
 
-        self.expect(T!["{"], "Expected `}`");
+        self.expect(T!["{"]);
 
         self.parse_match_arms();
 
-        self.expect(T!["}"], "Expect `}`");
+        self.expect(T!["}"]);
 
         self.finish_node()
     }

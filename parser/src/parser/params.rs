@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(T![")"], "Expected `)` to close type params");
+        self.expect(T![")"]);
 
         self.finish_node()
     }
@@ -27,7 +27,7 @@ impl<'a> Parser<'a> {
         self.parse_pattern(false);
 
         if self.at(T![:]) {
-            self.expect(T![:], "Expected `:`");
+            self.expect(T![:]);
             self.parse_type();
         }
 

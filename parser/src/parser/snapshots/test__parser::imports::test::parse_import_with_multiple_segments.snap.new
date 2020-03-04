@@ -1,0 +1,23 @@
+---
+created: "2020-03-03T23:57:34.866149Z"
+creator: insta@0.8.2
+source: parser/src/parser/imports.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 19)
+  IMPORT_DEF@[0; 19)
+    IMPORT_KW@[0; 6) "import"
+    WHITESPACE@[6; 7) " "
+    IMPORT_SEGMENT@[7; 18)
+      NAME@[7; 10)
+        IDENT@[7; 10) "foo"
+      COLON_COLON@[10; 11) ":"
+      IMPORT_SEGMENT@[11; 18)
+        NAME@[11; 14)
+          IDENT@[11; 14) "bar"
+        COLON_COLON@[14; 15) ":"
+        IMPORT_SEGMENT@[15; 18)
+          NAME@[15; 18)
+            IDENT@[15; 18) "baz"
+    SEMI@[18; 19) ";"
+

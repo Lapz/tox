@@ -12,7 +12,7 @@ impl PrefixParser for IdentParselet {
         parser.start_node(IDENT_EXPR);
         parser.start_node(NAME);
 
-        parser.expect(IDENT, "Expected an identifer");
+        parser.expect(IDENT);
 
         if parser.at(T![::]) {
             parser.bump();

@@ -30,7 +30,7 @@ impl PrefixParser for GroupingParselet {
             }
         }
 
-        parser.expect(T![")"], "Expected `)`");
+        parser.expect(T![")"]);
 
         if seen_comma {
             parser.start_node_at(checkpoint, TUPLE_EXPR);
