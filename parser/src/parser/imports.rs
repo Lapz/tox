@@ -32,7 +32,7 @@ impl<'a> Parser<'a> {
             while !self.at(EOF) && !self.at(T!["}"]) {
                 self.parse_import_segment();
 
-                if !self.at(T!["}"]) && !self.expected(T![,]) {
+                if !self.at(T!["}"]) && !self.expects(vec![T![,], T![::]]) {
                     break;
                 }
             }

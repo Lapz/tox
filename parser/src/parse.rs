@@ -26,11 +26,10 @@ pub fn parse_query(db: &impl ParseDatabase, file: FileId) -> WithError<SourceFil
     let mut parser = Parser::new(&tokens, reporter, source);
     let program = parser.parse_program();
     let reporter = parser.reporter();
-
-    Ok(program)
-    // if reporter.has_errors() {
-    //     Err(reporter.finish())
-    // } else {
-    //     Ok(program)
-    // }
+    // Ok(program)
+    if reporter.has_errors() {
+        Err(reporter.finish())
+    } else {
+        Ok(program)
+    }
 }

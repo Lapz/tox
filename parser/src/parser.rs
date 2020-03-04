@@ -312,6 +312,18 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn expects(&mut self, expected: Vec<SyntaxKind>) -> bool {
+        for kind in expected {
+            let current = self.current();
+            if kind == current {
+                self.bump();
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn expected(&mut self, expected: SyntaxKind) -> bool {
         if self.at(expected) {
             self.bump();
@@ -364,8 +376,6 @@ impl<'a> Parser<'a> {
         let range = TextRange::offset_len(token.start.absolute.into(), len);
 
         let text = &self.input[range];
-
-        println!("{:?}", text);
 
         self.text_pos += len;
         self.token_pos += 1;

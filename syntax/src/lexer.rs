@@ -146,8 +146,6 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == ':') {
                         self.advance();
                         let span = spans(SyntaxKind::COLON_COLON, start, start.span(':'));
-
-                        println!("len {:?}", span.value.len);
                         span
                     } else {
                         span(SyntaxKind::COLON, start)
