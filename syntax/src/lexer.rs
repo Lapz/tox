@@ -144,9 +144,10 @@ impl<'a> Lexer<'a> {
                 '%' => span(SyntaxKind::PERCENT, start),
                 ':' => {
                     if self.peek(|ch| ch == ':') {
-                        self.advance();
+                        let span = spans(SyntaxKind::COLON_COLON, start, start.span(':'));
 
-                        spans(SyntaxKind::COLON_COLON, start, start.shift(':'))
+                        println!("len {:?}", span.value.len);
+                        span
                     } else {
                         span(SyntaxKind::COLON, start)
                     }
@@ -154,7 +155,7 @@ impl<'a> Lexer<'a> {
                 '!' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::NEQ, start, start.shift(':'))
+                        spans(SyntaxKind::NEQ, start, start.span(':'))
                     } else {
                         span(SyntaxKind::EXCL, start)
                     }
@@ -163,10 +164,10 @@ impl<'a> Lexer<'a> {
                 '=' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::EQEQ, start, start.shift('='))
+                        spans(SyntaxKind::EQEQ, start, start.span('='))
                     } else if self.peek(|ch| ch == '>') {
                         self.advance();
-                        spans(SyntaxKind::FAT_ARROW, start, start.shift('>'))
+                        spans(SyntaxKind::FAT_ARROW, start, start.span('>'))
                     } else {
                         span(SyntaxKind::EQ, start)
                     }
@@ -175,7 +176,7 @@ impl<'a> Lexer<'a> {
                 '>' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::GTEQ, start, start.shift(':'))
+                        spans(SyntaxKind::GTEQ, start, start.span(':'))
                     } else {
                         span(SyntaxKind::R_ANGLE, start)
                     }
@@ -184,7 +185,7 @@ impl<'a> Lexer<'a> {
                 '<' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::LTEQ, start, start.shift(':'))
+                        spans(SyntaxKind::LTEQ, start, start.span(':'))
                     } else {
                         span(SyntaxKind::L_ANGLE, start)
                     }
@@ -193,7 +194,7 @@ impl<'a> Lexer<'a> {
                 '+' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::PLUSEQ, start, start.shift('='))
+                        spans(SyntaxKind::PLUSEQ, start, start.span('='))
                     } else {
                         span(SyntaxKind::PLUS, start)
                     }
@@ -202,10 +203,10 @@ impl<'a> Lexer<'a> {
                 '-' => {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
-                        spans(SyntaxKind::MINUSEQ, start, start.shift('='))
+                        spans(SyntaxKind::MINUSEQ, start, start.span('='))
                     } else if self.peek(|ch| ch == '>') {
                         self.advance();
-                        spans(SyntaxKind::FRETURN, start, start.shift('>'))
+                        spans(SyntaxKind::FRETURN, start, start.span('>'))
                     } else {
                         span(SyntaxKind::MINUS, start)
                     }
@@ -215,7 +216,7 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
 
-                        spans(SyntaxKind::STAREQ, start, start.shift('='))
+                        spans(SyntaxKind::STAREQ, start, start.span('='))
                     } else {
                         span(SyntaxKind::STAR, start)
                     }
@@ -226,7 +227,7 @@ impl<'a> Lexer<'a> {
                     if self.peek(|ch| ch == '=') {
                         self.advance();
 
-                        spans(SyntaxKind::SLASHEQ, start, start.shift('='))
+                        spans(SyntaxKind::SLASHEQ, start, start.span('='))
                     } else if self.peek(|ch| ch == '/') {
                         self.advance();
                         self.line_comment(start)
