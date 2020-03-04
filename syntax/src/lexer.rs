@@ -144,6 +144,7 @@ impl<'a> Lexer<'a> {
                 '%' => span(SyntaxKind::PERCENT, start),
                 ':' => {
                     if self.peek(|ch| ch == ':') {
+                        self.advance();
                         let span = spans(SyntaxKind::COLON_COLON, start, start.span(':'));
 
                         println!("len {:?}", span.value.len);

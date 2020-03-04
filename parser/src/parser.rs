@@ -283,8 +283,7 @@ impl<'a> Parser<'a> {
     fn current_string(&self) -> &str {
         let token = self.current;
 
-        &self.input[token.start.absolute as usize
-            ..token.start.absolute as usize + token.value.len as usize]
+        &self.input[token.start.absolute as usize..token.end.absolute as usize]
     }
 
     fn precedence(&mut self) -> Precedence {
