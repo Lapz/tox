@@ -63,7 +63,7 @@ impl Ctx {
         self.types.end_scope();
     }
 
-    pub(crate) fn get_type(&mut self, name: &NameId) -> Option<Type> {
+    pub(crate) fn get_type(&self, name: &NameId) -> Option<Type> {
         self.types.get(name).map(Clone::clone)
     }
 

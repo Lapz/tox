@@ -1,6 +1,6 @@
-import foo::bar::{bar};
+import foo::bar::{bar,Foo};
 
-type ParserResult<K> = Result<T,i32>;
+type ParserResult<K> = Result<T,Foo>;
 
 mod bar;
 mod foo;

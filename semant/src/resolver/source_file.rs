@@ -51,7 +51,9 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
     };
 
     for import in &source_file.imports {
-        db.resolve_import(file, import.id)?;
+        db.resolve_import(file, import.id)?
+            .into_iter()
+            .for_each(|(name, ty)| collector.ctx.insert_type(name, ty));
     }
 
     // collect the top level definitions first so we can

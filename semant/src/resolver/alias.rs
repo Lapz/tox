@@ -30,6 +30,11 @@ where
 
         self.ctx
             .insert_type(name.item, Type::Poly(poly_tvs, Box::new(ty)));
+
+        if alias.exported {
+            self.exported_items.insert(alias.name.item);
+        }
+
         Ok(())
     }
 }

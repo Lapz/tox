@@ -127,6 +127,7 @@ pub struct TypeParam {
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct TypeAlias {
     pub(crate) name: util::Span<NameId>,
+    pub(crate) exported: bool,
     pub(crate) type_params: Vec<util::Span<TypeParamId>>,
     pub(crate) ty: util::Span<TypeId>,
     pub(crate) ast_map: FunctionAstMap,

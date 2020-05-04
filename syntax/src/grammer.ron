@@ -184,6 +184,7 @@ Grammar(
                 "TypeParamsOwner",
                 "FnDefOwner",
                 "NamedFieldsOwner",
+                "VisibilityOwner",
             ]
         ),
         "NamedFieldDefList": (collections: [["fields", "NamedFieldDef"]]),
@@ -196,7 +197,8 @@ Grammar(
         "TypeAliasDef":(
             traits: [
                 "NameOwner",
-                "TypeParamsOwner"
+                "TypeParamsOwner",
+                "VisibilityOwner"
             ],
             options: ["TypeRef"]
         ),

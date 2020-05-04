@@ -3,7 +3,7 @@ use crate::{hir, util};
 
 use std::sync::Arc;
 
-use syntax::{ast, AstNode, NameOwner, TypeParamsOwner, TypesOwner};
+use syntax::{ast, AstNode, NameOwner, TypeParamsOwner, TypesOwner, VisibilityOwner};
 #[derive(Debug)]
 pub(crate) struct TypeAliasDataCollector<DB> {
     db: DB,
@@ -19,8 +19,9 @@ where
     pub fn finish(
         self,
         name: util::Span<hir::NameId>,
-        span: crate::TextRange,
+        exported: bool,
         ty: util::Span<hir::TypeId>,
+        span: crate::TextRange,
     ) -> hir::TypeAlias {
         let type_params = self.type_params;
         hir::TypeAlias {
@@ -28,6 +29,7 @@ where
             type_params,
             span,
             ast_map: self.ast_map,
+            exported,
             ty,
         }
     }
@@ -114,6 +116,8 @@ pub(crate) fn lower_type_alias_query(
         db.intern_name(alias.name().unwrap().into()),
         &alias.name().unwrap(),
     );
+
+    let exported = alias.visibility().is_some();
     let mut collector = TypeAliasDataCollector {
         db,
         type_params: Vec::new(),
@@ -129,5 +133,5 @@ pub(crate) fn lower_type_alias_query(
 
     let ty = collector.lower_type(alias.type_ref().unwrap());
     let span = alias.syntax().text_range();
-    Arc::new(collector.finish(name, span, ty))
+    Arc::new(collector.finish(name, exported, ty, span))
 }

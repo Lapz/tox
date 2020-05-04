@@ -46,11 +46,6 @@ where
             signature.push(Type::Con(TypeCon::Void))
         }
 
-        self.ctx.insert_type(
-            name.item,
-            Type::Poly(poly_tvs, Box::new(Type::App(signature))),
-        );
-
         if let Some(body) = &function.body {
             for stmt in body {
                 let _ = self.resolve_statement(&function.name, stmt, &function.ast_map);
@@ -58,6 +53,11 @@ where
         }
 
         self.end_scope();
+
+        self.ctx.insert_type(
+            name.item,
+            Type::Poly(poly_tvs, Box::new(Type::App(signature))),
+        );
 
         Ok(())
     }

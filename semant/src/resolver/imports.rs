@@ -1,17 +1,23 @@
-use crate::{hir::ImportId, HirDatabase};
+use crate::{
+    hir::{ImportId, NameId},
+    infer::Type,
+    HirDatabase,
+};
 use errors::{FileId, Reporter, WithError};
 
 pub fn resolve_imports_query(
     db: &impl HirDatabase,
     file: FileId,
     import_id: ImportId,
-) -> WithError<()> {
+) -> WithError<Vec<(NameId, Type)>> {
     let mut reporter = Reporter::new(file);
     let import = db.lower_import(file, import_id);
     let module_graphs = db.module_graph(file)?;
     let nodes = module_graphs.get_node(&file);
     let mut import_err = String::new();
     let span = (import.span.start().to_usize(), import.span.end().to_usize());
+
+    let mut imported_types = Vec::new();
 
     if nodes.is_none() {
         reporter.error(
@@ -36,10 +42,9 @@ pub fn resolve_imports_query(
             import_err.push_str(&format!("{}::", db.lookup_intern_name(segment.name.item)));
 
             if segment.nested_imports.len() > 0 {
-                let exports = db.resolve_exports(*module)?;
+                let exports = db.resolve_source_file(*module)?;
 
                 for name in &segment.nested_imports {
-                    eprintln!("{:#?}  {:?}", exports.exported_items, name);
                     if !exports.has_export(&name.item) {
                         reporter.error(
                             "Unresolved import",
@@ -49,6 +54,18 @@ pub fn resolve_imports_query(
                             ),
                             span,
                         );
+
+                        continue;
+                    }
+
+                    if let Some(ty) = exports.ctx.get_type(&name.item) {
+                        imported_types.push((name.item, ty))
+                    } else {
+                        eprintln!(
+                            "Found an import but couldn't find its type in the ctx; id {:?} name {}",
+                            name,
+                            db.lookup_intern_name(name.item)
+                        )
                     }
                 }
             }
@@ -66,7 +83,7 @@ pub fn resolve_imports_query(
     if reporter.has_errors() {
         Err(reporter.finish())
     } else {
-        Ok(())
+        Ok(imported_types)
     }
 }
 
