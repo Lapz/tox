@@ -1,5 +1,3 @@
-// mod type_alias;
-mod alias;
 mod ctx;
 mod infer;
 mod stacked_map;
