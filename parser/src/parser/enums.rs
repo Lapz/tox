@@ -67,6 +67,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     test_parser! {parse_empty_enum,"enum Foo {}"}
+    test_parser! {parse_exported_enum,"export enum Foo {}"}
     test_parser! {parse_enum_with_variants,"enum Foo {A,B,C}"}
     test_parser! {parse_enum_variants_trailing_comma,"enum Foo {A,B,C,}"}
     test_parser! {parse_enum_variants_types,"enum Foo { A([i32]),B(i32),C((i32,i32)),}"}

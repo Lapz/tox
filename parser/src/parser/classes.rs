@@ -87,6 +87,7 @@ mod test {
         assert_eq!(class.fields().count(), 2)
     }
     test_parser! {parse_empty_class,"class Foo {}"}
+    test_parser! {parse_exported_class,"export class Foo {}"}
     test_parser! {parse_class_generic,"class Result<T,E> {}"}
     test_parser! {parse_class_fields,"class Person { name:String; surname:String;}"}
     test_parser! {parse_class_fields_methods,"class Person { name:String; surname:String; fn hello(self) {}}"}

@@ -29,5 +29,6 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test {
     test_parser! {parse_type_alias,"type Foo = i32;"}
+    test_parser! {parse_exported_type_alias,"export type Foo = i32;"}
     test_parser! {parse_type_alias_params,"type ParseResult<T> = Result<T,void>;"}
 }
