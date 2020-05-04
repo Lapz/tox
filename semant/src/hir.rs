@@ -121,7 +121,7 @@ pub struct Param {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TypeParam {
-    pub(crate) name: NameId,
+    pub(crate) name: util::Span<NameId>,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash)]

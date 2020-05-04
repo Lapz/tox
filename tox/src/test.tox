@@ -1,6 +1,8 @@
 import foo::bar::{bar,Foo};
 
-type ParserResult<K> = Result<T,Foo>;
+type ParserResult<K,K> = Result<T,Foo>;
+
+type Foo = i32;
 
 mod bar;
 mod foo;

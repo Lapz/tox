@@ -86,6 +86,23 @@ where
         self.ctx.end_scope();
     }
 
+    pub(crate) fn insert_type(&mut self, name_id: &util::Span<NameId>, ty: Type) -> Result<(), ()> {
+        if self.ctx.get_type(&name_id.item).is_some() {
+            let name = self.db.lookup_intern_name(name_id.item);
+
+            self.reporter.error(
+                format!("Type `{}` is defined multiple times", name),
+                "",
+                (name_id.start().to_usize(), name_id.end().to_usize()),
+            );
+
+            Err(())
+        } else {
+            self.ctx.insert_type(name_id.item, ty);
+            Ok(())
+        }
+    }
+
     pub(crate) fn add_function(&mut self, name_id: util::Span<NameId>, exported: bool) {
         if self.items.contains(&name_id.item) {
             let name = self.db.lookup_intern_name(name_id.item);

@@ -36,7 +36,12 @@ where
     pub(crate) fn lower_type_param(&mut self, type_param: ast::TypeParam) {
         let name = self.db.intern_name(type_param.name().unwrap().into());
 
-        self.add_type_param(&type_param, hir::TypeParam { name });
+        self.add_type_param(
+            &type_param,
+            hir::TypeParam {
+                name: util::Span::from_ast(name, &type_param),
+            },
+        );
     }
 
     pub fn add_type_param(&mut self, ast_node: &ast::TypeParam, type_param: hir::TypeParam) {

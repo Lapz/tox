@@ -16,19 +16,17 @@ where
 
         self.begin_scope();
 
-        let poly_tvs = function
-            .type_params
-            .iter()
-            .map(|type_param| {
-                let type_param = function.ast_map.type_param(&type_param.item);
+        let mut poly_tvs = Vec::new();
 
-                let tv = self.ctx.type_var();
+        for type_param in &function.type_params {
+            let type_param = function.ast_map.type_param(&type_param.item);
 
-                self.ctx.insert_type(type_param.name, Type::Var(tv));
+            let tv = self.ctx.type_var();
 
-                tv
-            })
-            .collect::<Vec<_>>();
+            self.insert_type(&type_param.name, Type::Var(tv))?;
+
+            poly_tvs.push(tv);
+        }
 
         let mut signature = Vec::new();
 
@@ -54,10 +52,7 @@ where
 
         self.end_scope();
 
-        self.ctx.insert_type(
-            name.item,
-            Type::Poly(poly_tvs, Box::new(Type::App(signature))),
-        );
+        self.insert_type(&name, Type::Poly(poly_tvs, Box::new(Type::App(signature))))?;
 
         Ok(())
     }

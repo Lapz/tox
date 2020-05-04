@@ -8,28 +8,25 @@ where
     pub(crate) fn resolve_alias(&mut self, alias: &TypeAlias) -> Result<(), ()> {
         let name = alias.name;
 
+        let mut poly_tvs = Vec::new();
+
         self.begin_scope();
 
-        let poly_tvs = alias
-            .type_params
-            .iter()
-            .map(|type_param| {
-                let type_param = alias.ast_map.type_param(&type_param.item);
+        for type_param in &alias.type_params {
+            let type_param = alias.ast_map.type_param(&type_param.item);
 
-                let tv = self.ctx.type_var();
+            let tv = self.ctx.type_var();
 
-                self.ctx.insert_type(type_param.name, Type::Var(tv));
+            self.insert_type(&type_param.name, Type::Var(tv))?;
 
-                tv
-            })
-            .collect::<Vec<_>>();
+            poly_tvs.push(tv)
+        }
 
         let ty = self.resolve_type(&alias.ty)?;
 
         self.end_scope();
 
-        self.ctx
-            .insert_type(name.item, Type::Poly(poly_tvs, Box::new(ty)));
+        self.insert_type(&name, Type::Poly(poly_tvs, Box::new(ty)))?;
 
         if alias.exported {
             self.exported_items.insert(alias.name.item);
