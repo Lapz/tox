@@ -12,8 +12,10 @@ It's built using salsa and rowan and codespan. The design is inspired by rust-an
 
 ## TODO
 
+- [ ] Error when type is defined multiple times
+- [-] Add resolve imports to ctx
 - [ ] Infer types
-- [ ] Add resolve imports to ctx
+
 - [ ] Resolve external imports
 
 ## Build
