@@ -8,3 +8,12 @@ members=[
     "tox",
 ]
 default-members=["tox"]
+[profile.dev.overrides."*"]
+opt-level = 2
+overflow-checks = true
+debug-assertions = true
+panic = "abort"
+debug = false
+codegen-units = 8
+lto = false
+incremental = true

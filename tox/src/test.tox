@@ -1,14 +1,17 @@
-import foo::bar;
-import foo::Struct;
+import foo::bar::{bar};
 
-type ParserResult<T> = Result<T,i32>;
+type ParserResult<K> = Result<T,i32>;
 
+mod bar;
+mod foo;
 
 export fn main()  { 
     let x= 10;
     let x =10;
     let x =x;
-    v=10;
+
+    let x:i64 = 19;
+    v=id::<i32>();
 
     for(let i=0;i<10;i+=1) {
         print("ok");
@@ -17,6 +20,8 @@ export fn main()  {
 }
 
 
-export fn main() {
+
+
+export fn id<T>(a:T,(x,x):T) -> (T,i32) {
     
 }

@@ -3,12 +3,14 @@ mod enums;
 mod expressions;
 mod function;
 mod imports;
+mod module;
 mod params;
 mod pattern;
 mod pratt;
 mod restrictions;
 mod source_file;
 mod type_alias;
+mod type_args;
 mod type_params;
 mod types;
 mod visibility;
@@ -173,7 +175,7 @@ impl<'a> Parser<'a> {
         match replace(&mut self.state, State::Normal) {
             State::PendingStart => {
                 self.builder.start_node(kind.into());
-                // No need to attach trivias to previous node: there is no
+                // No need to attach trivia's to previous node: there is no
                 // previous node.
                 return;
             }
@@ -225,7 +227,6 @@ impl<'a> Parser<'a> {
     fn finish_node(&mut self) {
         match replace(&mut self.state, State::PendingFinish) {
             State::PendingFinish | State::Normal => {
-                self.eat_trivias();
                 self.builder.finish_node();
             }
             State::PendingStart => unreachable!(),
@@ -362,15 +363,6 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn eat_trivias(&mut self) {
-        while let Some(&token) = self.tokens.get(self.token_pos) {
-            if !token.value.kind.is_trivia() {
-                break;
-            }
-            self.add_token(&token);
-        }
-    }
-
     fn add_token(&mut self, token: &Span<Token>) {
         let len = TextUnit::from(token.value.len);
         let range = TextRange::offset_len(token.start.absolute.into(), len);
@@ -407,7 +399,7 @@ fn n_attached_trivias<'a>(
 ) -> usize {
     use SyntaxKind::*;
     match kind {
-        TYPE_ALIAS_DEF | CLASS_DEF | ENUM_DEF | ENUM_VARIANT | FN_DEF => {
+        TYPE_ALIAS_DEF | CLASS_DEF | ENUM_DEF | ENUM_VARIANT | FN_DEF | MOD_DEF | IMPORT_DEF => {
             let mut res = 0;
             for (i, (kind, text)) in trivias.enumerate() {
                 match kind {

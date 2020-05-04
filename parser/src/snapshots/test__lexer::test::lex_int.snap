@@ -1,8 +1,8 @@
 ---
-created: "2020-03-03T19:49:23.986392Z"
+created: "2020-04-11T12:58:10.039051900Z"
 creator: insta@0.8.2
-source: syntax/src/lexer.rs
-expression: tokens
+source: parser/src/lexer.rs
+expression: get_tokens(input)
 ---
 [
     Span {

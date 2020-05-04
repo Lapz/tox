@@ -1,5 +1,6 @@
 use itertools::multipeek;
 use itertools::structs::MultiPeek;
+use std::hash::Hash;
 use std::str::Chars;
 
 pub type ColumnIndex = u32;
@@ -12,14 +13,14 @@ pub struct CharPosition<'a> {
     pub pos: Position,
     pub chars: MultiPeek<Chars<'a>>,
 }
-#[derive(Debug, Copy, PartialOrd, Clone, PartialEq, Eq, Ord)]
+#[derive(Debug, Copy, PartialOrd, Clone, PartialEq, Eq, Ord, Hash)]
 pub struct Position {
     pub column: ColumnIndex,
     pub line: LineIndex,
     pub absolute: ByteIndex,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Span<T> {
     pub value: T,
     pub start: Position,
@@ -28,7 +29,7 @@ pub struct Span<T> {
 
 impl<T> Span<T>
 where
-    T: std::fmt::Debug + Clone,
+    T: std::fmt::Debug + Clone + Hash,
 {
     pub fn new(value: T, start: Position, end: Position) -> Self {
         Self { value, start, end }

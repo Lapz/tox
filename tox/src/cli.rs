@@ -1,6 +1,6 @@
 use crate::db::{DatabaseImpl, Diagnostics};
-
-use parser::{dump_debug, FilesExt, ParseDatabase};
+use errors::FileDatabase;
+use parser::{dump_debug, ParseDatabase};
 use semant::HirDatabase;
 use std::fs::File;
 use std::io::{self, Write};
@@ -23,12 +23,12 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub fn run(&self) -> io::Result<()> {
-        let mut db = DatabaseImpl::default();
+    pub fn run(self) -> io::Result<()> {
+        let db = DatabaseImpl::default();
         let mut errors = Vec::new();
 
-        for file in &self.source {
-            let handle = db.load_file(file);
+        for path in self.source {
+            let handle = db.intern_file(path);
 
             let tokens = match db.lex(handle) {
                 Ok(source_file) => source_file,
@@ -72,12 +72,19 @@ impl Cli {
                 }
             };
 
-            match db.resolve_program(handle) {
+            match db.resolve_source_file(handle) {
                 Ok(_) => {}
                 Err(more_errors) => {
                     errors.extend(more_errors);
                 }
             }
+
+            // match db.infer(handle) {
+            //     Ok(_) => {}
+            //     Err(more_errors) => {
+            //         errors.extend(more_errors);
+            //     }
+            // }
 
             db.emit(&mut errors)?;
         }

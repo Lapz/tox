@@ -24,9 +24,9 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn parse_import_segment(&mut self) {
-        self.start_node(IMPORT_SEGMENT);
-
         if self.at(T!["{"]) {
+            self.start_node(IMPORT_LIST);
+
             self.bump();
 
             while !self.at(EOF) && !self.at(T!["}"]) {
@@ -39,6 +39,7 @@ impl<'a> Parser<'a> {
 
             self.expect(T!["}"]);
         } else if !self.at(T![;]) {
+            self.start_node(IMPORT_SEGMENT);
             self.ident();
         }
 

@@ -16,7 +16,7 @@ impl PrefixParser for IdentParselet {
 
         if parser.at(T![::]) {
             parser.bump();
-            parser.parse_type_params(true);
+            parser.parse_type_args();
         };
 
         parser.finish_node();

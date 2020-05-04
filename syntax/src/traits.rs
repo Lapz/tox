@@ -237,6 +237,13 @@ pub trait ExternImportDefOwner: AstNode {
         children(self)
     }
 }
+
+pub trait ModuleDefOwner: AstNode {
+    fn modules(&self) -> AstChildren<ast::ModDef> {
+        children(self)
+    }
+}
+
 pub trait TypeParamsOwner: AstNode {
     fn type_param_list(&self) -> Option<ast::TypeParamList> {
         child_opt(self)
@@ -245,6 +252,12 @@ pub trait TypeParamsOwner: AstNode {
 
 pub trait TypesOwner: AstNode {
     fn types(&self) -> AstChildren<ast::TypeRef> {
+        children(self)
+    }
+}
+
+pub trait ImportSegmentOwner: AstNode {
+    fn segments(&self) -> AstChildren<ast::ImportSegment> {
         children(self)
     }
 }

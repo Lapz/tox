@@ -12,7 +12,6 @@ impl<'a> Parser<'a> {
         self.expect(T!["{"]);
 
         while !self.at(EOF) && !self.at(T!["}"]) {
-            self.eat_trivias();
             match self.current() {
                 T![let] => {
                     // self.start_node(EXPR_STMT);
@@ -70,7 +69,11 @@ impl<'a> Parser<'a> {
                     }
                     continue;
                 }
-                T!["{"] => self.parse_block(),
+                T!["{"] => {
+                    self.start_node(EXPR_STMT);
+                    self.parse_block();
+                    self.finish_node();
+                }
 
                 _ => {
                     self.start_node(EXPR_STMT);
@@ -79,8 +82,8 @@ impl<'a> Parser<'a> {
                 }
             }
 
-            if !self.at(T!["}"]) && !self.expected(T![;]) {
-                break;
+            if self.at(T![;]) {
+                self.bump();
             }
         }
 
@@ -93,11 +96,11 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod test {
-    test_parser! {parse_free_block, "fn main() {{};}"}
-    test_parser! {parse_nested_block,"fn main() {{ {};};}"}
+    test_parser! {parse_free_block, "fn main() {{}}"}
+    test_parser! {parse_nested_block,"fn main() {{{}}}"}
     test_parser! {parse_block_with_statements,"fn main() {{
         let x = 10;
         break;
         continue;
-    }}"}
+    } let y =10;}"}
 }

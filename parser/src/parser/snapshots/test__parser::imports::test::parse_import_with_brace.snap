@@ -1,5 +1,5 @@
 ---
-created: "2020-03-04T11:35:41.099809Z"
+created: "2020-04-11T13:02:12.778642200Z"
 creator: insta@0.8.2
 source: parser/src/parser/imports.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -12,7 +12,7 @@ SOURCE_FILE@[0; 22)
       NAME@[7; 10)
         IDENT@[7; 10) "foo"
     COLON_COLON@[10; 12) "::"
-    IMPORT_SEGMENT@[12; 21)
+    IMPORT_LIST@[12; 21)
       L_CURLY@[12; 13) "{"
       IMPORT_SEGMENT@[13; 16)
         NAME@[13; 16)

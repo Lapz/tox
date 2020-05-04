@@ -1,0 +1,14 @@
+---
+created: "2020-03-26T15:48:56.983050Z"
+creator: insta@0.8.2
+source: parser/src/parser/module.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 8)
+  MOD_DEF@[0; 8)
+    MOD_KW@[0; 3) "mod"
+    WHITESPACE@[3; 4) " "
+    NAME@[4; 7)
+      IDENT@[4; 7) "foo"
+    SEMI@[7; 8) ";"
+

@@ -1,14 +1,14 @@
 ---
-created: "2020-03-03T19:30:54.666414Z"
+created: "2020-05-02T10:11:44.439938Z"
 creator: insta@0.8.2
 source: parser/src/parser/visibility.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
 SOURCE_FILE@[0; 20)
   TYPE_ALIAS_DEF@[0; 20)
-    VISIBILITY@[0; 7)
+    VISIBILITY@[0; 6)
       EXPORT_KW@[0; 6) "export"
-      WHITESPACE@[6; 7) " "
+    WHITESPACE@[6; 7) " "
     TYPE_KW@[7; 11) "type"
     WHITESPACE@[11; 12) " "
     NAME@[12; 15)

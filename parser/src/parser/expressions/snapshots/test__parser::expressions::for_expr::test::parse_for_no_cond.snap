@@ -1,25 +1,25 @@
 ---
-created: "2020-03-03T19:30:54.463692Z"
+created: "2020-05-02T10:37:33.439203Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/for_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 36)
-  FN_DEF@[0; 36)
+SOURCE_FILE@[0; 37)
+  FN_DEF@[0; 37)
     FN_KW@[0; 2) "fn"
     WHITESPACE@[2; 3) " "
     NAME@[3; 7)
       IDENT@[3; 7) "main"
-    PARAM_LIST@[7; 10)
+    PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
-      WHITESPACE@[9; 10) " "
-    BLOCK_EXPR@[10; 36)
-      BLOCK@[10; 36)
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 37)
+      BLOCK@[10; 37)
         L_CURLY@[10; 11) "{"
         WHITESPACE@[11; 12) " "
-        EXPR_STMT@[12; 34)
-          FOR_EXPR@[12; 34)
+        EXPR_STMT@[12; 35)
+          FOR_EXPR@[12; 35)
             FOR_KW@[12; 15) "for"
             WHITESPACE@[15; 16) " "
             L_PAREN@[16; 17) "("
@@ -34,18 +34,18 @@ SOURCE_FILE@[0; 36)
                 INT_NUMBER@[23; 25) "10"
             SEMI@[25; 26) ";"
             SEMI@[26; 27) ";"
-            BIN_EXPR@[27; 31)
+            BIN_EXPR@[27; 32)
               IDENT_EXPR@[27; 28)
                 NAME@[27; 28)
                   IDENT@[27; 28) "x"
-              PLUSEQ@[28; 29) "+"
-              LITERAL@[29; 31)
-                INT_NUMBER@[29; 31) "10"
-            R_PAREN@[31; 32) ")"
-            BLOCK_EXPR@[32; 34)
-              BLOCK@[32; 34)
-                L_CURLY@[32; 33) "{"
-                R_CURLY@[33; 34) "}"
-        SEMI@[34; 35) ";"
-        R_CURLY@[35; 36) "}"
+              PLUSEQ@[28; 30) "+="
+              LITERAL@[30; 32)
+                INT_NUMBER@[30; 32) "10"
+            R_PAREN@[32; 33) ")"
+            BLOCK_EXPR@[33; 35)
+              BLOCK@[33; 35)
+                L_CURLY@[33; 34) "{"
+                R_CURLY@[34; 35) "}"
+        SEMI@[35; 36) ";"
+        R_CURLY@[36; 37) "}"
 

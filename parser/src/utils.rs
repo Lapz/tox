@@ -1,20 +1,41 @@
 use crate::AstNode;
-#[cfg(test)]
-use crate::Parser;
 
 #[cfg(test)]
-use syntax::{ast::SourceFile, Lexer};
+use syntax::ast::SourceFile;
 
 pub fn dump_debug<T: AstNode>(item: &T) -> String {
     format!("{:#?}", item.syntax())
 }
 
 #[cfg(test)]
-pub fn parse<'a>(input: &'a str) -> SourceFile {
-    let mut files = errors::Files::new();
-    let file_id = files.add("testing", input);
-    let reporter = errors::Reporter::new(file_id);
-    let tokens = Lexer::new(input, reporter.clone()).lex();
+#[salsa::database(errors::FileDatabaseStorage, crate::ParseDatabaseStorage)]
+#[derive(Debug, Default)]
+pub struct MockDatabaseImpl {
+    runtime: salsa::Runtime<MockDatabaseImpl>,
+}
 
-    Parser::new(&tokens, reporter, input).parse_program()
+#[cfg(test)]
+impl salsa::Database for MockDatabaseImpl {
+    fn salsa_runtime(&self) -> &salsa::Runtime<MockDatabaseImpl> {
+        &self.runtime
+    }
+
+    fn salsa_runtime_mut(&mut self) -> &mut salsa::Runtime<MockDatabaseImpl> {
+        &mut self.runtime
+    }
+}
+
+#[cfg(test)]
+pub fn parse<'a>(input: &'a str) -> SourceFile {
+    use crate::ParseDatabase;
+    use errors::FileDatabase;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    let mut file = NamedTempFile::new().unwrap();
+    write!(file, "{}", input).unwrap();
+    let db = MockDatabaseImpl::default();
+    let handle = db.intern_file(file.path().to_path_buf());
+
+    db.parse(handle).unwrap()
 }

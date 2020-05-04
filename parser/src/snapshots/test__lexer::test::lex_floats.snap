@@ -1,14 +1,14 @@
 ---
-created: "2020-03-03T19:49:23.986614Z"
+created: "2020-04-11T12:58:10.039059800Z"
 creator: insta@0.8.2
-source: syntax/src/lexer.rs
-expression: tokens
+source: parser/src/lexer.rs
+expression: get_tokens(input)
 ---
 [
     Span {
         value: Token {
-            kind: INT_NUMBER,
-            len: 2,
+            kind: FLOAT_NUMBER,
+            len: 5,
         },
         start: Position {
             column: 1,
@@ -16,73 +16,73 @@ expression: tokens
             absolute: 0,
         },
         end: Position {
-            column: 3,
+            column: 6,
             line: 1,
-            absolute: 2,
+            absolute: 5,
         },
     },
     Span {
         value: Token {
-            kind: WHITESPACE,
+            kind: COMMA,
             len: 1,
         },
         start: Position {
-            column: 3,
+            column: 6,
             line: 1,
-            absolute: 2,
+            absolute: 5,
         },
         end: Position {
-            column: 4,
+            column: 6,
             line: 1,
-            absolute: 3,
+            absolute: 5,
         },
     },
     Span {
         value: Token {
-            kind: COMMENT,
-            len: 22,
+            kind: FLOAT_NUMBER,
+            len: 5,
         },
         start: Position {
-            column: 4,
+            column: 7,
             line: 1,
-            absolute: 3,
+            absolute: 6,
         },
         end: Position {
-            column: 26,
+            column: 12,
             line: 1,
-            absolute: 25,
+            absolute: 11,
         },
     },
     Span {
         value: Token {
-            kind: WHITESPACE,
+            kind: COMMA,
             len: 1,
         },
         start: Position {
-            column: 26,
+            column: 12,
             line: 1,
-            absolute: 25,
+            absolute: 11,
         },
         end: Position {
-            column: 27,
+            column: 12,
             line: 1,
-            absolute: 26,
+            absolute: 11,
         },
     },
     Span {
         value: Token {
-            kind: INT_NUMBER,
-            len: 2,
+            kind: FLOAT_NUMBER,
+            len: 5,
         },
         start: Position {
-            column: 27,
+            column: 13,
             line: 1,
-            absolute: 26,
+            absolute: 12,
         },
         end: Position {
-            column: 29,
+            column: 18,
             line: 1,
-            absolute: 28,
+            absolute: 17,
         },
     },
     Span {
@@ -91,14 +91,14 @@ expression: tokens
             len: 1,
         },
         start: Position {
-            column: 29,
+            column: 18,
             line: 1,
-            absolute: 28,
+            absolute: 17,
         },
         end: Position {
-            column: 29,
+            column: 18,
             line: 1,
-            absolute: 28,
+            absolute: 17,
         },
     },
 ]

@@ -51,9 +51,7 @@ jobs:
       - name: Compile
         uses: actions-rs/cargo@v1
         with:
-          command: test
-          args: --no-run --all
-
+          command: build
       - name: Format
         uses: actions-rs/cargo@v1
         with:
@@ -64,3 +62,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all

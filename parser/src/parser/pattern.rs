@@ -5,7 +5,6 @@ use crate::SyntaxKind::*;
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_pattern(&mut self, allow_literal: bool) {
-        self.eat_trivias();
         match self.current() {
             T!["("] => self.parse_tuple_pattern(allow_literal),
             IDENT => self.parse_binding_pattern(),

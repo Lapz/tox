@@ -1,0 +1,26 @@
+DirectoryStructure(
+    contents: [
+         (
+            name:"main.tox",
+            text: "import foo::bar; fn main() {}"
+        ),
+        (
+            name:"foo.tox",
+            text: "fn baz() {}"
+        ),
+        (
+            name:"foo",
+            kind: Dir,
+            contents: Some(
+                DirectoryStructure(
+                    contents:[
+                        (
+                        name:"bar.tox",
+                        text: "export fn bar() {}"
+                        )
+                    ]
+                )
+            )
+        )
+    ]
+)

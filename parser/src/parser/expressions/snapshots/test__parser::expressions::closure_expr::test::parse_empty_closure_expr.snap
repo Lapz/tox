@@ -1,5 +1,5 @@
 ---
-created: "2020-03-03T19:30:54.420078Z"
+created: "2020-05-02T10:11:44.247406Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/closure_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -10,10 +10,10 @@ SOURCE_FILE@[0; 40)
     WHITESPACE@[2; 3) " "
     NAME@[3; 7)
       IDENT@[3; 7) "main"
-    PARAM_LIST@[7; 10)
+    PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
-      WHITESPACE@[9; 10) " "
+    WHITESPACE@[9; 10) " "
     BLOCK_EXPR@[10; 40)
       BLOCK@[10; 40)
         L_CURLY@[10; 11) "{"
@@ -21,10 +21,10 @@ SOURCE_FILE@[0; 40)
         LET_STMT@[20; 33)
           LET_KW@[20; 23) "let"
           WHITESPACE@[23; 24) " "
-          BIND_PAT@[24; 26)
-            NAME@[24; 26)
+          BIND_PAT@[24; 25)
+            NAME@[24; 25)
               IDENT@[24; 25) "a"
-              WHITESPACE@[25; 26) " "
+          WHITESPACE@[25; 26) " "
           EQ@[26; 27) "="
           WHITESPACE@[27; 28) " "
           CLOSURE_EXPR@[28; 33)

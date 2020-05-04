@@ -1,0 +1,6 @@
+fn foo() {}
+
+
+export fn bar() {
+    
+}

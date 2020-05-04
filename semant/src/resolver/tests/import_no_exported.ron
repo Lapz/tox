@@ -1,0 +1,12 @@
+DirectoryStructure (
+    contents: [
+        (
+            name:"main.tox",
+            text: "import foo::bar; mod foo; fn main() {}"
+        ),
+        (
+            name:"foo.tox",
+            text: "fn bar() {}"
+        )
+    ]
+)

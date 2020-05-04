@@ -22,6 +22,7 @@ impl<'a> Parser<'a> {
                 T![fn] => {
                     self.parse_function(checkpoint);
                 }
+                T![mod] => self.parse_module(),
                 T![import] => self.parse_import(),
                 T![enum] => self.parse_enum(checkpoint),
                 T![class] => self.parse_class(checkpoint),

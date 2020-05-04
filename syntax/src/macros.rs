@@ -15,6 +15,9 @@ macro_rules! T {
     (continue) => {
         $crate::SyntaxKind::CONTINUE_KW
     };
+    (mod) => {
+        $crate::SyntaxKind::MOD_KW
+    };
     (do) => {
         $crate::SyntaxKind::DO_KW
     };

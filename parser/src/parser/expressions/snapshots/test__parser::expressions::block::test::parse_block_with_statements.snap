@@ -1,49 +1,62 @@
 ---
-created: "2020-03-03T19:30:54.384648Z"
+created: "2020-05-02T10:37:33.423761Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/block.rs
 expression: "crate::utils::dump_debug(&parser_output)"
 ---
-SOURCE_FILE@[0; 72)
-  FN_DEF@[0; 72)
+SOURCE_FILE@[0; 83)
+  FN_DEF@[0; 83)
     FN_KW@[0; 2) "fn"
     WHITESPACE@[2; 3) " "
     NAME@[3; 7)
       IDENT@[3; 7) "main"
-    PARAM_LIST@[7; 10)
+    PARAM_LIST@[7; 9)
       L_PAREN@[7; 8) "("
       R_PAREN@[8; 9) ")"
-      WHITESPACE@[9; 10) " "
-    BLOCK_EXPR@[10; 72)
-      BLOCK@[10; 72)
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 83)
+      BLOCK@[10; 83)
         L_CURLY@[10; 11) "{"
-        BLOCK_EXPR@[11; 71)
-          BLOCK@[11; 71)
-            L_CURLY@[11; 12) "{"
-            WHITESPACE@[12; 21) "\n        "
-            LET_STMT@[21; 31)
-              LET_KW@[21; 24) "let"
-              WHITESPACE@[24; 25) " "
-              BIND_PAT@[25; 27)
-                NAME@[25; 27)
-                  IDENT@[25; 26) "x"
-                  WHITESPACE@[26; 27) " "
-              EQ@[27; 28) "="
-              WHITESPACE@[28; 29) " "
-              LITERAL@[29; 31)
-                INT_NUMBER@[29; 31) "10"
-            SEMI@[31; 32) ";"
-            WHITESPACE@[32; 41) "\n        "
-            EXPR_STMT@[41; 46)
-              BREAK_EXPR@[41; 46)
-                BREAK_KW@[41; 46) "break"
-            SEMI@[46; 47) ";"
-            WHITESPACE@[47; 56) "\n        "
-            EXPR_STMT@[56; 64)
-              CONTINUE_EXPR@[56; 64)
-                CONTINUE_KW@[56; 64) "continue"
-            SEMI@[64; 65) ";"
-            WHITESPACE@[65; 70) "\n    "
-            R_CURLY@[70; 71) "}"
-        R_CURLY@[71; 72) "}"
+        EXPR_STMT@[11; 71)
+          BLOCK_EXPR@[11; 71)
+            BLOCK@[11; 71)
+              L_CURLY@[11; 12) "{"
+              WHITESPACE@[12; 21) "\n        "
+              LET_STMT@[21; 31)
+                LET_KW@[21; 24) "let"
+                WHITESPACE@[24; 25) " "
+                BIND_PAT@[25; 26)
+                  NAME@[25; 26)
+                    IDENT@[25; 26) "x"
+                WHITESPACE@[26; 27) " "
+                EQ@[27; 28) "="
+                WHITESPACE@[28; 29) " "
+                LITERAL@[29; 31)
+                  INT_NUMBER@[29; 31) "10"
+              SEMI@[31; 32) ";"
+              WHITESPACE@[32; 41) "\n        "
+              EXPR_STMT@[41; 46)
+                BREAK_EXPR@[41; 46)
+                  BREAK_KW@[41; 46) "break"
+              SEMI@[46; 47) ";"
+              WHITESPACE@[47; 56) "\n        "
+              EXPR_STMT@[56; 64)
+                CONTINUE_EXPR@[56; 64)
+                  CONTINUE_KW@[56; 64) "continue"
+              SEMI@[64; 65) ";"
+              WHITESPACE@[65; 70) "\n    "
+              R_CURLY@[70; 71) "}"
+        WHITESPACE@[71; 72) " "
+        LET_STMT@[72; 81)
+          LET_KW@[72; 75) "let"
+          WHITESPACE@[75; 76) " "
+          BIND_PAT@[76; 77)
+            NAME@[76; 77)
+              IDENT@[76; 77) "y"
+          WHITESPACE@[77; 78) " "
+          EQ@[78; 79) "="
+          LITERAL@[79; 81)
+            INT_NUMBER@[79; 81) "10"
+        SEMI@[81; 82) ";"
+        R_CURLY@[82; 83) "}"
 

@@ -13,3 +13,4 @@ errors = {path="../errors"}
 
 [dev-dependencies]
 insta = "0.8.2"
+tempfile = "3.1.0"

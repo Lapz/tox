@@ -1,10 +1,11 @@
 use crate::db::HirDatabase;
-use crate::hir::{self};
+use crate::{hir, util, TextRange};
+use errors::FileId;
 use std::sync::Arc;
 
 use syntax::{
-    ast, ArgListOwner, AstNode, AstPtr, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
-    TypeParamsOwner, TypesOwner, VisibilityOwner,
+    ast, ArgListOwner, AstNode, LoopBodyOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner,
+    TypesOwner, VisibilityOwner,
 };
 
 #[derive(Debug)]
@@ -17,8 +18,8 @@ pub(crate) struct FunctionDataCollector<DB> {
     block_id_count: u64,
     pat_id_count: u64,
     ast_map: hir::FunctionAstMap,
-    params: Vec<hir::ParamId>, // expressions: HashMap<hir::ExprId, hir::Expr>,
-    type_params: Vec<hir::TypeParamId>,
+    params: Vec<util::Span<hir::ParamId>>, // expressions: HashMap<hir::ExprId, hir::Expr>,
+    type_params: Vec<util::Span<hir::TypeParamId>>,
 }
 
 impl<'a, DB> FunctionDataCollector<&'a DB>
@@ -28,20 +29,21 @@ where
     pub fn finish(
         self,
         exported: bool,
-        name: hir::Name,
+        name: util::Span<hir::NameId>,
         body: Option<Vec<hir::StmtId>>,
-        span: hir::Span,
+        returns: Option<util::Span<hir::TypeId>>,
+        span: TextRange,
     ) -> hir::Function {
         let params = self.params;
         let type_params = self.type_params;
-        let map = self.ast_map;
-        let name = self.db.intern_name(name);
-        hir::function::Function {
+        let ast_map = self.ast_map;
+        hir::Function {
             exported,
             name,
-            map,
+            ast_map,
             params,
             type_params,
+            returns,
             body,
             span,
         }
@@ -54,70 +56,64 @@ where
 
         let id = hir::ParamId(current);
 
-        self.ast_map.insert_param(id, param, AstPtr::new(ast_node));
+        self.ast_map.insert_param(id, param);
 
-        self.params.push(id);
+        self.params.push(util::Span::from_ast(id, ast_node));
     }
 
-    fn add_pat(&mut self, ast_node: &ast::Pat, pat: hir::Pattern) -> hir::PatId {
+    fn add_pat(&mut self, ast_node: &ast::Pat, pat: hir::Pattern) -> util::Span<hir::PatId> {
         let current = self.pat_id_count;
         self.pat_id_count += 1;
         let id = hir::PatId(current);
-        self.ast_map.insert_pat(id, pat, AstPtr::new(ast_node));
+        self.ast_map.insert_pat(id, pat);
 
-        id
+        util::Span::from_ast(id, ast_node)
     }
 
-    pub fn add_stmt(&mut self, ast_node: &ast::Stmt, stmt: hir::Stmt) -> hir::StmtId {
+    pub fn add_stmt(&mut self, stmt: hir::Stmt) -> hir::StmtId {
         let current = self.stmt_id_count;
 
         self.stmt_id_count += 1;
 
         let id = hir::StmtId(current);
 
-        self.ast_map.insert_stmt(id, stmt, AstPtr::new(ast_node));
+        self.ast_map.insert_stmt(id, stmt);
 
         id
     }
 
     pub fn expr_to_stmt(&mut self, expr: hir::ExprId) -> hir::StmtId {
-        let node = self.ast_map.get_expr_ptr(expr);
-
         let current = self.stmt_id_count;
 
         self.stmt_id_count += 1;
 
         let id = hir::StmtId(current);
 
-        self.ast_map.insert_stmt(
-            id,
-            hir::Stmt::Expr(expr),
-            AstPtr::from_ptr(node.syntax_node_ptr()),
-        );
+        self.ast_map.insert_stmt(id, hir::Stmt::Expr(expr));
 
         id
     }
 
-    pub fn add_expr(&mut self, ast_node: &ast::Expr, expr: hir::Expr) -> hir::ExprId {
+    pub fn add_expr(&mut self, expr: hir::Expr) -> hir::ExprId {
         let current = self.expr_id_count;
 
         self.expr_id_count += 1;
 
         let id = hir::ExprId(current);
 
-        self.ast_map.insert_expr(id, expr, AstPtr::new(ast_node));
+        self.ast_map.insert_expr(id, expr);
 
         id
     }
 
-    pub fn add_block(&mut self, ast_node: &ast::Block, block: hir::Block) -> hir::BlockId {
+    pub fn add_block(&mut self, block: hir::Block) -> hir::BlockId {
         let current = self.block_id_count;
 
         self.block_id_count += 1;
 
         let id = hir::BlockId(current);
 
-        self.ast_map.insert_block(id, block, AstPtr::new(ast_node));
+        self.ast_map.insert_block(id, block);
 
         id
     }
@@ -129,11 +125,12 @@ where
 
         let id = hir::TypeParamId(current);
 
-        self.ast_map
-            .insert_type_param(id, type_param, AstPtr::new(ast_node));
+        self.ast_map.insert_type_param(id, type_param);
+
+        self.type_params.push(util::Span::from_ast(id, ast_node))
     }
 
-    pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> hir::PatId {
+    pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> util::Span<hir::PatId> {
         let pattern = match &pat {
             ast::Pat::BindPat(binding) => {
                 let name = self.db.intern_name(
@@ -142,6 +139,8 @@ where
                         .map(|n| n.into())
                         .unwrap_or_else(crate::hir::Name::missing),
                 );
+
+                let name = util::Span::from_ast(name, &binding.name().unwrap());
                 crate::hir::Pattern::Bind { name }
             }
             ast::Pat::PlaceholderPat(_) => crate::hir::Pattern::Placeholder,
@@ -173,8 +172,9 @@ where
         self.add_type_param(&type_param, hir::TypeParam { name });
     }
 
-    pub(crate) fn lower_type(&mut self, ty: ast::TypeRef) -> hir::TypeId {
-        match ty {
+    pub(crate) fn lower_type(&mut self, ty: ast::TypeRef) -> util::Span<hir::TypeId> {
+        let range = ty.syntax().text_range();
+        let id = match ty {
             ast::TypeRef::ParenType(paren_ty) => {
                 let mut types = Vec::new();
 
@@ -209,7 +209,9 @@ where
 
                 self.db.intern_type(hir::Type::FnType { params, ret })
             }
-        }
+        };
+
+        util::Span::from_range(id, range)
     }
 
     pub fn lower_stmt(&mut self, node: ast::Stmt) -> hir::StmtId {
@@ -223,14 +225,24 @@ where
                     None
                 };
 
-                hir::Stmt::Let { pat, initializer }
+                let ascribed_type = if let Some(ascribed_type) = let_stmt.ascribed_type() {
+                    Some(self.lower_type(ascribed_type))
+                } else {
+                    None
+                };
+
+                hir::Stmt::Let {
+                    pat,
+                    initializer,
+                    ascribed_type,
+                }
             }
             ast::Stmt::ExprStmt(ref expr_stmt) => {
                 hir::Stmt::Expr(self.lower_expr(expr_stmt.expr().unwrap()))
             }
         };
 
-        self.add_stmt(&node, hir_stmt)
+        self.add_stmt(hir_stmt)
     }
 
     pub fn lower_expr(&mut self, node: ast::Expr) -> hir::ExprId {
@@ -247,7 +259,6 @@ where
                 hir::Expr::Binary { lhs, op, rhs }
             }
             ast::Expr::BlockExpr(ref block) => {
-                let node = block.block().unwrap();
                 let block = hir::Block(
                     block
                         .block()
@@ -257,7 +268,7 @@ where
                         .collect(),
                 );
 
-                hir::Expr::Block(self.add_block(&node, block))
+                hir::Expr::Block(self.add_block(block))
             }
 
             ast::Expr::BreakExpr(_) => hir::Expr::Break,
@@ -269,7 +280,20 @@ where
                     Vec::new()
                 };
 
-                hir::Expr::Call { callee, args }
+                let type_args = if let Some(type_args) = call_expr.type_args() {
+                    type_args
+                        .types()
+                        .map(|ty| self.lower_type(ty))
+                        .collect::<Vec<_>>()
+                } else {
+                    Vec::new()
+                };
+
+                hir::Expr::Call {
+                    callee,
+                    args,
+                    type_args,
+                }
             }
             ast::Expr::CastExpr(ref cast_expr) => {
                 let ty = self.lower_type(cast_expr.type_ref().unwrap());
@@ -300,19 +324,20 @@ where
 
                 let body_block = hir::Block(body);
 
-                let body = self.add_block(&loop_body, body_block);
+                let body = self.add_block(body_block);
 
-                let while_expr = self.add_expr(&node, hir::Expr::While { cond, body });
+                let while_expr = self.add_expr(hir::Expr::While { cond, body });
 
                 let block = hir::Block(vec![init, self.expr_to_stmt(while_expr)]);
 
-                let block = self.add_block(&loop_body, block);
+                let block = self.add_block(block);
 
                 hir::Expr::Block(block)
             }
-            ast::Expr::IdentExpr(ref ident_expr) => {
-                hir::Expr::Ident(self.db.intern_name(ident_expr.name().unwrap().into()))
-            }
+            ast::Expr::IdentExpr(ref ident_expr) => hir::Expr::Ident(util::Span::from_ast(
+                self.db.intern_name(ident_expr.name().unwrap().into()),
+                &ident_expr.name().unwrap(),
+            )),
             ast::Expr::IfExpr(ref if_expr) => {
                 let cond = self.lower_expr(if_expr.condition().unwrap().expr().unwrap());
                 let then_branch = self.lower_expr(ast::Expr::from(if_expr.then_branch().unwrap()));
@@ -391,7 +416,7 @@ where
                         .collect::<Vec<_>>(),
                 );
 
-                let body = self.add_block(&loop_body, block);
+                let body = self.add_block(block);
 
                 hir::Expr::While { cond, body }
             }
@@ -405,12 +430,13 @@ where
             }
         };
 
-        self.add_expr(&node, expr)
+        self.add_expr(expr)
     }
 }
 
 pub(crate) fn lower_function_query(
     db: &impl HirDatabase,
+    _file: FileId,
     fun_id: hir::FunctionId,
 ) -> Arc<hir::Function> {
     let mut collector = FunctionDataCollector {
@@ -456,7 +482,15 @@ pub(crate) fn lower_function_query(
         None
     };
 
+    let returns = if let Some(ret) = function.ret_type() {
+        Some(collector.lower_type(ret.type_ref().unwrap()))
+    } else {
+        None
+    };
+
     let span = function.syntax().text_range();
 
-    Arc::new(collector.finish(exported, name.unwrap(), body, span))
+    let name = util::Span::from_ast(db.intern_name(name.unwrap()), &function.name().unwrap());
+
+    Arc::new(collector.finish(exported, name, body, returns, span))
 }

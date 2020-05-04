@@ -67,6 +67,7 @@ Grammar(
         "export",
         "import",
         "from",
+        "mod",
         "nil",
         "self",
     ],
@@ -90,8 +91,10 @@ Grammar(
         "ENUM_DEF",
         "FN_DEF",
         "IMPORT_DEF",
+        "MOD_DEF",
         "TYPE_ALIAS_DEF",
         "IMPORT_SEGMENT",
+        "IMPORT_LIST",
         //patterns
         "BIND_PAT",
         "PLACEHOLDER_PAT",
@@ -128,8 +131,6 @@ Grammar(
         "RETURN_EXPR",
         "CLOSURE_EXPR",
         "PAREN_EXPR",
-        
-
         "MATCH_EXPR",
         "MATCH_ARM_LIST",
         "MATCH_ARM",
@@ -154,6 +155,7 @@ Grammar(
         "EXPR_STMT",
 
         "TYPE_PARAM_LIST",
+        "TYPE_ARG_LIST",
         "TYPE_PARAM",
         "PARAM_LIST",
         "PARAM",
@@ -163,7 +165,7 @@ Grammar(
     ],
     ast: {
         "SourceFile": (
-            traits: ["ClassDefOwner","FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner"]
+            traits: ["ClassDefOwner","FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner","ModuleDefOwner"]
         ),
         "FnDef":(
             traits: [
@@ -199,7 +201,15 @@ Grammar(
             options: ["TypeRef"]
         ),
         "ImportDef":(
-            options: [["imports","Name"]]
+            options: [["imports","ImportSegment"], "ImportList"],
+            traits: [
+                "ImportSegmentOwner"
+            ]
+        ),
+        "ModDef":(
+            traits: [
+                "NameOwner",
+            ]
         ),
         "EnumDef":(
              traits: [
@@ -212,7 +222,10 @@ Grammar(
 
         "ArrayType": ( options: ["TypeRef", "Expr"] ),
         "ParenType": (traits:["TypesOwner"],options: ["TypeRef"],),
-        "IdentType": (options: ["TypeRef"]),
+        "IdentType": (
+            options: ["TypeRef", ["type_args","TypeArgList"]],
+
+        ),
         "FnType": (options: ["ParamList", "RetType"],traits:["TypesOwner"]),
 
         "TypeRef":(enum:[
@@ -254,16 +267,21 @@ Grammar(
             collections: [ [ "pats", "Pat" ] ],
         ),
         "ImportSegment": (
-            options:[
-                "Name"
+            options: [
+                "Name",
+               
             ]
+        ),
+        "ImportList": (
+            traits: ["ImportSegmentOwner"],
+            collections: [ ["segments", "ImportSegment" ] ]
         ),
         "NamedFieldList": (
             collections: [ ["fields", "NamedField"] ]),
         "NamedField": (options: ["NameRef", "Expr"]),
         "CallExpr": (
             traits: ["ArgListOwner"],
-            options: [ "Expr" ],
+            options: [ "Expr",["type_args","TypeArgList"] ],
         ),
         "ArrayExpr": (
             collections: [["exprs", "Expr"]]
@@ -318,6 +336,11 @@ Grammar(
         "TypeParamList": (
             collections: [
                 ["type_params", "TypeParam" ],
+            ]
+        ),
+        "TypeArgList": (
+            collections: [
+                ["types", "TypeRef" ],
             ]
         ),
         "ArgList": (

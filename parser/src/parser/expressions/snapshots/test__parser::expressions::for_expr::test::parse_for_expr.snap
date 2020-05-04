@@ -1,5 +1,5 @@
 ---
-created: "2020-03-03T19:30:54.462605Z"
+created: "2020-05-02T10:42:47.001757Z"
 creator: insta@0.8.2
 source: parser/src/parser/expressions/for_expr.rs
 expression: "crate::utils::dump_debug(&parser_output)"
@@ -11,10 +11,10 @@ SOURCE_FILE@[0; 165)
     WHITESPACE@[23; 24) " "
     NAME@[24; 28)
       IDENT@[24; 28) "main"
-    PARAM_LIST@[28; 31)
+    PARAM_LIST@[28; 30)
       L_PAREN@[28; 29) "("
       R_PAREN@[29; 30) ")"
-      WHITESPACE@[30; 31) " "
+    WHITESPACE@[30; 31) " "
     BLOCK_EXPR@[31; 165)
       BLOCK@[31; 165)
         L_CURLY@[31; 32) "{"
@@ -26,10 +26,10 @@ SOURCE_FILE@[0; 165)
             LET_STMT@[61; 71)
               LET_KW@[61; 64) "let"
               WHITESPACE@[64; 65) " "
-              BIND_PAT@[65; 67)
-                NAME@[65; 67)
+              BIND_PAT@[65; 66)
+                NAME@[65; 66)
                   IDENT@[65; 66) "x"
-                  WHITESPACE@[66; 67) " "
+              WHITESPACE@[66; 67) " "
               EQ@[67; 68) "="
               WHITESPACE@[68; 69) " "
               LITERAL@[69; 71)
@@ -65,16 +65,16 @@ SOURCE_FILE@[0; 165)
                 L_CURLY@[87; 88) "{"
                 WHITESPACE@[88; 117) "\n                     ..."
                 EXPR_STMT@[117; 162)
-                  CALL_EXPR@[117; 162)
+                  CALL_EXPR@[117; 137)
                     IDENT_EXPR@[117; 124)
                       NAME@[117; 124)
                         IDENT@[117; 124) "println"
-                    ARG_LIST@[124; 162)
+                    ARG_LIST@[124; 137)
                       L_PAREN@[124; 125) "("
                       LITERAL@[125; 136)
                         STRING@[125; 136) "\"it works \""
                       R_PAREN@[136; 137) ")"
-                      WHITESPACE@[137; 162) "\n                     ..."
+                  WHITESPACE@[137; 162) "\n                     ..."
                 R_CURLY@[162; 163) "}"
         SEMI@[163; 164) ";"
         R_CURLY@[164; 165) "}"

@@ -1,20 +1,16 @@
-use errors::{emit, ColorChoice, Config, Diagnostic, FileId, StandardStream};
-use parser::FilesExt;
+use errors::{emit, ColorChoice, Config, Diagnostic, FileId, Files, StandardStream};
 use std::default::Default;
-use std::fs::File;
-use std::io::{self, Read};
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::io::{self};
+use std::ops::Range;
 #[salsa::database(
     semant::HirDatabaseStorage,
     semant::InternDatabaseStorage,
-    parser::ParseDatabaseStorage
+    parser::ParseDatabaseStorage,
+    errors::FileDatabaseStorage
 )]
 #[derive(Debug, Default)]
 pub struct DatabaseImpl {
     runtime: salsa::Runtime<DatabaseImpl>,
-    files: errors::Files<Arc<str>>,
-    diagnostics: Vec<Diagnostic<FileId>>,
 }
 
 pub(crate) trait Diagnostics {
@@ -28,21 +24,10 @@ impl Diagnostics for DatabaseImpl {
         let config = Config::default();
 
         while let Some(diagnostic) = diagnostics.pop() {
-            emit(&mut writer, &config, &self.files, &diagnostic)?
+            emit(&mut writer, &config, self, &diagnostic)?
         }
 
         Ok(())
-    }
-}
-
-impl FilesExt for DatabaseImpl {
-    fn source(&self, file: FileId) -> &Arc<str> {
-        self.files.source(file)
-    }
-
-    fn load_file(&mut self, path: &PathBuf) -> FileId {
-        let source = read_file(path).expect("Couldn't read a file");
-        self.files.add(path, source.into())
     }
 }
 
@@ -56,12 +41,24 @@ impl salsa::Database for DatabaseImpl {
     }
 }
 
-fn read_file(name: &PathBuf) -> io::Result<String> {
-    let mut file = File::open(name)?;
+impl<'files> Files<'files> for DatabaseImpl {
+    type FileId = FileId;
+    type Name = String;
+    type Source = String;
 
-    let mut contents = String::new();
+    fn name(&self, file_id: FileId) -> Option<Self::Name> {
+        Some((*errors::db::FileDatabase::file(self, file_id).name).clone())
+    }
 
-    file.read_to_string(&mut contents)?;
+    fn source(&self, file_id: FileId) -> Option<Self::Source> {
+        Some((*errors::db::FileDatabase::file(self, file_id).source).clone())
+    }
 
-    Ok(contents)
+    fn line_index(&self, file_id: FileId, byte_index: usize) -> Option<usize> {
+        errors::db::FileDatabase::line_index(self, file_id, byte_index)
+    }
+
+    fn line_range(&self, file_id: FileId, line_index: usize) -> Option<Range<usize>> {
+        errors::db::FileDatabase::line_range(self, file_id, line_index)
+    }
 }

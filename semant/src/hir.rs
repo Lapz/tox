@@ -1,13 +1,16 @@
 pub(crate) mod function;
 
-pub(crate) use function::{Function, FunctionAstMap};
+pub(crate) use function::FunctionAstMap;
 
-use std::sync::Arc;
+use crate::util;
+use errors::FileId;
+use std::{path::Path, sync::Arc};
 use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
-pub type Span = TextRange;
 
 #[derive(Debug, Default, Eq, PartialEq, Clone, Hash)]
-pub struct Program {
+pub struct SourceFile {
+    pub(crate) imports: Vec<Arc<Import>>,
+    pub(crate) modules: Vec<Arc<Module>>,
     pub(crate) functions: Vec<Arc<Function>>,
     pub(crate) type_alias: Vec<Arc<TypeAlias>>,
 }
@@ -27,26 +30,56 @@ pub struct StmtId(pub(crate) u64);
 
 pub struct BodyId(pub(crate) u64);
 
-macro_rules! create_intern_key {
-    ($name:ident) => {
-        #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-        pub struct $name(salsa::InternId);
-        impl salsa::InternKey for $name {
-            fn from_intern_id(v: salsa::InternId) -> Self {
-                $name(v)
-            }
-            fn as_intern_id(&self) -> salsa::InternId {
-                self.0
-            }
-        }
-    };
-}
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Name(SmolStr);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Import {
+    pub(crate) id: ImportId,
+    pub(crate) segments: Vec<Segment>,
+    pub(crate) file: FileId,
+    pub(crate) span: TextRange,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Segment {
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) nested_imports: Vec<util::Span<NameId>>,
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct Function {
+    pub(crate) exported: bool,
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) ast_map: FunctionAstMap,
+    pub(crate) params: Vec<util::Span<ParamId>>,
+    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
+    pub(crate) body: Option<Vec<StmtId>>,
+    pub(crate) returns: Option<util::Span<TypeId>>,
+    pub(crate) span: TextRange,
+}
+/// A symbol is composed of a name and the file it belongs to
+/// Symbols with the same name but from different files are not the sames
+/// i.e
+/// export foo {
+///
+/// };
+/// export foo {
+///
+/// };
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Symbol(pub(crate) FunctionId, pub(crate) FileId);
 
 impl Name {
     pub fn missing() -> Self {
         Name(SmolStr::new("missing name"))
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new<T: AsRef<str> + Into<String>>(s: T) -> Self {
+        Name(SmolStr::new(s))
     }
 }
 
@@ -68,12 +101,22 @@ impl From<ast::Name> for Name {
     }
 }
 
-create_intern_key!(FunctionId);
+impl AsRef<str> for Name {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<Path> for Name {
+    fn as_ref(&self) -> &Path {
+        &Path::new(self.0.as_str())
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Param {
-    pub(crate) pat: PatId,
-    pub(crate) ty: TypeId,
+    pub(crate) pat: util::Span<PatId>,
+    pub(crate) ty: util::Span<TypeId>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -81,19 +124,21 @@ pub struct TypeParam {
     pub(crate) name: NameId,
 }
 
-create_intern_key!(ClassId);
-create_intern_key!(EnumId);
-create_intern_key!(TypeAliasId);
-create_intern_key!(NameId);
-create_intern_key!(TypeId);
-create_intern_key!(LiteralId);
-
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct TypeAlias {
-    pub(crate) name: Name,
-    pub(crate) type_params: Vec<TypeParamId>,
-    pub(crate) ty: TypeId,
-    pub(crate) span: Span,
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
+    pub(crate) ty: util::Span<TypeId>,
+    pub(crate) ast_map: FunctionAstMap,
+    pub(crate) span: TextRange,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct Module {
+    pub(crate) id: ModuleId,
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) file: FileId,
+    pub(crate) span: TextRange,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -104,15 +149,15 @@ pub struct BlockId(pub(crate) u64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Pattern {
-    Bind { name: NameId },
+    Bind { name: util::Span<NameId> },
     Placeholder,
-    Tuple(Vec<PatId>),
+    Tuple(Vec<util::Span<PatId>>),
     Literal(LiteralId),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MatchArm {
-    pub(crate) pats: Vec<PatId>,
+    pub(crate) pats: Vec<util::Span<PatId>>,
     pub(crate) expr: ExprId,
 }
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
@@ -127,16 +172,20 @@ pub enum Literal {
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Type {
-    ParenType(Vec<TypeId>),
+    ParenType(Vec<util::Span<TypeId>>),
     /// An array type with no supplied size is assumed to be dynamic in growth
     /// If the size is present the array has a static size
     ArrayType {
-        ty: TypeId,
+        ty: util::Span<TypeId>,
         size: Option<usize>,
     },
     FnType {
-        params: Vec<TypeId>,
-        ret: Option<TypeId>,
+        params: Vec<util::Span<TypeId>>,
+        ret: Option<util::Span<TypeId>>,
+    },
+    Poly {
+        name: NameId,
+        type_args: Vec<util::Span<TypeId>>,
     },
     Ident(NameId),
 }
@@ -144,7 +193,8 @@ pub enum Type {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Stmt {
     Let {
-        pat: PatId,
+        pat: util::Span<PatId>,
+        ascribed_type: Option<util::Span<TypeId>>,
         initializer: Option<ExprId>,
     },
     Expr(ExprId),
@@ -166,10 +216,11 @@ pub enum Expr {
     Call {
         callee: ExprId,
         args: Vec<ExprId>,
+        type_args: Vec<util::Span<TypeId>>,
     },
     Cast {
         expr: ExprId,
-        ty: TypeId,
+        ty: util::Span<TypeId>,
     },
     Continue,
     If {
@@ -177,7 +228,7 @@ pub enum Expr {
         then_branch: ExprId,
         else_branch: Option<ExprId>,
     },
-    Ident(NameId),
+    Ident(util::Span<NameId>),
     Index {
         base: ExprId,
         index: ExprId,
@@ -226,6 +277,30 @@ pub enum UnaryOp {
     Minus,
     Excl,
 }
+
+macro_rules! create_intern_key {
+    ($name:ident) => {
+        #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+        pub struct $name(salsa::InternId);
+        impl salsa::InternKey for $name {
+            fn from_intern_id(v: salsa::InternId) -> Self {
+                $name(v)
+            }
+            fn as_intern_id(&self) -> salsa::InternId {
+                self.0
+            }
+        }
+    };
+}
+create_intern_key!(ClassId);
+create_intern_key!(EnumId);
+create_intern_key!(TypeAliasId);
+create_intern_key!(NameId);
+create_intern_key!(FunctionId);
+create_intern_key!(TypeId);
+create_intern_key!(LiteralId);
+create_intern_key!(ModuleId);
+create_intern_key!(ImportId);
 
 impl UnaryOp {
     pub(crate) fn from_kind(kind: SyntaxKind) -> Option<UnaryOp> {

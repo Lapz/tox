@@ -4,7 +4,6 @@ use syntax::T;
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_type(&mut self) {
-        self.eat_trivias();
         match self.current() {
             IDENT | T![self] => self.parse_ident_type(),
             T!["["] => self.parse_array_type(),
@@ -36,7 +35,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.at(T![<]) {
-            self.parse_type_params(false);
+            self.parse_type_args();
         }
 
         self.finish_node();
