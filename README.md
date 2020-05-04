@@ -13,7 +13,7 @@ It's built using salsa and rowan and codespan. The design is inspired by rust-an
 ## TODO
 
 - [ ] Error when type is defined multiple times
-- [-] Add resolve imports to ctx
+- [x] Add resolve imports to ctx
 - [ ] Warn on unused pattern variable
 - [ ] Infer types
 - [ ] Resolve external imports
