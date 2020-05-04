@@ -1,15 +1,25 @@
 # Tox
 
-cargo run -p=tools -- -s -g=syntax/src/grammer.ron -t=syntax/src/ast.rs.tera
 This is the new experimental version of Tox.I've been working on this slowly but I do have a working lexer plus parser and I've started on semantic analysis.
 
-It's built using salsa and rowan. The design is inspired by rust-analazyer along with other projects.
+It's built using salsa and rowan and codespan. The design is inspired by rust-analyzer along with other projects.
+
+## Screenshots
+
+<img src='./assets/program.png' width=250>
+<img src='./assets/errors.png' width=250>
+<img src='./assets/bar.png' width=250>
 
 ## TODO
 
-[ ] Parsing
-[ ] Fix ast reperesentation of record literal
-[ ] Add a tratir for record literal fields
-[ ] Add an immutable scoped map
-[ ] Add import syntax
-[ ] Resolve external imports
+- [ ] Infer types
+- [ ] Add resolve imports to ctx
+- [ ] Resolve external imports
+
+## Build
+
+Generate the ast
+
+```bash
+cargo run -p=tools -- -s -g=syntax/src/grammer.ron -t=syntax/src/ast.rs.tera
+```
