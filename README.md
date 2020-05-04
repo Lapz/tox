@@ -1,7 +1,8 @@
 # Tox
 
 ![](https://github.com/lapz/tox-rewrite/workflows/CI/badge.svg)
-[![](https://tokei.rs/b1/github/lapz/tox-rewrite)](https://github.com/lapz/tox-rewrite).
+[![](https://tokei.rs/b1/github/lapz/tox-rewrite)](https://github.com/lapz/tox-rewrite)
+<br />
 This is the new experimental version of Tox.I've been working on this slowly but I do have a working lexer plus parser and I've started on semantic analysis.
 
 It's built using salsa and rowan and codespan. The design is inspired by rust-analyzer along with other projects.
