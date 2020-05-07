@@ -13,6 +13,7 @@ pub struct SourceFile {
     pub(crate) modules: Vec<Arc<Module>>,
     pub(crate) functions: Vec<Arc<Function>>,
     pub(crate) type_alias: Vec<Arc<TypeAlias>>,
+    pub(crate) classes: Vec<Arc<Class>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -56,6 +57,22 @@ pub struct Function {
     pub(crate) body: Option<Vec<StmtId>>,
     pub(crate) returns: Option<util::Span<TypeId>>,
     pub(crate) span: TextRange,
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct Class {
+    pub(crate) exported: bool,
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) ast_map: FunctionAstMap,
+    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
+    pub(crate) fields: Vec<util::Span<Field>>,
+    pub(crate) methods: Vec<Arc<Function>>,
+    pub(crate) span: TextRange,
+}
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
+pub struct Field {
+    pub(crate) property: util::Span<NameId>,
+    pub(crate) ty: util::Span<TypeId>,
 }
 /// A symbol is composed of a name and the file it belongs to
 /// Symbols with the same name but from different files are not the sames

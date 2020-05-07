@@ -444,7 +444,6 @@ where
 
 pub(crate) fn lower_function_query(
     db: &impl HirDatabase,
-    _file: FileId,
     fun_id: hir::FunctionId,
 ) -> Arc<hir::Function> {
     let mut collector = FunctionDataCollector {
