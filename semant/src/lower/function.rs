@@ -1,6 +1,6 @@
 use crate::db::HirDatabase;
 use crate::{hir, util, TextRange};
-use errors::FileId;
+
 use std::sync::Arc;
 
 use syntax::{
