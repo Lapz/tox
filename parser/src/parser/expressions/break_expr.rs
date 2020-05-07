@@ -15,6 +15,6 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_break_expr,"fn main() {break;}"}
 }

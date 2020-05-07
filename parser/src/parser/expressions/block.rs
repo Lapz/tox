@@ -95,7 +95,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_free_block, "fn main() {{}}"}
     test_parser! {parse_nested_block,"fn main() {{{}}}"}
     test_parser! {parse_block_with_statements,"fn main() {{

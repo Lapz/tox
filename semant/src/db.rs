@@ -1,7 +1,7 @@
 use crate::{
     hir::{self, NameId},
     infer::Type,
-    resolver::{ModuleGraph, Resolver},
+    resolver::{ModuleGraph, Resolver, TypeKind},
 };
 use errors::{FileId, WithError};
 use parser::ParseDatabase;
@@ -57,8 +57,11 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
     #[salsa::invoke(crate::resolver::resolve_source_file_query)]
     fn resolve_source_file(&self, file: FileId) -> WithError<Arc<Resolver>>;
     #[salsa::invoke(crate::resolver::resolve_imports_query)]
-    fn resolve_import(&self, file: FileId, import: hir::ImportId)
-        -> WithError<Vec<(NameId, Type)>>;
+    fn resolve_import(
+        &self,
+        file: FileId,
+        import: hir::ImportId,
+    ) -> WithError<Vec<(NameId, Type, TypeKind)>>;
 
     #[salsa::invoke(crate::resolver::module_graph_query)]
     fn module_graph(&self, file: FileId) -> WithError<ModuleGraph>;

@@ -27,7 +27,7 @@ impl InfixParser for IndexParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_simple_index_expr,"fn main() {a[1+2];}"}
     test_parser! {parse_nested_index_expr,"fn main() {a[0][1];}"}
 }

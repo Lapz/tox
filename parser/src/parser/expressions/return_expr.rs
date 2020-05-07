@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_return_expr,"fn main() {return 1+1;}"}
     test_parser! {parse_empty_return_expr,"fn main() {return;}"}
 }

@@ -101,7 +101,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_fn_type,"fn main(_:fn(i32,i32) -> i32) {}"}
     test_parser! {parse_fn_tuple_type,"fn main(_:fn((i32,i32)) -> i32) {}"}
     test_parser! {parse_ident_type,"fn main(x:i32) {}"}

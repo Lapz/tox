@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_empty_import,"import foo;"}
     test_parser! {parse_import_with_multiple_segments,"import foo::bar::baz;"}
     test_parser! {parse_import_with_brace,"import foo::{bar,baz};"}

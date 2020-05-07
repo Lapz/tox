@@ -19,7 +19,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_single_mod,"mod foo;"}
     test_parser! {parse_many_mods,"mod bar; mod foo;"}
 }

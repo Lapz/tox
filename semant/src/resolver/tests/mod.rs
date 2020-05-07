@@ -99,7 +99,7 @@ pub fn load_file<P: AsRef<Path>>(p: P) -> DirectoryStructure {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

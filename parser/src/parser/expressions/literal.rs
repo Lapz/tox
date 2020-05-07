@@ -23,7 +23,7 @@ impl PrefixParser for LiteralParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_int_literal,"fn main() {1;}"}
     test_parser! {parse_float_literal,"fn main() {1.0;}"}
     test_parser! {parse_string_literal,"fn main() {\"abc\";}"}

@@ -59,7 +59,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_placeholder_pattern,"fn main(_:i32) {}"}
 
     test_parser! {parse_tuple_pattern,"fn main((x,y):i32) {}"}

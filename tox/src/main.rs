@@ -1,9 +1,6 @@
 mod cli;
 mod db;
 
-#[cfg(test)]
-mod tests;
-
 use crate::cli::Cli;
 use structopt::StructOpt as _;
 

@@ -38,7 +38,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_function,"fn main() {}"}
     test_parser! {parse_exported_function,"export fn main() {}"}
 }

@@ -1,0 +1,12 @@
+DirectoryStructure (
+    contents: [
+        (
+            name:"main.tox",
+            text: "import foo::Foo; mod foo; type Bar = Foo; fn main() {}"
+        ),
+        (
+            name:"foo.tox",
+            text: "export type Foo = i32; "
+        )
+    ]
+)

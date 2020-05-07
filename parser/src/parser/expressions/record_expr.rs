@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_empty_record_literal,"fn main() { foo{};}"}
     test_parser! {parse_shorthand_record_literal,"fn main() { foo{ shorthand,short,shortymcshort};}"}
     test_parser! {parse_longhand_record_literal,"fn main() { foo{ longhand:longhand,long:long,longymclong:longymclong};}"}

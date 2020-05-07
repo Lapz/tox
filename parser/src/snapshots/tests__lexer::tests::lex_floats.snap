@@ -1,0 +1,104 @@
+---
+created: "2020-05-06T10:43:10.865573200Z"
+creator: insta@0.8.2
+source: parser/src/lexer.rs
+expression: get_tokens(input)
+---
+[
+    Span {
+        value: Token {
+            kind: FLOAT_NUMBER,
+            len: 5,
+        },
+        start: Position {
+            column: 1,
+            line: 1,
+            absolute: 0,
+        },
+        end: Position {
+            column: 6,
+            line: 1,
+            absolute: 5,
+        },
+    },
+    Span {
+        value: Token {
+            kind: COMMA,
+            len: 1,
+        },
+        start: Position {
+            column: 6,
+            line: 1,
+            absolute: 5,
+        },
+        end: Position {
+            column: 6,
+            line: 1,
+            absolute: 5,
+        },
+    },
+    Span {
+        value: Token {
+            kind: FLOAT_NUMBER,
+            len: 5,
+        },
+        start: Position {
+            column: 7,
+            line: 1,
+            absolute: 6,
+        },
+        end: Position {
+            column: 12,
+            line: 1,
+            absolute: 11,
+        },
+    },
+    Span {
+        value: Token {
+            kind: COMMA,
+            len: 1,
+        },
+        start: Position {
+            column: 12,
+            line: 1,
+            absolute: 11,
+        },
+        end: Position {
+            column: 12,
+            line: 1,
+            absolute: 11,
+        },
+    },
+    Span {
+        value: Token {
+            kind: FLOAT_NUMBER,
+            len: 5,
+        },
+        start: Position {
+            column: 13,
+            line: 1,
+            absolute: 12,
+        },
+        end: Position {
+            column: 18,
+            line: 1,
+            absolute: 17,
+        },
+    },
+    Span {
+        value: Token {
+            kind: EOF,
+            len: 1,
+        },
+        start: Position {
+            column: 18,
+            line: 1,
+            absolute: 17,
+        },
+        end: Position {
+            column: 18,
+            line: 1,
+            absolute: 17,
+        },
+    },
+]

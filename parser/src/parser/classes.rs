@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     use crate::utils::parse;
     use syntax::{ClassDefOwner, NamedFieldsOwner};

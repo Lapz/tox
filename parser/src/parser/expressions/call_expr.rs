@@ -35,7 +35,7 @@ impl InfixParser for CallParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_simple_call_expr,"fn main() {a(1,2);}"}
     test_parser! {parse_call_no_args_expr,"fn main() {a();}"}
     test_parser! {parse_call_generic_params_expr,"fn main() {a::<i32>(a,b);}"}

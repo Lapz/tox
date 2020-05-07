@@ -23,6 +23,6 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_do_expr,"fn main() { do {println(x); x=x+1;} while x<10;}"}
 }

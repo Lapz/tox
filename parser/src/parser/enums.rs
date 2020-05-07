@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_empty_enum,"enum Foo {}"}
     test_parser! {parse_exported_enum,"export enum Foo {}"}
     test_parser! {parse_enum_with_variants,"enum Foo {A,B,C}"}

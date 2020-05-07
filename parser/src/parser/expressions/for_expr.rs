@@ -43,7 +43,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-mod test {
+mod tests {
     test_parser! {parse_empty_for_expr,"fn main() {for(;;;) {}}"}
     test_parser! {parse_for_expr,"
                     fn main() {

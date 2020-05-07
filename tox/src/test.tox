@@ -2,28 +2,31 @@ import foo::bar::{bar,Foo};
 
 type ParserResult<T> = Result<T,Foo>;
 
-type Foo = i32;
-
 mod bar;
 mod foo;
 
-export fn main()  { 
+/*export fn main()  { 
     let x= 10;
     let x =10;
     let x =x;
 
     let x:i64 = 19;
-    v=id::<i32>();
+    id::<i32,f32,i32>();
+    v(a)(b);
 
     for(let i=0;i<10;i+=1) {
         print("ok");
     };
-    if true {print("good")} else {print("bad")};
-}
 
-
-
-
-export fn id<T>(a:T,(x,x):T) -> (T,i32) {
     
+    if true {print("good")} else {print("bad")};
+}*/
+
+
+
+
+export fn id<T>(a:T,(x,z):T) -> (T,i32) {
+    let (y,(x,a)) = 10;
+    
+    let x =10;
 }

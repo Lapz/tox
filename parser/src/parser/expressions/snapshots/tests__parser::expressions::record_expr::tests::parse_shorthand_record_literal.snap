@@ -1,0 +1,40 @@
+---
+created: "2020-05-06T10:43:12.700936500Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/record_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 49)
+  FN_DEF@[0; 49)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 49)
+      BLOCK@[10; 49)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 12) " "
+        EXPR_STMT@[12; 47)
+          RECORD_LITERAL_EXPR@[12; 47)
+            IDENT_EXPR@[12; 15)
+              NAME@[12; 15)
+                IDENT@[12; 15) "foo"
+            RECORD_LITERAL_FIELD_LIST@[15; 47)
+              L_CURLY@[15; 16) "{"
+              WHITESPACE@[16; 17) " "
+              RECORD_LITERAL_FIELD@[17; 26)
+                IDENT@[17; 26) "shorthand"
+              COMMA@[26; 27) ","
+              RECORD_LITERAL_FIELD@[27; 32)
+                IDENT@[27; 32) "short"
+              COMMA@[32; 33) ","
+              RECORD_LITERAL_FIELD@[33; 46)
+                IDENT@[33; 46) "shortymcshort"
+              R_CURLY@[46; 47) "}"
+        SEMI@[47; 48) ";"
+        R_CURLY@[48; 49) "}"
+

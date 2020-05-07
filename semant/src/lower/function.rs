@@ -286,12 +286,15 @@ where
                 };
 
                 let type_args = if let Some(type_args) = call_expr.type_args() {
-                    type_args
-                        .types()
-                        .map(|ty| self.lower_type(ty))
-                        .collect::<Vec<_>>()
+                    util::Span::from_ast(
+                        type_args
+                            .types()
+                            .map(|ty| self.lower_type(ty))
+                            .collect::<Vec<_>>(),
+                        &type_args,
+                    )
                 } else {
-                    Vec::new()
+                    util::Span::from_ast(Vec::new(), &call_expr.expr().unwrap())
                 };
 
                 hir::Expr::Call {

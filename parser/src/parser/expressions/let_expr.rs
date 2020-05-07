@@ -36,7 +36,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-mod test {
+mod tests {
     test_parser! {parse_let_expr,"fn main() {let foo = 10; let bar = \"a\"}"}
     test_parser! {parse_empty_let_expr,"fn main() {let foo;}"}
     test_parser! {parse_let_type_expr,"fn main() {let foo:i32; let bar: (i32,i32);}"}

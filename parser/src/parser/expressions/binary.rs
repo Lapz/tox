@@ -52,7 +52,7 @@ impl InfixParser for BinaryParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_bin_expr,"fn main() {1+1;}"}
     test_parser! {parse_wrapped_bin_expr_literal,"fn main() {1.0+2.0+2.0;}"}
     test_parser! {parse_assign_bin_expr_,"fn main() {x=10;x+=10;x-=10;x/=10;x*=10;}"}

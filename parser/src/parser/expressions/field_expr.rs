@@ -25,7 +25,7 @@ impl InfixParser for FieldParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_field_access,"fn main(){a.b;}"}
     test_parser! {parse_field_access_chain,"fn main(){a.b.c.d.e.f;}"}
     test_parser! {parse_field_access_method,"fn main(){a.b();}"}

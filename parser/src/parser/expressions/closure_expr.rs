@@ -42,7 +42,7 @@ impl PrefixParser for ClosureParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_simple_closure_expr,r"
         fn main() {
             let a = |x,y| {

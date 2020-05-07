@@ -34,7 +34,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_empty_if,"fn main() { if true {}}"}
     test_parser! {parse_if_and_else,"fn main() { if true {} else {}}"}
     test_parser! {parse_chained_if,"fn main() { if true {} else if false {} else if true {} else if false {} }"}

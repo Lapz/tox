@@ -1,0 +1,60 @@
+---
+created: "2020-05-06T10:43:12.715196600Z"
+creator: insta@0.8.2
+source: parser/src/parser/expressions/match_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 42)
+  FN_DEF@[0; 42)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 42)
+      BLOCK@[10; 42)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 12) " "
+        EXPR_STMT@[12; 40)
+          MATCH_EXPR@[12; 40)
+            MATCH_KW@[12; 17) "match"
+            WHITESPACE@[17; 18) " "
+            TUPLE_EXPR@[18; 23)
+              L_PAREN@[18; 19) "("
+              IDENT_EXPR@[19; 20)
+                NAME@[19; 20)
+                  IDENT@[19; 20) "a"
+              COMMA@[20; 21) ","
+              IDENT_EXPR@[21; 22)
+                NAME@[21; 22)
+                  IDENT@[21; 22) "b"
+              R_PAREN@[22; 23) ")"
+            WHITESPACE@[23; 24) " "
+            L_CURLY@[24; 25) "{"
+            WHITESPACE@[25; 26) " "
+            MATCH_ARM_LIST@[26; 39)
+              MATCH_ARM@[26; 33)
+                BIND_PAT@[26; 27)
+                  NAME@[26; 27)
+                    IDENT@[26; 27) "x"
+                WHITESPACE@[27; 28) " "
+                FAT_ARROW@[28; 30) "=>"
+                WHITESPACE@[30; 31) " "
+                LITERAL@[31; 33)
+                  INT_NUMBER@[31; 33) "10"
+              COMMA@[33; 34) ","
+              MATCH_ARM@[34; 39)
+                LITERAL_PAT@[34; 36)
+                  LITERAL@[34; 35)
+                    INT_NUMBER@[34; 35) "1"
+                  WHITESPACE@[35; 36) " "
+                FAT_ARROW@[36; 38) "=>"
+                LITERAL@[38; 39)
+                  INT_NUMBER@[38; 39) "3"
+            R_CURLY@[39; 40) "}"
+        SEMI@[40; 41) ";"
+        R_CURLY@[41; 42) "}"
+

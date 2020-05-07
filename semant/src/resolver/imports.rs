@@ -1,3 +1,4 @@
+use super::TypeKind;
 use crate::{
     hir::{ImportId, NameId},
     infer::Type,
@@ -9,7 +10,7 @@ pub fn resolve_imports_query(
     db: &impl HirDatabase,
     file: FileId,
     import_id: ImportId,
-) -> WithError<Vec<(NameId, Type)>> {
+) -> WithError<Vec<(NameId, Type, TypeKind)>> {
     let mut reporter = Reporter::new(file);
     let import = db.lower_import(file, import_id);
     let module_graphs = db.module_graph(file)?;
@@ -59,7 +60,7 @@ pub fn resolve_imports_query(
                     }
 
                     if let Some(ty) = exports.ctx.get_type(&name.item) {
-                        imported_types.push((name.item, ty))
+                        imported_types.push((name.item, ty, exports.ctx.get_kind(&name.item)))
                     } else {
                         eprintln!(
                             "Found an import but couldn't find its type in the ctx; id {:?} name {}",
@@ -88,51 +89,10 @@ pub fn resolve_imports_query(
 }
 
 #[cfg(test)]
-#[macro_use]
-mod test {
 
-    macro_rules! create_test {
-        ($filename:ident ,is_err) => {
-            __create_test!($filename, is_err);
-        };
-        ($filename:ident ) => {
-            __create_test!($filename, is_ok);
-        };
-    }
+mod tests {
 
-    macro_rules! __create_test {
-        ($filename:ident,$kind:ident) => {
-            #[test]
-            fn $filename() -> std::io::Result<()> {
-                use crate::HirDatabase;
-                use errors::db::FileDatabase;
-
-                let dir = tempfile::tempdir()?;
-
-                let structure = crate::resolver::tests::load_file(&format!(
-                    "{}/src/resolver/tests/{}.ron",
-                    env!("CARGO_MANIFEST_DIR"),
-                    stringify!($filename)
-                ));
-
-                let mut file_names = Vec::new();
-
-                crate::resolver::tests::create_structure(&dir.path(), &structure, &mut file_names)?;
-
-                let db = crate::resolver::tests::MockDatabaseImpl::default();
-
-                let handle = db.intern_file(file_names.remove(0));
-
-                match db.resolve_source_file(handle) {
-                    Ok(_) => {}
-                    Err(errors) => println!("{:?}", errors),
-                }
-
-                assert!(db.resolve_source_file(handle).$kind());
-                Ok(())
-            }
-        };
-    }
+    use crate::create_test;
 
     create_test!(import_single);
     create_test!(import_many);

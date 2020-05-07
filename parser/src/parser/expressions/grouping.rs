@@ -43,7 +43,7 @@ impl PrefixParser for GroupingParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_grouping_expr,"fn main() {(1+10-1);}"}
     test_parser! {parse_tuple_expr,"fn main() {(1,2,3,4);}"}
 }

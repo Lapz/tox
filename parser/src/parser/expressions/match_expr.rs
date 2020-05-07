@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-mod test {
+mod tests {
     test_parser! {parse_empty_match_expr,"fn main() { match a {};}"}
     test_parser! {parse_match_expr,"fn main() { match (a,b) { x => 10,1 =>3};}"}
 }

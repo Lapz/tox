@@ -25,7 +25,7 @@ impl PrefixParser for IdentParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {
         parse_ident_expr,"fn main(){a;}"
     }

@@ -35,7 +35,7 @@ impl PrefixParser for UnaryParselet {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_unary_expr,"fn main() {!true;-1}"}
     test_parser! {parse_nested_unary_expr,"fn main() {!!true;}"}
 }

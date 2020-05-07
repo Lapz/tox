@@ -1,0 +1,37 @@
+---
+created: "2020-05-06T10:43:13.408190700Z"
+creator: insta@0.8.2
+source: parser/src/parser/types.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 25)
+  FN_DEF@[0; 25)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 22)
+      L_PAREN@[7; 8) "("
+      PARAM@[8; 21)
+        BIND_PAT@[8; 9)
+          NAME@[8; 9)
+            IDENT@[8; 9) "x"
+        COLON@[9; 10) ":"
+        ARRAY_TYPE@[10; 21)
+          L_BRACK@[10; 11) "["
+          PAREN_TYPE@[11; 20)
+            L_PAREN@[11; 12) "("
+            IDENT_TYPE@[12; 15)
+              IDENT@[12; 15) "i32"
+            COMMA@[15; 16) ","
+            IDENT_TYPE@[16; 19)
+              IDENT@[16; 19) "i32"
+            R_PAREN@[19; 20) ")"
+          R_BRACK@[20; 21) "]"
+      R_PAREN@[21; 22) ")"
+    WHITESPACE@[22; 23) " "
+    BLOCK_EXPR@[23; 25)
+      BLOCK@[23; 25)
+        L_CURLY@[23; 24) "{"
+        R_CURLY@[24; 25) "}"
+

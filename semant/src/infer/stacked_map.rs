@@ -34,6 +34,13 @@ impl<K: Hash + Eq + Copy + Clone, V: Clone> StackedMap<K, V> {
         }
     }
 
+    pub fn end_scope_iter(&mut self) -> ExitScopeIter<K, V> {
+        ExitScopeIter {
+            map: self,
+            done: false,
+        }
+    }
+
     /// Enters a piece of data into the current scope
     pub fn insert(&mut self, key: K, value: V) {
         let mapping = self.table.entry(key).or_insert_with(Vec::new);
@@ -42,15 +49,39 @@ impl<K: Hash + Eq + Copy + Clone, V: Clone> StackedMap<K, V> {
         self.scopes.push(Some(key));
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
-        let _depth = self.scopes.len();
+    pub fn update(&mut self, key: K, value: V) {
+        let mapping = self.table.entry(key).or_insert_with(Vec::new);
+        if mapping.is_empty() {
+            mapping.push(value);
+        } else {
+            mapping.pop();
+            mapping.push(value);
+        }
+    }
 
+    pub fn is_in_scope(&self, key: &K) -> bool {
+        for v in self.scopes.iter().rev() {
+            match v {
+                Some(ref n) if n == key => return true,
+                Some(_) => (),
+                None => break,
+            }
+        }
+
+        false
+    }
+
+    pub fn get(&self, key: &K) -> Option<&V> {
         self.table.get(key).and_then(|vec| vec.last())
+    }
+
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+        self.table.get_mut(key).and_then(|vec| vec.last_mut())
     }
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     #[test]
     fn test_it_works() {
@@ -72,5 +103,39 @@ mod test {
         assert_eq!(map.get(&1), Some(&"b"));
         map.end_scope();
         assert_eq!(map.get(&2), None);
+    }
+}
+
+pub struct ExitScopeIter<'a, K, V>
+where
+    K: 'a + Eq + Hash,
+    V: 'a + Clone,
+{
+    map: &'a mut StackedMap<K, V>,
+    done: bool,
+}
+
+impl<'a, K, V: Clone> Iterator for ExitScopeIter<'a, K, V>
+where
+    K: Eq + Hash + Clone,
+{
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            None
+        } else {
+            match self.map.scopes.pop() {
+                Some(Some(key)) => {
+                    let result = self.map.table.get_mut(&key).and_then(|x| x.pop());
+                    self.done = result.is_none();
+                    result.map(|value| (key, value))
+                }
+                _ => {
+                    self.done = true;
+                    None
+                }
+            }
+        }
     }
 }

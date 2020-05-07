@@ -23,7 +23,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     test_parser! {parse_empty_while_expr,"fn main(){while true {}}"}
     test_parser! {parse_while_expr,"fn main(){while true {print(\"it works\")}}"}
 }
