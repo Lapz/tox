@@ -3,8 +3,8 @@ mod class;
 mod function;
 mod imports;
 mod module;
-use crate::db::HirDatabase;
-use crate::hir;
+
+use crate::{db::HirDatabase, hir};
 use errors::{FileId, WithError};
 use std::sync::Arc;
 use syntax::{ClassDefOwner, ExternImportDefOwner, FnDefOwner, ModuleDefOwner, TypeAliasDefOwner};
