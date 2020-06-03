@@ -5,6 +5,7 @@ mod db;
 mod hir;
 mod infer;
 mod lower;
+
 mod util;
 #[macro_use]
 mod resolver;

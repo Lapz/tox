@@ -1,4 +1,5 @@
 mod alias;
+mod class;
 mod data;
 mod function;
 mod imports;

@@ -20,7 +20,7 @@ It's built using salsa and rowan and codespan. The design is inspired by rust-an
 - [x] Error when a function is used as a type
 - [x] Error on duplicate pattern bindings in the same statement
 - [x] Warn on unused pattern variable
-- [ ] Lower structural and struct methods
+- [x] Lower structural and struct methods
 - [ ] Lower enums
 - [ ] Infer types
 - [ ] Resolve external imports

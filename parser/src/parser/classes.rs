@@ -68,7 +68,9 @@ impl<'a> Parser<'a> {
         self.ident();
         self.expect(T![:]);
         self.parse_type();
+
         self.expect(T![;]);
+
         self.finish_node();
     }
 }

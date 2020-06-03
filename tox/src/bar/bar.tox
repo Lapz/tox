@@ -5,4 +5,6 @@ export fn bar() {
     
 }
 
-export type Foo = i32;
+export class Foo {
+    bar:i32
+};

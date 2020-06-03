@@ -11,10 +11,8 @@ impl<'a, DB> ResolverDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub fn resolve_function(&mut self, function: &Function) -> Result<(), ()> {
+    pub fn resolve_function_signature(&mut self, function: &Function) -> Result<Type, ()> {
         let name = function.name;
-
-        self.begin_scope();
 
         let mut poly_tvs = Vec::new();
 
@@ -45,6 +43,18 @@ where
             signature.push(Type::Con(TypeCon::Void))
         }
 
+        self.end_function_scope(name.item);
+
+        Ok(Type::Poly(poly_tvs, Box::new(Type::App(signature))))
+    }
+
+    pub fn resolve_function(&mut self, function: &Function) -> Result<(), ()> {
+        let name = function.name;
+
+        self.begin_scope();
+
+        let signature = self.resolve_function_signature(function)?;
+
         self.begin_function_scope(name.item);
 
         if let Some(body) = &function.body {
@@ -54,15 +64,10 @@ where
         }
 
         self.end_function_scope(name.item);
-        self.end_function_scope(name.item);
 
         self.end_scope();
 
-        self.insert_type(
-            &name,
-            Type::Poly(poly_tvs, Box::new(Type::App(signature))),
-            TypeKind::Function,
-        )?;
+        self.insert_type(&name, signature, TypeKind::Function)?;
 
         Ok(())
     }

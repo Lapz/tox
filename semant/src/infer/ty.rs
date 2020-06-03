@@ -1,4 +1,5 @@
 use crate::hir::NameId;
+use std::collections::HashMap;
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,6 +33,11 @@ pub enum Type {
     Var(TypeVar),
     Con(TypeCon),
     Enum(NameId, Vec<EnumVariant>),
+    Class {
+        name: NameId,
+        fields: HashMap<NameId, Type>,
+        methods: HashMap<NameId, Type>,
+    },
 }
 
 /// Represent an enum variant

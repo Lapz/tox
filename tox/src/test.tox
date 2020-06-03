@@ -1,7 +1,7 @@
 import foo::bar::{bar,Foo};
 
 type ParserResult<T> = Result<T,Foo>;
-
+type ParserResult<T> = Result<T,Foo>;
 mod bar;
 mod foo;
 
@@ -24,6 +24,10 @@ mod foo;
 
 
 
+class Bza {
+    foo:i32;
+    bar:i32;
+}
 
 export fn id<T>(a:T,(x,z):T) -> (T,i32) {
     let (y,(x,a)) = 10;

@@ -1,6 +1,7 @@
 use crate::db::HirDatabase;
 use crate::Ctx;
 
+use super::data::ItemKind;
 use crate::resolver::{data::ResolverDataCollector, Resolver};
 use errors::{FileId, Reporter, WithError};
 use std::{
@@ -23,7 +24,7 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
     };
 
     for function in &program.functions {
-        collector.add_function(function.name, function.exported)
+        collector.add_item(function.name, ItemKind::Function, function.exported)
     }
 
     let (resolver, reporter) = collector.finish();
@@ -60,14 +61,26 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
 
     // collect the top level definitions first so we can
     // use forward declarations
+    for class in &source_file.classes {
+        collector.add_item(class.name, ItemKind::Class, class.exported)
+    }
+
+    // collect the top level definitions first so we can
+    // use forward declarations
     for function in &source_file.functions {
-        collector.add_function(function.name, function.exported);
+        collector.add_item(function.name, ItemKind::Function, function.exported);
     }
 
     for alias in &source_file.type_alias {
         if let Err(_) = collector.resolve_alias(alias) {
             continue;
         };
+    }
+
+    for class in &source_file.classes {
+        if let Err(_) = collector.resolve_class(class) {
+            continue;
+        }
     }
 
     for function in &source_file.functions {

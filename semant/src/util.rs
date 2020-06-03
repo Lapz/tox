@@ -40,4 +40,8 @@ where
     pub fn end(&self) -> TextUnit {
         self.end
     }
+
+    pub fn as_reporter_span(&self) -> (usize, usize) {
+        (self.start.to_usize(), self.end.to_usize())
+    }
 }

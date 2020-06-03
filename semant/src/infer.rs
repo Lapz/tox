@@ -2,6 +2,7 @@ mod ctx;
 mod infer;
 mod stacked_map;
 mod ty;
+mod unify;
 
 pub use ctx::Ctx;
 pub(crate) use infer::infer_query;
