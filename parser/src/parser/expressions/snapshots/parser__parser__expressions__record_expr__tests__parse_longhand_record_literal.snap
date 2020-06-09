@@ -21,25 +21,28 @@ SOURCE_FILE@[0; 71)
             IDENT_EXPR@[12; 15)
               NAME@[12; 15)
                 IDENT@[12; 15) "foo"
-            RECORD_LITERAL_FIELD_LIST@[15; 69)
+            NAMED_FIELD_LIST@[15; 69)
               L_CURLY@[15; 16) "{"
               WHITESPACE@[16; 17) " "
-              RECORD_LITERAL_FIELD@[17; 34)
-                IDENT@[17; 25) "longhand"
+              NAMED_FIELD@[17; 34)
+                NAME@[17; 25)
+                  IDENT@[17; 25) "longhand"
                 COLON@[25; 26) ":"
                 IDENT_EXPR@[26; 34)
                   NAME@[26; 34)
                     IDENT@[26; 34) "longhand"
               COMMA@[34; 35) ","
-              RECORD_LITERAL_FIELD@[35; 44)
-                IDENT@[35; 39) "long"
+              NAMED_FIELD@[35; 44)
+                NAME@[35; 39)
+                  IDENT@[35; 39) "long"
                 COLON@[39; 40) ":"
                 IDENT_EXPR@[40; 44)
                   NAME@[40; 44)
                     IDENT@[40; 44) "long"
               COMMA@[44; 45) ","
-              RECORD_LITERAL_FIELD@[45; 68)
-                IDENT@[45; 56) "longymclong"
+              NAMED_FIELD@[45; 68)
+                NAME@[45; 56)
+                  IDENT@[45; 56) "longymclong"
                 COLON@[56; 57) ":"
                 IDENT_EXPR@[57; 68)
                   NAME@[57; 68)

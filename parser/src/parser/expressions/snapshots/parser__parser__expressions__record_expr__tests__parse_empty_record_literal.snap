@@ -21,7 +21,7 @@ SOURCE_FILE@[0; 19)
             IDENT_EXPR@[12; 15)
               NAME@[12; 15)
                 IDENT@[12; 15) "foo"
-            RECORD_LITERAL_FIELD_LIST@[15; 17)
+            NAMED_FIELD_LIST@[15; 17)
               L_CURLY@[15; 16) "{"
               R_CURLY@[16; 17) "}"
         SEMI@[17; 18) ";"
