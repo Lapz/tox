@@ -34,7 +34,6 @@ pub enum Type {
     Con(TypeCon),
     Enum(HashMap<NameId, Variant>),
     Class {
-        name: NameId,
         fields: HashMap<NameId, Type>,
         methods: HashMap<NameId, Type>,
     },

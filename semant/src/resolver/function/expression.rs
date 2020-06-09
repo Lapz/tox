@@ -120,6 +120,59 @@ where
                     self.resolve_expression(fn_name, &arm.expr, ast_map)?;
                 }
             }
+            Expr::RecordLiteral {
+                def,
+                fields: record_fields,
+            } => {
+                if let Some(ty) = self.ctx.get_type(&def.item) {
+                    match ty {
+                        crate::infer::Type::Poly(_, inner) => match &*inner {
+                            crate::infer::Type::Class { fields, .. } => {
+                                for (field, expr) in record_fields {
+                                    if !fields.contains_key(&field.item) {
+                                        let msg = format!(
+                                            "Unknown literal field `{}`",
+                                            self.db.lookup_intern_name(field.item)
+                                        );
+
+                                        self.reporter.error(msg, "", field.as_reporter_span());
+                                    }
+
+                                    if self.resolve_expression(fn_name, expr, ast_map).is_err() {
+                                        continue;
+                                    };
+                                }
+                            }
+                            _ => {
+                                let msg = format!(
+                                    "`{}` is not an enum",
+                                    self.db.lookup_intern_name(def.item)
+                                );
+
+                                self.reporter.error(msg, "", def.as_reporter_span());
+
+                                return Err(());
+                            }
+                        },
+                        _ => {
+                            let msg = format!(
+                                "`{}` is not an enum",
+                                self.db.lookup_intern_name(def.item)
+                            );
+
+                            self.reporter.error(msg, "", def.as_reporter_span());
+
+                            return Err(());
+                        }
+                    }
+                } else {
+                    let msg = format!("Unknown class `{}`", self.db.lookup_intern_name(def.item));
+
+                    self.reporter.error(msg, "", def.as_reporter_span());
+
+                    return Err(());
+                }
+            }
             Expr::Enum { def, variant, expr } => {
                 if let Some(ty) = self.ctx.get_type(&def.item) {
                     match ty {

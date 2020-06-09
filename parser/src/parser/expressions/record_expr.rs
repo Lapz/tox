@@ -12,7 +12,7 @@ impl InfixParser for RecordParselet {
     fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, RECORD_LITERAL_EXPR);
 
-        parser.start_node(RECORD_LITERAL_FIELD_LIST);
+        parser.start_node(NAMED_FIELD_LIST);
 
         parser.expect(T!["{"]);
 
@@ -37,9 +37,13 @@ impl InfixParser for RecordParselet {
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_record_field(&mut self) {
-        self.start_node(RECORD_LITERAL_FIELD);
+        self.start_node(NAMED_FIELD);
+
+        self.start_node(NAME);
 
         self.expect(IDENT);
+
+        self.finish_node();
 
         if self.at(T![:]) {
             self.bump();
