@@ -17,13 +17,13 @@ impl PrefixParser for IdentParselet {
         parser.expect(IDENT);
 
         if parser.at(T![::]) {
-            parser.finish_node();
+            parser.finish_node(); // close name
 
             parser.bump();
 
             if parser.at(T![<]) {
                 parser.parse_type_args();
-                parser.finish_node();
+                parser.finish_node(); // close ident_expr
             } else {
                 parser.finish_node();
 

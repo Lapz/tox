@@ -144,23 +144,21 @@ pub enum SyntaxKind {
     ENUM_VARIANT, // 120
     NAMED_FIELD_DEF_LIST, // 121
     NAMED_FIELD_DEF, // 122
-    RECORD_LITERAL_FIELD_LIST, // 123
-    RECORD_LITERAL_FIELD, // 124
-    RECORD_LITERAL_EXPR, // 125
-    ENUM_VARIANT_LIST, // 126
-    VISIBILITY, // 127
-    LITERAL, // 128
-    NAME, // 129
-    NAME_REF, // 130
-    LET_STMT, // 131
-    EXPR_STMT, // 132
-    TYPE_PARAM_LIST, // 133
-    TYPE_ARG_LIST, // 134
-    TYPE_PARAM, // 135
-    PARAM_LIST, // 136
-    PARAM, // 137
-    SELF_PARAM, // 138
-    ARG_LIST, // 139
+    RECORD_LITERAL_EXPR, // 123
+    ENUM_VARIANT_LIST, // 124
+    VISIBILITY, // 125
+    LITERAL, // 126
+    NAME, // 127
+    NAME_REF, // 128
+    LET_STMT, // 129
+    EXPR_STMT, // 130
+    TYPE_PARAM_LIST, // 131
+    TYPE_ARG_LIST, // 132
+    TYPE_PARAM, // 133
+    PARAM_LIST, // 134
+    PARAM, // 135
+    SELF_PARAM, // 136
+    ARG_LIST, // 137
     // Technical kind so that we can cast from u16 safely
     #[doc(hidden)]
     __LAST,
@@ -302,8 +300,6 @@ impl SyntaxKind {
             ENUM_VARIANT => "ENUM_VARIANT",
             NAMED_FIELD_DEF_LIST => "NAMED_FIELD_DEF_LIST",
             NAMED_FIELD_DEF => "NAMED_FIELD_DEF",
-            RECORD_LITERAL_FIELD_LIST => "RECORD_LITERAL_FIELD_LIST",
-            RECORD_LITERAL_FIELD => "RECORD_LITERAL_FIELD",
             RECORD_LITERAL_EXPR => "RECORD_LITERAL_EXPR",
             ENUM_VARIANT_LIST => "ENUM_VARIANT_LIST",
             VISIBILITY => "VISIBILITY",
@@ -1092,7 +1088,7 @@ impl FieldExpr {
         child_opt(self)
     }
 
-    pub fn name_ref(&self) -> Option<NameRef> {
+    pub fn name(&self) -> Option<Name> {
         child_opt(self)
     }
 }
@@ -1646,7 +1642,7 @@ impl AstNode for NamedField {
 
 
 impl NamedField {
-    pub fn name_ref(&self) -> Option<NameRef> {
+    pub fn name(&self) -> Option<Name> {
         child_opt(self)
     }
 
@@ -1977,6 +1973,10 @@ impl AstNode for RecordLiteralExpr {
 impl traits::NamedFieldsOwner for RecordLiteralExpr {}
 impl RecordLiteralExpr {
     pub fn named_field_list(&self) -> Option<NamedFieldList> {
+        child_opt(self)
+    }
+
+    pub fn ident(&self) -> Option<IdentExpr> {
         child_opt(self)
     }
 }

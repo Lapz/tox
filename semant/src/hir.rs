@@ -292,6 +292,10 @@ pub enum Expr {
         variant: util::Span<NameId>,
         expr: Option<ExprId>,
     },
+    RecordLiteral {
+        def: util::Span<NameId>,
+        fields: Vec<(util::Span<NameId>, ExprId)>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]

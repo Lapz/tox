@@ -143,8 +143,6 @@ Grammar(
         "ENUM_VARIANT",
         "NAMED_FIELD_DEF_LIST",
         "NAMED_FIELD_DEF",
-        "RECORD_LITERAL_FIELD_LIST",
-        "RECORD_LITERAL_FIELD",
         "RECORD_LITERAL_EXPR",
         "ENUM_VARIANT_LIST",
         "VISIBILITY",
@@ -283,7 +281,7 @@ Grammar(
         ),
         "NamedFieldList": (
             collections: [ ["fields", "NamedField"] ]),
-        "NamedField": (options: ["NameRef", "Expr"]),
+        "NamedField": (options: ["Name", "Expr"]),
         "CallExpr": (
             traits: ["ArgListOwner"],
             options: [ "Expr",["type_args","TypeArgList"] ],
@@ -293,7 +291,7 @@ Grammar(
         ),
         "IdentExpr":(traits: ["NameOwner"]),
         "RecordLiteralExpr": (
-            options: ["NamedFieldList"],
+            options: ["NamedFieldList",["ident","IdentExpr"]],
             traits: ["NamedFieldsOwner"]
         ),
         "EnumExpr":(
@@ -303,7 +301,7 @@ Grammar(
         "IndexExpr": (),
         "ReturnExpr": (options: ["Expr"]),
         "ParenExpr": (options: ["Expr"]),
-        "FieldExpr": (options: ["Expr", "NameRef"]),
+        "FieldExpr": (options: ["Expr", "Name"]),
         "CastExpr": (options: ["Expr", "TypeRef"]),
         "PrefixExpr": (options: ["Expr"]),
         "BinExpr": (),

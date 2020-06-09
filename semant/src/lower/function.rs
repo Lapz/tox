@@ -246,7 +246,30 @@ where
 
                 hir::Expr::Cast { expr, ty }
             }
-            ast::Expr::RecordLiteralExpr(ref _record_lit) => unimplemented!(),
+            ast::Expr::RecordLiteralExpr(ref record_lit) => {
+                let def = util::Span::from_ast(
+                    self.db
+                        .intern_name(record_lit.ident().unwrap().name().unwrap().into()),
+                    &record_lit.ident().unwrap(),
+                );
+
+                let mut fields = Vec::new();
+
+                let fields_iter = record_lit.named_field_list().unwrap().fields();
+
+                for field in fields_iter {
+                    let name = util::Span::from_ast(
+                        self.db.intern_name(field.name().unwrap().into()),
+                        &field.name().unwrap(),
+                    );
+
+                    let expr = self.lower_expr(field.expr().unwrap());
+
+                    fields.push((name, expr));
+                }
+
+                hir::Expr::RecordLiteral { def, fields }
+            }
             ast::Expr::ClosureExpr(ref _closure_expr) => {
                 // let args = closure_expr.a
 

@@ -47,6 +47,12 @@ export fn id<T>(a:T,(x,z):T) -> (T,i32) {
     let f  = A::B(10);
 
     let c = A::B;
+
+    let d = Bza {
+        foo:i32,
+        bar:i32,
+        bat:1 
+    };
     
     let x =10;
 }
