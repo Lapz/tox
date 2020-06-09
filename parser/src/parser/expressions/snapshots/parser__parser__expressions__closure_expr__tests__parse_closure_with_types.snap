@@ -1,0 +1,67 @@
+---
+source: parser/src/parser/expressions/closure_expr.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 83)
+  FN_DEF@[0; 83)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 83)
+      BLOCK@[10; 83)
+        L_CURLY@[10; 11) "{"
+        WHITESPACE@[11; 20) "\n        "
+        LET_STMT@[20; 82)
+          LET_KW@[20; 23) "let"
+          WHITESPACE@[23; 24) " "
+          BIND_PAT@[24; 25)
+            NAME@[24; 25)
+              IDENT@[24; 25) "a"
+          WHITESPACE@[25; 26) " "
+          EQ@[26; 27) "="
+          WHITESPACE@[27; 28) " "
+          CLOSURE_EXPR@[28; 77)
+            PIPE@[28; 29) "|"
+            PARAM@[29; 30)
+              BIND_PAT@[29; 30)
+                NAME@[29; 30)
+                  IDENT@[29; 30) "x"
+            COMMA@[30; 31) ","
+            PARAM@[31; 32)
+              BIND_PAT@[31; 32)
+                NAME@[31; 32)
+                  IDENT@[31; 32) "y"
+            PIPE@[32; 33) "|"
+            WHITESPACE@[33; 34) " "
+            FRETURN@[34; 36) "->"
+            WHITESPACE@[36; 37) " "
+            IDENT_TYPE@[37; 41)
+              IDENT@[37; 40) "i32"
+              WHITESPACE@[40; 41) " "
+            BLOCK_EXPR@[41; 77)
+              BLOCK@[41; 77)
+                L_CURLY@[41; 42) "{"
+                WHITESPACE@[42; 55) "\n            "
+                EXPR_STMT@[55; 65)
+                  RETURN_EXPR@[55; 65)
+                    RETURN_KW@[55; 61) "return"
+                    WHITESPACE@[61; 62) " "
+                    BIN_EXPR@[62; 65)
+                      IDENT_EXPR@[62; 63)
+                        NAME@[62; 63)
+                          IDENT@[62; 63) "x"
+                      PLUS@[63; 64) "+"
+                      IDENT_EXPR@[64; 65)
+                        NAME@[64; 65)
+                          IDENT@[64; 65) "y"
+                SEMI@[65; 66) ";"
+                WHITESPACE@[66; 76) " \n        "
+                R_CURLY@[76; 77) "}"
+          WHITESPACE@[77; 82) "\n    "
+        R_CURLY@[82; 83) "}"
+

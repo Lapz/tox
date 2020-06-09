@@ -117,6 +117,7 @@ Grammar(
         "PREFIX_EXPR",
         "TUPLE_EXPR",
         "IDENT_EXPR",
+        "ENUM_EXPR",
 
         //stms
         "IF_EXPR",
@@ -216,11 +217,13 @@ Grammar(
         "EnumDef":(
              traits: [
                 "NameOwner",
+                "VisibilityOwner",
+                "TypeParamsOwner"
             ],
             options: [["variant_list","EnumVariantList"]]
         ),
         "EnumVariantList": ( collections: [["variants", "EnumVariant"]] ),
-        "EnumVariant": ( traits: ["NameOwner"], options: ["Expr"] ),
+        "EnumVariant": ( traits: ["NameOwner"], options: ["TypeRef"] ),
 
         "ArrayType": ( options: ["TypeRef", "Expr"] ),
         "ParenType": (traits:["TypesOwner"],options: ["TypeRef"],),
@@ -293,6 +296,10 @@ Grammar(
             options: ["NamedFieldList"],
             traits: ["NamedFieldsOwner"]
         ),
+        "EnumExpr":(
+            options: ["Expr"],
+            collections: [["segments","IdentExpr"]]
+        ),
         "IndexExpr": (),
         "ReturnExpr": (options: ["Expr"]),
         "ParenExpr": (options: ["Expr"]),
@@ -330,6 +337,7 @@ Grammar(
                 "BinExpr",
                 "Literal",
                 "TupleExpr",
+                "EnumExpr"
             ],
         ),
         "Visibility": (),

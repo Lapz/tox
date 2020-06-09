@@ -1,13 +1,13 @@
 use crate::{
     hir::{self, Class, Field, Function, FunctionAstMap},
-    util, HirDatabase, TextRange,
+    impl_collector, util, HirDatabase, TextRange,
 };
-
 use std::sync::Arc;
 use syntax::{
     ast, AstNode, FnDefOwner, NameOwner, NamedFieldsOwner, TypeAscriptionOwner, TypeParamsOwner,
     TypesOwner, VisibilityOwner,
 };
+
 #[derive(Debug)]
 pub(crate) struct ClassDataCollector<DB> {
     db: DB,
@@ -17,6 +17,8 @@ pub(crate) struct ClassDataCollector<DB> {
     fields: Vec<util::Span<Field>>,
     ast_map: FunctionAstMap,
 }
+
+impl_collector!(ClassDataCollector);
 
 impl<'a, DB> ClassDataCollector<&'a DB>
 where
@@ -38,93 +40,15 @@ where
         }
     }
 
-    pub(crate) fn lower_type(&mut self, ty: ast::TypeRef) -> util::Span<hir::TypeId> {
-        let range = ty.syntax().text_range();
-        let id = match ty {
-            ast::TypeRef::ParenType(paren_ty) => {
-                let mut types = Vec::new();
-
-                for c in paren_ty.types() {
-                    types.push(self.lower_type(c))
-                }
-
-                self.db.intern_type(hir::Type::ParenType(types))
-            }
-            ast::TypeRef::ArrayType(array_ty) => {
-                let ty = self.lower_type(array_ty.type_ref().unwrap());
-
-                self.db.intern_type(hir::Type::ArrayType { ty, size: None })
-            }
-            ast::TypeRef::IdentType(ident_ty) => {
-                if let Some(type_args) = ident_ty.type_args() {
-                    let type_args = type_args
-                        .types()
-                        .map(|ty| self.lower_type(ty))
-                        .collect::<Vec<_>>();
-
-                    let name: hir::Name = ident_ty.into();
-
-                    self.db.intern_type(hir::Type::Poly {
-                        name: self.db.intern_name(name),
-                        type_args,
-                    })
-                } else {
-                    let name: hir::Name = ident_ty.into();
-
-                    let name_id = self.db.intern_name(name);
-
-                    self.db.intern_type(hir::Type::Ident(name_id))
-                }
-            }
-
-            ast::TypeRef::FnType(fn_ty) => {
-                let mut params = Vec::new();
-
-                for param in fn_ty.types() {
-                    params.push(self.lower_type(param))
-                }
-
-                let ret = fn_ty
-                    .ret_type()
-                    .and_then(|ret| ret.type_ref().map(|ty| self.lower_type(ty)));
-
-                self.db.intern_type(hir::Type::FnType { params, ret })
-            }
-        };
-
-        util::Span::from_range(id, range)
-    }
-
-    pub(crate) fn lower_type_param(&mut self, type_param: ast::TypeParam) {
-        let name = self.db.intern_name(type_param.name().unwrap().into());
-
-        self.add_type_param(
-            &type_param,
-            hir::TypeParam {
-                name: util::Span::from_ast(name, &type_param),
-            },
-        );
-    }
-
-    pub(crate) fn lower_field(&mut self, field: ast::NamedFieldDef) -> Field {
+    pub(crate) fn lower_field(&mut self, field: ast::NamedFieldDef) {
         let property = util::Span::from_ast(
             self.db.intern_name(field.name().unwrap().into()),
             &field.name().unwrap(),
         );
 
         let ty = self.lower_type(field.ascribed_type().unwrap());
-        Field { property, ty }
-    }
-
-    pub fn add_type_param(&mut self, ast_node: &ast::TypeParam, type_param: hir::TypeParam) {
-        let current = self.type_param_count;
-
-        self.type_param_count += 1;
-
-        let id = hir::TypeParamId(current);
-
-        self.ast_map.insert_type_param(id, type_param);
-        self.type_params.push(util::Span::from_ast(id, ast_node));
+        self.fields
+            .push(util::Span::from_ast(Field { property, ty }, &field));
     }
 
     pub fn lower_method(&mut self, lowered_fn: Arc<Function>) {

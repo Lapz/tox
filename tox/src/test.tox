@@ -29,8 +29,24 @@ class Bza {
     bar:i32;
 }
 
+
+enum Foo { 
+    A(i32),
+    B
+} 
+
+enum A {
+    A,
+    B
+}
+
+
 export fn id<T>(a:T,(x,z):T) -> (T,i32) {
     let (y,(x,a)) = 10;
+
+    let f  = A::B(10);
+
+    let c = A::B;
     
     let x =10;
 }

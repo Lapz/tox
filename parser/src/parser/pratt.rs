@@ -55,6 +55,7 @@ pub enum RuleToken {
     SlashEq,
     AmpAmp,
     PipePipe,
+    ColonColon,
 }
 
 impl Precedence {
@@ -81,6 +82,7 @@ impl Rule for SyntaxKind {
                 RuleToken::Literal
             }
             IDENT => RuleToken::Ident,
+            T![::] => RuleToken::ColonColon,
             T![=] => RuleToken::Eq,
             T![.] => RuleToken::Dot,
             T![+=] => RuleToken::PlusEq,

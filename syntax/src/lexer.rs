@@ -145,8 +145,7 @@ impl<'a> Lexer<'a> {
                 ':' => {
                     if self.peek(|ch| ch == ':') {
                         self.advance();
-                        let span = spans(SyntaxKind::COLON_COLON, start, start.span(':'));
-                        span
+                        spans(SyntaxKind::COLON_COLON, start, start.span(':'))
                     } else {
                         span(SyntaxKind::COLON, start)
                     }
@@ -299,14 +298,10 @@ impl<'a> Lexer<'a> {
 
     fn string_literal(&mut self, start: Position) -> Span<Token> {
         while let Some((next, ch)) = self.advance() {
-            match ch {
-                '"' => {
-                    let end = next.shift(ch);
+            if ch == '"' {
+                let end = next.shift(ch);
 
-                    return spans(SyntaxKind::STRING, start, end);
-                }
-
-                _ => (),
+                return spans(SyntaxKind::STRING, start, end);
             }
         }
 

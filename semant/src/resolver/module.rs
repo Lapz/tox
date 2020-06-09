@@ -82,29 +82,25 @@ pub fn resolve_modules_query(
                 reporter.error(format!("Unresolved module `{}`", name), "", span);
 
                 Err(reporter.finish())
+            } else if dir.exists() && path_buf.exists() {
+                reporter.error(
+                    format!("Conflicting module `{}`", name),
+                    format!(
+                        "{} exists and so does {}. You can only have the file or the dir not both",
+                        dir.display(),
+                        path_buf.display(),
+                    ),
+                    span,
+                );
+
+                Err(reporter.finish())
+            } else if dir.exists() {
+                Ok(db.intern_file(dir))
             } else {
-                if dir.exists() && path_buf.exists() {
-                    reporter.error(
-                        format!("Conflicting module `{}`", name),
-                        format!(
-                            "{} exists and so does {}. You can only have the file or the dir not both",
-                            dir.display(),
-                            path_buf.display(),
-                        ),
-                        span
-                    );
-
-                    Err(reporter.finish())
-                } else {
-                    if dir.exists() {
-                        Ok(db.intern_file(dir))
-                    } else {
-                        Ok(db.intern_file(path_buf))
-                    }
-                }
-
-                // add a path from file -> module.file_id
+                Ok(db.intern_file(path_buf))
             }
+
+            // add a path from file -> module.file_id
         }
     }
 }

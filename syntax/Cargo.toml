@@ -12,5 +12,5 @@ itertools="*"
 errors = {path="../errors"}
 
 [dev-dependencies]
-insta = "0.8.2"
+insta = "0.16.0"
 tempfile = "3.1.0"

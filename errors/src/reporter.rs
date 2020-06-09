@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Eq)]
 pub struct Reporter {
     file: FileId,
     diagnostics: Rc<RefCell<Vec<Diagnostic<FileId>>>>,
@@ -73,6 +73,12 @@ impl Hash for Reporter {
         self.file.hash(state);
 
         self.diagnostics.borrow().hash(state);
+    }
+}
+
+impl PartialEq for Reporter {
+    fn eq(&self, other: &Self) -> bool {
+        self.file == other.file && self.diagnostics == other.diagnostics
     }
 }
 

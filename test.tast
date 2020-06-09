@@ -1,4 +1,4 @@
-SOURCE_FILE@[0; 536)
+SOURCE_FILE@[0; 522)
   IMPORT_DEF@[0; 27)
     IMPORT_KW@[0; 6) "import"
     WHITESPACE@[6; 7) " "
@@ -90,155 +90,161 @@ SOURCE_FILE@[0; 536)
   WHITESPACE@[122; 124) "\n\n"
   COMMENT@[124; 366) "/*export fn main()  { ..."
   WHITESPACE@[366; 370) "\n\n\n\n"
-  CLASS_DEF@[370; 447)
+  CLASS_DEF@[370; 409)
     CLASS_KW@[370; 375) "class"
     WHITESPACE@[375; 376) " "
     NAME@[376; 379)
-      IDENT@[376; 379) "Foo"
+      IDENT@[376; 379) "Bza"
     WHITESPACE@[379; 380) " "
     L_CURLY@[380; 381) "{"
     WHITESPACE@[381; 386) "\n    "
-    FN_DEF@[386; 423)
-      FN_KW@[386; 388) "fn"
-      WHITESPACE@[388; 389) " "
-      NAME@[389; 392)
-        IDENT@[389; 392) "new"
-      PARAM_LIST@[392; 394)
-        L_PAREN@[392; 393) "("
-        R_PAREN@[393; 394) ")"
-      WHITESPACE@[394; 395) " "
-      RET_TYPE@[395; 402)
-        FRETURN@[395; 397) "->"
-        WHITESPACE@[397; 398) " "
-        IDENT_TYPE@[398; 402)
-          IDENT@[398; 401) "Foo"
-          WHITESPACE@[401; 402) " "
-      BLOCK_EXPR@[402; 423)
-        BLOCK@[402; 423)
-          L_CURLY@[402; 403) "{"
-          WHITESPACE@[403; 412) "\n        "
-          EXPR_STMT@[412; 422)
-            CALL_EXPR@[412; 417)
-              IDENT_EXPR@[412; 415)
-                NAME@[412; 415)
-                  IDENT@[412; 415) "bar"
-              ARG_LIST@[415; 417)
-                L_PAREN@[415; 416) "("
-                R_PAREN@[416; 417) ")"
-            WHITESPACE@[417; 422) "\n    "
-          R_CURLY@[422; 423) "}"
-    WHITESPACE@[423; 428) "\n    "
-    FN_DEF@[428; 445)
-      FN_KW@[428; 430) "fn"
-      WHITESPACE@[430; 431) " "
-      NAME@[431; 434)
-        IDENT@[431; 434) "bar"
-      PARAM_LIST@[434; 436)
-        L_PAREN@[434; 435) "("
-        R_PAREN@[435; 436) ")"
-      WHITESPACE@[436; 437) " "
-      BLOCK_EXPR@[437; 445)
-        BLOCK@[437; 445)
-          L_CURLY@[437; 438) "{"
-          WHITESPACE@[438; 444) "\n\n    "
-          R_CURLY@[444; 445) "}"
-    WHITESPACE@[445; 446) "\n"
-    R_CURLY@[446; 447) "}"
-  WHITESPACE@[447; 449) "\n\n"
-  FN_DEF@[449; 536)
-    VISIBILITY@[449; 455)
-      EXPORT_KW@[449; 455) "export"
-    WHITESPACE@[455; 456) " "
-    FN_KW@[456; 458) "fn"
-    WHITESPACE@[458; 459) " "
-    NAME@[459; 461)
-      IDENT@[459; 461) "id"
-    TYPE_PARAM_LIST@[461; 464)
-      L_ANGLE@[461; 462) "<"
-      TYPE_PARAM@[462; 463)
-        NAME@[462; 463)
-          IDENT@[462; 463) "T"
-      R_ANGLE@[463; 464) ">"
-    PARAM_LIST@[464; 477)
-      L_PAREN@[464; 465) "("
-      PARAM@[465; 468)
-        BIND_PAT@[465; 466)
-          NAME@[465; 466)
-            IDENT@[465; 466) "a"
-        COLON@[466; 467) ":"
-        IDENT_TYPE@[467; 468)
-          IDENT@[467; 468) "T"
-      COMMA@[468; 469) ","
-      PARAM@[469; 476)
-        TUPLE_PAT@[469; 474)
-          L_PAREN@[469; 470) "("
-          BIND_PAT@[470; 471)
-            NAME@[470; 471)
-              IDENT@[470; 471) "x"
-          COMMA@[471; 472) ","
-          BIND_PAT@[472; 473)
-            NAME@[472; 473)
-              IDENT@[472; 473) "z"
-          R_PAREN@[473; 474) ")"
-        COLON@[474; 475) ":"
-        IDENT_TYPE@[475; 476)
-          IDENT@[475; 476) "T"
-      R_PAREN@[476; 477) ")"
-    WHITESPACE@[477; 478) " "
-    RET_TYPE@[478; 488)
-      FRETURN@[478; 480) "->"
-      WHITESPACE@[480; 481) " "
-      PAREN_TYPE@[481; 488)
-        L_PAREN@[481; 482) "("
-        IDENT_TYPE@[482; 483)
-          IDENT@[482; 483) "T"
-        COMMA@[483; 484) ","
-        IDENT_TYPE@[484; 487)
-          IDENT@[484; 487) "i32"
-        R_PAREN@[487; 488) ")"
-    WHITESPACE@[488; 489) " "
-    BLOCK_EXPR@[489; 536)
-      BLOCK@[489; 536)
-        L_CURLY@[489; 490) "{"
-        WHITESPACE@[490; 495) "\n    "
-        LET_STMT@[495; 513)
-          LET_KW@[495; 498) "let"
-          WHITESPACE@[498; 499) " "
-          TUPLE_PAT@[499; 508)
-            L_PAREN@[499; 500) "("
-            BIND_PAT@[500; 501)
-              NAME@[500; 501)
-                IDENT@[500; 501) "y"
-            COMMA@[501; 502) ","
-            TUPLE_PAT@[502; 507)
-              L_PAREN@[502; 503) "("
-              BIND_PAT@[503; 504)
-                NAME@[503; 504)
-                  IDENT@[503; 504) "x"
-              COMMA@[504; 505) ","
-              BIND_PAT@[505; 506)
-                NAME@[505; 506)
-                  IDENT@[505; 506) "a"
-              R_PAREN@[506; 507) ")"
-            R_PAREN@[507; 508) ")"
-          WHITESPACE@[508; 509) " "
-          EQ@[509; 510) "="
-          WHITESPACE@[510; 511) " "
-          LITERAL@[511; 513)
-            INT_NUMBER@[511; 513) "10"
-        SEMI@[513; 514) ";"
-        WHITESPACE@[514; 524) "\n    \n    "
-        LET_STMT@[524; 533)
-          LET_KW@[524; 527) "let"
-          WHITESPACE@[527; 528) " "
-          BIND_PAT@[528; 529)
-            NAME@[528; 529)
-              IDENT@[528; 529) "x"
-          WHITESPACE@[529; 530) " "
-          EQ@[530; 531) "="
-          LITERAL@[531; 533)
-            INT_NUMBER@[531; 533) "10"
-        SEMI@[533; 534) ";"
-        WHITESPACE@[534; 535) "\n"
-        R_CURLY@[535; 536) "}"
+    NAMED_FIELD_DEF@[386; 394)
+      NAME@[386; 389)
+        IDENT@[386; 389) "foo"
+      COLON@[389; 390) ":"
+      IDENT_TYPE@[390; 393)
+        IDENT@[390; 393) "i32"
+      SEMI@[393; 394) ";"
+    WHITESPACE@[394; 399) "\n    "
+    NAMED_FIELD_DEF@[399; 407)
+      NAME@[399; 402)
+        IDENT@[399; 402) "bar"
+      COLON@[402; 403) ":"
+      IDENT_TYPE@[403; 406)
+        IDENT@[403; 406) "i32"
+      SEMI@[406; 407) ";"
+    WHITESPACE@[407; 408) "\n"
+    R_CURLY@[408; 409) "}"
+  WHITESPACE@[409; 411) "\n\n"
+  FN_DEF@[411; 522)
+    VISIBILITY@[411; 417)
+      EXPORT_KW@[411; 417) "export"
+    WHITESPACE@[417; 418) " "
+    FN_KW@[418; 420) "fn"
+    WHITESPACE@[420; 421) " "
+    NAME@[421; 423)
+      IDENT@[421; 423) "id"
+    TYPE_PARAM_LIST@[423; 426)
+      L_ANGLE@[423; 424) "<"
+      TYPE_PARAM@[424; 425)
+        NAME@[424; 425)
+          IDENT@[424; 425) "T"
+      R_ANGLE@[425; 426) ">"
+    PARAM_LIST@[426; 439)
+      L_PAREN@[426; 427) "("
+      PARAM@[427; 430)
+        BIND_PAT@[427; 428)
+          NAME@[427; 428)
+            IDENT@[427; 428) "a"
+        COLON@[428; 429) ":"
+        IDENT_TYPE@[429; 430)
+          IDENT@[429; 430) "T"
+      COMMA@[430; 431) ","
+      PARAM@[431; 438)
+        TUPLE_PAT@[431; 436)
+          L_PAREN@[431; 432) "("
+          BIND_PAT@[432; 433)
+            NAME@[432; 433)
+              IDENT@[432; 433) "x"
+          COMMA@[433; 434) ","
+          BIND_PAT@[434; 435)
+            NAME@[434; 435)
+              IDENT@[434; 435) "z"
+          R_PAREN@[435; 436) ")"
+        COLON@[436; 437) ":"
+        IDENT_TYPE@[437; 438)
+          IDENT@[437; 438) "T"
+      R_PAREN@[438; 439) ")"
+    WHITESPACE@[439; 440) " "
+    RET_TYPE@[440; 450)
+      FRETURN@[440; 442) "->"
+      WHITESPACE@[442; 443) " "
+      PAREN_TYPE@[443; 450)
+        L_PAREN@[443; 444) "("
+        IDENT_TYPE@[444; 445)
+          IDENT@[444; 445) "T"
+        COMMA@[445; 446) ","
+        IDENT_TYPE@[446; 449)
+          IDENT@[446; 449) "i32"
+        R_PAREN@[449; 450) ")"
+    WHITESPACE@[450; 451) " "
+    BLOCK_EXPR@[451; 522)
+      BLOCK@[451; 522)
+        L_CURLY@[451; 452) "{"
+        WHITESPACE@[452; 457) "\n    "
+        LET_STMT@[457; 475)
+          LET_KW@[457; 460) "let"
+          WHITESPACE@[460; 461) " "
+          TUPLE_PAT@[461; 470)
+            L_PAREN@[461; 462) "("
+            BIND_PAT@[462; 463)
+              NAME@[462; 463)
+                IDENT@[462; 463) "y"
+            COMMA@[463; 464) ","
+            TUPLE_PAT@[464; 469)
+              L_PAREN@[464; 465) "("
+              BIND_PAT@[465; 466)
+                NAME@[465; 466)
+                  IDENT@[465; 466) "x"
+              COMMA@[466; 467) ","
+              BIND_PAT@[467; 468)
+                NAME@[467; 468)
+                  IDENT@[467; 468) "a"
+              R_PAREN@[468; 469) ")"
+            R_PAREN@[469; 470) ")"
+          WHITESPACE@[470; 471) " "
+          EQ@[471; 472) "="
+          WHITESPACE@[472; 473) " "
+          LITERAL@[473; 475)
+            INT_NUMBER@[473; 475) "10"
+        SEMI@[475; 476) ";"
+        WHITESPACE@[476; 482) "\n\n    "
+        LET_STMT@[482; 499)
+          LET_KW@[482; 485) "let"
+          WHITESPACE@[485; 486) " "
+          BIND_PAT@[486; 487)
+            NAME@[486; 487)
+              IDENT@[486; 487) "f"
+          WHITESPACE@[487; 489) "  "
+          EQ@[489; 490) "="
+          WHITESPACE@[490; 491) " "
+          ENUM_EXPR@[491; 499)
+            IDENT_EXPR@[491; 494)
+              NAME@[491; 492)
+                IDENT@[491; 492) "A"
+              COLON_COLON@[492; 494) "::"
+            IDENT_EXPR@[494; 495)
+              NAME@[494; 495)
+                IDENT@[494; 495) "B"
+            PAREN_EXPR@[495; 499)
+              L_PAREN@[495; 496) "("
+              LITERAL@[496; 498)
+                INT_NUMBER@[496; 498) "10"
+              R_PAREN@[498; 499) ")"
+        SEMI@[499; 500) ";"
+        WHITESPACE@[500; 510) "\n    \n    "
+        LET_STMT@[510; 519)
+          LET_KW@[510; 513) "let"
+          WHITESPACE@[513; 514) " "
+          BIND_PAT@[514; 515)
+            NAME@[514; 515)
+              IDENT@[514; 515) "x"
+          WHITESPACE@[515; 516) " "
+          EQ@[516; 517) "="
+          LITERAL@[517; 519)
+            INT_NUMBER@[517; 519) "10"
+        SEMI@[519; 520) ";"
+        WHITESPACE@[520; 521) "\n"
+        R_CURLY@[521; 522) "}"
 
+Some(Name { syntax: NAME@[491; 492) })
+Some(Name { syntax: NAME@[494; 495) })
+Class
+Function
+Function
+Type
+Alias
+Type
+Class
+Type
+Function

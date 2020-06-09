@@ -45,7 +45,7 @@ pub enum State {
 pub enum ItemKind {
     Class,
     Function,
-    // _Enum,
+    Enum,
 }
 /// Information at a local variable declared in a block
 #[derive(Copy, Debug, Clone, PartialEq, Eq)]
@@ -143,7 +143,7 @@ where
                 ItemKind::Function => {
                     self.function_data.insert(name_id.item, FunctionData::new());
                 }
-                ItemKind::Class => {} // ItemKind::Enum => {}
+                ItemKind::Class | ItemKind::Enum => {}
             }
         }
     }

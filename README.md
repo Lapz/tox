@@ -21,9 +21,14 @@ It's built using salsa and rowan and codespan. The design is inspired by rust-an
 - [x] Error on duplicate pattern bindings in the same statement
 - [x] Warn on unused pattern variable
 - [x] Lower structural and struct methods
-- [ ] Lower enums
+- [x] Lower enums
+- [x] Resolve enums
+- [x] Resolve external imports
+- [ ] Lower field access
+- [ ] Resolve class field access
+- [ ] Lower class literal
+- [ ] Resolve class literal
 - [ ] Infer types
-- [ ] Resolve external imports
 
 ## Build
 

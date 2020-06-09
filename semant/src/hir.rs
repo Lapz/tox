@@ -16,6 +16,7 @@ pub struct SourceFile {
     pub(crate) functions: Vec<Arc<Function>>,
     pub(crate) type_alias: Vec<Arc<TypeAlias>>,
     pub(crate) classes: Vec<Arc<Class>>,
+    pub(crate) enums: Vec<Arc<Enum>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -71,10 +72,27 @@ pub struct Class {
     pub(crate) methods: Vec<Arc<Function>>,
     pub(crate) span: TextRange,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Enum {
+    pub(crate) exported: bool,
+    pub(crate) name: util::Span<NameId>,
+    pub(crate) ast_map: FunctionAstMap,
+    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
+    pub(crate) variants: Vec<util::Span<EnumVariant>>,
+    pub(crate) span: TextRange,
+}
+
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct Field {
     pub(crate) property: util::Span<NameId>,
     pub(crate) ty: util::Span<TypeId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct EnumVariant {
+    pub(crate) ty: Option<util::Span<TypeId>>,
+    pub(crate) name: NameId,
 }
 /// A symbol is composed of a name and the file it belongs to
 /// Symbols with the same name but from different files are not the sames
@@ -268,6 +286,11 @@ pub enum Expr {
     Match {
         expr: ExprId,
         arms: Vec<MatchArm>,
+    },
+    Enum {
+        def: util::Span<NameId>,
+        variant: util::Span<NameId>,
+        expr: Option<ExprId>,
     },
 }
 

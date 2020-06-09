@@ -5,11 +5,12 @@ members=[
     "syntax",
     "semant",
     "tools",
+    "tox-wasm",
     "tox",
 ]
 default-members=["tox"]
-[profile.dev.overrides."*"]
-opt-level = 2
+[profile.dev]
+opt-level = 0
 overflow-checks = true
 debug-assertions = true
 panic = "abort"

@@ -1,6 +1,6 @@
 #[macro_use]
 mod macros;
-
+#[rustfmt::skip]
 pub mod ast;
 mod lexer;
 

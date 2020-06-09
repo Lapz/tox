@@ -8,4 +8,4 @@ pub use ctx::Ctx;
 pub(crate) use infer::infer_query;
 pub(crate) use stacked_map::StackedMap;
 
-pub(crate) use ty::{Type, TypeCon};
+pub(crate) use ty::{Type, TypeCon, Variant};

@@ -1,6 +1,7 @@
 mod alias;
 mod class;
 mod data;
+mod enums;
 mod function;
 mod imports;
 mod module;

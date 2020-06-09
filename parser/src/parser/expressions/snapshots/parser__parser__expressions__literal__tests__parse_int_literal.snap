@@ -1,0 +1,23 @@
+---
+source: parser/src/parser/expressions/literal.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 14)
+  FN_DEF@[0; 14)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 14)
+      BLOCK@[10; 14)
+        L_CURLY@[10; 11) "{"
+        EXPR_STMT@[11; 12)
+          LITERAL@[11; 12)
+            INT_NUMBER@[11; 12) "1"
+        SEMI@[12; 13) ";"
+        R_CURLY@[13; 14) "}"
+

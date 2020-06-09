@@ -28,7 +28,7 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          components: rustfmt, rust-src
+          components: rustfmt, rust-src, clippy
 
       - name: Cache cargo registry
         uses: actions/cache@v1
@@ -52,11 +52,18 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
+
       - name: Format
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
+
+      # - name: Clippy
+      #   uses: actions-rs/clippy-check@v1
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     args: --all-features
 
       - name: Test
         uses: actions-rs/cargo@v1

@@ -14,14 +14,8 @@ parser={path="../parser",version="*"}
 semant = {path="../semant"}
 reporting = {version="^0.9.0",package="codespan-reporting"}
 [dev-dependencies]
-insta = "0.8.2"
+insta = "0.16.0"
 serde ="1.0.106"
 ron = "0.5.1"
 tempfile = "3.1.0"
 walkdir = "2"
-
-[target.x86_64-unknown-linux-gnu]                                                                   
-rustflags = [                                                                                       
-    "-C", "link-arg=-fuse-ld=lld",                                                    
-]
-

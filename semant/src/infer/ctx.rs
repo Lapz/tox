@@ -3,7 +3,7 @@ use crate::resolver::TypeKind;
 use crate::{
     db::HirDatabase,
     hir::{Name, NameId},
-    infer::ty::{EnumVariant, Type, TypeCon, TypeVar},
+    infer::ty::{Type, TypeCon, TypeVar, Variant},
 };
 use std::collections::HashMap;
 
@@ -36,23 +36,29 @@ impl Ctx {
 
         let result_name = db.intern_name(Name::new("Result"));
         kind.insert(db.intern_name(Name::new("Result")), TypeKind::Enum);
+
+        let mut result_variants = HashMap::new();
+
+        result_variants.insert(
+            db.intern_name(Name::new("Ok")),
+            Variant {
+                tag: 0,
+                ty: Some(Type::Var(TypeVar::from(0))), // Ok(T)
+            },
+        );
+
+        result_variants.insert(
+            db.intern_name(Name::new("Err")),
+            Variant {
+                tag: 1,
+                ty: Some(Type::Var(TypeVar::from(1))), // Err(U)
+            },
+        );
         types.insert(
             result_name,
             Type::Poly(
                 vec![TypeVar::from(0), TypeVar::from(1)],
-                Box::new(Type::Enum(
-                    result_name,
-                    vec![
-                        EnumVariant {
-                            tag: 0,
-                            inner: Some(Type::Var(TypeVar::from(0))), // Ok(T)
-                        },
-                        EnumVariant {
-                            tag: 1,
-                            inner: Some(Type::Var(TypeVar::from(1))), // Err(U)
-                        },
-                    ],
-                )),
+                Box::new(Type::Enum(result_variants)),
             ),
         );
 

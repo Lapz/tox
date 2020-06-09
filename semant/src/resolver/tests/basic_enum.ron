@@ -1,0 +1,8 @@
+DirectoryStructure (
+    contents: [
+        (
+            name:"main.tox",
+            text: "enum Foo {A(i32),B } enum Bar {Foo(Foo)}"
+        )
+    ]
+)

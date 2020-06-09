@@ -1,11 +1,11 @@
 use reporting::files;
+#[cfg(not(target_arch = "wasm32"))]
 use std::{
     fs,
     io::{self, Read},
-    ops::Range,
-    path::PathBuf,
-    sync::Arc,
 };
+
+use std::{ops::Range, path::PathBuf, sync::Arc};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FileId(salsa::InternId);
 
@@ -32,6 +32,8 @@ impl salsa::InternKey for FileId {
 pub trait FileDatabase {
     #[salsa::interned]
     fn intern_file(&self, path: PathBuf) -> FileId;
+    #[salsa::interned]
+    fn intern_content(&self, contents: String) -> FileId;
     fn source(&self, file: FileId) -> Arc<String>;
     fn name(&self, file: FileId) -> Arc<String>;
     fn file(&self, file: FileId) -> Arc<File>;
@@ -39,9 +41,16 @@ pub trait FileDatabase {
     fn line_range(&self, file: FileId, line_index: usize) -> Option<Range<usize>>;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn source(db: &impl FileDatabase, file_id: FileId) -> Arc<String> {
     let contents = read_file(&db.lookup_intern_file(file_id))
         .expect("Couldn't read file. TODO handle deletion of file");
+    Arc::new(contents)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn source(db: &impl FileDatabase, file_id: FileId) -> Arc<String> {
+    let contents = db.lookup_intern_content(file_id);
     Arc::new(contents)
 }
 
@@ -78,6 +87,7 @@ fn file(db: &impl FileDatabase, file_id: FileId) -> Arc<File> {
     })
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn read_file(name: &PathBuf) -> io::Result<String> {
     let mut file = fs::File::open(name)?;
 

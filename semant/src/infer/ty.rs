@@ -32,7 +32,7 @@ pub enum Type {
     Poly(Vec<TypeVar>, Box<Type>),
     Var(TypeVar),
     Con(TypeCon),
-    Enum(NameId, Vec<EnumVariant>),
+    Enum(HashMap<NameId, Variant>),
     Class {
         name: NameId,
         fields: HashMap<NameId, Type>,
@@ -49,9 +49,9 @@ pub enum Type {
 /// ```
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EnumVariant {
-    pub tag: u32,
-    pub inner: Option<Type>,
+pub struct Variant {
+    pub tag: usize,
+    pub ty: Option<Type>,
 }
 
 impl From<u32> for TypeVar {

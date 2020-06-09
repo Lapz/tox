@@ -50,6 +50,8 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
     fn lower_type_alias(&self, alias: hir::TypeAliasId) -> Arc<hir::TypeAlias>;
     #[salsa::invoke(crate::lower::lower_class_query)]
     fn lower_class(&self, class: hir::ClassId) -> Arc<hir::Class>;
+    #[salsa::invoke(crate::lower::lower_enum_query)]
+    fn lower_enum(&self, class: hir::EnumId) -> Arc<hir::Enum>;
     #[salsa::invoke(crate::lower::lower_query)]
     fn lower(&self, file: FileId) -> WithError<Arc<hir::SourceFile>>;
     #[salsa::invoke(crate::resolver::resolve_exports_query)]

@@ -1,5 +1,5 @@
 use crate::db::HirDatabase;
-use crate::{hir, util, TextRange};
+use crate::{hir, impl_collector, util, TextRange};
 
 use std::sync::Arc;
 
@@ -21,6 +21,8 @@ pub(crate) struct FunctionDataCollector<DB> {
     params: Vec<util::Span<hir::ParamId>>, // expressions: HashMap<hir::ExprId, hir::Expr>,
     type_params: Vec<util::Span<hir::TypeParamId>>,
 }
+
+impl_collector!(FunctionDataCollector);
 
 impl<'a, DB> FunctionDataCollector<&'a DB>
 where
@@ -118,18 +120,6 @@ where
         id
     }
 
-    pub fn add_type_param(&mut self, ast_node: &ast::TypeParam, type_param: hir::TypeParam) {
-        let current = self.type_param_count;
-
-        self.type_param_count += 1;
-
-        let id = hir::TypeParamId(current);
-
-        self.ast_map.insert_type_param(id, type_param);
-
-        self.type_params.push(util::Span::from_ast(id, ast_node))
-    }
-
     pub(crate) fn lower_pattern(&mut self, pat: ast::Pat) -> util::Span<hir::PatId> {
         let pattern = match &pat {
             ast::Pat::BindPat(binding) => {
@@ -164,59 +154,6 @@ where
         let ty = self.lower_type(param.ascribed_type().unwrap());
 
         self.add_param(&param, hir::Param { pat, ty });
-    }
-
-    pub(crate) fn lower_type_param(&mut self, type_param: ast::TypeParam) {
-        let name = self.db.intern_name(type_param.name().unwrap().into());
-
-        self.add_type_param(
-            &type_param,
-            hir::TypeParam {
-                name: util::Span::from_ast(name, &type_param),
-            },
-        );
-    }
-
-    pub(crate) fn lower_type(&mut self, ty: ast::TypeRef) -> util::Span<hir::TypeId> {
-        let range = ty.syntax().text_range();
-        let id = match ty {
-            ast::TypeRef::ParenType(paren_ty) => {
-                let mut types = Vec::new();
-
-                for c in paren_ty.types() {
-                    types.push(self.lower_type(c))
-                }
-
-                self.db.intern_type(hir::Type::ParenType(types))
-            }
-            ast::TypeRef::ArrayType(array_ty) => {
-                let ty = self.lower_type(array_ty.type_ref().unwrap());
-
-                self.db.intern_type(hir::Type::ArrayType { ty, size: None })
-            }
-            ast::TypeRef::IdentType(ident_ty) => {
-                let name: hir::Name = ident_ty.into();
-
-                self.db
-                    .intern_type(hir::Type::Ident(self.db.intern_name(name)))
-            }
-
-            ast::TypeRef::FnType(fn_ty) => {
-                let mut params = Vec::new();
-
-                for param in fn_ty.types() {
-                    params.push(self.lower_type(param))
-                }
-
-                let ret = fn_ty
-                    .ret_type()
-                    .and_then(|ret| ret.type_ref().map(|ty| self.lower_type(ty)));
-
-                self.db.intern_type(hir::Type::FnType { params, ret })
-            }
-        };
-
-        util::Span::from_range(id, range)
     }
 
     pub fn lower_stmt(&mut self, node: ast::Stmt) -> hir::StmtId {
@@ -435,6 +372,33 @@ where
                     .collect();
 
                 hir::Expr::Tuple(exprs)
+            }
+
+            ast::Expr::EnumExpr(ref enum_expr) => {
+                let def = enum_expr.segments().nth(0).unwrap();
+                let variant = enum_expr.segments().nth(1).unwrap();
+
+                let def = util::Span::from_ast(
+                    self.db.intern_name(def.name().unwrap().into()),
+                    &def.name().unwrap(),
+                );
+
+                let variant = util::Span::from_ast(
+                    self.db.intern_name(variant.name().unwrap().into()),
+                    &variant.name().unwrap(),
+                );
+
+                for name in enum_expr.segments() {
+                    println!("{:?}", name.name());
+                }
+
+                let expr = if let Some(expr) = enum_expr.expr() {
+                    Some(self.lower_expr(expr))
+                } else {
+                    None
+                };
+
+                hir::Expr::Enum { def, variant, expr }
             }
         };
 

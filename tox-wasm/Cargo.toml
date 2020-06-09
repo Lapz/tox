@@ -1,0 +1,21 @@
+[package]
+name = "tox-wasm"
+version = "0.1.0"
+authors = ["Lenard Pratt <striderman34@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+salsa ="^0.14.1"
+syntax={path="../syntax",version="*"}
+errors= {path="../errors",version="*"}
+parser={path="../parser",version="*"}
+semant = {path="../semant"}
+reporting = {version="^0.9.0",package="codespan-reporting"}
+wasm-bindgen="*"
+console_error_panic_hook = "0.1.6"
+[lib]
+crate-type = ["cdylib"]
+
+

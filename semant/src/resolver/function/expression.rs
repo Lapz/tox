@@ -120,6 +120,42 @@ where
                     self.resolve_expression(fn_name, &arm.expr, ast_map)?;
                 }
             }
+            Expr::Enum { def, variant, expr } => {
+                if let Some(ty) = self.ctx.get_type(&def.item) {
+                    match ty {
+                        crate::infer::Type::Enum(variants) => {
+                            if variants.get(&variant.item).is_none() {
+                                let msg = format!(
+                                    "Unknown enum variant `{}`",
+                                    self.db.lookup_intern_name(variant.item)
+                                );
+                                self.reporter.error(msg, "", variant.as_reporter_span());
+                                return Err(());
+                            }
+                        }
+                        _ => {
+                            let msg = format!(
+                                "`{}` is not an enum",
+                                self.db.lookup_intern_name(def.item)
+                            );
+
+                            self.reporter.error(msg, "", def.as_reporter_span());
+
+                            return Err(());
+                        }
+                    }
+                } else {
+                    let msg = format!("Unknown enum `{}`", self.db.lookup_intern_name(def.item));
+
+                    self.reporter.error(msg, "", def.as_reporter_span());
+
+                    return Err(());
+                }
+
+                if let Some(expr) = expr {
+                    self.resolve_expression(fn_name, expr, ast_map)?;
+                }
+            }
         }
 
         Ok(())
