@@ -1,0 +1,13 @@
+---
+source: parser/src/parser/imports.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 11)
+  IMPORT_DEF@[0; 11)
+    IMPORT_KW@[0; 6) "import"
+    WHITESPACE@[6; 7) " "
+    IMPORT_SEGMENT@[7; 10)
+      NAME@[7; 10)
+        IDENT@[7; 10) "foo"
+    SEMI@[10; 11) ";"
+

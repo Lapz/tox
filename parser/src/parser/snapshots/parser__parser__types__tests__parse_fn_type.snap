@@ -1,0 +1,38 @@
+---
+source: parser/src/parser/types.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 32)
+  FN_DEF@[0; 32)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 29)
+      L_PAREN@[7; 8) "("
+      PARAM@[8; 28)
+        PLACEHOLDER_PAT@[8; 9)
+          UNDERSCORE@[8; 9) "_"
+        COLON@[9; 10) ":"
+        FN_TYPE@[10; 28)
+          FN_KW@[10; 12) "fn"
+          L_PAREN@[12; 13) "("
+          IDENT_TYPE@[13; 16)
+            IDENT@[13; 16) "i32"
+          COMMA@[16; 17) ","
+          IDENT_TYPE@[17; 20)
+            IDENT@[17; 20) "i32"
+          R_PAREN@[20; 21) ")"
+          WHITESPACE@[21; 22) " "
+          RET_TYPE@[22; 28)
+            FRETURN@[22; 24) "->"
+            WHITESPACE@[24; 25) " "
+            IDENT_TYPE@[25; 28)
+              IDENT@[25; 28) "i32"
+      R_PAREN@[28; 29) ")"
+    WHITESPACE@[29; 30) " "
+    BLOCK_EXPR@[30; 32)
+      BLOCK@[30; 32)
+        L_CURLY@[30; 31) "{"
+        R_CURLY@[31; 32) "}"
+

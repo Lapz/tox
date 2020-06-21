@@ -1,21 +1,16 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug",
-            "program": "/Users/rowlandsonpratt/Lenard/Rust/tox/target/debug/deps/tox-14aaf93dc5c3311d",
-            "args": ["/Users/rowlandsonpratt/Lenard/Rust/tox/tests/test.tox"],
-            "cwd": "${workspaceRoot}",
-        
-            
-            
-            
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug",
+      "program": "${workspaceFolder}/target/debug/tox",
+      "args": ["/Users/lenardpratt/Projects/Rust/tox-rewrite/tox/src/test.tox"],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
 }

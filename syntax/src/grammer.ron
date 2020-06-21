@@ -1,0 +1,410 @@
+
+Grammar(
+    single_byte_tokens: [
+        [";", "SEMI"],
+        [",", "COMMA"],
+        ["(", "L_PAREN"],
+        [")", "R_PAREN"],
+        ["{", "L_CURLY"],
+        ["}", "R_CURLY"],
+        ["[", "L_BRACK"],
+        ["]", "R_BRACK"],
+        ["<", "L_ANGLE"],
+        [">", "R_ANGLE"],
+        ["&", "AMP"],
+        ["|", "PIPE"],
+        ["+", "PLUS"],
+        ["*", "STAR"],
+        ["/", "SLASH"],
+        ["^", "CARET"],
+        ["%", "PERCENT"],
+        ["_", "UNDERSCORE"],
+        ["^","EXPONENTIAL"],
+        [".", "DOT"],
+        ["?","QUESTION"],
+    ],
+    // Tokens for which the longest match must be chosen (e.g. `..` is a DOTDOT, but `.` is a DOT)
+    multi_byte_tokens: [
+        ["-","MINUS"],
+        ["->","FRETURN"],
+        [":", "COLON"],
+        ["::", "COLON_COLON"],
+        ["=", "EQ"],
+        ["==", "EQEQ"],
+        ["=>", "FAT_ARROW"],
+        ["!", "EXCL"],
+        ["!=", "NEQ"],
+        ["<=", "LTEQ"],
+        [">=", "GTEQ"],
+        ["+=", "PLUSEQ"],
+        ["-=", "MINUSEQ"],
+        ["*=", "STAREQ"],
+        ["/=","SLASHEQ"],
+        ["&&", "AMPAMP"],
+        ["||", "PIPEPIPE"],
+    ],
+    keywords: [
+        "class",
+        "extends",
+        "type",
+        "as",
+        "match",
+        "enum",
+        "fn",
+        "let",
+        "if",
+        "else",
+        "for",
+        "while",
+        "return",
+        "break",
+        "continue",
+        "do",
+        "true",
+        "false",
+        "or",
+        "and",
+        "export",
+        "import",
+        "from",
+        "mod",
+        "nil",
+        "self",
+    ],
+    literals: [
+        "INT_NUMBER",
+        "FLOAT_NUMBER",
+        "CHAR",
+        "STRING",
+    ],
+    tokens: [
+        "ERROR",
+        "IDENT",
+        "COMMENT",
+        "WHITESPACE"
+    ],
+    nodes: [
+        //defintions
+        "BLOCK",
+        "SOURCE_FILE",
+        "CLASS_DEF",
+        "ENUM_DEF",
+        "FN_DEF",
+        "IMPORT_DEF",
+        "MOD_DEF",
+        "TYPE_ALIAS_DEF",
+        "IMPORT_SEGMENT",
+        "IMPORT_LIST",
+        //patterns
+        "BIND_PAT",
+        "PLACEHOLDER_PAT",
+        "TUPLE_PAT",
+        "LITERAL_PAT",
+        //types
+        "TYPE_REF",
+        "FN_TYPE",
+        "PAREN_TYPE",
+        "ARRAY_TYPE",
+        "IDENT_TYPE",
+        "RET_TYPE",
+        //atoms,
+        "ARRAY_EXPR",
+        "CALL_EXPR",
+        "CAST_EXPR",
+        "INDEX_EXPR",
+        "FIELD_EXPR",
+        "BIN_EXPR",
+        "PREFIX_EXPR",
+        "TUPLE_EXPR",
+        "IDENT_EXPR",
+        "ENUM_EXPR",
+
+        //stms
+        "IF_EXPR",
+        "WHILE_EXPR",
+        "CONDITION",
+        "LOOP_EXPR",
+        "DO_EXPR",
+        "FOR_EXPR",
+        "CONTINUE_EXPR",
+        "BREAK_EXPR",
+        "BLOCK_EXPR",
+        "RETURN_EXPR",
+        "CLOSURE_EXPR",
+        "PAREN_EXPR",
+        "MATCH_EXPR",
+        "MATCH_ARM_LIST",
+        "MATCH_ARM",
+        "MATCH_GUARD",
+        "CLASS_LIT",
+        "NAMED_FIELD_LIST",
+        "NAMED_FIELD",
+
+        "ENUM_VARIANT",
+        "NAMED_FIELD_DEF_LIST",
+        "NAMED_FIELD_DEF",
+        "RECORD_LITERAL_EXPR",
+        "ENUM_VARIANT_LIST",
+        "VISIBILITY",
+        "LITERAL",
+        "NAME",
+        "NAME_REF",
+
+        "LET_STMT",
+        "EXPR_STMT",
+
+        "TYPE_PARAM_LIST",
+        "TYPE_ARG_LIST",
+        "TYPE_PARAM",
+        "PARAM_LIST",
+        "PARAM",
+        "SELF_PARAM",
+        "ARG_LIST",
+        
+    ],
+    ast: {
+        "SourceFile": (
+            traits: ["ClassDefOwner","FnDefOwner","TypeAliasDefOwner","EnumDefOwner","ExternImportDefOwner","ModuleDefOwner"]
+        ),
+        "FnDef":(
+            traits: [
+                "NameOwner",
+                "TypeParamsOwner",
+                "VisibilityOwner",
+            ],
+            options: ["ParamList",["body","BlockExpr"],"RetType"],
+        ),
+        "RetType":(
+            options:["TypeRef"]
+        ),
+        "ClassDef":(
+            traits: [
+                "NameOwner",
+                "TypeParamsOwner",
+                "FnDefOwner",
+                "NamedFieldsOwner",
+                "VisibilityOwner",
+            ]
+        ),
+        "NamedFieldDefList": (collections: [["fields", "NamedFieldDef"]]),
+        "NamedFieldDef": (
+            traits: [
+                "NameOwner",
+                "TypeAscriptionOwner",    
+            ]
+        ),
+        "TypeAliasDef":(
+            traits: [
+                "NameOwner",
+                "TypeParamsOwner",
+                "VisibilityOwner"
+            ],
+            options: ["TypeRef"]
+        ),
+        "ImportDef":(
+            options: [["imports","ImportSegment"], "ImportList"],
+            traits: [
+                "ImportSegmentOwner"
+            ]
+        ),
+        "ModDef":(
+            traits: [
+                "NameOwner",
+            ]
+        ),
+        "EnumDef":(
+             traits: [
+                "NameOwner",
+                "VisibilityOwner",
+                "TypeParamsOwner"
+            ],
+            options: [["variant_list","EnumVariantList"]]
+        ),
+        "EnumVariantList": ( collections: [["variants", "EnumVariant"]] ),
+        "EnumVariant": ( traits: ["NameOwner"], options: ["TypeRef"] ),
+
+        "ArrayType": ( options: ["TypeRef", "Expr"] ),
+        "ParenType": (traits:["TypesOwner"],options: ["TypeRef"],),
+        "IdentType": (
+            options: ["TypeRef", ["type_args","TypeArgList"]],
+
+        ),
+        "FnType": (options: ["ParamList", "RetType"],traits:["TypesOwner"]),
+
+        "TypeRef":(enum:[
+            "ParenType",
+            "ArrayType",
+            "FnType",
+            "IdentType",
+        ]),
+
+        "ClosureExpr": (
+            options: [
+                "ParamList",
+                ["body","Expr"]
+            ],
+            traits: ["ArgListOwner"]
+        ),
+        "IfExpr": (
+            options: [ "Condition" ]
+        ),
+        "ForExpr": (
+            traits: ["LoopBodyOwner"]
+        ),
+        "WhileExpr": (
+            traits: ["LoopBodyOwner"],
+            options: [ "Condition" ]
+        ),
+        "ContinueExpr": (),
+        "BreakExpr": (),
+        "MatchExpr": (
+            options: [ "Expr", "MatchArmList" ],
+        ),
+        "MatchArmList": (
+            collections: [ ["arms", "MatchArm"] ],
+        ),
+        "MatchArm": (
+            options:[
+                "Expr",
+            ],
+            collections: [ [ "pats", "Pat" ] ],
+        ),
+        "ImportSegment": (
+            options: [
+                "Name",
+               
+            ]
+        ),
+        "ImportList": (
+            traits: ["ImportSegmentOwner"],
+            collections: [ ["segments", "ImportSegment" ] ]
+        ),
+        "NamedFieldList": (
+            collections: [ ["fields", "NamedField"] ]),
+        "NamedField": (options: ["Name", "Expr"]),
+        "CallExpr": (
+            traits: ["ArgListOwner"],
+            options: [ "Expr",["type_args","TypeArgList"] ],
+        ),
+        "ArrayExpr": (
+            collections: [["exprs", "Expr"]]
+        ),
+        "IdentExpr":(traits: ["NameOwner"]),
+        "RecordLiteralExpr": (
+            options: ["NamedFieldList",["ident","IdentExpr"]],
+            traits: ["NamedFieldsOwner"]
+        ),
+        "EnumExpr":(
+            options: ["Expr"],
+            collections: [["segments","IdentExpr"]]
+        ),
+        "IndexExpr": (),
+        "ReturnExpr": (options: ["Expr"]),
+        "ParenExpr": (options: ["Expr"]),
+        "FieldExpr": (options: ["Expr", "Name"]),
+        "CastExpr": (options: ["Expr", "TypeRef"]),
+        "PrefixExpr": (options: ["Expr"]),
+        "BinExpr": (),
+        "Literal": (),
+        "BlockExpr": (
+            options: [ "Block" ]
+        ),
+        "TupleExpr":(
+            collections: [ ["exprs", "Expr"] ],
+        ),
+        "Expr": (
+            enum: [
+                "ArrayExpr",
+                "IdentExpr",
+                "ParenExpr",
+                "ClosureExpr",
+                "IfExpr",
+                "ForExpr",
+                "WhileExpr",
+                "ContinueExpr",
+                "BreakExpr",
+                "BlockExpr",
+                "ReturnExpr",
+                "MatchExpr",
+                "RecordLiteralExpr",
+                "CallExpr",
+                "IndexExpr",
+                "FieldExpr",
+                "CastExpr",
+                "PrefixExpr",
+                "BinExpr",
+                "Literal",
+                "TupleExpr",
+                "EnumExpr"
+            ],
+        ),
+        "Visibility": (),
+        "Name": (),
+        "NameRef": (),
+        "TypeParamList": (
+            collections: [
+                ["type_params", "TypeParam" ],
+            ]
+        ),
+        "TypeArgList": (
+            collections: [
+                ["types", "TypeRef" ],
+            ]
+        ),
+        "ArgList": (
+            collections: [
+                ["args", "Expr"]
+            ]
+        ),
+        "TypeParam": ( traits: ["NameOwner"] ),
+        "ExprStmt": (
+            options: [ ["expr", "Expr"] ]
+        ),
+        "LetStmt": (
+            options: [
+                ["pat", "Pat"],
+                ["initializer", "Expr"],
+            ],
+            traits: [
+                "TypeAscriptionOwner",
+            ]
+        ),
+        "Condition": (
+            options: [ "Pat", "Expr" ]
+        ),
+        "Stmt": (
+            enum: ["ExprStmt", "LetStmt"],
+        ),
+        "Block": (
+            collections: [
+                ["statements", "Stmt"],
+            ],
+        ),
+        "ParamList": (
+            collections: [
+                ["params", "Param"]
+            ]
+        ),
+        "Param": (
+            options: [ "Pat" ],
+            traits: [
+                "TypeAscriptionOwner",
+            ]
+        ),
+        "BindPat": (
+            traits: ["NameOwner"]
+        ),
+        "PlaceholderPat": (),
+        "TuplePat": ( collections: [["args", "Pat"]] ),
+        "LiteralPat": (options: ["Literal"]),
+        "Pat": (
+            enum: [
+                "BindPat",
+                "PlaceholderPat",
+                "TuplePat",
+                "LiteralPat",
+            ],
+        ),
+    },
+    
+)

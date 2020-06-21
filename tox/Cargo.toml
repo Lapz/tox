@@ -1,31 +1,21 @@
 [package]
 name = "tox"
-version = "0.2.0"
-authors = ["Lenard Pratt <striderman34@gmail.com>"]
-[features]
-default = []
-debug = ["vm/debug"]
-# debug = ["vm/debug"]  # Enable debug statements within the vm
+version = "0.1.0"
+authors = ["Lenard Pratt <l3np27@gmail.com>"]
+edition = "2018"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-util = {path = "../util"}
-syntax = {path = "../syntax"}
-
-frontend = {path = "../frontend"}
-vm = {path="../vm"}
-structopt = "0.1.6"
-structopt-derive = "0.1.6"
-clippy = {version = "*", optional = true}
-fnv = "*"
-
-
-[[test]]
-name ="test_runner"
-path ="../tests/test_runner.rs"
-harness = false
-
-
+salsa ="^0.14.1"
+structopt = "0.3"
+syntax={path="../syntax",version="*"}
+errors= {path="../errors",version="*"}
+parser={path="../parser",version="*"}
+semant = {path="../semant"}
+reporting = {version="^0.9.0",package="codespan-reporting"}
 [dev-dependencies]
+insta = "0.16.0"
+serde ="1.0.106"
+ron = "0.5.1"
+tempfile = "3.1.0"
 walkdir = "2"
-ansi_term = "0.10"
-tempfile = "3"

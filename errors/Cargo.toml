@@ -1,0 +1,13 @@
+[package]
+name = "errors"
+version = "0.1.0"
+authors = ["Lenard Pratt <l3np27@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+codespan-reporting = {version="^0.9.0",git="https://github.com/Lapz/codespan"}
+reporting = {version="^0.9.0",package="codespan-reporting"}
+itertools="*"
+salsa = "^0.14.1"

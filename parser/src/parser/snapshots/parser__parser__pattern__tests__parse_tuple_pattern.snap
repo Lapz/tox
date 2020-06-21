@@ -1,0 +1,33 @@
+---
+source: parser/src/parser/pattern.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 21)
+  FN_DEF@[0; 21)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 18)
+      L_PAREN@[7; 8) "("
+      PARAM@[8; 17)
+        TUPLE_PAT@[8; 13)
+          L_PAREN@[8; 9) "("
+          BIND_PAT@[9; 10)
+            NAME@[9; 10)
+              IDENT@[9; 10) "x"
+          COMMA@[10; 11) ","
+          BIND_PAT@[11; 12)
+            NAME@[11; 12)
+              IDENT@[11; 12) "y"
+          R_PAREN@[12; 13) ")"
+        COLON@[13; 14) ":"
+        IDENT_TYPE@[14; 17)
+          IDENT@[14; 17) "i32"
+      R_PAREN@[17; 18) ")"
+    WHITESPACE@[18; 19) " "
+    BLOCK_EXPR@[19; 21)
+      BLOCK@[19; 21)
+        L_CURLY@[19; 20) "{"
+        R_CURLY@[20; 21) "}"
+

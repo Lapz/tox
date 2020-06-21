@@ -1,12 +1,16 @@
 [package]
 name = "syntax"
 version = "0.1.0"
-authors = ["rowlandsonpratt <striderman34@gmail.com>"]
+authors = ["Lenard Pratt <l3np27@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-util = {path = "../util"}
-rand = "0.5.0-pre.0"
-
+rowan = "0.9.0"
+itertools="*"
+errors = {path="../errors"}
 
 [dev-dependencies]
-pretty_assertions = "0.4.0"
+insta = "0.16.0"
+tempfile = "3.1.0"

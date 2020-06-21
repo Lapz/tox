@@ -1,160 +1,190 @@
-/// Macro that is used to generate the code that parse a binary op
-macro_rules! binary {
-    ($_self:ident, $e:ident, $lhs:expr, $func:ident) => {
-        while $_self.recognise($e) {
-            let op = $_self.get_binary_op()?;
-
-            let rhs = Box::new($_self.$func()?);
-
-            $lhs = Spanned {
-                span: $lhs.get_span().to(rhs.get_span()),
-                value: Expression::Binary {
-                    lhs: Box::new($lhs),
-                    op,
-                    rhs,
-                },
-            }
-        }
+#[macro_export]
+macro_rules! T {
+    () => {
+        $crate::SyntaxKind::WHITESPACE
+    };
+    (while) => {
+        $crate::SyntaxKind::WHILE_KW
+    };
+    (for) => {
+        $crate::SyntaxKind::FOR_KW
+    };
+    (break) => {
+        $crate::SyntaxKind::BREAK_KW
+    };
+    (continue) => {
+        $crate::SyntaxKind::CONTINUE_KW
+    };
+    (mod) => {
+        $crate::SyntaxKind::MOD_KW
+    };
+    (do) => {
+        $crate::SyntaxKind::DO_KW
+    };
+    (return) => {
+        $crate::SyntaxKind::RETURN_KW
+    };
+    (print) => {
+        $crate::SyntaxKind::PRINT
+    };
+    (class) => {
+        $crate::SyntaxKind::CLASS_KW
+    };
+    (match) => {
+        $crate::SyntaxKind::MATCH_KW
+    };
+    (true) => {
+        $crate::SyntaxKind::TRUE_KW
+    };
+    (false) => {
+        $crate::SyntaxKind::FALSE_KW
+    };
+    (self) => {
+        $crate::SyntaxKind::SELF_KW
+    };
+    (enum) => {
+        $crate::SyntaxKind::ENUM_KW
     };
 
-    ($_self:ident, $expr:expr, $lhs:expr, $func:ident) => {
-        while $_self.matches($expr) {
-            let op = $_self.get_binary_op()?;
-
-            let rhs = Box::new($_self.$func()?);
-
-            $lhs = Spanned {
-                span: $lhs.get_span().to(rhs.get_span()),
-                value: Expression::Binary {
-                    lhs: Box::new($lhs),
-                    op,
-                    rhs,
-                },
-            }
-        }
+    (extends) => {
+        $crate::SyntaxKind::EXTENDS
     };
-}
-/// Macro that expands to a match that takes a `TokenType` and turns it into a Operator
-macro_rules! get_op {
-    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
-        {
-            match $_self.next() {
-                 $(Ok(Spanned{
-                    value: Token {
-                        token:TokenType::$p,
-                    },
-                    ref span,
-                }) => {
-                    Ok(Spanned {
-                    span: *span,
-                    value: Op::$t,
-                    })
-                },)+
+    (export) => {
+        $crate::SyntaxKind::EXPORT_KW
+    };
+    (match) => {
+        $crate::SyntaxKind::MATCH
+    };
+    (else) => {
+        $crate::SyntaxKind::ELSE_KW
+    };
+    (if) => {
+        $crate::SyntaxKind::IF_KW
+    };
+    (let) => {
+        $crate::SyntaxKind::LET_KW
+    };
+    (type) => {
+        $crate::SyntaxKind::TYPE_KW
+    };
+    (import) => {
+        $crate::SyntaxKind::IMPORT_KW
+    };
+    (::) => {
+        $crate::SyntaxKind::COLON_COLON
+    };
+    ("{") => {
+        $crate::SyntaxKind::L_CURLY
+    };
 
-                Ok(Spanned {
-                value: Token { ref token },
-                ref span,
-            }) => {
-                let msg = format!(
-                    "Expected one of '!' '+' '-' '/''*' '=' '<' '>' '<=' '=>' but instead found {}",
-                    token
-                );
+    (,) => {
+        $crate::SyntaxKind::COMMA
+    };
+    ("}") => {
+        $crate::SyntaxKind::R_CURLY
+    };
+    ("[") => {
+        $crate::SyntaxKind::L_BRACK
+    };
+    ("]") => {
+        $crate::SyntaxKind::R_BRACK
+    };
+    ("(") => {
+        $crate::SyntaxKind::L_PAREN
+    };
+    (")") => {
+        $crate::SyntaxKind::R_PAREN
+    };
+    ("//") => {
+        $crate::SyntaxKind::COMMENT
+    };
+    (=) => {
+        $crate::SyntaxKind::EQ
+    };
+    (:) => {
+        $crate::SyntaxKind::COLON
+    };
+    (.) => {
+        $crate::SyntaxKind::DOT
+    };
+    (;) => {
+        $crate::SyntaxKind::SEMI
+    };
+    (_) => {
+        $crate::SyntaxKind::UNDERSCORE
+    };
+    (+=) => {
+        $crate::SyntaxKind::PLUSEQ
+    };
+    (!) => {
+        $crate::SyntaxKind::EXCL
+    };
+    ("//") => {
+        $crate::SyntaxKind::COMMENT
+    };
 
-                $_self.span_error(msg, *span);
+    (+) => {
+        $crate::SyntaxKind::PLUS
+    };
+    (-) => {
+        $crate::SyntaxKind::MINUS
+    };
+    (*) => {
+        $crate::SyntaxKind::STAR
+    };
+    (/) => {
+        $crate::SyntaxKind::SLASH
+    };
 
-                Err(())
-            }
+    (&&) => {
+        $crate::SyntaxKind::AMPAMP
+    };
+    (==) => {
+        $crate::SyntaxKind::EQEQ
+    };
+    (=>) => {
+        $crate::SyntaxKind::FAT_ARROW
+    };
+    (<) => {
+        $crate::SyntaxKind::L_ANGLE
+    };
+    (<=) => {
+        $crate::SyntaxKind::LTEQ
+    };
+    (>) => {
+        $crate::SyntaxKind::R_ANGLE
+    };
+    (>=) => {
+        $crate::SyntaxKind::GTEQ
+    };
+    (!=) => {
+        $crate::SyntaxKind::NEQ
+    };
 
+    (-=) => {
+        $crate::SyntaxKind::MINUSEQ
+    };
+    (*=) => {
+        $crate::SyntaxKind::STAREQ
+    };
+    (/=) => {
+        $crate::SyntaxKind::SLASHEQ
+    };
+    (||) => {
+        $crate::SyntaxKind::PIPEPIPE
+    };
+    (|) => {
+        $crate::SyntaxKind::PIPE
+    };
+    (->) => {
+        $crate::SyntaxKind::FRETURN
+    };
 
-            Err(_) => {
+    (fn) => {
+        $crate::SyntaxKind::FN_KW
+    };
 
-                    Err(())
-                }
-            }
-        }
-
-    }
-}
-
-// The unary version of the get_binary_op macro
-macro_rules! get_unary_op {
-    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
-        {
-            match $_self.next() {
-                 $(Ok(Spanned{
-                    value: Token {
-                        token:TokenType::$p,
-                    },
-                    ref span,
-                }) => {
-                    Ok(Spanned {
-                    span: *span,
-                    value: UnaryOp::$t,
-                    })
-                },)+
-
-                Ok(Spanned {
-                value: Token { ref token },
-                ref span,
-            }) => {
-                let msg = format!(
-                    "Expected one  '!' or '-' but instead found {}",
-                    token
-                );
-
-                $_self.span_error(msg, *span);
-
-                Err(())
-            }
-
-
-            Err(_) => {
-
-                    Err(())
-                }
-            }
-        }
-
-    }
-}
-
-macro_rules! get_assign_op {
-    ($_self:ident,{ $($p:ident => $t:ident),*}) => {
-        {
-            match $_self.next() {
-                 $(Ok(Spanned{
-                    value: Token {
-                        token:TokenType::$p,
-                    },
-                    ref span,
-                }) => {
-                    Ok(Spanned {
-                    span: *span,
-                    value: AssignOperator::$t,
-                    })
-                },)+
-
-                Ok(Spanned {
-                value: Token { ref token },
-                ref span,
-            }) => {
-                let msg = format!(
-                    "Expected one  '+=','-=','*=','/='  but instead found {}",
-                    token
-                );
-
-                $_self.span_error(msg, *span);
-
-                Err(())
-            }
-
-
-            Err(_) => {
-
-                    Err(())
-                }
-            }
-        }
-
-    }
+    (nil) => {
+        $crate::SyntaxKind::NIL_KW
+    };
 }

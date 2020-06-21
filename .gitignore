@@ -6,3 +6,6 @@
 tox/out.ll
 .DS_Store
 */.DS_Store
+/target
+**/*.rs.bk
+.DS_STORE

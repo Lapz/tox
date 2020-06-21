@@ -1,0 +1,29 @@
+---
+source: parser/src/parser/expressions/block.rs
+expression: "crate::utils::dump_debug(&parser_output)"
+---
+SOURCE_FILE@[0; 16)
+  FN_DEF@[0; 16)
+    FN_KW@[0; 2) "fn"
+    WHITESPACE@[2; 3) " "
+    NAME@[3; 7)
+      IDENT@[3; 7) "main"
+    PARAM_LIST@[7; 9)
+      L_PAREN@[7; 8) "("
+      R_PAREN@[8; 9) ")"
+    WHITESPACE@[9; 10) " "
+    BLOCK_EXPR@[10; 16)
+      BLOCK@[10; 16)
+        L_CURLY@[10; 11) "{"
+        EXPR_STMT@[11; 15)
+          BLOCK_EXPR@[11; 15)
+            BLOCK@[11; 15)
+              L_CURLY@[11; 12) "{"
+              EXPR_STMT@[12; 14)
+                BLOCK_EXPR@[12; 14)
+                  BLOCK@[12; 14)
+                    L_CURLY@[12; 13) "{"
+                    R_CURLY@[13; 14) "}"
+              R_CURLY@[14; 15) "}"
+        R_CURLY@[15; 16) "}"
+

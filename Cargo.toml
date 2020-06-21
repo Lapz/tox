@@ -1,9 +1,20 @@
 [workspace]
-members = [
+members=[
+    "errors",
+    "parser",
     "syntax",
-    "frontend",
-    "util",
-    "opcode",
-    "tox"
+    "semant",
+    "tools",
+    "tox-wasm",
+    "tox",
 ]
-
+default-members=["tox"]
+[profile.dev]
+opt-level = 0
+overflow-checks = true
+debug-assertions = true
+panic = "abort"
+debug = false
+codegen-units = 8
+lto = false
+incremental = true
