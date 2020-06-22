@@ -1,10 +1,12 @@
+use crate::resolver::Resolver;
 use crate::HirDatabase;
 use errors::{FileId, WithError};
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
     db: DB,
-    resolver: Resolver,
+    resolver: Arc<Resolver>,
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
@@ -13,7 +15,7 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
 
     let collector = InferDataCollector { db, resolver };
 
-    for function in &program.functions {  
+    for function in &program.functions {
         //
     }
 
