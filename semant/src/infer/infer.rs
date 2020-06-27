@@ -1,10 +1,12 @@
+use crate::resolver::Resolver;
 use crate::HirDatabase;
 use errors::{FileId, WithError};
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
     db: DB,
-    resolver: Resolver,
+    resolver: Arc<Resolver>,
 }
 
 
