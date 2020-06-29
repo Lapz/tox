@@ -346,6 +346,23 @@ where
                     }
                 };
 
+                match ty {
+                    Type::Poly(_, _) => (),
+                    _ => {
+                        let span = (id.start().to_usize(), id.end().to_usize());
+                        self.reporter.error(
+                            format!(
+                                "Type `{}` is not polymorphic",
+                                self.db.lookup_intern_name(name)
+                            ),
+                            "",
+                            span,
+                        );
+
+                        return Err(());
+                    }
+                }
+
                 if self.ctx.get_kind(&name) == TypeKind::Function {
                     let span = (id.start().to_usize(), id.end().to_usize());
                     self.reporter.error(

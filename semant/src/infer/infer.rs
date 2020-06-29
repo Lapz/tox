@@ -1,17 +1,17 @@
 use super::StackedMap;
-use crate::infer::{Type, TypeCon};
+use crate::infer::{self, Type, TypeCon};
 use crate::resolver::Resolver;
 use crate::{
-    hir::{ExprId, Function, FunctionAstMap, NameId, StmtId},
-    HirDatabase,
+    hir::{self, ExprId, Function, FunctionAstMap, NameId, StmtId, TypeId},
+    util, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug)]
-struct InferDataCollector<DB> {
-    db: DB,
-    resolver: Arc<Resolver>,
+pub(crate) struct InferDataCollector<DB> {
+    pub(crate) db: DB,
+    pub(crate) resolver: Arc<Resolver>,
     reporter: Reporter,
     types: StackedMap<NameId, Type>,
     return_ty: Option<Type>,
@@ -21,9 +21,61 @@ impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    fn unify(&self, lhs: &Type, rhs: &Type) {
-        match (lhs, rhs) {
-            _ => unimplemented!(),
+    fn infer_type(&mut self, id: &util::Span<hir::TypeId>) -> infer::Type {
+        let ty = self.db.lookup_intern_type(id.item);
+
+        match ty {
+            hir::Type::ParenType(types) => {
+                let mut signature = vec![];
+
+                for id in &types {
+                    signature.push(self.infer_type(id))
+                }
+
+                infer::Type::Tuple(signature)
+            }
+            hir::Type::ArrayType { ty, size } => Type::Con(TypeCon::Array {
+                ty: Box::new(self.infer_type(&ty)),
+                size,
+            }),
+            hir::Type::FnType { params, ret } => {
+                let mut signature = vec![];
+
+                for id in &params {
+                    signature.push(self.infer_type(id))
+                }
+
+                if let Some(returns) = &ret {
+                    signature.push(self.infer_type(returns))
+                } else {
+                    signature.push(Type::Con(TypeCon::Void))
+                }
+
+                Type::App(signature)
+            }
+            hir::Type::Poly { name, type_args } => {
+                let ty = self.resolver.ctx.get_type(&name).unwrap();
+
+                match ty {
+                    Type::Poly(type_vars, inner) => {
+                        let mut substitutions = HashMap::new();
+
+                        for (type_var, type_arg) in type_vars.iter().zip(type_args) {
+                            substitutions.insert(*type_var, self.infer_type(&type_arg));
+                        }
+                        match &*inner {
+                            ty @ Type::Enum(variants) => self.subst(&ty, &mut substitutions),
+                            ty @ Type::Class { fields, methods } => {
+                                self.subst(&ty, &mut substitutions)
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+
+                    _ => unreachable!(),
+                }
+            }
+            hir::Type::Ident(name) => self.resolver.ctx.get_type(&name).unwrap(),
         }
     }
 
@@ -72,17 +124,20 @@ where
                 ascribed_type,
             } => {
                 if let (Some(expr), Some(ascribed_type)) = (initializer, ascribed_type) {
-                    let lhs = self.infer_type(ascribed_type);
+                    let lhs = unimplemented!();
 
                     let expr_ty = self.infer_expr(expr, ast_map);
 
                     self.unify(lhs, &expr_ty);
 
-                    self.add_var(pat, expr_ty);
+                    // self.add_var(pat, expr_ty);
                 }
             }
 
-            crate::hir::Stmt::Expr(expr) => self.infer_expr(expr, ast_map),
+            crate::hir::Stmt::Expr(expr) => {
+                self.infer_expr(expr, ast_map);
+                unimplemented!()
+            }
         }
     }
 

@@ -1,15 +1,19 @@
 use crate::hir::NameId;
-use std::collections::HashMap;
+use indexmap::IndexMap;
+use std::{
+    collections::{hash_map::DefaultHasher, HashMap},
+    hash::{Hash, Hasher},
+};
 
 /// A type var represent a variable that could be a type
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeVar(pub(crate) u32);
 /// A unique identifier that is used to distinguish to types with the exact some fields
 /// i.e struct Foo {} && struct Bar {} we treat them differently
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Unique(pub(crate) u32);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TypeCon {
     Bool,
     Float,
@@ -47,7 +51,7 @@ pub enum Type {
 ///  }
 /// ```
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Variant {
     pub tag: usize,
     pub ty: Option<Type>,
@@ -56,5 +60,42 @@ pub struct Variant {
 impl From<u32> for TypeVar {
     fn from(i: u32) -> Self {
         Self(i)
+    }
+}
+
+macro_rules! hash {
+    ($state:expr => $( $field:expr ),*) => {
+        {
+            $(
+            $state.write_u64(
+            $field
+                .values()
+                .map(|kv| {
+                    let mut h = DefaultHasher::new();
+                    kv.hash(&mut h);
+                    h.finish()
+                })
+                .fold(0, u64::wrapping_add),
+            );
+        )*
+        }
+    };
+
+}
+
+impl Hash for Type {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Type::App(inner) => inner.hash(state),
+            Type::Tuple(inner) => inner.hash(state),
+            Type::Poly(l, r) => {
+                l.hash(state);
+                r.hash(state)
+            }
+            Type::Var(inner) => inner.hash(state),
+            Type::Con(inner) => inner.hash(state),
+            Type::Enum(fields) => hash!(state => fields),
+            Type::Class { fields, methods } => hash!(state => fields,methods),
+        }
     }
 }

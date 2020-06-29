@@ -39,3 +39,15 @@ The type inference is based on the HIR.
 ```
 
 It should be done using query's.
+
+The type inference phase occurs after the resolving phase.
+
+The resolving phase basically checks if type signatures are valid, unknown variables aren't used aswell as checking that enums and class exprs refer to proper items;
+
+After the resolving phase is completed the type checking phase starts.
+
+The type checker will then go through the body of functions and type check them.
+
+Each statement in an expression has a TypeId which resolves to its type.
+
+The mapping is stored in a Map<StmtId,TypeId>

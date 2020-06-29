@@ -71,4 +71,7 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
 
     #[salsa::invoke(crate::infer::infer_query)]
     fn infer(&self, file: FileId) -> WithError<()>;
+
+    // #[salsa::interned]
+    // fn intern_ty(&self, ty: crate::infer::Type) -> crate::infer::TypeId;
 }
