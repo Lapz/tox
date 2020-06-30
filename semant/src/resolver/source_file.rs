@@ -27,10 +27,10 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
         collector.add_item(function.name, ItemKind::Function, function.exported)
     }
 
-    let (resolver, reporter) = collector.finish();
+    let resolver = collector.finish();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
+    if resolver.reporter.has_errors() {
+        Err(resolver.reporter.finish())
     } else {
         Ok(Arc::new(resolver))
     }
@@ -101,10 +101,10 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
         }
     }
 
-    let (resolver, reporter) = collector.finish();
+    let resolver = collector.finish();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
+    if resolver.reporter.has_errors() {
+        Err(resolver.reporter.finish())
     } else {
         Ok(Arc::new(resolver))
     }

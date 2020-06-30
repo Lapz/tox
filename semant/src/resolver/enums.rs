@@ -11,6 +11,7 @@ where
     DB: HirDatabase,
 {
     pub fn resolve_enum(&mut self, enum_def: &Enum) -> Result<(), ()> {
+        let name = enum_def.name.item;
         self.begin_scope();
         let mut poly_tvs = Vec::new();
 
@@ -54,7 +55,7 @@ where
 
         self.end_scope();
 
-        self.insert_type(&enum_def.name, Type::Enum(variants), TypeKind::Enum)?;
+        self.insert_type(&enum_def.name, Type::Enum(name, variants), TypeKind::Enum)?;
 
         Ok(())
     }

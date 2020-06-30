@@ -352,6 +352,7 @@ pub(crate) struct FunctionAstMap {
     hir_to_stmt: IndexMap<StmtId, Stmt>,
     hir_to_expr: IndexMap<ExprId, Expr>,
     ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
+    ast_to_stmt: IndexMap<StmtId, AstPtr<ast::Stmt>>,
 }
 
 impl FunctionAstMap {
@@ -369,6 +370,10 @@ impl FunctionAstMap {
 
     pub fn insert_expr(&mut self, id: ExprId, expr: Expr) {
         self.hir_to_expr.insert(id, expr);
+    }
+
+    pub fn insert_expr_ptr(&mut self, id: ExprId, expr: AstPtr<ast::Expr>) {
+        self.ast_to_expr.insert(id, expr);
     }
 
     pub fn insert_block(&mut self, id: BlockId, block: Block) {
@@ -433,7 +438,9 @@ impl Hash for FunctionAstMap {
             self.hir_to_block,
             self.hir_to_pattern,
             self.hir_to_type_params,
-            self.hir_to_params
+            self.hir_to_params,
+            self.ast_to_expr,
+            self.ast_to_stmt
         )
     }
 }

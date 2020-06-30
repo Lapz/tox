@@ -4,8 +4,8 @@ use crate::{hir, impl_collector, util, TextRange};
 use std::sync::Arc;
 
 use syntax::{
-    ast, ArgListOwner, AstNode, LoopBodyOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner,
-    TypesOwner, VisibilityOwner,
+    ast, ArgListOwner, AstNode, AstPtr, LoopBodyOwner, NameOwner, TypeAscriptionOwner,
+    TypeParamsOwner, TypesOwner, VisibilityOwner,
 };
 
 #[derive(Debug)]
@@ -102,7 +102,6 @@ where
         self.expr_id_count += 1;
 
         let id = hir::ExprId(current);
-
         self.ast_map.insert_expr(id, expr);
 
         id

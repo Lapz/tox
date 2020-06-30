@@ -10,6 +10,7 @@ where
     DB: HirDatabase,
 {
     pub fn resolve_class(&mut self, class: &Class) -> Result<(), ()> {
+        let name = class.name.item;
         self.begin_scope();
 
         let mut poly_tvs = Vec::new();
@@ -71,7 +72,14 @@ where
 
         self.insert_type(
             &class.name,
-            Type::Poly(poly_tvs, Box::new(Type::Class { fields, methods })),
+            Type::Poly(
+                poly_tvs,
+                Box::new(Type::Class {
+                    name,
+                    fields,
+                    methods,
+                }),
+            ),
             TypeKind::Class,
         )?;
 

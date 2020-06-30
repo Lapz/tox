@@ -2,7 +2,7 @@ use super::StackedMap;
 use crate::infer::{self, Type, TypeCon};
 use crate::resolver::Resolver;
 use crate::{
-    hir::{self, ExprId, Function, FunctionAstMap, NameId, StmtId, TypeId},
+    hir::{self, ExprId, Function, FunctionAstMap, NameId, StmtId},
     util, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
@@ -12,15 +12,22 @@ use std::{collections::HashMap, sync::Arc};
 pub(crate) struct InferDataCollector<DB> {
     pub(crate) db: DB,
     pub(crate) resolver: Arc<Resolver>,
-    reporter: Reporter,
+    pub(crate) reporter: Reporter,
     types: StackedMap<NameId, Type>,
     return_ty: Option<Type>,
+    tvar_count: u32,
 }
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    pub(crate) fn type_var(&mut self) -> infer::TypeVar {
+        let tv = infer::TypeVar::from(self.tvar_count);
+        self.tvar_count += 1;
+
+        tv
+    }
     fn infer_type(&mut self, id: &util::Span<hir::TypeId>) -> infer::Type {
         let ty = self.db.lookup_intern_type(id.item);
 
@@ -64,10 +71,8 @@ where
                             substitutions.insert(*type_var, self.infer_type(&type_arg));
                         }
                         match &*inner {
-                            ty @ Type::Enum(variants) => self.subst(&ty, &mut substitutions),
-                            ty @ Type::Class { fields, methods } => {
-                                self.subst(&ty, &mut substitutions)
-                            }
+                            ty @ Type::Enum(_, _) => self.subst(&ty, &mut substitutions),
+                            ty @ Type::Class { .. } => self.subst(&ty, &mut substitutions),
                             _ => unreachable!(),
                         }
                     }
@@ -114,7 +119,7 @@ where
         unimplemented!()
     }
 
-    fn infer_statement(&mut self, stmt: &StmtId, ast_map: &FunctionAstMap) {
+    fn infer_statement(&mut self, stmt: &StmtId, ast_map: &FunctionAstMap) -> Result<(), ()> {
         let stmt = ast_map.stmt(stmt);
 
         match stmt {
@@ -122,17 +127,27 @@ where
                 pat,
                 initializer,
                 ascribed_type,
-            } => {
-                if let (Some(expr), Some(ascribed_type)) = (initializer, ascribed_type) {
-                    let lhs = unimplemented!();
+            } => match (initializer, ascribed_type) {
+                (None, None) => unimplemented!(),
+                (None, Some(ty)) => {
+                    let ty = self.infer_type(ty);
 
+                    unimplemented!()
+                }
+                (Some(expr), None) => {
                     let expr_ty = self.infer_expr(expr, ast_map);
 
-                    self.unify(lhs, &expr_ty);
-
-                    // self.add_var(pat, expr_ty);
+                    unimplemented!()
                 }
-            }
+                (Some(expr), Some(ascribed_type)) => {
+                    let expected = self.infer_type(ascribed_type);
+                    let expr_ty = self.infer_expr(expr, ast_map);
+
+                    // self.unify(&expected, &expr_ty, stmt, unimplemented!())
+
+                    unimplemented!()
+                }
+            },
 
             crate::hir::Stmt::Expr(expr) => {
                 self.infer_expr(expr, ast_map);
@@ -148,26 +163,25 @@ where
 
         self.return_ty = Some(expected.clone());
 
-        let body_ty = if let Some(body) = &function.body {
+        if let Some(body) = &function.body {
             for stmt in body {
-                self.infer_statement(stmt, &function.ast_map)
+                let _ = self.infer_statement(stmt, &function.ast_map);
             }
-
-            unimplemented!()
         } else {
-            self.unify(&expected, &Type::Con(TypeCon::Void));
+            // self.unify(&expected, &Type::Con(TypeCon::Void));
         };
     }
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
     let program = db.lower(file)?;
-    let resolver = db.resolve_source_file(file)?;
+    let resolver = db.resolve_source_file(file).unwrap();
 
     let mut collector = InferDataCollector {
         db,
+        tvar_count: resolver.ctx.tvar_count,
+        reporter: resolver.reporter.clone(),
         resolver,
-        reporter: Reporter::new(file),
         types: StackedMap::new(),
         return_ty: None,
     };

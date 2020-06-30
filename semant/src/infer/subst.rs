@@ -7,7 +7,7 @@ impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub(crate) fn subst(&self, ty: &Type, substitutions: &mut Subst) -> Type {
+    pub(crate) fn subst(&mut self, ty: &Type, substitutions: &mut Subst) -> Type {
         match ty {
             Type::App(types) | Type::Tuple(types) => Type::App(
                 types
@@ -24,15 +24,13 @@ where
                 }
             }
             Type::Poly(type_vars, u) => {
-                let tvars = type_vars
-                    .iter()
-                    .map(|_| self.resolver.ctx.type_var())
-                    .collect();
+                let tvars = type_vars.iter().map(|_| self.type_var()).collect();
 
                 Type::Poly(tvars, Box::new(self.subst(u, substitutions)))
             }
             Type::Con(con) => Type::Con(con.clone()),
-            Type::Enum(variants) => Type::Enum(
+            Type::Enum(name, variants) => Type::Enum(
+                *name,
                 variants
                     .iter()
                     .map(|(name, variant)| {
@@ -46,7 +44,11 @@ where
                     })
                     .collect(),
             ),
-            Type::Class { fields, methods } => {
+            Type::Class {
+                name,
+                fields,
+                methods,
+            } => {
                 let mut new_fields = HashMap::new();
                 let mut new_methods = HashMap::new();
 
@@ -59,6 +61,7 @@ where
                 }
 
                 Type::Class {
+                    name: *name,
                     fields: new_fields,
                     methods: new_methods,
                 }

@@ -176,7 +176,7 @@ where
             Expr::Enum { def, variant, expr } => {
                 if let Some(ty) = self.ctx.get_type(&def.item) {
                     match ty {
-                        crate::infer::Type::Enum(variants) => {
+                        crate::infer::Type::Enum(_, variants) => {
                             if variants.get(&variant.item).is_none() {
                                 let msg = format!(
                                     "Unknown enum variant `{}`",

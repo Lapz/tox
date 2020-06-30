@@ -33,6 +33,7 @@ pub struct Resolver {
     pub(crate) items: HashSet<hir::NameId>,
     pub(crate) exported_items: HashSet<hir::NameId>,
     pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
+    pub(crate) reporter: Reporter,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -77,16 +78,14 @@ impl<'a, DB> ResolverDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub fn finish(self) -> (Resolver, Reporter) {
-        (
-            Resolver {
-                ctx: self.ctx,
-                items: self.items,
-                exported_items: self.exported_items,
-                function_data: self.function_data,
-            },
-            self.reporter,
-        )
+    pub fn finish(self) -> Resolver {
+        Resolver {
+            ctx: self.ctx,
+            items: self.items,
+            exported_items: self.exported_items,
+            function_data: self.function_data,
+            reporter: self.reporter,
+        }
     }
     pub(crate) fn begin_scope(&mut self) {
         self.ctx.begin_scope();
@@ -117,7 +116,6 @@ where
             }
             Err(())
         } else {
-            println!("{:?}", kind);
             self.ctx.insert_type(name_id.item, ty, kind);
             Ok(())
         }

@@ -1,3 +1,4 @@
+
 use super::{Infer, InferResult};
 use crate::ctx::CompileCtx;
 use crate::infer::types::{Type, TypeCon};

@@ -11,7 +11,7 @@ use std::collections::HashMap;
 pub struct Ctx {
     types: StackedMap<NameId, Type>,
     kind: HashMap<NameId, TypeKind>,
-    tvar_count: u32,
+    pub(crate) tvar_count: u32,
 }
 
 impl Ctx {
@@ -58,7 +58,7 @@ impl Ctx {
             result_name,
             Type::Poly(
                 vec![TypeVar::from(0), TypeVar::from(1)],
-                Box::new(Type::Enum(result_variants)),
+                Box::new(Type::Enum(result_name, result_variants)),
             ),
         );
 

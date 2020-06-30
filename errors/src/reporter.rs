@@ -1,4 +1,4 @@
-use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle};
+use codespan_reporting::diagnostic::{Diagnostic, Label, LabelStyle, Severity};
 
 use crate::FileId;
 use std::cell::RefCell;
@@ -64,7 +64,16 @@ impl Reporter {
     }
 
     pub fn has_errors(&self) -> bool {
-        !self.diagnostics.borrow().is_empty()
+        if self.diagnostics.borrow().is_empty() {
+            return false;
+        } else {
+            for diag in self.diagnostics.borrow().iter() {
+                if diag.severity == Severity::Error {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
 
