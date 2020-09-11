@@ -126,9 +126,9 @@ pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
     let prefix = Blue.paint("| ");
 
     if cfg!(target_arch = "wasm32") {
-        writeln!(
+        write!(
             output,
-            "{}: {}",
+            "{}: {}\n\r",
             d.level,
             Fixed(252).bold().paint(d.msg.clone())
         )
@@ -150,7 +150,7 @@ pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
         let line_idx = idx + 1;
 
         if cfg!(target_arch = "wasm32") {
-            writeln!(output, "{:>4} {}{}", line_idx, prefix, line).unwrap();
+            write!(output, "{:>4} {}{}\n\r", line_idx, prefix, line).unwrap();
         } else {
             println!("{:>4} {}{}", line_idx, prefix, line);
         }
@@ -172,7 +172,7 @@ pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
             if span.start.column != 0 {
                 let whitespace = repeat_string(" ", span.start.column as usize - 1);
                 if cfg!(target_arch = "wasm32") {
-                    writeln!(output, "     {}{}{}", prefix, whitespace, carets).unwrap();
+                    write!(output, "     {}{}{}\n\r", prefix, whitespace, carets).unwrap();
                 } else {
                     println!("     {}{}{}", prefix, whitespace, carets);
                 }
@@ -185,7 +185,7 @@ pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
                 Level::RunTimeError => Purple.bold().paint(carets),
             };
             if cfg!(target_arch = "wasm32") {
-                writeln!(output, "     {}{}", prefix, carets).unwrap();
+                write!(output, "     {}{}\n\r", prefix, carets).unwrap();
             } else {
                 println!("     {}{}", prefix, carets);
             }
@@ -201,7 +201,7 @@ pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
             };
 
             if cfg!(target_arc = "wasm32") {
-                writeln!(output, "     {}{}", prefix, carets).unwrap();
+                write!(output, "     {}{}\n\r", prefix, carets).unwrap();
             } else {
                 println!("     {}{}", prefix, carets);
             }
