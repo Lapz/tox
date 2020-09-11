@@ -11,7 +11,7 @@ util = {path = "../util"}
 opcode = {path = "../opcode"}
 syntax = {path= "../syntax"}
 vm = {path = "../vm"}
-rand = "0.3.16"
+rand = "0.7"
 fnv = "1.0.6"
 
 

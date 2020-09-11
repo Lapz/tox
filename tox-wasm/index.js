@@ -3,6 +3,14 @@ import * as monaco from "monaco-editor";
 import { Terminal } from "xterm";
 const rust = import("./pkg");
 
+let mod;
+
+rust
+  .then((m) => {
+    mod = m;
+  })
+  .catch(console.error);
+
 const term = new Terminal();
 
 self.MonacoEnvironment = {
@@ -24,17 +32,11 @@ self.MonacoEnvironment = {
 };
 
 const editor = monaco.editor.create(document.getElementById("container"), {
-  value: ['fn main() { let x:int ="a"; }'].join("\n"),
+  value: ['fn main() { print "Hello World"; }'].join("\n"),
   language: "rust",
 });
 
 const initXterm = () => {
-  const div = document.createElement("div");
-  div.id = "terminal";
-
-  const body = document.getElementById("root");
-
-  body.appendChild(div);
   term.open(document.getElementById("terminal"));
 };
 
@@ -43,15 +45,11 @@ initXterm();
 const runButton = document.getElementById("run");
 
 runButton.addEventListener("click", () => {
-  rust
-    .then((m) => {
-      try {
-        m.compile(editor.getValue());
-      } catch (e) {
-        console.error(e);
-        term.clear();
-        term.write(e);
-      }
-    })
-    .catch(console.error);
+  term.clear();
+
+  try {
+    term.write(mod.compile(editor.getValue()));
+  } catch (e) {
+    term.write(e);
+  }
 });

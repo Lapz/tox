@@ -14,7 +14,5 @@ util = {path = "../util"}
 syntax = {path = "../syntax"}
 frontend = {path = "../frontend"}
 vm = {path="../vm"}
-
-
-[profile.release]
-lto = true
+console_error_panic_hook = "0.1.6"
+wee_alloc = "0.4.5"

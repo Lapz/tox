@@ -19,10 +19,6 @@ extern "C" {
     fn log(s: &str);
 }
 
-#[cfg(target_arch = "wasm32")]
-macro_rules! log {
-    ($($t:tt)*) =>( log(&format!($($t)*)));
-}
 #[derive(Debug)]
 pub struct StackFrame<'a> {
     ip: usize,
@@ -39,6 +35,8 @@ pub struct VM<'a> {
     program: &'a Program,
     objects: RawObject,
     stack_top: usize,
+    #[cfg(target_arch = "wasm32")]
+    pub stdout: Vec<Value>,
 }
 
 #[derive(Debug)]
@@ -91,6 +89,8 @@ impl<'a> VM<'a> {
             stack_top: 4,
             native_functions,
             objects,
+            #[cfg(target_arch = "wasm32")]
+            stdout: Vec::new(),
         })
     }
 
@@ -154,11 +154,12 @@ impl<'a> VM<'a> {
                 opcode::PRINT => {
                     let value = self.pop();
 
-                    if cfg!(target_arch = "wasm32") {
-                        log!("{}", value);
-                    } else {
-                        println!("{}", value);
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        self.stdout.push(value);
                     }
+
+                    println!("{}", value);
                 }
 
                 opcode::NEGATE => {

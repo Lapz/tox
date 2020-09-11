@@ -1,12 +1,23 @@
 use crate::object::{RawObject, StringObject};
 use crate::value::Value;
 use rand::{thread_rng, Rng};
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::{SystemTime, UNIX_EPOCH};
+
+#[cfg(target_arch = "wasm32")]
+use js_sys::Date;
+
 /// Calculate the number of seconds since the UNIX_EPOCH
+#[cfg(not(target_arch = "wasm32"))]
 pub fn clock(_: *const Value) -> Value {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 
     Value::float(time.as_secs() as f64 + f64::from(time.subsec_nanos()) * 1e-9)
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn clock(_: *const Value) -> Value {
+    Value::float(Date::new_0().get_time())
 }
 /// Return a random number between the min and max range
 /// Panics if min is larger than the max
@@ -15,6 +26,7 @@ pub fn random(args: *const Value) -> Value {
 
     let max = unsafe { (*args.add(1)).as_int() };
     let mut rng = thread_rng();
+
     Value::int(rng.gen_range(min, max))
 }
 

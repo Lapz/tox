@@ -7,11 +7,18 @@ edition="2018"
 [dependencies]
 util = {path = "../util"}
 opcode = {path="../opcode"}
-rand = "0.6.1"
+instant = { version = "0.1", features = [ "now" ] }
 fnv = "1.0.6"
+js-sys = "0.3.45"
+
+[dependencies.rand]
+version = "0.7"
+features = ["wasm-bindgen"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
+
+
 
 [features]
 debug = ["stack"]
