@@ -7,9 +7,22 @@ use crate::opcode;
 use crate::value::Value;
 use fnv::FnvHashMap;
 use util::symbol::Symbol;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 /// The max size of the stack
 const STACK_MAX: usize = 256;
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+#[cfg(target_arch = "wasm32")]
+macro_rules! log {
+    ($($t:tt)*) =>( log(&format!($($t)*)));
+}
 #[derive(Debug)]
 pub struct StackFrame<'a> {
     ip: usize,
@@ -140,7 +153,12 @@ impl<'a> VM<'a> {
 
                 opcode::PRINT => {
                     let value = self.pop();
-                    println!("{}", value);
+
+                    if cfg!(target_arch = "wasm32") {
+                        log!("{}", value);
+                    } else {
+                        println!("{}", value);
+                    }
                 }
 
                 opcode::NEGATE => {

@@ -13,8 +13,7 @@ syntax = {path = "../syntax"}
 
 frontend = {path = "../frontend"}
 vm = {path="../vm"}
-structopt = "0.1.6"
-structopt-derive = "0.1.6"
+structopt = "0.3"
 clippy = {version = "*", optional = true}
 fnv = "*"
 

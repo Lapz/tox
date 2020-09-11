@@ -3,7 +3,7 @@ use crate::pos::Span;
 use crate::pos::EMPTYSPAN;
 use ansi_term::Colour::{Blue, Fixed, Purple, Red, Yellow};
 use std::cell::RefCell;
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Write};
 use std::iter::repeat;
 use std::rc::Rc;
 
@@ -98,9 +98,17 @@ impl Reporter {
         })
     }
 
+    #[cfg(target_arch = "wasm32")]
+    pub fn emit(&self, input: &str, output: &mut String) {
+        for diagnostic in self.diagnostics.borrow().iter() {
+            print(input, diagnostic, output)
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn emit(&self, input: &str) {
         for diagnostic in self.diagnostics.borrow().iter() {
-            print(input, diagnostic)
+            print(input, diagnostic, &mut String::new())
         }
     }
 }
@@ -114,10 +122,20 @@ impl Default for Reporter {
     }
 }
 
-pub fn print(input: &str, d: &Diagnostic) {
+pub fn print(input: &str, d: &Diagnostic, output: &mut String) {
     let prefix = Blue.paint("| ");
 
-    println!("{}: {}", d.level, Fixed(252).bold().paint(d.msg.clone()));
+    if cfg!(target_arch = "wasm32") {
+        writeln!(
+            output,
+            "{}: {}",
+            d.level,
+            Fixed(252).bold().paint(d.msg.clone())
+        )
+        .unwrap();
+    } else {
+        println!("{}: {}", d.level, Fixed(252).bold().paint(d.msg.clone()));
+    }
 
     let span = d.span;
 
@@ -130,7 +148,13 @@ pub fn print(input: &str, d: &Diagnostic) {
     for (idx, line) in input.lines().enumerate().skip(start_line as usize) {
         let line = line;
         let line_idx = idx + 1;
-        println!("{:>4} {}{}", line_idx, prefix, line);
+
+        if cfg!(target_arch = "wasm32") {
+            writeln!(output, "{:>4} {}{}", line_idx, prefix, line).unwrap();
+        } else {
+            println!("{:>4} {}{}", line_idx, prefix, line);
+        }
+
         if line_idx == span.start.line as usize {
             let end = if line_idx == span.end.line as usize {
                 span.end.column as usize
@@ -147,7 +171,11 @@ pub fn print(input: &str, d: &Diagnostic) {
 
             if span.start.column != 0 {
                 let whitespace = repeat_string(" ", span.start.column as usize - 1);
-                println!("     {}{}{}", prefix, whitespace, carets);
+                if cfg!(target_arch = "wasm32") {
+                    writeln!(output, "     {}{}{}", prefix, whitespace, carets).unwrap();
+                } else {
+                    println!("     {}{}{}", prefix, whitespace, carets);
+                }
             }
         } else if line_idx == span.end.line as usize {
             let carets = repeat_string("^", span.end.column as usize);
@@ -156,7 +184,11 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::Error => Red.bold().paint(carets),
                 Level::RunTimeError => Purple.bold().paint(carets),
             };
-            println!("     {}{}", prefix, carets);
+            if cfg!(target_arch = "wasm32") {
+                writeln!(output, "     {}{}", prefix, carets).unwrap();
+            } else {
+                println!("     {}{}", prefix, carets);
+            }
         } else if line_idx > span.start.line as usize
             && line_idx < span.end.line as usize
             && !line.is_empty()
@@ -167,7 +199,12 @@ pub fn print(input: &str, d: &Diagnostic) {
                 Level::Error => Red.bold().paint(carets),
                 Level::RunTimeError => Purple.bold().paint(carets),
             };
-            println!("     {}{}", prefix, carets);
+
+            if cfg!(target_arc = "wasm32") {
+                writeln!(output, "     {}{}", prefix, carets).unwrap();
+            } else {
+                println!("     {}{}", prefix, carets);
+            }
         }
 
         if line_idx >= span.end.line as usize + 3 {

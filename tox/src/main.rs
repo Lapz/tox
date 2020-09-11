@@ -1,8 +1,7 @@
 extern crate fnv;
 extern crate frontend;
 extern crate structopt;
-#[macro_use]
-extern crate structopt_derive;
+
 // extern crate interpreter;
 extern crate syntax;
 extern crate util;

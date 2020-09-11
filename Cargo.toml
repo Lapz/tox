@@ -4,6 +4,7 @@ members = [
     "frontend",
     "util",
     "opcode",
-    "tox"
+    "tox",
+    "tox-wasm"
 ]
 

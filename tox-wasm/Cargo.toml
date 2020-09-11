@@ -1,0 +1,20 @@
+[package]
+name = "tox-wasm"
+version = "0.1.0"
+authors = ["Lenard Pratt <l3np27@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.68"
+util = {path = "../util"}
+syntax = {path = "../syntax"}
+frontend = {path = "../frontend"}
+vm = {path="../vm"}
+
+
+[profile.release]
+lto = true
