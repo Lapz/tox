@@ -9,3 +9,4 @@ tox/out.ll
 /target
 **/*.rs.bk
 .DS_STORE
+node_modules
