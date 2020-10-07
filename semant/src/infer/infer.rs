@@ -1,4 +1,5 @@
 use crate::hir::Function;
+use crate::infer::Type;
 use crate::resolver::Resolver;
 use crate::HirDatabase;
 use errors::{FileId, WithError};
@@ -14,7 +15,15 @@ impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    fn infer_function(&mut self, function: &Function) {}
+    fn infer_function(&mut self, function: &Function) {
+        let body = if let Some(ty) = self.resolver.get_type(&function.name.item) {
+            ty
+        } else {
+            Type::Unknown
+        };
+
+        println!("{:?}", body);
+    }
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {

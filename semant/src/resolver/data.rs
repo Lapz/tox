@@ -68,6 +68,10 @@ impl FunctionData {
 }
 
 impl Resolver {
+    pub fn get_type(&self, id: &hir::NameId) -> Option<Type> {
+        self.ctx.get_type(id)
+    }
+
     pub fn has_export(&self, id: &hir::NameId) -> bool {
         self.exported_items.get(id).is_some()
     }

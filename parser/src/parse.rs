@@ -10,11 +10,7 @@ pub fn lex_query(db: &impl ParseDatabase, file: FileId) -> WithError<Vec<Span<To
     let tokens = lexer.lex();
     let reporter = lexer.reporter();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(tokens)
-    }
+    WithError(tokens, reporter.finish())
 }
 
 pub fn parse_query(db: &impl ParseDatabase, file: FileId) -> WithError<SourceFile> {
@@ -22,14 +18,10 @@ pub fn parse_query(db: &impl ParseDatabase, file: FileId) -> WithError<SourceFil
 
     let source = db.source(file);
 
-    let tokens = db.lex(file)?;
+    let WithError(tokens, mut errors) = db.lex(file);
     let mut parser = Parser::new(&tokens, reporter, &source);
     let program = parser.parse_program();
     let reporter = parser.reporter();
-
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(program)
-    }
+    errors.extend(reporter.finish());
+    WithError(program, errors)
 }

@@ -411,10 +411,6 @@ where
                     &variant.name().unwrap(),
                 );
 
-                for name in enum_expr.segments() {
-                    println!("{:?}", name.name());
-                }
-
                 let expr = if let Some(expr) = enum_expr.expr() {
                     Some(self.lower_expr(expr))
                 } else {

@@ -16,4 +16,6 @@ pub use codespan_reporting::{
 pub use pos::Span;
 
 pub use db::{FileDatabase, FileDatabaseStorage, FileId};
-pub type WithError<T> = Result<T, Vec<Diagnostic<FileId>>>;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct WithError<T>(pub T, pub Vec<Diagnostic<FileId>>);

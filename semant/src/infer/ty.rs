@@ -37,6 +37,7 @@ pub enum Type {
         fields: HashMap<NameId, Type>,
         methods: HashMap<NameId, Type>,
     },
+    Unknown,
 }
 
 /// Represent an enum variant
