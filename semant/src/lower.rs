@@ -120,7 +120,7 @@ macro_rules! impl_collector {
 }
 
 pub(crate) fn lower_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<hir::SourceFile>> {
-    let source = db.parse(file)?;
+    let WithError(source, errors) = db.parse(file);
     let mut program = hir::SourceFile::default();
 
     for import in source.imports() {
@@ -156,5 +156,5 @@ pub(crate) fn lower_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<
         program.functions.push(db.lower_function(id));
     }
 
-    Ok(Arc::new(program))
+    WithError(Arc::new(program), errors)
 }

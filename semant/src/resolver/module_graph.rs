@@ -49,17 +49,22 @@ impl ModuleGraph {
 }
 
 pub(crate) fn module_graph_query(db: &impl HirDatabase, file: FileId) -> WithError<ModuleGraph> {
-    let program = db.lower(file)?;
+    let WithError(program, mut errors) = db.lower(file);
 
     let mut module_graph = ModuleGraph::new();
 
     for module in &program.modules {
-        let to = db.resolve_modules(file, module.id)?;
+        match db.resolve_modules(file, module.id) {
+            WithError(Some(to), _) => {
+                module_graph.insert_edges(file, to, module.name.item);
 
-        module_graph.insert_edges(file, to, module.name.item);
-
-        module_graph.merge(db.module_graph(to)?)
+                let WithError(graph, error) = db.module_graph(to);
+ errors.extend(error);
+                module_graph.merge(graph)
+            }
+            WithError(None, error) => errors.extend(error),
+        }
     }
 
-    Ok(module_graph)
+    WithError(module_graph, errors)
 }

@@ -1,5 +1,5 @@
 use crate::db::{DatabaseImpl, Diagnostics};
-use errors::FileDatabase;
+use errors::{FileDatabase, WithError};
 use parser::{dump_debug, ParseDatabase};
 use semant::HirDatabase;
 use std::fs::File;
@@ -25,20 +25,12 @@ pub struct Cli {
 impl Cli {
     pub fn run(self) -> io::Result<()> {
         let db = DatabaseImpl::default();
-        let mut errors = Vec::new();
+        // let mut errors = Vec::new();
 
         for path in self.source {
             let handle = db.intern_file(path);
 
-            let tokens = match db.lex(handle) {
-                Ok(source_file) => source_file,
-                Err(more_errors) => {
-                    errors.extend(more_errors);
-
-                    db.emit(&mut errors)?;
-                    continue;
-                }
-            };
+            let WithError(tokens, _) = db.lex(handle);
 
             if self.lex {
                 if let Some(ref output) = self.output {
@@ -48,13 +40,7 @@ impl Cli {
                 }
             }
 
-            let source_file = match db.parse(handle) {
-                Ok(source_file) => source_file,
-                Err(ref mut more_errors) => {
-                    db.emit(more_errors)?;
-                    continue;
-                }
-            };
+            let WithError(source_file, _) = db.parse(handle);
 
             if self.ast {
                 if let Some(ref output) = self.output {
@@ -64,20 +50,7 @@ impl Cli {
                 }
             }
 
-            let _hir = match db.lower(handle) {
-                Ok(program) => program,
-                Err(ref mut more_errors) => {
-                    db.emit(more_errors)?;
-                    continue;
-                }
-            };
-
-            match db.infer(handle) {
-                Ok(_) => {}
-                Err(more_errors) => {
-                    errors.extend(more_errors);
-                }
-            }
+            let WithError((), mut errors) = db.infer(handle);
 
             db.emit(&mut errors)?;
         }

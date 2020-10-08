@@ -27,8 +27,10 @@ where
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
-    let program = db.lower(file)?;
-    let resolver = db.resolve_source_file(file)?;
+    let WithError(program, mut errors) = db.lower(file);
+    let WithError(resolver, error) = db.resolve_source_file(file);
+
+    errors.extend(error);
 
     let mut collector = InferDataCollector { db, resolver };
 
@@ -36,5 +38,5 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         collector.infer_function(function);
     }
 
-    Ok(())
+    WithError((), errors)
 }

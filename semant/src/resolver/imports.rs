@@ -13,7 +13,7 @@ pub fn resolve_imports_query(
 ) -> WithError<Vec<(NameId, Type, TypeKind)>> {
     let mut reporter = Reporter::new(file);
     let import = db.lower_import(file, import_id);
-    let module_graphs = db.module_graph(file)?;
+    let WithError(module_graphs, mut errors) = db.module_graph(file);
     let nodes = module_graphs.get_node(&file);
     let mut import_err = String::new();
     let span = (import.span.start().to_usize(), import.span.end().to_usize());
@@ -27,7 +27,7 @@ pub fn resolve_imports_query(
             span,
         );
 
-        return Err(reporter.finish());
+        return WithError(imported_types, reporter.finish());
     }
 
     let mut nodes = nodes.unwrap();
@@ -43,7 +43,9 @@ pub fn resolve_imports_query(
             import_err.push_str(&format!("{}::", db.lookup_intern_name(segment.name.item)));
 
             if segment.nested_imports.len() > 0 {
-                let exports = db.resolve_source_file(*module)?;
+                let WithError(exports, error) = db.resolve_source_file(*module);
+
+                errors.extend(error);
 
                 for name in &segment.nested_imports {
                     if !exports.has_export(&name.item) {
@@ -81,11 +83,7 @@ pub fn resolve_imports_query(
         }
     }
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(imported_types)
-    }
+    WithError(imported_types, reporter.finish())
 }
 
 #[cfg(test)]

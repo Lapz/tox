@@ -10,7 +10,7 @@ use std::{
 };
 
 pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<Resolver>> {
-    let program = db.lower(file)?;
+    let WithError(program, mut errors) = db.lower(file);
     let reporter = Reporter::new(file);
     let ctx = Ctx::new(db);
     let mut collector = ResolverDataCollector {
@@ -29,15 +29,13 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
 
     let (resolver, reporter) = collector.finish();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(Arc::new(resolver))
-    }
+    errors.extend(reporter.finish());
+
+    WithError(Arc::new(resolver), errors)
 }
 
 pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<Resolver>> {
-    let source_file = db.lower(file)?;
+    let WithError(source_file, mut errors) = db.lower(file);
 
     let reporter = Reporter::new(file);
 
@@ -54,7 +52,10 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
     };
 
     for import in &source_file.imports {
-        db.resolve_import(file, import.id)?
+        let WithError(import, error) = db.resolve_import(file, import.id);
+
+        errors.extend(error);
+        import
             .into_iter()
             .for_each(|(name, ty, kind)| collector.ctx.insert_type(name, ty, kind));
     }
@@ -103,9 +104,7 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
 
     let (resolver, reporter) = collector.finish();
 
-    if reporter.has_errors() {
-        Err(reporter.finish())
-    } else {
-        Ok(Arc::new(resolver))
-    }
+    errors.extend(reporter.finish());
+
+    WithError(Arc::new(resolver), errors)
 }

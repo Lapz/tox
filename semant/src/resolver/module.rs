@@ -18,7 +18,7 @@ pub fn resolve_modules_query(
     db: &impl HirDatabase,
     file: FileId,
     mod_id: ModuleId,
-) -> WithError<FileId> {
+) -> WithError<Option<FileId>> {
     let mut reporter = Reporter::new(file);
     let module = db.lower_module(file, mod_id);
     let name = db.lookup_intern_name(module.name.item);
@@ -40,7 +40,7 @@ pub fn resolve_modules_query(
         (false, false) => {
             reporter.error(format!("Unresolved module `{}`", name), "", span);
 
-            Err(reporter.finish())
+            WithError(None, reporter.finish())
         }
 
         (true, false) => {
@@ -51,11 +51,11 @@ pub fn resolve_modules_query(
                     span,
                 );
 
-                return Err(reporter.finish());
+                WithError(None, reporter.finish())
+            } else {
+                // add a path from file -> module.file_id
+                WithError(Some(db.intern_file(path_buf)), reporter.finish())
             }
-
-            // add a path from file -> module.file_id
-            Ok(db.intern_file(path_buf))
         }
 
         (false, true) => {
@@ -67,9 +67,9 @@ pub fn resolve_modules_query(
                     "Sub-module's exist but the module file doesn't ",
                     span,
                 );
-                Err(reporter.finish())
+                WithError(None, reporter.finish())
             } else {
-                Ok(db.intern_file(dir))
+                WithError(Some(db.intern_file(dir)), reporter.finish())
             }
         }
 
@@ -81,7 +81,7 @@ pub fn resolve_modules_query(
             if path_buf == db.lookup_intern_file(module.file) && !dir.exists() {
                 reporter.error(format!("Unresolved module `{}`", name), "", span);
 
-                Err(reporter.finish())
+                WithError(None, reporter.finish())
             } else if dir.exists() && path_buf.exists() {
                 reporter.error(
                     format!("Conflicting module `{}`", name),
@@ -93,11 +93,11 @@ pub fn resolve_modules_query(
                     span,
                 );
 
-                Err(reporter.finish())
+                WithError(None, reporter.finish())
             } else if dir.exists() {
-                Ok(db.intern_file(dir))
+                WithError(Some(db.intern_file(dir)), reporter.finish())
             } else {
-                Ok(db.intern_file(path_buf))
+                WithError(Some(db.intern_file(path_buf)), reporter.finish())
             }
 
             // add a path from file -> module.file_id

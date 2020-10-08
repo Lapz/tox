@@ -57,7 +57,7 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
     #[salsa::invoke(crate::resolver::resolve_exports_query)]
     fn resolve_exports(&self, file: FileId) -> WithError<Arc<Resolver>>;
     #[salsa::invoke(crate::resolver::resolve_modules_query)]
-    fn resolve_modules(&self, file: FileId, module: hir::ModuleId) -> WithError<FileId>;
+    fn resolve_modules(&self, file: FileId, module: hir::ModuleId) -> WithError<Option<FileId>>;
     #[salsa::invoke(crate::resolver::resolve_source_file_query)]
     fn resolve_source_file(&self, file: FileId) -> WithError<Arc<Resolver>>;
     #[salsa::invoke(crate::resolver::resolve_imports_query)]
