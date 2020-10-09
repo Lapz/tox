@@ -346,7 +346,7 @@ where
                             span,
                         );
 
-                        return Err(());
+                        Type::Unknown
                     }
                 };
 
@@ -400,7 +400,7 @@ where
                     span,
                 );
 
-                Err(())
+                Ok(Type::Unknown)
             }
         }
     }

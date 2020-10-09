@@ -1,5 +1,5 @@
-use crate::hir::Function;
-use crate::infer::Type;
+use crate::hir::{Function, FunctionAstMap, StmtId};
+use crate::infer::{Type, TypeCon};
 use crate::resolver::Resolver;
 use crate::HirDatabase;
 use errors::{FileId, WithError};
@@ -16,13 +16,33 @@ where
     DB: HirDatabase,
 {
     fn infer_function(&mut self, function: &Function) {
-        let body = if let Some(ty) = self.resolver.get_type(&function.name.item) {
+        let expected = if let Some(ty) = self.resolver.get_type(&function.name.item) {
             ty
         } else {
             Type::Unknown
         };
 
-        println!("{:?}", body);
+        let body = if let Some(body) = function.body {
+        } else {
+            Type::Con(TypeCon::Void)
+        };
+
+        println!("{:?}", expected);
+    }
+
+    fn infer_statements(&mut self, map: &FunctionAstMap, body: &[StmtId], returns: &Type) {
+        for id in body {
+            let stmt = map.stmt(id);
+
+            match stmt {
+                crate::hir::Stmt::Let {
+                    pat,
+                    ascribed_type,
+                    initializer,
+                } => {}
+                crate::hir::Stmt::Expr(expr) => self.infer_expr(map, expr, returns),
+            }
+        }
     }
 }
 
