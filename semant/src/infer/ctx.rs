@@ -89,7 +89,7 @@ impl Ctx {
     }
 
     pub(crate) fn get_kind(&self, name: &NameId) -> TypeKind {
-        *self.kind.get(name).unwrap()
+        self.kind[name]
     }
 
     pub(crate) fn insert_type(&mut self, name: NameId, ty: Type, kind: TypeKind) {

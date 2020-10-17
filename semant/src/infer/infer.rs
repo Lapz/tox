@@ -1,4 +1,3 @@
-use crate::HirDatabase;
 use crate::{hir::Literal, resolver::Resolver};
 use crate::{
     hir::LiteralId,
@@ -9,12 +8,14 @@ use crate::{
     hir::{ExprId, Function, FunctionAstMap, StmtId},
     util,
 };
+use crate::{Ctx, HirDatabase};
 use errors::{FileId, WithError};
 use std::sync::Arc;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
     db: DB,
+    ctx: Ctx,
     resolver: Arc<Resolver>,
 }
 
@@ -29,14 +30,20 @@ where
             Type::Unknown
         };
 
+        self.ctx.begin_scope();
+
         let body = if let Some(body) = &function.body {
             Type::Unknown
         } else {
             Type::Con(TypeCon::Void)
         };
 
+        self.ctx.end_scope();
+
         println!("{:?}", expected);
     }
+
+    fn unify(&self, lhs: &Type, rhs: &Type) {}
 
     fn infer_statements(
         &mut self,
@@ -53,26 +60,39 @@ where
                     ascribed_type,
                     initializer,
                 } => {
-                    match (ascribed_type, initializer) {
-                        (Some(expected), Some(init)) => {}
-                        (Some(expected), None) => {}
-                        (None, Some(init)) => {}
-                        (None, None) => {}
-                    }
-                    // let pat = map.pat(&pat.item);
-                    // match pat {
-                    //     crate::hir::Pattern::Bind { name } => {
+                    let (ascribed, init) = match (ascribed_type, initializer) {
+                        (Some(expected), Some(init)) => {
+                            let expr = self.infer_expr(map, init);
 
-                    //     }
-                    //     crate::hir::Pattern::Placeholder => {}
-                    //     crate::hir::Pattern::Tuple(_) => {}
-                    //     crate::hir::Pattern::Literal(literal) => {
-                    //         let lhs = self.infer_literal(*literal);
-                    //     }
-                    // }
+                            self.unify(&expected, expr);
+                            (
+                                self.resolver.lookup_intern_type(&expected.item).unwrap(),
+                                expr,
+                            )
+                        }
+                        (Some(expected), None) => (
+                            self.resolver.lookup_intern_type(&expected.item).unwrap(),
+                            Type::Con(TypeCon::Void),
+                        ),
+                        (None, Some(init)) => {
+                            (Type::Con(TypeCon::Void), self.infer_expr(map, init))
+                        }
+                        (None, None) => (Type::Con(TypeCon::Void), Type::Con(TypeCon::Void)),
+                    };
+                    let pat = map.pat(&pat.item);
+                    match pat {
+                        crate::hir::Pattern::Bind { name } => {
+                            self.ctx.insert_type(name.item, ty, kind)
+                        }
+                        crate::hir::Pattern::Placeholder => {}
+                        crate::hir::Pattern::Tuple(idents) => {}
+                        crate::hir::Pattern::Literal(literal) => {
+                            let lhs = self.infer_literal(*literal);
+                        }
+                    }
                 }
                 crate::hir::Stmt::Expr(expr) => {
-                    let rhs = self.infer_expr(map, expr, returns);
+                    let rhs = self.infer_expr(map, expr);
                 }
             }
         }
@@ -92,7 +112,7 @@ where
         }
     }
 
-    fn infer_expr(&mut self, map: &FunctionAstMap, id: &ExprId, returns: &Type) -> Type {
+    fn infer_expr(&mut self, map: &FunctionAstMap, id: &ExprId) -> Type {
         let expr = map.expr(id);
 
         match expr {
@@ -135,7 +155,9 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
 
     errors.extend(error);
 
-    let mut collector = InferDataCollector { db, resolver };
+    let ctx = resolver.ctx.clone();
+
+    let mut collector = InferDataCollector { db, ctx, resolver };
 
     for function in &program.functions {
         collector.infer_function(function);

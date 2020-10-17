@@ -16,6 +16,7 @@ pub(crate) struct ResolverDataCollector<DB> {
     pub(crate) exported_items: HashSet<hir::NameId>,
     pub(crate) binding_error: bool,
     pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
+    pub(crate) interned_types: HashMap<hir::TypeId, Type>,
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -33,6 +34,7 @@ pub struct Resolver {
     pub(crate) items: HashSet<hir::NameId>,
     pub(crate) exported_items: HashSet<hir::NameId>,
     pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
+    pub(crate) interned_types: HashMap<hir::TypeId, Type>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -72,6 +74,10 @@ impl Resolver {
         self.ctx.get_type(id)
     }
 
+    pub fn lookup_intern_type(&self, id: &hir::TypeId) -> Option<Type> {
+        self.interned_types.get(id).map(Clone::clone)
+    }
+
     pub fn has_export(&self, id: &hir::NameId) -> bool {
         self.exported_items.get(id).is_some()
     }
@@ -88,10 +94,20 @@ where
                 items: self.items,
                 exported_items: self.exported_items,
                 function_data: self.function_data,
+                interned_types: self.interned_types,
             },
             self.reporter,
         )
     }
+
+    pub(crate) fn intern_type(&mut self, id: TypeId, ty: Type) {
+        self.interned_types.insert(id, ty);
+    }
+
+    pub(crate) fn lookup_type(&mut self, id: &TypeId) -> Option<Type> {
+        self.interned_types.get(id).map(Clone::clone)
+    }
+
     pub(crate) fn begin_scope(&mut self) {
         self.ctx.begin_scope();
     }
@@ -303,20 +319,24 @@ where
     pub(crate) fn resolve_type(&mut self, id: &util::Span<TypeId>) -> Result<Type, ()> {
         let ty = self.db.lookup_intern_type(id.item);
 
-        match ty {
+        if let Some(interned_ty) = self.lookup_type(&id.item) {
+            return Ok(interned_ty);
+        }
+
+        let ty = match ty {
             hir::Type::ParenType(types) => {
                 let mut signature = vec![];
                 for id in &types {
                     signature.push(self.resolve_type(id)?)
                 }
 
-                Ok(Type::Tuple(signature))
+                Type::Tuple(signature)
             }
 
-            hir::Type::ArrayType { ty, size } => Ok(Type::Con(TypeCon::Array {
+            hir::Type::ArrayType { ty, size } => Type::Con(TypeCon::Array {
                 ty: Box::new(self.resolve_type(&ty)?),
                 size,
-            })),
+            }),
             hir::Type::FnType { params, ret } => {
                 let mut signature = vec![];
 
@@ -330,7 +350,7 @@ where
                     signature.push(Type::Con(TypeCon::Void))
                 }
 
-                Ok(Type::App(signature))
+                Type::App(signature)
             }
             hir::Type::Poly { name, type_args } => {
                 let ty = match self.ctx.get_type(&name) {
@@ -370,7 +390,7 @@ where
                     }
                 }
 
-                Ok(ty)
+                ty
             }
             hir::Type::Ident(name) => {
                 if let Some(ty) = self.ctx.get_type(&name) {
@@ -387,6 +407,8 @@ where
 
                         return Err(());
                     }
+
+                    self.intern_type(id.item, ty.clone());
                     return Ok(ty);
                 }
 
@@ -400,8 +422,12 @@ where
                     span,
                 );
 
-                Ok(Type::Unknown)
+                Type::Unknown
             }
-        }
+        };
+
+        self.intern_type(id.item, ty.clone());
+
+        Ok(ty)
     }
 }
