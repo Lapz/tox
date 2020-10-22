@@ -23,10 +23,11 @@ pub enum TypeCon {
 ///
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
-    /// (x |-> y)
-    /// Last type in a app is the return
-    /// type. \n i.e. i32 => App(Con(Int))
-    /// and f(a:i32,b:i32) -> f32 => App(vec![App(Con(Int)) ,App(Con(Int)),App(Con(Float)) ])
+    /// (x |-> y) <br/>
+    /// Last type in a app is the return type. <br/>
+    /// i.e. i32 => App(Con(Int))
+    /// and f(a:i32,b:i32) -> f32 <br/>
+    /// App(vec&#33;[App(Con(Int)) ,App(Con(Int)),App(Con(Float)) ])
     App(Vec<Type>),
     Tuple(Vec<Type>),
     Poly(Vec<TypeVar>, Box<Type>),

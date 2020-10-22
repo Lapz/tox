@@ -1,15 +1,12 @@
-use crate::{hir::Literal, resolver::Resolver};
+use crate::hir::{ExprId, Function, FunctionAstMap, StmtId};
+use crate::{hir::Literal, resolver::Resolver, util::Span};
 use crate::{
     hir::LiteralId,
     hir::PatId,
     infer::{Type, TypeCon},
 };
-use crate::{
-    hir::{ExprId, Function, FunctionAstMap, StmtId},
-    util,
-};
 use crate::{Ctx, HirDatabase};
-use errors::{FileId, WithError};
+use errors::{FileId, Reporter, Span, WithError};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -17,6 +14,7 @@ struct InferDataCollector<DB> {
     db: DB,
     ctx: Ctx,
     resolver: Arc<Resolver>,
+    reporter: Reporter,
 }
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -43,7 +41,69 @@ where
         println!("{:?}", expected);
     }
 
-    fn unify(&self, lhs: &Type, rhs: &Type) {}
+    fn unify(
+        &self,
+        lhs: &Type,
+        rhs: &Type,
+        span: (usize, usize),
+        notes: Vec<String>,
+        report: bool,
+    ) {
+        match (lhs, rhs) {
+            (Type::App(types1), Type::App(types2)) => {
+                if types1.len() != types2.len() && report {
+                    let msg = format!("Expected {} params, found {}", types1.len(), types2.len());
+                    self.reporter.error(msg, "", span);
+                    return;
+                }
+
+                if types1[types1.len() - 1] != types2[types2.len() - 1] && report {
+                    let msg = format!(
+                        "Expected {} found {}. The return types are different",
+                        types1.len(),
+                        types2.len()
+                    );
+                    self.reporter.error(msg, "", span);
+                    return;
+                }
+
+                for (a, b) in types1.iter().zip(types2.iter()) {
+                    let _ = self.unify(a, b, span, vec![], false);
+                }
+            }
+            (Type::Tuple(types1), Type::Tuple(types2)) => {
+                if types1.len() != types2.len() && report {
+                    let msg = format!("Expected {} params, found {}", types1.len(), types2.len());
+                    self.reporter.error(msg, "", span);
+                    return;
+                }
+
+                for (a, b) in types1.iter().zip(types2.iter()) {
+                    let _ = self.unify(a, b, span, vec![], false);
+                }
+            }
+            (Type::Enum(_), Type::Enum(_)) => {}
+            (Type::Class { fields, methods }, Type::Class { fields, methods }) => {}
+            (Type::Var(v1), Type::Var(v2)) => {
+                if v1 != v2 && report {
+                    let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                    self.reporter.error(msg, "", span);
+                }
+            }
+            (Type::Poly(_, _), t) => {}
+            (t, Type::Poly(_, _)) => {}
+            (Type::Unknown, _) => {}
+            (_, Type::Unknown) => {}
+            (t1, t2) => {
+                //Todo report error
+
+                if report {
+                    let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                    self.reporter.error(msg, "", span);
+                }
+            }
+        }
+    }
 
     fn infer_statements(
         &mut self,
@@ -152,12 +212,17 @@ where
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
-
+    let reporter = Reporter::new(file);
     errors.extend(error);
 
     let ctx = resolver.ctx.clone();
 
-    let mut collector = InferDataCollector { db, ctx, resolver };
+    let mut collector = InferDataCollector {
+        db,
+        ctx,
+        resolver,
+        reporter,
+    };
 
     for function in &program.functions {
         collector.infer_function(function);

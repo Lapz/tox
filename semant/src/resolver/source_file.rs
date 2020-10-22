@@ -21,6 +21,7 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
         exported_items: HashSet::new(),
         binding_error: false,
         function_data: HashMap::new(),
+        interned_types: HashMap::new(),
     };
 
     for function in &program.functions {
@@ -49,6 +50,7 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
         exported_items: HashSet::new(),
         binding_error: false,
         function_data: HashMap::new(),
+        interned_types: HashMap::new(),
     };
 
     for import in &source_file.imports {
