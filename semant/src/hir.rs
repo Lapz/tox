@@ -37,6 +37,8 @@ pub struct BodyId(pub(crate) u64);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Name(SmolStr);
 
+pub const PLACEHOLDER_NAME: Name = Name(SmolStr::new_inline_from_ascii(1, b"_"));
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Import {
     pub(crate) id: ImportId,
@@ -57,7 +59,7 @@ pub struct Function {
     pub(crate) ast_map: FunctionAstMap,
     pub(crate) params: Vec<util::Span<ParamId>>,
     pub(crate) type_params: Vec<util::Span<TypeParamId>>,
-    pub(crate) body: Option<Vec<StmtId>>,
+    pub(crate) body: Option<Vec<util::Span<StmtId>>>,
     pub(crate) returns: Option<util::Span<TypeId>>,
     pub(crate) span: TextRange,
 }
@@ -196,7 +198,7 @@ pub enum Pattern {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct MatchArm {
     pub(crate) pats: Vec<util::Span<PatId>>,
-    pub(crate) expr: ExprId,
+    pub(crate) expr: util::Span<ExprId>,
 }
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Literal {
@@ -233,68 +235,68 @@ pub enum Stmt {
     Let {
         pat: util::Span<PatId>,
         ascribed_type: Option<util::Span<TypeId>>,
-        initializer: Option<ExprId>,
+        initializer: Option<util::Span<ExprId>>,
     },
-    Expr(ExprId),
+    Expr(util::Span<ExprId>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Block(pub Vec<StmtId>);
+pub struct Block(pub Vec<util::Span<StmtId>>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
-    Array(Vec<ExprId>),
+    Array(Vec<util::Span<ExprId>>),
     Binary {
-        lhs: ExprId,
+        lhs: util::Span<ExprId>,
         op: BinOp,
-        rhs: ExprId,
+        rhs: util::Span<ExprId>,
     },
     Block(BlockId),
     Break,
     Call {
-        callee: ExprId,
-        args: Vec<ExprId>,
+        callee: util::Span<ExprId>,
+        args: Vec<util::Span<ExprId>>,
         type_args: util::Span<Vec<util::Span<TypeId>>>,
     },
     Cast {
-        expr: ExprId,
+        expr: util::Span<ExprId>,
         ty: util::Span<TypeId>,
     },
     Continue,
     If {
-        cond: ExprId,
-        then_branch: ExprId,
-        else_branch: Option<ExprId>,
+        cond: util::Span<ExprId>,
+        then_branch: util::Span<ExprId>,
+        else_branch: Option<util::Span<ExprId>>,
     },
     Ident(util::Span<NameId>),
     Index {
-        base: ExprId,
-        index: ExprId,
+        base: util::Span<ExprId>,
+        index: util::Span<ExprId>,
     },
     While {
-        cond: ExprId,
+        cond: util::Span<ExprId>,
         body: BlockId,
     },
     Literal(LiteralId),
-    Paren(ExprId),
-    Tuple(Vec<ExprId>),
+    Paren(util::Span<ExprId>),
+    Tuple(Vec<util::Span<ExprId>>),
     Unary {
         op: UnaryOp,
-        expr: ExprId,
+        expr: util::Span<ExprId>,
     },
-    Return(Option<ExprId>),
+    Return(Option<util::Span<ExprId>>),
     Match {
-        expr: ExprId,
+        expr: util::Span<ExprId>,
         arms: Vec<MatchArm>,
     },
     Enum {
         def: util::Span<NameId>,
         variant: util::Span<NameId>,
-        expr: Option<ExprId>,
+        expr: Option<util::Span<ExprId>>,
     },
     RecordLiteral {
         def: util::Span<NameId>,
-        fields: Vec<(util::Span<NameId>, ExprId)>,
+        fields: Vec<(util::Span<NameId>, util::Span<ExprId>)>,
     },
 }
 

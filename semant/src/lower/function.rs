@@ -32,7 +32,7 @@ where
         self,
         exported: bool,
         name: util::Span<hir::NameId>,
-        body: Option<Vec<hir::StmtId>>,
+        body: Option<Vec<util::Span<hir::StmtId>>>,
         returns: Option<util::Span<hir::TypeId>>,
         span: TextRange,
     ) -> hir::Function {
@@ -84,7 +84,7 @@ where
         id
     }
 
-    pub fn expr_to_stmt(&mut self, expr: hir::ExprId) -> hir::StmtId {
+    pub fn expr_to_stmt(&mut self, expr: util::Span<hir::ExprId>) -> util::Span<hir::StmtId> {
         let current = self.stmt_id_count;
 
         self.stmt_id_count += 1;
@@ -93,7 +93,7 @@ where
 
         self.ast_map.insert_stmt(id, hir::Stmt::Expr(expr));
 
-        id
+        util::Span::new(id, expr.start, expr.end)
     }
 
     pub fn add_expr(&mut self, expr: hir::Expr) -> hir::ExprId {
@@ -156,7 +156,7 @@ where
         self.add_param(&param, hir::Param { pat, ty });
     }
 
-    pub fn lower_stmt(&mut self, node: ast::Stmt) -> hir::StmtId {
+    pub fn lower_stmt(&mut self, node: ast::Stmt) -> util::Span<hir::StmtId> {
         let hir_stmt = match node {
             ast::Stmt::LetStmt(ref let_stmt) => {
                 let pat = self.lower_pattern(let_stmt.pat().unwrap());
@@ -184,11 +184,11 @@ where
             }
         };
 
-        self.add_stmt(hir_stmt)
+        util::Span::from_ast(self.add_stmt(hir_stmt), &node)
     }
 
-    pub fn lower_expr(&mut self, node: ast::Expr) -> hir::ExprId {
-        let expr = match node {
+    pub fn lower_expr(&mut self, node: ast::Expr) -> util::Span<hir::ExprId> {
+        let hir_expr = match node {
             ast::Expr::ArrayExpr(ref array) => {
                 hir::Expr::Array(array.exprs().map(|expr| self.lower_expr(expr)).collect())
             }
@@ -294,7 +294,8 @@ where
 
                 let body = self.add_block(body_block);
 
-                let while_expr = self.add_expr(hir::Expr::While { cond, body });
+                let while_expr =
+                    util::Span::from_ast(self.add_expr(hir::Expr::While { cond, body }), for_expr);
 
                 let block = hir::Block(vec![init, self.expr_to_stmt(while_expr)]);
 
@@ -421,7 +422,7 @@ where
             }
         };
 
-        self.add_expr(expr)
+        util::Span::from_ast(self.add_expr(hir_expr), &node)
     }
 }
 

@@ -1,12 +1,10 @@
-use crate::hir::{ExprId, Function, FunctionAstMap, StmtId};
-use crate::{hir::Literal, resolver::Resolver, util::Span};
 use crate::{
-    hir::LiteralId,
-    hir::PatId,
+    hir::{ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, PLACEHOLDER_NAME},
     infer::{Type, TypeCon},
+    resolver::Resolver,
+    util, Ctx, HirDatabase,
 };
-use crate::{Ctx, HirDatabase};
-use errors::{FileId, Reporter, Span, WithError};
+use errors::{FileId, Reporter, WithError};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -30,10 +28,12 @@ where
 
         self.ctx.begin_scope();
 
-        let body = if let Some(body) = &function.body {
-            Type::Unknown
+        if let Some(body) = &function.body {
+            self.infer_statements(&function.ast_map, &body, &Type::Con(TypeCon::Void))
+                .unwrap()
         } else {
-            Type::Con(TypeCon::Void)
+            self.infer_statements(&function.ast_map, &[], &Type::Con(TypeCon::Void))
+                .unwrap()
         };
 
         self.ctx.end_scope();
@@ -42,11 +42,11 @@ where
     }
 
     fn unify(
-        &self,
+        &mut self,
         lhs: &Type,
         rhs: &Type,
         span: (usize, usize),
-        notes: Vec<String>,
+        notes: Option<String>,
         report: bool,
     ) {
         match (lhs, rhs) {
@@ -63,12 +63,12 @@ where
                         types1.len(),
                         types2.len()
                     );
-                    self.reporter.error(msg, "", span);
+                    self.reporter.error(msg, notes.unwrap_or("".into()), span);
                     return;
                 }
 
                 for (a, b) in types1.iter().zip(types2.iter()) {
-                    let _ = self.unify(a, b, span, vec![], false);
+                    let _ = self.unify(a, b, span, None, false);
                 }
             }
             (Type::Tuple(types1), Type::Tuple(types2)) => {
@@ -79,11 +79,17 @@ where
                 }
 
                 for (a, b) in types1.iter().zip(types2.iter()) {
-                    let _ = self.unify(a, b, span, vec![], false);
+                    let _ = self.unify(a, b, span, None, false);
                 }
             }
             (Type::Enum(_), Type::Enum(_)) => {}
-            (Type::Class { fields, methods }, Type::Class { fields, methods }) => {}
+            (
+                Type::Class { fields, methods },
+                Type::Class {
+                    fields: feilds1,
+                    methods: methods1,
+                },
+            ) => {}
             (Type::Var(v1), Type::Var(v2)) => {
                 if v1 != v2 && report {
                     let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
@@ -105,51 +111,77 @@ where
         }
     }
 
+    fn assign_pattern_type(&mut self, map: &FunctionAstMap, id: &util::Span<PatId>, ty: Type) {
+        let pat = map.pat(&id.item);
+        match pat {
+            crate::hir::Pattern::Bind { name } => {
+                self.ctx
+                    .insert_type(name.item, ty, crate::resolver::TypeKind::Type)
+            }
+            crate::hir::Pattern::Placeholder => self.ctx.insert_type(
+                self.db.intern_name(PLACEHOLDER_NAME),
+                ty,
+                crate::resolver::TypeKind::Type,
+            ),
+            crate::hir::Pattern::Tuple(idents) => match ty {
+                Type::Tuple(types) => {
+                    for (ident, ty) in idents.iter().zip(types.into_iter()) {
+                        self.assign_pattern_type(map, ident, ty)
+                    }
+                }
+
+                _ => {
+                    let msg = format!("Tried assigning a non tuple type to a tuple pattern");
+
+                    self.reporter.error(
+                        msg,
+                        &format!("`{:?}` is not a tuple type", ty),
+                        id.as_reporter_span(),
+                    );
+                }
+            },
+            crate::hir::Pattern::Literal(_) => {}
+        }
+    }
+
     fn infer_statements(
         &mut self,
         map: &FunctionAstMap,
-        body: &[StmtId],
+        body: &[util::Span<StmtId>],
         returns: &Type,
     ) -> Result<(), ()> {
         for id in body {
-            let stmt = map.stmt(id);
-
+            let stmt = map.stmt(&id.item);
             match stmt {
                 crate::hir::Stmt::Let {
                     pat,
                     ascribed_type,
                     initializer,
                 } => {
-                    let (ascribed, init) = match (ascribed_type, initializer) {
+                    match (ascribed_type, initializer) {
                         (Some(expected), Some(init)) => {
                             let expr = self.infer_expr(map, init);
+                            let expected =
+                                self.resolver.lookup_intern_type(&expected.item).unwrap();
 
-                            self.unify(&expected, expr);
-                            (
+                            self.unify(&expected, &expr, id.as_reporter_span(), None, true);
+                            self.assign_pattern_type(map, pat, expected);
+                        }
+                        (Some(expected), None) => {
+                            self.assign_pattern_type(
+                                map,
+                                pat,
                                 self.resolver.lookup_intern_type(&expected.item).unwrap(),
-                                expr,
-                            )
+                            );
                         }
-                        (Some(expected), None) => (
-                            self.resolver.lookup_intern_type(&expected.item).unwrap(),
-                            Type::Con(TypeCon::Void),
-                        ),
                         (None, Some(init)) => {
-                            (Type::Con(TypeCon::Void), self.infer_expr(map, init))
+                            let expected = self.infer_expr(map, init);
+                            self.assign_pattern_type(map, pat, expected);
                         }
-                        (None, None) => (Type::Con(TypeCon::Void), Type::Con(TypeCon::Void)),
+                        (None, None) => {
+                            self.assign_pattern_type(map, pat, Type::Con(TypeCon::Void));
+                        }
                     };
-                    let pat = map.pat(&pat.item);
-                    match pat {
-                        crate::hir::Pattern::Bind { name } => {
-                            self.ctx.insert_type(name.item, ty, kind)
-                        }
-                        crate::hir::Pattern::Placeholder => {}
-                        crate::hir::Pattern::Tuple(idents) => {}
-                        crate::hir::Pattern::Literal(literal) => {
-                            let lhs = self.infer_literal(*literal);
-                        }
-                    }
                 }
                 crate::hir::Stmt::Expr(expr) => {
                     let rhs = self.infer_expr(map, expr);
@@ -172,8 +204,8 @@ where
         }
     }
 
-    fn infer_expr(&mut self, map: &FunctionAstMap, id: &ExprId) -> Type {
-        let expr = map.expr(id);
+    fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
+        let expr = map.expr(&id.item);
 
         match expr {
             crate::hir::Expr::Array(_) => {}
@@ -227,6 +259,8 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
     for function in &program.functions {
         collector.infer_function(function);
     }
+
+    errors.extend(collector.reporter.finish());
 
     WithError((), errors)
 }

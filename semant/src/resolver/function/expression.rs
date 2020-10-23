@@ -11,10 +11,10 @@ where
     pub(crate) fn resolve_expression(
         &mut self,
         fn_name: &util::Span<NameId>,
-        expr: &ExprId,
+        expr: &util::Span<ExprId>,
         ast_map: &FunctionAstMap,
     ) -> Result<(), ()> {
-        let expr = ast_map.expr(expr);
+        let expr = ast_map.expr(&expr.item);
 
         match expr {
             Expr::Array(exprs) | Expr::Tuple(exprs) => {

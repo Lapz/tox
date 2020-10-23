@@ -42,16 +42,10 @@ enum A {
 
 
 export fn id<T>(a:T,(x,z):T) -> (T,i32) {
-    let (y,(x,a)) = 10;
+   
 
-    let f  = A::B(10);
+    let a:i32 = "";
 
-    let c = A::B;
+    let (a,b) = 10;
 
-    let d = Bza {
-        foo:1,
-        bar:22,
-    };
-    
-    let x =10;
 }

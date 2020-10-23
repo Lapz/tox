@@ -75,10 +75,10 @@ where
     pub(crate) fn resolve_statement(
         &mut self,
         fn_name: &util::Span<NameId>,
-        stmt: &StmtId,
+        stmt: &util::Span<StmtId>,
         ast_map: &FunctionAstMap,
     ) -> Result<(), ()> {
-        let stmt = ast_map.stmt(stmt);
+        let stmt = ast_map.stmt(&stmt.item);
 
         match stmt {
             crate::hir::Stmt::Let {
