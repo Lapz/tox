@@ -228,8 +228,11 @@ where
             crate::hir::Expr::Index { base, index } => {}
             crate::hir::Expr::While { cond, body } => {}
             crate::hir::Expr::Literal(literal) => return self.infer_literal(*literal),
-            crate::hir::Expr::Paren(_) => {}
-            crate::hir::Expr::Tuple(_) => {}
+            crate::hir::Expr::Paren(inner) => return self.infer_expr(map, inner),
+            crate::hir::Expr::Tuple(exprs) => {
+                let types = exprs.iter().map(|id| self.infer_expr(map, id)).collect();
+                return Type::Tuple(types);
+            }
             crate::hir::Expr::Unary { op, expr } => {}
             crate::hir::Expr::Return(_) => {}
             crate::hir::Expr::Match { expr, arms } => {}

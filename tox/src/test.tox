@@ -42,7 +42,6 @@ enum A {
 
 
 export fn id<T>(a:T,(x,z):T) -> (T,i32) {
-   
 
     let a:i32 = "";
 
