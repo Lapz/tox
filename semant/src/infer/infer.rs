@@ -1,5 +1,8 @@
 use crate::{
-    hir::{ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, PLACEHOLDER_NAME},
+    hir::{
+        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId,
+        UnaryOp, PLACEHOLDER_NAME,
+    },
     infer::{Type, TypeCon},
     resolver::Resolver,
     util, Ctx, HirDatabase,
@@ -53,7 +56,7 @@ where
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {
                     let msg = format!("Expected {} params, found {}", types1.len(), types2.len());
-                    self.reporter.error(msg, "", span);
+                    self.reporter.error(msg, notes.unwrap_or("".into()), span);
                     return;
                 }
 
@@ -74,7 +77,7 @@ where
             (Type::Tuple(types1), Type::Tuple(types2)) => {
                 if types1.len() != types2.len() && report {
                     let msg = format!("Expected {} params, found {}", types1.len(), types2.len());
-                    self.reporter.error(msg, "", span);
+                    self.reporter.error(msg, notes.unwrap_or("".into()), span);
                     return;
                 }
 
@@ -93,7 +96,17 @@ where
             (Type::Var(v1), Type::Var(v2)) => {
                 if v1 != v2 && report {
                     let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
-                    self.reporter.error(msg, "", span);
+                    self.reporter.error(msg, notes.unwrap_or("".into()), span);
+                }
+            }
+            (Type::Con(TypeCon::Int), Type::Con(TypeCon::Float)) => {}
+            (Type::Con(TypeCon::Float), Type::Con(TypeCon::Int)) => {}
+            (Type::Con(l), Type::Con(r)) => {
+                if l != r {
+                    if report {
+                        let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                        self.reporter.error(msg, notes.unwrap_or("".into()), span);
+                    }
                 }
             }
             (Type::Poly(_, _), t) => {}
@@ -105,7 +118,7 @@ where
 
                 if report {
                     let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
-                    self.reporter.error(msg, "", span);
+                    self.reporter.error(msg, notes.unwrap_or("".into()), span);
                 }
             }
         }
@@ -204,50 +217,255 @@ where
         }
     }
 
+    fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId) -> Type {
+        let block = map.block(block_id);
+
+        unimplemented!()
+    }
+
     fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
         let expr = map.expr(&id.item);
 
         match expr {
-            crate::hir::Expr::Array(_) => {}
-            crate::hir::Expr::Binary { lhs, op, rhs } => {}
-            crate::hir::Expr::Block(_) => {}
-            crate::hir::Expr::Break => {}
+            crate::hir::Expr::Array(exprs) => {
+                if exprs.len() == 0 {
+                    return Type::Unknown;
+                }
+
+                let first = self.infer_expr(map, &exprs[0]);
+
+                exprs.iter().skip(1).for_each(|id| {
+                    let inferred = self.infer_expr(map, id);
+                    self.unify(&first, &inferred, id.as_reporter_span(), None, true)
+                });
+
+                Type::Con(TypeCon::Array {
+                    ty: Box::new(first),
+                    size: None,
+                })
+            }
+            crate::hir::Expr::Binary { lhs, op, rhs } => {
+                let inferred_lhs = self.infer_expr(map, lhs);
+                let inferred_rhs = self.infer_expr(map, rhs);
+
+                match op {
+                    BinOp::Plus | BinOp::Minus | BinOp::Mult | BinOp::Div => {
+                        self.unify(
+                            &inferred_lhs,
+                            &inferred_rhs,
+                            id.as_reporter_span(),
+                            Some("`+`,`-`,`*`,`/` operators only works on i32 and f32".into()),
+                            true,
+                        );
+                        Type::Con(TypeCon::Bool)
+                    }
+                    BinOp::And | BinOp::Or => {
+                        self.unify(
+                            &inferred_lhs,
+                            &Type::Con(TypeCon::Bool),
+                            lhs.as_reporter_span(),
+                            Some("Expected a bool".into()),
+                            true,
+                        );
+                        self.unify(
+                            &inferred_rhs,
+                            &Type::Con(TypeCon::Bool),
+                            rhs.as_reporter_span(),
+                            Some("Expected a bool".into()),
+                            true,
+                        );
+
+                        Type::Con(TypeCon::Bool)
+                    }
+                    BinOp::LessThan
+                    | BinOp::GreaterThan
+                    | BinOp::GreaterThanEqual
+                    | BinOp::LessThanEqual => {
+                        self.unify(
+                            &inferred_lhs,
+                            &inferred_rhs,
+                            id.as_reporter_span(),
+                            Some("Comparison operators only work on numbers".into()),
+                            true,
+                        );
+                        Type::Con(TypeCon::Bool)
+                    }
+                    BinOp::Equal => {
+                        self.unify(
+                            &inferred_lhs,
+                            &inferred_rhs,
+                            id.as_reporter_span(),
+                            None,
+                            true,
+                        );
+
+                        inferred_rhs
+                    }
+                    BinOp::EqualEqual | BinOp::NotEqual => Type::Con(TypeCon::Bool),
+                    BinOp::PlusEqual | BinOp::MinusEqual | BinOp::MultEqual | BinOp::DivEqual => {
+                        self.unify(
+                            &inferred_lhs,
+                            &inferred_rhs,
+                            id.as_reporter_span(),
+                            None,
+                            true,
+                        );
+
+                        inferred_rhs
+                    }
+                }
+            }
+
+            crate::hir::Expr::Block(block) => self.infer_block(map, block),
+            crate::hir::Expr::Break | crate::hir::Expr::Continue => Type::Con(TypeCon::Void),
             crate::hir::Expr::Call {
                 callee,
                 args,
                 type_args,
-            } => {}
-            crate::hir::Expr::Cast { expr, ty } => {}
-            crate::hir::Expr::Continue => {}
+            } => Type::Unknown,
+            crate::hir::Expr::Cast { expr, ty } => Type::Unknown,
+
             crate::hir::Expr::If {
                 cond,
                 then_branch,
                 else_branch,
-            } => {}
-            crate::hir::Expr::Ident(_) => {}
-            crate::hir::Expr::Index { base, index } => {}
-            crate::hir::Expr::While { cond, body } => {}
-            crate::hir::Expr::Literal(literal) => return self.infer_literal(*literal),
-            crate::hir::Expr::Paren(inner) => return self.infer_expr(map, inner),
+            } => {
+                let inferred_cond = self.infer_expr(map, cond);
+
+                self.unify(
+                    &inferred_cond,
+                    &Type::Con(TypeCon::Bool),
+                    cond.as_reporter_span(),
+                    Some("Expected the type of the expression to be bool".into()),
+                    true,
+                );
+
+                let inferred_then = self.infer_expr(map, then_branch);
+
+                if let Some(else_b) = else_branch {
+                    let inferred_else = self.infer_expr(map, else_b);
+
+                    self.unify(
+                        &inferred_then,
+                        &inferred_else,
+                        id.as_reporter_span(),
+                        Some("One of the branches is of different type".into()),
+                        true,
+                    )
+                }
+
+                inferred_then
+            }
+            crate::hir::Expr::Ident(name) => self.ctx.get_type(&name.item).unwrap_or(Type::Unknown),
+            crate::hir::Expr::Index { base, index } => {
+                let inferred_base = self.infer_expr(map, base);
+
+                let inferred_index = self.infer_expr(map, index);
+
+                self.unify(
+                    &inferred_index,
+                    &Type::Con(TypeCon::Int),
+                    index.as_reporter_span(),
+                    Some("Array indexes can only be an integer".into()),
+                    true,
+                );
+
+                match inferred_base {
+                    Type::Con(TypeCon::Array { ty, .. }) => *ty,
+                    _ => {
+                        let msg = format!("Tried indexing a non array type");
+
+                        self.reporter.error(
+                            msg,
+                            &format!("`{:?}` is not indexable", inferred_base),
+                            id.as_reporter_span(),
+                        );
+
+                        Type::Unknown
+                    }
+                }
+            }
+            crate::hir::Expr::While { cond, body } => {
+                let inferred_cond = self.infer_expr(map, cond);
+
+                self.unify(
+                    &inferred_cond,
+                    &Type::Con(TypeCon::Bool),
+                    cond.as_reporter_span(),
+                    Some("Expected the type of the expression to be bool".into()),
+                    true,
+                );
+
+                self.infer_block(map, body);
+
+                Type::Con(TypeCon::Void)
+            }
+            crate::hir::Expr::Literal(literal) => self.infer_literal(*literal),
+            crate::hir::Expr::Paren(inner) => self.infer_expr(map, inner),
             crate::hir::Expr::Tuple(exprs) => {
                 let types = exprs.iter().map(|id| self.infer_expr(map, id)).collect();
-                return Type::Tuple(types);
+                Type::Tuple(types)
             }
-            crate::hir::Expr::Unary { op, expr } => {}
-            crate::hir::Expr::Return(_) => {}
-            crate::hir::Expr::Match { expr, arms } => {}
-            crate::hir::Expr::Enum { def, variant, expr } => {}
-            crate::hir::Expr::RecordLiteral { def, fields } => {}
-        }
+            crate::hir::Expr::Unary { op, expr } => {
+                let inferred = self.infer_expr(map, id);
+                match op {
+                    UnaryOp::Minus => match inferred {
+                        Type::Con(TypeCon::Int) | Type::Con(TypeCon::Float) => inferred,
 
-        Type::Unknown
+                        _ => {
+                            let msg = format!("Cannot use `-` operator on type `{:?}`", inferred);
+                            self.reporter.error(
+                                msg,
+                                "`-` only works on i32,f32,",
+                                expr.as_reporter_span(),
+                            );
+
+                            Type::Con(TypeCon::Int)
+                        }
+                    },
+                    UnaryOp::Excl => {
+                        self.unify(
+                            &Type::Con(TypeCon::Bool),
+                            &inferred,
+                            expr.as_reporter_span(),
+                            Some("`!` can only be used on a boolean expression".into()),
+                            true,
+                        );
+                        Type::Con(TypeCon::Bool)
+                    }
+                }
+            }
+            crate::hir::Expr::Return(expr) => {
+                if let Some(id) = expr {
+                    let inferred = self.infer_expr(map, id);
+
+                    self.unify(
+                        unimplemented!(),
+                        &inferred,
+                        id.as_reporter_span(),
+                        Some(format!(
+                            "{:?}.into() is returned here but expected {:?}",
+                            inferred,
+                            unimplemented!()
+                        )),
+                        true,
+                    );
+                    inferred
+                } else {
+                    Type::Con(TypeCon::Void)
+                }
+            }
+            crate::hir::Expr::Match { expr, arms } => Type::Unknown,
+            crate::hir::Expr::Enum { def, variant, expr } => Type::Unknown,
+            crate::hir::Expr::RecordLiteral { def, fields } => Type::Unknown,
+        }
     }
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
-    let reporter = Reporter::new(file);
+    let reporter  bb  = Reporter::new(file);
     errors.extend(error);
 
     let ctx = resolver.ctx.clone();
