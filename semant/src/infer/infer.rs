@@ -8,7 +8,7 @@ use crate::{
     util, Ctx, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
@@ -218,7 +218,10 @@ where
     }
 
     fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId) -> Type {
+        self.ctx.begin_scope();
         let block = map.block(block_id);
+
+        self.ctx.end_scope();
 
         unimplemented!()
     }
@@ -323,7 +326,15 @@ where
                 args,
                 type_args,
             } => Type::Unknown,
-            crate::hir::Expr::Cast { expr, ty } => Type::Unknown,
+            crate::hir::Expr::Cast { expr, ty } => {
+                let _ = self.infer_expr(map, expr);
+
+                // TODO implement a casting check
+
+                self.resolver
+                    .lookup_intern_type(&ty.item)
+                    .unwrap_or(Type::Unknown)
+            }
 
             crate::hir::Expr::If {
                 cond,
@@ -456,8 +467,91 @@ where
                 }
             }
             crate::hir::Expr::Match { expr, arms } => Type::Unknown,
-            crate::hir::Expr::Enum { def, variant, expr } => Type::Unknown,
-            crate::hir::Expr::RecordLiteral { def, fields } => Type::Unknown,
+            crate::hir::Expr::Enum { def, variant, expr } => {
+                let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
+                match inferred_def {
+                    Type::Enum(ref variants) => match variants.get(&variant.item) {
+                        Some(v) => {
+                            if let Some(v_ty) = &v.ty {
+                                if let Some(expr) = expr {
+                                    let inferred_expr = self.infer_expr(map, expr);
+                                    self.unify(
+                                        &inferred_expr,
+                                        v_ty,
+                                        expr.as_reporter_span(),
+                                        None,
+                                        true,
+                                    )
+                                } else {
+                                    let msg = format!("Missing enum variant constructor",);
+                                    self.reporter.error(
+                                        msg,
+                                        format!("Expected an enum variant constructor of type {:?} but found none",v_ty),
+                                        variant.as_reporter_span(),
+                                    );
+                                }
+                            }
+
+                            inferred_def
+                        }
+
+                        None => {
+                            if let Some(expr) = expr {
+                                let msg = format!("Unknown enum variant constructor",);
+                                self.reporter.error(
+                                    msg,
+                                    "Expected no enum variant constructor,",
+                                    expr.as_reporter_span(),
+                                );
+                            }
+                            // Error reported in resolver
+                            inferred_def
+                        }
+                    },
+                    _ => {
+                        // Error reported in resolver
+                        Type::Unknown
+                    }
+                }
+            }
+            crate::hir::Expr::RecordLiteral { def, fields } => {
+                let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
+
+                match inferred_def.clone() {
+                    Type::Poly(_, inner) => match &*inner {
+                        Type::Class {
+                            fields: field_types,
+                            ..
+                        } => {
+                            for (field, expr) in fields {
+                                let inferred_expr = self.infer_expr(map, expr);
+
+                                let expected =
+                                    field_types.get(&field.item).unwrap_or(&Type::Unknown);
+
+                                self.unify(
+                                    expected,
+                                    &inferred_expr,
+                                    field.as_reporter_span(),
+                                    None,
+                                    true,
+                                );
+                            }
+
+                            inferred_def
+                        }
+
+                        _ => {
+                            // Error reported in resolver
+                            Type::Unknown
+                        }
+                    },
+                    _ => {
+                        // Error reported in resolver
+                        Type::Unknown
+                    }
+                }
+            }
         }
     }
 }
@@ -465,7 +559,7 @@ where
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
-    let reporter  bb  = Reporter::new(file);
+    let reporter = Reporter::new(file);
     errors.extend(error);
 
     let ctx = resolver.ctx.clone();

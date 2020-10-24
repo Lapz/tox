@@ -145,7 +145,7 @@ where
                             }
                             _ => {
                                 let msg = format!(
-                                    "`{}` is not an enum",
+                                    "`{}` is not an class",
                                     self.db.lookup_intern_name(def.item)
                                 );
 
