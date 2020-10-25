@@ -1,6 +1,8 @@
 extern crate console_error_panic_hook;
 extern crate wasm_bindgen;
-use errors::{emit, ColorChoice, Config, Diagnostic, FileDatabase, FileId, Files, StandardStream};
+use errors::{
+    emit, ColorChoice, Config, Diagnostic, FileDatabase, FileId, Files, StandardStream, WithError,
+};
 use semant::HirDatabase;
 use std::default::Default;
 use std::io::{self};
@@ -73,14 +75,10 @@ impl<'files> Files<'files> for DatabaseImpl {
 pub fn parse(contents: String) {
     set_panic_hook();
     let db = DatabaseImpl::default();
-    let mut errors = Vec::new();
 
     let handle = db.intern_content(contents);
 
-    match db.resolve_source_file(handle) {
-        Ok(_) => {}
-        Err(more_errs) => errors.extend(more_errs),
-    }
+    let WithError(resolver, mut errors) = db.resolve_source_file(handle);
 
     db.emit(&mut errors).unwrap();
 }

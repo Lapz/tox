@@ -53,11 +53,6 @@ macro_rules! __create_test {
 
             let handle = db.intern_file(file_names.remove(0));
 
-            match db.resolve_source_file(handle) {
-                Ok(_) => {}
-                Err(errors) => println!("{:?}", errors),
-            }
-
             assert!(db.resolve_source_file(handle).$kind());
             Ok(())
         }

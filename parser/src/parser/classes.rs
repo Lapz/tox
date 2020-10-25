@@ -79,10 +79,11 @@ impl<'a> Parser<'a> {
 mod tests {
 
     use crate::utils::parse;
+    use errors::WithError;
     use syntax::{ClassDefOwner, NamedFieldsOwner};
     #[test]
     fn test_class_fields() {
-        let source_file = parse("class Person { name:String; surname:String;}");
+        let WithError(source_file, _) = parse("class Person { name:String; surname:String;}");
 
         let class = source_file.classes().next().unwrap();
 

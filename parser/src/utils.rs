@@ -1,5 +1,6 @@
 use crate::AstNode;
-
+#[cfg(test)]
+use errors::WithError;
 #[cfg(test)]
 use syntax::ast::SourceFile;
 
@@ -26,7 +27,7 @@ impl salsa::Database for MockDatabaseImpl {
 }
 
 #[cfg(test)]
-pub fn parse<'a>(input: &'a str) -> SourceFile {
+pub fn parse<'a>(input: &'a str) -> WithError<SourceFile> {
     use crate::ParseDatabase;
     use errors::FileDatabase;
     use std::io::Write;
@@ -37,5 +38,5 @@ pub fn parse<'a>(input: &'a str) -> SourceFile {
     let db = MockDatabaseImpl::default();
     let handle = db.intern_file(file.path().to_path_buf());
 
-    db.parse(handle).unwrap()
+    db.parse(handle)
 }

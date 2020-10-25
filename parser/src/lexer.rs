@@ -3,7 +3,7 @@ mod tests {
 
     use crate::utils::MockDatabaseImpl;
     use crate::ParseDatabase;
-    use errors::{pos::Span, FileDatabase};
+    use errors::{pos::Span, FileDatabase, WithError};
     use insta::assert_debug_snapshot;
     use std::io::Write;
     use syntax::Token;
@@ -16,7 +16,7 @@ mod tests {
         let db = MockDatabaseImpl::default();
         let handle = db.intern_file(file.path().to_path_buf());
 
-        db.lex(handle).unwrap()
+        db.lex(handle).0
     }
 
     #[test]

@@ -14,10 +14,11 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use crate::utils::parse;
+    use errors::WithError;
     use syntax::{FnDefOwner, VisibilityOwner};
     #[test]
     fn test_visibility() {
-        let source_file = parse("export fn main(){}");
+        let WithError(source_file, _) = parse("export fn main(){}");
 
         let func = source_file.functions().next().unwrap();
 
@@ -25,7 +26,7 @@ mod tests {
     }
     #[test]
     fn test_visibility_not_present() {
-        let source_file = parse("fn main(){}");
+        let WithError(source_file, _) = parse("fn main(){}");
 
         let func = source_file.functions().next().unwrap();
 

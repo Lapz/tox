@@ -8,7 +8,7 @@ use crate::{
     util, Ctx, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
