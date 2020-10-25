@@ -3,12 +3,14 @@ use crate::{
         BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId,
         UnaryOp, PLACEHOLDER_NAME,
     },
-    infer::{Type, TypeCon},
+    infer::{Type, TypeCon, TypeVar},
     resolver::Resolver,
     util, Ctx, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
+
+use super::Variant;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
@@ -42,6 +44,71 @@ where
         self.ctx.end_scope();
 
         println!("{:?}", expected);
+    }
+
+    fn subst(&mut self, ty: &Type, substitutions: &mut HashMap<TypeVar, Type>) -> Type {
+        match ty {
+            Type::App(types) => Type::App(
+                types
+                    .iter()
+                    .map(|ty| self.subst(ty, substitutions))
+                    .collect(),
+            ),
+            Type::Tuple(types) => Type::Tuple(
+                types
+                    .iter()
+                    .map(|ty| self.subst(ty, substitutions))
+                    .collect(),
+            ),
+            Type::Poly(ty_vars, u) => Type::Poly(
+                ty_vars.iter().map(|_| self.ctx.type_var()).collect(),
+                Box::new(self.subst(u, substitutions)),
+            ),
+            Type::Var(tvar) => {
+                if let Some(ty) = substitutions.get(tvar) {
+                    ty.clone()
+                } else {
+                    Type::Var(*tvar)
+                }
+            }
+
+            Type::Con(con) => Type::Con(match con {
+                TypeCon::Bool => TypeCon::Bool,
+                TypeCon::Float => TypeCon::Float,
+                TypeCon::Int => TypeCon::Int,
+                TypeCon::Str => TypeCon::Str,
+                TypeCon::Void => TypeCon::Void,
+                TypeCon::Array { ty, size } => TypeCon::Array {
+                    ty: Box::new(self.subst(ty, substitutions)),
+                    size: size.clone(),
+                },
+            }),
+            Type::Enum(variants) => Type::Enum(
+                variants
+                    .iter()
+                    .map(|(name, v)| {
+                        (
+                            *name,
+                            Variant {
+                                tag: v.tag,
+                                ty: v.ty.clone().map(|ty| self.subst(&ty, substitutions)),
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+            Type::Class { fields, methods } => Type::Class {
+                fields: fields
+                    .iter()
+                    .map(|(name, ty)| (*name, self.subst(ty, substitutions)))
+                    .collect(),
+                methods: methods
+                    .iter()
+                    .map(|(name, ty)| (*name, self.subst(ty, substitutions)))
+                    .collect(),
+            },
+            Type::Unknown => Type::Unknown,
+        }
     }
 
     fn unify(
@@ -95,7 +162,7 @@ where
             ) => {}
             (Type::Var(v1), Type::Var(v2)) => {
                 if v1 != v2 && report {
-                    let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                    let msg = format!("Mismatching types, expected `{:?}` found `{:?}`", lhs, rhs);
                     self.reporter.error(msg, notes.unwrap_or("".into()), span);
                 }
             }
@@ -104,7 +171,8 @@ where
             (Type::Con(l), Type::Con(r)) => {
                 if l != r {
                     if report {
-                        let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                        let msg =
+                            format!("Mismatching types, expected `{:?}` found `{:?}`", lhs, rhs);
                         self.reporter.error(msg, notes.unwrap_or("".into()), span);
                     }
                 }
@@ -117,7 +185,7 @@ where
                 //Todo report error
 
                 if report {
-                    let msg = format!("Cannot unify `{:?}` vs `{:?}`", lhs, rhs);
+                    let msg = format!("Mismatching types, expected `{:?}` found `{:?}`", lhs, rhs);
                     self.reporter.error(msg, notes.unwrap_or("".into()), span);
                 }
             }
@@ -325,11 +393,129 @@ where
                 callee,
                 args,
                 type_args,
-            } => Type::Unknown,
+            } => {
+                let inferred_callee = self.infer_expr(map, callee);
+
+                match inferred_callee {
+                    Type::Poly(vars, inner) => match &*inner {
+                        Type::App(arg_types) => {
+                            let ret = arg_types
+                                .last()
+                                .unwrap_or(&Type::Con(TypeCon::Void))
+                                .clone();
+
+                            if args.len() > arg_types.len() - 1 {
+                                self.reporter.error(
+                                    "Missing arguments",
+                                    format!(
+                                        "Too many arguments,expected `{}` found `{}",
+                                        arg_types.len(),
+                                        args.len()
+                                    ),
+                                    callee.as_reporter_span(),
+                                );
+                            } else if args.len() < arg_types.len() - 1 {
+                                self.reporter.error(
+                                    "Missing arguments",
+                                    format!(
+                                        "Too few arguments,expected `{}` found `{}",
+                                        arg_types.len(),
+                                        args.len()
+                                    ),
+                                    callee.as_reporter_span(),
+                                );
+                            }
+
+                            let mut subst = HashMap::new();
+
+                            for (var, type_arg) in vars.iter().zip(type_args.item.iter()) {
+                                let ty = self
+                                    .resolver
+                                    .lookup_intern_type(&type_arg.item)
+                                    .unwrap_or(Type::Unknown);
+
+                                subst.insert(*var, ty);
+                            }
+
+                            println!("{:?}", subst);
+
+                            arg_types.iter().zip(args.iter()).for_each(|(ty, expr)| {
+                                let inferred_expr = self.infer_expr(map, expr);
+                                let inferred_expr = self.subst(&inferred_expr, &mut subst);
+
+                                let ty = self.subst(ty, &mut subst);
+
+                                println!("{:?}", ty);
+                                self.unify(&ty, &inferred_expr, expr.as_reporter_span(), None, true)
+                            });
+
+                            ret
+                        }
+                        ty => {
+                            let msg = format!("Expected a function found `{:?}`", ty);
+
+                            self.reporter.error(
+                                msg,
+                                "A call expression requires a function",
+                                callee.as_reporter_span(),
+                            );
+
+                            Type::Unknown
+                        }
+                    },
+                    Type::App(arg_types) => {
+                        let ret = arg_types
+                            .last()
+                            .unwrap_or(&Type::Con(TypeCon::Void))
+                            .clone();
+
+                        if args.len() > arg_types.len() - 1 {
+                            self.reporter.error(
+                                "Missing arguments",
+                                format!(
+                                    "Too many arguments,expected `{}` found `{}",
+                                    arg_types.len(),
+                                    args.len()
+                                ),
+                                callee.as_reporter_span(),
+                            );
+                        } else if args.len() < arg_types.len() - 1 {
+                            self.reporter.error(
+                                "Missing arguments",
+                                format!(
+                                    "Too few arguments,expected `{}` found `{}",
+                                    arg_types.len(),
+                                    args.len()
+                                ),
+                                callee.as_reporter_span(),
+                            );
+                        }
+
+                        arg_types.iter().zip(args.iter()).for_each(|(ty, expr)| {
+                            let inferred_expr = self.infer_expr(map, expr);
+                            self.unify(ty, &inferred_expr, expr.as_reporter_span(), None, true)
+                        });
+
+                        ret
+                    }
+
+                    _ => {
+                        let msg = format!("Expected a function found `{:?}`", inferred_callee);
+
+                        self.reporter.error(
+                            msg,
+                            "A call expression requires a function",
+                            callee.as_reporter_span(),
+                        );
+
+                        Type::Unknown
+                    }
+                }
+            }
             crate::hir::Expr::Cast { expr, ty } => {
                 let _ = self.infer_expr(map, expr);
 
-                // TODO implement a casting check
+                // TODO implement a well formed casting check
 
                 self.resolver
                     .lookup_intern_type(&ty.item)
@@ -466,7 +652,11 @@ where
                     Type::Con(TypeCon::Void)
                 }
             }
-            crate::hir::Expr::Match { expr, arms } => Type::Unknown,
+            crate::hir::Expr::Match { expr, arms } => {
+                let inferred_expr = self.infer_expr(map, expr);
+
+                Type::Unknown
+            }
             crate::hir::Expr::Enum { def, variant, expr } => {
                 let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
                 match inferred_def {

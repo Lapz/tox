@@ -2,7 +2,7 @@ use crate::hir::NameId;
 use std::collections::HashMap;
 
 /// A type var represent a variable that could be a type
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeVar(pub(crate) u32);
 /// A unique identifier that is used to distinguish to types with the exact some fields
 /// i.e struct Foo {} && struct Bar {} we treat them differently

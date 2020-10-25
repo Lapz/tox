@@ -43,6 +43,7 @@ where
             signature.push(Type::Con(TypeCon::Void))
         }
 
+        println!("sig {:?} {:?}", signature, poly_tvs);
         self.end_function_scope(name.item);
 
         Ok(Type::Poly(poly_tvs, Box::new(Type::App(signature))))
