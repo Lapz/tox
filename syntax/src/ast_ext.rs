@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self};
 use crate::{
     child_opt, children, AstChildren, AstNode,
     SyntaxKind::{self, *},
@@ -104,6 +104,16 @@ impl ast::Stmt {
             | CALL_EXPR | INDEX_EXPR | FIELD_EXPR | CAST_EXPR | PREFIX_EXPR | BIN_EXPR
             | LITERAL => Some(ast::Stmt::ExprStmt(ast::ExprStmt { syntax })),
             _ => None,
+        }
+    }
+}
+
+impl ast::CallExpr {
+    pub fn type_args(&self) -> Option<ast::TypeArgList> {
+        if let Some(id_expr) = children::<_, ast::IdentExpr>(self).nth(0) {
+            child_opt(&id_expr)
+        } else {
+            None
         }
     }
 }

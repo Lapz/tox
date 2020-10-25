@@ -565,10 +565,6 @@ impl CallExpr {
     pub fn expr(&self) -> Option<Expr> {
         child_opt(self)
     }
-
-    pub fn type_args(&self) -> Option<TypeArgList> {
-        child_opt(self)
-    }
 }
 
 // CastExpr

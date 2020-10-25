@@ -284,7 +284,7 @@ Grammar(
         "NamedField": (options: ["Name", "Expr"]),
         "CallExpr": (
             traits: ["ArgListOwner"],
-            options: [ "Expr",["type_args","TypeArgList"] ],
+            options: [ "Expr"],
         ),
         "ArrayExpr": (
             collections: [["exprs", "Expr"]]
