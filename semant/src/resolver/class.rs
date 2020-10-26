@@ -19,7 +19,7 @@ where
 
             let tv = self.ctx.type_var();
 
-            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type)?;
+            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type);
 
             poly_tvs.push(tv);
         }
@@ -40,10 +40,7 @@ where
                 continue;
             }
 
-            let ty = match self.resolve_type(&field.item.ty) {
-                Ok(ty) => ty,
-                Err(_) => continue,
-            };
+            let ty = self.resolve_type(&field.item.ty);
 
             fields.insert(field.item.property.item, ty);
         }
@@ -73,7 +70,7 @@ where
             &class.name,
             Type::Poly(poly_tvs, Box::new(Type::Class { fields, methods })),
             TypeKind::Class,
-        )?;
+        );
 
         Ok(())
     }

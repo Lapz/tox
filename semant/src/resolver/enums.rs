@@ -19,7 +19,7 @@ where
 
             let tv = self.ctx.type_var();
 
-            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type)?;
+            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type);
 
             poly_tvs.push(tv);
         }
@@ -41,10 +41,7 @@ where
             }
 
             let ty = if let Some(variant_ty) = variant.item.ty {
-                match self.resolve_type(&variant_ty) {
-                    Ok(ty) => Some(ty),
-                    Err(_) => continue,
-                }
+                Some(self.resolve_type(&variant_ty))
             } else {
                 None
             };
@@ -54,7 +51,7 @@ where
 
         self.end_scope();
 
-        self.insert_type(&enum_def.name, Type::Enum(variants), TypeKind::Enum)?;
+        self.insert_type(&enum_def.name, Type::Enum(variants), TypeKind::Enum);
 
         Ok(())
     }

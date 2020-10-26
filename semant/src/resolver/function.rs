@@ -21,7 +21,7 @@ where
 
             let tv = self.ctx.type_var();
 
-            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type)?;
+            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type);
 
             poly_tvs.push(tv);
         }
@@ -34,11 +34,11 @@ where
 
             self.resolve_pattern(function.name.item, &param.pat, &function.ast_map)?;
 
-            signature.push(self.resolve_type(&param.ty)?);
+            signature.push(self.resolve_type(&param.ty));
         }
 
         if let Some(returns) = &function.returns {
-            signature.push(self.resolve_type(&returns)?)
+            signature.push(self.resolve_type(&returns))
         } else {
             signature.push(Type::Con(TypeCon::Void))
         }
@@ -68,7 +68,7 @@ where
 
         self.end_scope();
 
-        self.insert_type(&name, signature, TypeKind::Function)?;
+        self.insert_type(&name, signature, TypeKind::Function);
 
         Ok(())
     }

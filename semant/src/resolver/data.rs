@@ -16,7 +16,7 @@ pub(crate) struct ResolverDataCollector<DB> {
     pub(crate) exported_items: HashSet<hir::NameId>,
     pub(crate) binding_error: bool,
     pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
-    pub(crate) interned_types: HashMap<hir::TypeId, Type>,
+    pub(crate) interned_types: StackedMap<hir::TypeId, Type>,
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -34,7 +34,7 @@ pub struct Resolver {
     pub(crate) items: HashSet<hir::NameId>,
     pub(crate) exported_items: HashSet<hir::NameId>,
     pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
-    pub(crate) interned_types: HashMap<hir::TypeId, Type>,
+    pub(crate) interned_types: StackedMap<hir::TypeId, Type>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -110,18 +110,15 @@ where
 
     pub(crate) fn begin_scope(&mut self) {
         self.ctx.begin_scope();
+        self.interned_types.begin_scope();
     }
 
     pub(crate) fn end_scope(&mut self) {
         self.ctx.end_scope();
+        self.interned_types.end_scope();
     }
 
-    pub(crate) fn insert_type(
-        &mut self,
-        name_id: &util::Span<NameId>,
-        ty: Type,
-        kind: TypeKind,
-    ) -> Result<(), ()> {
+    pub(crate) fn insert_type(&mut self, name_id: &util::Span<NameId>, ty: Type, kind: TypeKind) {
         if self.ctx.get_type(&name_id.item).is_some() {
             match kind {
                 TypeKind::Function | TypeKind::Enum => (), // Error already reported
@@ -135,11 +132,8 @@ where
                     );
                 }
             }
-            Err(())
         } else {
-            println!("{:?}", kind);
             self.ctx.insert_type(name_id.item, ty, kind);
-            Ok(())
         }
     }
 
@@ -316,36 +310,36 @@ where
         Ok(())
     }
 
-    pub(crate) fn resolve_type(&mut self, id: &util::Span<TypeId>) -> Result<Type, ()> {
+    pub(crate) fn resolve_type(&mut self, id: &util::Span<TypeId>) -> Type {
         let ty = self.db.lookup_intern_type(id.item);
 
         if let Some(interned_ty) = self.lookup_type(&id.item) {
-            return Ok(interned_ty);
+            return interned_ty;
         }
 
         let ty = match ty {
             hir::Type::ParenType(types) => {
                 let mut signature = vec![];
                 for id in &types {
-                    signature.push(self.resolve_type(id)?)
+                    signature.push(self.resolve_type(id))
                 }
 
                 Type::Tuple(signature)
             }
 
             hir::Type::ArrayType { ty, size } => Type::Con(TypeCon::Array {
-                ty: Box::new(self.resolve_type(&ty)?),
+                ty: Box::new(self.resolve_type(&ty)),
                 size,
             }),
             hir::Type::FnType { params, ret } => {
                 let mut signature = vec![];
 
                 for id in &params {
-                    signature.push(self.resolve_type(id)?)
+                    signature.push(self.resolve_type(id))
                 }
 
                 if let Some(returns) = &ret {
-                    signature.push(self.resolve_type(returns)?)
+                    signature.push(self.resolve_type(returns))
                 } else {
                     signature.push(Type::Con(TypeCon::Void))
                 }
@@ -381,13 +375,11 @@ where
                         span,
                     );
 
-                    return Err(());
+                    return Type::Unknown;
                 }
 
                 for arg in &type_args {
-                    if let Err(()) = self.resolve_type(arg) {
-                        continue;
-                    }
+                    let _ = self.resolve_type(arg);
                 }
 
                 ty
@@ -405,11 +397,11 @@ where
                             span,
                         );
 
-                        return Err(());
+                        return Type::Unknown;
                     }
 
                     self.intern_type(id.item, ty.clone());
-                    return Ok(ty);
+                    return ty;
                 }
 
                 let span = (id.start().to_usize(), id.end().to_usize());
@@ -428,6 +420,6 @@ where
 
         self.intern_type(id.item, ty.clone());
 
-        Ok(ty)
+        ty
     }
 }

@@ -17,16 +17,16 @@ where
 
             let tv = self.ctx.type_var();
 
-            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type)?;
+            self.insert_type(&type_param.name, Type::Var(tv), TypeKind::Type);
 
             poly_tvs.push(tv)
         }
 
-        let ty = self.resolve_type(&alias.ty)?;
+        let ty = self.resolve_type(&alias.ty);
 
         self.end_scope();
 
-        self.insert_type(&name, Type::Poly(poly_tvs, Box::new(ty)), TypeKind::Alias)?;
+        self.insert_type(&name, Type::Poly(poly_tvs, Box::new(ty)), TypeKind::Alias);
 
         if alias.exported {
             self.exported_items.insert(alias.name.item);

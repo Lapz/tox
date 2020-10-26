@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ctx {
-    types: StackedMap<NameId, Type>,
+    pub types: StackedMap<NameId, Type>,
     kind: HashMap<NameId, TypeKind>,
     tvar_count: u32,
 }

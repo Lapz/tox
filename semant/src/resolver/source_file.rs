@@ -1,5 +1,5 @@
-use crate::db::HirDatabase;
 use crate::Ctx;
+use crate::{db::HirDatabase, infer::StackedMap};
 
 use super::data::ItemKind;
 use crate::resolver::{data::ResolverDataCollector, Resolver};
@@ -21,7 +21,7 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
         exported_items: HashSet::new(),
         binding_error: false,
         function_data: HashMap::new(),
-        interned_types: HashMap::new(),
+        interned_types: StackedMap::new(),
     };
 
     for function in &program.functions {
@@ -50,7 +50,7 @@ pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithErr
         exported_items: HashSet::new(),
         binding_error: false,
         function_data: HashMap::new(),
-        interned_types: HashMap::new(),
+        interned_types: StackedMap::new(),
     };
 
     for import in &source_file.imports {
