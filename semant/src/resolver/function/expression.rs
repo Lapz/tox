@@ -176,13 +176,21 @@ where
             Expr::Enum { def, variant, expr } => {
                 if let Some(ty) = self.ctx.get_type(&def.item) {
                     match ty {
-                        crate::infer::Type::Enum(variants) => {
+                        crate::infer::Type::Enum(name, variants) => {
                             if variants.get(&variant.item).is_none() {
                                 let msg = format!(
                                     "Unknown enum variant `{}`",
                                     self.db.lookup_intern_name(variant.item)
                                 );
-                                self.reporter.error(msg, "", variant.as_reporter_span());
+                                self.reporter.error(
+                                    msg,
+                                    format!(
+                                        "Add a variant for `{}` to `{}`",
+                                        self.db.lookup_intern_name(variant.item),
+                                        self.db.lookup_intern_name(name)
+                                    ),
+                                    variant.as_reporter_span(),
+                                );
                                 return Err(());
                             }
                         }

@@ -3,7 +3,7 @@ mod tests {
 
     use crate::utils::MockDatabaseImpl;
     use crate::ParseDatabase;
-    use errors::{pos::Span, FileDatabase, WithError};
+    use errors::{pos::Span, FileDatabase};
     use insta::assert_debug_snapshot;
     use std::io::Write;
     use syntax::Token;

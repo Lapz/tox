@@ -19,6 +19,8 @@ struct InferDataCollector<DB> {
     ctx: Ctx,
     resolver: Arc<Resolver>,
     reporter: Reporter,
+    returns: Option<Type>,
+    possible_returns: Vec<Type>,
 }
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -34,17 +36,16 @@ where
 
         self.ctx.begin_scope();
 
+        self.returns = Some(expected.clone());
         if let Some(body) = &function.body {
-            self.infer_statements(&function.ast_map, &body, &Type::Con(TypeCon::Void))
+            self.infer_statements(&function.ast_map, &body, &expected)
                 .unwrap()
         } else {
-            self.infer_statements(&function.ast_map, &[], &Type::Con(TypeCon::Void))
+            self.infer_statements(&function.ast_map, &[], &expected)
                 .unwrap()
         };
 
         self.ctx.end_scope();
-
-        println!("{:?}", expected);
     }
 
     fn subst(&mut self, ty: &Type, substitutions: &mut HashMap<TypeVar, Type>) -> Type {
@@ -84,7 +85,8 @@ where
                     size: size.clone(),
                 },
             }),
-            Type::Enum(variants) => Type::Enum(
+            Type::Enum(name, variants) => Type::Enum(
+                *name,
                 variants
                     .iter()
                     .map(|(name, v)| {
@@ -98,7 +100,12 @@ where
                     })
                     .collect(),
             ),
-            Type::Class { fields, methods } => Type::Class {
+            Type::Class {
+                name,
+                fields,
+                methods,
+            } => Type::Class {
+                name: *name,
                 fields: fields
                     .iter()
                     .map(|(name, ty)| (*name, self.subst(ty, substitutions)))
@@ -153,14 +160,41 @@ where
                     let _ = self.unify(a, b, span, None, false);
                 }
             }
-            (Type::Enum(_), Type::Enum(_)) => {}
+            (Type::Enum(name1, variants1), Type::Enum(name2, variants2)) => {
+                if variants1 != variants2 {
+                    if report {
+                        let msg = format!(
+                            "Expected enum `{}` but found enum `{}`",
+                            self.db.lookup_intern_name(*name1),
+                            self.db.lookup_intern_name(*name2)
+                        );
+                        self.reporter.error(msg, notes.unwrap_or("".into()), span);
+                    }
+                }
+            }
             (
-                Type::Class { fields, methods },
                 Type::Class {
-                    fields: feilds1,
+                    name,
+                    fields,
+                    methods,
+                },
+                Type::Class {
+                    name: name1,
+                    fields: fields1,
                     methods: methods1,
                 },
-            ) => {}
+            ) => {
+                if fields != fields1 && methods != methods1 {
+                    if report {
+                        let msg = format!(
+                            "Expected class `{}` but found class `{}`",
+                            self.db.lookup_intern_name(*name),
+                            self.db.lookup_intern_name(*name1)
+                        );
+                        self.reporter.error(msg, notes.unwrap_or("".into()), span);
+                    }
+                }
+            }
             (Type::Var(v1), Type::Var(v2)) => {
                 if v1 != v2 && report {
                     let msg = format!("Mismatching types, expected `{:?}` found `{:?}`", lhs, rhs);
@@ -178,11 +212,27 @@ where
                     }
                 }
             }
-            (Type::Poly(_, _), t) => {}
-            (t, Type::Poly(_, _)) => {}
+
+            (Type::Poly(vars1, t1), Type::Poly(vars2, t2)) => {
+                let mut mappings = HashMap::new();
+
+                for var in vars1 {
+                    mappings.insert(*var, Type::Var(*var));
+                }
+
+                for var in vars2 {
+                    mappings.insert(*var, Type::Var(*var));
+                }
+
+                let subst = self.subst(t2, &mut mappings);
+
+                self.unify(t1, &subst, span, notes, true)
+            }
+            (Type::Poly(_, ret), t) => self.unify(ret, t, span, notes, true),
+            (t, Type::Poly(_, ret)) => self.unify(t, ret, span, notes, true),
             (Type::Unknown, _) => {}
             (_, Type::Unknown) => {}
-            (t1, t2) => {
+            (_, _) => {
                 //Todo report error
 
                 if report {
@@ -243,8 +293,10 @@ where
                     match (ascribed_type, initializer) {
                         (Some(expected), Some(init)) => {
                             let expr = self.infer_expr(map, init);
-                            let expected =
-                                self.resolver.lookup_intern_type(&expected.item).unwrap();
+                            let expected = self
+                                .resolver
+                                .lookup_intern_type(&expected.item)
+                                .unwrap_or(Type::Unknown);
 
                             self.unify(&expected, &expr, id.as_reporter_span(), None, true);
                             self.assign_pattern_type(map, pat, expected);
@@ -636,15 +688,17 @@ where
             crate::hir::Expr::Return(expr) => {
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
+                    let expected = self.returns.clone().unwrap();
+
+                    println!("expected{:?}", expected);
 
                     self.unify(
-                        unimplemented!(),
+                        &expected,
                         &inferred,
                         id.as_reporter_span(),
                         Some(format!(
-                            "{:?}.into() is returned here but expected {:?}",
-                            inferred,
-                            unimplemented!()
+                            "{:?} is returned here but expected {:?}",
+                            inferred, expected
                         )),
                         true,
                     );
@@ -675,7 +729,7 @@ where
             crate::hir::Expr::Enum { def, variant, expr } => {
                 let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
                 match inferred_def {
-                    Type::Enum(ref variants) => match variants.get(&variant.item) {
+                    Type::Enum(_, ref variants) => match variants.get(&variant.item) {
                         Some(v) => {
                             if let Some(v_ty) = &v.ty {
                                 if let Some(expr) = expr {
@@ -701,14 +755,6 @@ where
                         }
 
                         None => {
-                            if let Some(expr) = expr {
-                                let msg = format!("Unknown enum variant constructor",);
-                                self.reporter.error(
-                                    msg,
-                                    "Expected no enum variant constructor,",
-                                    expr.as_reporter_span(),
-                                );
-                            }
                             // Error reported in resolver
                             inferred_def
                         }
@@ -839,6 +885,8 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         ctx,
         resolver,
         reporter,
+        returns: None,
+        possible_returns: Vec::new(),
     };
 
     for function in &program.functions {

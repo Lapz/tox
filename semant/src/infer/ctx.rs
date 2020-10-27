@@ -58,7 +58,7 @@ impl Ctx {
             result_name,
             Type::Poly(
                 vec![TypeVar::from(0), TypeVar::from(1)],
-                Box::new(Type::Enum(result_variants)),
+                Box::new(Type::Enum(result_name, result_variants)),
             ),
         );
 

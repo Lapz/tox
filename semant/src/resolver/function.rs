@@ -29,6 +29,7 @@ where
         let mut signature = Vec::new();
 
         self.begin_function_scope(name.item);
+
         for param in &function.params {
             let param = function.ast_map.param(&param.item);
 
@@ -43,7 +44,6 @@ where
             signature.push(Type::Con(TypeCon::Void))
         }
 
-        println!("sig {:?} {:?}", signature, poly_tvs);
         self.end_function_scope(name.item);
 
         Ok(Type::Poly(poly_tvs, Box::new(Type::App(signature))))

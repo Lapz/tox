@@ -68,7 +68,14 @@ where
 
         self.insert_type(
             &class.name,
-            Type::Poly(poly_tvs, Box::new(Type::Class { fields, methods })),
+            Type::Poly(
+                poly_tvs,
+                Box::new(Type::Class {
+                    name: class.name.item,
+                    fields,
+                    methods,
+                }),
+            ),
             TypeKind::Class,
         );
 

@@ -75,6 +75,7 @@ impl Resolver {
     }
 
     pub fn lookup_intern_type(&self, id: &hir::TypeId) -> Option<Type> {
+        println!("{:?}", self.interned_types);
         self.interned_types.get(id).map(Clone::clone)
     }
 
@@ -110,12 +111,12 @@ where
 
     pub(crate) fn begin_scope(&mut self) {
         self.ctx.begin_scope();
-        self.interned_types.begin_scope();
+        // self.interned_types.begin_scope();
     }
 
     pub(crate) fn end_scope(&mut self) {
         self.ctx.end_scope();
-        self.interned_types.end_scope();
+        // self.interned_types.end_scope();
     }
 
     pub(crate) fn insert_type(&mut self, name_id: &util::Span<NameId>, ty: Type, kind: TypeKind) {

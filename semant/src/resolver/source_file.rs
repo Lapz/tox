@@ -12,7 +12,12 @@ use std::{
 pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<Resolver>> {
     let WithError(program, mut errors) = db.lower(file);
     let reporter = Reporter::new(file);
-    let ctx = Ctx::new(db);
+    let mut ctx = Ctx::new(db);
+    ctx.begin_scope();
+
+    let mut interned_types = StackedMap::new();
+    interned_types.begin_scope();
+
     let mut collector = ResolverDataCollector {
         db,
         ctx,
@@ -21,7 +26,7 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
         exported_items: HashSet::new(),
         binding_error: false,
         function_data: HashMap::new(),
-        interned_types: StackedMap::new(),
+        interned_types,
     };
 
     for function in &program.functions {

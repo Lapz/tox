@@ -51,7 +51,11 @@ where
 
         self.end_scope();
 
-        self.insert_type(&enum_def.name, Type::Enum(variants), TypeKind::Enum);
+        self.insert_type(
+            &enum_def.name,
+            Type::Enum(enum_def.name.item, variants),
+            TypeKind::Enum,
+        );
 
         Ok(())
     }
