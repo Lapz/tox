@@ -1,16 +1,17 @@
 use crate::{
     hir::{
-        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId,
-        UnaryOp, PLACEHOLDER_NAME,
+        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, Pattern,
+        StmtId, UnaryOp, PLACEHOLDER_NAME,
     },
-    infer::{Type, TypeCon, TypeVar},
+    infer::{
+        pattern_matrix::{self, wcard, Constructor, PatternMatrix, Row},
+        Type, TypeCon, TypeVar, Variant,
+    },
     resolver::Resolver,
     util, Ctx, HirDatabase,
 };
 use errors::{FileId, Reporter, WithError};
 use std::{collections::HashMap, sync::Arc};
-
-use super::Variant;
 
 #[derive(Debug)]
 struct InferDataCollector<DB> {
@@ -655,6 +656,20 @@ where
             crate::hir::Expr::Match { expr, arms } => {
                 let inferred_expr = self.infer_expr(map, expr);
 
+                let mut matrix = PatternMatrix::new();
+
+                for match_arm in arms {
+                    let mut patterns = vec![];
+
+                    for pattern in &match_arm.pats {
+                        let pat = map.pat(&pattern.item);
+
+                        patterns.push(self.to_matrix_pattern(pat, map))
+                    }
+
+                    matrix.add_row(Row::new(patterns, match_arm.expr.item))
+                }
+
                 Type::Unknown
             }
             crate::hir::Expr::Enum { def, variant, expr } => {
@@ -741,6 +756,71 @@ where
                         Type::Unknown
                     }
                 }
+            }
+        }
+    }
+
+    fn to_matrix_pattern(
+        &self,
+        pattern: &Pattern,
+        map: &FunctionAstMap,
+    ) -> pattern_matrix::Pattern {
+        match pattern {
+            Pattern::Bind { .. } => wcard(),
+            Pattern::Placeholder => wcard(),
+            Pattern::Tuple(pats) => pattern_matrix::Pattern::Con(
+                Constructor {
+                    name: "Tuple".into(),
+                    arity: pats.len(),
+                    span: 0,
+                },
+                pats.iter()
+                    .map(|id| {
+                        let pat = map.pat(&id.item);
+                        self.to_matrix_pattern(pat, map)
+                    })
+                    .collect(),
+            ),
+            Pattern::Literal(lit_id) => {
+                let lit = self.db.lookup_intern_literal(*lit_id);
+
+                pattern_matrix::Pattern::Con(
+                    match lit {
+                        Literal::String(_) => Constructor {
+                            name: "String".into(),
+                            arity: 0,
+                            span: usize::MAX,
+                        },
+                        Literal::Nil => Constructor {
+                            name: "Nil".into(),
+                            arity: 0,
+                            span: 1,
+                        },
+                        Literal::True => Constructor {
+                            name: "true".into(),
+                            arity: 0,
+                            span: 2,
+                        },
+                        Literal::False => Constructor {
+                            name: "false".into(),
+                            arity: 0,
+                            span: 2,
+                        },
+                        Literal::Int(_) => Constructor {
+                            name: "true".into(),
+                            arity: 0,
+                            span: i32::MAX as usize,
+                        },
+                        Literal::Float(_) => Constructor {
+                            name: "f32".into(),
+                            arity: 0,
+                            span: f32::MAX as usize,
+                        },
+                    },
+                    vec![],
+                );
+
+                unimplemented!()
             }
         }
     }

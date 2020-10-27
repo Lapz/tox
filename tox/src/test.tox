@@ -1,50 +1,11 @@
-import foo::bar::{bar,Foo};
-
-type ParserResult<T> = Result<T,Foo>;
-type ParserResult<T> = Result<T,Foo>;
-mod bar;
-mod foo;
-
-/*export fn main()  { 
-    let x= 10;
-    let x =10;
-    let x =x;
-
-    let x:i64 = 19;
-    id::<i32,f32,i32>();
-    v(a)(b);
-
-    for(let i=0;i<10;i+=1) {
-        print("ok");
-    };
-
-    
-    if true {print("good")} else {print("bad")};
-}*/
 
 
-
-class Bza {
-    foo:i32;
-    bar:int;
+export fn main() {
+    match a  {
+        Foo::Bar(123) => "world",
+        _ => Ok
+    }
 }
 
 
-enum Foo { 
-    A(i32),
-    B
-} 
 
-enum A {
-    A,
-    B
-}
-
-
-export fn id<T>(a:T,(x,z):T) -> (T,i32) {
-
-    let a:i32 = "";
-
-    let (a,b) = 10;
-
-}
