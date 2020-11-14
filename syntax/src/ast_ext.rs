@@ -117,3 +117,33 @@ impl ast::CallExpr {
         }
     }
 }
+
+impl ast::BlockExpr {
+    pub fn is_expr(&self) -> bool {
+        self.block().map(|b| b.is_expr()).unwrap_or(false)
+    }
+}
+
+impl ast::Block {
+    pub fn is_expr(&self) -> bool {
+        let last = self.statements().last();
+
+        if let Some(stmt) = last {
+            match stmt {
+                ast::Stmt::ExprStmt(expr) => {
+                    if let Some(sibling_or_token) = expr.syntax().next_sibling_or_token() {
+                        match sibling_or_token {
+                            rowan::NodeOrToken::Node(_) => false,
+                            rowan::NodeOrToken::Token(t) => t.kind() != T![;],
+                        }
+                    } else {
+                        false
+                    }
+                }
+                ast::Stmt::LetStmt(_) => false,
+            }
+        } else {
+            false
+        }
+    }
+}

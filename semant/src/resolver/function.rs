@@ -12,8 +12,6 @@ where
     DB: HirDatabase,
 {
     pub fn resolve_function_signature(&mut self, function: &Function) -> Result<Type, ()> {
-        let name = function.name;
-
         let mut poly_tvs = Vec::new();
 
         for type_param in &function.type_params {
@@ -28,8 +26,6 @@ where
 
         let mut signature = Vec::new();
 
-        self.begin_function_scope(name.item);
-
         for param in &function.params {
             let param = function.ast_map.param(&param.item);
 
@@ -43,8 +39,6 @@ where
         } else {
             signature.push(Type::Con(TypeCon::Void))
         }
-
-        self.end_function_scope(name.item);
 
         Ok(Type::Poly(poly_tvs, Box::new(Type::App(signature))))
     }

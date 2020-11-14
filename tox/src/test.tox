@@ -1,11 +1,16 @@
+fn main() {
+    {
+        let x = 10;
+        x
+    }
 
+    {
+        return x;
+        let x;
+        x+x;
+    }
 
-export fn main() {
-    match a  {
-        Foo::Bar(123) => "world",
-        _ => Ok
+    {
+
     }
 }
-
-
-

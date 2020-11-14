@@ -344,7 +344,7 @@ where
 
         self.ctx.end_scope();
 
-        unimplemented!()
+        Type::Unknown
     }
 
     fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {

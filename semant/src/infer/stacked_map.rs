@@ -96,6 +96,17 @@ mod tests {
     }
 
     #[test]
+    fn test_scope() {
+        let mut map = StackedMap::new();
+
+        map.insert(1, "b");
+        map.begin_scope();
+        assert_eq!(map.get(&1), Some(&"b"));
+        map.end_scope();
+        assert_eq!(map.get(&1), Some(&"b"));
+    }
+
+    #[test]
     fn test_get() {
         let mut map = StackedMap::new();
 
