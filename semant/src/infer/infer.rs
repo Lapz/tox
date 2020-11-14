@@ -440,7 +440,7 @@ where
                 }
             }
 
-            crate::hir::Expr::Block(block) => self.infer_block(map, block),
+            crate::hir::Expr::Block(block, has_value) => self.infer_block(map, block),
             crate::hir::Expr::Break | crate::hir::Expr::Continue => Type::Con(TypeCon::Void),
             crate::hir::Expr::Call {
                 callee,

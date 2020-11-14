@@ -201,8 +201,7 @@ where
                 hir::Expr::Binary { lhs, op, rhs }
             }
             ast::Expr::BlockExpr(ref block) => {
-                println!("{:?}", block.is_expr());
-
+                let has_value = block.has_value();
                 let block = hir::Block(
                     block
                         .block()
@@ -212,7 +211,7 @@ where
                         .collect(),
                 );
 
-                hir::Expr::Block(self.add_block(block))
+                hir::Expr::Block(self.add_block(block), has_value)
             }
 
             ast::Expr::BreakExpr(_) => hir::Expr::Break,
@@ -285,6 +284,7 @@ where
                 let increment = self.lower_expr(for_expr.increment().unwrap());
 
                 let loop_body = for_expr.loop_body().unwrap().block().unwrap();
+                let has_value = loop_body.has_value();
                 let mut body = loop_body
                     .statements()
                     .map(|st| self.lower_stmt(st))
@@ -303,7 +303,7 @@ where
 
                 let block = self.add_block(block);
 
-                hir::Expr::Block(block)
+                hir::Expr::Block(block, has_value)
             }
             ast::Expr::IdentExpr(ref ident_expr) => hir::Expr::Ident(util::Span::from_ast(
                 self.db.intern_name(ident_expr.name().unwrap().into()),

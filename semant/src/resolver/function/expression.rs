@@ -26,7 +26,7 @@ where
                 self.resolve_expression(fn_name, lhs, ast_map)?;
                 self.resolve_expression(fn_name, rhs, ast_map)?;
             }
-            Expr::Block(block_id) => {
+            Expr::Block(block_id, _) => {
                 let block = ast_map.block(block_id);
 
                 self.begin_function_scope(fn_name.item);

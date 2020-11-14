@@ -251,7 +251,7 @@ pub enum Expr {
         op: BinOp,
         rhs: util::Span<ExprId>,
     },
-    Block(BlockId),
+    Block(BlockId, bool),
     Break,
     Call {
         callee: util::Span<ExprId>,

@@ -119,13 +119,13 @@ impl ast::CallExpr {
 }
 
 impl ast::BlockExpr {
-    pub fn is_expr(&self) -> bool {
-        self.block().map(|b| b.is_expr()).unwrap_or(false)
+    pub fn has_value(&self) -> bool {
+        self.block().map(|b| b.has_value()).unwrap_or(false)
     }
 }
 
 impl ast::Block {
-    pub fn is_expr(&self) -> bool {
+    pub fn has_value(&self) -> bool {
         let last = self.statements().last();
 
         if let Some(stmt) = last {
