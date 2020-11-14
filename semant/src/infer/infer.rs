@@ -281,7 +281,7 @@ where
         map: &FunctionAstMap,
         body: &[util::Span<StmtId>],
         returns: &Type,
-    ) -> Result<(), ()> {
+    ) -> Option<Type> {
         for id in body {
             let stmt = map.stmt(&id.item);
             match stmt {
@@ -323,7 +323,7 @@ where
             }
         }
 
-        Ok(())
+        None
     }
 
     fn infer_literal(&mut self, lit_id: LiteralId) -> Type {
@@ -340,7 +340,12 @@ where
 
     fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId) -> Type {
         self.ctx.begin_scope();
+
         let block = map.block(block_id);
+
+        let returns = self.returns.as_ref().unwrap();
+
+        self.infer_statements(map,&block.0, returns);
 
         self.ctx.end_scope();
 
