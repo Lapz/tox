@@ -1,7 +1,7 @@
 use crate::{
     hir::{
-        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, Pattern,
-        StmtId, UnaryOp, PLACEHOLDER_NAME,
+        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, NameId, PatId,
+        Pattern, StmtId, UnaryOp, PLACEHOLDER_NAME,
     },
     infer::{
         pattern_matrix::{self, wcard, Constructor, PatternMatrix, Row},
@@ -21,6 +21,7 @@ struct InferDataCollector<DB> {
     reporter: Reporter,
     returns: Option<Type>,
     possible_returns: Vec<Type>,
+    fn_name: Option<NameId>,
 }
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -37,6 +38,8 @@ where
         self.ctx.begin_scope();
 
         self.returns = Some(expected);
+
+        self.fn_name = Some(function.name.item);
 
         if let Some(body) = &function.body {
             self.infer_statements(&function.ast_map, &body)
@@ -147,6 +150,11 @@ where
                 for (a, b) in types1.iter().zip(types2.iter()) {
                     let _ = self.unify(a, b, span, None, false);
                 }
+            }
+            (Type::App(signature), ret) => {
+                let last = signature.last().unwrap_or(&Type::Con(TypeCon::Void));
+
+                self.unify(last, ret, span, notes, report)
             }
             (Type::Tuple(types1), Type::Tuple(types2)) => {
                 if types1.len() != types2.len() && report {
@@ -613,7 +621,19 @@ where
 
                 inferred_then
             }
-            crate::hir::Expr::Ident(name) => self.ctx.get_type(&name.item).unwrap_or(Type::Unknown),
+            crate::hir::Expr::Ident(name) => {
+                println!(
+                    "name {:?} param {:?} ctx {:?}",
+                    name.item,
+                    self.resolver.get_param(&self.fn_name.unwrap(), &name.item),
+                    self.ctx.get_type(&name.item)
+                );
+                self.ctx.get_type(&name.item).unwrap_or(
+                    self.resolver
+                        .get_param(&self.fn_name.unwrap(), &name.item)
+                        .unwrap_or(Type::Unknown),
+                )
+            }
             crate::hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
 
@@ -693,9 +713,11 @@ where
                 }
             }
             crate::hir::Expr::Return(expr) => {
+                let expected = self.returns.clone().unwrap();
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
-                    let expected = self.returns.clone().unwrap();
+
+                    println!("inferred {:?} expected {:?}", inferred, expected);
 
                     self.unify(
                         &expected,
@@ -709,7 +731,18 @@ where
                     );
                     inferred
                 } else {
-                    Type::Con(TypeCon::Void)
+                    let inferred = Type::Con(TypeCon::Void);
+                    self.unify(
+                        &expected,
+                        &inferred,
+                        id.as_reporter_span(),
+                        Some(format!(
+                            "{:?} is returned here but expected {:?}",
+                            inferred, expected
+                        )),
+                        true,
+                    );
+                    inferred
                 }
             }
             crate::hir::Expr::Match { expr, arms } => {
@@ -891,6 +924,8 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         resolver,
         reporter,
         returns: None,
+
+        fn_name: None,
         possible_returns: Vec::new(),
     };
 

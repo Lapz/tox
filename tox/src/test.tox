@@ -1,16 +1,3 @@
-fn main() {
-    {
-        let x = 10;
-        x
-    }
-
-    {
-        return x;
-        let x;
-        x+x;
-    }
-
-    {
-
-    }
+fn id<T>(i:T) -> i32 {
+    return i;
 }

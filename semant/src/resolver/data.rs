@@ -1,5 +1,5 @@
 use crate::{
-    hir::{self, NameId, TypeId},
+    hir::{self, Name, NameId, TypeId},
     infer::{StackedMap, Type, TypeCon},
     util, Ctx, HirDatabase,
 };
@@ -58,12 +58,16 @@ pub struct LocalData {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FunctionData {
+    pub(crate) type_params: HashMap<NameId, Type>,
+    pub(crate) params: HashMap<NameId, Type>,
     pub(crate) scopes: StackedMap<hir::NameId, LocalData>,
 }
 
 impl FunctionData {
     pub fn new() -> Self {
         Self {
+            type_params: HashMap::new(),
+            params: HashMap::new(),
             scopes: StackedMap::new(),
         }
     }
@@ -75,12 +79,18 @@ impl Resolver {
     }
 
     pub fn lookup_intern_type(&self, id: &hir::TypeId) -> Option<Type> {
-        println!("{:?}", self.interned_types);
         self.interned_types.get(id).map(Clone::clone)
     }
 
     pub fn has_export(&self, id: &hir::NameId) -> bool {
         self.exported_items.get(id).is_some()
+    }
+
+    pub fn get_param(&self, fn_name: &hir::NameId, param: &hir::NameId) -> Option<Type> {
+        self.function_data[fn_name]
+            .params
+            .get(param)
+            .map(Clone::clone)
     }
 }
 
@@ -117,6 +127,59 @@ where
     pub(crate) fn end_scope(&mut self) {
         self.ctx.end_scope();
         // self.interned_types.end_scope();
+    }
+
+    pub(crate) fn insert_type_param(
+        &mut self,
+        fn_name: &NameId,
+        param_id: &util::Span<NameId>,
+        ty: Type,
+    ) {
+        let function_data = self.function_data.get_mut(&fn_name).unwrap();
+        function_data.type_params.insert(param_id.item, ty);
+    }
+
+    pub(crate) fn insert_param(
+        &mut self,
+        fn_name: &NameId,
+        param: &util::Span<PatId>,
+        ast_map: &hir::FunctionAstMap,
+        ty: Type,
+    ) {
+        let pat = ast_map.pat(&param.item);
+        let function_data = self.function_data.get_mut(&fn_name).unwrap();
+
+        match pat {
+            hir::Pattern::Bind { name } => {
+                function_data.params.insert(name.item, ty);
+            }
+            hir::Pattern::Placeholder => {
+                function_data
+                    .params
+                    .insert(self.db.intern_name(Name::new("_")), ty);
+            }
+            hir::Pattern::Tuple(pats) => match ty {
+                Type::Tuple(types) => {
+                    for (pat, ty) in pats.iter().zip(types.iter()) {
+                        self.insert_param(fn_name, pat, ast_map, ty.clone())
+                    }
+                }
+
+                Type::Poly(_, inner) => match &*inner {
+                    Type::Tuple(types) => {
+                        for (pat, ty) in pats.iter().zip(types.iter()) {
+                            self.insert_param(fn_name, pat, ast_map, ty.clone())
+                        }
+                    }
+                    _ => {}
+                },
+
+                _ => {}
+            },
+            hir::Pattern::Literal(_) => {
+                // TODO error
+            }
+        }
     }
 
     pub(crate) fn insert_type(&mut self, name_id: &util::Span<NameId>, ty: Type, kind: TypeKind) {
