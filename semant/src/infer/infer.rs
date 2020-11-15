@@ -36,13 +36,12 @@ where
 
         self.ctx.begin_scope();
 
-        self.returns = Some(expected.clone());
+        self.returns = Some(expected);
+
         if let Some(body) = &function.body {
-            self.infer_statements(&function.ast_map, &body, &expected)
-                .unwrap()
+            self.infer_statements(&function.ast_map, &body)
         } else {
-            self.infer_statements(&function.ast_map, &[], &expected)
-                .unwrap()
+            self.infer_statements(&function.ast_map, &[])
         };
 
         self.ctx.end_scope();
@@ -276,54 +275,10 @@ where
         }
     }
 
-    fn infer_statements(
-        &mut self,
-        map: &FunctionAstMap,
-        body: &[util::Span<StmtId>],
-        returns: &Type,
-    ) -> Option<Type> {
+    fn infer_statements(&mut self, map: &FunctionAstMap, body: &[util::Span<StmtId>]) {
         for id in body {
-            let stmt = map.stmt(&id.item);
-            match stmt {
-                crate::hir::Stmt::Let {
-                    pat,
-                    ascribed_type,
-                    initializer,
-                } => {
-                    match (ascribed_type, initializer) {
-                        (Some(expected), Some(init)) => {
-                            let expr = self.infer_expr(map, init);
-                            let expected = self
-                                .resolver
-                                .lookup_intern_type(&expected.item)
-                                .unwrap_or(Type::Unknown);
-
-                            self.unify(&expected, &expr, id.as_reporter_span(), None, true);
-                            self.assign_pattern_type(map, pat, expected);
-                        }
-                        (Some(expected), None) => {
-                            self.assign_pattern_type(
-                                map,
-                                pat,
-                                self.resolver.lookup_intern_type(&expected.item).unwrap(),
-                            );
-                        }
-                        (None, Some(init)) => {
-                            let expected = self.infer_expr(map, init);
-                            self.assign_pattern_type(map, pat, expected);
-                        }
-                        (None, None) => {
-                            self.assign_pattern_type(map, pat, Type::Con(TypeCon::Void));
-                        }
-                    };
-                }
-                crate::hir::Stmt::Expr(expr) => {
-                    let rhs = self.infer_expr(map, expr);
-                }
-            }
+            let _ = self.infer_statement(map, id);
         }
-
-        None
     }
 
     fn infer_literal(&mut self, lit_id: LiteralId) -> Type {
@@ -338,18 +293,65 @@ where
         }
     }
 
-    fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId) -> Type {
+    fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId, has_value: bool) -> Type {
         self.ctx.begin_scope();
 
         let block = map.block(block_id);
 
-        let returns = self.returns.as_ref().unwrap();
+        let mut returns = Type::Con(TypeCon::Void);
 
-        self.infer_statements(map,&block.0, returns);
+        for (index, stmt) in block.0.iter().enumerate() {
+            let ty = self.infer_statement(map, stmt);
+            if has_value && index == block.0.len() - 1 {
+                returns = ty;
+            }
+        }
 
         self.ctx.end_scope();
 
-        Type::Unknown
+        returns
+    }
+
+    fn infer_statement(&mut self, map: &FunctionAstMap, id: &util::Span<StmtId>) -> Type {
+        let stmt = map.stmt(&id.item);
+
+        match stmt {
+            crate::hir::Stmt::Let {
+                pat,
+                ascribed_type,
+                initializer,
+            } => {
+                match (ascribed_type, initializer) {
+                    (Some(expected), Some(init)) => {
+                        let expr = self.infer_expr(map, init);
+                        let expected = self
+                            .resolver
+                            .lookup_intern_type(&expected.item)
+                            .unwrap_or(Type::Unknown);
+
+                        self.unify(&expected, &expr, id.as_reporter_span(), None, true);
+                        self.assign_pattern_type(map, pat, expected);
+                    }
+                    (Some(expected), None) => {
+                        self.assign_pattern_type(
+                            map,
+                            pat,
+                            self.resolver.lookup_intern_type(&expected.item).unwrap(),
+                        );
+                    }
+                    (None, Some(init)) => {
+                        let expected = self.infer_expr(map, init);
+                        self.assign_pattern_type(map, pat, expected);
+                    }
+                    (None, None) => {
+                        self.assign_pattern_type(map, pat, Type::Con(TypeCon::Void));
+                    }
+                };
+
+                Type::Con(TypeCon::Void)
+            }
+            crate::hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
+        }
     }
 
     fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
@@ -386,7 +388,7 @@ where
                             Some("`+`,`-`,`*`,`/` operators only works on i32 and f32".into()),
                             true,
                         );
-                        Type::Con(TypeCon::Bool)
+                        inferred_lhs
                     }
                     BinOp::And | BinOp::Or => {
                         self.unify(
@@ -445,7 +447,7 @@ where
                 }
             }
 
-            crate::hir::Expr::Block(block, has_value) => self.infer_block(map, block),
+            crate::hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
             crate::hir::Expr::Break | crate::hir::Expr::Continue => Type::Con(TypeCon::Void),
             crate::hir::Expr::Call {
                 callee,
@@ -651,7 +653,7 @@ where
                     true,
                 );
 
-                self.infer_block(map, body);
+                self.infer_block(map, body, false);
 
                 Type::Con(TypeCon::Void)
             }
@@ -694,8 +696,6 @@ where
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
                     let expected = self.returns.clone().unwrap();
-
-                    println!("expected{:?}", expected);
 
                     self.unify(
                         &expected,
