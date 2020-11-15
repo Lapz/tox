@@ -1,3 +1,8 @@
 fn id<T>(i:T) -> i32 {
     return i;
 }
+
+
+fn main() {
+    print("hello world");
+}

@@ -520,13 +520,18 @@ where
                             ret
                         }
                         ty => {
-                            let msg = format!("Expected a function found `{:?}`", ty);
+                            match ty {
+                                Type::Unknown => {} // use of undefined function
+                                _ => {
+                                    let msg = format!("Expected a function found `{:?}`", ty);
 
-                            self.reporter.error(
-                                msg,
-                                "A call expression requires a function",
-                                callee.as_reporter_span(),
-                            );
+                                    self.reporter.error(
+                                        msg,
+                                        "A call expression requires a function",
+                                        callee.as_reporter_span(),
+                                    );
+                                }
+                            }
 
                             Type::Unknown
                         }
@@ -567,14 +572,19 @@ where
                         ret
                     }
 
-                    _ => {
-                        let msg = format!("Expected a function found `{:?}`", inferred_callee);
+                    ty => {
+                        match ty {
+                            Type::Unknown => {}
+                            _ => {
+                                let msg = format!("Expected a function found `{:?}`", ty);
 
-                        self.reporter.error(
-                            msg,
-                            "A call expression requires a function",
-                            callee.as_reporter_span(),
-                        );
+                                self.reporter.error(
+                                    msg,
+                                    "A call expression requires a function",
+                                    callee.as_reporter_span(),
+                                );
+                            }
+                        }
 
                         Type::Unknown
                     }

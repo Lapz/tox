@@ -241,7 +241,7 @@ where
         // so to resolve them we need to look at the file ctx
         if !self.items.contains(&name.item) {
             let msg = format!(
-                "Use of undefined variable `{}`",
+                "Use of undefined identifier `{}`",
                 self.db.lookup_intern_name(name.item)
             );
 
