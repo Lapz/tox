@@ -337,7 +337,7 @@ where
                             .lookup_intern_type(&expected.item)
                             .unwrap_or(Type::Unknown);
 
-                        self.unify(&expected, &expr, id.as_reporter_span(), None, true);
+                        self.unify(&expected, &expr, init.as_reporter_span(), None, true);
                         self.assign_pattern_type(map, pat, expected);
                     }
                     (Some(expected), None) => {
@@ -496,6 +496,8 @@ where
 
                             let mut subst = HashMap::new();
 
+                            let mut callee_exprs = Vec::new();
+
                             for (var, type_arg) in vars.iter().zip(type_args.item.iter()) {
                                 let ty = self
                                     .resolver
@@ -505,19 +507,35 @@ where
                                 subst.insert(*var, ty);
                             }
 
-                            println!("{:?}", subst);
+                            if type_args.item.is_empty() {
+                                for (var, expr) in vars.iter().zip(args.iter()) {
+                                    let inferred_expr = self.infer_expr(map, expr);
+                                    callee_exprs.push(inferred_expr.clone());
 
-                            arg_types.iter().zip(args.iter()).for_each(|(ty, expr)| {
-                                let inferred_expr = self.infer_expr(map, expr);
-                                let inferred_expr = self.subst(&inferred_expr, &mut subst);
+                                    subst.insert(*var, inferred_expr);
+                                }
+                            }
 
-                                let ty = self.subst(ty, &mut subst);
+                            arg_types
+                                .iter()
+                                .zip(args.iter().zip(callee_exprs.iter()))
+                                .for_each(|(ty, (expr, expr_ty))| {
+                                    let inferred_expr = expr_ty;
 
-                                println!("{:?}", ty);
-                                self.unify(&ty, &inferred_expr, expr.as_reporter_span(), None, true)
-                            });
+                                    let inferred_expr = self.subst(&inferred_expr, &mut subst);
 
-                            ret
+                                    let ty = self.subst(ty, &mut subst);
+
+                                    self.unify(
+                                        &ty,
+                                        &inferred_expr,
+                                        expr.as_reporter_span(),
+                                        Some("test".into()),
+                                        false,
+                                    )
+                                });
+
+                            self.subst(&ret, &mut subst)
                         }
                         ty => {
                             match ty {
@@ -537,6 +555,7 @@ where
                         }
                     },
                     Type::App(arg_types) => {
+                        // TODO check if code path is reachable
                         let ret = arg_types
                             .last()
                             .unwrap_or(&Type::Con(TypeCon::Void))
@@ -631,19 +650,11 @@ where
 
                 inferred_then
             }
-            crate::hir::Expr::Ident(name) => {
-                println!(
-                    "name {:?} param {:?} ctx {:?}",
-                    name.item,
-                    self.resolver.get_param(&self.fn_name.unwrap(), &name.item),
-                    self.ctx.get_type(&name.item)
-                );
-                self.ctx.get_type(&name.item).unwrap_or(
-                    self.resolver
-                        .get_param(&self.fn_name.unwrap(), &name.item)
-                        .unwrap_or(Type::Unknown),
-                )
-            }
+            crate::hir::Expr::Ident(name) => self.ctx.get_type(&name.item).unwrap_or(
+                self.resolver
+                    .get_param(&self.fn_name.unwrap(), &name.item)
+                    .unwrap_or(Type::Unknown),
+            ),
             crate::hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
 
@@ -726,8 +737,6 @@ where
                 let expected = self.returns.clone().unwrap();
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
-
-                    println!("inferred {:?} expected {:?}", inferred, expected);
 
                     self.unify(
                         &expected,

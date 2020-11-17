@@ -1,8 +1,13 @@
-fn id<T>(i:T) -> i32 {
+fn id<T>(i:T) -> T {
     return i;
 }
 
+fn foo() {
+    return 10;
+}
 
 fn main() {
-    print("hello world");
+    let x:i32 = id(10);
+    let x:string = id("a");
+    let x:void = id(10);
 }

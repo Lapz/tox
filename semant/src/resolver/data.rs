@@ -177,7 +177,7 @@ where
                 _ => {}
             },
             hir::Pattern::Literal(_) => {
-                // TODO error
+                // TODO error in resolving
             }
         }
     }
