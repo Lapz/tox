@@ -98,6 +98,10 @@ macro_rules! T {
     ("//") => {
         $crate::SyntaxKind::COMMENT
     };
+
+    ("/*") => {
+        $crate::SyntaxKind::COMMENT
+    };
     (=) => {
         $crate::SyntaxKind::EQ
     };

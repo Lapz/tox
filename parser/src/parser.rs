@@ -344,7 +344,7 @@ impl<'a> Parser<'a> {
     }
 
     fn current(&mut self) -> SyntaxKind {
-        if self.current.value.kind.is_trivia() {
+        while self.current.value.kind.is_trivia() {
             self.add_token(self.current);
         }
         self.current.value.kind

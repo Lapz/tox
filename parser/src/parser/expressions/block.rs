@@ -63,8 +63,9 @@ impl<'a> Parser<'a> {
                     self.parse_closure_expr();
                     self.finish_node();
                 }
-                pat @ T!["//"] => {
-                    while self.at(pat) {
+                T!["//"] | T!["/*"] => {
+                    println!("a");
+                    while self.at(T!["//"]) {
                         self.bump();
                     }
                     continue;

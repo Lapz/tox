@@ -14,7 +14,7 @@ impl InfixParser for FieldParselet {
 
         parser.expect(T![.]);
 
-        parser.parse_expression(Precedence::Assignment, Restrictions::default());
+        parser.parse_expression(Precedence::Or, Restrictions::default());
 
         parser.finish_node();
     }
@@ -27,6 +27,7 @@ impl InfixParser for FieldParselet {
 #[cfg(test)]
 mod tests {
     test_parser! {parse_field_access,"fn main(){a.b;}"}
+    test_parser! {parse_field_access_assign,"fn main(){a.b = 10;}"}
     test_parser! {parse_field_access_chain,"fn main(){a.b.c.d.e.f;}"}
     test_parser! {parse_field_access_method,"fn main(){a.b();}"}
     test_parser! {parse_field_access_method_chain,"fn main(){a.b.c.d.e();}"}
