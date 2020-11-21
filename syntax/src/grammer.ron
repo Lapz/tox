@@ -301,7 +301,10 @@ Grammar(
         "IndexExpr": (),
         "ReturnExpr": (options: ["Expr"]),
         "ParenExpr": (options: ["Expr"]),
-        "FieldExpr": (options: ["Expr", "Name"]),
+        "FieldExpr": (
+            options: ["Expr", "Name"],
+            collections: [["exprs","Expr"]]
+        ),
         "CastExpr": (options: ["Expr", "TypeRef"]),
         "PrefixExpr": (options: ["Expr"]),
         "BinExpr": (),

@@ -277,7 +277,17 @@ where
                 unimplemented!()
             }
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
-            ast::Expr::FieldExpr(ref _field_expr) => unimplemented!(),
+            ast::Expr::FieldExpr(ref field_expr) => {
+                let mut exprs = Vec::new();
+
+                for expr in field_expr.exprs() {
+                    let expr_id = self.lower_expr(expr);
+
+                    exprs.push(expr_id);
+                }
+
+                hir::Expr::Field(exprs)
+            }
             ast::Expr::ForExpr(ref for_expr) => {
                 let init = self.lower_stmt(for_expr.init().unwrap());
                 let cond = self.lower_expr(for_expr.cond().unwrap());

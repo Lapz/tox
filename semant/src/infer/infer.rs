@@ -860,6 +860,61 @@ where
                     }
                 }
             }
+            crate::hir::Expr::Field(fields) => {
+                let record = self.infer_expr(map, &fields[0]);
+                match record {
+                    Type::Poly(_, inner) => match &*inner {
+                        Type::Class {
+                            name,
+                            fields: ty_fields,
+                            methods: ty_methods,
+                        } => {
+                            // resolve method chain
+
+                            // self.infer_field_exprs(&fields[1..], map);
+
+                            for id in &fields[1..] {
+                                println!("{:?}", map.expr(&id.item))
+                            }
+
+                            // self.infer_expr(map, id);
+                            Type::Unknown
+                        }
+                        Type::Unknown => Type::Unknown,
+                        ty => {
+                            let msg = format!(
+                                "Expected expression of type `class` instead found `{:?}`",
+                                ty
+                            );
+
+                            self.reporter.error(
+                                msg,
+                                "Field access only works on classes",
+                                fields[0].as_reporter_span(),
+                            );
+
+                            Type::Unknown
+                        }
+                    },
+
+                    ty @ Type::Tuple(_) => Type::Unknown,
+                    Type::Unknown => Type::Unknown,
+                    _ => {
+                        let msg = format!(
+                            "Expected expression of type `class` instead found `{:?}`",
+                            record
+                        );
+
+                        self.reporter.error(
+                            msg,
+                            "Field access only works on classes",
+                            fields[0].as_reporter_span(),
+                        );
+
+                        Type::Unknown
+                    }
+                }
+            }
         }
     }
 

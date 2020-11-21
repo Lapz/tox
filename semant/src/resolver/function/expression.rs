@@ -120,6 +120,12 @@ where
                     self.resolve_expression(fn_name, &arm.expr, ast_map)?;
                 }
             }
+
+            Expr::Field(exprs) => {
+                // We only resolve the record that the user is trying to reference exist
+                // Type checking handles weather all fields referenced exist
+                self.resolve_expression(fn_name, &exprs[0], ast_map)?;
+            }
             Expr::RecordLiteral {
                 def,
                 fields: record_fields,

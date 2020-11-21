@@ -1080,6 +1080,10 @@ impl AstNode for FieldExpr {
 
 
 impl FieldExpr {
+    pub fn exprs(&self) -> impl Iterator<Item = Expr> {
+        children(self)
+    }
+
     pub fn expr(&self) -> Option<Expr> {
         child_opt(self)
     }

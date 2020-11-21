@@ -298,6 +298,7 @@ pub enum Expr {
         def: util::Span<NameId>,
         fields: Vec<(util::Span<NameId>, util::Span<ExprId>)>,
     },
+    Field(Vec<util::Span<ExprId>>),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
