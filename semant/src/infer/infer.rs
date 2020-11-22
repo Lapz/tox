@@ -864,21 +864,14 @@ where
                 let record = self.infer_expr(map, &fields[0]);
                 match record {
                     Type::Poly(_, inner) => match &*inner {
-                        Type::Class {
-                            name,
-                            fields: ty_fields,
-                            methods: ty_methods,
-                        } => {
-                            // resolve method chain
-
-                            // self.infer_field_exprs(&fields[1..], map);
+                        ty @ Type::Class { .. } => {
+                            // resolve method chain                            // self.infer_field_exprs(&fields[1..], map);
 
                             for id in &fields[1..] {
                                 println!("{:?}", map.expr(&id.item))
                             }
 
-                            // self.infer_expr(map, id);
-                            Type::Unknown
+                            self.infer_field_exprs(&fields[1..], ty, map)
                         }
                         Type::Unknown => Type::Unknown,
                         ty => {
@@ -897,7 +890,7 @@ where
                         }
                     },
 
-                    ty @ Type::Tuple(_) => Type::Unknown,
+                    ty @ Type::Tuple(_) => self.infer_field_exprs(&fields[1..], &ty, map),
                     Type::Unknown => Type::Unknown,
                     _ => {
                         let msg = format!(
@@ -914,6 +907,106 @@ where
                         Type::Unknown
                     }
                 }
+            }
+        }
+    }
+
+    fn infer_field_exprs(
+        &mut self,
+        exprs: &[util::Span<ExprId>],
+        ty: &Type,
+        map: &FunctionAstMap,
+    ) -> Type {
+        if exprs.is_empty() {
+            return ty.clone();
+        }
+
+        let expr = map.expr(&exprs[0].item);
+
+        match expr {
+            crate::hir::Expr::Call {
+                callee,
+                args,
+                type_args,
+            } => unimplemented!(),
+            crate::hir::Expr::Ident(ident) => match ty {
+                Type::Class { fields, .. } => {
+                    if let Some(ty) = fields.get(&ident.item) {
+                        println!("{:?}", ty);
+                        self.infer_field_exprs(&exprs[1..], ty, map)
+                    } else {
+                        let msg = format!(
+                            "Unknown record field `{}`",
+                            self.db.lookup_intern_name(ident.item),
+                        );
+
+                        self.reporter.error(msg, "", exprs[0].as_reporter_span());
+
+                        Type::Unknown
+                    }
+                }
+                ty => {
+                    let msg = format!(
+                        "`{}` does not exist on `{:?}`",
+                        self.db.lookup_intern_name(ident.item),
+                        ty
+                    );
+
+                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
+
+                    Type::Unknown
+                }
+            },
+
+            crate::hir::Expr::Literal(literal) => {
+                let lit = self.db.lookup_intern_literal(*literal);
+                match lit {
+                    Literal::Int(int) => {
+                        let index: usize = int.parse().expect("Couldn't parse to i32");
+
+                        match ty {
+                            Type::Tuple(types) => {
+                                if let Some(ty) = types.get(index) {
+                                    self.infer_field_exprs(&exprs[1..], ty, map)
+                                } else {
+                                    let msg = format!("Unknown tuple field `{}`", index);
+
+                                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
+
+                                    Type::Unknown
+                                }
+                            }
+                            _ => {
+                                let msg = format!("`{}` does not exist on `{:?}`", index, ty);
+
+                                self.reporter.error(
+                                    msg,
+                                    "Numbered field access can only be used on tuples",
+                                    exprs[0].as_reporter_span(),
+                                );
+
+                                Type::Unknown
+                            }
+                        }
+                    }
+                    _ => {
+                        let msg = format!("`{:?}` is not a valid tuple field ", lit);
+
+                        self.reporter.error(
+                            msg,
+                            "Tuple fields can only be numbers",
+                            exprs[0].as_reporter_span(),
+                        );
+
+                        Type::Unknown
+                    }
+                }
+            }
+
+            _ => {
+                // invalid field types
+                // todo error
+                Type::Unknown
             }
         }
     }

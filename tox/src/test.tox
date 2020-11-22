@@ -1,13 +1,19 @@
-fn id<T>(i:T) -> T {
-    return i;
+
+class Second {
+    foo:string;
+}
+class Person {
+    firstName:Second;
+    lastName:string;
 }
 
-fn foo() {
-    return 10;
-}
+
+
 
 fn main() {
-    let x:i32 = id(10);
-    let x:string = id("a");
-    let x:void = id(10);
+
+    let a:Person;
+    a.firstName.foo = 1;
+    
+  /*  a.b.c;a.b.c(1,2); */
 }

@@ -1,0 +1,11 @@
+Program (
+    contents: "
+        fn main() {
+            let a:(i32,i32);
+            a.5 = 1;
+        }
+    ",
+    errors:[
+        "Unknown tuple field `5`"
+    ]  
+)

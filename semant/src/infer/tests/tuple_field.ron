@@ -1,0 +1,11 @@
+Program (
+    contents: "
+        fn main() {
+            let a:(i32,i32);
+            a.1 = 1;
+        }
+    ",
+    errors:[
+        "is not a valid tuple field"
+    ]  
+)
