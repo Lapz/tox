@@ -8,6 +8,7 @@ use crate::{
 };
 
 use super::TypeVar;
+use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
@@ -94,6 +95,7 @@ where
         self.subst(&ret, &mut subst)
     }
 
+    #[instrument(skip(self))]
     pub(crate) fn infer_call(
         &mut self,
         callee: &Span<ExprId>,

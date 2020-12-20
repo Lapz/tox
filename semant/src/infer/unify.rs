@@ -1,14 +1,15 @@
-use std::collections::HashMap;
-
 use crate::{
     infer::{InferDataCollector, Type, TypeCon},
     HirDatabase,
 };
+use std::collections::HashMap;
+use tracing::{debug, instrument};
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    #[instrument(skip(self))]
     pub(crate) fn unify(
         &mut self,
         lhs: &Type,
@@ -17,6 +18,7 @@ where
         notes: Option<String>,
         report: bool,
     ) {
+        debug!("Unifying ${:?} ${:?}", lhs, rhs);
         match (lhs, rhs) {
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {

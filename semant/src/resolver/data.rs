@@ -241,7 +241,7 @@ where
         // so to resolve them we need to look at the file ctx
         if !self.items.contains(&name.item) {
             let msg = format!(
-                "Undefined identifier `{}`",
+                "Unknown identifier `{}`",
                 self.db.lookup_intern_name(name.item)
             );
 
@@ -377,10 +377,6 @@ where
     pub(crate) fn resolve_type(&mut self, id: &util::Span<TypeId>) -> Type {
         let ty = self.db.lookup_intern_type(id.item);
 
-        if let Some(interned_ty) = self.lookup_type(&id.item) {
-            return interned_ty;
-        }
-
         let ty = match ty {
             hir::Type::ParenType(types) => {
                 let mut signature = vec![];
@@ -416,10 +412,7 @@ where
                     None => {
                         let span = (id.start().to_usize(), id.end().to_usize());
                         self.reporter.error(
-                            format!(
-                                "Use of undefined type `{}`",
-                                self.db.lookup_intern_name(name)
-                            ),
+                            format!("Use of unknown type `{}`", self.db.lookup_intern_name(name)),
                             "",
                             span,
                         );
@@ -427,7 +420,6 @@ where
                         Type::Unknown
                     }
                 };
-                println!("Here: NameId:{:?} \n {:#?}", name, ty);
                 if self.ctx.get_kind(&name) == TypeKind::Function {
                     let span = (id.start().to_usize(), id.end().to_usize());
                     self.reporter.error(
@@ -470,10 +462,7 @@ where
 
                 let span = (id.start().to_usize(), id.end().to_usize());
                 self.reporter.error(
-                    format!(
-                        "Use of undefined type `{}`",
-                        self.db.lookup_intern_name(name)
-                    ),
+                    format!("Use of unknown type `{}`", self.db.lookup_intern_name(name)),
                     "",
                     span,
                 );

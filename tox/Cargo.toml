@@ -13,6 +13,8 @@ errors= {path="../errors",version="*"}
 parser={path="../parser",version="*"}
 semant = {path="../semant"}
 reporting = {version="^0.9.0",package="codespan-reporting"}
+tracing = "^0.1.22"
+tracing-subscriber = "0.2"
 [dev-dependencies]
 insta = "0.16.0"
 serde ="1.0.106"

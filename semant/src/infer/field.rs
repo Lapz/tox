@@ -4,11 +4,13 @@ use crate::{
     util::Span,
     HirDatabase,
 };
+use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    #[instrument(skip(self))]
     pub(crate) fn infer_field_exprs(
         &mut self,
         exprs: &[Span<ExprId>],

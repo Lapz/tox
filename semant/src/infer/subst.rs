@@ -1,14 +1,15 @@
-use std::collections::HashMap;
-
 use crate::{
     infer::{InferDataCollector, Type, TypeCon, TypeVar, Variant},
     HirDatabase,
 };
+use std::collections::HashMap;
+use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    #[instrument(skip(self))]
     pub(crate) fn subst(&mut self, ty: &Type, substitutions: &mut HashMap<TypeVar, Type>) -> Type {
         match ty {
             Type::App(types) => Type::App(

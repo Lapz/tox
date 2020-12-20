@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     hir::{
         ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
@@ -9,11 +11,12 @@ use crate::{
     },
     util, HirDatabase,
 };
-
+use tracing::instrument;
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    #[instrument(skip(self, function))]
     pub(crate) fn infer_function(&mut self, function: &Function) {
         let expected = if let Some(ty) = self.resolver.get_type(&function.name.item) {
             ty
@@ -35,7 +38,7 @@ where
 
         self.ctx.end_scope();
     }
-
+    #[instrument(skip(self))]
     fn assign_pattern_type(&mut self, map: &FunctionAstMap, id: &util::Span<PatId>, ty: Type) {
         let pat = map.pat(&id.item);
         match pat {
@@ -68,13 +71,13 @@ where
             crate::hir::Pattern::Literal(_) => {}
         }
     }
-
+    #[instrument(skip(self, map,))]
     fn infer_statements(&mut self, map: &FunctionAstMap, body: &[util::Span<StmtId>]) {
         for id in body {
             let _ = self.infer_statement(map, id);
         }
     }
-
+    #[instrument(skip(self))]
     fn infer_literal(&mut self, lit_id: LiteralId) -> Type {
         let lit = self.db.lookup_intern_literal(lit_id);
 
@@ -86,7 +89,7 @@ where
             Literal::Float(_) => Type::Con(TypeCon::Float),
         }
     }
-
+    #[instrument(skip(self, map))]
     pub(crate) fn infer_statement(
         &mut self,
         map: &FunctionAstMap,
@@ -132,7 +135,7 @@ where
             crate::hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
         }
     }
-
+    #[instrument(skip(self, map))]
     pub(crate) fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
         let expr = map.expr(&id.item);
 
@@ -379,20 +382,35 @@ where
             crate::hir::Expr::RecordLiteral { def, fields } => {
                 let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
 
+                println!("{:?}", inferred_def);
+
+                let mut subst = HashMap::new();
+
                 match inferred_def.clone() {
-                    Type::Poly(_, inner) => match &*inner {
+                    Type::Poly(vars, inner) => match &*inner {
                         Type::Class {
                             fields: field_types,
                             ..
                         } => {
-                            for (field, expr) in fields {
+                            for (var, (_, expr)) in vars.iter().zip(fields.iter()) {
                                 let inferred_expr = self.infer_expr(map, expr);
 
-                                let expected =
-                                    field_types.get(&field.item).unwrap_or(&Type::Unknown);
+                                subst.insert(*var, inferred_expr.clone());
+                            }
+
+                            println!("{:?}", subst);
+
+                            for (field, expr) in fields {
+                                let inferred_expr = self.infer_expr(map, expr);
+                                let expected = self.subst(
+                                    field_types.get(&field.item).unwrap_or(&Type::Unknown),
+                                    &mut subst,
+                                );
+
+                                println!("Expected {:?}", expected);
 
                                 self.unify(
-                                    expected,
+                                    &expected,
                                     &inferred_expr,
                                     field.as_reporter_span(),
                                     None,
