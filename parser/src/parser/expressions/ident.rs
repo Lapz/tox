@@ -35,7 +35,7 @@ impl PrefixParser for IdentParselet {
                 parser.finish_node();
                 parser.finish_node();
 
-                if !parser.at(T![;]) {
+                if !parser.at(T![;]) && parser.at(T!["("]) {
                     parser.parse_expression(Precedence::Assignment, Restrictions::default());
                 }
 
