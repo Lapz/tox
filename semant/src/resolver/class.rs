@@ -3,13 +3,14 @@ use super::{
     TypeKind,
 };
 use crate::{hir::Class, infer::Type, HirDatabase};
+
 use std::collections::HashMap;
 
 impl<'a, DB> ResolverDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub fn resolve_class(&mut self, class: &Class) -> Result<(), ()> {
+    pub fn resolve_class_signature(&mut self, class: &Class) -> Result<Type, ()> {
         self.begin_scope();
 
         let mut poly_tvs = Vec::new();
@@ -23,6 +24,19 @@ where
 
             poly_tvs.push(tv);
         }
+
+        self.insert_type(
+            &class.name,
+            Type::Poly(
+                poly_tvs.clone(),
+                Box::new(Type::Class {
+                    name: class.name.item,
+                    fields: HashMap::new(),
+                    methods: HashMap::new(),
+                }),
+            ),
+            TypeKind::Class,
+        );
 
         let mut fields = HashMap::new();
 
@@ -58,27 +72,21 @@ where
             }
         }
 
-        for method in &class.methods {
-            if let Err(_) = self.resolve_function(method) {
-                continue;
-            }
-        }
-
         self.end_scope();
 
-        self.insert_type(
-            &class.name,
-            Type::Poly(
-                poly_tvs,
-                Box::new(Type::Class {
-                    name: class.name.item,
-                    fields,
-                    methods,
-                }),
-            ),
-            TypeKind::Class,
-        );
+        Ok(Type::Poly(
+            poly_tvs,
+            Box::new(Type::Class {
+                name: class.name.item,
+                fields,
+                methods,
+            }),
+        ))
+    }
 
+    pub fn resolve_class(&mut self, class: &Class) -> Result<(), ()> {
+        let ty = self.resolve_class_signature(class)?;
+        self.insert_type(&class.name, ty, TypeKind::Class);
         Ok(())
     }
 }

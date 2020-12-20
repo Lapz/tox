@@ -190,7 +190,7 @@ where
                     let name = self.db.lookup_intern_name(name_id.item);
 
                     self.reporter.error(
-                        format!("Type `{}` is defined multiple times", name),
+                        format!("`{}` is defined multiple times", name),
                         "",
                         (name_id.start().to_usize(), name_id.end().to_usize()),
                     );
@@ -427,7 +427,7 @@ where
                         Type::Unknown
                     }
                 };
-
+                println!("Here: NameId:{:?} \n {:#?}", name, ty);
                 if self.ctx.get_kind(&name) == TypeKind::Function {
                     let span = (id.start().to_usize(), id.end().to_usize());
                     self.reporter.error(
