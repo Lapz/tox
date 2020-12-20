@@ -1,7 +1,7 @@
 use crate::{
     hir::{
-        BinOp, BlockId, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId,
-        UnaryOp, PLACEHOLDER_NAME,
+        ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
+        PLACEHOLDER_NAME,
     },
     infer::{
         pattern_matrix::{PatternMatrix, Row},
@@ -9,7 +9,6 @@ use crate::{
     },
     util, HirDatabase,
 };
-use std::collections::HashMap;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
@@ -88,26 +87,11 @@ where
         }
     }
 
-    fn infer_block(&mut self, map: &FunctionAstMap, block_id: &BlockId, has_value: bool) -> Type {
-        self.ctx.begin_scope();
-
-        let block = map.block(block_id);
-
-        let mut returns = Type::Con(TypeCon::Void);
-
-        for (index, stmt) in block.0.iter().enumerate() {
-            let ty = self.infer_statement(map, stmt);
-            if has_value && index == block.0.len() - 1 {
-                returns = ty;
-            }
-        }
-
-        self.ctx.end_scope();
-
-        returns
-    }
-
-    fn infer_statement(&mut self, map: &FunctionAstMap, id: &util::Span<StmtId>) -> Type {
+    pub(crate) fn infer_statement(
+        &mut self,
+        map: &FunctionAstMap,
+        id: &util::Span<StmtId>,
+    ) -> Type {
         let stmt = map.stmt(&id.item);
 
         match stmt {
@@ -149,7 +133,7 @@ where
         }
     }
 
-    fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
+    pub(crate) fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
         let expr = map.expr(&id.item);
 
         match expr {
@@ -170,77 +154,7 @@ where
                     size: None,
                 })
             }
-            crate::hir::Expr::Binary { lhs, op, rhs } => {
-                let inferred_lhs = self.infer_expr(map, lhs);
-                let inferred_rhs = self.infer_expr(map, rhs);
-
-                match op {
-                    BinOp::Plus | BinOp::Minus | BinOp::Mult | BinOp::Div => {
-                        self.unify(
-                            &inferred_lhs,
-                            &inferred_rhs,
-                            id.as_reporter_span(),
-                            Some("`+`,`-`,`*`,`/` operators only works on i32 and f32".into()),
-                            true,
-                        );
-                        inferred_lhs
-                    }
-                    BinOp::And | BinOp::Or => {
-                        self.unify(
-                            &inferred_lhs,
-                            &Type::Con(TypeCon::Bool),
-                            lhs.as_reporter_span(),
-                            Some("Expected a bool".into()),
-                            true,
-                        );
-                        self.unify(
-                            &inferred_rhs,
-                            &Type::Con(TypeCon::Bool),
-                            rhs.as_reporter_span(),
-                            Some("Expected a bool".into()),
-                            true,
-                        );
-
-                        Type::Con(TypeCon::Bool)
-                    }
-                    BinOp::LessThan
-                    | BinOp::GreaterThan
-                    | BinOp::GreaterThanEqual
-                    | BinOp::LessThanEqual => {
-                        self.unify(
-                            &inferred_lhs,
-                            &inferred_rhs,
-                            id.as_reporter_span(),
-                            Some("Comparison operators only work on numbers".into()),
-                            true,
-                        );
-                        Type::Con(TypeCon::Bool)
-                    }
-                    BinOp::Equal => {
-                        self.unify(
-                            &inferred_lhs,
-                            &inferred_rhs,
-                            id.as_reporter_span(),
-                            None,
-                            true,
-                        );
-
-                        inferred_rhs
-                    }
-                    BinOp::EqualEqual | BinOp::NotEqual => Type::Con(TypeCon::Bool),
-                    BinOp::PlusEqual | BinOp::MinusEqual | BinOp::MultEqual | BinOp::DivEqual => {
-                        self.unify(
-                            &inferred_lhs,
-                            &inferred_rhs,
-                            id.as_reporter_span(),
-                            None,
-                            true,
-                        );
-
-                        inferred_rhs
-                    }
-                }
-            }
+            crate::hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
 
             crate::hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
             crate::hir::Expr::Break | crate::hir::Expr::Continue => Type::Con(TypeCon::Void),
@@ -248,154 +162,7 @@ where
                 callee,
                 args,
                 type_args,
-            } => {
-                let inferred_callee = self.infer_expr(map, callee);
-
-                match inferred_callee {
-                    Type::Poly(vars, inner) => match &*inner {
-                        Type::App(arg_types) => {
-                            let ret = arg_types
-                                .last()
-                                .unwrap_or(&Type::Con(TypeCon::Void))
-                                .clone();
-
-                            if args.len() > arg_types.len() - 1 {
-                                self.reporter.error(
-                                    "Missing arguments",
-                                    format!(
-                                        "Too many arguments,expected `{}` found `{}",
-                                        arg_types.len(),
-                                        args.len()
-                                    ),
-                                    callee.as_reporter_span(),
-                                );
-                            } else if args.len() < arg_types.len() - 1 {
-                                self.reporter.error(
-                                    "Missing arguments",
-                                    format!(
-                                        "Too few arguments,expected `{}` found `{}",
-                                        arg_types.len(),
-                                        args.len()
-                                    ),
-                                    callee.as_reporter_span(),
-                                );
-                            }
-
-                            let mut subst = HashMap::new();
-
-                            let mut callee_exprs = Vec::new();
-
-                            for (var, type_arg) in vars.iter().zip(type_args.item.iter()) {
-                                let ty = self
-                                    .resolver
-                                    .lookup_intern_type(&type_arg.item)
-                                    .unwrap_or(Type::Unknown);
-
-                                subst.insert(*var, ty);
-                            }
-
-                            if type_args.item.is_empty() {
-                                for (var, expr) in vars.iter().zip(args.iter()) {
-                                    let inferred_expr = self.infer_expr(map, expr);
-                                    callee_exprs.push(inferred_expr.clone());
-
-                                    subst.insert(*var, inferred_expr);
-                                }
-                            }
-
-                            arg_types
-                                .iter()
-                                .zip(args.iter().zip(callee_exprs.iter()))
-                                .for_each(|(ty, (expr, expr_ty))| {
-                                    let inferred_expr = expr_ty;
-
-                                    let inferred_expr = self.subst(&inferred_expr, &mut subst);
-
-                                    let ty = self.subst(ty, &mut subst);
-
-                                    self.unify(
-                                        &ty,
-                                        &inferred_expr,
-                                        expr.as_reporter_span(),
-                                        Some("test".into()),
-                                        false,
-                                    )
-                                });
-
-                            self.subst(&ret, &mut subst)
-                        }
-                        ty => {
-                            match ty {
-                                Type::Unknown => {} // use of undefined function
-                                _ => {
-                                    let msg = format!("Expected a function found `{:?}`", ty);
-
-                                    self.reporter.error(
-                                        msg,
-                                        "A call expression requires a function",
-                                        callee.as_reporter_span(),
-                                    );
-                                }
-                            }
-
-                            Type::Unknown
-                        }
-                    },
-                    Type::App(arg_types) => {
-                        // TODO check if code path is reachable
-                        let ret = arg_types
-                            .last()
-                            .unwrap_or(&Type::Con(TypeCon::Void))
-                            .clone();
-
-                        if args.len() > arg_types.len() - 1 {
-                            self.reporter.error(
-                                "Missing arguments",
-                                format!(
-                                    "Too many arguments,expected `{}` found `{}",
-                                    arg_types.len(),
-                                    args.len()
-                                ),
-                                callee.as_reporter_span(),
-                            );
-                        } else if args.len() < arg_types.len() - 1 {
-                            self.reporter.error(
-                                "Missing arguments",
-                                format!(
-                                    "Too few arguments,expected `{}` found `{}",
-                                    arg_types.len(),
-                                    args.len()
-                                ),
-                                callee.as_reporter_span(),
-                            );
-                        }
-
-                        arg_types.iter().zip(args.iter()).for_each(|(ty, expr)| {
-                            let inferred_expr = self.infer_expr(map, expr);
-                            self.unify(ty, &inferred_expr, expr.as_reporter_span(), None, true)
-                        });
-
-                        ret
-                    }
-
-                    ty => {
-                        match ty {
-                            Type::Unknown => {}
-                            _ => {
-                                let msg = format!("Expected a function found `{:?}`", ty);
-
-                                self.reporter.error(
-                                    msg,
-                                    "A call expression requires a function",
-                                    callee.as_reporter_span(),
-                                );
-                            }
-                        }
-
-                        Type::Unknown
-                    }
-                }
-            }
+            } => self.infer_call(callee, args, type_args, map),
             crate::hir::Expr::Cast { expr, ty } => {
                 let _ = self.infer_expr(map, expr);
 
@@ -694,106 +461,6 @@ where
                         Type::Unknown
                     }
                 }
-            }
-        }
-    }
-
-    fn infer_field_exprs(
-        &mut self,
-        exprs: &[util::Span<ExprId>],
-        ty: &Type,
-        map: &FunctionAstMap,
-    ) -> Type {
-        if exprs.is_empty() {
-            return ty.clone();
-        }
-
-        let expr = map.expr(&exprs[0].item);
-
-        match expr {
-            crate::hir::Expr::Call {
-                callee,
-                args,
-                type_args,
-            } => unimplemented!(),
-            crate::hir::Expr::Ident(ident) => match ty {
-                Type::Class { fields, .. } => {
-                    if let Some(ty) = fields.get(&ident.item) {
-                        println!("{:?}", ty);
-                        self.infer_field_exprs(&exprs[1..], ty, map)
-                    } else {
-                        let msg = format!(
-                            "Unknown record field `{}`",
-                            self.db.lookup_intern_name(ident.item),
-                        );
-
-                        self.reporter.error(msg, "", exprs[0].as_reporter_span());
-
-                        Type::Unknown
-                    }
-                }
-                ty => {
-                    let msg = format!(
-                        "`{}` does not exist on `{:?}`",
-                        self.db.lookup_intern_name(ident.item),
-                        ty
-                    );
-
-                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
-
-                    Type::Unknown
-                }
-            },
-
-            crate::hir::Expr::Literal(literal) => {
-                let lit = self.db.lookup_intern_literal(*literal);
-                match lit {
-                    Literal::Int(int) => {
-                        let index: usize = int.parse().expect("Couldn't parse to i32");
-
-                        match ty {
-                            Type::Tuple(types) => {
-                                if let Some(ty) = types.get(index) {
-                                    self.infer_field_exprs(&exprs[1..], ty, map)
-                                } else {
-                                    let msg = format!("Unknown tuple field `{}`", index);
-
-                                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
-
-                                    Type::Unknown
-                                }
-                            }
-                            _ => {
-                                let msg = format!("`{}` does not exist on `{:?}`", index, ty);
-
-                                self.reporter.error(
-                                    msg,
-                                    "Numbered field access can only be used on tuples",
-                                    exprs[0].as_reporter_span(),
-                                );
-
-                                Type::Unknown
-                            }
-                        }
-                    }
-                    _ => {
-                        let msg = format!("`{:?}` is not a valid tuple field ", lit);
-
-                        self.reporter.error(
-                            msg,
-                            "Tuple fields can only be numbers",
-                            exprs[0].as_reporter_span(),
-                        );
-
-                        Type::Unknown
-                    }
-                }
-            }
-
-            _ => {
-                // invalid field types
-                // todo error
-                Type::Unknown
             }
         }
     }

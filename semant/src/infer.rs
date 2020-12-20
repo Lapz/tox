@@ -1,10 +1,15 @@
+mod binary;
+mod block;
+mod call;
 mod ctx;
+mod field;
 mod infer;
 mod pattern_matrix;
 mod stacked_map;
 mod subst;
 mod ty;
 mod unify;
+
 use crate::{hir::NameId, resolver::Resolver, HirDatabase};
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
