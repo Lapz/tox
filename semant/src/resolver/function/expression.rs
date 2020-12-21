@@ -1,5 +1,6 @@
 use crate::{
     hir::{Expr, ExprId, FunctionAstMap, NameId},
+    infer::Type,
     resolver::data::ResolverDataCollector,
     util, HirDatabase,
 };
@@ -132,8 +133,8 @@ where
             } => {
                 if let Some(ty) = self.ctx.get_type(&def.item) {
                     match ty {
-                        crate::infer::Type::Poly(_, inner) => match &*inner {
-                            crate::infer::Type::Class { fields, .. } => {
+                        Type::Poly(_, inner) => match &*inner {
+                            Type::Class { fields, .. } => {
                                 for (field, expr) in record_fields {
                                     if !fields.contains_key(&field.item) {
                                         let msg = format!(
@@ -162,7 +163,7 @@ where
                         },
                         _ => {
                             let msg = format!(
-                                "`{}` is not an enum",
+                                "`{}` is not a class",
                                 self.db.lookup_intern_name(def.item)
                             );
 
@@ -182,24 +183,37 @@ where
             Expr::Enum { def, variant, expr } => {
                 if let Some(ty) = self.ctx.get_type(&def.item) {
                     match ty {
-                        crate::infer::Type::Enum(name, variants) => {
-                            if variants.get(&variant.item).is_none() {
+                        Type::Poly(_, inner) => match &*inner {
+                            Type::Enum(name, variants) => {
+                                if variants.get(&variant.item).is_none() {
+                                    let msg = format!(
+                                        "Unknown enum variant `{}`",
+                                        self.db.lookup_intern_name(variant.item)
+                                    );
+                                    self.reporter.error(
+                                        msg,
+                                        format!(
+                                            "Add a variant for `{}` to `{}`",
+                                            self.db.lookup_intern_name(variant.item),
+                                            self.db.lookup_intern_name(*name)
+                                        ),
+                                        variant.as_reporter_span(),
+                                    );
+                                    return Err(());
+                                }
+                            }
+                            _ => {
                                 let msg = format!(
-                                    "Unknown enum variant `{}`",
-                                    self.db.lookup_intern_name(variant.item)
+                                    "`{}` is not an enum",
+                                    self.db.lookup_intern_name(def.item)
                                 );
-                                self.reporter.error(
-                                    msg,
-                                    format!(
-                                        "Add a variant for `{}` to `{}`",
-                                        self.db.lookup_intern_name(variant.item),
-                                        self.db.lookup_intern_name(name)
-                                    ),
-                                    variant.as_reporter_span(),
-                                );
+
+                                self.reporter.error(msg, "", def.as_reporter_span());
+
                                 return Err(());
                             }
-                        }
+                        },
+
                         _ => {
                             let msg = format!(
                                 "`{}` is not an enum",

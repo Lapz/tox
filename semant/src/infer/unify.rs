@@ -18,7 +18,7 @@ where
         notes: Option<String>,
         report: bool,
     ) {
-        debug!("Unifying ${:?} ${:?}", lhs, rhs);
+        debug!("Unifying {:#?} with {:#?}", lhs, rhs);
         match (lhs, rhs) {
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {

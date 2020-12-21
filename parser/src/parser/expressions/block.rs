@@ -64,7 +64,6 @@ impl<'a> Parser<'a> {
                     self.finish_node();
                 }
                 T!["//"] | T!["/*"] => {
-                    println!("a");
                     while self.at(T!["//"]) {
                         self.bump();
                     }

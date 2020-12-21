@@ -11,7 +11,7 @@ use crate::{
     },
     util, HirDatabase,
 };
-use tracing::instrument;
+use tracing::{debug, instrument};
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
@@ -38,7 +38,7 @@ where
 
         self.ctx.end_scope();
     }
-    #[instrument(skip(self))]
+    #[instrument(skip(self, map))]
     fn assign_pattern_type(&mut self, map: &FunctionAstMap, id: &util::Span<PatId>, ty: Type) {
         let pat = map.pat(&id.item);
         match pat {
@@ -342,37 +342,66 @@ where
             }
             crate::hir::Expr::Enum { def, variant, expr } => {
                 let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
+
+                let mut subst = HashMap::new();
+
+                // TODO handle matching multiple type vars
+
                 match inferred_def {
-                    Type::Enum(_, ref variants) => match variants.get(&variant.item) {
-                        Some(v) => {
-                            if let Some(v_ty) = &v.ty {
-                                if let Some(expr) = expr {
-                                    let inferred_expr = self.infer_expr(map, expr);
-                                    self.unify(
-                                        &inferred_expr,
-                                        v_ty,
-                                        expr.as_reporter_span(),
-                                        None,
-                                        true,
-                                    )
-                                } else {
-                                    let msg = format!("Missing enum variant constructor",);
-                                    self.reporter.error(
+                    Type::Poly(ref vars, ref inner) => match &**inner {
+                        Type::Enum(_, ref variants) => {
+                            if let Some(v) = variants.get(&variant.item) {
+                                match (expr, &v.ty) {
+                                    (None, None) => {}
+                                    (None, Some(variant_ty)) => {
+                                        let msg = format!("Missing enum variant constructor",);
+                                        self.reporter.error(
                                         msg,
-                                        format!("Expected an enum variant constructor of type {:?} but found none",v_ty),
+                                        format!("Expected an enum variant constructor of type {:?} but found none",variant_ty),
                                         variant.as_reporter_span(),
                                     );
+                                    }
+                                    (Some(_), None) => {
+                                        let msg = format!("Unexpected enum variant constructor",);
+                                        let name = self.db.lookup_intern_name(variant.item);
+                                        self.reporter.error(
+                                            msg,
+                                            format!(
+                                                "enum variant `{}` does not have a constructor",
+                                                name
+                                            ),
+                                            variant.as_reporter_span(),
+                                        );
+                                    }
+                                    (Some(expr), Some(variant_ty)) => {
+                                        let inferred_expr = self.infer_expr(map, expr);
+
+                                        for ty_var in vars {
+                                            subst.insert(*ty_var, inferred_expr.clone());
+                                        }
+
+                                        let variant_ty = self.subst(&variant_ty, &mut subst);
+
+                                        self.unify(
+                                            &inferred_expr,
+                                            &variant_ty,
+                                            expr.as_reporter_span(),
+                                            None,
+                                            true,
+                                        )
+                                    }
                                 }
                             }
 
-                            inferred_def
+                            self.subst(&inferred_def, &mut subst)
                         }
 
-                        None => {
+                        _ => {
                             // Error reported in resolver
-                            inferred_def
+                            Type::Unknown
                         }
                     },
+
                     _ => {
                         // Error reported in resolver
                         Type::Unknown
@@ -382,50 +411,51 @@ where
             crate::hir::Expr::RecordLiteral { def, fields } => {
                 let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
 
-                println!("{:?}", inferred_def);
+                debug!("The record definition type was {:?}", inferred_def);
 
                 let mut subst = HashMap::new();
 
                 match inferred_def.clone() {
-                    Type::Poly(vars, inner) => match &*inner {
-                        Type::Class {
-                            fields: field_types,
-                            ..
-                        } => {
-                            for (var, (_, expr)) in vars.iter().zip(fields.iter()) {
-                                let inferred_expr = self.infer_expr(map, expr);
+                    Type::Poly(vars, inner) => {
+                        match &*inner {
+                            Type::Class {
+                                fields: field_types,
+                                ..
+                            } => {
+                                for (var, (_, expr)) in vars.iter().zip(fields.iter()) {
+                                    let inferred_expr = self.infer_expr(map, expr);
 
-                                subst.insert(*var, inferred_expr.clone());
+                                    subst.insert(*var, inferred_expr.clone());
+                                }
+
+                                for (field, expr) in fields {
+                                    let inferred_expr = self.infer_expr(map, expr);
+
+                                    let expected = self.subst(
+                                        field_types.get(&field.item).unwrap_or(&Type::Unknown),
+                                        &mut subst,
+                                    );
+
+                                    debug!("Inferring record literal fields - expected {:?}, inferred {:?}", expected, inferred_expr);
+
+                                    self.unify(
+                                        &expected,
+                                        &inferred_expr,
+                                        field.as_reporter_span(),
+                                        None,
+                                        true,
+                                    );
+                                }
+
+                                self.subst(&inferred_def, &mut subst)
                             }
 
-                            println!("{:?}", subst);
-
-                            for (field, expr) in fields {
-                                let inferred_expr = self.infer_expr(map, expr);
-                                let expected = self.subst(
-                                    field_types.get(&field.item).unwrap_or(&Type::Unknown),
-                                    &mut subst,
-                                );
-
-                                println!("Expected {:?}", expected);
-
-                                self.unify(
-                                    &expected,
-                                    &inferred_expr,
-                                    field.as_reporter_span(),
-                                    None,
-                                    true,
-                                );
+                            _ => {
+                                // Error reported in resolver
+                                Type::Unknown
                             }
-
-                            inferred_def
                         }
-
-                        _ => {
-                            // Error reported in resolver
-                            Type::Unknown
-                        }
-                    },
+                    }
                     _ => {
                         // Error reported in resolver
                         Type::Unknown

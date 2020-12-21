@@ -53,7 +53,7 @@ where
 
         self.insert_type(
             &enum_def.name,
-            Type::Enum(enum_def.name.item, variants),
+            Type::Poly(poly_tvs, Box::new(Type::Enum(enum_def.name.item, variants))),
             TypeKind::Enum,
         );
 

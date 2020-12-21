@@ -1301,6 +1301,7 @@ dependencies = [
  "tempfile",
  "tracing",
  "tracing-subscriber",
+ "tracing-tree",
  "walkdir",
 ]
 
@@ -1391,6 +1392,20 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "tracing-tree"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43aac8afb493b08e1e1904956f7407c1e671b9c83b26a17e1bd83d6a3520e350"
+dependencies = [
+ "ansi_term 0.12.1",
+ "atty",
+ "chrono",
+ "termcolor",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
