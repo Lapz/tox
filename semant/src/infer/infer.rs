@@ -428,6 +428,8 @@ where
                                     subst.insert(*var, inferred_expr.clone());
                                 }
 
+                                debug!("Subst {:?}", subst);
+
                                 for (field, expr) in fields {
                                     let inferred_expr = self.infer_expr(map, expr);
 
@@ -447,7 +449,9 @@ where
                                     );
                                 }
 
-                                self.subst(&inferred_def, &mut subst)
+                                inferred_def
+
+                                // self.subst(&inferred_def, &mut subst)
                             }
 
                             _ => {

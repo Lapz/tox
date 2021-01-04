@@ -18,7 +18,7 @@ where
         notes: Option<String>,
         report: bool,
     ) {
-        debug!("Unifying {:#?} with {:#?}", lhs, rhs);
+        debug!("Unifying {:?} with {:?}", lhs, rhs);
         match (lhs, rhs) {
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {
@@ -59,6 +59,7 @@ where
             }
             (Type::Enum(name1, variants1), Type::Enum(name2, variants2)) => {
                 if variants1 != variants2 {
+                    debug!("Differing enum fields\n {:?} vs {:?}", variants1, variants2);
                     if report {
                         let msg = format!(
                             "Expected enum `{}` but found enum `{}`",
