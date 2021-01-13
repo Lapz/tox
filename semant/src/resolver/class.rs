@@ -73,15 +73,17 @@ where
         }
 
         self.end_scope();
-
-        Ok(Type::Poly(
+        let o = Type::Poly(
             poly_tvs,
             Box::new(Type::Class {
                 name: class.name.item,
                 fields,
                 methods,
             }),
-        ))
+        );
+
+        println!("{:?}", o);
+        Ok(o)
     }
 
     pub fn resolve_class(&mut self, class: &Class) -> Result<(), ()> {

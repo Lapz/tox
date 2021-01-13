@@ -330,7 +330,7 @@ pub enum UnaryOp {
 macro_rules! create_intern_key {
     ($name:ident) => {
         #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-        pub struct $name(salsa::InternId);
+        pub struct $name(pub salsa::InternId);
         impl salsa::InternKey for $name {
             fn from_intern_id(v: salsa::InternId) -> Self {
                 $name(v)
