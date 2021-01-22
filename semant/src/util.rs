@@ -7,6 +7,7 @@ pub struct Span<T> {
     pub start: TextUnit,
     pub end: TextUnit,
 }
+pub type ReporterSpan = (usize, usize);
 
 impl<T> Span<T>
 where

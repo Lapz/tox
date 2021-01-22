@@ -14,7 +14,7 @@ use crate::{hir::NameId, infer2, resolver::Resolver, HirDatabase};
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
 pub(crate) use stacked_map::StackedMap;
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, vec};
 pub(crate) use ty::{Type, TypeCon, TypeVar, Variant};
 
 #[derive(Debug)]
@@ -26,6 +26,7 @@ pub(crate) struct InferDataCollector<DB> {
     returns: Option<Type>,
     possible_returns: Vec<Type>,
     fn_name: Option<NameId>,
+    file: FileId,
 }
 
 pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
@@ -40,22 +41,12 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         db,
         ctx,
         resolver,
-        reporter,
+        reporter: reporter.clone(),
         returns: None,
-
+        file,
         fn_name: None,
         possible_returns: Vec::new(),
     };
-
-    let mut unify = infer2::Unify {
-        context: infer2::Map::new(),
-        errors: vec![],
-        tvar_count: 0,
-    };
-
-    println!("{:?}", unify);
-
-    unify.insert(TypeVar(2), infer2::Type::Con(infer2::TypeCon::Int));
 
     let mut fields = HashMap::new();
 
@@ -70,17 +61,20 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         },
     );
 
-    println!(
-        "{:?}",
-        unify.subst(&infer2::Type::Class {
-            name: NameId(0u32.into()),
-            fields,
-            methods: HashMap::new(),
-        })
-    );
+    let mut collector2 = infer2::InferDataCollector {
+        db,
+        reporter,
+        type_schemes: StackedMap::new(),
+        substitutions: HashMap::new(),
+        tvar_count: 0,
+        errors: vec![],
+        file,
+    };
 
     for function in &program.functions {
-        collector.infer_function(function);
+        // collector.infer_function(function);
+
+        collector2.infer_function(function);
     }
 
     errors.extend(collector.reporter.finish());

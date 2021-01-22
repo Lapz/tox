@@ -62,7 +62,14 @@ pub fn resolve_imports_query(
                     }
 
                     if let Some(ty) = exports.ctx.get_type(&name.item) {
-                        imported_types.push((name.item, ty, exports.ctx.get_kind(&name.item)))
+                        imported_types.push((
+                            name.item,
+                            ty,
+                            exports
+                                .ctx
+                                .get_kind(&name.item)
+                                .unwrap_or(TypeKind::Function),
+                        ))
                     } else {
                         eprintln!(
                             "Found an import but couldn't find its type in the ctx; id {:?} name {}",

@@ -1,5 +1,8 @@
-use crate::Ctx;
-use crate::{db::HirDatabase, infer::StackedMap};
+use crate::{
+    db::HirDatabase,
+    infer::{self, StackedMap},
+};
+use crate::{hir, Ctx};
 
 use super::data::ItemKind;
 use crate::resolver::{data::ResolverDataCollector, Resolver};
@@ -38,6 +41,32 @@ pub fn resolve_exports_query(db: &impl HirDatabase, file: FileId) -> WithError<A
     errors.extend(reporter.finish());
 
     WithError(Arc::new(resolver), errors)
+}
+
+pub fn resolve_named_type_query(
+    db: &impl HirDatabase,
+    file: FileId,
+    name: hir::NameId,
+) -> Arc<infer::Type> {
+    let WithError(resolver, _) = db.resolve_source_file(file);
+    if let Some(ty) = resolver.get_type(&name) {
+        Arc::new(ty)
+    } else {
+        Arc::new(infer::Type::Unknown)
+    }
+}
+
+pub fn resolve_hir_type_query(
+    db: &impl HirDatabase,
+    file: FileId,
+    ty_id: hir::TypeId,
+) -> Arc<infer::Type> {
+    let WithError(resolver, _) = db.resolve_source_file(file);
+    if let Some(ty) = resolver.lookup_intern_type(&ty_id) {
+        Arc::new(ty)
+    } else {
+        Arc::new(infer::Type::Unknown)
+    }
 }
 
 pub fn resolve_source_file_query(db: &impl HirDatabase, file: FileId) -> WithError<Arc<Resolver>> {

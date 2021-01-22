@@ -420,7 +420,8 @@ where
                         Type::Unknown
                     }
                 };
-                if self.ctx.get_kind(&name) == TypeKind::Function {
+
+                if let Some(TypeKind::Function) = self.ctx.get_kind(&name) {
                     let span = (id.start().to_usize(), id.end().to_usize());
                     self.reporter.error(
                         format!(
@@ -442,7 +443,7 @@ where
             }
             hir::Type::Ident(name) => {
                 if let Some(ty) = self.ctx.get_type(&name) {
-                    if self.ctx.get_kind(&name) == TypeKind::Function {
+                    if let Some(TypeKind::Function) = self.ctx.get_kind(&name) {
                         let span = (id.start().to_usize(), id.end().to_usize());
                         self.reporter.error(
                             format!(

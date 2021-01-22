@@ -88,8 +88,8 @@ impl Ctx {
         self.types.get(name).map(Clone::clone)
     }
 
-    pub(crate) fn get_kind(&self, name: &NameId) -> TypeKind {
-        self.kind[name]
+    pub(crate) fn get_kind(&self, name: &NameId) -> Option<TypeKind> {
+        self.kind.get(name).cloned()
     }
 
     pub(crate) fn insert_type(&mut self, name: NameId, ty: Type, kind: TypeKind) {
