@@ -67,9 +67,9 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
         import: hir::ImportId,
     ) -> WithError<Vec<(NameId, Type, TypeKind)>>;
     #[salsa::invoke(crate::resolver::resolve_named_type_query)]
-    fn resolve_named_type(&self, file: FileId, name: hir::NameId) -> Arc<Type>;
+    fn resolve_named_type(&self, file: FileId, name: hir::NameId) -> Type;
     #[salsa::invoke(crate::resolver::resolve_hir_type_query)]
-    fn resolve_hir_type(&self, file: FileId, name: hir::TypeId) -> Arc<Type>;
+    fn resolve_hir_type(&self, file: FileId, name: hir::TypeId) -> Type;
     #[salsa::invoke(crate::resolver::module_graph_query)]
     fn module_graph(&self, file: FileId) -> WithError<ModuleGraph>;
 

@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
             reporter,
             input,
         };
-
+        parser.prefix(RuleToken::LBracket, &expressions::LiteralParselet);
         parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);
         parser.prefix(RuleToken::Ident, &expressions::IdentParselet);
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);

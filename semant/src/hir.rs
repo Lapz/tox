@@ -238,6 +238,7 @@ pub enum Stmt {
         initializer: Option<util::Span<ExprId>>,
     },
     Expr(util::Span<ExprId>),
+    Error,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -353,7 +354,7 @@ pub(crate) struct FunctionAstMap {
     hir_to_block: IndexMap<BlockId, Block>,
     hir_to_stmt: IndexMap<StmtId, Stmt>,
     hir_to_expr: IndexMap<ExprId, Expr>,
-    ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
+    // ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
 }
 
 impl FunctionAstMap {

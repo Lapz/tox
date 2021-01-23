@@ -99,6 +99,7 @@ where
                 }
             }
             crate::hir::Stmt::Expr(expr) => self.resolve_expression(fn_name, expr, ast_map)?,
+            crate::hir::Stmt::Error => {}
         }
 
         Ok(())

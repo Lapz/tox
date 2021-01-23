@@ -26,6 +26,7 @@ pub(crate) struct InferDataCollector<DB> {
     returns: Option<Type>,
     possible_returns: Vec<Type>,
     fn_name: Option<NameId>,
+    env: StackedMap<NameId, Type>,
     file: FileId,
 }
 
@@ -41,40 +42,16 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<()> {
         db,
         ctx,
         resolver,
-        reporter: reporter.clone(),
-        returns: None,
+        reporter,
         file,
+        returns: None,
         fn_name: None,
+        env: StackedMap::new(),
         possible_returns: Vec::new(),
     };
 
-    let mut fields = HashMap::new();
-
-    fields.insert(NameId(2u32.into()), infer2::Type::Var(TypeVar(2)));
-
-    fields.insert(
-        NameId(3u32.into()),
-        infer2::Type::Class {
-            name: NameId(0u32.into()),
-            fields: HashMap::new(),
-            methods: HashMap::new(),
-        },
-    );
-
-    let mut collector2 = infer2::InferDataCollector {
-        db,
-        reporter,
-        type_schemes: StackedMap::new(),
-        substitutions: HashMap::new(),
-        tvar_count: 0,
-        errors: vec![],
-        file,
-    };
-
     for function in &program.functions {
-        // collector.infer_function(function);
-
-        collector2.infer_function(function);
+        collector.infer_function(function);
     }
 
     errors.extend(collector.reporter.finish());

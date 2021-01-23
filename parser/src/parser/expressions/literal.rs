@@ -1,7 +1,9 @@
 use syntax::T;
 
-use crate::parser::pratt::PrefixParser;
-use crate::parser::Parser;
+use crate::parser::{
+    pratt::{Precedence, PrefixParser},
+    Parser, Restrictions,
+};
 
 use crate::SyntaxKind::*;
 
@@ -15,7 +17,33 @@ impl PrefixParser for LiteralParselet {
                 parser.start_node(LITERAL);
                 parser.bump();
                 parser.finish_node();
-            }
+            },
+
+
+            T!["["] => {
+                parser.start_node(ARRAY_EXPR);
+                parser.bump(); // Eats the `[`
+
+                if parser.at(T!["]"]) {
+                    parser.bump(); // Eats the `]`
+                    parser.finish_node();
+                    return
+                }
+
+                  while !parser.at(EOF) && !parser.at(T!["]"]) {
+                    parser.parse_expression(Precedence::Assignment, Restrictions::default());
+                    if !parser.at(T!["]"]) && !parser.expected(T![,]) {
+                        break;
+                    }
+                }
+
+                 parser.expect(T!["]"]);
+
+
+                parser.finish_node()
+
+
+            },
 
             _ => parser.error("Expected `{{int}}` or `{{nil}}` or `{{true|false}}` or `{{ident}}` or `{{string}}`",format!("Expected `{{int}}` or `{{nil}}` or `{{true|false}}` or `{{ident}}` or `{{string}}` found `{}`",parser.current_string()))
         }

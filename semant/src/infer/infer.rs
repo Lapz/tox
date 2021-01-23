@@ -1,14 +1,16 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc, todo};
 
 use crate::{
     hir::{
-        ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
+        self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
         PLACEHOLDER_NAME,
     },
     infer::{
         pattern_matrix::{PatternMatrix, Row},
         InferDataCollector, Type, TypeCon,
     },
+    infer2::Unify,
+    resolver::resolve_named_type_query,
     util, HirDatabase,
 };
 use tracing::{debug, instrument};
@@ -24,57 +26,64 @@ where
             Type::Unknown
         };
 
-        self.ctx.begin_scope();
-
         self.returns = Some(expected);
 
         self.fn_name = Some(function.name.item);
 
+        for param in &function.params {
+            let param = function.ast_map.param(&param.item);
+
+            let ty = self.db.resolve_hir_type(self.file, param.ty.item);
+
+            self.assign_type(param.pat.item, ty, &function.ast_map)
+        }
+
         if let Some(body) = &function.body {
-            self.infer_statements(&function.ast_map, &body)
-        } else {
-            self.infer_statements(&function.ast_map, &[])
-        };
+            body.iter().for_each(|stmt| {
+                let ty = self.infer_statement(stmt, &function.ast_map);
 
-        self.ctx.end_scope();
-    }
-    #[instrument(skip(self, map))]
-    fn assign_pattern_type(&mut self, map: &FunctionAstMap, id: &util::Span<PatId>, ty: Type) {
-        let pat = map.pat(&id.item);
-        match pat {
-            crate::hir::Pattern::Bind { name } => {
-                self.ctx
-                    .insert_type(name.item, ty, crate::resolver::TypeKind::Type)
-            }
-            crate::hir::Pattern::Placeholder => self.ctx.insert_type(
-                self.db.intern_name(PLACEHOLDER_NAME),
-                ty,
-                crate::resolver::TypeKind::Type,
-            ),
-            crate::hir::Pattern::Tuple(idents) => match ty {
-                Type::Tuple(types) => {
-                    for (ident, ty) in idents.iter().zip(types.into_iter()) {
-                        self.assign_pattern_type(map, ident, ty)
-                    }
-                }
-
-                _ => {
-                    let msg = format!("Tried assigning a non tuple type to a tuple pattern");
-
-                    self.reporter.error(
-                        msg,
-                        &format!("`{:?}` is not a tuple type", ty),
-                        id.as_reporter_span(),
-                    );
-                }
-            },
-            crate::hir::Pattern::Literal(_) => {}
+                println!("stmt {:?}", ty)
+            })
         }
     }
+    // TODO remove the requirement on Arc here or update enum Type to use Arc
+    #[instrument(skip(self, map))]
+    pub(crate) fn assign_type(&mut self, pat: PatId, ty: Type, map: &FunctionAstMap) {
+        let pat = map.pat(&pat);
+
+        match pat {
+            hir::Pattern::Bind { name } => self.env.insert(name.item, ty),
+            hir::Pattern::Placeholder => {
+                let name = self.db.intern_name(PLACEHOLDER_NAME);
+
+                self.env.insert(name, ty)
+            }
+            hir::Pattern::Tuple(pats) => match ty {
+                Type::Tuple(types) => {
+                    for (pat, ty) in pats.iter().zip(types.iter()) {
+                        self.assign_type(pat.item, ty.clone(), map)
+                    }
+                }
+                _ => {}
+            },
+            hir::Pattern::Literal(_) => {}
+        }
+    }
+
+    #[instrument(skip(self,))]
+    pub(crate) fn lookup_type(&mut self, name: hir::NameId) -> Type {
+        if let Some(local_ty) = self.env.get(&name).cloned() {
+            println!("local {:#?}", local_ty);
+            local_ty
+        } else {
+            self.db.resolve_named_type(self.file, name)
+        }
+    }
+
     #[instrument(skip(self, map,))]
     fn infer_statements(&mut self, map: &FunctionAstMap, body: &[util::Span<StmtId>]) {
         for id in body {
-            let _ = self.infer_statement(map, id);
+            let _ = self.infer_statement(id, map);
         }
     }
     #[instrument(skip(self))]
@@ -92,13 +101,13 @@ where
     #[instrument(skip(self, map))]
     pub(crate) fn infer_statement(
         &mut self,
-        map: &FunctionAstMap,
         id: &util::Span<StmtId>,
+        map: &FunctionAstMap,
     ) -> Type {
         let stmt = map.stmt(&id.item);
 
         match stmt {
-            crate::hir::Stmt::Let {
+            hir::Stmt::Let {
                 pat,
                 ascribed_type,
                 initializer,
@@ -106,33 +115,28 @@ where
                 match (ascribed_type, initializer) {
                     (Some(expected), Some(init)) => {
                         let expr = self.infer_expr(map, init);
-                        let expected = self
-                            .resolver
-                            .lookup_intern_type(&expected.item)
-                            .unwrap_or(Type::Unknown);
+                        let expected = self.db.resolve_hir_type(self.file, expected.item);
 
                         self.unify(&expected, &expr, init.as_reporter_span(), None, true);
-                        self.assign_pattern_type(map, pat, expected);
+                        self.assign_type(pat.item, expected, map);
                     }
                     (Some(expected), None) => {
-                        self.assign_pattern_type(
-                            map,
-                            pat,
-                            self.resolver.lookup_intern_type(&expected.item).unwrap(),
-                        );
+                        let ty = self.db.resolve_hir_type(self.file, expected.item);
+                        self.assign_type(pat.item, ty, map);
                     }
                     (None, Some(init)) => {
                         let expected = self.infer_expr(map, init);
-                        self.assign_pattern_type(map, pat, expected);
+                        self.assign_type(pat.item, expected, map);
                     }
                     (None, None) => {
-                        self.assign_pattern_type(map, pat, Type::Con(TypeCon::Void));
+                        self.assign_type(pat.item, Type::Con(TypeCon::Void), map);
                     }
                 };
 
                 Type::Con(TypeCon::Void)
             }
-            crate::hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
+            hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
+            hir::Stmt::Error => Type::Unknown,
         }
     }
     #[instrument(skip(self, map))]
@@ -140,9 +144,12 @@ where
         let expr = map.expr(&id.item);
 
         match expr {
-            crate::hir::Expr::Array(exprs) => {
+            hir::Expr::Array(exprs) => {
                 if exprs.len() == 0 {
-                    return Type::Unknown;
+                    return Type::Con(TypeCon::Array {
+                        ty: Box::new(Type::Con(TypeCon::Void)),
+                        size: None,
+                    });
                 }
 
                 let first = self.infer_expr(map, &exprs[0]);
@@ -157,26 +164,26 @@ where
                     size: None,
                 })
             }
-            crate::hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
+            hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
 
-            crate::hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
-            crate::hir::Expr::Break | crate::hir::Expr::Continue => Type::Con(TypeCon::Void),
-            crate::hir::Expr::Call {
+            hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
+            hir::Expr::Break | hir::Expr::Continue => Type::Con(TypeCon::Void),
+            hir::Expr::Call {
                 callee,
                 args,
                 type_args,
             } => self.infer_call(callee, args, type_args, map),
-            crate::hir::Expr::Cast { expr, ty } => {
+            hir::Expr::Cast { expr, ty } => {
                 let _ = self.infer_expr(map, expr);
 
                 // TODO implement a well formed casting check
 
-                self.resolver
-                    .lookup_intern_type(&ty.item)
-                    .unwrap_or(Type::Unknown)
+                self.db.resolve_hir_type(self.file, ty.item);
+
+                todo!()
             }
 
-            crate::hir::Expr::If {
+            hir::Expr::If {
                 cond,
                 then_branch,
                 else_branch,
@@ -207,12 +214,9 @@ where
 
                 inferred_then
             }
-            crate::hir::Expr::Ident(name) => self.ctx.get_type(&name.item).unwrap_or(
-                self.resolver
-                    .get_param(&self.fn_name.unwrap(), &name.item)
-                    .unwrap_or(Type::Unknown),
-            ),
-            crate::hir::Expr::Index { base, index } => {
+            hir::Expr::Ident(name) => self.lookup_type(name.item),
+
+            hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
 
                 let inferred_index = self.infer_expr(map, index);
@@ -240,7 +244,7 @@ where
                     }
                 }
             }
-            crate::hir::Expr::While { cond, body } => {
+            hir::Expr::While { cond, body } => {
                 let inferred_cond = self.infer_expr(map, cond);
 
                 self.unify(
@@ -255,13 +259,13 @@ where
 
                 Type::Con(TypeCon::Void)
             }
-            crate::hir::Expr::Literal(literal) => self.infer_literal(*literal),
-            crate::hir::Expr::Paren(inner) => self.infer_expr(map, inner),
-            crate::hir::Expr::Tuple(exprs) => {
+            hir::Expr::Literal(literal) => self.infer_literal(*literal),
+            hir::Expr::Paren(inner) => self.infer_expr(map, inner),
+            hir::Expr::Tuple(exprs) => {
                 let types = exprs.iter().map(|id| self.infer_expr(map, id)).collect();
                 Type::Tuple(types)
             }
-            crate::hir::Expr::Unary { op, expr } => {
+            hir::Expr::Unary { op, expr } => {
                 let inferred = self.infer_expr(map, id);
                 match op {
                     UnaryOp::Minus => match inferred {
@@ -290,7 +294,7 @@ where
                     }
                 }
             }
-            crate::hir::Expr::Return(expr) => {
+            hir::Expr::Return(expr) => {
                 let expected = self.returns.clone().unwrap();
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
@@ -321,7 +325,7 @@ where
                     inferred
                 }
             }
-            crate::hir::Expr::Match { expr, arms } => {
+            hir::Expr::Match { expr, arms } => {
                 let inferred_expr = self.infer_expr(map, expr);
 
                 let mut matrix = PatternMatrix::new();
@@ -340,8 +344,8 @@ where
 
                 Type::Unknown
             }
-            crate::hir::Expr::Enum { def, variant, expr } => {
-                let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
+            hir::Expr::Enum { def, variant, expr } => {
+                let inferred_def = self.db.resolve_named_type(self.file, def.item);
 
                 let mut subst = HashMap::new();
 
@@ -408,8 +412,8 @@ where
                     }
                 }
             }
-            crate::hir::Expr::RecordLiteral { def, fields } => {
-                let inferred_def = self.ctx.get_type(&def.item).unwrap_or(Type::Unknown);
+            hir::Expr::RecordLiteral { def, fields } => {
+                let inferred_def = self.db.resolve_named_type(self.file, def.item);
 
                 debug!("The record definition type was {:?}", inferred_def);
 
@@ -433,10 +437,21 @@ where
                                 for (field, expr) in fields {
                                     let inferred_expr = self.infer_expr(map, expr);
 
+                                    if let Some(ty) = field_types.get(&field.item) {
+                                        match ty {
+                                            Type::Var(tv) => {
+                                                subst.insert(*tv, inferred_expr.clone());
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+
                                     let expected = self.subst(
                                         field_types.get(&field.item).unwrap_or(&Type::Unknown),
                                         &mut subst,
                                     );
+
+                                    println!("field {:?}", inferred_expr);
 
                                     debug!("Inferring record literal fields - expected {:?}, inferred {:?}", expected, inferred_expr);
 
@@ -449,9 +464,11 @@ where
                                     );
                                 }
 
-                                inferred_def
+                                println!("{:#?}", self.subst(&inferred_def, &mut subst));
 
-                                // self.subst(&inferred_def, &mut subst)
+                                // inferred_def
+
+                                self.subst(&inferred_def, &mut subst)
                             }
 
                             _ => {
@@ -466,7 +483,7 @@ where
                     }
                 }
             }
-            crate::hir::Expr::Field(fields) => {
+            hir::Expr::Field(fields) => {
                 let record = self.infer_expr(map, &fields[0]);
                 match record {
                     Type::Poly(_, inner) => match &*inner {

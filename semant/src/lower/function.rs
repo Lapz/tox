@@ -180,7 +180,11 @@ where
                 }
             }
             ast::Stmt::ExprStmt(ref expr_stmt) => {
-                hir::Stmt::Expr(self.lower_expr(expr_stmt.expr().unwrap()))
+                if let Some(expr) = expr_stmt.expr() {
+                    hir::Stmt::Expr(self.lower_expr(expr))
+                } else {
+                    hir::Stmt::Error
+                }
             }
         };
 

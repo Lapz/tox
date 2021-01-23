@@ -126,10 +126,10 @@ where
 
                 self.unify(t1, &subst, span, notes, true)
             }
-            (Type::Poly(_, ret), t) => self.unify(ret, t, span, notes, true),
-            (t, Type::Poly(_, ret)) => self.unify(t, ret, span, notes, true),
+            (_, Type::Con(TypeCon::Void)) => {}
             (Type::Unknown, _) => {}
             (_, Type::Unknown) => {}
+
             (_, _) => {
                 //Todo report error
 

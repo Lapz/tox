@@ -273,6 +273,7 @@ where
             }
 
             hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
+            hir::Stmt::Error => todo!(),
         }
     }
 
@@ -448,8 +449,8 @@ where
                                     );
                                 }
                                 (Some(expr), Some(variant_ty)) => {
-                                    let inferred_expr =
-                                        self.shallow_normalize(&self.infer_expr(map, expr));
+                                    // let inferred_expr =
+                                    // self.shallow_normalize(&self.infer_expr(map, expr));
 
                                     // for ty_var in vars {
                                     //     subst.insert(*ty_var, inferred_expr.clone());
@@ -457,7 +458,7 @@ where
 
                                     // let variant_ty = self.subst(&variant_ty, &mut subst);
 
-                                    self.unify(&inferred_expr, &variant_ty, expr.as_reporter_span())
+                                    // self.unify(&inferred_expr, &variant_ty, expr.as_reporter_span())
                                 }
                             }
                         }
@@ -469,9 +470,11 @@ where
                         Type::Unknown
                     }
                 }
-            },
-            hir::Expr::RecordLiteral { def, fields } =>{
-                let inferred_def = self.db.resolve_named_type(self.file, def.item).into();
+            }
+            hir::Expr::RecordLiteral { def, fields } => {
+                // let inferred_def = self.db.resolve_named_type(self.file, def.item).into();
+
+                unimplemented!()
             }
 
             e => todo!("{:?}", e),
@@ -642,6 +645,7 @@ where
             (Type::Con(TypeCon::Int), Type::Con(TypeCon::Float))
             | (Type::Con(TypeCon::Float), Type::Con(TypeCon::Int)) => return,
             (Type::Unknown, _) | (_, Type::Unknown) => return,
+
             (Type::Con(l), Type::Con(r)) if l == r => return,
             (_, _) => {
                 self.errors.push(Reason {

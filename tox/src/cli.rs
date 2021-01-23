@@ -20,6 +20,9 @@ pub struct Cli {
 
     #[structopt(short, long)]
     pub ast: bool,
+
+    #[structopt(short, long)]
+    pub trace: bool,
 }
 
 impl Cli {
