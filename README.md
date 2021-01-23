@@ -59,11 +59,14 @@ fn main() {
 - [x] Lower enums
 - [x] Resolve enums
 - [x] Resolve external imports
-- [ ] Lower field access
-- [ ] Resolve class field access
-- [ ] Lower class literal
-- [ ] Resolve class literal
-- [ ] Infer types
+- [x] Lower field access
+- [x] Resolve class field access
+- [x] Lower class literal
+- [x] Resolve class literal
+- [x] Infer types
+- [] Codegen
+- [] Finish of the VM
+- [] Add support for closures
 
 ## Build
 

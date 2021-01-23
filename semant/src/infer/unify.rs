@@ -19,6 +19,8 @@ where
         report: bool,
     ) {
         debug!("Unifying {:?} with {:?}", lhs, rhs);
+        // TODO handle the fact instance types are a subtype of the original def type
+        // i.e List { ...} is equivalent to List<i32>
         match (lhs, rhs) {
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {

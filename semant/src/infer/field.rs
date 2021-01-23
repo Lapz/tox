@@ -4,13 +4,14 @@ use crate::{
     util::Span,
     HirDatabase,
 };
+
 use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    #[instrument(skip(self))]
+    #[instrument(skip(self, map))]
     pub(crate) fn infer_field_exprs(
         &mut self,
         exprs: &[Span<ExprId>],
@@ -28,8 +29,39 @@ where
                 callee,
                 args,
                 type_args,
-            } => unimplemented!(),
+            } => self.infer_call(callee, args, type_args, map),
+
+            Expr::Field(exprs) => self.infer_field_exprs(exprs, ty, map),
             Expr::Ident(ident) => match ty {
+                Type::Poly(_, inner) => match &**inner {
+                    Type::Class { fields, .. } => {
+                        if let Some(ty) = fields.get(&ident.item) {
+                            println!("{:?}", ty);
+                            self.infer_field_exprs(&exprs[1..], ty, map)
+                        } else {
+                            let msg = format!(
+                                "Unknown record field `{}`",
+                                self.db.lookup_intern_name(ident.item),
+                            );
+
+                            self.reporter.error(msg, "", exprs[0].as_reporter_span());
+
+                            Type::Unknown
+                        }
+                    }
+                    ty => {
+                        let msg = format!(
+                            "`{}` does not exist on `{:?}`",
+                            self.db.lookup_intern_name(ident.item),
+                            ty
+                        );
+
+                        self.reporter.error(msg, "", exprs[0].as_reporter_span());
+
+                        Type::Unknown
+                    }
+                },
+
                 Type::Class { fields, .. } => {
                     if let Some(ty) = fields.get(&ident.item) {
                         println!("{:?}", ty);
@@ -45,6 +77,7 @@ where
                         Type::Unknown
                     }
                 }
+
                 ty => {
                     let msg = format!(
                         "`{}` does not exist on `{:?}`",
@@ -104,8 +137,9 @@ where
             }
 
             _ => {
-                // invalid field types
-                // todo error
+                self.reporter
+                    .error("Unknown field".to_string(), "", exprs[0].as_reporter_span());
+
                 Type::Unknown
             }
         }

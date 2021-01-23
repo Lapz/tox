@@ -1,3 +1,4 @@
+use core::panic;
 use std::{collections::HashMap, sync::Arc, todo};
 
 use crate::{
@@ -9,8 +10,6 @@ use crate::{
         pattern_matrix::{PatternMatrix, Row},
         InferDataCollector, Type, TypeCon,
     },
-    infer2::Unify,
-    resolver::resolve_named_type_query,
     util, HirDatabase,
 };
 use tracing::{debug, instrument};
@@ -20,11 +19,7 @@ where
 {
     #[instrument(skip(self, function))]
     pub(crate) fn infer_function(&mut self, function: &Function) {
-        let expected = if let Some(ty) = self.resolver.get_type(&function.name.item) {
-            ty
-        } else {
-            Type::Unknown
-        };
+        let expected = self.db.resolve_named_type(self.file, function.name.item);
 
         self.returns = Some(expected);
 
@@ -41,12 +36,11 @@ where
         if let Some(body) = &function.body {
             body.iter().for_each(|stmt| {
                 let ty = self.infer_statement(stmt, &function.ast_map);
-
                 println!("stmt {:?}", ty)
             })
         }
     }
-    // TODO remove the requirement on Arc here or update enum Type to use Arc
+
     #[instrument(skip(self, map))]
     pub(crate) fn assign_type(&mut self, pat: PatId, ty: Type, map: &FunctionAstMap) {
         let pat = map.pat(&pat);
@@ -73,7 +67,6 @@ where
     #[instrument(skip(self,))]
     pub(crate) fn lookup_type(&mut self, name: hir::NameId) -> Type {
         if let Some(local_ty) = self.env.get(&name).cloned() {
-            println!("local {:#?}", local_ty);
             local_ty
         } else {
             self.db.resolve_named_type(self.file, name)
@@ -118,7 +111,7 @@ where
                         let expected = self.db.resolve_hir_type(self.file, expected.item);
 
                         self.unify(&expected, &expr, init.as_reporter_span(), None, true);
-                        self.assign_type(pat.item, expected, map);
+                        self.assign_type(pat.item, expr, map);
                     }
                     (Some(expected), None) => {
                         let ty = self.db.resolve_hir_type(self.file, expected.item);
@@ -126,6 +119,8 @@ where
                     }
                     (None, Some(init)) => {
                         let expected = self.infer_expr(map, init);
+
+                        println!("expected {:?}", expected);
                         self.assign_type(pat.item, expected, map);
                     }
                     (None, None) => {
@@ -178,9 +173,7 @@ where
 
                 // TODO implement a well formed casting check
 
-                self.db.resolve_hir_type(self.file, ty.item);
-
-                todo!()
+                self.db.resolve_hir_type(self.file, ty.item)
             }
 
             hir::Expr::If {
@@ -349,7 +342,7 @@ where
 
                 let mut subst = HashMap::new();
 
-                // TODO handle matching multiple type vars
+                // TODO handle matching multiple type vars aka check record literal code
 
                 match inferred_def {
                     Type::Poly(ref vars, ref inner) => match &**inner {
@@ -415,15 +408,15 @@ where
             hir::Expr::RecordLiteral { def, fields } => {
                 let inferred_def = self.db.resolve_named_type(self.file, def.item);
 
-                debug!("The record definition type was {:?}", inferred_def);
-
                 let mut subst = HashMap::new();
 
                 match inferred_def.clone() {
                     Type::Poly(vars, inner) => {
                         match &*inner {
                             Type::Class {
+                                name: class_name,
                                 fields: field_types,
+                                methods,
                                 ..
                             } => {
                                 for (var, (_, expr)) in vars.iter().zip(fields.iter()) {
@@ -432,7 +425,7 @@ where
                                     subst.insert(*var, inferred_expr.clone());
                                 }
 
-                                debug!("Subst {:?}", subst);
+                                let mut instance_fields = field_types.clone();
 
                                 for (field, expr) in fields {
                                     let inferred_expr = self.infer_expr(map, expr);
@@ -451,10 +444,6 @@ where
                                         &mut subst,
                                     );
 
-                                    println!("field {:?}", inferred_expr);
-
-                                    debug!("Inferring record literal fields - expected {:?}, inferred {:?}", expected, inferred_expr);
-
                                     self.unify(
                                         &expected,
                                         &inferred_expr,
@@ -462,13 +451,22 @@ where
                                         None,
                                         true,
                                     );
+
+                                    instance_fields.insert(field.item, inferred_expr);
                                 }
 
-                                println!("{:#?}", self.subst(&inferred_def, &mut subst));
+                                let instance_ty = Type::Poly(
+                                    vars.clone(),
+                                    Box::new(Type::Class {
+                                        name: *class_name,
+                                        fields: instance_fields,
+                                        methods: methods.clone(),
+                                    }),
+                                );
 
                                 // inferred_def
 
-                                self.subst(&inferred_def, &mut subst)
+                                self.subst(&instance_ty, &mut subst)
                             }
 
                             _ => {
@@ -485,15 +483,11 @@ where
             }
             hir::Expr::Field(fields) => {
                 let record = self.infer_expr(map, &fields[0]);
+
                 match record {
                     Type::Poly(_, inner) => match &*inner {
                         ty @ Type::Class { .. } => {
-                            // resolve method chain                            // self.infer_field_exprs(&fields[1..], map);
-
-                            for id in &fields[1..] {
-                                println!("{:?}", map.expr(&id.item))
-                            }
-
+                            // resolve method chain
                             self.infer_field_exprs(&fields[1..], ty, map)
                         }
                         Type::Unknown => Type::Unknown,
@@ -514,6 +508,7 @@ where
                     },
 
                     ty @ Type::Tuple(_) => self.infer_field_exprs(&fields[1..], &ty, map),
+
                     Type::Unknown => Type::Unknown,
                     _ => {
                         let msg = format!(

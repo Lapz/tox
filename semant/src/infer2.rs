@@ -228,6 +228,9 @@ where
         if let Some(body) = &function.body {
             body.iter().for_each(|stmt| {
                 self.infer_statement(stmt, &function.ast_map);
+
+                // TODO Add something like the function map which is a mapping between the
+                // Types and the expression it originates from
             })
         }
 
@@ -273,7 +276,7 @@ where
             }
 
             hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
-            hir::Stmt::Error => todo!(),
+            hir::Stmt::Error => Type::Unknown,
         }
     }
 
