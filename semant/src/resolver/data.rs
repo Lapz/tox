@@ -115,10 +115,6 @@ where
         self.interned_types.insert(id, ty);
     }
 
-    pub(crate) fn lookup_type(&mut self, id: &TypeId) -> Option<Type> {
-        self.interned_types.get(id).map(Clone::clone)
-    }
-
     pub(crate) fn begin_scope(&mut self) {
         self.ctx.begin_scope();
         // self.interned_types.begin_scope();

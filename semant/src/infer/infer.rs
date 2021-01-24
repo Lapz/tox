@@ -1,6 +1,4 @@
-use core::panic;
-use std::{collections::HashMap, sync::Arc, todo};
-
+use super::{InferDataMap, TypeMap};
 use crate::{
     hir::{
         self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
@@ -12,13 +10,24 @@ use crate::{
     },
     util, HirDatabase,
 };
-use tracing::{debug, instrument};
+use errors::Reporter;
+use std::collections::HashMap;
+use tracing::instrument;
+
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
+    pub(crate) fn finish(self) -> (TypeMap, Reporter) {
+        (self.type_map, self.reporter)
+    }
+
     #[instrument(skip(self, function))]
     pub(crate) fn infer_function(&mut self, function: &Function) {
+        let map = InferDataMap::default();
+
+        self.type_map.insert(function.name.item, map);
+
         let expected = self.db.resolve_named_type(self.file, function.name.item);
 
         self.returns = Some(expected);
@@ -35,8 +44,7 @@ where
 
         if let Some(body) = &function.body {
             body.iter().for_each(|stmt| {
-                let ty = self.infer_statement(stmt, &function.ast_map);
-                println!("stmt {:?}", ty)
+                let _ = self.infer_statement(stmt, &function.ast_map);
             })
         }
     }
@@ -99,7 +107,7 @@ where
     ) -> Type {
         let stmt = map.stmt(&id.item);
 
-        match stmt {
+        let ty = match stmt {
             hir::Stmt::Let {
                 pat,
                 ascribed_type,
@@ -132,32 +140,37 @@ where
             }
             hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
             hir::Stmt::Error => Type::Unknown,
-        }
+        };
+
+        let map = self.type_map.get_mut(&self.fn_name.unwrap()).unwrap();
+        map.insert_stmt_type(id.item, ty.clone());
+
+        ty
     }
     #[instrument(skip(self, map))]
     pub(crate) fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
         let expr = map.expr(&id.item);
 
-        match expr {
+        let ty = match expr {
             hir::Expr::Array(exprs) => {
                 if exprs.len() == 0 {
-                    return Type::Con(TypeCon::Array {
+                    Type::Con(TypeCon::Array {
                         ty: Box::new(Type::Con(TypeCon::Void)),
                         size: None,
+                    })
+                } else {
+                    let first = self.infer_expr(map, &exprs[0]);
+
+                    exprs.iter().skip(1).for_each(|id| {
+                        let inferred = self.infer_expr(map, id);
+                        self.unify(&first, &inferred, id.as_reporter_span(), None, true)
                     });
+
+                    Type::Con(TypeCon::Array {
+                        ty: Box::new(first),
+                        size: None,
+                    })
                 }
-
-                let first = self.infer_expr(map, &exprs[0]);
-
-                exprs.iter().skip(1).for_each(|id| {
-                    let inferred = self.infer_expr(map, id);
-                    self.unify(&first, &inferred, id.as_reporter_span(), None, true)
-                });
-
-                Type::Con(TypeCon::Array {
-                    ty: Box::new(first),
-                    size: None,
-                })
             }
             hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
 
@@ -526,6 +539,11 @@ where
                     }
                 }
             }
-        }
+        };
+
+        let map = self.type_map.get_mut(&self.fn_name.unwrap()).unwrap();
+        map.insert_expr_type(id.item, ty.clone());
+
+        ty
     }
 }

@@ -26,9 +26,11 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub fn run(self) -> io::Result<()> {
+    pub fn run(self) -> io::Result<i32> {
         let db = DatabaseImpl::default();
         // let mut errors = Vec::new();
+
+        let mut exit = 0;
 
         for path in self.source {
             let handle = db.intern_file(path);
@@ -53,11 +55,16 @@ impl Cli {
                 }
             }
 
-            let WithError((), mut errors) = db.infer(handle);
+            let WithError(type_map, mut errors) = db.infer(handle);
+            // Todo handle warnings being errors
+            if !errors.is_empty() {
+                exit = 1;
+                db.emit(&mut errors)?;
+            }
 
-            db.emit(&mut errors)?;
+            // Codegen here
         }
 
-        Ok(())
+        Ok(exit)
     }
 }

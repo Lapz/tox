@@ -1,4 +1,4 @@
-use crate::util;
+use crate::{infer, util};
 use errors::FileId;
 use indexmap::IndexMap;
 
@@ -8,7 +8,7 @@ use std::{
     path::Path,
     sync::Arc,
 };
-use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, SyntaxKind, TextRange, T};
+use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 #[derive(Debug, Default, Eq, PartialEq, Clone, Hash)]
 pub struct SourceFile {
     pub(crate) imports: Vec<Arc<Import>>,
@@ -354,6 +354,7 @@ pub(crate) struct FunctionAstMap {
     hir_to_block: IndexMap<BlockId, Block>,
     hir_to_stmt: IndexMap<StmtId, Stmt>,
     hir_to_expr: IndexMap<ExprId, Expr>,
+    expr_to_type: IndexMap<ExprId, infer::Type>,
     // ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
 }
 
