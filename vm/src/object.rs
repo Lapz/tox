@@ -82,7 +82,7 @@ pub struct InstanceObject {
 pub struct FunctionObject {
     pub obj: Object,
     pub arity: usize,
-    pub function: super::Function,
+    pub function: Function,
 }
 
 #[derive(Clone, PartialEq)]
@@ -116,7 +116,7 @@ impl NativeObject {
 }
 
 impl FunctionObject {
-    pub fn new(arity: usize, function: super::Function, next: RawObject) -> RawObject {
+    pub fn new(arity: usize, function: Function, next: RawObject) -> RawObject {
         let func = FunctionObject {
             obj: Object::new(ObjectType::Func, next),
             function,

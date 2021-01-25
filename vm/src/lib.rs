@@ -1,7 +1,12 @@
-// mod chunks;
+#[macro_use]
+mod macros;
+mod chunks;
+mod codegen;
 mod db;
-// mod object;
+mod native;
+mod object;
 mod value;
+mod vm;
 
 #[cfg(test)]
 mod tests {

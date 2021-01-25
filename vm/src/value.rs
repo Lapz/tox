@@ -1,5 +1,8 @@
+use crate::object::{
+    ArrayObject, ClassObject, EnumObject, FunctionObject, InstanceObject, NativeObject, Object,
+    ObjectType, RawObject, StringObject,
+};
 use std::fmt::{self, Debug, Display};
-
 #[derive(Clone, Copy)]
 /// A value within the VM
 pub struct Value {

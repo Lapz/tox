@@ -13,10 +13,10 @@ use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, 
 pub struct SourceFile {
     pub(crate) imports: Vec<Arc<Import>>,
     pub(crate) modules: Vec<Arc<Module>>,
-    pub(crate) functions: Vec<Arc<Function>>,
-    pub(crate) type_alias: Vec<Arc<TypeAlias>>,
-    pub(crate) classes: Vec<Arc<Class>>,
-    pub(crate) enums: Vec<Arc<Enum>>,
+    functions: Vec<Arc<Function>>,
+    type_alias: Vec<Arc<TypeAlias>>,
+    classes: Vec<Arc<Class>>,
+    enums: Vec<Arc<Enum>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]

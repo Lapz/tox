@@ -32,7 +32,7 @@ fn main() {
        val: 2,
        next: List {
          val: "3",
-         next:nil
+         next: nil
        }
      }
    };  

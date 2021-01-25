@@ -18,10 +18,10 @@ use crate::{
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
 use indexmap::IndexMap;
-pub(crate) use stacked_map::StackedMap;
+pub use stacked_map::StackedMap;
+
 use std::{collections::HashMap, sync::Arc};
 pub use ty::{Type, TypeCon, TypeVar, Variant};
-
 pub type TypeMap = HashMap<NameId, InferDataMap>;
 
 #[derive(Debug)]
