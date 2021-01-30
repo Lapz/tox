@@ -38,8 +38,8 @@ pub(crate) struct InferDataCollector<DB> {
 }
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct InferDataMap {
-    expr_to_type: IndexMap<ExprId, Type>,
-    stmt_to_type: IndexMap<StmtId, Type>,
+    pub expr_to_type: IndexMap<ExprId, Type>,
+    pub stmt_to_type: IndexMap<StmtId, Type>,
 }
 
 impl InferDataMap {

@@ -142,6 +142,14 @@ impl<'a> Lexer<'a> {
                 '|' => span(SyntaxKind::PIPE, start),
                 '^' => span(SyntaxKind::EXPONENTIAL, start),
                 '%' => span(SyntaxKind::PERCENT, start),
+                '&' => {
+                    if self.peek(|ch| ch == '&') {
+                        self.advance();
+                        spans(SyntaxKind::AMPAMP, start, start.span('&'))
+                    } else {
+                        span(SyntaxKind::AMP, start)
+                    }
+                }
                 ':' => {
                     if self.peek(|ch| ch == ':') {
                         self.advance();

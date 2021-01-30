@@ -1306,6 +1306,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "tracing-tree",
+ "vm",
  "walkdir",
 ]
 

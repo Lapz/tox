@@ -11,12 +11,12 @@ use std::{
 use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 #[derive(Debug, Default, Eq, PartialEq, Clone, Hash)]
 pub struct SourceFile {
-    pub(crate) imports: Vec<Arc<Import>>,
-    pub(crate) modules: Vec<Arc<Module>>,
-    functions: Vec<Arc<Function>>,
-    type_alias: Vec<Arc<TypeAlias>>,
-    classes: Vec<Arc<Class>>,
-    enums: Vec<Arc<Enum>>,
+    pub imports: Vec<Arc<Import>>,
+    pub modules: Vec<Arc<Module>>,
+    pub functions: Vec<Arc<Function>>,
+    pub type_alias: Vec<Arc<TypeAlias>>,
+    pub classes: Vec<Arc<Class>>,
+    pub enums: Vec<Arc<Enum>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -54,14 +54,14 @@ pub struct Segment {
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Function {
-    pub(crate) exported: bool,
-    pub(crate) name: util::Span<NameId>,
-    pub(crate) ast_map: FunctionAstMap,
-    pub(crate) params: Vec<util::Span<ParamId>>,
-    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
-    pub(crate) body: Option<Vec<util::Span<StmtId>>>,
-    pub(crate) returns: Option<util::Span<TypeId>>,
-    pub(crate) span: TextRange,
+    pub exported: bool,
+    pub name: util::Span<NameId>,
+    pub ast_map: FunctionAstMap,
+    pub params: Vec<util::Span<ParamId>>,
+    pub type_params: Vec<util::Span<TypeParamId>>,
+    pub body: Option<Vec<util::Span<StmtId>>>,
+    pub returns: Option<util::Span<TypeId>>,
+    pub span: TextRange,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -347,7 +347,7 @@ macro_rules! create_intern_key {
 /// Allows one to go from id => hir::item
 ///  and from id => astPtr
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
-pub(crate) struct FunctionAstMap {
+pub struct FunctionAstMap {
     hir_to_pattern: IndexMap<PatId, Pattern>,
     hir_to_params: IndexMap<ParamId, Param>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
@@ -383,27 +383,27 @@ impl FunctionAstMap {
         self.hir_to_pattern.insert(id, pat);
     }
 
-    pub(crate) fn stmt(&self, id: &StmtId) -> &Stmt {
+    pub fn stmt(&self, id: &StmtId) -> &Stmt {
         &self.hir_to_stmt[id]
     }
 
-    pub(crate) fn expr(&self, id: &ExprId) -> &Expr {
+    pub fn expr(&self, id: &ExprId) -> &Expr {
         &self.hir_to_expr[id]
     }
 
-    pub(crate) fn block(&self, id: &BlockId) -> &Block {
+    pub fn block(&self, id: &BlockId) -> &Block {
         &self.hir_to_block[id]
     }
 
-    pub(crate) fn pat(&self, id: &PatId) -> &Pattern {
+    pub fn pat(&self, id: &PatId) -> &Pattern {
         &self.hir_to_pattern[id]
     }
 
-    pub(crate) fn type_param(&self, id: &TypeParamId) -> &TypeParam {
+    pub fn type_param(&self, id: &TypeParamId) -> &TypeParam {
         &self.hir_to_type_params[id]
     }
 
-    pub(crate) fn param(&self, id: &ParamId) -> &Param {
+    pub fn param(&self, id: &ParamId) -> &Param {
         &self.hir_to_params[id]
     }
 }
@@ -485,7 +485,10 @@ impl BinOp {
             T![*=] => BinOp::MultEqual,
             T![/=] => BinOp::DivEqual,
 
-            _ => return None,
+            t => {
+                println!("op {:?}", t);
+                return None;
+            }
         };
         Some(op)
     }

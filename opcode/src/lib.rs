@@ -130,3 +130,6 @@ pub const ENUM: u8 = 52;
 
 // declare an enum with associated data
 pub const ENUMDATA: u8 = 53;
+
+// A tuple and its length
+pub const TUPLE: u8 = 53;

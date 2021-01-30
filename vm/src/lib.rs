@@ -8,6 +8,7 @@ mod object;
 mod value;
 mod vm;
 
+pub use db::{CodegenDatabase, CodegenDatabaseStorage};
 #[cfg(test)]
 mod tests {
     #[test]

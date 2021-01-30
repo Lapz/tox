@@ -8,5 +8,6 @@ mod util;
 #[macro_use]
 mod resolver;
 pub use db::{HirDatabase, HirDatabaseStorage, InternDatabaseStorage};
-pub use infer::{Ctx, StackedMap, Type, TypeCon, TypeMap};
+pub use infer::{Ctx, InferDataMap, StackedMap, Type, TypeCon, TypeMap};
 pub use syntax::TextRange;
+pub use util::Span;

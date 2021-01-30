@@ -173,7 +173,7 @@ impl<'a> StringObject<'a> {
     pub fn new(string: &'a str, next: RawObject) -> RawObject {
         let s = StringObject {
             obj: Object::new(ObjectType::String, next),
-            chars: ObjectValue::Str(string),
+            chars: ObjectValue::String(string.to_string()),
         };
 
         Box::into_raw(Box::new(s)) as RawObject

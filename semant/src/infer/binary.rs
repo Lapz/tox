@@ -32,15 +32,15 @@ where
             }
             BinOp::And | BinOp::Or => {
                 self.unify(
-                    &inferred_lhs,
                     &Type::Con(TypeCon::Bool),
+                    &inferred_lhs,
                     lhs.as_reporter_span(),
                     Some("Expected a bool".into()),
                     true,
                 );
                 self.unify(
-                    &inferred_rhs,
                     &Type::Con(TypeCon::Bool),
+                    &inferred_rhs,
                     rhs.as_reporter_span(),
                     Some("Expected a bool".into()),
                     true,

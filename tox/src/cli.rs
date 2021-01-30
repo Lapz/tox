@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
+use vm::CodegenDatabase;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "tox")]
@@ -61,6 +62,8 @@ impl Cli {
                 exit = 1;
                 db.emit(&mut errors)?;
             }
+
+            let WithError(_, _) = db.codegen(handle);
 
             // Codegen here
         }

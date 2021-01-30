@@ -26,18 +26,13 @@ fn map<A,B>(array:[A],body: fn(A) -> B) -> [B] {
 
 fn main() {
 
-   let l:List<i32> = List {
-     val:1,
-     next: List {
-       val: 2,
-       next: List {
-         val: "3",
-         next: nil
-       }
-     }
-   };  
-
-
-   l.next.val;
+  1;
+  2;
+  "a";
+  "Hello World";
+  "b";
+  "c";
+  nil;
+  1 && 1;
   /*  a.b.c;a.b.c(1,2); */
 }

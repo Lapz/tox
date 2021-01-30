@@ -1,4 +1,6 @@
-#[cfg(feature = "debug")]
+use std::fmt::Display;
+
+// #[cfg(feature = "debug")]
 use opcode;
 
 use crate::value::Value;
@@ -27,8 +29,8 @@ impl Chunk {
         self.lines.push(line)
     }
 
-    #[cfg(feature = "debug")]
-    pub fn disassemble(&self, name: &str) {
+    // #[cfg(feature = "debug")]
+    pub fn disassemble<T: Display>(&self, name: &T) {
         println!("== {} ==\n", name);
 
         let mut i = 0;
@@ -38,7 +40,7 @@ impl Chunk {
         }
     }
 
-    #[cfg(feature = "debug")]
+    // #[cfg(feature = "debug")]
     pub fn disassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04}", offset);
 
@@ -106,7 +108,7 @@ impl Chunk {
         }
     }
 
-    #[cfg(feature = "debug")]
+    // #[cfg(feature = "debug")]
     pub fn constant_instruction(&self, name: &str, offset: usize) -> usize {
         let constant = self.code[offset + 1];
         println!(
@@ -146,7 +148,7 @@ impl Chunk {
     }
 }
 
-#[cfg(feature = "debug")]
+// #[cfg(feature = "debug")]
 pub fn simple_instruction(name: &str, offset: usize) -> usize {
     println!("{}", name);
     offset + 1
