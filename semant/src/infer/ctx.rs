@@ -5,7 +5,7 @@ use crate::{
     hir::{Name, NameId},
     infer::ty::{Type, TypeCon, TypeVar, Variant},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ctx {
@@ -36,6 +36,11 @@ impl Ctx {
 
         let result_name = db.intern_name(Name::new("Result"));
         kind.insert(db.intern_name(Name::new("Result")), TypeKind::Enum);
+
+        let print_name = db.intern_name(Name::new("print"));
+
+        types.insert(print_name, Type::App(vec![]));
+        kind.insert(print_name, TypeKind::Function);
 
         let mut result_variants = HashMap::new();
 

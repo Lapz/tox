@@ -128,7 +128,6 @@ where
                     (None, Some(init)) => {
                         let expected = self.infer_expr(map, init);
 
-                        println!("expected {:?}", expected);
                         self.assign_type(pat.item, expected, map);
                     }
                     (None, None) => {
@@ -304,7 +303,6 @@ where
                 let expected = self.returns.clone().unwrap();
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
-
                     self.unify(
                         &expected,
                         &inferred,

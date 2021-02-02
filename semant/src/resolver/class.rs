@@ -82,7 +82,6 @@ where
             }),
         );
 
-        println!("{:?}", o);
         Ok(o)
     }
 

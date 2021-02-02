@@ -1,4 +1,5 @@
-use std::{collections::HashMap, todo};
+use core::panic;
+use std::{collections::HashMap, todo, usize};
 
 use crate::{
     chunks::Chunk,
@@ -7,9 +8,12 @@ use crate::{
     value::Value,
 };
 use errors::{FileId, Reporter, WithError};
-use opcode::TRUE;
+use opcode::PRINT;
 use semant::{
-    hir::{BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, NameId, ParamId, Stmt, StmtId},
+    hir::{
+        BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, ParamId, PatId,
+        Pattern, Stmt, StmtId, UnaryOp,
+    },
     InferDataMap, Span, StackedMap, Type, TypeCon,
 };
 
@@ -43,8 +47,12 @@ where
     DB: CodegenDatabase,
 {
     pub(crate) fn codegen_function(&mut self, function: &Function) {
-        for (i, param) in function.params.iter().enumerate() {
-            self.params.insert(param.item, i);
+        for param in &function.params {
+            let param = function.ast_map.param(&param.item);
+
+            let pat = param.pat.item;
+
+            let _ = self.get_slot_for_pat(pat, &function.ast_map, None);
         }
 
         if let Some(body) = &function.body {
@@ -62,6 +70,41 @@ where
         let slot = self.slots;
         self.slots += 1;
         slot
+    }
+
+    pub fn get_slot_for_pat(&mut self, id: PatId, map: &FunctionAstMap, slot: Option<u32>) -> u32 {
+        let pat = map.pat(&id);
+
+        let slot = slot.unwrap_or(self.new_slot());
+
+        match pat {
+            Pattern::Bind { name } => {
+                self.locals.insert(name.item, slot as usize);
+            }
+            Pattern::Placeholder => {
+                // Todo check if this is the correct behavior
+            }
+            Pattern::Tuple(pats) => {
+                for pat in pats {
+                    let _ = self.get_slot_for_pat(pat.item, map, Some(slot));
+                }
+            }
+            Pattern::Literal(_) => {}
+        }
+
+        slot
+    }
+
+    pub fn get_ident(&mut self, id: ExprId, map: &FunctionAstMap) -> usize {
+        let expr = map.expr(&id);
+
+        match expr {
+            Expr::Field(_) => {
+                todo!()
+            }
+            Expr::Ident(ident) => *self.locals.get(&ident.item).expect("Undefined var"),
+            _ => todo!(),
+        }
     }
 
     pub fn patch_jump(&mut self, offset: usize) {
@@ -115,21 +158,29 @@ where
 
         match stmt {
             Stmt::Let {
-                pat,
-                ascribed_type,
-                initializer,
-            } => {}
+                pat, initializer, ..
+            } => {
+                if let Some(expr) = initializer {
+                    self.codegen_expr(expr, map);
+                } else {
+                    self.emit_constant(Value::nil());
+                }
+
+                let slot = self.get_slot_for_pat(pat.item, map, None);
+
+                self.emit_bytes(opcode::SETLOCAL, slot as u8);
+            }
             Stmt::Expr(expr) => self.codegen_expr(expr, map),
             Stmt::Error => {
                 self.emit_byte(opcode::IGL);
             }
         }
-        // let ty = self.type_map[]
     }
 
     pub fn codegen_expr(&mut self, id: &Span<ExprId>, map: &FunctionAstMap) {
-        let ty = self.type_map.expr_to_type.get(&id.item).unwrap();
         let expr = map.expr(&id.item);
+
+        let ty = self.type_map.expr_to_type.get(&id.item).unwrap();
 
         match expr {
             Expr::Array(exprs) => {
@@ -142,6 +193,73 @@ where
             Expr::Binary { lhs, op, rhs } => match op {
                 BinOp::And => self.codegen_and(lhs, rhs, map),
                 BinOp::Or => self.codegen_or(lhs, rhs, map),
+                BinOp::Equal => {
+                    let ident = self.get_ident(lhs.item, map);
+
+                    self.codegen_expr(rhs, map);
+
+                    self.emit_bytes(opcode::SETLOCAL, ident as u8);
+                }
+                BinOp::PlusEqual => {
+                    let ident = self.get_ident(lhs.item, map);
+
+                    self.emit_bytes(opcode::GETLOCAL, ident as u8);
+
+                    self.codegen_expr(rhs, map);
+
+                    match ty {
+                        Type::Con(TypeCon::Int) => self.emit_byte(opcode::ADD),
+                        Type::Con(TypeCon::Float) => self.emit_byte(opcode::ADDF),
+                        _ => panic!("Unsupported assignment types"),
+                    }
+
+                    self.emit_bytes(opcode::SETLOCAL, ident as u8);
+                }
+                BinOp::MinusEqual => {
+                    let ident = self.get_ident(lhs.item, map);
+
+                    self.emit_bytes(opcode::GETLOCAL, ident as u8);
+
+                    match ty {
+                        Type::Con(TypeCon::Int) => self.emit_byte(opcode::SUB),
+                        Type::Con(TypeCon::Float) => self.emit_byte(opcode::SUBF),
+                        _ => panic!("Unsupported assignment types"),
+                    }
+
+                    self.codegen_expr(rhs, map);
+
+                    self.emit_bytes(opcode::SETLOCAL, ident as u8);
+                }
+                BinOp::MultEqual => {
+                    let ident = self.get_ident(lhs.item, map);
+
+                    self.emit_bytes(opcode::GETLOCAL, ident as u8);
+
+                    match ty {
+                        Type::Con(TypeCon::Int) => self.emit_byte(opcode::MUL),
+                        Type::Con(TypeCon::Float) => self.emit_byte(opcode::MULF),
+                        _ => panic!("Unsupported assignment types"),
+                    }
+
+                    self.codegen_expr(rhs, map);
+
+                    self.emit_bytes(opcode::SETLOCAL, ident as u8);
+                }
+                BinOp::DivEqual => {
+                    let ident = self.get_ident(lhs.item, map);
+
+                    self.emit_bytes(opcode::GETLOCAL, ident as u8);
+
+                    match ty {
+                        Type::Con(TypeCon::Int) => self.emit_byte(opcode::DIV),
+                        Type::Con(TypeCon::Float) => self.emit_byte(opcode::DIVF),
+                        _ => panic!("Unsupported assignment types"),
+                    }
+
+                    self.codegen_expr(rhs, map);
+
+                    self.emit_bytes(opcode::SETLOCAL, ident as u8);
+                }
                 op => {
                     self.codegen_expr(lhs, map);
                     self.codegen_expr(rhs, map);
@@ -269,21 +387,112 @@ where
 
                 self.emit_bytes(opcode::JUMP, description.start as u8);
             }
-            Expr::Call {
-                callee,
-                args,
-                type_args,
-            } => {}
+            Expr::Call { callee, args, .. } => {
+                for arg in args {
+                    self.codegen_expr(arg, map);
+                }
+
+                self.codegen_expr(callee, map);
+                self.emit_bytes(opcode::CALL, 0);
+
+                self.emit_byte(args.len() as u8)
+            }
             Expr::Cast { expr, ty } => {}
 
             Expr::If {
                 cond,
                 then_branch,
-                else_branch,
-            } => {}
-            Expr::Ident(_) => {}
-            Expr::Index { base, index } => {}
-            Expr::While { cond, body } => {}
+                else_branch: None,
+            } => {
+                self.codegen_expr(cond, map);
+
+                let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.emit_byte(opcode::POP);
+
+                self.codegen_expr(then_branch, map);
+
+                self.patch_jump(false_label);
+
+                self.emit_byte(opcode::POP);
+            }
+            Expr::If {
+                cond,
+                then_branch,
+                else_branch: Some(else_branch),
+            } => {
+                self.codegen_expr(cond, map);
+
+                let false_label = self.emit_jump(opcode::JUMPNOT);
+
+                self.emit_byte(opcode::POP);
+
+                self.codegen_expr(then_branch, map);
+
+                let end_label = self.emit_jump(opcode::JUMP);
+
+                self.patch_jump(false_label);
+
+                self.emit_byte(opcode::POP);
+
+                self.codegen_expr(else_branch, map);
+
+                self.patch_jump(end_label);
+            }
+            Expr::Ident(index) => {
+                if let Some(pos) = self.locals.get(&index.item).cloned() {
+                    self.emit_bytes(opcode::GETLOCAL, pos as u8);
+                } else {
+                    let print = self.db.intern_name(Name::new("print"));
+
+                    if index.item == print {
+                        self.emit_byte(opcode::PRINT)
+                    } else {
+                        // panic!("Undefined var")
+                    }
+                }
+            }
+            Expr::Index { base, index } => match ty {
+                Type::Con(TypeCon::Str) => {
+                    self.codegen_expr(base, map);
+                    self.codegen_expr(index, map);
+
+                    self.emit_byte(opcode::INDEXSTRING);
+                }
+                Type::Con(TypeCon::Array { .. }) => {
+                    self.codegen_expr(base, map);
+                    self.codegen_expr(index, map);
+                    self.emit_byte(opcode::INDEXARRAY);
+                }
+
+                _ => panic!("Tried to index a {:?}", ty),
+            },
+            Expr::While { cond, body } => {
+                let start_label = self.chunk.code.len();
+
+                self.codegen_expr(cond, map);
+
+                let out = self.emit_jump(opcode::JUMPNOT);
+
+                self.current_loop = Some(LoopDescription {
+                    start: start_label,
+                    end: out,
+                });
+
+                self.emit_byte(opcode::POP);
+
+                let block = map.block(body);
+
+                for stmt in block.0.iter() {
+                    self.codegen_statement(stmt, map)
+                }
+
+                self.emit_loop(start_label); // Jumps back to the start
+
+                self.patch_jump(out); // the outer label
+
+                self.emit_byte(opcode::POP); //removes cond from stack
+            }
             Expr::Literal(literal) => {
                 let literal = self.db.lookup_intern_literal(*literal);
 
@@ -314,14 +523,31 @@ where
 
                 self.emit_bytes(opcode::TUPLE, exprs.len() as u8);
             }
-            Expr::Unary { op, expr } => {}
-            Expr::Return(_) => {}
+            Expr::Unary { op, expr } => {
+                self.codegen_expr(expr, map);
+                match op {
+                    UnaryOp::Minus => match ty {
+                        Type::Con(TypeCon::Int) => self.emit_byte(opcode::NEGATE),
+                        Type::Con(TypeCon::Float) => self.emit_byte(opcode::NEGATEF),
+                        _ => panic!("Tried using {:?} on an unsupported type {:?}", op, ty),
+                    },
+                    UnaryOp::Excl => {
+                        self.emit_byte(opcode::NOT);
+                    }
+                }
+            }
+            Expr::Return(expr) => {
+                if let Some(expr) = expr {
+                    self.codegen_expr(expr, map);
+                }
+
+                self.emit_byte(opcode::RETURN)
+            }
             Expr::Match { expr, arms } => {}
             Expr::Enum { def, variant, expr } => {}
             Expr::RecordLiteral { def, fields } => {}
             Expr::Field(_) => {}
         }
-        // let ty = self.type_map[]
     }
 
     fn codegen_and(&mut self, lhs: &Span<ExprId>, rhs: &Span<ExprId>, map: &FunctionAstMap) {
@@ -350,7 +576,7 @@ where
 pub fn codegen_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(type_map, error) = db.infer(file);
-    let reporter = Reporter::new(file);
+
     errors.extend(error);
 
     for function in &program.functions {
@@ -369,8 +595,6 @@ pub fn codegen_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
         };
 
         collector.codegen_function(function);
-
-        println!("{:?}", collector.chunk);
 
         collector
             .chunk

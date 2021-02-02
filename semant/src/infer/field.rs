@@ -36,7 +36,6 @@ where
                 Type::Poly(_, inner) => match &**inner {
                     Type::Class { fields, .. } => {
                         if let Some(ty) = fields.get(&ident.item) {
-                            println!("{:?}", ty);
                             self.infer_field_exprs(&exprs[1..], ty, map)
                         } else {
                             let msg = format!(
@@ -64,7 +63,6 @@ where
 
                 Type::Class { fields, .. } => {
                     if let Some(ty) = fields.get(&ident.item) {
-                        println!("{:?}", ty);
                         self.infer_field_exprs(&exprs[1..], ty, map)
                     } else {
                         let msg = format!(

@@ -128,6 +128,8 @@ where
 
                 self.unify(t1, &subst, span, notes, true)
             }
+
+            (Type::Poly(_, inner), ret) => self.unify(inner, ret, span, notes, report),
             (_, Type::Con(TypeCon::Void)) => {}
             (Type::Unknown, _) => {}
             (_, Type::Unknown) => {}

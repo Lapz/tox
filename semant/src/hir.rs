@@ -154,7 +154,7 @@ impl AsRef<Path> for Name {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Param {
-    pub(crate) pat: util::Span<PatId>,
+    pub pat: util::Span<PatId>,
     pub(crate) ty: util::Span<TypeId>,
 }
 
@@ -484,9 +484,7 @@ impl BinOp {
             T![-=] => BinOp::MinusEqual,
             T![*=] => BinOp::MultEqual,
             T![/=] => BinOp::DivEqual,
-
             t => {
-                println!("op {:?}", t);
                 return None;
             }
         };
