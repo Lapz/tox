@@ -56,14 +56,25 @@ impl Cli {
                 }
             }
 
-            let WithError(type_map, mut errors) = db.infer(handle);
             // Todo handle warnings being errors
+
+            let WithError((bytecode, object), mut errors) = db.codegen(handle);
+
             if !errors.is_empty() {
                 exit = 1;
                 db.emit(&mut errors)?;
             }
 
-            let WithError(_, _) = db.codegen(handle);
+            let vm = vm::VM::new(&db, &bytecode, object);
+
+            match vm {
+                Some(mut vm) => {
+                    vm.run();
+                }
+                None => {
+                    panic!("Missing main function")
+                }
+            }
 
             // Codegen here
         }

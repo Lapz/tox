@@ -236,6 +236,12 @@ where
         // and IdentExpr followed by the args
         // so to resolve them we need to look at the file ctx
         if !self.items.contains(&name.item) {
+            let n = self.db.intern_name(Name::new("print"));
+
+            if n == name.item {
+                return;
+            }
+
             let msg = format!(
                 "Unknown identifier `{}`",
                 self.db.lookup_intern_name(name.item)

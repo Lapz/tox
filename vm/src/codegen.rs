@@ -4,8 +4,10 @@ use std::{collections::HashMap, todo, usize};
 use crate::{
     chunks::Chunk,
     db::CodegenDatabase,
+    ir::{self},
     object::{RawObject, StringObject},
     value::Value,
+    vm::VM,
 };
 use errors::{FileId, WithError};
 
@@ -14,7 +16,7 @@ use semant::{
         BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId, Pattern, Stmt,
         StmtId, UnaryOp,
     },
-    InferDataMap, Span, Type, TypeCon,
+    IndexMap, InferDataMap, Span, Type, TypeCon,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +31,6 @@ struct LoopDescription {
 pub(crate) struct CodegenBuilder<'map, DB> {
     db: DB,
     type_map: &'map InferDataMap,
-    chunks: Vec<Chunk>,
     chunk: Chunk,
     current_loop: Option<LoopDescription>,
     ///  A linked list of all the objects allocated. This
@@ -46,7 +47,7 @@ impl<'a, 'map, DB> CodegenBuilder<'map, &'a DB>
 where
     DB: CodegenDatabase,
 {
-    pub(crate) fn codegen_function(&mut self, function: &Function) {
+    pub(crate) fn build_function(&mut self, function: &Function) -> ir::Function {
         for param in &function.params {
             let param = function.ast_map.param(&param.item);
 
@@ -59,6 +60,21 @@ where
             body.iter().for_each(|stmt| {
                 self.codegen_statement(stmt, &function.ast_map);
             })
+        }
+
+        let mut chunk = Chunk::new();
+        let mut params = HashMap::new();
+
+        std::mem::swap(&mut chunk, &mut self.chunk);
+        std::mem::swap(&mut params, &mut self.params);
+
+        self.slots = 0;
+        self.current_loop = None;
+
+        ir::Function {
+            name: function.name.item,
+            params: params,
+            body: chunk,
         }
     }
 
@@ -585,33 +601,43 @@ where
     }
 }
 
-pub fn codegen_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
+pub fn codegen_query(
+    db: &impl CodegenDatabase,
+    file: FileId,
+) -> WithError<(ir::Program, RawObject)> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(type_map, error) = db.infer(file);
-
     errors.extend(error);
 
+    let mut bytecode = ir::Program {
+        functions: HashMap::new(),
+    };
+
+    let mut builder = CodegenBuilder {
+        db,
+        type_map: &InferDataMap {
+            expr_to_type: IndexMap::new(),
+            stmt_to_type: IndexMap::new(),
+        },
+        chunk: Chunk::new(),
+        current_loop: None,
+        objects: std::ptr::null::<RawObject>() as RawObject,
+        slots: 0,
+        line: 0,
+        locals: HashMap::new(),
+        params: HashMap::new(),
+    };
+
     for function in &program.functions {
-        let type_map = type_map.get(&function.name.item).unwrap();
-        let mut collector = CodegenBuilder {
-            db,
-            type_map,
-            chunks: Vec::new(),
-            chunk: Chunk::new(),
-            current_loop: None,
-            objects: std::ptr::null::<RawObject>() as RawObject,
-            slots: 0,
-            line: 0,
-            locals: HashMap::new(),
-            params: HashMap::new(),
-        };
+        builder.type_map = type_map.get(&function.name.item).unwrap();
 
-        collector.codegen_function(function);
+        let func = builder.build_function(function);
 
-        collector
-            .chunk
+        func.body
             .disassemble(&db.lookup_intern_name(function.name.item));
+
+        bytecode.functions.insert(function.name.item, func);
     }
 
-    WithError((), errors)
+    WithError((bytecode, builder.objects), errors)
 }

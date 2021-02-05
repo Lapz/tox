@@ -2,8 +2,8 @@
 //! When adding a new object make sure the first field is obj:Object otherwise the transmutes will fail
 // #![allow(clippy::new_ret_no_self)]
 // use super::Function;
+use crate::ir::Function;
 use crate::value::Value;
-
 use std::collections::HashMap;
 use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
@@ -11,7 +11,6 @@ use std::ops::Deref;
 pub type RawObject = *mut Object;
 pub type NativeFn = fn(*const Value) -> Value;
 pub type Symbol = i32;
-pub type Function = i32;
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
 pub enum ObjectType {

@@ -1,3 +1,10 @@
+class Foo {
+  fn bar() {
+
+  }
+}
+
+
 fn add(x:i32,y:i32) -> i32 {
     return x+y;
 }
@@ -9,7 +16,10 @@ fn main() {
     
     x += 5;
 
-    add(x,10);
+
+    print(x);
+
+    print("hello" + "world");
     
     
     // print(1+1);
