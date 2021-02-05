@@ -1,38 +1,17 @@
-
-class Second {
-    foo:string;
-}
-class Person {
-    firstName:Second;
-    lastName:string;
-}
-
-
-enum Option<T> {
-    Ok(T),
-    None
-}
-
-class List<T> {
-    val:T;
-    next:List<T>;
-}
-
-
-fn map<A,B>(array:[A],body: fn(A) -> B) -> [B] {
-
+fn add(x:i32,y:i32) -> i32 {
+    return x+y;
 }
 
 
 fn main() {
 
-  1;
-  2;
-  "a";
-  "Hello World";
-  "b";
-  "c";
-  nil;
-  1 && 1;
+    let x = 10;
+    
+    x += 5;
+
+    add(x,10);
+    
+    
+    // print(1+1);
   /*  a.b.c;a.b.c(1,2); */
 }

@@ -7,14 +7,14 @@ use crate::{
     object::{RawObject, StringObject},
     value::Value,
 };
-use errors::{FileId, Reporter, WithError};
-use opcode::PRINT;
+use errors::{FileId, WithError};
+
 use semant::{
     hir::{
-        BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, ParamId, PatId,
-        Pattern, Stmt, StmtId, UnaryOp,
+        BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId, Pattern, Stmt,
+        StmtId, UnaryOp,
     },
-    InferDataMap, Span, StackedMap, Type, TypeCon,
+    InferDataMap, Span, Type, TypeCon,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -38,8 +38,8 @@ pub(crate) struct CodegenBuilder<'map, DB> {
     /// The stack slot of the variable
     slots: u32,
     line: u32,
-    locals: StackedMap<NameId, usize>,
-    params: HashMap<ParamId, usize>,
+    locals: HashMap<NameId, usize>,
+    params: HashMap<NameId, usize>,
 }
 
 impl<'a, 'map, DB> CodegenBuilder<'map, &'a DB>
@@ -52,7 +52,7 @@ where
 
             let pat = param.pat.item;
 
-            let _ = self.get_slot_for_pat(pat, &function.ast_map, None);
+            let _ = self.get_slot_for_pat(pat, &function.ast_map, None, true);
         }
 
         if let Some(body) = &function.body {
@@ -72,21 +72,31 @@ where
         slot
     }
 
-    pub fn get_slot_for_pat(&mut self, id: PatId, map: &FunctionAstMap, slot: Option<u32>) -> u32 {
+    pub fn get_slot_for_pat(
+        &mut self,
+        id: PatId,
+        map: &FunctionAstMap,
+        slot: Option<u32>,
+        param: bool,
+    ) -> u32 {
         let pat = map.pat(&id);
 
         let slot = slot.unwrap_or(self.new_slot());
 
         match pat {
             Pattern::Bind { name } => {
-                self.locals.insert(name.item, slot as usize);
+                if param {
+                    self.params.insert(name.item, slot as usize);
+                } else {
+                    self.locals.insert(name.item, slot as usize);
+                }
             }
             Pattern::Placeholder => {
                 // Todo check if this is the correct behavior
             }
             Pattern::Tuple(pats) => {
                 for pat in pats {
-                    let _ = self.get_slot_for_pat(pat.item, map, Some(slot));
+                    let _ = self.get_slot_for_pat(pat.item, map, Some(slot), param);
                 }
             }
             Pattern::Literal(_) => {}
@@ -166,7 +176,7 @@ where
                     self.emit_constant(Value::nil());
                 }
 
-                let slot = self.get_slot_for_pat(pat.item, map, None);
+                let slot = self.get_slot_for_pat(pat.item, map, None, false);
 
                 self.emit_bytes(opcode::SETLOCAL, slot as u8);
             }
@@ -442,6 +452,8 @@ where
             Expr::Ident(index) => {
                 if let Some(pos) = self.locals.get(&index.item).cloned() {
                     self.emit_bytes(opcode::GETLOCAL, pos as u8);
+                } else if let Some(pos) = self.params.get(&index.item).cloned() {
+                    self.emit_bytes(opcode::GETLOCAL, pos as u8);
                 } else {
                     let print = self.db.intern_name(Name::new("print"));
 
@@ -590,7 +602,7 @@ pub fn codegen_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
             objects: std::ptr::null::<RawObject>() as RawObject,
             slots: 0,
             line: 0,
-            locals: StackedMap::new(),
+            locals: HashMap::new(),
             params: HashMap::new(),
         };
 
