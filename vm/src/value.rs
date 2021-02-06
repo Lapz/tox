@@ -260,7 +260,7 @@ impl Display for Value {
                     ObjectType::Func => write!(fmt, " fun")?,
                     ObjectType::Array => write!(fmt, "array")?,
                     ObjectType::Class => write!(fmt, "class")?,
-                    ObjectType::Instance => write!(fmt, "instance")?,
+                    ObjectType::Instance => write!(fmt, "instance {:#?}", self.as_instance())?,
                     ObjectType::Native => write!(fmt, "native")?,
                     ObjectType::Enum => write!(fmt, "enum")?,
                 }

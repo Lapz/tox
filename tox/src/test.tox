@@ -14,13 +14,17 @@ fn main() {
 
     let x = 10;
     
-    x += 5;
+    x -= 5;
 
 
-    print(x);
+    let foo =  Foo {};
+
+    
+    print(add(x,10));
 
     print("hello" + "world");
-    
+
+    print(foo);
     
     // print(1+1);
   /*  a.b.c;a.b.c(1,2); */

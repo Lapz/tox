@@ -1,5 +1,5 @@
 use core::panic;
-use std::{collections::HashMap, todo, usize};
+use std::{collections::HashMap, todo, usize, vec};
 
 use crate::{
     chunks::Chunk,
@@ -13,8 +13,8 @@ use errors::{FileId, WithError};
 
 use semant::{
     hir::{
-        BinOp, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId, Pattern, Stmt,
-        StmtId, UnaryOp,
+        BinOp, Class, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId,
+        Pattern, Stmt, StmtId, UnaryOp,
     },
     IndexMap, InferDataMap, Span, Type, TypeCon,
 };
@@ -33,6 +33,7 @@ pub(crate) struct CodegenBuilder<'map, DB> {
     type_map: &'map InferDataMap,
     chunk: Chunk,
     current_loop: Option<LoopDescription>,
+    current_call: Option<NameId>,
     ///  A linked list of all the objects allocated. This
     /// is passed to the vm so runtime collection can be done
     pub objects: RawObject,
@@ -75,6 +76,19 @@ where
             name: function.name.item,
             params: params,
             body: chunk,
+        }
+    }
+
+    pub(crate) fn build_class(&mut self, class: &Class) -> ir::Class {
+        let mut methods = HashMap::default();
+
+        for method in class.methods.iter() {
+            methods.insert(method.name.item, self.build_function(method));
+        }
+
+        ir::Class {
+            methods,
+            name: class.name.item,
         }
     }
 
@@ -410,18 +424,29 @@ where
 
             Expr::Continue => {
                 let description = self.current_loop.expect("Using break outside a loop");
-
                 self.emit_bytes(opcode::JUMP, description.start as u8);
             }
+
             Expr::Call { callee, args, .. } => {
                 for arg in args {
                     self.codegen_expr(arg, map);
                 }
 
                 self.codegen_expr(callee, map);
-                self.emit_bytes(opcode::CALL, 0);
 
-                self.emit_byte(args.len() as u8)
+                match self.current_call {
+                    Some(name) => {
+                        let print = self.db.intern_name(Name::new("print"));
+
+                        if name == print {
+                            self.emit_bytes(opcode::PRINT, args.len() as u8);
+                        } else {
+                            self.emit_byte(opcode::CALL);
+                            self.emit_bytes(args.len() as u8, name.0.as_u32() as u8)
+                        }
+                    }
+                    None => {}
+                };
             }
             Expr::Cast { expr, ty } => {}
 
@@ -469,14 +494,14 @@ where
                 if let Some(pos) = self.locals.get(&index.item).cloned() {
                     self.emit_bytes(opcode::GETLOCAL, pos as u8);
                 } else if let Some(pos) = self.params.get(&index.item).cloned() {
-                    self.emit_bytes(opcode::GETLOCAL, pos as u8);
+                    self.emit_bytes(opcode::GETPARAM, pos as u8);
                 } else {
                     let print = self.db.intern_name(Name::new("print"));
 
                     if index.item == print {
-                        self.emit_byte(opcode::PRINT)
+                        self.current_call = Some(print);
                     } else {
-                        // panic!("Undefined var")
+                        self.current_call = Some(index.item);
                     }
                 }
             }
@@ -573,7 +598,20 @@ where
             }
             Expr::Match { expr, arms } => {}
             Expr::Enum { def, variant, expr } => {}
-            Expr::RecordLiteral { def, fields } => {}
+            Expr::RecordLiteral { def, fields } => {
+                // generate the expressions
+                for (_, value) in fields.iter().rev() {
+                    self.codegen_expr(value, map);
+                }
+
+                self.emit_bytes(opcode::CLASSINSTANCE, def.item.0.as_u32() as u8);
+
+                self.emit_byte(fields.len() as u8);
+
+                for (field, _) in fields.iter().rev() {
+                    self.emit_byte(field.item.0.as_u32() as u8);
+                }
+            }
             Expr::Field(_) => {}
         }
     }
@@ -611,6 +649,7 @@ pub fn codegen_query(
 
     let mut bytecode = ir::Program {
         functions: HashMap::new(),
+        classes: HashMap::new(),
     };
 
     let mut builder = CodegenBuilder {
@@ -621,6 +660,7 @@ pub fn codegen_query(
         },
         chunk: Chunk::new(),
         current_loop: None,
+        current_call: None,
         objects: std::ptr::null::<RawObject>() as RawObject,
         slots: 0,
         line: 0,
@@ -637,6 +677,12 @@ pub fn codegen_query(
             .disassemble(&db.lookup_intern_name(function.name.item));
 
         bytecode.functions.insert(function.name.item, func);
+    }
+
+    for class in &program.classes {
+        bytecode
+            .classes
+            .insert(class.name.item, builder.build_class(class));
     }
 
     WithError((bytecode, builder.objects), errors)

@@ -12,8 +12,15 @@ pub struct Function {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Class {
+    pub name: NameId,
+    pub methods: HashMap<NameId, Function>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Program {
     pub functions: HashMap<NameId, Function>,
+    pub classes: HashMap<NameId, Class>,
 }
 
 impl Eq for Program {}

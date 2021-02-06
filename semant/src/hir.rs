@@ -67,11 +67,11 @@ pub struct Function {
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Class {
     pub(crate) exported: bool,
-    pub(crate) name: util::Span<NameId>,
+    pub name: util::Span<NameId>,
     pub(crate) ast_map: FunctionAstMap,
     pub(crate) type_params: Vec<util::Span<TypeParamId>>,
     pub(crate) fields: Vec<util::Span<Field>>,
-    pub(crate) methods: Vec<Arc<Function>>,
+    pub methods: Vec<Arc<Function>>,
     pub(crate) span: TextRange,
 }
 

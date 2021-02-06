@@ -57,7 +57,11 @@ impl Chunk {
             opcode::HLT => simple_instruction("OPCODE::HLT", offset),
             opcode::RETURN => simple_instruction("OPCODE::RETURN", offset),
             opcode::CONSTANT => self.constant_instruction("OPCODE::CONSTANT", offset),
-            opcode::PRINT => simple_instruction("OPCODE::PRINT", offset),
+            opcode::PRINT => {
+                let args = self.code[offset + 1];
+                println!("{:16}{:4}", "OPCODE::PRINT", args);
+                offset + 2
+            }
             opcode::NEGATE => simple_instruction("OPCODE::NEGATE", offset),
             opcode::NEGATEF => simple_instruction("OPCODE::NEGATEF", offset),
             opcode::NIL => simple_instruction("OPCODE::NIL", offset),

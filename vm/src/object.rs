@@ -1,5 +1,7 @@
 //! Contains all the values that are objects within tox
 //! When adding a new object make sure the first field is obj:Object otherwise the transmutes will fail
+use semant::hir::NameId;
+
 // #![allow(clippy::new_ret_no_self)]
 // use super::Function;
 use crate::ir::Function;
@@ -72,8 +74,8 @@ pub struct ClassObject {
 #[repr(C)]
 pub struct InstanceObject {
     pub obj: Object,
-    pub properties: HashMap<Symbol, Value>,
-    pub methods: HashMap<Symbol, Function>,
+    pub properties: HashMap<NameId, Value>,
+    pub methods: HashMap<NameId, Function>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -152,8 +154,8 @@ impl EnumObject {
 
 impl InstanceObject {
     pub fn new(
-        methods: HashMap<Symbol, Function>,
-        properties: HashMap<Symbol, Value>,
+        methods: HashMap<NameId, Function>,
+        properties: HashMap<NameId, Value>,
         next: RawObject,
     ) -> RawObject {
         let array = InstanceObject {

@@ -1,13 +1,14 @@
 use core::panic;
+use salsa::{InternId, InternKey};
 use semant::{
     hir::{Name, NameId, ParamId},
     Span,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, u32};
 
 use crate::{
     chunks::Chunk,
-    object::{ArrayObject, StringObject},
+    object::{ArrayObject, InstanceObject, StringObject},
     value::Value,
     CodegenDatabase,
 };
@@ -100,8 +101,11 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::PRINT => {
-                    let value = self.pop();
-                    println!("{}", value);
+                    let len = self.read_byte();
+
+                    for i in 0..len {
+                        println!("{}", self.pop());
+                    }
                 }
 
                 opcode::NEGATE => {
@@ -129,7 +133,7 @@ impl<'a> VM<'a> {
                     self.push(Value::bool(a == b));
                 }
 
-                opcode::ARRAY => {
+                opcode::ARRAY | opcode::TUPLE => {
                     let len = self.read_byte();
 
                     let items: Vec<Value> = (0..len).map(|_| self.pop()).collect();
@@ -298,44 +302,45 @@ impl<'a> VM<'a> {
                         .push(::std::mem::replace(&mut self.current_frame, call_frame));
                 }
 
-                // opcode::CALL => {
-                //     let function_name = Symbol(u64::from(self.read_byte()));
-                //     let arg_count = self.read_byte();
+                opcode::CALL => {
+                    let arg_count = self.read_byte();
+                    let function_name =
+                        NameId::from_intern_id(InternId::from(u32::from(self.read_byte())));
 
-                //     let function = &self.program.functions[&function_name];
+                    let function = &self.program.functions[&function_name];
 
-                //     let mut params = HashMap::default();
+                    let mut params = HashMap::default();
 
-                //     for i in 0..arg_count {
-                //         params.insert(i, self.pop());
-                //     }
+                    for i in 0..arg_count {
+                        params.insert(i, self.pop());
+                    }
 
-                //     let call_frame = StackFrame {
-                //         ip: 0,
-                //         locals: HashMap::default(),
-                //         function,
-                //         params,
-                //     };
+                    let call_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::default(),
+                        function,
+                        params,
+                    };
+                    // swaps the current frame with the one we are one and then
+                    self.frames
+                        .push(::std::mem::replace(&mut self.current_frame, call_frame));
+                }
+                opcode::CALLNATIVE => {
+                    let function_name =
+                        NameId::from_intern_id(InternId::from(u32::from(self.read_byte())));
+                    let function = &self.native_functions[&function_name];
+                    let function = function.as_native();
 
-                //     self.frames
-                //         .push(::std::mem::replace(&mut self.current_frame, call_frame));
-                //     // swaps the current frame with the one we are one and then
-                // }
-                // opcode::CALLNATIVE => {
-                //     let function_name = Symbol(u64::from(self.read_byte()));
-                //     let function = &self.native_functions[&function_name];
-                //     let function = function.as_native();
+                    let arg_count = function.arity;
+                    let result = (function.function)(
+                        self.stack[self.stack_top - arg_count as usize..self.stack_top].as_ptr(),
+                    );
 
-                //     let arg_count = function.arity;
-                //     let result = (function.function)(
-                //         self.stack[self.stack_top - arg_count as usize..self.stack_top].as_ptr(),
-                //     );
-
-                //     self.stack_top -= arg_count as usize;
-                //     {
-                //         self.push(result);
-                //     }
-                // }
+                    self.stack_top -= arg_count as usize;
+                    {
+                        self.push(result);
+                    }
+                }
 
                 // opcode::CALLINSTANCEMETHOD => {
                 //     let method_name = Symbol(u64::from(self.read_byte()));
@@ -410,25 +415,29 @@ impl<'a> VM<'a> {
                     self.push(Value::object(result))
                 }
 
-                // opcode::CLASSINSTANCE => {
-                //     let class_name = Symbol(u64::from(self.read_byte()));
+                opcode::CLASSINSTANCE => {
+                    let class_name =
+                        NameId::from_intern_id(InternId::from(u32::from(self.read_byte())));
 
-                //     let num_properties = self.read_byte() as usize;
+                    let num_properties = self.read_byte() as usize;
 
-                //     let class = &self.program.classes[&class_name];
+                    let class = &self.program.classes[&class_name];
 
-                //     let methods = class.methods.clone();
+                    let methods = class.methods.clone();
 
-                //     let mut properties = HashMap::default();
+                    let mut properties = HashMap::default();
 
-                //     for _ in 0..num_properties {
-                //         properties.insert(Symbol(u64::from(self.read_byte())), self.pop());
-                //     }
+                    for _ in 0..num_properties {
+                        properties.insert(
+                            NameId::from_intern_id(InternId::from(u32::from(self.read_byte()))),
+                            self.pop(),
+                        );
+                    }
 
-                //     let instance = InstanceObject::new(methods, properties, self.objects);
+                    let instance = InstanceObject::new(methods, properties, self.objects);
 
-                //     self.push(Value::object(instance));
-                // }
+                    self.push(Value::object(instance));
+                }
                 opcode::CONCAT => self.concat(),
 
                 opcode::IGL => {
