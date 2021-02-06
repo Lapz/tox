@@ -30,9 +30,16 @@ impl<'a> Parser<'a> {
                     self.bump();
                     continue;
                 }
-                _ => {
-                    self.recover();
+                IDENT => {
+                    let message = format!("Unknown top level modifier");
+
+                    self.error(
+                        message,
+                        "Only `type`, `fn`, `mod`, `import`, `enum` , `class` are allowed at the top level",
+                    )
                 }
+
+                _ => self.recover(),
             }
         }
 

@@ -224,6 +224,7 @@ where
             hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
 
+                println!("base {:?}", inferred_base);
                 let inferred_index = self.infer_expr(map, index);
 
                 self.unify(
@@ -236,6 +237,7 @@ where
 
                 match inferred_base {
                     Type::Con(TypeCon::Array { ty, .. }) => *ty,
+                    Type::Con(TypeCon::Str) => inferred_base,
                     _ => {
                         let msg = format!("Tried indexing a non array type");
 
