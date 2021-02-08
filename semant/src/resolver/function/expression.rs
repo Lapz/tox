@@ -1,5 +1,5 @@
 use crate::{
-    hir::{Expr, ExprId, FunctionAstMap, NameId},
+    hir::{BlockId, Expr, ExprId, FunctionAstMap, NameId},
     infer::Type,
     resolver::data::ResolverDataCollector,
     util, HirDatabase,
@@ -27,17 +27,7 @@ where
                 self.resolve_expression(fn_name, lhs, ast_map)?;
                 self.resolve_expression(fn_name, rhs, ast_map)?;
             }
-            Expr::Block(block_id, _) => {
-                let block = ast_map.block(block_id);
-
-                self.begin_function_scope(fn_name.item);
-
-                for id in &block.0 {
-                    self.resolve_statement(fn_name, id, ast_map)?
-                }
-
-                self.end_function_scope(fn_name.item);
-            }
+            Expr::Block(block_id, _) => self.resolve_block(block_id, fn_name, ast_map)?,
             Expr::Break | Expr::Continue => {}
 
             Expr::Call {
@@ -69,7 +59,7 @@ where
                     let _ = self.resolve_type(&returns);
                 }
 
-                self.resolve_expression(fn_name, body, ast_map)?;
+                self.resolve_block(&body.item, fn_name, ast_map)?;
             }
 
             Expr::If {
@@ -252,6 +242,24 @@ where
             }
         }
 
+        Ok(())
+    }
+
+    pub(crate) fn resolve_block(
+        &mut self,
+        block_id: &BlockId,
+        fn_name: &util::Span<NameId>,
+        ast_map: &FunctionAstMap,
+    ) -> Result<(), ()> {
+        let block = ast_map.block(block_id);
+
+        self.begin_function_scope(fn_name.item);
+
+        for id in &block.0 {
+            self.resolve_statement(fn_name, id, ast_map)?
+        }
+
+        self.end_function_scope(fn_name.item);
         Ok(())
     }
 }

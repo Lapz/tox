@@ -241,7 +241,7 @@ Grammar(
         "ClosureExpr": (
             options: [
                 "ParamList",
-                ["body","Expr"],
+                ["body","BlockExpr"],
                 "RetType"
             ],
             traits: ["ArgListOwner"]

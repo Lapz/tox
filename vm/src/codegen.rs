@@ -155,9 +155,7 @@ where
         let expr = map.expr(&id);
 
         match expr {
-            Expr::Field(_) => {
-                todo!()
-            }
+            Expr::Field(_) => todo!(),
             Expr::Ident(ident) => *self.locals.get(&ident.item).expect("Undefined var"),
             _ => todo!(),
         }
@@ -339,14 +337,12 @@ where
                             match lhs_ty {
                                 Type::Con(TypeCon::Int) => self.emit_byte(opcode::GREATER),
                                 Type::Con(TypeCon::Float) => self.emit_byte(opcode::GREATERF),
-                                _ => {
-                                    panic!(
-                                        "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
-                                        op,
-                                        lhs_ty,
-                                        self.type_map.expr_to_type.get(&rhs.item).unwrap()
-                                    )
-                                }
+                                _ => panic!(
+                                    "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
+                                    op,
+                                    lhs_ty,
+                                    self.type_map.expr_to_type.get(&rhs.item).unwrap()
+                                ),
                             }
                         }
 
@@ -360,14 +356,12 @@ where
                                 Type::Con(TypeCon::Float) => {
                                     self.emit_bytes(opcode::GREATERF, opcode::NOT)
                                 }
-                                _ => {
-                                    panic!(
-                                        "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
-                                        op,
-                                        lhs_ty,
-                                        self.type_map.expr_to_type.get(&rhs.item).unwrap()
-                                    )
-                                }
+                                _ => panic!(
+                                    "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
+                                    op,
+                                    lhs_ty,
+                                    self.type_map.expr_to_type.get(&rhs.item).unwrap()
+                                ),
                             }
                         }
 
@@ -377,14 +371,12 @@ where
                             match lhs_ty {
                                 Type::Con(TypeCon::Int) => self.emit_byte(opcode::LESS),
                                 Type::Con(TypeCon::Float) => self.emit_byte(opcode::LESSF),
-                                _ => {
-                                    panic!(
-                                        "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
-                                        op,
-                                        lhs_ty,
-                                        self.type_map.expr_to_type.get(&rhs.item).unwrap()
-                                    )
-                                }
+                                _ => panic!(
+                                    "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
+                                    op,
+                                    lhs_ty,
+                                    self.type_map.expr_to_type.get(&rhs.item).unwrap()
+                                ),
                             }
                         }
 
@@ -398,14 +390,12 @@ where
                                 Type::Con(TypeCon::Float) => {
                                     self.emit_bytes(opcode::LESSF, opcode::NOT)
                                 }
-                                _ => {
-                                    panic!(
-                                        "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
-                                        op,
-                                        lhs_ty,
-                                        self.type_map.expr_to_type.get(&rhs.item).unwrap()
-                                    )
-                                }
+                                _ => panic!(
+                                    "Invalid comparison types for {:?} lhs {:?} rhs {:?}",
+                                    op,
+                                    lhs_ty,
+                                    self.type_map.expr_to_type.get(&rhs.item).unwrap()
+                                ),
                             }
                         }
 
@@ -414,14 +404,12 @@ where
                         (_, BinOp::Equal) => self.emit_byte(opcode::EQUAL),
                         (_, BinOp::NotEqual) => self.emit_bytes(opcode::ENUM, opcode::NOT),
 
-                        _ => {
-                            todo!(
-                                "OP {:?} LHS {:?} RHS {:?}",
-                                op,
-                                self.type_map.expr_to_type.get(&lhs.item).unwrap(),
-                                self.type_map.expr_to_type.get(&rhs.item).unwrap()
-                            )
-                        }
+                        _ => todo!(
+                            "OP {:?} LHS {:?} RHS {:?}",
+                            op,
+                            self.type_map.expr_to_type.get(&lhs.item).unwrap(),
+                            self.type_map.expr_to_type.get(&rhs.item).unwrap()
+                        ),
                     }
                 }
             },
@@ -693,22 +681,22 @@ pub fn codegen_query(
         params: HashMap::new(),
     };
 
-    for function in &program.functions {
-        builder.type_map = type_map.get(&function.name.item).unwrap();
+    // for function in &program.functions {
+    //     builder.type_map = type_map.get(&function.name.item).unwrap();
 
-        let func = builder.build_function(function);
+    //     let func = builder.build_function(function);
 
-        func.body
-            .disassemble(&db.lookup_intern_name(function.name.item));
+    //     func.body
+    //         .disassemble(&db.lookup_intern_name(function.name.item));
 
-        bytecode.functions.insert(function.name.item, func);
-    }
+    //     bytecode.functions.insert(function.name.item, func);
+    // }
 
-    for class in &program.classes {
-        bytecode
-            .classes
-            .insert(class.name.item, builder.build_class(class));
-    }
+    // for class in &program.classes {
+    //     bytecode
+    //         .classes
+    //         .insert(class.name.item, builder.build_class(class));
+    // }
 
     WithError((bytecode, builder.objects), errors)
 }

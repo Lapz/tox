@@ -265,7 +265,7 @@ pub enum Expr {
     },
     Closure {
         params: Vec<util::Span<ParamId>>,
-        body: util::Span<ExprId>,
+        body: util::Span<BlockId>,
         returns: Option<util::Span<TypeId>>,
     },
     Continue,

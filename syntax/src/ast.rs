@@ -653,7 +653,7 @@ impl ClosureExpr {
         child_opt(self)
     }
 
-    pub fn body(&self) -> Option<Expr> {
+    pub fn body(&self) -> Option<BlockExpr> {
         child_opt(self)
     }
 

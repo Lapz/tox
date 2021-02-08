@@ -226,6 +226,7 @@ where
         let data = self.function_data.get_mut(fn_name).unwrap();
 
         if let Some(state) = data.scopes.get_mut(&name.item) {
+            println!("{}, {:#?}", self.db.lookup_intern_name(name.item), state);
             state.state = util::Span::new(State::Read, name.start(), name.end());
             state.reads += 1;
             return;
@@ -235,6 +236,8 @@ where
         // function names when called are stored as
         // and IdentExpr followed by the args
         // so to resolve them we need to look at the file ctx
+
+        println!("{:?}", self.db.lookup_intern_name(name.item));
         if !self.items.contains(&name.item) {
             let n = self.db.intern_name(Name::new("print"));
 
