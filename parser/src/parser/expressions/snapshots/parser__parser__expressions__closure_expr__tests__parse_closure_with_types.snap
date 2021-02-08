@@ -26,23 +26,25 @@ SOURCE_FILE@[0; 83)
           EQ@[26; 27) "="
           WHITESPACE@[27; 28) " "
           CLOSURE_EXPR@[28; 77)
-            PIPE@[28; 29) "|"
-            PARAM@[29; 30)
-              BIND_PAT@[29; 30)
-                NAME@[29; 30)
-                  IDENT@[29; 30) "x"
-            COMMA@[30; 31) ","
-            PARAM@[31; 32)
-              BIND_PAT@[31; 32)
-                NAME@[31; 32)
-                  IDENT@[31; 32) "y"
-            PIPE@[32; 33) "|"
+            PARAM_LIST@[28; 33)
+              PIPE@[28; 29) "|"
+              PARAM@[29; 30)
+                BIND_PAT@[29; 30)
+                  NAME@[29; 30)
+                    IDENT@[29; 30) "x"
+              COMMA@[30; 31) ","
+              PARAM@[31; 32)
+                BIND_PAT@[31; 32)
+                  NAME@[31; 32)
+                    IDENT@[31; 32) "y"
+              PIPE@[32; 33) "|"
             WHITESPACE@[33; 34) " "
-            FRETURN@[34; 36) "->"
-            WHITESPACE@[36; 37) " "
-            IDENT_TYPE@[37; 41)
-              IDENT@[37; 40) "i32"
-              WHITESPACE@[40; 41) " "
+            RET_TYPE@[34; 41)
+              FRETURN@[34; 36) "->"
+              WHITESPACE@[36; 37) " "
+              IDENT_TYPE@[37; 41)
+                IDENT@[37; 40) "i32"
+                WHITESPACE@[40; 41) " "
             BLOCK_EXPR@[41; 77)
               BLOCK@[41; 77)
                 L_CURLY@[41; 42) "{"

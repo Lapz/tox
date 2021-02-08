@@ -27,17 +27,18 @@ SOURCE_FILE@[0; 96)
           EQ@[39; 40) "="
           WHITESPACE@[40; 41) " "
           CLOSURE_EXPR@[41; 90)
-            PIPE@[41; 42) "|"
-            PARAM@[42; 43)
-              BIND_PAT@[42; 43)
-                NAME@[42; 43)
-                  IDENT@[42; 43) "x"
-            COMMA@[43; 44) ","
-            PARAM@[44; 45)
-              BIND_PAT@[44; 45)
-                NAME@[44; 45)
-                  IDENT@[44; 45) "y"
-            PIPE@[45; 46) "|"
+            PARAM_LIST@[41; 46)
+              PIPE@[41; 42) "|"
+              PARAM@[42; 43)
+                BIND_PAT@[42; 43)
+                  NAME@[42; 43)
+                    IDENT@[42; 43) "x"
+              COMMA@[43; 44) ","
+              PARAM@[44; 45)
+                BIND_PAT@[44; 45)
+                  NAME@[44; 45)
+                    IDENT@[44; 45) "y"
+              PIPE@[45; 46) "|"
             WHITESPACE@[46; 47) " "
             BLOCK_EXPR@[47; 90)
               BLOCK@[47; 90)

@@ -39,6 +39,7 @@ where
                 self.end_function_scope(fn_name.item);
             }
             Expr::Break | Expr::Continue => {}
+
             Expr::Call {
                 callee,
                 args,
@@ -57,6 +58,18 @@ where
             Expr::Cast { expr, ty } => {
                 self.resolve_expression(fn_name, expr, ast_map)?;
                 let _ = self.resolve_type(ty);
+            }
+
+            Expr::Closure {
+                body,
+                params,
+                returns,
+            } => {
+                if let Some(returns) = returns {
+                    let _ = self.resolve_type(&returns);
+                }
+
+                self.resolve_expression(fn_name, body, ast_map)?;
             }
 
             Expr::If {

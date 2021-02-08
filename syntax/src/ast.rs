@@ -656,6 +656,10 @@ impl ClosureExpr {
     pub fn body(&self) -> Option<Expr> {
         child_opt(self)
     }
+
+    pub fn ret_type(&self) -> Option<RetType> {
+        child_opt(self)
+    }
 }
 
 // Condition

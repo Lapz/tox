@@ -263,6 +263,11 @@ pub enum Expr {
         expr: util::Span<ExprId>,
         ty: util::Span<TypeId>,
     },
+    Closure {
+        params: Vec<util::Span<ParamId>>,
+        body: util::Span<ExprId>,
+        returns: Option<util::Span<TypeId>>,
+    },
     Continue,
     If {
         cond: util::Span<ExprId>,
@@ -495,8 +500,14 @@ impl BinOp {
 impl Literal {
     pub(crate) fn from_token(token: syntax::SyntaxToken) -> Literal {
         use syntax::SyntaxKind::*;
-        let text = token.text().clone();
         let kind = token.kind();
+        let text = if kind == STRING {
+            let text = token.text();
+            SmolStr::new(&text[1..text.len() - 1]) // our lexer includes \" so we need to strip it out of strings
+        } else {
+            token.text().clone()
+        };
+
         match kind {
             INT_NUMBER => Literal::Int(text),
             STRING => Literal::String(text),

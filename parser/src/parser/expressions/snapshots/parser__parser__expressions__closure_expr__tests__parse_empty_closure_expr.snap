@@ -26,8 +26,9 @@ SOURCE_FILE@[0; 40)
           EQ@[26; 27) "="
           WHITESPACE@[27; 28) " "
           CLOSURE_EXPR@[28; 33)
-            PIPE@[28; 29) "|"
-            PIPE@[29; 30) "|"
+            PARAM_LIST@[28; 30)
+              PIPE@[28; 29) "|"
+              PIPE@[29; 30) "|"
             WHITESPACE@[30; 31) " "
             BLOCK_EXPR@[31; 33)
               BLOCK@[31; 33)

@@ -3,6 +3,8 @@ use crate::{hir, impl_collector, util, TextRange};
 
 use std::sync::Arc;
 
+use ast::Param;
+use hir::ParamId;
 use syntax::{
     ast, ArgListOwner, AstNode, LoopBodyOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner,
     TypesOwner, VisibilityOwner,
@@ -51,7 +53,11 @@ where
         }
     }
 
-    pub fn add_param(&mut self, ast_node: &ast::Param, param: hir::Param) {
+    pub fn add_param(
+        &mut self,
+        ast_node: &ast::Param,
+        param: hir::Param,
+    ) -> util::Span<hir::ParamId> {
         let current = self.param_id_count;
 
         self.param_id_count += 1;
@@ -60,7 +66,11 @@ where
 
         self.ast_map.insert_param(id, param);
 
-        self.params.push(util::Span::from_ast(id, ast_node));
+        let id = util::Span::from_ast(id, ast_node);
+
+        self.params.push(id);
+
+        id
     }
 
     fn add_pat(&mut self, ast_node: &ast::Pat, pat: hir::Pattern) -> util::Span<hir::PatId> {
@@ -148,12 +158,12 @@ where
         self.add_pat(&pat, pattern)
     }
 
-    pub(crate) fn lower_param(&mut self, param: ast::Param) {
+    pub(crate) fn lower_param(&mut self, param: ast::Param) -> util::Span<hir::ParamId> {
         let pat = self.lower_pattern(param.pat().unwrap());
 
         let ty = self.lower_type(param.ascribed_type().unwrap());
 
-        self.add_param(&param, hir::Param { pat, ty });
+        self.add_param(&param, hir::Param { pat, ty })
     }
 
     pub fn lower_stmt(&mut self, node: ast::Stmt) -> util::Span<hir::StmtId> {
@@ -275,10 +285,29 @@ where
 
                 hir::Expr::RecordLiteral { def, fields }
             }
-            ast::Expr::ClosureExpr(ref _closure_expr) => {
-                // let args = closure_expr.a
+            ast::Expr::ClosureExpr(ref closure_expr) => {
+                let returns = if let Some(ret) = closure_expr.ret_type() {
+                    Some(self.lower_type(ret.type_ref().unwrap()))
+                } else {
+                    None
+                };
 
-                unimplemented!()
+                let params = if let Some(param_list) = closure_expr.param_list() {
+                    param_list
+                        .params()
+                        .map(|param| self.lower_param(param))
+                        .collect()
+                } else {
+                    Vec::new()
+                };
+
+                let body = self.lower_expr(closure_expr.body().unwrap());
+
+                hir::Expr::Closure {
+                    body,
+                    returns,
+                    params,
+                }
             }
             ast::Expr::ContinueExpr(_) => hir::Expr::Continue,
             ast::Expr::FieldExpr(ref field_expr) => {

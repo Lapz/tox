@@ -180,6 +180,7 @@ where
                 args,
                 type_args,
             } => self.infer_call(callee, args, type_args, map),
+            hir::Expr::Closure { .. } => Type::Unknown,
             hir::Expr::Cast { expr, ty } => {
                 let _ = self.infer_expr(map, expr);
 

@@ -109,7 +109,6 @@ where
         type_args: &Span<Vec<Span<TypeId>>>,
         map: &FunctionAstMap,
     ) -> Type {
-        println!("callee {:?}", callee);
         let inferred_callee = self.infer_expr(map, callee);
 
         match inferred_callee {

@@ -1,5 +1,5 @@
 use core::panic;
-use std::{collections::HashMap, todo, usize, vec};
+use std::{collections::HashMap, mem::swap, todo, usize, vec};
 
 use crate::{
     chunks::Chunk,
@@ -16,7 +16,7 @@ use semant::{
         BinOp, Class, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId,
         Pattern, Stmt, StmtId, UnaryOp,
     },
-    IndexMap, InferDataMap, Span, Type, TypeCon,
+    IndexMap, InferDataMap, Span, StackedMap, Type, TypeCon,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -40,7 +40,7 @@ pub(crate) struct CodegenBuilder<'map, DB> {
     /// The stack slot of the variable
     slots: u32,
     line: u32,
-    locals: HashMap<NameId, usize>,
+    locals: StackedMap<NameId, usize>,
     params: HashMap<NameId, usize>,
 }
 
@@ -100,6 +100,22 @@ where
         let slot = self.slots;
         self.slots += 1;
         slot
+    }
+
+    pub fn begin_scope(&mut self) {
+        self.locals.begin_scope();
+    }
+
+    pub fn end_scope(&mut self) {
+        let mut dummy = StackedMap::new();
+
+        std::mem::swap(&mut self.locals, &mut dummy);
+
+        dummy
+            .end_scope_iter()
+            .for_each(|_| self.emit_byte(opcode::POP));
+
+        std::mem::swap(&mut self.locals, &mut dummy);
     }
 
     pub fn get_slot_for_pat(
@@ -412,10 +428,15 @@ where
             Expr::Block(block_id, _) => {
                 let block = map.block(block_id);
 
+                self.begin_scope();
+
                 for stmt in block.0.iter() {
                     self.codegen_statement(stmt, map)
                 }
+
+                self.end_scope();
             }
+
             Expr::Break => {
                 let description = self.current_loop.expect("Using break outside a loop");
 
@@ -449,7 +470,7 @@ where
                 };
             }
             Expr::Cast { expr, ty } => {}
-
+            Expr::Closure { .. } => {}
             Expr::If {
                 cond,
                 then_branch,
@@ -639,6 +660,10 @@ where
     }
 }
 
+fn new() -> () {
+    todo!()
+}
+
 pub fn codegen_query(
     db: &impl CodegenDatabase,
     file: FileId,
@@ -664,7 +689,7 @@ pub fn codegen_query(
         objects: std::ptr::null::<RawObject>() as RawObject,
         slots: 0,
         line: 0,
-        locals: HashMap::new(),
+        locals: StackedMap::new(),
         params: HashMap::new(),
     };
 

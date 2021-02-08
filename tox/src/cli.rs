@@ -1,7 +1,7 @@
 use crate::db::{DatabaseImpl, Diagnostics};
 use errors::{FileDatabase, WithError};
 use parser::{dump_debug, ParseDatabase};
-use semant::HirDatabase;
+
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;

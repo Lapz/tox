@@ -8,8 +8,8 @@ mod native;
 mod object;
 mod value;
 mod vm;
+pub use crate::vm::VM;
 pub use db::{CodegenDatabase, CodegenDatabaseStorage};
-pub use vm::VM;
 #[cfg(test)]
 mod tests {
     #[test]
