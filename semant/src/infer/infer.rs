@@ -225,7 +225,6 @@ where
             hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
 
-                println!("base {:?}", inferred_base);
                 let inferred_index = self.infer_expr(map, index);
 
                 self.unify(

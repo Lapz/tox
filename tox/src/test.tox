@@ -12,19 +12,15 @@ fn add(x:i32,y:i32) -> i32 {
 
 fn main() {
 
-    let x = 10;
+    let b = 1;
     
-    x -= 5;
+    let add = |a:i32| {
+      return a+b;
+    };
 
 
-    let foo =  Foo {};
-
-    
-    print(add(x,10));
-
-    print("hello" + "world");
-
-    print(foo);
+    print(add(5))
+ 
     
     // print(1+1);
   /*  a.b.c;a.b.c(1,2); */

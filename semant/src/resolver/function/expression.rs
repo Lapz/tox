@@ -55,11 +55,23 @@ where
                 params,
                 returns,
             } => {
+                self.begin_function_scope(fn_name.item);
+
+                for param in params {
+                    let param = ast_map.param(&param.item);
+
+                    self.resolve_pattern(fn_name.item, &param.pat, ast_map)?;
+
+                    let _ = self.resolve_type(&param.ty);
+                }
+
                 if let Some(returns) = returns {
                     let _ = self.resolve_type(&returns);
                 }
 
                 self.resolve_block(&body.item, fn_name, ast_map)?;
+
+                self.end_function_scope(fn_name.item)
             }
 
             Expr::If {

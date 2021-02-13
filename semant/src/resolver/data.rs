@@ -61,6 +61,7 @@ pub(crate) struct FunctionData {
     pub(crate) type_params: HashMap<NameId, Type>,
     pub(crate) params: HashMap<NameId, Type>,
     pub(crate) scopes: StackedMap<hir::NameId, LocalData>,
+    pub(crate) up_values: HashMap<hir::ExprId, ()>,
 }
 
 impl FunctionData {
@@ -69,6 +70,7 @@ impl FunctionData {
             type_params: HashMap::new(),
             params: HashMap::new(),
             scopes: StackedMap::new(),
+            up_values: HashMap::new(),
         }
     }
 }
@@ -224,9 +226,10 @@ where
 
     pub(crate) fn resolve_local(&mut self, fn_name: &NameId, name: &util::Span<NameId>) {
         let data = self.function_data.get_mut(fn_name).unwrap();
-
+        println!("{:#?}", data.scopes);
         if let Some(state) = data.scopes.get_mut(&name.item) {
-            println!("{}, {:#?}", self.db.lookup_intern_name(name.item), state);
+            println!("{:?}", self.db.lookup_intern_name(name.item));
+
             state.state = util::Span::new(State::Read, name.start(), name.end());
             state.reads += 1;
             return;
@@ -237,7 +240,6 @@ where
         // and IdentExpr followed by the args
         // so to resolve them we need to look at the file ctx
 
-        println!("{:?}", self.db.lookup_intern_name(name.item));
         if !self.items.contains(&name.item) {
             let n = self.db.intern_name(Name::new("print"));
 

@@ -87,7 +87,7 @@ where
                 initializer,
                 ascribed_type,
             } => {
-                println!("pat {:?}", pat.item);
+                
                 self.resolve_pattern(fn_name.item, pat, ast_map)?;
 
                 if let Some(expr) = initializer {
