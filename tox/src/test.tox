@@ -13,13 +13,8 @@ fn add(x:i32,y:i32) -> i32 {
 fn main() {
 
     let b = 1;
-    
-    let add = |a:i32| {
-      return a+b;
-    };
 
-
-    print(add(5))
+    add(5,6);
  
     
     // print(1+1);

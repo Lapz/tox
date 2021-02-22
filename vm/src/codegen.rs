@@ -5,7 +5,7 @@ use crate::{
     chunks::Chunk,
     db::CodegenDatabase,
     ir::{self},
-    object::{RawObject, StringObject},
+    object::{FunctionObject, Object, ObjectType, RawObject, StringObject},
     value::Value,
     vm::VM,
 };
@@ -681,22 +681,34 @@ pub fn codegen_query(
         params: HashMap::new(),
     };
 
-    // for function in &program.functions {
-    //     builder.type_map = type_map.get(&function.name.item).unwrap();
+    let main_name = db.intern_name(Name::new("main"));
 
-    //     let func = builder.build_function(function);
+    let mut main: Option<FunctionObject> = None;
 
-    //     func.body
-    //         .disassemble(&db.lookup_intern_name(function.name.item));
+    for function in &program.functions {
+        builder.type_map = type_map.get(&function.name.item).unwrap();
 
-    //     bytecode.functions.insert(function.name.item, func);
-    // }
+        let func = builder.build_function(function);
 
-    // for class in &program.classes {
-    //     bytecode
-    //         .classes
-    //         .insert(class.name.item, builder.build_class(class));
-    // }
+        func.body
+            .disassemble(&db.lookup_intern_name(function.name.item));
+
+        if function.name.item == main_name {
+            main = Some(FunctionObject {
+                obj: Object::new(ObjectType::Func, builder.objects),
+                arity: 0,
+                function: func,
+            })
+        } else {
+            bytecode.functions.insert(function.name.item, func);
+        }
+    }
+
+    for class in &program.classes {
+        bytecode
+            .classes
+            .insert(class.name.item, builder.build_class(class));
+    }
 
     WithError((bytecode, builder.objects), errors)
 }

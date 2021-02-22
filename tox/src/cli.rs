@@ -61,16 +61,16 @@ impl Cli {
             let WithError((bytecode, object), mut errors) = db.codegen(handle);
 
             db.emit(&mut errors)?;
-            // let vm = vm::VM::new(&db, &bytecode, object);
+            let vm = vm::VM::new(&db, &bytecode, object);
 
-            // match vm {
-            //     Some(mut vm) => {
-            //         vm.run();
-            //     }
-            //     None => {
-            //         panic!("Missing main function")
-            //     }
-            // }
+            match vm {
+                Some(mut vm) => {
+                    vm.run();
+                }
+                None => {
+                    panic!("Missing main function")
+                }
+            }
 
             // Codegen here
         }

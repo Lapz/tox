@@ -226,10 +226,8 @@ where
 
     pub(crate) fn resolve_local(&mut self, fn_name: &NameId, name: &util::Span<NameId>) {
         let data = self.function_data.get_mut(fn_name).unwrap();
-        println!("{:#?}", data.scopes);
-        if let Some(state) = data.scopes.get_mut(&name.item) {
-            println!("{:?}", self.db.lookup_intern_name(name.item));
 
+        if let Some(state) = data.scopes.get_mut(&name.item) {
             state.state = util::Span::new(State::Read, name.start(), name.end());
             state.reads += 1;
             return;
