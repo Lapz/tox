@@ -133,3 +133,5 @@ pub const ENUMDATA: u8 = 53;
 
 // A tuple and its length
 pub const TUPLE: u8 = 53;
+
+pub const GET_FUNCTION: u8 = 54;

@@ -5,5 +5,5 @@ use semant::HirDatabase;
 #[salsa::query_group(CodegenDatabaseStorage)]
 pub trait CodegenDatabase: HirDatabase {
     #[salsa::invoke(crate::codegen::codegen_query)]
-    fn codegen(&self, file: FileId) -> WithError<(Program, RawObject)>;
+    fn codegen(&self, file: FileId) -> WithError<(Option<usize>, Program, RawObject)>;
 }

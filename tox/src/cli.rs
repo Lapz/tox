@@ -58,10 +58,10 @@ impl Cli {
 
             // Todo handle warnings being errors
 
-            let WithError((bytecode, object), mut errors) = db.codegen(handle);
+            let WithError((main, bytecode, object), mut errors) = db.codegen(handle);
 
             db.emit(&mut errors)?;
-            let vm = vm::VM::new(&db, &bytecode, object);
+            let vm = vm::VM::new(&db, main, &bytecode, object);
 
             match vm {
                 Some(mut vm) => {

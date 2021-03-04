@@ -42,6 +42,7 @@ pub(crate) struct CodegenBuilder<'map, DB> {
     line: u32,
     locals: StackedMap<NameId, usize>,
     params: HashMap<NameId, usize>,
+    function_table: HashMap<NameId, usize>,
 }
 
 impl<'a, 'map, DB> CodegenBuilder<'map, &'a DB>
@@ -450,8 +451,7 @@ where
                         if name == print {
                             self.emit_bytes(opcode::PRINT, args.len() as u8);
                         } else {
-                            self.emit_byte(opcode::CALL);
-                            self.emit_bytes(args.len() as u8, name.0.as_u32() as u8)
+                            self.emit_bytes(opcode::CALL, args.len() as u8);
                         }
                     }
                     None => {}
@@ -505,12 +505,17 @@ where
                 } else if let Some(pos) = self.params.get(&index.item).cloned() {
                     self.emit_bytes(opcode::GETPARAM, pos as u8);
                 } else {
+                    // We are calling a function
                     let print = self.db.intern_name(Name::new("print"));
 
                     if index.item == print {
                         self.current_call = Some(print);
                     } else {
                         self.current_call = Some(index.item);
+                    }
+
+                    if let Some(pos) = self.function_table.get(&index.item).cloned() {
+                        self.emit_bytes(opcode::GET_FUNCTION, pos as u8);
                     }
                 }
             }
@@ -655,7 +660,7 @@ fn new() -> () {
 pub fn codegen_query(
     db: &impl CodegenDatabase,
     file: FileId,
-) -> WithError<(ir::Program, RawObject)> {
+) -> WithError<(Option<usize>, ir::Program, RawObject)> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(type_map, error) = db.infer(file);
     errors.extend(error);
@@ -664,6 +669,20 @@ pub fn codegen_query(
         functions: HashMap::new(),
         classes: HashMap::new(),
     };
+
+    let mut function_table = HashMap::new();
+
+    let mut count = 0;
+
+    for function in &program.functions {
+        function_table.insert(function.name.item, count);
+
+        count += 1;
+    }
+
+    let main = function_table
+        .get(&db.intern_name(Name::new("main")))
+        .cloned();
 
     let mut builder = CodegenBuilder {
         db,
@@ -679,13 +698,11 @@ pub fn codegen_query(
         line: 0,
         locals: StackedMap::new(),
         params: HashMap::new(),
+        function_table,
     };
 
-    let main_name = db.intern_name(Name::new("main"));
-
-    let mut main: Option<FunctionObject> = None;
-
     for function in &program.functions {
+        let index = builder.function_table[&function.name.item];
         builder.type_map = type_map.get(&function.name.item).unwrap();
 
         let func = builder.build_function(function);
@@ -693,15 +710,9 @@ pub fn codegen_query(
         func.body
             .disassemble(&db.lookup_intern_name(function.name.item));
 
-        if function.name.item == main_name {
-            main = Some(FunctionObject {
-                obj: Object::new(ObjectType::Func, builder.objects),
-                arity: 0,
-                function: func,
-            })
-        } else {
-            bytecode.functions.insert(function.name.item, func);
-        }
+        bytecode
+            .functions
+            .insert(index, FunctionObject::new(0, func, builder.objects));
     }
 
     for class in &program.classes {
@@ -710,5 +721,5 @@ pub fn codegen_query(
             .insert(class.name.item, builder.build_class(class));
     }
 
-    WithError((bytecode, builder.objects), errors)
+    WithError((main, bytecode, builder.objects), errors)
 }

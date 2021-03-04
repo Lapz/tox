@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use semant::hir::{NameId, ParamId};
 
-use crate::chunks::Chunk;
+use crate::{chunks::Chunk, object::RawObject};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
@@ -19,7 +19,7 @@ pub struct Class {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
-    pub functions: HashMap<NameId, Function>,
+    pub functions: HashMap<usize, RawObject>,
     pub classes: HashMap<NameId, Class>,
 }
 

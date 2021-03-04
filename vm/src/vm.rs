@@ -4,7 +4,7 @@ use semant::{
     hir::{Name, NameId, ParamId},
     Span,
 };
-use std::{collections::HashMap, u32};
+use std::{collections::HashMap, u32, usize};
 
 use crate::{
     chunks::Chunk,
@@ -22,17 +22,18 @@ const STACK_MAX: usize = 256;
 const FRAMES_MAX: usize = 64;
 
 #[derive(Debug)]
-pub struct StackFrame {
+pub struct StackFrame<'a> {
     ip: usize,
     locals: HashMap<u8, Value>,
-    function: FunctionObject,
+    function: &'a FunctionObject,
     params: HashMap<u8, Value>,
     slots: usize,
 }
 
 pub struct VM<'a> {
     stack: [Value; STACK_MAX],
-    frames: Vec<StackFrame>,
+    frames: Vec<StackFrame<'a>>,
+    current_frame: StackFrame<'a>,
     native_functions: HashMap<NameId, Value>,
     program: &'a Program,
     objects: RawObject,
@@ -43,48 +44,54 @@ pub struct VM<'a> {
 impl<'a> VM<'a> {
     pub fn new(
         db: &impl CodegenDatabase,
+        main: Option<usize>,
         program: &'a Program,
         objects: RawObject,
     ) -> Option<Self> {
-        let main = db.intern_name(Name::new("main"));
+        if let Some(main) = main {
+            let main_function = program.functions.get(&main).cloned();
 
-        let main_function = program.functions.get(&main);
+            match main_function {
+                Some(function) => {
+                    let object = unsafe { &*(function as *const FunctionObject) };
+                    let current_frame = StackFrame {
+                        ip: 0,
+                        locals: HashMap::default(),
+                        function: object,
+                        params: HashMap::default(),
+                        slots: 0,
+                    };
 
-        match main_function {
-            Some(function) => {
-                let vm = VM {
-                    stack: [Value::nil(); STACK_MAX],
-                    program,
-                    frames: Vec::new(),
-                    stack_top: 4,
-                    native_functions: HashMap::new(),
-                    objects,
-                    frame_count: 0,
-                };
+                    let vm = VM {
+                        stack: [Value::nil(); STACK_MAX],
+                        program,
+                        frames: Vec::new(),
+                        stack_top: 4,
+                        native_functions: HashMap::new(),
+                        frame_count: 0,
+                        current_frame,
+                        objects,
+                    };
 
-                vm.push(Value::object(FunctionObject::new(
-                    0,
-                    function.clone(),
-                    objects,
-                )));
-
-                vm.call_value(
-                    Value::object(FunctionObject::new(0, function.clone(), objects)),
-                    0,
-                );
-
-                Some(vm)
+                    Some(vm)
+                }
+                None => None,
             }
-            None => None,
+        } else {
+            None
         }
     }
 
     pub fn run(&mut self) {
         loop {
-            let current_frame = self.frames[self.frame_count - 1];
-            if current_frame.ip >= current_frame.function.function.body.code.len() {
+            if self.current_frame.ip >= self.current_frame.function.function.body.code.len() {
                 return;
             }
+
+            // println!(
+            //     "{}",
+            //     self.current_frame.function.function.body.code[self.current_frame.ip]
+            // );
             match self.read_byte() {
                 opcode::HLT => {
                     break;
@@ -94,8 +101,8 @@ impl<'a> VM<'a> {
                     let value = self.pop();
 
                     match self.frames.pop() {
-                        Some(frame) => {
-                            current_frame = frame;
+                        Some(mut frame) => {
+                            self.current_frame = frame;
                             self.push(value);
                         }
 
@@ -193,31 +200,31 @@ impl<'a> VM<'a> {
                 opcode::LOOP => {
                     let address = self.read_16_bits();
 
-                    current_frame.ip -= address as usize
+                    self.current_frame.ip -= address as usize
                 }
                 opcode::JUMP => {
                     let address = self.read_16_bits();
-                    current_frame.ip += address as usize;
+                    self.current_frame.ip += address as usize;
                 }
 
                 opcode::JUMPIF => {
                     let address = self.read_16_bits();
 
                     if self.stack[self.stack_top - 1].as_bool() {
-                        current_frame.ip += address as usize;
+                        self.current_frame.ip += address as usize;
                     }
                 }
                 opcode::JUMPNOT => {
                     let address = self.read_16_bits();
 
                     if !self.stack[self.stack_top - 1].as_bool() {
-                        current_frame.ip += address as usize;
+                        self.current_frame.ip += address as usize;
                     }
                 }
                 opcode::GETLOCAL => {
                     let local = self.read_byte();
 
-                    let val = current_frame.locals[&local];
+                    let val = self.current_frame.locals[&local];
 
                     self.push(val);
                 }
@@ -227,13 +234,13 @@ impl<'a> VM<'a> {
 
                     let val = self.stack[self.stack_top - 1]; // do it manually because we don't  want to modify the stack
 
-                    current_frame.locals.insert(ident, val);
+                    self.current_frame.locals.insert(ident, val);
                 }
 
                 opcode::GETPARAM => {
                     let param = self.read_byte();
 
-                    let val = current_frame.params[&param];
+                    let val = self.current_frame.params[&param];
 
                     self.push(val);
                 }
@@ -313,26 +320,11 @@ impl<'a> VM<'a> {
                 }
 
                 opcode::CALL => {
-                    // let arg_count = self.read_byte();
+                    let arg_count = self.read_byte();
 
-                    // let function = self.pop().as_function();
+                    let function = self.pop().as_function();
 
-                    // let mut params = HashMap::default();
-
-                    // for i in 0..arg_count {
-                    //     params.insert(i, self.pop());
-                    // }
-
-                    // let call_frame = StackFrame {
-                    //     ip: 0,
-                    //     locals: HashMap::default(),
-                    //     function: &function.function,
-                    //     params,
-                    // };
-
-                    // // swaps the current frame with the one we are one and then
-                    // self.frames
-                    //     .push(::std::mem::replace(&mut current_frame, call_frame));
+                    self.call(function, arg_count as usize);
                 }
                 opcode::CALLNATIVE => {
                     let function_name =
@@ -453,6 +445,14 @@ impl<'a> VM<'a> {
                     panic!("Illegal instruction encountered")
                 }
 
+                opcode::GET_FUNCTION => {
+                    let pos = self.read_byte();
+
+                    let function = self.program.functions[&(pos as usize)];
+
+                    self.push(Value::object(function))
+                }
+
                 opcode => {
                     println!("Unknown opcode ${:?}", opcode);
                     self.read_byte();
@@ -462,11 +462,25 @@ impl<'a> VM<'a> {
         }
     }
 
-    fn call(&mut self, function: &FunctionObject, arg_count: usize) {
-        let frame = &self.frames[self.frame_count + 1];
-        frame.function = function;
-        frame.ip = 0; // set the ip to the start of the functions bytecode
-        frame.slots = self.stack_top - arg_count - 1;
+    fn call(&mut self, function: &'a FunctionObject, arg_count: usize) {
+        let mut params = HashMap::default();
+
+        for i in 0..self.stack_top - arg_count - 1 {
+            params.insert(i as u8, self.pop());
+        }
+
+        let call_frame = StackFrame {
+            ip: 0,
+            locals: HashMap::default(),
+            function,
+            params,
+            slots: self.stack_top - arg_count - 1,
+        };
+
+        self.frames
+            .push(::std::mem::replace(&mut self.current_frame, call_frame));
+
+        println!("{:?}", self.frames)
     }
 
     fn call_value(&mut self, value: Value, arg_count: usize) {
@@ -497,21 +511,24 @@ impl<'a> VM<'a> {
 
     fn read_constant(&mut self) -> Value {
         let index = self.read_byte() as usize;
-        current_frame.function.body.constants[index]
+        self.current_frame.function.function.body.constants[index]
     }
 
     fn read_16_bits(&mut self) -> u16 {
-        let result = (u16::from(current_frame.function.body.code[current_frame.ip]) << 8)
-            | u16::from(current_frame.function.body.code[current_frame.ip + 1]);
+        let result =
+            (u16::from(self.current_frame.function.function.body.code[self.current_frame.ip]) << 8)
+                | u16::from(
+                    self.current_frame.function.function.body.code[self.current_frame.ip + 1],
+                );
         // Shifts the instruction by 8 to the right and or all the 1's and 0's
-        current_frame.ip += 2;
+        self.current_frame.ip += 2;
 
         result
     }
 
     fn read_byte(&mut self) -> u8 {
-        let byte = current_frame.function.body.code[current_frame.ip];
-        current_frame.ip += 1;
+        let byte = self.current_frame.function.function.body.code[self.current_frame.ip];
+        self.current_frame.ip += 1;
         byte
     }
 

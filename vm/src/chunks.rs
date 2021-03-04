@@ -105,6 +105,7 @@ impl Chunk {
             opcode::ENUM => self.enum_instruction("OPCODE::ENUM", offset),
             opcode::CALLSTATICMETHOD => self.call_instruction("OPCODE::CALLSTATICMETHOD", offset),
             opcode::CLASSINSTANCE => self.call_instruction("OPCODE::CLASSINSTANCE", offset),
+            opcode::GET_FUNCTION => self.local_instruction("OPCODE::GET_FUNCTION", offset),
             _ => {
                 println!("UNKOWN OPCODE {}", instruction);
                 offset + 1
