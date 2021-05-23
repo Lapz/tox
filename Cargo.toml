@@ -5,7 +5,6 @@ members=[
     "syntax",
     "semant",
     "tools",
-    "vm",
     "tox-wasm",
     "tox",
 ]

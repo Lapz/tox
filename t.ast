@@ -1,4 +1,4 @@
-SOURCE_FILE@[0; 238)
+SOURCE_FILE@[0; 186)
   CLASS_DEF@[0; 31)
     CLASS_KW@[0; 5) "class"
     WHITESPACE@[5; 6) " "
@@ -74,7 +74,7 @@ SOURCE_FILE@[0; 238)
         WHITESPACE@[78; 79) "\n"
         R_CURLY@[79; 80) "}"
   WHITESPACE@[80; 83) "\n\n\n"
-  FN_DEF@[83; 238)
+  FN_DEF@[83; 186)
     FN_KW@[83; 85) "fn"
     WHITESPACE@[85; 86) " "
     NAME@[86; 90)
@@ -83,11 +83,11 @@ SOURCE_FILE@[0; 238)
       L_PAREN@[90; 91) "("
       R_PAREN@[91; 92) ")"
     WHITESPACE@[92; 93) " "
-    BLOCK_EXPR@[93; 238)
-      BLOCK@[93; 238)
+    BLOCK_EXPR@[93; 186)
+      BLOCK@[93; 186)
         L_CURLY@[93; 94) "{"
         WHITESPACE@[94; 100) "\n\n    "
-        LET_STMT@[100; 108)
+        LET_STMT@[100; 109)
           LET_KW@[100; 103) "let"
           WHITESPACE@[103; 104) " "
           BIND_PAT@[104; 105)
@@ -95,79 +95,31 @@ SOURCE_FILE@[0; 238)
               IDENT@[104; 105) "b"
           WHITESPACE@[105; 106) " "
           EQ@[106; 107) "="
-          LITERAL@[107; 108)
-            INT_NUMBER@[107; 108) "1"
-        SEMI@[108; 109) ";"
-        WHITESPACE@[109; 119) "\n    \n    "
-        LET_STMT@[119; 162)
-          LET_KW@[119; 122) "let"
-          WHITESPACE@[122; 123) " "
-          BIND_PAT@[123; 126)
-            NAME@[123; 126)
-              IDENT@[123; 126) "add"
-          WHITESPACE@[126; 127) " "
-          EQ@[127; 128) "="
-          WHITESPACE@[128; 129) " "
-          CLOSURE_EXPR@[129; 162)
-            PARAM_LIST@[129; 136)
-              PIPE@[129; 130) "|"
-              PARAM@[130; 135)
-                BIND_PAT@[130; 131)
-                  NAME@[130; 131)
-                    IDENT@[130; 131) "a"
-                COLON@[131; 132) ":"
-                IDENT_TYPE@[132; 135)
-                  IDENT@[132; 135) "i32"
-              PIPE@[135; 136) "|"
-            WHITESPACE@[136; 137) " "
-            BLOCK_EXPR@[137; 162)
-              BLOCK@[137; 162)
-                L_CURLY@[137; 138) "{"
-                WHITESPACE@[138; 145) "\n      "
-                EXPR_STMT@[145; 155)
-                  RETURN_EXPR@[145; 155)
-                    RETURN_KW@[145; 151) "return"
-                    WHITESPACE@[151; 152) " "
-                    BIN_EXPR@[152; 155)
-                      IDENT_EXPR@[152; 153)
-                        NAME@[152; 153)
-                          IDENT@[152; 153) "a"
-                      PLUS@[153; 154) "+"
-                      IDENT_EXPR@[154; 155)
-                        NAME@[154; 155)
-                          IDENT@[154; 155) "b"
-                SEMI@[155; 156) ";"
-                WHITESPACE@[156; 161) "\n    "
-                R_CURLY@[161; 162) "}"
-        SEMI@[162; 163) ";"
-        WHITESPACE@[163; 170) "\n\n\n    "
-        EXPR_STMT@[170; 237)
-          CALL_EXPR@[170; 183)
-            IDENT_EXPR@[170; 175)
-              NAME@[170; 175)
-                IDENT@[170; 175) "print"
-            ARG_LIST@[175; 183)
-              L_PAREN@[175; 176) "("
-              CALL_EXPR@[176; 182)
-                IDENT_EXPR@[176; 179)
-                  NAME@[176; 179)
-                    IDENT@[176; 179) "add"
-                ARG_LIST@[179; 182)
-                  L_PAREN@[179; 180) "("
-                  LITERAL@[180; 181)
-                    INT_NUMBER@[180; 181) "5"
-                  R_PAREN@[181; 182) ")"
-              R_PAREN@[182; 183) ")"
-          WHITESPACE@[183; 195) "\n \n    \n    "
-          COMMENT@[195; 209) "// print(1+1);"
-          WHITESPACE@[209; 212) "\n  "
-          COMMENT@[212; 236) "/*  a.b.c;a.b.c(1,2); */"
-          WHITESPACE@[236; 237) "\n"
-        R_CURLY@[237; 238) "}"
+          WHITESPACE@[107; 108) " "
+          LITERAL@[108; 109)
+            INT_NUMBER@[108; 109) "1"
+        SEMI@[109; 110) ";"
+        WHITESPACE@[110; 116) "\n\n    "
+        EXPR_STMT@[116; 130)
+          CALL_EXPR@[116; 130)
+            IDENT_EXPR@[116; 121)
+              NAME@[116; 121)
+                IDENT@[116; 121) "print"
+            ARG_LIST@[121; 130)
+              L_PAREN@[121; 122) "("
+              BIN_EXPR@[122; 129)
+                LITERAL@[122; 125)
+                  STRING@[122; 125) "\"A\""
+                PLUS@[125; 126) "+"
+                IDENT_EXPR@[126; 129)
+                  NAME@[126; 129)
+                    IDENT@[126; 129) "FOO"
+              R_PAREN@[129; 130) ")"
+        SEMI@[130; 131) ";"
+        WHITESPACE@[131; 143) "\n \n    \n    "
+        COMMENT@[143; 157) "// print(1+1);"
+        WHITESPACE@[157; 160) "\n  "
+        COMMENT@[160; 184) "/*  a.b.c;a.b.c(1,2); */"
+        WHITESPACE@[184; 185) "\n"
+        R_CURLY@[185; 186) "}"
 
-== add ==
-
-0000   0 OPCODE::GETPARAM  '0'
-0002   | OPCODE::GETPARAM  '1'
-0004   | OPCODE::ADD
-0005   | OPCODE::RETURN

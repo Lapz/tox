@@ -2,12 +2,11 @@ use crate::db::{DatabaseImpl, Diagnostics};
 use errors::{FileDatabase, WithError};
 use parser::{dump_debug, ParseDatabase};
 
+use semant::HirDatabase;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use vm::CodegenDatabase;
-
 #[derive(StructOpt, Debug)]
 #[structopt(name = "tox")]
 pub struct Cli {
@@ -36,7 +35,13 @@ impl Cli {
         for path in self.source {
             let handle = db.intern_file(path);
 
-            let WithError(tokens, _) = db.lex(handle);
+            let WithError(tokens, mut errors) = db.lex(handle);
+
+            if !errors.is_empty() {
+                db.emit(&mut errors)?;
+                exit = -1;
+                break;
+            }
 
             if self.lex {
                 if let Some(ref output) = self.output {
@@ -46,7 +51,13 @@ impl Cli {
                 }
             }
 
-            let WithError(source_file, _) = db.parse(handle);
+            let WithError(source_file, mut errors) = db.parse(handle);
+
+            if !errors.is_empty() {
+                db.emit(&mut errors)?;
+                exit = -1;
+                break;
+            }
 
             if self.ast {
                 if let Some(ref output) = self.output {
@@ -56,21 +67,12 @@ impl Cli {
                 }
             }
 
-            // Todo handle warnings being errors
+            let WithError(program, mut errors) = db.lower(handle);
+            let WithError(type_map, error) = db.infer(handle);
 
-            let WithError((main, bytecode, object), mut errors) = db.codegen(handle);
+            errors.extend(error);
 
             db.emit(&mut errors)?;
-            let vm = vm::VM::new(&db, main, &bytecode, object);
-
-            match vm {
-                Some(mut vm) => {
-                    vm.run();
-                }
-                None => {
-                    panic!("Missing main function")
-                }
-            }
 
             // Codegen here
         }
