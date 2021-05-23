@@ -42,14 +42,7 @@ pub enum Type {
     Unknown,
 }
 
-impl Type {
-    fn inner(&self) -> Option<&Type> {
-        match self {
-            Type::Poly(_, inner) => Some(inner),
-            _ => None,
-        }
-    }
-}
+impl Type {}
 
 /// Represent an enum variant
 /// ```ignore

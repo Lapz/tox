@@ -67,8 +67,8 @@ impl Cli {
                 }
             }
 
-            let WithError(program, mut errors) = db.lower(handle);
-            let WithError(type_map, error) = db.infer(handle);
+            let WithError(_program, mut errors) = db.lower(handle);
+            let WithError(_type_map, error) = db.infer(handle);
 
             errors.extend(error);
 

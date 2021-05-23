@@ -489,7 +489,7 @@ impl BinOp {
             T![-=] => BinOp::MinusEqual,
             T![*=] => BinOp::MultEqual,
             T![/=] => BinOp::DivEqual,
-            t => {
+            _ => {
                 return None;
             }
         };

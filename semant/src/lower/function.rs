@@ -2,9 +2,6 @@ use crate::db::HirDatabase;
 use crate::{hir, impl_collector, util, TextRange};
 
 use std::sync::Arc;
-
-use ast::Param;
-use hir::ParamId;
 use syntax::{
     ast, ArgListOwner, AstNode, LoopBodyOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner,
     TypesOwner, VisibilityOwner,

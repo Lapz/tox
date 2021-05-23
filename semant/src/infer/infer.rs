@@ -4,10 +4,7 @@ use crate::{
         self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
         PLACEHOLDER_NAME,
     },
-    infer::{
-        pattern_matrix::{PatternMatrix, Row},
-        InferDataCollector, Type, TypeCon,
-    },
+    infer::{InferDataCollector, Type, TypeCon},
     util, HirDatabase,
 };
 use errors::Reporter;
@@ -331,22 +328,22 @@ where
                     inferred
                 }
             }
-            hir::Expr::Match { expr, arms } => {
-                let inferred_expr = self.infer_expr(map, expr);
+            hir::Expr::Match { expr, .. } => {
+                let _inferred_expr = self.infer_expr(map, expr);
 
-                let mut matrix = PatternMatrix::new();
+                // let mut matrix = PatternMatrix::new();
 
-                for match_arm in arms {
-                    let mut patterns = vec![];
+                // for match_arm in arms {
+                //     let mut patterns = vec![];
 
-                    for pattern in &match_arm.pats {
-                        let pat = map.pat(&pattern.item);
+                //     for pattern in &match_arm.pats {
+                //         let pat = map.pat(&pattern.item);
 
-                        patterns.push(self.to_matrix_pattern(pat, map))
-                    }
+                //         patterns.push(self.to_matrix_pattern(pat, map))
+                //     }
 
-                    matrix.add_row(Row::new(patterns, match_arm.expr.item))
-                }
+                //     matrix.add_row(Row::new(patterns, match_arm.expr.item))
+                // }
 
                 Type::Unknown
             }
