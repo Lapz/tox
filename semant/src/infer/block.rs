@@ -13,20 +13,20 @@ where
         block_id: &BlockId,
         has_value: bool,
     ) -> Type {
-        self.ctx.begin_scope();
+        self.env.begin_scope();
 
         let block = map.block(block_id);
 
         let mut returns = Type::Con(TypeCon::Void);
 
         for (index, stmt) in block.0.iter().enumerate() {
-            let ty = self.infer_statement(map, stmt);
+            let ty = self.infer_statement(stmt, map);
             if has_value && index == block.0.len() - 1 {
                 returns = ty;
             }
         }
 
-        self.ctx.end_scope();
+        self.env.begin_scope();
 
         returns
     }

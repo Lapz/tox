@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
             reporter,
             input,
         };
-
+        parser.prefix(RuleToken::LBracket, &expressions::LiteralParselet);
         parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);
         parser.prefix(RuleToken::Ident, &expressions::IdentParselet);
         parser.prefix(RuleToken::Excl, &expressions::UnaryParselet);
@@ -237,8 +237,19 @@ impl<'a> Parser<'a> {
         match self.current() {
             T!["{"] => self.recover_until(T!["}"]),
             T!["}"] => self.recover_until(T![;]),
-            _ => self.bump(),
+            IDENT => self.recover_until_many(&[T!["}"], T![;], T![fn]]),
+            _ => {
+                self.bump();
+            }
         }
+    }
+
+    fn recover_until_many(&mut self, tokens: &[SyntaxKind]) {
+        while self.lookahead().is_some() && !self.matches(tokens.to_vec()) {
+            self.bump();
+        }
+
+        self.bump(); // eat the token as well
     }
 
     fn recover_until(&mut self, token: SyntaxKind) {

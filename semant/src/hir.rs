@@ -1,4 +1,4 @@
-use crate::util;
+use crate::{infer, util};
 use errors::FileId;
 use indexmap::IndexMap;
 
@@ -8,15 +8,15 @@ use std::{
     path::Path,
     sync::Arc,
 };
-use syntax::{ast, text_of_first_token, AstNode, AstPtr, SmolStr, SyntaxKind, TextRange, T};
+use syntax::{ast, text_of_first_token, AstNode, SmolStr, SyntaxKind, TextRange, T};
 #[derive(Debug, Default, Eq, PartialEq, Clone, Hash)]
 pub struct SourceFile {
-    pub(crate) imports: Vec<Arc<Import>>,
-    pub(crate) modules: Vec<Arc<Module>>,
-    pub(crate) functions: Vec<Arc<Function>>,
-    pub(crate) type_alias: Vec<Arc<TypeAlias>>,
-    pub(crate) classes: Vec<Arc<Class>>,
-    pub(crate) enums: Vec<Arc<Enum>>,
+    pub imports: Vec<Arc<Import>>,
+    pub modules: Vec<Arc<Module>>,
+    pub functions: Vec<Arc<Function>>,
+    pub type_alias: Vec<Arc<TypeAlias>>,
+    pub classes: Vec<Arc<Class>>,
+    pub enums: Vec<Arc<Enum>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -54,24 +54,24 @@ pub struct Segment {
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Function {
-    pub(crate) exported: bool,
-    pub(crate) name: util::Span<NameId>,
-    pub(crate) ast_map: FunctionAstMap,
-    pub(crate) params: Vec<util::Span<ParamId>>,
-    pub(crate) type_params: Vec<util::Span<TypeParamId>>,
-    pub(crate) body: Option<Vec<util::Span<StmtId>>>,
-    pub(crate) returns: Option<util::Span<TypeId>>,
-    pub(crate) span: TextRange,
+    pub exported: bool,
+    pub name: util::Span<NameId>,
+    pub ast_map: FunctionAstMap,
+    pub params: Vec<util::Span<ParamId>>,
+    pub type_params: Vec<util::Span<TypeParamId>>,
+    pub body: Option<Vec<util::Span<StmtId>>>,
+    pub returns: Option<util::Span<TypeId>>,
+    pub span: TextRange,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Class {
     pub(crate) exported: bool,
-    pub(crate) name: util::Span<NameId>,
+    pub name: util::Span<NameId>,
     pub(crate) ast_map: FunctionAstMap,
     pub(crate) type_params: Vec<util::Span<TypeParamId>>,
     pub(crate) fields: Vec<util::Span<Field>>,
-    pub(crate) methods: Vec<Arc<Function>>,
+    pub methods: Vec<Arc<Function>>,
     pub(crate) span: TextRange,
 }
 
@@ -154,7 +154,7 @@ impl AsRef<Path> for Name {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Param {
-    pub(crate) pat: util::Span<PatId>,
+    pub pat: util::Span<PatId>,
     pub(crate) ty: util::Span<TypeId>,
 }
 
@@ -238,6 +238,7 @@ pub enum Stmt {
         initializer: Option<util::Span<ExprId>>,
     },
     Expr(util::Span<ExprId>),
+    Error,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -261,6 +262,11 @@ pub enum Expr {
     Cast {
         expr: util::Span<ExprId>,
         ty: util::Span<TypeId>,
+    },
+    Closure {
+        params: Vec<util::Span<ParamId>>,
+        body: util::Span<BlockId>,
+        returns: Option<util::Span<TypeId>>,
     },
     Continue,
     If {
@@ -330,7 +336,7 @@ pub enum UnaryOp {
 macro_rules! create_intern_key {
     ($name:ident) => {
         #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-        pub struct $name(salsa::InternId);
+        pub struct $name(pub salsa::InternId);
         impl salsa::InternKey for $name {
             fn from_intern_id(v: salsa::InternId) -> Self {
                 $name(v)
@@ -346,14 +352,15 @@ macro_rules! create_intern_key {
 /// Allows one to go from id => hir::item
 ///  and from id => astPtr
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
-pub(crate) struct FunctionAstMap {
+pub struct FunctionAstMap {
     hir_to_pattern: IndexMap<PatId, Pattern>,
     hir_to_params: IndexMap<ParamId, Param>,
     hir_to_type_params: IndexMap<TypeParamId, TypeParam>,
     hir_to_block: IndexMap<BlockId, Block>,
     hir_to_stmt: IndexMap<StmtId, Stmt>,
     hir_to_expr: IndexMap<ExprId, Expr>,
-    ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
+    expr_to_type: IndexMap<ExprId, infer::Type>,
+    // ast_to_expr: IndexMap<ExprId, AstPtr<ast::Expr>>,
 }
 
 impl FunctionAstMap {
@@ -381,27 +388,27 @@ impl FunctionAstMap {
         self.hir_to_pattern.insert(id, pat);
     }
 
-    pub(crate) fn stmt(&self, id: &StmtId) -> &Stmt {
+    pub fn stmt(&self, id: &StmtId) -> &Stmt {
         &self.hir_to_stmt[id]
     }
 
-    pub(crate) fn expr(&self, id: &ExprId) -> &Expr {
+    pub fn expr(&self, id: &ExprId) -> &Expr {
         &self.hir_to_expr[id]
     }
 
-    pub(crate) fn block(&self, id: &BlockId) -> &Block {
+    pub fn block(&self, id: &BlockId) -> &Block {
         &self.hir_to_block[id]
     }
 
-    pub(crate) fn pat(&self, id: &PatId) -> &Pattern {
+    pub fn pat(&self, id: &PatId) -> &Pattern {
         &self.hir_to_pattern[id]
     }
 
-    pub(crate) fn type_param(&self, id: &TypeParamId) -> &TypeParam {
+    pub fn type_param(&self, id: &TypeParamId) -> &TypeParam {
         &self.hir_to_type_params[id]
     }
 
-    pub(crate) fn param(&self, id: &ParamId) -> &Param {
+    pub fn param(&self, id: &ParamId) -> &Param {
         &self.hir_to_params[id]
     }
 }
@@ -482,8 +489,9 @@ impl BinOp {
             T![-=] => BinOp::MinusEqual,
             T![*=] => BinOp::MultEqual,
             T![/=] => BinOp::DivEqual,
-
-            _ => return None,
+            t => {
+                return None;
+            }
         };
         Some(op)
     }
@@ -492,8 +500,14 @@ impl BinOp {
 impl Literal {
     pub(crate) fn from_token(token: syntax::SyntaxToken) -> Literal {
         use syntax::SyntaxKind::*;
-        let text = token.text().clone();
         let kind = token.kind();
+        let text = if kind == STRING {
+            let text = token.text();
+            SmolStr::new(&text[1..text.len() - 1]) // our lexer includes \" so we need to strip it out of strings
+        } else {
+            token.text().clone()
+        };
+
         match kind {
             INT_NUMBER => Literal::Int(text),
             STRING => Literal::String(text),

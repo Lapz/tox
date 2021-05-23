@@ -6,7 +6,8 @@ use std::ops::Range;
     semant::HirDatabaseStorage,
     semant::InternDatabaseStorage,
     parser::ParseDatabaseStorage,
-    errors::FileDatabaseStorage
+    errors::FileDatabaseStorage,
+    vm::CodegenDatabaseStorage
 )]
 #[derive(Debug, Default)]
 pub struct DatabaseImpl {

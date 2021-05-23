@@ -1,6 +1,6 @@
 use crate::{
     hir::{self, NameId},
-    infer::Type,
+    infer::{Type, TypeMap},
     resolver::{ModuleGraph, Resolver, TypeKind},
 };
 use errors::{FileId, WithError};
@@ -66,9 +66,13 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
         file: FileId,
         import: hir::ImportId,
     ) -> WithError<Vec<(NameId, Type, TypeKind)>>;
+    #[salsa::invoke(crate::resolver::resolve_named_type_query)]
+    fn resolve_named_type(&self, file: FileId, name: hir::NameId) -> Type;
+    #[salsa::invoke(crate::resolver::resolve_hir_type_query)]
+    fn resolve_hir_type(&self, file: FileId, name: hir::TypeId) -> Type;
     #[salsa::invoke(crate::resolver::module_graph_query)]
     fn module_graph(&self, file: FileId) -> WithError<ModuleGraph>;
 
     #[salsa::invoke(crate::infer::infer_query)]
-    fn infer(&self, file: FileId) -> WithError<()>;
+    fn infer(&self, file: FileId) -> WithError<TypeMap>;
 }

@@ -47,6 +47,7 @@ impl ast::BinExpr {
         self.syntax()
             .children_with_tokens()
             .filter_map(|it| it.into_token())
+            .skip_while(|it| it.kind().is_trivia())
             .find_map(|c| Some(c.kind()))
     }
 }

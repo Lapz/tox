@@ -84,10 +84,10 @@ where
         match stmt {
             crate::hir::Stmt::Let {
                 pat,
-
                 initializer,
                 ascribed_type,
             } => {
+                
                 self.resolve_pattern(fn_name.item, pat, ast_map)?;
 
                 if let Some(expr) = initializer {
@@ -99,6 +99,7 @@ where
                 }
             }
             crate::hir::Stmt::Expr(expr) => self.resolve_expression(fn_name, expr, ast_map)?,
+            crate::hir::Stmt::Error => {}
         }
 
         Ok(())

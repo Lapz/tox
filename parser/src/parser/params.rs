@@ -1,23 +1,25 @@
 use crate::parser::Parser;
 use syntax::T;
 
-use crate::SyntaxKind::*;
+use crate::SyntaxKind::{self, *};
 
 impl<'a> Parser<'a> {
-    pub(crate) fn parse_func_params(&mut self) {
+    pub(crate) fn parse_func_params(&mut self, flavour: SyntaxKind) {
         self.start_node(PARAM_LIST);
+
+        // We assume that we have parsed the opening token
 
         self.bump();
 
-        while !self.at(EOF) && !self.at(T![")"]) {
+        while !self.at(EOF) && !self.at(flavour) {
             self.func_param();
 
-            if !self.at(T![")"]) && !self.expected(T![,]) {
+            if !self.at(flavour) && !self.expected(T![,]) {
                 break;
             }
         }
 
-        self.expect(T![")"]);
+        self.expect(flavour);
 
         self.finish_node()
     }

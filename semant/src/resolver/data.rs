@@ -61,6 +61,7 @@ pub(crate) struct FunctionData {
     pub(crate) type_params: HashMap<NameId, Type>,
     pub(crate) params: HashMap<NameId, Type>,
     pub(crate) scopes: StackedMap<hir::NameId, LocalData>,
+    pub(crate) up_values: HashMap<hir::ExprId, ()>,
 }
 
 impl FunctionData {
@@ -69,6 +70,7 @@ impl FunctionData {
             type_params: HashMap::new(),
             params: HashMap::new(),
             scopes: StackedMap::new(),
+            up_values: HashMap::new(),
         }
     }
 }
@@ -113,10 +115,6 @@ where
 
     pub(crate) fn intern_type(&mut self, id: TypeId, ty: Type) {
         self.interned_types.insert(id, ty);
-    }
-
-    pub(crate) fn lookup_type(&mut self, id: &TypeId) -> Option<Type> {
-        self.interned_types.get(id).map(Clone::clone)
     }
 
     pub(crate) fn begin_scope(&mut self) {
@@ -239,7 +237,14 @@ where
         // function names when called are stored as
         // and IdentExpr followed by the args
         // so to resolve them we need to look at the file ctx
+
         if !self.items.contains(&name.item) {
+            let n = self.db.intern_name(Name::new("print"));
+
+            if n == name.item {
+                return;
+            }
+
             let msg = format!(
                 "Unknown identifier `{}`",
                 self.db.lookup_intern_name(name.item)
@@ -420,7 +425,8 @@ where
                         Type::Unknown
                     }
                 };
-                if self.ctx.get_kind(&name) == TypeKind::Function {
+
+                if let Some(TypeKind::Function) = self.ctx.get_kind(&name) {
                     let span = (id.start().to_usize(), id.end().to_usize());
                     self.reporter.error(
                         format!(
@@ -442,7 +448,7 @@ where
             }
             hir::Type::Ident(name) => {
                 if let Some(ty) = self.ctx.get_type(&name) {
-                    if self.ctx.get_kind(&name) == TypeKind::Function {
+                    if let Some(TypeKind::Function) = self.ctx.get_kind(&name) {
                         let span = (id.start().to_usize(), id.end().to_usize());
                         self.reporter.error(
                             format!(

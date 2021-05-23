@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.current() == T!["("] {
-            self.parse_func_params();
+            self.parse_func_params(T!(")"));
         }
 
         if self.current() == T![->] {
@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
         self.finish_node()
     }
 
-    fn parse_return_type(&mut self) {
+    pub(crate) fn parse_return_type(&mut self) {
         self.start_node(RET_TYPE);
         self.expect(T![->]);
         self.parse_type();

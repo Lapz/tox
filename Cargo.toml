@@ -5,6 +5,7 @@ members=[
     "syntax",
     "semant",
     "tools",
+    "vm",
     "tox-wasm",
     "tox",
 ]
@@ -13,8 +14,8 @@ default-members=["tox"]
 opt-level = 0
 overflow-checks = true
 debug-assertions = true
-panic = "abort"
-debug = false
+# panic = "abort"
+# debug = false
 codegen-units = 8
 lto = false
 incremental = true

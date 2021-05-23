@@ -1,41 +1,292 @@
-SOURCE_FILE@[0; 55)
-  FN_DEF@[0; 55)
-    FN_KW@[0; 2) "fn"
-    WHITESPACE@[2; 3) " "
-    NAME@[3; 7)
-      IDENT@[3; 7) "main"
-    PARAM_LIST@[7; 9)
-      L_PAREN@[7; 8) "("
-      R_PAREN@[8; 9) ")"
-    WHITESPACE@[9; 10) " "
-    BLOCK_EXPR@[10; 55)
-      BLOCK@[10; 55)
-        L_CURLY@[10; 11) "{"
-        WHITESPACE@[11; 16) "\n    "
-        EXPR_STMT@[16; 53)
-          BLOCK_EXPR@[16; 53)
-            BLOCK@[16; 53)
-              L_CURLY@[16; 17) "{"
-              WHITESPACE@[17; 26) "\n        "
-              LET_STMT@[26; 36)
-                LET_KW@[26; 29) "let"
-                WHITESPACE@[29; 30) " "
-                BIND_PAT@[30; 31)
-                  NAME@[30; 31)
-                    IDENT@[30; 31) "x"
-                WHITESPACE@[31; 32) " "
-                EQ@[32; 33) "="
-                WHITESPACE@[33; 34) " "
-                LITERAL@[34; 36)
-                  INT_NUMBER@[34; 36) "10"
-              SEMI@[36; 37) ";"
-              WHITESPACE@[37; 46) "\n        "
-              EXPR_STMT@[46; 52)
-                IDENT_EXPR@[46; 52)
-                  NAME@[46; 52)
-                    IDENT@[46; 47) "x"
-                    WHITESPACE@[47; 52) "\n    "
-              R_CURLY@[52; 53) "}"
-        WHITESPACE@[53; 54) "\n"
-        R_CURLY@[54; 55) "}"
+SOURCE_FILE@[0; 344)
+  WHITESPACE@[0; 1) "\n"
+  CLASS_DEF@[1; 33)
+    CLASS_KW@[1; 6) "class"
+    WHITESPACE@[6; 7) " "
+    NAME@[7; 13)
+      IDENT@[7; 13) "Second"
+    WHITESPACE@[13; 14) " "
+    L_CURLY@[14; 15) "{"
+    WHITESPACE@[15; 20) "\n    "
+    NAMED_FIELD_DEF@[20; 31)
+      NAME@[20; 23)
+        IDENT@[20; 23) "foo"
+      COLON@[23; 24) ":"
+      IDENT_TYPE@[24; 30)
+        IDENT@[24; 30) "string"
+      SEMI@[30; 31) ";"
+    WHITESPACE@[31; 32) "\n"
+    R_CURLY@[32; 33) "}"
+  WHITESPACE@[33; 34) "\n"
+  CLASS_DEF@[34; 93)
+    CLASS_KW@[34; 39) "class"
+    WHITESPACE@[39; 40) " "
+    NAME@[40; 46)
+      IDENT@[40; 46) "Person"
+    WHITESPACE@[46; 47) " "
+    L_CURLY@[47; 48) "{"
+    WHITESPACE@[48; 53) "\n    "
+    NAMED_FIELD_DEF@[53; 70)
+      NAME@[53; 62)
+        IDENT@[53; 62) "firstName"
+      COLON@[62; 63) ":"
+      IDENT_TYPE@[63; 69)
+        IDENT@[63; 69) "Second"
+      SEMI@[69; 70) ";"
+    WHITESPACE@[70; 75) "\n    "
+    NAMED_FIELD_DEF@[75; 91)
+      NAME@[75; 83)
+        IDENT@[75; 83) "lastName"
+      COLON@[83; 84) ":"
+      IDENT_TYPE@[84; 90)
+        IDENT@[84; 90) "string"
+      SEMI@[90; 91) ";"
+    WHITESPACE@[91; 92) "\n"
+    R_CURLY@[92; 93) "}"
+  WHITESPACE@[93; 96) "\n\n\n"
+  ENUM_DEF@[96; 134)
+    ENUM_KW@[96; 100) "enum"
+    WHITESPACE@[100; 101) " "
+    NAME@[101; 107)
+      IDENT@[101; 107) "Option"
+    TYPE_PARAM_LIST@[107; 110)
+      L_ANGLE@[107; 108) "<"
+      TYPE_PARAM@[108; 109)
+        NAME@[108; 109)
+          IDENT@[108; 109) "T"
+      R_ANGLE@[109; 110) ">"
+    WHITESPACE@[110; 111) " "
+    ENUM_VARIANT_LIST@[111; 134)
+      L_CURLY@[111; 112) "{"
+      WHITESPACE@[112; 117) "\n    "
+      ENUM_VARIANT@[117; 122)
+        NAME@[117; 119)
+          IDENT@[117; 119) "Ok"
+        L_PAREN@[119; 120) "("
+        IDENT_TYPE@[120; 121)
+          IDENT@[120; 121) "T"
+        R_PAREN@[121; 122) ")"
+      COMMA@[122; 123) ","
+      WHITESPACE@[123; 128) "\n    "
+      ENUM_VARIANT@[128; 133)
+        NAME@[128; 132)
+          IDENT@[128; 132) "None"
+        WHITESPACE@[132; 133) "\n"
+      R_CURLY@[133; 134) "}"
+  WHITESPACE@[134; 136) "\n\n"
+  CLASS_DEF@[136; 182)
+    CLASS_KW@[136; 141) "class"
+    WHITESPACE@[141; 142) " "
+    NAME@[142; 146)
+      IDENT@[142; 146) "List"
+    TYPE_PARAM_LIST@[146; 149)
+      L_ANGLE@[146; 147) "<"
+      TYPE_PARAM@[147; 148)
+        NAME@[147; 148)
+          IDENT@[147; 148) "T"
+      R_ANGLE@[148; 149) ">"
+    WHITESPACE@[149; 150) " "
+    L_CURLY@[150; 151) "{"
+    WHITESPACE@[151; 156) "\n    "
+    NAMED_FIELD_DEF@[156; 162)
+      NAME@[156; 159)
+        IDENT@[156; 159) "val"
+      COLON@[159; 160) ":"
+      IDENT_TYPE@[160; 161)
+        IDENT@[160; 161) "T"
+      SEMI@[161; 162) ";"
+    WHITESPACE@[162; 167) "\n    "
+    NAMED_FIELD_DEF@[167; 180)
+      NAME@[167; 171)
+        IDENT@[167; 171) "next"
+      COLON@[171; 172) ":"
+      IDENT_TYPE@[172; 179)
+        IDENT@[172; 176) "List"
+        TYPE_ARG_LIST@[176; 179)
+          L_ANGLE@[176; 177) "<"
+          IDENT_TYPE@[177; 178)
+            IDENT@[177; 178) "T"
+          R_ANGLE@[178; 179) ">"
+      SEMI@[179; 180) ";"
+    WHITESPACE@[180; 181) "\n"
+    R_CURLY@[181; 182) "}"
+  WHITESPACE@[182; 185) "\n\n\n"
+  FN_DEF@[185; 236)
+    FN_KW@[185; 187) "fn"
+    WHITESPACE@[187; 188) " "
+    NAME@[188; 191)
+      IDENT@[188; 191) "map"
+    TYPE_PARAM_LIST@[191; 196)
+      L_ANGLE@[191; 192) "<"
+      TYPE_PARAM@[192; 193)
+        NAME@[192; 193)
+          IDENT@[192; 193) "A"
+      COMMA@[193; 194) ","
+      TYPE_PARAM@[194; 195)
+        NAME@[194; 195)
+          IDENT@[194; 195) "B"
+      R_ANGLE@[195; 196) ">"
+    PARAM_LIST@[196; 224)
+      L_PAREN@[196; 197) "("
+      PARAM@[197; 206)
+        BIND_PAT@[197; 202)
+          NAME@[197; 202)
+            IDENT@[197; 202) "array"
+        COLON@[202; 203) ":"
+        ARRAY_TYPE@[203; 206)
+          L_BRACK@[203; 204) "["
+          IDENT_TYPE@[204; 205)
+            IDENT@[204; 205) "A"
+          R_BRACK@[205; 206) "]"
+      COMMA@[206; 207) ","
+      PARAM@[207; 223)
+        BIND_PAT@[207; 211)
+          NAME@[207; 211)
+            IDENT@[207; 211) "body"
+        COLON@[211; 212) ":"
+        WHITESPACE@[212; 213) " "
+        FN_TYPE@[213; 223)
+          FN_KW@[213; 215) "fn"
+          L_PAREN@[215; 216) "("
+          IDENT_TYPE@[216; 217)
+            IDENT@[216; 217) "A"
+          R_PAREN@[217; 218) ")"
+          WHITESPACE@[218; 219) " "
+          RET_TYPE@[219; 223)
+            FRETURN@[219; 221) "->"
+            WHITESPACE@[221; 222) " "
+            IDENT_TYPE@[222; 223)
+              IDENT@[222; 223) "B"
+      R_PAREN@[223; 224) ")"
+    WHITESPACE@[224; 225) " "
+    RET_TYPE@[225; 231)
+      FRETURN@[225; 227) "->"
+      WHITESPACE@[227; 228) " "
+      ARRAY_TYPE@[228; 231)
+        L_BRACK@[228; 229) "["
+        IDENT_TYPE@[229; 230)
+          IDENT@[229; 230) "B"
+        R_BRACK@[230; 231) "]"
+    WHITESPACE@[231; 232) " "
+    BLOCK_EXPR@[232; 236)
+      BLOCK@[232; 236)
+        L_CURLY@[232; 233) "{"
+        WHITESPACE@[233; 235) "\n\n"
+        R_CURLY@[235; 236) "}"
+  WHITESPACE@[236; 239) "\n\n\n"
+  FN_DEF@[239; 344)
+    FN_KW@[239; 241) "fn"
+    WHITESPACE@[241; 242) " "
+    NAME@[242; 246)
+      IDENT@[242; 246) "main"
+    PARAM_LIST@[246; 248)
+      L_PAREN@[246; 247) "("
+      R_PAREN@[247; 248) ")"
+    WHITESPACE@[248; 249) " "
+    BLOCK_EXPR@[249; 344)
+      BLOCK@[249; 344)
+        L_CURLY@[249; 250) "{"
+        WHITESPACE@[250; 254) "\n\n  "
+        EXPR_STMT@[254; 255)
+          LITERAL@[254; 255)
+            INT_NUMBER@[254; 255) "1"
+        SEMI@[255; 256) ";"
+        WHITESPACE@[256; 259) "\n  "
+        EXPR_STMT@[259; 260)
+          LITERAL@[259; 260)
+            INT_NUMBER@[259; 260) "2"
+        SEMI@[260; 261) ";"
+        WHITESPACE@[261; 264) "\n  "
+        EXPR_STMT@[264; 267)
+          LITERAL@[264; 267)
+            STRING@[264; 267) "\"a\""
+        SEMI@[267; 268) ";"
+        WHITESPACE@[268; 271) "\n  "
+        EXPR_STMT@[271; 284)
+          LITERAL@[271; 284)
+            STRING@[271; 284) "\"Hello World\""
+        SEMI@[284; 285) ";"
+        WHITESPACE@[285; 288) "\n  "
+        EXPR_STMT@[288; 291)
+          LITERAL@[288; 291)
+            STRING@[288; 291) "\"b\""
+        SEMI@[291; 292) ";"
+        WHITESPACE@[292; 295) "\n  "
+        EXPR_STMT@[295; 298)
+          LITERAL@[295; 298)
+            STRING@[295; 298) "\"c\""
+        SEMI@[298; 299) ";"
+        WHITESPACE@[299; 302) "\n  "
+        EXPR_STMT@[302; 305)
+          LITERAL@[302; 305)
+            NIL_KW@[302; 305) "nil"
+        SEMI@[305; 306) ";"
+        WHITESPACE@[306; 309) "\n  "
+        EXPR_STMT@[309; 314)
+          BIN_EXPR@[309; 314)
+            LITERAL@[309; 310)
+              INT_NUMBER@[309; 310) "1"
+            WHITESPACE@[310; 311) " "
+            PLUS@[311; 312) "+"
+            WHITESPACE@[312; 313) " "
+            LITERAL@[313; 314)
+              INT_NUMBER@[313; 314) "1"
+        SEMI@[314; 315) ";"
+        WHITESPACE@[315; 318) "\n  "
+        COMMENT@[318; 342) "/*  a.b.c;a.b.c(1,2); */"
+        WHITESPACE@[342; 343) "\n"
+        R_CURLY@[343; 344) "}"
 
+Poly([], Class { name: NameId(4), fields: {NameId(5): Con(Str)}, methods: {} })
+Poly([], Class { name: NameId(7), fields: {NameId(9): Con(Str), NameId(8): Poly([], Class { name: NameId(4), fields: {NameId(5): Con(Str)}, methods: {} })}, methods: {} })
+Poly([TypeVar(3)], Class { name: NameId(10), fields: {NameId(11): Var(TypeVar(3)), NameId(12): Poly([TypeVar(3)], Class { name: NameId(10), fields: {}, methods: {} })}, methods: {} })
+Chunk { code: [], constants: [], lines: [] }
+== map ==
+
+Literal(LiteralId(0))
+Literal(LiteralId(1))
+Literal(LiteralId(2))
+Literal(LiteralId(3))
+Literal(LiteralId(4))
+Literal(LiteralId(5))
+Literal(LiteralId(6))
+Binary { lhs: Span { item: ExprId(7), start: 309, end: 310 }, op: Plus, rhs: Span { item: ExprId(8), start: 313, end: 314 } }
+Literal(LiteralId(0))
+Literal(LiteralId(0))
+Chunk { code: [3, 0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 7, 3, 6, 3, 7, 16], constants: [Value {val:1, ty:Int}, Value {val:2, ty:Int}, Value {StringObject {
+    obj: Object {
+        ty: String,
+        next: 0x0000000000000000,
+    },
+    chars: new: "\"a\"",
+} ty:Object}, Value {StringObject {
+    obj: Object {
+        ty: String,
+        next: 0x00007fd235f040f0,
+    },
+    chars: new: "\"Hello World\"",
+} ty:Object}, Value {StringObject {
+    obj: Object {
+        ty: String,
+        next: 0x00007fd235f042e0,
+    },
+    chars: new: "\"b\"",
+} ty:Object}, Value {StringObject {
+    obj: Object {
+        ty: String,
+        next: 0x00007fd235f04320,
+    },
+    chars: new: "\"c\"",
+} ty:Object}, Value {val:1, ty:Int}, Value {val:1, ty:Int}], lines: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+== main ==
+
+0000   0 OPCODE::CONSTANT   0 '1' 
+0002   | OPCODE::CONSTANT   1 '2' 
+0004   | OPCODE::CONSTANT   2 '"a"' 
+0006   | OPCODE::CONSTANT   3 '"Hello World"' 
+0008   | OPCODE::CONSTANT   4 '"b"' 
+0010   | OPCODE::CONSTANT   5 '"c"' 
+0012   | OPCODE::NIL
+0013   | OPCODE::CONSTANT   6 '1' 
+0015   | OPCODE::CONSTANT   7 '1' 
+0017   | OPCODE::ADD

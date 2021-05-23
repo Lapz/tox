@@ -46,9 +46,14 @@ where
             &field.name().unwrap(),
         );
 
-        let ty = self.lower_type(field.ascribed_type().unwrap());
-        self.fields
-            .push(util::Span::from_ast(Field { property, ty }, &field));
+        if let Some(ty) = field.ascribed_type() {
+            let ty = self.lower_type(ty);
+
+            self.fields
+                .push(util::Span::from_ast(Field { property, ty }, &field));
+        } else {
+            // TODO : add the field name but with the unknown type;
+        }
     }
 
     pub fn lower_method(&mut self, lowered_fn: Arc<Function>) {

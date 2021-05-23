@@ -19,6 +19,8 @@ where
         report: bool,
     ) {
         debug!("Unifying {:?} with {:?}", lhs, rhs);
+        // TODO handle the fact instance types are a subtype of the original def type
+        // i.e List { ...} is equivalent to List<i32>
         match (lhs, rhs) {
             (Type::App(types1), Type::App(types2)) => {
                 if types1.len() != types2.len() && report {
@@ -126,10 +128,12 @@ where
 
                 self.unify(t1, &subst, span, notes, true)
             }
-            (Type::Poly(_, ret), t) => self.unify(ret, t, span, notes, true),
-            (t, Type::Poly(_, ret)) => self.unify(t, ret, span, notes, true),
+
+            (Type::Poly(_, inner), ret) => self.unify(inner, ret, span, notes, report),
+            (_, Type::Con(TypeCon::Void)) => {}
             (Type::Unknown, _) => {}
             (_, Type::Unknown) => {}
+
             (_, _) => {
                 //Todo report error
 

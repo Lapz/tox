@@ -1,3 +1,4 @@
+use core::panic;
 use std::collections::HashMap;
 
 use crate::{
@@ -29,7 +30,15 @@ where
             .unwrap_or(&Type::Con(TypeCon::Void))
             .clone();
 
-        if args.len() > arg_types.len() - 1 {
+        if arg_types.len() == 0 {
+            if args.len() > arg_types.len() {
+                self.reporter.error(
+                    "Too many arguments",
+                    format!("Expected 0 arguments",),
+                    callee.as_reporter_span(),
+                );
+            }
+        } else if args.len() > arg_types.len() - 1 {
             self.reporter.error(
                 "Missing arguments",
                 format!(
@@ -73,24 +82,21 @@ where
             }
         }
 
-        arg_types
-            .iter()
-            .zip(args.iter().zip(callee_exprs.iter()))
-            .for_each(|(ty, (expr, expr_ty))| {
-                let inferred_expr = expr_ty;
+        for (i, arg) in args.iter().enumerate() {
+            let inferred = self.infer_expr(map, arg);
 
-                let inferred_expr = self.subst(&inferred_expr, &mut subst);
+            let inferred_expr = self.subst(&inferred, &mut subst);
 
-                let ty = self.subst(ty, &mut subst);
+            let ty = self.subst(arg_types.get(i).unwrap_or(&Type::Unknown), &mut subst);
 
-                self.unify(
-                    &ty,
-                    &inferred_expr,
-                    expr.as_reporter_span(),
-                    Some("test".into()),
-                    false,
-                )
-            });
+            self.unify(
+                &ty,
+                &inferred_expr,
+                arg.as_reporter_span(),
+                Some("test".into()),
+                false,
+            )
+        }
 
         self.subst(&ret, &mut subst)
     }
