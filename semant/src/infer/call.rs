@@ -82,8 +82,6 @@ where
             }
         }
 
-        println!("{:?} {:?}", args, callee_exprs);
-
         for (i, arg) in args.iter().enumerate() {
             let inferred = self.infer_expr(map, arg);
 
@@ -95,8 +93,8 @@ where
                 &ty,
                 &inferred_expr,
                 arg.as_reporter_span(),
-                Some("test".into()),
-                false,
+                Some("Wrong arguments provided to this function".into()),
+                true,
             )
         }
 
