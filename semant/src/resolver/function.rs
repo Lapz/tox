@@ -70,6 +70,10 @@ where
 
         self.insert_type(&name, signature, TypeKind::Function);
 
+        println!(
+            "{:#?}",
+            self.function_data.get_mut(&name.item).unwrap().scopes
+        );
         Ok(())
     }
 
@@ -87,7 +91,6 @@ where
                 initializer,
                 ascribed_type,
             } => {
-                
                 self.resolve_pattern(fn_name.item, pat, ast_map)?;
 
                 if let Some(expr) = initializer {

@@ -61,7 +61,6 @@ pub(crate) struct FunctionData {
     pub(crate) type_params: HashMap<NameId, Type>,
     pub(crate) params: HashMap<NameId, Type>,
     pub(crate) scopes: StackedMap<hir::NameId, LocalData>,
-    pub(crate) up_values: HashMap<hir::ExprId, ()>,
 }
 
 impl FunctionData {
@@ -70,7 +69,6 @@ impl FunctionData {
             type_params: HashMap::new(),
             params: HashMap::new(),
             scopes: StackedMap::new(),
-            up_values: HashMap::new(),
         }
     }
 }
@@ -230,6 +228,7 @@ where
         if let Some(state) = data.scopes.get_mut(&name.item) {
             state.state = util::Span::new(State::Read, name.start(), name.end());
             state.reads += 1;
+
             return;
         } //check for ident name in function/local scope
 
@@ -325,7 +324,7 @@ where
         let function_data = self.function_data.get_mut(&fn_name).unwrap();
 
         for (name, state) in function_data.scopes.end_scope_iter() {
-            let LocalData { reads, state } = state;
+            let LocalData { reads, state, .. } = state;
 
             if reads == 0 || state.item == State::Declared {
                 let msg = format!("Unused variable `{}`", self.db.lookup_intern_name(name));

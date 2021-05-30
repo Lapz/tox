@@ -1,125 +1,572 @@
-SOURCE_FILE@[0; 186)
-  CLASS_DEF@[0; 31)
-    CLASS_KW@[0; 5) "class"
-    WHITESPACE@[5; 6) " "
-    NAME@[6; 9)
-      IDENT@[6; 9) "Foo"
-    WHITESPACE@[9; 10) " "
-    L_CURLY@[10; 11) "{"
-    WHITESPACE@[11; 14) "\n  "
-    FN_DEF@[14; 29)
-      FN_KW@[14; 16) "fn"
-      WHITESPACE@[16; 17) " "
-      NAME@[17; 20)
-        IDENT@[17; 20) "bar"
-      PARAM_LIST@[20; 22)
-        L_PAREN@[20; 21) "("
-        R_PAREN@[21; 22) ")"
-      WHITESPACE@[22; 23) " "
-      BLOCK_EXPR@[23; 29)
-        BLOCK@[23; 29)
-          L_CURLY@[23; 24) "{"
-          WHITESPACE@[24; 28) "\n\n  "
-          R_CURLY@[28; 29) "}"
-    WHITESPACE@[29; 30) "\n"
-    R_CURLY@[30; 31) "}"
-  WHITESPACE@[31; 34) "\n\n\n"
-  FN_DEF@[34; 80)
-    FN_KW@[34; 36) "fn"
-    WHITESPACE@[36; 37) " "
-    NAME@[37; 40)
-      IDENT@[37; 40) "add"
-    PARAM_LIST@[40; 53)
-      L_PAREN@[40; 41) "("
-      PARAM@[41; 46)
-        BIND_PAT@[41; 42)
-          NAME@[41; 42)
-            IDENT@[41; 42) "x"
-        COLON@[42; 43) ":"
-        IDENT_TYPE@[43; 46)
-          IDENT@[43; 46) "i32"
-      COMMA@[46; 47) ","
-      PARAM@[47; 52)
-        BIND_PAT@[47; 48)
-          NAME@[47; 48)
-            IDENT@[47; 48) "y"
-        COLON@[48; 49) ":"
-        IDENT_TYPE@[49; 52)
-          IDENT@[49; 52) "i32"
-      R_PAREN@[52; 53) ")"
-    WHITESPACE@[53; 54) " "
-    RET_TYPE@[54; 61)
-      FRETURN@[54; 56) "->"
-      WHITESPACE@[56; 57) " "
-      IDENT_TYPE@[57; 61)
-        IDENT@[57; 60) "i32"
-        WHITESPACE@[60; 61) " "
-    BLOCK_EXPR@[61; 80)
-      BLOCK@[61; 80)
-        L_CURLY@[61; 62) "{"
-        WHITESPACE@[62; 67) "\n    "
-        EXPR_STMT@[67; 77)
-          RETURN_EXPR@[67; 77)
-            RETURN_KW@[67; 73) "return"
-            WHITESPACE@[73; 74) " "
-            BIN_EXPR@[74; 77)
-              IDENT_EXPR@[74; 75)
-                NAME@[74; 75)
-                  IDENT@[74; 75) "x"
-              PLUS@[75; 76) "+"
-              IDENT_EXPR@[76; 77)
-                NAME@[76; 77)
-                  IDENT@[76; 77) "y"
-        SEMI@[77; 78) ";"
-        WHITESPACE@[78; 79) "\n"
-        R_CURLY@[79; 80) "}"
-  WHITESPACE@[80; 83) "\n\n\n"
-  FN_DEF@[83; 186)
-    FN_KW@[83; 85) "fn"
+Restrictions { forbid_record: false } PlusEq BinaryParselet(Assignment)
+Restrictions { forbid_record: false } Comparison BinaryParselet(Comparison)
+Restrictions { forbid_record: false } PlusEq BinaryParselet(Assignment)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } PlusEq BinaryParselet(Assignment)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: true } EqEq BinaryParselet(Equality)
+Restrictions { forbid_record: true } LBrace RecordParselet(Call)
+Restrictions { forbid_record: true } LBrace RecordParselet(Call)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } Dot FieldParselet(Call)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } Plus BinaryParselet(Term)
+Restrictions { forbid_record: false } Dot FieldParselet(Call)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } Plus BinaryParselet(Term)
+Restrictions { forbid_record: false } Dot FieldParselet(Call)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+Restrictions { forbid_record: false } Plus BinaryParselet(Term)
+Restrictions { forbid_record: false } LParen CallParselet(Call)
+SOURCE_FILE@[0; 661)
+  WHITESPACE@[0; 1) "\n"
+  CLASS_DEF@[1; 57)
+    CLASS_KW@[1; 6) "class"
+    WHITESPACE@[6; 7) " "
+    NAME@[7; 11)
+      IDENT@[7; 11) "Tree"
+    WHITESPACE@[11; 12) " "
+    L_CURLY@[12; 13) "{"
+    WHITESPACE@[13; 16) "\n  "
+    NAMED_FIELD_DEF@[16; 27)
+      NAME@[16; 19)
+        IDENT@[16; 19) "key"
+      COLON@[19; 20) ":"
+      IDENT_TYPE@[20; 26)
+        IDENT@[20; 26) "string"
+      SEMI@[26; 27) ";"
+    WHITESPACE@[27; 30) "\n  "
+    NAMED_FIELD_DEF@[30; 41)
+      NAME@[30; 34)
+        IDENT@[30; 34) "left"
+      COLON@[34; 35) ":"
+      WHITESPACE@[35; 36) " "
+      IDENT_TYPE@[36; 40)
+        IDENT@[36; 40) "Tree"
+      SEMI@[40; 41) ";"
+    WHITESPACE@[41; 44) "\n  "
+    NAMED_FIELD_DEF@[44; 55)
+      NAME@[44; 49)
+        IDENT@[44; 49) "right"
+      COLON@[49; 50) ":"
+      IDENT_TYPE@[50; 54)
+        IDENT@[50; 54) "Tree"
+      SEMI@[54; 55) ";"
+    WHITESPACE@[55; 56) "\n"
+    R_CURLY@[56; 57) "}"
+  WHITESPACE@[57; 60) "\n\n\n"
+  FN_DEF@[60; 510)
+    FN_KW@[60; 62) "fn"
+    WHITESPACE@[62; 63) " "
+    NAME@[63; 74)
+      IDENT@[63; 74) "prettyprint"
+    PARAM_LIST@[74; 85)
+      L_PAREN@[74; 75) "("
+      PARAM@[75; 84)
+        BIND_PAT@[75; 79)
+          NAME@[75; 79)
+            IDENT@[75; 79) "tree"
+        COLON@[79; 80) ":"
+        IDENT_TYPE@[80; 84)
+          IDENT@[80; 84) "Tree"
+      R_PAREN@[84; 85) ")"
     WHITESPACE@[85; 86) " "
-    NAME@[86; 90)
-      IDENT@[86; 90) "main"
-    PARAM_LIST@[90; 92)
-      L_PAREN@[90; 91) "("
-      R_PAREN@[91; 92) ")"
-    WHITESPACE@[92; 93) " "
-    BLOCK_EXPR@[93; 186)
-      BLOCK@[93; 186)
-        L_CURLY@[93; 94) "{"
-        WHITESPACE@[94; 100) "\n\n    "
-        LET_STMT@[100; 109)
+    RET_TYPE@[86; 96)
+      FRETURN@[86; 88) "->"
+      WHITESPACE@[88; 89) " "
+      IDENT_TYPE@[89; 96)
+        IDENT@[89; 95) "string"
+        WHITESPACE@[95; 96) " "
+    BLOCK_EXPR@[96; 510)
+      BLOCK@[96; 510)
+        L_CURLY@[96; 97) "{"
+        WHITESPACE@[97; 100) "\n  "
+        LET_STMT@[100; 115)
           LET_KW@[100; 103) "let"
           WHITESPACE@[103; 104) " "
-          BIND_PAT@[104; 105)
-            NAME@[104; 105)
-              IDENT@[104; 105) "b"
-          WHITESPACE@[105; 106) " "
-          EQ@[106; 107) "="
-          WHITESPACE@[107; 108) " "
-          LITERAL@[108; 109)
-            INT_NUMBER@[108; 109) "1"
-        SEMI@[109; 110) ";"
-        WHITESPACE@[110; 116) "\n\n    "
-        EXPR_STMT@[116; 130)
-          CALL_EXPR@[116; 130)
-            IDENT_EXPR@[116; 121)
-              NAME@[116; 121)
-                IDENT@[116; 121) "print"
-            ARG_LIST@[121; 130)
-              L_PAREN@[121; 122) "("
-              BIN_EXPR@[122; 129)
-                LITERAL@[122; 125)
-                  STRING@[122; 125) "\"A\""
-                PLUS@[125; 126) "+"
-                IDENT_EXPR@[126; 129)
-                  NAME@[126; 129)
-                    IDENT@[126; 129) "FOO"
-              R_PAREN@[129; 130) ")"
-        SEMI@[130; 131) ";"
-        WHITESPACE@[131; 143) "\n \n    \n    "
-        COMMENT@[143; 157) "// print(1+1);"
-        WHITESPACE@[157; 160) "\n  "
-        COMMENT@[160; 184) "/*  a.b.c;a.b.c(1,2); */"
-        WHITESPACE@[184; 185) "\n"
-        R_CURLY@[185; 186) "}"
+          BIND_PAT@[104; 110)
+            NAME@[104; 110)
+              IDENT@[104; 110) "output"
+          WHITESPACE@[110; 111) " "
+          EQ@[111; 112) "="
+          WHITESPACE@[112; 113) " "
+          LITERAL@[113; 115)
+            STRING@[113; 115) "\"\""
+        SEMI@[115; 116) ";"
+        WHITESPACE@[116; 120) "\n\n  "
+        LET_STMT@[120; 165)
+          LET_KW@[120; 123) "let"
+          WHITESPACE@[123; 124) " "
+          BIND_PAT@[124; 129)
+            NAME@[124; 129)
+              IDENT@[124; 129) "write"
+          WHITESPACE@[129; 130) " "
+          EQ@[130; 131) "="
+          WHITESPACE@[131; 133) "  "
+          CLOSURE_EXPR@[133; 165)
+            PARAM_LIST@[133; 143)
+              PIPE@[133; 134) "|"
+              PARAM@[134; 142)
+                BIND_PAT@[134; 135)
+                  NAME@[134; 135)
+                    IDENT@[134; 135) "s"
+                COLON@[135; 136) ":"
+                IDENT_TYPE@[136; 142)
+                  IDENT@[136; 142) "string"
+              PIPE@[142; 143) "|"
+            WHITESPACE@[143; 144) " "
+            BLOCK_EXPR@[144; 165)
+              BLOCK@[144; 165)
+                L_CURLY@[144; 145) "{"
+                WHITESPACE@[145; 150) "\n    "
+                EXPR_STMT@[150; 164)
+                  BIN_EXPR@[150; 164)
+                    IDENT_EXPR@[150; 157)
+                      NAME@[150; 157)
+                        IDENT@[150; 156) "output"
+                        WHITESPACE@[156; 157) " "
+                    PLUSEQ@[157; 159) "+="
+                    WHITESPACE@[159; 160) " "
+                    IDENT_EXPR@[160; 164)
+                      NAME@[160; 164)
+                        IDENT@[160; 161) "s"
+                        WHITESPACE@[161; 164) "\n  "
+                R_CURLY@[164; 165) "}"
+        SEMI@[165; 166) ";"
+        WHITESPACE@[166; 170) "\n\n  "
+        LET_STMT@[170; 473)
+          LET_KW@[170; 173) "let"
+          WHITESPACE@[173; 174) " "
+          BIND_PAT@[174; 178)
+            NAME@[174; 178)
+              IDENT@[174; 178) "show"
+          WHITESPACE@[178; 179) " "
+          EQ@[179; 180) "="
+          WHITESPACE@[180; 181) " "
+          CLOSURE_EXPR@[181; 473)
+            PARAM_LIST@[181; 197)
+              PIPE@[181; 182) "|"
+              PARAM@[182; 187)
+                BIND_PAT@[182; 183)
+                  NAME@[182; 183)
+                    IDENT@[182; 183) "n"
+                COLON@[183; 184) ":"
+                IDENT_TYPE@[184; 187)
+                  IDENT@[184; 187) "i32"
+              COMMA@[187; 188) ","
+              WHITESPACE@[188; 189) " "
+              PARAM@[189; 196)
+                BIND_PAT@[189; 190)
+                  NAME@[189; 190)
+                    IDENT@[189; 190) "t"
+                COLON@[190; 191) ":"
+                WHITESPACE@[191; 192) " "
+                IDENT_TYPE@[192; 196)
+                  IDENT@[192; 196) "Tree"
+              PIPE@[196; 197) "|"
+            WHITESPACE@[197; 198) " "
+            BLOCK_EXPR@[198; 473)
+              BLOCK@[198; 473)
+                L_CURLY@[198; 199) "{"
+                WHITESPACE@[199; 204) "\n    "
+                LET_STMT@[204; 341)
+                  LET_KW@[204; 207) "let"
+                  WHITESPACE@[207; 208) " "
+                  BIND_PAT@[208; 214)
+                    NAME@[208; 214)
+                      IDENT@[208; 214) "indent"
+                  WHITESPACE@[214; 215) " "
+                  EQ@[215; 216) "="
+                  WHITESPACE@[216; 217) " "
+                  CLOSURE_EXPR@[217; 341)
+                    PARAM_LIST@[217; 227)
+                      PIPE@[217; 218) "|"
+                      PARAM@[218; 226)
+                        BIND_PAT@[218; 219)
+                          NAME@[218; 219)
+                            IDENT@[218; 219) "s"
+                        COLON@[219; 220) ":"
+                        IDENT_TYPE@[220; 226)
+                          IDENT@[220; 226) "string"
+                      PIPE@[226; 227) "|"
+                    WHITESPACE@[227; 228) " "
+                    BLOCK_EXPR@[228; 341)
+                      BLOCK@[228; 341)
+                        L_CURLY@[228; 229) "{"
+                        WHITESPACE@[229; 236) "\n      "
+                        EXPR_STMT@[236; 295)
+                          FOR_EXPR@[236; 295)
+                            FOR_KW@[236; 239) "for"
+                            L_PAREN@[239; 240) "("
+                            LET_STMT@[240; 249)
+                              LET_KW@[240; 243) "let"
+                              WHITESPACE@[243; 244) " "
+                              BIND_PAT@[244; 245)
+                                NAME@[244; 245)
+                                  IDENT@[244; 245) "i"
+                              WHITESPACE@[245; 246) " "
+                              EQ@[246; 247) "="
+                              WHITESPACE@[247; 248) " "
+                              LITERAL@[248; 249)
+                                INT_NUMBER@[248; 249) "0"
+                            SEMI@[249; 250) ";"
+                            WHITESPACE@[250; 251) " "
+                            BIN_EXPR@[251; 256)
+                              IDENT_EXPR@[251; 253)
+                                NAME@[251; 253)
+                                  IDENT@[251; 252) "i"
+                                  WHITESPACE@[252; 253) " "
+                              L_ANGLE@[253; 254) "<"
+                              WHITESPACE@[254; 255) " "
+                              IDENT_EXPR@[255; 256)
+                                NAME@[255; 256)
+                                  IDENT@[255; 256) "n"
+                            SEMI@[256; 257) ";"
+                            WHITESPACE@[257; 258) " "
+                            BIN_EXPR@[258; 264)
+                              IDENT_EXPR@[258; 260)
+                                NAME@[258; 260)
+                                  IDENT@[258; 259) "i"
+                                  WHITESPACE@[259; 260) " "
+                              PLUSEQ@[260; 262) "+="
+                              WHITESPACE@[262; 263) " "
+                              LITERAL@[263; 264)
+                                INT_NUMBER@[263; 264) "1"
+                            R_PAREN@[264; 265) ")"
+                            WHITESPACE@[265; 266) " "
+                            BLOCK_EXPR@[266; 295)
+                              BLOCK@[266; 295)
+                                L_CURLY@[266; 267) "{"
+                                WHITESPACE@[267; 276) "\n        "
+                                EXPR_STMT@[276; 286)
+                                  CALL_EXPR@[276; 286)
+                                    IDENT_EXPR@[276; 281)
+                                      NAME@[276; 281)
+                                        IDENT@[276; 281) "write"
+                                    ARG_LIST@[281; 286)
+                                      L_PAREN@[281; 282) "("
+                                      LITERAL@[282; 285)
+                                        STRING@[282; 285) "\" \""
+                                      R_PAREN@[285; 286) ")"
+                                SEMI@[286; 287) ";"
+                                WHITESPACE@[287; 294) "\n      "
+                                R_CURLY@[294; 295) "}"
+                        WHITESPACE@[295; 303) "\n\n      "
+                        EXPR_STMT@[303; 314)
+                          BIN_EXPR@[303; 314)
+                            IDENT_EXPR@[303; 310)
+                              NAME@[303; 310)
+                                IDENT@[303; 309) "output"
+                                WHITESPACE@[309; 310) " "
+                            PLUSEQ@[310; 312) "+="
+                            WHITESPACE@[312; 313) " "
+                            IDENT_EXPR@[313; 314)
+                              NAME@[313; 314)
+                                IDENT@[313; 314) "s"
+                        SEMI@[314; 315) ";"
+                        WHITESPACE@[315; 323) "\n\n      "
+                        EXPR_STMT@[323; 334)
+                          CALL_EXPR@[323; 334)
+                            IDENT_EXPR@[323; 328)
+                              NAME@[323; 328)
+                                IDENT@[323; 328) "write"
+                            ARG_LIST@[328; 334)
+                              L_PAREN@[328; 329) "("
+                              LITERAL@[329; 333)
+                                STRING@[329; 333) "\"\\n\""
+                              R_PAREN@[333; 334) ")"
+                        SEMI@[334; 335) ";"
+                        WHITESPACE@[335; 340) "\n    "
+                        R_CURLY@[340; 341) "}"
+                SEMI@[341; 342) ";"
+                WHITESPACE@[342; 349) "\n\n\n    "
+                EXPR_STMT@[349; 469)
+                  IF_EXPR@[349; 469)
+                    IF_KW@[349; 351) "if"
+                    WHITESPACE@[351; 352) " "
+                    CONDITION@[352; 361)
+                      BIN_EXPR@[352; 361)
+                        IDENT_EXPR@[352; 354)
+                          NAME@[352; 354)
+                            IDENT@[352; 353) "t"
+                            WHITESPACE@[353; 354) " "
+                        EQEQ@[354; 356) "=="
+                        WHITESPACE@[356; 357) " "
+                        LITERAL@[357; 360)
+                          NIL_KW@[357; 360) "nil"
+                        WHITESPACE@[360; 361) " "
+                    BLOCK_EXPR@[361; 386)
+                      BLOCK@[361; 386)
+                        L_CURLY@[361; 362) "{"
+                        WHITESPACE@[362; 369) "\n      "
+                        EXPR_STMT@[369; 385)
+                          CALL_EXPR@[369; 380)
+                            IDENT_EXPR@[369; 375)
+                              NAME@[369; 375)
+                                IDENT@[369; 375) "indent"
+                            ARG_LIST@[375; 380)
+                              L_PAREN@[375; 376) "("
+                              LITERAL@[376; 379)
+                                STRING@[376; 379) "\".\""
+                              R_PAREN@[379; 380) ")"
+                          WHITESPACE@[380; 385) "\n    "
+                        R_CURLY@[385; 386) "}"
+                    WHITESPACE@[386; 387) " "
+                    ELSE_KW@[387; 391) "else"
+                    WHITESPACE@[391; 392) " "
+                    BLOCK_EXPR@[392; 469)
+                      BLOCK@[392; 469)
+                        L_CURLY@[392; 393) "{"
+                        WHITESPACE@[393; 400) "\n      "
+                        EXPR_STMT@[400; 413)
+                          CALL_EXPR@[400; 413)
+                            IDENT_EXPR@[400; 406)
+                              NAME@[400; 406)
+                                IDENT@[400; 406) "indent"
+                            ARG_LIST@[406; 413)
+                              L_PAREN@[406; 407) "("
+                              FIELD_EXPR@[407; 412)
+                                IDENT_EXPR@[407; 408)
+                                  NAME@[407; 408)
+                                    IDENT@[407; 408) "t"
+                                DOT@[408; 409) "."
+                                IDENT_EXPR@[409; 412)
+                                  NAME@[409; 412)
+                                    IDENT@[409; 412) "key"
+                              R_PAREN@[412; 413) ")"
+                        SEMI@[413; 414) ";"
+                        WHITESPACE@[414; 421) "\n      "
+                        EXPR_STMT@[421; 437)
+                          CALL_EXPR@[421; 437)
+                            IDENT_EXPR@[421; 425)
+                              NAME@[421; 425)
+                                IDENT@[421; 425) "show"
+                            ARG_LIST@[425; 437)
+                              L_PAREN@[425; 426) "("
+                              BIN_EXPR@[426; 429)
+                                IDENT_EXPR@[426; 427)
+                                  NAME@[426; 427)
+                                    IDENT@[426; 427) "n"
+                                PLUS@[427; 428) "+"
+                                LITERAL@[428; 429)
+                                  INT_NUMBER@[428; 429) "1"
+                              COMMA@[429; 430) ","
+                              FIELD_EXPR@[430; 436)
+                                IDENT_EXPR@[430; 431)
+                                  NAME@[430; 431)
+                                    IDENT@[430; 431) "t"
+                                DOT@[431; 432) "."
+                                IDENT_EXPR@[432; 436)
+                                  NAME@[432; 436)
+                                    IDENT@[432; 436) "left"
+                              R_PAREN@[436; 437) ")"
+                        SEMI@[437; 438) ";"
+                        WHITESPACE@[438; 445) "\n      "
+                        EXPR_STMT@[445; 462)
+                          CALL_EXPR@[445; 462)
+                            IDENT_EXPR@[445; 449)
+                              NAME@[445; 449)
+                                IDENT@[445; 449) "show"
+                            ARG_LIST@[449; 462)
+                              L_PAREN@[449; 450) "("
+                              BIN_EXPR@[450; 453)
+                                IDENT_EXPR@[450; 451)
+                                  NAME@[450; 451)
+                                    IDENT@[450; 451) "n"
+                                PLUS@[451; 452) "+"
+                                LITERAL@[452; 453)
+                                  INT_NUMBER@[452; 453) "1"
+                              COMMA@[453; 454) ","
+                              FIELD_EXPR@[454; 461)
+                                IDENT_EXPR@[454; 455)
+                                  NAME@[454; 455)
+                                    IDENT@[454; 455) "t"
+                                DOT@[455; 456) "."
+                                IDENT_EXPR@[456; 461)
+                                  NAME@[456; 461)
+                                    IDENT@[456; 461) "right"
+                              R_PAREN@[461; 462) ")"
+                        SEMI@[462; 463) ";"
+                        WHITESPACE@[463; 468) "\n    "
+                        R_CURLY@[468; 469) "}"
+                WHITESPACE@[469; 472) "\n  "
+                R_CURLY@[472; 473) "}"
+        SEMI@[473; 474) ";"
+        WHITESPACE@[474; 478) "\n\n  "
+        EXPR_STMT@[478; 490)
+          CALL_EXPR@[478; 490)
+            IDENT_EXPR@[478; 482)
+              NAME@[478; 482)
+                IDENT@[478; 482) "show"
+            ARG_LIST@[482; 490)
+              L_PAREN@[482; 483) "("
+              LITERAL@[483; 484)
+                INT_NUMBER@[483; 484) "0"
+              COMMA@[484; 485) ","
+              IDENT_EXPR@[485; 489)
+                NAME@[485; 489)
+                  IDENT@[485; 489) "tree"
+              R_PAREN@[489; 490) ")"
+        SEMI@[490; 491) ";"
+        WHITESPACE@[491; 495) "\n\n  "
+        EXPR_STMT@[495; 509)
+          RETURN_EXPR@[495; 509)
+            RETURN_KW@[495; 501) "return"
+            WHITESPACE@[501; 502) " "
+            IDENT_EXPR@[502; 509)
+              NAME@[502; 509)
+                IDENT@[502; 508) "output"
+                WHITESPACE@[508; 509) "\n"
+        R_CURLY@[509; 510) "}"
+  WHITESPACE@[510; 512) "\n\n"
+  FN_DEF@[512; 661)
+    FN_KW@[512; 514) "fn"
+    WHITESPACE@[514; 515) " "
+    NAME@[515; 519)
+      IDENT@[515; 519) "main"
+    PARAM_LIST@[519; 521)
+      L_PAREN@[519; 520) "("
+      R_PAREN@[520; 521) ")"
+    WHITESPACE@[521; 522) " "
+    BLOCK_EXPR@[522; 661)
+      BLOCK@[522; 661)
+        L_CURLY@[522; 523) "{"
+        WHITESPACE@[523; 529) "\n\n    "
+        LET_STMT@[529; 538)
+          LET_KW@[529; 532) "let"
+          WHITESPACE@[532; 533) " "
+          BIND_PAT@[533; 534)
+            NAME@[533; 534)
+              IDENT@[533; 534) "a"
+          WHITESPACE@[534; 535) " "
+          EQ@[535; 536) "="
+          WHITESPACE@[536; 537) " "
+          LITERAL@[537; 538)
+            INT_NUMBER@[537; 538) "1"
+        SEMI@[538; 539) ";"
+        WHITESPACE@[539; 546) "\n\n\n    "
+        LET_STMT@[546; 597)
+          LET_KW@[546; 549) "let"
+          WHITESPACE@[549; 550) " "
+          BIND_PAT@[550; 553)
+            NAME@[550; 553)
+              IDENT@[550; 553) "add"
+          WHITESPACE@[553; 554) " "
+          EQ@[554; 555) "="
+          WHITESPACE@[555; 556) " "
+          CLOSURE_EXPR@[556; 591)
+            PARAM_LIST@[556; 563)
+              PIPE@[556; 557) "|"
+              PARAM@[557; 562)
+                BIND_PAT@[557; 558)
+                  NAME@[557; 558)
+                    IDENT@[557; 558) "b"
+                COLON@[558; 559) ":"
+                IDENT_TYPE@[559; 562)
+                  IDENT@[559; 562) "i32"
+              PIPE@[562; 563) "|"
+            WHITESPACE@[563; 564) " "
+            BLOCK_EXPR@[564; 591)
+              BLOCK@[564; 591)
+                L_CURLY@[564; 565) "{"
+                WHITESPACE@[565; 572) "\n      "
+                EXPR_STMT@[572; 584)
+                  RETURN_EXPR@[572; 584)
+                    RETURN_KW@[572; 578) "return"
+                    WHITESPACE@[578; 579) " "
+                    BIN_EXPR@[579; 584)
+                      IDENT_EXPR@[579; 581)
+                        NAME@[579; 581)
+                          IDENT@[579; 580) "a"
+                          WHITESPACE@[580; 581) " "
+                      PLUS@[581; 582) "+"
+                      WHITESPACE@[582; 583) " "
+                      IDENT_EXPR@[583; 584)
+                        NAME@[583; 584)
+                          IDENT@[583; 584) "b"
+                SEMI@[584; 585) ";"
+                WHITESPACE@[585; 590) "\n    "
+                R_CURLY@[590; 591) "}"
+          WHITESPACE@[591; 597) "\n\n    "
+        EXPR_STMT@[597; 605)
+          CALL_EXPR@[597; 605)
+            IDENT_EXPR@[597; 600)
+              NAME@[597; 600)
+                IDENT@[597; 600) "add"
+            ARG_LIST@[600; 605)
+              L_PAREN@[600; 601) "("
+              LITERAL@[601; 604)
+                STRING@[601; 604) "\"a\""
+              R_PAREN@[604; 605) ")"
+        SEMI@[605; 606) ";"
+        WHITESPACE@[606; 618) "\n \n    \n    "
+        COMMENT@[618; 632) "// print(1+1);"
+        WHITESPACE@[632; 635) "\n  "
+        COMMENT@[635; 659) "/*  a.b.c;a.b.c(1,2); */"
+        WHITESPACE@[659; 660) "\n"
+        R_CURLY@[660; 661) "}"
 
+StackedMap {
+    table: {
+        NameId(
+            12,
+        ): [],
+        NameId(
+            14,
+        ): [],
+        NameId(
+            8,
+        ): [],
+        NameId(
+            5,
+        ): [
+            LocalData {
+                state: Span {
+                    item: Read,
+                    start: 485,
+                    end: 489,
+                },
+                reads: 1,
+                depth: 0,
+                escape: true,
+            },
+        ],
+        NameId(
+            6,
+        ): [],
+        NameId(
+            7,
+        ): [],
+        NameId(
+            10,
+        ): [],
+        NameId(
+            13,
+        ): [],
+        NameId(
+            9,
+        ): [],
+    },
+    scopes: [
+        Some(
+            NameId(
+                5,
+            ),
+        ),
+    ],
+}
+StackedMap {
+    table: {
+        NameId(
+            16,
+        ): [],
+        NameId(
+            18,
+        ): [],
+        NameId(
+            17,
+        ): [],
+    },
+    scopes: [],
+}

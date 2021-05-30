@@ -28,6 +28,7 @@ impl<'a> Parser<'a> {
             | T![-=]
             | T![*=]
             | T![/=] => self.bump(),
+            
             _ => self.error("Expected an operator",format!("Expected one of `-` | `+` |`*`| `/` | `&&` | `||` | `<` | `>` | `==` | `!` | `!=` | `>=` | `<=` | `+=` | `-=` | `*=` | `/=`  instead found `{}`",self.current_string())),
         }
     }
@@ -43,9 +44,11 @@ impl InfixParser for BinaryParselet {
     fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, BIN_EXPR);
 
+      
         parser.parse_op();
 
-        parser.parse_expression(self.0.higher(), Restrictions::default());
+        let restriction = parser.restriction.unwrap_or(Restrictions::default());
+        parser.parse_expression(self.0.higher(), restriction);
 
         parser.finish_node();
     }

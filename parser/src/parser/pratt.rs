@@ -99,6 +99,7 @@ impl Rule for SyntaxKind {
             T![&&] => RuleToken::AmpAmp,
             T![||] => RuleToken::PipePipe,
             T![|] => RuleToken::Pipe,
+            T![==] => RuleToken::EqEq,
             _ => RuleToken::None,
         }
     }

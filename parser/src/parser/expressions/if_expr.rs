@@ -11,8 +11,11 @@ impl<'a> Parser<'a> {
         self.expect(T![if]);
 
         self.start_node(CONDITION);
+
+        self.restriction = Some(Restrictions::no_records());
         self.parse_expression(Precedence::Assignment, Restrictions::no_records());
         self.finish_node();
+        self.restriction = None;
         self.parse_block();
 
         if self.current() == T![else] {

@@ -44,6 +44,7 @@ pub struct Parser<'a> {
     token_pos: usize,
     prefix: HashMap<RuleToken, &'a dyn PrefixParser>,
     infix: HashMap<RuleToken, &'a dyn InfixParser>,
+    restriction: Option<Restrictions>,
 }
 
 impl<'a> Parser<'a> {
@@ -59,6 +60,7 @@ impl<'a> Parser<'a> {
             infix: HashMap::new(),
             reporter,
             input,
+            restriction: None,
         };
         parser.prefix(RuleToken::LBracket, &expressions::LiteralParselet);
         parser.prefix(RuleToken::Literal, &expressions::LiteralParselet);

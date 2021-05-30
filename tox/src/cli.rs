@@ -37,12 +37,6 @@ impl Cli {
 
             let WithError(tokens, mut errors) = db.lex(handle);
 
-            if !errors.is_empty() {
-                db.emit(&mut errors)?;
-                exit = -1;
-                break;
-            }
-
             if self.lex {
                 if let Some(ref output) = self.output {
                     write!(&mut File::open(output)?, "{:#?}", tokens)?;
@@ -51,13 +45,13 @@ impl Cli {
                 }
             }
 
-            let WithError(source_file, mut errors) = db.parse(handle);
-
             if !errors.is_empty() {
                 db.emit(&mut errors)?;
                 exit = -1;
                 break;
             }
+
+            let WithError(source_file, mut errors) = db.parse(handle);
 
             if self.ast {
                 if let Some(ref output) = self.output {
@@ -65,6 +59,12 @@ impl Cli {
                 } else {
                     println!("{}", dump_debug(&source_file));
                 }
+            }
+
+            if !errors.is_empty() {
+                db.emit(&mut errors)?;
+                exit = -1;
+                break;
             }
 
             let WithError(_program, mut errors) = db.lower(handle);

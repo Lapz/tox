@@ -1,20 +1,54 @@
-class Foo {
-  fn bar() {
 
-  }
+class Tree {
+  key:string;
+  left: Tree;
+  right:Tree;
 }
 
 
-fn add(x:i32,y:i32) -> i32 {
-    return x+y;
-}
+fn prettyprint(tree:Tree) -> string {
+  let output = "";
 
+  let write =  |s:string| {
+    output += s
+  };
+
+  let show = |n:i32, t: Tree| {
+    let indent = |s:string| {
+      for(let i = 0; i < n; i += 1) {
+        write(" ");
+      }
+
+      output += s;
+
+      write("\n");
+    };
+
+
+    if t == nil {
+      indent(".")
+    } else {
+      indent(t.key);
+      show(n+1,t.left);
+      show(n+1,t.right);
+    }
+  };
+
+  show(0,tree);
+
+  return output
+}
 
 fn main() {
 
-    let b = 1;
+    let a = 1;
 
-    add(5,"a");
+
+    let add = |b:i32| {
+      return a + b;
+    }
+
+    add("a");
  
     
     // print(1+1);

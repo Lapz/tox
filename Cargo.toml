@@ -4,6 +4,7 @@ members=[
     "parser",
     "syntax",
     "semant",
+    "ir",
     "tools",
     "tox-wasm",
     "tox",
