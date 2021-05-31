@@ -3,6 +3,7 @@ members=[
     "errors",
     "parser",
     "syntax",
+    "codegen",
     "semant",
     "ir",
     "tools",

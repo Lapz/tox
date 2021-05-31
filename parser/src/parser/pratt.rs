@@ -90,6 +90,7 @@ impl Rule for SyntaxKind {
             T![/=] => RuleToken::SlashEq,
             T![*=] => RuleToken::MinusEq,
             T![+] => RuleToken::Plus,
+            T![/] => RuleToken::Slash,
             T![!] => RuleToken::Excl,
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,

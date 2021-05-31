@@ -10,5 +10,5 @@ mod resolver;
 pub use db::{HirDatabase, HirDatabaseStorage, InternDatabaseStorage};
 pub use indexmap::IndexMap;
 pub use infer::{Ctx, InferDataMap, StackedMap, Type, TypeCon, TypeMap};
-pub use syntax::TextRange;
+pub use syntax::{SmolStr, TextRange};
 pub use util::Span;

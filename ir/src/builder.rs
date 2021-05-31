@@ -3,11 +3,8 @@ use std::collections::HashMap;
 use errors::{FileId, WithError};
 
 use semant::{
-    hir::{
-        BinOp, Class, Expr, ExprId, Function, FunctionAstMap, Literal, Name, NameId, PatId,
-        Pattern, Stmt, StmtId, UnaryOp,
-    },
-    IndexMap, InferDataMap, Span, StackedMap, Type, TypeCon,
+    hir::{Expr, ExprId, FunctionAstMap, Literal, NameId, PatId, Pattern, Stmt, StmtId},
+    IndexMap, InferDataMap, Span, StackedMap,
 };
 
 use crate::ir::{self, Instruction, Value};

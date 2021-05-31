@@ -1,7 +1,7 @@
 use crate::db::{DatabaseImpl, Diagnostics};
+use codegen::CodegenDatabase;
 use errors::{FileDatabase, WithError};
 use parser::{dump_debug, ParseDatabase};
-
 use semant::HirDatabase;
 use std::fs::File;
 use std::io::{self, Write};
@@ -75,6 +75,8 @@ impl Cli {
             db.emit(&mut errors)?;
 
             // Codegen here
+
+            let WithError(_, _) = db.compile_to_asm(handle);
         }
 
         Ok(exit)
