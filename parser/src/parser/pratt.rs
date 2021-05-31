@@ -92,6 +92,7 @@ impl Rule for SyntaxKind {
             T![+] => RuleToken::Plus,
             T![/] => RuleToken::Slash,
             T![!] => RuleToken::Excl,
+            T![*] => RuleToken::Star,
             T![-] => RuleToken::Minus,
             T!["("] => RuleToken::LParen,
             T!["["] => RuleToken::LBracket,

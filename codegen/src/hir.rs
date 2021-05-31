@@ -68,10 +68,12 @@ where
     }
 
     pub fn generate_function(&mut self, function: &Function) -> std::io::Result<()> {
-        writeln!(
+        write!(
             &mut self.file,
-            "{}:\n\tpushq %rbp
-            \tmovq %rsp, %rbp",
+            r#"{}:
+    pushq %rbp
+    movq %rsp, %rbp
+    "#,
             self.db.lookup_intern_name(function.name.item)
         )?;
 
@@ -124,8 +126,7 @@ where
         let expr = map.expr(&id.item);
 
         match expr {
-            Expr::Paren(_)
-            | Expr::Tuple(_)
+            Expr::Tuple(_)
             | Expr::Unary { .. }
             | Expr::Return(_)
             | Expr::Match { .. }
@@ -143,26 +144,52 @@ where
             | Expr::Ident(_)
             | Expr::Index { .. }
             | Expr::While { .. } => unimplemented!(),
+            Expr::Paren(expr) => self.generate_expr(expr, map),
             Expr::Binary { lhs, op, rhs } => {
-                let lhs = self.generate_expr(lhs, map);
-                self.emit("pushq %rax")?;
-
-                let rhs = self.generate_expr(rhs, map);
-
-                self.emit("popq %rdx")?;
-
                 match op {
-                    BinOp::Plus => {
-                        self.emit("addq %rdx,%rax")?;
-                    }
-                    BinOp::Minus => {
-                        self.emit("subq %rdx,%rax")?;
+                    BinOp::Plus | BinOp::Minus => {
+                        let lhs = self.generate_expr(lhs, map);
+                        self.emit("pushq %rax")?;
+
+                        let rhs = self.generate_expr(rhs, map);
+
+                        self.emit("popq %rdx")?;
+                        self.emit(format!(
+                            "{} %rdx,%rax",
+                            match op {
+                                BinOp::Plus => {
+                                    "addq"
+                                }
+                                BinOp::Minus => {
+                                    "subq"
+                                }
+                                BinOp::Mult => {
+                                    "mulq"
+                                }
+                                _ => unreachable!(),
+                            }
+                        ))?;
                     }
                     BinOp::Mult => {
-                        self.emit("mulq %rdx,%rax")?;
+                        let lhs = self.generate_expr(lhs, map);
+                        self.emit("pushq %rax")?;
+
+                        let rhs = self.generate_expr(rhs, map);
+                        self.emit("popq %rdx")?;
+                        self.emit("mulq %rdx")?;
                     }
+
                     BinOp::Div => {
-                        self.emit("divq %rax")?;
+                        let _ = self.generate_expr(rhs, map);
+                        self.emit("pushq %rax")?;
+
+                        let _ = self.generate_expr(lhs, map);
+
+                        self.emit("popq %rdi")?;
+
+                        self.emit("cltd")?;
+
+                        self.emit("divq %rdi")?;
                     }
                     _ => {
                         unimplemented!()

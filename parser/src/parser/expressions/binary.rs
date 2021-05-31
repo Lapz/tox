@@ -44,7 +44,6 @@ impl InfixParser for BinaryParselet {
     fn parse(&self, parser: &mut Parser, checkpoint: rowan::Checkpoint) {
         parser.start_node_at(checkpoint, BIN_EXPR);
 
-      
         parser.parse_op();
 
         let restriction = parser.restriction.unwrap_or(Restrictions::default());

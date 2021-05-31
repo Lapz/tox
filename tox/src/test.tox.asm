@@ -9,13 +9,16 @@ _main:
         ret
 
 main:
-	pushq %rbp
+    pushq %rbp
     movq %rsp, %rbp
-	movq $10,%rax
+    movq $10,%rax
 	pushq %rax
 	movq $2,%rax
-    movq $0, %rdx
-	popq %rdx 
-	divq %rax
+	popq %rdx
+	mulq %rdx
+	pushq %rax
+	movq $5,%rax
+	popq %rdx
+	addq %rdx,%rax
 	popq %rbp
 	ret
