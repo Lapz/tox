@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::{write, Display},
     fs::File,
     io::{Seek, SeekFrom, Write},
@@ -18,8 +19,30 @@ pub(crate) struct Codegen<DB> {
     db: DB,
     file: File,
     label_count: usize,
+
     constants: Vec<(usize, SmolStr)>,
 }
+
+macro_rules! emit {
+    ($self:ident, $fmt:expr) => {
+
+    writeln!(&mut  $self.file,$fmt)
+
+    };
+
+   ($self:ident,$fmt:expr,$($arg:tt)+) => {
+
+    writeln!(&mut $self.file,$fmt,$($arg)+)
+
+    };
+
+}
+
+const fn align_to(n: usize, align: usize) -> usize {
+    (n + align - 1) / align * align
+}
+
+const REGS: [Register; 6] = [RDI, RSI, RDX, RCX, R8, R9];
 
 pub enum Register {
     Offset(usize),
@@ -34,6 +57,8 @@ pub enum Register {
     RBP,
     Label(usize),
 }
+
+use Register::*;
 
 const RUNTIME_START: &'static str = r#"
 .text # code segment
@@ -67,6 +92,33 @@ where
         Ok(())
     }
 
+    fn generate_params(
+        &mut self,
+        params: &[Span<semant::hir::ParamId>],
+        mut stack_offset: usize,
+    ) -> std::io::Result<()> {
+        let immediate_register = 0;
+        let mut arg_count = 2;
+
+        for param in params {
+            if immediate_register >= 6 {
+                // save the register on the stack
+
+                arg_count += 1;
+
+                emit!(self, "mov {}(%rbp), %rax", arg_count * 8)?;
+
+                emit!(self, "push %rax")?;
+            } else {
+                let reg = writeln!(&mut self.file, "\tpush ",)?;
+            }
+
+            stack_offset -= 8;
+        }
+
+        Ok(())
+    }
+
     pub fn generate_function(&mut self, function: &Function) -> std::io::Result<()> {
         write!(
             &mut self.file,
@@ -76,6 +128,8 @@ where
     "#,
             self.db.lookup_intern_name(function.name.item)
         )?;
+
+        self.generate_params(&function.params, 8)?;
 
         if let Some(body) = &function.body {
             for stmt in body {
