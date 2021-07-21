@@ -12,7 +12,8 @@ mod source_file;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use data::Resolver;
+pub use data::FunctionData;
+pub use data::Resolver;
 pub(crate) use data::TypeKind;
 pub(crate) use imports::resolve_imports_query;
 pub(crate) use module::resolve_modules_query;

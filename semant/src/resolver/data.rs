@@ -30,11 +30,11 @@ pub enum TypeKind {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Resolver {
-    pub(crate) ctx: Ctx,
-    pub(crate) items: HashSet<hir::NameId>,
-    pub(crate) exported_items: HashSet<hir::NameId>,
-    pub(crate) function_data: HashMap<hir::NameId, FunctionData>,
-    pub(crate) interned_types: StackedMap<hir::TypeId, Type>,
+    pub ctx: Ctx,
+    pub items: HashSet<hir::NameId>,
+    pub exported_items: HashSet<hir::NameId>,
+    pub function_data: HashMap<hir::NameId, FunctionData>,
+    pub interned_types: StackedMap<hir::TypeId, Type>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -57,10 +57,10 @@ pub struct LocalData {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FunctionData {
-    pub(crate) type_params: HashMap<NameId, Type>,
-    pub(crate) params: HashMap<NameId, Type>,
-    pub(crate) scopes: StackedMap<hir::NameId, LocalData>,
+pub struct FunctionData {
+    type_params: HashMap<NameId, Type>,
+    pub params: HashMap<NameId, Type>,
+    pub scopes: StackedMap<hir::NameId, LocalData>,
 }
 
 impl FunctionData {

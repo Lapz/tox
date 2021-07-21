@@ -8,10 +8,13 @@ _main:
         popq    %rbp
         ret
 
+.text
+.type main, @function
 main:
-    pushq %rbp
-    movq %rsp, %rbp
-    movq $10,%rax
+	push %rbp
+	mov %rsp, %rbp
+	sub $16, %rsp
+	movq $10,%rax
 	pushq %rax
 	movq $2,%rax
 	popq %rdx

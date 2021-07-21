@@ -12,8 +12,7 @@ mod unify;
 
 use crate::{
     hir::{ExprId, NameId, StmtId},
-    resolver::Resolver,
-    HirDatabase,
+    HirDatabase, Resolver,
 };
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
@@ -22,6 +21,7 @@ pub use stacked_map::StackedMap;
 
 use std::{collections::HashMap, sync::Arc};
 pub use ty::{Type, TypeCon, TypeVar, Variant};
+
 pub type TypeMap = HashMap<NameId, InferDataMap>;
 
 #[derive(Debug)]
@@ -36,6 +36,7 @@ pub(crate) struct InferDataCollector<DB> {
     file: FileId,
     type_map: TypeMap,
 }
+
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct InferDataMap {
     pub expr_to_type: IndexMap<ExprId, Type>,

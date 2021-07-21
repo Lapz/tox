@@ -1,0 +1,218 @@
+StackedMap {
+    table: {
+        NameId(
+            0,
+        ): [],
+        NameId(
+            1,
+        ): [],
+    },
+    scopes: [],
+}
+Resolver {
+    ctx: Ctx {
+        types: StackedMap {
+            table: {
+                NameId(
+                    5,
+                ): [
+                    Con(
+                        Bool,
+                    ),
+                ],
+                NameId(
+                    4,
+                ): [
+                    Con(
+                        Float,
+                    ),
+                ],
+                NameId(
+                    6,
+                ): [
+                    Con(
+                        Void,
+                    ),
+                ],
+                NameId(
+                    9,
+                ): [
+                    App(
+                        [],
+                    ),
+                ],
+                NameId(
+                    2,
+                ): [
+                    Poly(
+                        [],
+                        App(
+                            [
+                                Con(
+                                    Void,
+                                ),
+                            ],
+                        ),
+                    ),
+                ],
+                NameId(
+                    7,
+                ): [
+                    Con(
+                        Str,
+                    ),
+                ],
+                NameId(
+                    8,
+                ): [
+                    Poly(
+                        [
+                            TypeVar(
+                                0,
+                            ),
+                            TypeVar(
+                                1,
+                            ),
+                        ],
+                        Enum(
+                            NameId(
+                                8,
+                            ),
+                            {
+                                NameId(
+                                    11,
+                                ): Variant {
+                                    tag: 1,
+                                    ty: Some(
+                                        Var(
+                                            TypeVar(
+                                                1,
+                                            ),
+                                        ),
+                                    ),
+                                },
+                                NameId(
+                                    10,
+                                ): Variant {
+                                    tag: 0,
+                                    ty: Some(
+                                        Var(
+                                            TypeVar(
+                                                0,
+                                            ),
+                                        ),
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                ],
+                NameId(
+                    3,
+                ): [
+                    Con(
+                        Int,
+                    ),
+                ],
+            },
+            scopes: [
+                Some(
+                    NameId(
+                        3,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        4,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        5,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        6,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        7,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        9,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        8,
+                    ),
+                ),
+                Some(
+                    NameId(
+                        2,
+                    ),
+                ),
+            ],
+        },
+        kind: {
+            NameId(
+                3,
+            ): Type,
+            NameId(
+                6,
+            ): Type,
+            NameId(
+                9,
+            ): Function,
+            NameId(
+                8,
+            ): Enum,
+            NameId(
+                4,
+            ): Type,
+            NameId(
+                7,
+            ): Type,
+            NameId(
+                2,
+            ): Function,
+            NameId(
+                5,
+            ): Type,
+        },
+        tvar_count: 2,
+    },
+    items: {
+        NameId(
+            2,
+        ),
+    },
+    exported_items: {},
+    function_data: {
+        NameId(
+            2,
+        ): FunctionData {
+            type_params: {},
+            params: {},
+            scopes: StackedMap {
+                table: {
+                    NameId(
+                        0,
+                    ): [],
+                    NameId(
+                        1,
+                    ): [],
+                },
+                scopes: [],
+            },
+        },
+    },
+    interned_types: StackedMap {
+        table: {},
+        scopes: [],
+    },
+}

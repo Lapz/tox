@@ -1,32 +1,33 @@
-use std::{
-    collections::HashMap,
-    fmt::{write, Display},
-    fs::File,
-    io::{Seek, SeekFrom, Write},
-    usize,
-};
+use std::{collections::HashMap, fmt::Display, fs::File, io::Write, sync::Arc, usize};
 
 use errors::{FileId, WithError};
 use semant::{
-    hir::{BinOp, Expr, ExprId, Function, FunctionAstMap, FunctionId, Literal, Stmt, StmtId},
-    SmolStr, Span,
+    hir::{
+        BinOp, Expr, ExprId, Function, FunctionAstMap, FunctionId, Literal, NameId, Stmt, StmtId,
+    },
+    Resolver, SmolStr, Span,
 };
 
 use crate::db::CodegenDatabase;
 
+const FP_MAX: usize = 8;
+const GP_MAX: usize = 6;
+#[derive(Debug)]
+struct Frame {
+    /// The total space on the stack
+    stack_size: usize,
+}
 #[derive(Debug)]
 pub(crate) struct Codegen<DB> {
     db: DB,
     file: File,
-    label_count: usize,
-
-    constants: Vec<(usize, SmolStr)>,
+    frame_info: HashMap<NameId, Frame>,
 }
 
 macro_rules! emit {
     ($self:ident, $fmt:expr) => {
 
-    writeln!(&mut  $self.file,$fmt)
+  {  writeln!(&mut $self.file,$fmt)}
 
     };
 
@@ -80,56 +81,35 @@ where
         Ok(())
     }
 
-    fn generate_constants(&mut self) -> std::io::Result<()> {
-        for (label, string) in &self.constants {
-            writeln!(
-                &mut self.file,
-                ".LC{}:\n \t.string \"{}\"",
-                label, &**string
-            )?;
-        }
+    fn get_frame_info(&mut self, function: &Function) -> Frame {
+        // If a function has many parameters, some parameters are
+        // inevitably passed by stack rather than by register.
+        // The first passed-by-stack parameter resides at RBP+16.
+        let top = 16;
+        let bottom = 0;
 
-        Ok(())
-    }
+        let gp = 0;
+        let bp = 0;
 
-    fn generate_params(
-        &mut self,
-        params: &[Span<semant::hir::ParamId>],
-        mut stack_offset: usize,
-    ) -> std::io::Result<()> {
-        let immediate_register = 0;
-        let mut arg_count = 2;
-
-        for param in params {
-            if immediate_register >= 6 {
-                // save the register on the stack
-
-                arg_count += 1;
-
-                emit!(self, "mov {}(%rbp), %rax", arg_count * 8)?;
-
-                emit!(self, "push %rax")?;
-            } else {
-                let reg = writeln!(&mut self.file, "\tpush ",)?;
-            }
-
-            stack_offset -= 8;
-        }
-
-        Ok(())
+        for param in &function.params {}
+        Frame { stack_size: 16 }
     }
 
     pub fn generate_function(&mut self, function: &Function) -> std::io::Result<()> {
-        write!(
-            &mut self.file,
-            r#"{}:
-    pushq %rbp
-    movq %rsp, %rbp
-    "#,
+        emit!(self, ".text")?;
+        emit!(
+            self,
+            ".type {}, @function",
             self.db.lookup_intern_name(function.name.item)
-        )?;
+        );
+        emit!(self, "{}:", self.db.lookup_intern_name(function.name.item));
+        emit!(self, "\tpush %rbp");
+        emit!(self, "\tmov %rsp, %rbp");
 
-        self.generate_params(&function.params, 8)?;
+        let frame = self.get_frame_info(&function.name.item);
+        emit!(self, "\tsub ${}, %rsp", frame.stack_size);
+
+        // self.generate_params(&function.params, 8)?;
 
         if let Some(body) = &function.body {
             for stmt in body {
@@ -279,12 +259,13 @@ where
                     Literal::String(string) => {
                         // Support strings
 
-                        let label = self.label_count;
-                        self.label_count += 1;
+                        // let label = self.label_count;
+                        // self.label_count += 1;
 
-                        self.constants.push((label, string.clone()));
+                        // self.constants.push((label, string.clone()));
 
-                        Ok(Register::Label(label))
+                        // Ok(Register::Label(label))
+                        unimplemented!()
                     }
                     Literal::Nil => {
                         writeln!(&mut self.file, "\tmovq $0,%rax")?;
@@ -298,17 +279,19 @@ where
 
 pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
+    let WithError(resolver, _) = db.resolve_source_file(file);
     let WithError(type_map, error) = db.infer(file);
     errors.extend(error);
     let name = format!("{}.asm", db.name(file));
 
     let file = File::create(&name).expect("couldn't generate file");
 
+    println!("{:#?}", resolver);
+
     let mut builder = Codegen {
         db,
         file,
-        label_count: 0,
-        constants: vec![],
+        frame_info: HashMap::default(),
     };
 
     builder.generate_main().unwrap();
@@ -316,7 +299,7 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithErro
     for function in &program.functions {
         builder.generate_function(function).unwrap()
     }
-    builder.generate_constants().unwrap();
+    // builder.generate_constants().unwrap();
 
     WithError((), vec![])
 }

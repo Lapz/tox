@@ -16,6 +16,8 @@ where
     DB: HirDatabase,
 {
     pub(crate) fn finish(self) -> (TypeMap, Reporter) {
+        let clone = self.type_map.clone();
+
         (self.type_map, self.reporter)
     }
 
