@@ -11,13 +11,14 @@ mod ty;
 mod unify;
 
 use crate::{
-    hir::{ExprId, NameId, StmtId},
-    HirDatabase, Resolver,
+    hir::{ExprId, FunctionAstMap, NameId, ParamId, StmtId},
+    HirDatabase, Resolver, Span,
 };
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
 use indexmap::IndexMap;
 pub use stacked_map::StackedMap;
+use syntax::TextRange;
 
 use std::{collections::HashMap, sync::Arc};
 pub use ty::{Type, TypeCon, TypeVar, Variant};
@@ -36,7 +37,22 @@ pub(crate) struct InferDataCollector<DB> {
     file: FileId,
     type_map: TypeMap,
 }
-
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct Program {
+    pub functions: Vec<Function>,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Function {
+    pub exported: bool,
+    pub name: Span<NameId>,
+    pub ast_map: Arc<FunctionAstMap>,
+    pub params: IndexMap<Span<ParamId>, Type>,
+    pub expr_to_type: IndexMap<ExprId, Type>,
+    pub stmt_to_type: IndexMap<StmtId, Type>,
+    pub signature: Type,
+    pub span: TextRange,
+    pub body: Option<Vec<Span<StmtId>>>,
+}
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct InferDataMap {
     pub expr_to_type: IndexMap<ExprId, Type>,
@@ -52,8 +68,8 @@ impl InferDataMap {
     }
 }
 
-pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<TypeMap> {
-    let WithError(program, mut errors) = db.lower(file);
+pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<Program> {
+    let WithError(source, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
     let reporter = Reporter::new(file);
     errors.extend(error);
@@ -72,13 +88,15 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<TypeMap> {
         type_map: HashMap::new(),
     };
 
-    for function in &program.functions {
-        collector.infer_function(function);
+    let mut program = Program { functions: vec![] };
+
+    for function in &source.functions {
+        program.functions.push(collector.infer_function(function));
     }
 
-    let (type_map, reporter) = collector.finish();
+    let reporter = collector.finish();
 
     errors.extend(reporter.finish());
 
-    WithError(type_map, errors)
+    WithError(program, errors)
 }

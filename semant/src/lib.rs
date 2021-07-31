@@ -1,7 +1,7 @@
 #[macro_use]
 mod db;
 pub mod hir;
-mod infer;
+pub mod infer;
 // mod infer2;
 mod lower;
 mod util;

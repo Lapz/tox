@@ -1,6 +1,6 @@
 use crate::{
     hir::{self, NameId},
-    infer::{Type, TypeMap},
+    infer::{Program, Type},
     resolver::{ModuleGraph, Resolver, TypeKind},
 };
 use errors::{FileId, WithError};
@@ -74,5 +74,5 @@ pub trait HirDatabase: std::fmt::Debug + InternDatabase + ParseDatabase {
     fn module_graph(&self, file: FileId) -> WithError<ModuleGraph>;
 
     #[salsa::invoke(crate::infer::infer_query)]
-    fn infer(&self, file: FileId) -> WithError<TypeMap>;
+    fn infer(&self, file: FileId) -> WithError<Program>;
 }

@@ -1,4 +1,5 @@
 use crate::hir::NameId;
+
 use std::collections::HashMap;
 
 /// A type var represent a variable that could be a type
@@ -42,7 +43,78 @@ pub enum Type {
     Unknown,
 }
 
-impl Type {}
+impl Type {
+    pub fn size(&self) -> usize {
+        match self {
+            Type::Con(con) => match con {
+                TypeCon::Bool => 1,
+                TypeCon::Float => 4,
+                TypeCon::Int => 4,
+                TypeCon::Str => 4, // TODO fix
+                TypeCon::Void => 1,
+                TypeCon::Array { ty, size } => {
+                    if let Some(len) = size {
+                        ty.size() * len
+                    } else {
+                        16
+                    }
+                }
+            },
+            Type::App(..) => 8,
+            Type::Tuple(length) => 8,
+            Type::Enum(_, fields) => {
+                4 + fields.iter().fold(0, |acc, (_, variant)| {
+                    acc + variant.ty.as_ref().map_or(4, |ty| ty.size())
+                })
+            }
+            Type::Class { fields, .. } => {
+                let mut size = 0;
+
+                for (_, ty) in fields {
+                    size += ty.size()
+                }
+
+                size
+            }
+
+            Type::Poly(_, inner) => inner.size(),
+            Type::Var(_) => panic!("Found type var during code generation, this is a bug"),
+            Type::Unknown => panic!("Found unknown type during code generation"),
+        }
+    }
+
+    // We treat a tuple like a struct
+
+    pub fn align(&self) -> usize {
+        match self {
+            Type::Con(con) => match con {
+                TypeCon::Bool => 1,
+                TypeCon::Float => 4,
+                TypeCon::Int => 4,
+                TypeCon::Str => 4, // TODO fix
+                TypeCon::Void => 1,
+                TypeCon::Array { ty, .. } => ty.align(),
+            },
+            Type::App(..) => 8,
+            Type::Poly(_, inner) => inner.align(),
+            Type::Unknown => panic!("Unsized types"),
+            Type::Tuple(length) => 8,
+            Type::Enum(_, _) => 4,
+            Type::Var(_) => panic!("Unsized type"),
+            Type::Class {
+                name,
+                fields,
+                methods,
+            } => {
+                if fields.is_empty() {
+                    1
+                } else {
+                    4
+                }
+            }
+        }
+    }
+}
 
 /// Represent an enum variant
 /// ```ignore

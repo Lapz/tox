@@ -1,11 +1,17 @@
-use std::{collections::HashMap, fmt::Display, fs::File, io::Write, sync::Arc, usize};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+    fs::File,
+    io::Write,
+    sync::Arc,
+    usize,
+};
 
 use errors::{FileId, WithError};
 use semant::{
-    hir::{
-        BinOp, Expr, ExprId, Function, FunctionAstMap, FunctionId, Literal, NameId, Stmt, StmtId,
-    },
-    Resolver, SmolStr, Span,
+    hir::{BinOp, Expr, ExprId, FunctionAstMap, FunctionId, Literal, NameId, Stmt, StmtId},
+    infer::{self},
+    Resolver, SmolStr, Span, Type,
 };
 
 use crate::db::CodegenDatabase;
@@ -61,41 +67,53 @@ pub enum Register {
 
 use Register::*;
 
-const RUNTIME_START: &'static str = r#"
-.text # code segment
-.globl _main # label at start of compiled static main
-_main:
-        pushq   %rbp
-        movq    %rsp, %rbp
-        call    main
-        popq    %rbp
-        ret
-"#;
-
 impl<'a, DB> Codegen<&'a DB>
 where
     DB: CodegenDatabase,
 {
-    pub fn generate_main(&mut self) -> std::io::Result<()> {
-        writeln!(&mut self.file, "{}", RUNTIME_START)?;
-        Ok(())
-    }
-
-    fn get_frame_info(&mut self, function: &Function) -> Frame {
+    fn get_frame_info(&mut self, function: &infer::Function) -> Frame {
         // If a function has many parameters, some parameters are
         // inevitably passed by stack rather than by register.
         // The first passed-by-stack parameter resides at RBP+16.
-        let top = 16;
-        let bottom = 0;
+        let mut top = 16;
+        let mut bottom = 0;
 
         let gp = 0;
         let bp = 0;
 
-        for param in &function.params {}
-        Frame { stack_size: 16 }
+        for (_, ty) in &function.params {
+            top = align_to(top, 8);
+
+            top += ty.size();
+        }
+
+        for (_, ty) in &function.params {
+            // AMD64 System V ABI has a special alignment rule for an array of
+            // length at least 16 bytes. We need to align such array to at least
+            // 16-byte boundaries. See p.14 of
+            // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
+            let alignment = match ty {
+                ty @ Type::Con(semant::TypeCon::Array { .. }) => {
+                    if ty.size() >= 16 {
+                        std::cmp::max(16, ty.align())
+                    } else {
+                        ty.align()
+                    }
+                }
+                ty => ty.align(),
+            };
+
+            bottom += ty.size();
+
+            bottom = align_to(bottom, alignment);
+        }
+
+        Frame {
+            stack_size: align_to(bottom, 16),
+        }
     }
 
-    pub fn generate_function(&mut self, function: &Function) -> std::io::Result<()> {
+    pub fn generate_function(&mut self, function: &infer::Function) -> std::io::Result<()> {
         emit!(self, ".text")?;
         emit!(
             self,
@@ -106,16 +124,16 @@ where
         emit!(self, "\tpush %rbp");
         emit!(self, "\tmov %rsp, %rbp");
 
-        let frame = self.get_frame_info(&function.name.item);
+        let frame = self.get_frame_info(function);
         emit!(self, "\tsub ${}, %rsp", frame.stack_size);
 
-        // self.generate_params(&function.params, 8)?;
+        let offset = function.params.len() * 8;
 
-        if let Some(body) = &function.body {
-            for stmt in body {
-                self.generate_statement(stmt, &function.ast_map)?;
-            }
-        }
+        // if let Some(body) = &function.body {
+        //     for stmt in body {
+        //         self.generate_statement(stmt, &function.ast_map)?;
+        //     }
+        // }
 
         self.emit("popq %rbp")?;
         self.emit("ret")?;
@@ -280,7 +298,7 @@ where
 pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
     let WithError(program, mut errors) = db.lower(file);
     let WithError(resolver, _) = db.resolve_source_file(file);
-    let WithError(type_map, error) = db.infer(file);
+    let WithError(typed_program, error) = db.infer(file);
     errors.extend(error);
     let name = format!("{}.asm", db.name(file));
 
@@ -294,9 +312,7 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithErro
         frame_info: HashMap::default(),
     };
 
-    builder.generate_main().unwrap();
-
-    for function in &program.functions {
+    for function in &typed_program.functions {
         builder.generate_function(function).unwrap()
     }
     // builder.generate_constants().unwrap();

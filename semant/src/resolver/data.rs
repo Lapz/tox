@@ -61,14 +61,16 @@ pub struct FunctionData {
     type_params: HashMap<NameId, Type>,
     pub params: HashMap<NameId, Type>,
     pub scopes: StackedMap<hir::NameId, LocalData>,
+    pub locals: HashMap<NameId, Type>,
 }
 
 impl FunctionData {
     pub fn new() -> Self {
         Self {
-            type_params: HashMap::new(),
-            params: HashMap::new(),
+        type_params: HashMap::default(),
+            params: HashMap::default(),
             scopes: StackedMap::new(),
+            locals: HashMap::default(),
         }
     }
 }

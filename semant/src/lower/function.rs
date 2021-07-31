@@ -37,7 +37,7 @@ where
     ) -> hir::Function {
         let params = self.params;
         let type_params = self.type_params;
-        let ast_map = self.ast_map;
+        let ast_map = Arc::new(self.ast_map);
         hir::Function {
             exported,
             name,

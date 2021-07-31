@@ -4,40 +4,40 @@ use crate::{
         self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
         PLACEHOLDER_NAME,
     },
-    infer::{InferDataCollector, Type, TypeCon},
+    infer::{self, InferDataCollector, Type, TypeCon},
     util, HirDatabase,
 };
 use errors::Reporter;
-use std::collections::HashMap;
+use indexmap::IndexMap;
+use std::{collections::HashMap, hash::Hash};
 use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
 where
     DB: HirDatabase,
 {
-    pub(crate) fn finish(self) -> (TypeMap, Reporter) {
-        let clone = self.type_map.clone();
-
-        (self.type_map, self.reporter)
+    pub(crate) fn finish(self) -> Reporter {
+        self.reporter
     }
 
     #[instrument(skip(self, function))]
-    pub(crate) fn infer_function(&mut self, function: &Function) {
+    pub(crate) fn infer_function(&mut self, function: &Function) -> infer::Function {
         let map = InferDataMap::default();
 
         self.type_map.insert(function.name.item, map);
 
+        let mut params = IndexMap::default();
         let expected = self.db.resolve_named_type(self.file, function.name.item);
 
-        self.returns = Some(expected);
+        self.returns = Some(expected.clone());
 
         self.fn_name = Some(function.name.item);
 
-        for param in &function.params {
-            let param = function.ast_map.param(&param.item);
+        for ast_param in &function.params {
+            let param = function.ast_map.param(&ast_param.item);
 
             let ty = self.db.resolve_hir_type(self.file, param.ty.item);
-
+            params.insert(*ast_param, ty.clone());
             self.assign_type(param.pat.item, ty, &function.ast_map)
         }
 
@@ -45,6 +45,20 @@ where
             body.iter().for_each(|stmt| {
                 let _ = self.infer_statement(stmt, &function.ast_map);
             })
+        }
+
+        let map = self.type_map.remove(&function.name.item).unwrap();
+
+        infer::Function {
+            exported: function.exported,
+            name: function.name,
+            ast_map: function.ast_map.clone(),
+            params,
+            expr_to_type: map.expr_to_type,
+            stmt_to_type: map.stmt_to_type,
+            signature: expected.clone(),
+            span: function.span,
+            body: function.body.clone(),
         }
     }
 
