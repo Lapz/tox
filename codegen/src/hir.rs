@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
+    error::Error,
     fmt::Display,
     fs::File,
     io::Write,
@@ -11,13 +12,19 @@ use errors::{FileId, WithError};
 use semant::{
     hir::{BinOp, Expr, ExprId, FunctionAstMap, FunctionId, Literal, NameId, Stmt, StmtId},
     infer::{self},
-    Resolver, SmolStr, Span, Type,
+    Resolver, SmolStr, Span, Type, TypeCon,
 };
 
 use crate::db::CodegenDatabase;
 
 const FP_MAX: usize = 8;
 const GP_MAX: usize = 6;
+
+#[repr(C)]
+union FloatParts {
+    f_bits: f32,
+    i_bits: i32,
+}
 #[derive(Debug)]
 struct Frame {
     /// The total space on the stack
@@ -115,25 +122,32 @@ where
 
     pub fn generate_function(&mut self, function: &infer::Function) -> std::io::Result<()> {
         emit!(self, ".text")?;
-        emit!(
-            self,
-            ".type {}, @function",
-            self.db.lookup_intern_name(function.name.item)
-        );
-        emit!(self, "{}:", self.db.lookup_intern_name(function.name.item));
+
+        let name = self.db.lookup_intern_name(function.name.item);
+        // emit!(
+        //     self,
+        //     ".type {}, %function",
+        //     self.db.lookup_intern_name(function.name.item)
+        // );
+
+        if name.as_str() == "main" {
+            emit!(self, ".globl _main");
+            emit!(self, "_main:");
+        } else {
+            emit!(self, "{}:", name);
+        }
+
         emit!(self, "\tpush %rbp");
         emit!(self, "\tmov %rsp, %rbp");
 
         let frame = self.get_frame_info(function);
         emit!(self, "\tsub ${}, %rsp", frame.stack_size);
 
-        let offset = function.params.len() * 8;
-
-        // if let Some(body) = &function.body {
-        //     for stmt in body {
-        //         self.generate_statement(stmt, &function.ast_map)?;
-        //     }
-        // }
+        if let Some(body) = &function.body {
+            for stmt in body {
+                self.generate_statement(stmt, &function.ast_map)?;
+            }
+        }
 
         self.emit("popq %rbp")?;
         self.emit("ret")?;
@@ -155,6 +169,7 @@ where
     ) -> std::io::Result<()> {
         let stmt = map.stmt(&id.item);
 
+        emit!(self, "# span {:?}", id.as_reporter_span());
         match stmt {
             Stmt::Let {
                 pat,
@@ -170,16 +185,25 @@ where
         }
     }
 
-    pub fn generate_expr(
-        &mut self,
-        id: &Span<ExprId>,
-        map: &FunctionAstMap,
-    ) -> std::io::Result<Register> {
+    pub fn compare_zero(ty: &Type) -> Result<(), std::io::Error> {
+        match ty {
+            Type::Con(TypeCon::Float) => {
+                emit!(self, "xorps %%xmm1, %%xmm1")?;
+                emit!(self, "ucomiss %%xmm1, %%xmm0")
+            }
+
+            Type::Con(TypeCon::Float) if ty.size() <= 4 => emit!(self, "cmp $0,%eax"),
+            _ => {
+                emit!(self, "cmp $0,%rax")
+            }
+        }
+    }
+
+    pub fn generate_expr(&mut self, id: &Span<ExprId>, map: &FunctionAstMap) {
         let expr = map.expr(&id.item);
 
         match expr {
             Expr::Tuple(_)
-            | Expr::Unary { .. }
             | Expr::Return(_)
             | Expr::Match { .. }
             | Expr::Enum { .. }
@@ -196,83 +220,98 @@ where
             | Expr::Ident(_)
             | Expr::Index { .. }
             | Expr::While { .. } => unimplemented!(),
-            Expr::Paren(expr) => self.generate_expr(expr, map),
-            Expr::Binary { lhs, op, rhs } => {
-                match op {
-                    BinOp::Plus | BinOp::Minus => {
-                        let lhs = self.generate_expr(lhs, map);
-                        self.emit("pushq %rax")?;
+            Expr::Unary { expr, op } => match op {
+                semant::hir::UnaryOp::Minus => {
+                    self.generate_expr(expr, map)?;
+                    let ty = Type::Unknown;
 
-                        let rhs = self.generate_expr(rhs, map);
-
-                        self.emit("popq %rdx")?;
-                        self.emit(format!(
-                            "{} %rdx,%rax",
-                            match op {
-                                BinOp::Plus => {
-                                    "addq"
-                                }
-                                BinOp::Minus => {
-                                    "subq"
-                                }
-                                BinOp::Mult => {
-                                    "mulq"
-                                }
-                                _ => unreachable!(),
-                            }
-                        ))?;
-                    }
-                    BinOp::Mult => {
-                        let lhs = self.generate_expr(lhs, map);
-                        self.emit("pushq %rax")?;
-
-                        let rhs = self.generate_expr(rhs, map);
-                        self.emit("popq %rdx")?;
-                        self.emit("mulq %rdx")?;
-                    }
-
-                    BinOp::Div => {
-                        let _ = self.generate_expr(rhs, map);
-                        self.emit("pushq %rax")?;
-
-                        let _ = self.generate_expr(lhs, map);
-
-                        self.emit("popq %rdi")?;
-
-                        self.emit("cltd")?;
-
-                        self.emit("divq %rdi")?;
-                    }
-                    _ => {
-                        unimplemented!()
+                    match ty {
+                        Type::Con(TypeCon::Float) => {
+                            emit!(self, "mov $1, %rax")?;
+                            emit!(self, "shl $31, %rax")?;
+                            emit!(self, "movq %raq, %xmm1")?;
+                            emit!(self, "xorps %xmm1, %xmm0");
+                        }
+                        _ => emit!(self, "neg %rax"),
                     }
                 }
+                semant::hir::UnaryOp::Excl => {
+                    self.generate_expr(expr, expr)?;
+                }
+            },
+            Expr::Paren(expr) => self.generate_expr(expr, map),
+            Expr::Binary { lhs, op, rhs } => match op {
+                BinOp::Plus | BinOp::Minus => {
+                    let lhs = self.generate_expr(lhs, map);
+                    self.emit("pushq %rax")?;
 
-                Ok(Register::RAX)
-            }
+                    let rhs = self.generate_expr(rhs, map);
+
+                    self.emit("popq %rdx")?;
+                    self.emit(format!(
+                        "{} %rdx,%rax",
+                        match op {
+                            BinOp::Plus => {
+                                "addq"
+                            }
+                            BinOp::Minus => {
+                                "subq"
+                            }
+                            BinOp::Mult => {
+                                "mulq"
+                            }
+                            _ => unreachable!(),
+                        }
+                    ))?;
+                }
+                BinOp::Mult => {
+                    let lhs = self.generate_expr(lhs, map);
+                    self.emit("pushq %rax")?;
+
+                    let rhs = self.generate_expr(rhs, map);
+                    self.emit("popq %rdx")?;
+                    self.emit("mulq %rdx")?;
+                }
+
+                BinOp::Div => {
+                    let _ = self.generate_expr(rhs, map);
+                    self.emit("pushq %rax")?;
+
+                    let _ = self.generate_expr(lhs, map);
+
+                    self.emit("popq %rdi")?;
+
+                    self.emit("cltd")?;
+
+                    self.emit("divq %rdi")?;
+                }
+                _ => {
+                    unimplemented!()
+                }
+            },
             Expr::Literal(literal) => {
                 let literal = self.db.lookup_intern_literal(*literal);
 
                 match literal {
                     Literal::True => {
-                        self.emit("movq $1,%rax")?;
-                        Ok(Register::RAX)
+                        self.emit("mov $1,%rax")?;
                     }
                     Literal::False => {
                         self.emit("movq $0,%rax")?;
-                        Ok(Register::RAX)
                     }
                     Literal::Int(int) => {
                         let int = int.parse::<i64>().unwrap();
 
                         writeln!(&mut self.file, "\tmovq ${},%rax", int)?;
-                        Ok(Register::RAX)
                     }
                     Literal::Float(float) => {
-                        // let float = float.parse::<f64>().unwrap();
-                        // self.emit_store_immediate(dest, Value::Float(Box::new(float.to_be_bytes())))
+                        let float = float.parse::<f32>().unwrap();
 
-                        unimplemented!();
+                        let u = unsafe { std::mem::transmute::<f32, FloatParts>(float) };
+
+                        emit!(self, "mov ${}, %eax # float {}", unsafe { u.i_bits }, float);
+
+                        emit!(self, "movq %rax, %xmm0");
                     }
                     Literal::String(string) => {
                         // Support strings
@@ -286,8 +325,7 @@ where
                         unimplemented!()
                     }
                     Literal::Nil => {
-                        writeln!(&mut self.file, "\tmovq $0,%rax")?;
-                        Ok(Register::RAX)
+                        writeln!(&mut self.file, "\tmov $0,%rax")?;
                     }
                 }
             }
