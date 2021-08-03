@@ -1,7 +1,8 @@
 use crate::{
     hir::{self, NameId},
-    infer::{Program, Type},
+    infer::Type,
     resolver::{ModuleGraph, Resolver, TypeKind},
+    typed::Program,
 };
 use errors::{FileId, WithError};
 use parser::ParseDatabase;

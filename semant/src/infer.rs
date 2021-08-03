@@ -2,9 +2,11 @@ mod binary;
 mod block;
 mod call;
 mod ctx;
+mod enum_expr;
 mod field;
 mod infer;
 mod pattern_matrix;
+mod record;
 mod stacked_map;
 mod subst;
 mod ty;
@@ -12,7 +14,7 @@ mod unify;
 
 use crate::{
     hir::{ExprId, FunctionAstMap, NameId, ParamId, StmtId},
-    HirDatabase, Resolver, Span,
+    typed, HirDatabase, Resolver, Span,
 };
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
@@ -37,22 +39,7 @@ pub(crate) struct InferDataCollector<DB> {
     file: FileId,
     type_map: TypeMap,
 }
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct Program {
-    pub functions: Vec<Function>,
-}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Function {
-    pub exported: bool,
-    pub name: Span<NameId>,
-    pub ast_map: Arc<FunctionAstMap>,
-    pub params: IndexMap<Span<ParamId>, Type>,
-    pub expr_to_type: IndexMap<ExprId, Type>,
-    pub stmt_to_type: IndexMap<StmtId, Type>,
-    pub signature: Type,
-    pub span: TextRange,
-    pub body: Option<Vec<Span<StmtId>>>,
-}
+
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct InferDataMap {
     pub expr_to_type: IndexMap<ExprId, Type>,
@@ -68,7 +55,7 @@ impl InferDataMap {
     }
 }
 
-pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<Program> {
+pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<typed::Program> {
     let WithError(source, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
     let reporter = Reporter::new(file);
@@ -88,7 +75,7 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<Program> {
         type_map: HashMap::new(),
     };
 
-    let mut program = Program { functions: vec![] };
+    let mut program = typed::Program { functions: vec![] };
 
     for function in &source.functions {
         program.functions.push(collector.infer_function(function));

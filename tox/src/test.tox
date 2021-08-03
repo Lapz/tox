@@ -1,3 +1,3 @@
-fn main() {
+fn main((a,b):i32) {
   10.0;
 }

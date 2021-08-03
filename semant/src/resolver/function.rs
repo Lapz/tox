@@ -70,10 +70,6 @@ where
 
         self.insert_type(&name, signature, TypeKind::Function);
 
-        println!(
-            "{:#?}",
-            self.function_data.get_mut(&name.item).unwrap().scopes
-        );
         Ok(())
     }
 

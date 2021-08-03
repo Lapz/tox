@@ -43,6 +43,12 @@ pub enum Type {
     Unknown,
 }
 
+impl std::hash::Hash for Type {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        todo!()
+    }
+}
+
 impl Type {
     pub fn size(&self) -> usize {
         match self {

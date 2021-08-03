@@ -1,15 +1,15 @@
-use super::{InferDataMap, TypeMap};
+use super::InferDataMap;
 use crate::{
     hir::{
         self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
         PLACEHOLDER_NAME,
     },
-    infer::{self, InferDataCollector, Type, TypeCon},
-    util, HirDatabase,
+    infer::{InferDataCollector, Type, TypeCon},
+    typed::{self},
+    util, HirDatabase, Span,
 };
 use errors::Reporter;
-use indexmap::IndexMap;
-use std::{collections::HashMap, hash::Hash};
+
 use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -21,67 +21,98 @@ where
     }
 
     #[instrument(skip(self, function))]
-    pub(crate) fn infer_function(&mut self, function: &Function) -> infer::Function {
+    pub(crate) fn infer_function(&mut self, function: &Function) -> typed::Typed<typed::Function> {
         let map = InferDataMap::default();
 
         self.type_map.insert(function.name.item, map);
 
-        let mut params = IndexMap::default();
         let expected = self.db.resolve_named_type(self.file, function.name.item);
 
         self.returns = Some(expected.clone());
 
         self.fn_name = Some(function.name.item);
 
+        let mut typed_params = Vec::new();
+
         for ast_param in &function.params {
             let param = function.ast_map.param(&ast_param.item);
 
             let ty = self.db.resolve_hir_type(self.file, param.ty.item);
-            params.insert(*ast_param, ty.clone());
-            self.assign_type(param.pat.item, ty, &function.ast_map)
+
+            typed_params.push(typed::Typed::new(
+                typed::Param {
+                    pat: self.assign_type(param.pat, ty.clone(), &function.ast_map),
+                },
+                ty,
+                (ast_param.start, ast_param.end),
+            ));
         }
 
+        let mut inferred_body = vec![];
+
         if let Some(body) = &function.body {
-            body.iter().for_each(|stmt| {
-                let _ = self.infer_statement(stmt, &function.ast_map);
-            })
+            body.iter()
+                .for_each(|stmt| inferred_body.push(self.infer_statement(stmt, &function.ast_map)))
         }
 
         let map = self.type_map.remove(&function.name.item).unwrap();
 
-        infer::Function {
-            exported: function.exported,
-            name: function.name,
-            ast_map: function.ast_map.clone(),
-            params,
-            expr_to_type: map.expr_to_type,
-            stmt_to_type: map.stmt_to_type,
-            signature: expected.clone(),
-            span: function.span,
-            body: function.body.clone(),
-        }
+        typed::Typed::new(
+            typed::Function {
+                exported: function.exported,
+                name: function.name,
+                params: typed_params,
+                body: inferred_body,
+            },
+            expected.clone(),
+            (function.span.start(), function.span.end()),
+        )
     }
 
     #[instrument(skip(self, map))]
-    pub(crate) fn assign_type(&mut self, pat: PatId, ty: Type, map: &FunctionAstMap) {
-        let pat = map.pat(&pat);
+    pub(crate) fn assign_type(
+        &mut self,
+        pat: Span<PatId>,
+        ty: Type,
+        map: &FunctionAstMap,
+    ) -> typed::Typed<typed::Pattern> {
+        let span = (pat.start, pat.end);
+        let pat = map.pat(&pat.item);
 
         match pat {
-            hir::Pattern::Bind { name } => self.env.insert(name.item, ty),
+            hir::Pattern::Bind { name } => {
+                self.env.insert(name.item, ty.clone());
+
+                typed::Typed::new(typed::Pattern::Bind { name: *name }, ty, span)
+            }
             hir::Pattern::Placeholder => {
                 let name = self.db.intern_name(PLACEHOLDER_NAME);
 
-                self.env.insert(name, ty)
+                self.env.insert(name, ty.clone());
+                typed::Typed::new(typed::Pattern::Placeholder, ty, span)
             }
-            hir::Pattern::Tuple(pats) => match ty {
+            hir::Pattern::Tuple(pats) => match &ty {
                 Type::Tuple(types) => {
+                    let mut typed_pats = Vec::with_capacity(types.len());
                     for (pat, ty) in pats.iter().zip(types.iter()) {
-                        self.assign_type(pat.item, ty.clone(), map)
+                        typed_pats.push(self.assign_type(*pat, ty.clone(), map))
                     }
+
+                    typed::Typed::new(typed::Pattern::Tuple(typed_pats), ty, span)
                 }
-                _ => {}
+                _ => {
+                    let tuple = format!(
+                        "({})",
+                        std::iter::repeat("_,").take(pats.len()).collect::<String>()
+                    );
+                    let msg = format!("Found {} but expected type {:?}", tuple, ty);
+                    self.reporter
+                        .error(msg, "", (span.0.to_usize(), span.1.to_usize()));
+
+                    typed::Typed::new(typed::Pattern::Placeholder, ty, span)
+                }
             },
-            hir::Pattern::Literal(_) => {}
+            hir::Pattern::Literal(id) => typed::Typed::new(typed::Pattern::Literal(*id), ty, span),
         }
     }
 
@@ -117,7 +148,7 @@ where
         &mut self,
         id: &util::Span<StmtId>,
         map: &FunctionAstMap,
-    ) -> Type {
+    ) -> typed::Typed<typed::Stmt> {
         let stmt = map.stmt(&id.item);
 
         let ty = match stmt {
@@ -126,80 +157,138 @@ where
                 ascribed_type,
                 initializer,
             } => {
-                match (ascribed_type, initializer) {
+                let stmt = match (ascribed_type, initializer) {
                     (Some(expected), Some(init)) => {
                         let expr = self.infer_expr(map, init);
                         let expected = self.db.resolve_hir_type(self.file, expected.item);
 
-                        self.unify(&expected, &expr, init.as_reporter_span(), None, true);
-                        self.assign_type(pat.item, expr, map);
+                        self.unify(&expected, &expr.ty, init.as_reporter_span(), None, true);
+                        let pat = self.assign_type(*pat, expr.ty.clone(), map);
+
+                        typed::Stmt::Let {
+                            pat,
+                            ascribed_type: Some(expected),
+                            initializer: Some(expr),
+                        }
                     }
                     (Some(expected), None) => {
                         let ty = self.db.resolve_hir_type(self.file, expected.item);
-                        self.assign_type(pat.item, ty, map);
+                        let pat = self.assign_type(*pat, ty.clone(), map);
+
+                        typed::Stmt::Let {
+                            pat,
+                            ascribed_type: Some(ty),
+                            initializer: None,
+                        }
                     }
                     (None, Some(init)) => {
-                        let expected = self.infer_expr(map, init);
+                        let initializer = self.infer_expr(map, init);
 
-                        self.assign_type(pat.item, expected, map);
+                        let pat = self.assign_type(*pat, initializer.ty.clone(), map);
+
+                        typed::Stmt::Let {
+                            pat,
+                            ascribed_type: None,
+                            initializer: Some(initializer),
+                        }
                     }
-                    (None, None) => {
-                        self.assign_type(pat.item, Type::Con(TypeCon::Void), map);
-                    }
+                    (None, None) => typed::Stmt::Let {
+                        pat: self.assign_type(*pat, Type::Con(TypeCon::Void), map),
+                        ascribed_type: None,
+                        initializer: None,
+                    },
                 };
 
-                Type::Con(TypeCon::Void)
+                typed::Typed::new(stmt, Type::Con(TypeCon::Void), (id.start, id.end))
             }
-            hir::Stmt::Expr(expr) => self.infer_expr(map, expr),
-            hir::Stmt::Error => Type::Unknown,
+            hir::Stmt::Expr(expr) => {
+                let expr = self.infer_expr(map, expr);
+                let ty = expr.ty.clone();
+                typed::Typed::new(typed::Stmt::Expr(expr), ty, (id.start, id.end))
+            }
+            hir::Stmt::Error => {
+                typed::Typed::new(typed::Stmt::Error, Type::Unknown, (id.start, id.end))
+            }
         };
-
-        let map = self.type_map.get_mut(&self.fn_name.unwrap()).unwrap();
-        map.insert_stmt_type(id.item, ty.clone());
 
         ty
     }
     #[instrument(skip(self, map))]
-    pub(crate) fn infer_expr(&mut self, map: &FunctionAstMap, id: &util::Span<ExprId>) -> Type {
+    pub(crate) fn infer_expr(
+        &mut self,
+        map: &FunctionAstMap,
+        id: &util::Span<ExprId>,
+    ) -> typed::Typed<typed::Expr> {
+        let span = (id.start, id.end);
         let expr = map.expr(&id.item);
 
-        let ty = match expr {
+        match expr {
             hir::Expr::Array(exprs) => {
                 if exprs.len() == 0 {
-                    Type::Con(TypeCon::Array {
-                        ty: Box::new(Type::Con(TypeCon::Void)),
-                        size: None,
-                    })
+                    typed::Typed::new(
+                        typed::Expr::Array(vec![]),
+                        Type::Con(TypeCon::Array {
+                            ty: Box::new(Type::Con(TypeCon::Void)),
+                            size: None,
+                        }),
+                        span,
+                    )
                 } else {
+                    let mut typed_exprs = Vec::with_capacity(exprs.len());
+
                     let first = self.infer_expr(map, &exprs[0]);
+                    let first_ty = first.ty.clone();
+                    typed_exprs.push(first);
 
                     exprs.iter().skip(1).for_each(|id| {
                         let inferred = self.infer_expr(map, id);
-                        self.unify(&first, &inferred, id.as_reporter_span(), None, true)
+                        self.unify(&first_ty, &inferred.ty, id.as_reporter_span(), None, true);
+
+                        typed_exprs.push(inferred)
                     });
 
-                    Type::Con(TypeCon::Array {
-                        ty: Box::new(first),
-                        size: None,
-                    })
+                    typed::Typed::new(
+                        typed::Expr::Array(typed_exprs),
+                        Type::Con(TypeCon::Array {
+                            ty: Box::new(first_ty),
+                            size: None,
+                        }),
+                        span,
+                    )
                 }
             }
             hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
 
             hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
-            hir::Expr::Break | hir::Expr::Continue => Type::Con(TypeCon::Void),
+            hir::Expr::Break => {
+                typed::Typed::new(typed::Expr::Break, Type::Con(TypeCon::Void), span)
+            }
+            hir::Expr::Continue => {
+                typed::Typed::new(typed::Expr::Continue, Type::Con(TypeCon::Void), span)
+            }
             hir::Expr::Call {
                 callee,
                 args,
                 type_args,
-            } => self.infer_call(callee, args, type_args, map),
-            hir::Expr::Closure { .. } => Type::Unknown,
+            } => self.infer_call(callee, args, type_args, span, map),
+            hir::Expr::Closure { .. } => {
+                typed::Typed::new(typed::Expr::Closure {}, Type::Unknown, span)
+            }
             hir::Expr::Cast { expr, ty } => {
-                let _ = self.infer_expr(map, expr);
+                let expr = self.infer_expr(map, expr);
 
                 // TODO implement a well formed casting check
 
-                self.db.resolve_hir_type(self.file, ty.item)
+                let ty = self.db.resolve_hir_type(self.file, ty.item);
+
+                typed::Typed::new(
+                    typed::Expr::Cast {
+                        expr: Box::new(expr),
+                        ty: ty.clone(),
+                    },
+                    ty,
+                    span,
+                )
             }
 
             hir::Expr::If {
@@ -210,7 +299,7 @@ where
                 let inferred_cond = self.infer_expr(map, cond);
 
                 self.unify(
-                    &inferred_cond,
+                    &inferred_cond.ty,
                     &Type::Con(TypeCon::Bool),
                     cond.as_reporter_span(),
                     Some("Expected the type of the expression to be bool".into()),
@@ -218,22 +307,44 @@ where
                 );
 
                 let inferred_then = self.infer_expr(map, then_branch);
+                let ty = inferred_then.ty.clone();
 
                 if let Some(else_b) = else_branch {
                     let inferred_else = self.infer_expr(map, else_b);
 
                     self.unify(
-                        &inferred_then,
-                        &inferred_else,
+                        &inferred_then.ty,
+                        &inferred_else.ty,
                         id.as_reporter_span(),
                         Some("One of the branches is of different type".into()),
                         true,
+                    );
+
+                    typed::Typed::new(
+                        typed::Expr::If {
+                            cond: Box::new(inferred_cond),
+                            then_branch: Box::new(inferred_then),
+                            else_branch: Some(Box::new(inferred_else)),
+                        },
+                        ty,
+                        span,
+                    )
+                } else {
+                    typed::Typed::new(
+                        typed::Expr::If {
+                            cond: Box::new(inferred_cond),
+                            then_branch: Box::new(inferred_then),
+                            else_branch: None,
+                        },
+                        ty,
+                        span,
                     )
                 }
-
-                inferred_then
             }
-            hir::Expr::Ident(name) => self.lookup_type(name.item),
+            hir::Expr::Ident(name) => {
+                let ty = self.lookup_type(name.item);
+                typed::Typed::new(typed::Expr::Ident(*name), ty, span)
+            }
 
             hir::Expr::Index { base, index } => {
                 let inferred_base = self.infer_expr(map, base);
@@ -241,16 +352,16 @@ where
                 let inferred_index = self.infer_expr(map, index);
 
                 self.unify(
-                    &inferred_index,
+                    &inferred_index.ty,
                     &Type::Con(TypeCon::Int),
                     index.as_reporter_span(),
                     Some("Array indexes can only be an integer".into()),
                     true,
                 );
 
-                match inferred_base {
-                    Type::Con(TypeCon::Array { ty, .. }) => *ty,
-                    Type::Con(TypeCon::Str) => inferred_base,
+                let ty = match &inferred_base.ty {
+                    Type::Con(TypeCon::Array { ty, .. }) => *ty.clone(),
+                    Type::Con(TypeCon::Str) => inferred_base.ty.clone(),
                     _ => {
                         let msg = format!("Tried indexing a non array type");
 
@@ -262,37 +373,74 @@ where
 
                         Type::Unknown
                     }
-                }
+                };
+
+                typed::Typed::new(
+                    typed::Expr::Index {
+                        base: Box::new(inferred_base),
+                        index: Box::new(inferred_index),
+                    },
+                    ty,
+                    span,
+                )
             }
             hir::Expr::While { cond, body } => {
                 let inferred_cond = self.infer_expr(map, cond);
 
                 self.unify(
-                    &inferred_cond,
+                    &inferred_cond.ty,
                     &Type::Con(TypeCon::Bool),
                     cond.as_reporter_span(),
                     Some("Expected the type of the expression to be bool".into()),
                     true,
                 );
 
-                self.infer_block(map, body, false);
+                let body = self.infer_block(map, body, false);
 
-                Type::Con(TypeCon::Void)
+                typed::Typed::new(
+                    typed::Expr::While {
+                        cond: Box::new(inferred_cond),
+                        body: Box::new(body),
+                    },
+                    Type::Con(TypeCon::Void),
+                    span,
+                )
             }
-            hir::Expr::Literal(literal) => self.infer_literal(*literal),
-            hir::Expr::Paren(inner) => self.infer_expr(map, inner),
+            hir::Expr::Literal(literal) => typed::Typed::new(
+                typed::Expr::Literal(*literal),
+                self.infer_literal(*literal),
+                span,
+            ),
+            hir::Expr::Paren(inner) => {
+                let expr = self.infer_expr(map, inner);
+                let ty = expr.ty.clone();
+                typed::Typed::new(typed::Expr::Paren(Box::new(expr)), ty, span)
+            }
             hir::Expr::Tuple(exprs) => {
-                let types = exprs.iter().map(|id| self.infer_expr(map, id)).collect();
-                Type::Tuple(types)
+                let mut inferred_exprs = Vec::with_capacity(exprs.len());
+                let types = exprs
+                    .iter()
+                    .map(|id| {
+                        let expr = self.infer_expr(map, id);
+                        let ty = expr.ty.clone();
+
+                        inferred_exprs.push(expr);
+
+                        ty
+                    })
+                    .collect();
+
+                typed::Typed::new(typed::Expr::Tuple(inferred_exprs), Type::Tuple(types), span)
             }
             hir::Expr::Unary { op, expr } => {
                 let inferred = self.infer_expr(map, id);
-                match op {
-                    UnaryOp::Minus => match inferred {
-                        Type::Con(TypeCon::Int) | Type::Con(TypeCon::Float) => inferred,
+                let ty = match op {
+                    UnaryOp::Minus => match inferred.ty {
+                        Type::Con(TypeCon::Int) | Type::Con(TypeCon::Float) => inferred.ty.clone(),
 
                         _ => {
-                            let msg = format!("Cannot use `-` operator on type `{:?}`", inferred);
+                            let msg =
+                                format!("Cannot use `-` operator on type `{:?}`", inferred.ty);
                             self.reporter.error(
                                 msg,
                                 "`-` only works on i32,f32,",
@@ -305,22 +453,32 @@ where
                     UnaryOp::Excl => {
                         self.unify(
                             &Type::Con(TypeCon::Bool),
-                            &inferred,
+                            &inferred.ty,
                             expr.as_reporter_span(),
                             Some("`!` can only be used on a boolean expression".into()),
                             true,
                         );
                         Type::Con(TypeCon::Bool)
                     }
-                }
+                };
+
+                typed::Typed::new(
+                    typed::Expr::Unary {
+                        op: *op,
+                        expr: Box::new(inferred),
+                    },
+                    ty,
+                    span,
+                )
             }
             hir::Expr::Return(expr) => {
-                let expected = self.returns.clone().unwrap();
+                let expected = self.returns.clone().unwrap_or(Type::Unknown);
                 if let Some(id) = expr {
                     let inferred = self.infer_expr(map, id);
+                    let ty = inferred.ty.clone();
                     self.unify(
                         &expected,
-                        &inferred,
+                        &ty,
                         id.as_reporter_span(),
                         Some(format!(
                             "{:?} is returned here but expected {:?}",
@@ -328,7 +486,8 @@ where
                         )),
                         true,
                     );
-                    inferred
+
+                    typed::Typed::new(typed::Expr::Return(Some(Box::new(inferred))), ty, span)
                 } else {
                     let inferred = Type::Con(TypeCon::Void);
                     self.unify(
@@ -341,7 +500,7 @@ where
                         )),
                         true,
                     );
-                    inferred
+                    typed::Typed::new(typed::Expr::Return(None), inferred, span)
                 }
             }
             hir::Expr::Match { expr, .. } => {
@@ -360,203 +519,16 @@ where
 
                 //     matrix.add_row(Row::new(patterns, match_arm.expr.item))
                 // }
-
-                Type::Unknown
+                //  Type::Unknown
+                todo!()
             }
             hir::Expr::Enum { def, variant, expr } => {
-                let inferred_def = self.db.resolve_named_type(self.file, def.item);
-
-                let mut subst = HashMap::new();
-
-                // TODO handle matching multiple type vars aka check record literal code
-
-                match inferred_def {
-                    Type::Poly(ref vars, ref inner) => match &**inner {
-                        Type::Enum(_, ref variants) => {
-                            if let Some(v) = variants.get(&variant.item) {
-                                match (expr, &v.ty) {
-                                    (None, None) => {}
-                                    (None, Some(variant_ty)) => {
-                                        let msg = format!("Missing enum variant constructor",);
-                                        self.reporter.error(
-                                        msg,
-                                        format!("Expected an enum variant constructor of type {:?} but found none",variant_ty),
-                                        variant.as_reporter_span(),
-                                    );
-                                    }
-                                    (Some(_), None) => {
-                                        let msg = format!("Unexpected enum variant constructor",);
-                                        let name = self.db.lookup_intern_name(variant.item);
-                                        self.reporter.error(
-                                            msg,
-                                            format!(
-                                                "enum variant `{}` does not have a constructor",
-                                                name
-                                            ),
-                                            variant.as_reporter_span(),
-                                        );
-                                    }
-                                    (Some(expr), Some(variant_ty)) => {
-                                        let inferred_expr = self.infer_expr(map, expr);
-
-                                        for ty_var in vars {
-                                            subst.insert(*ty_var, inferred_expr.clone());
-                                        }
-
-                                        let variant_ty = self.subst(&variant_ty, &mut subst);
-
-                                        self.unify(
-                                            &inferred_expr,
-                                            &variant_ty,
-                                            expr.as_reporter_span(),
-                                            None,
-                                            true,
-                                        )
-                                    }
-                                }
-                            }
-
-                            self.subst(&inferred_def, &mut subst)
-                        }
-
-                        _ => {
-                            // Error reported in resolver
-                            Type::Unknown
-                        }
-                    },
-
-                    _ => {
-                        // Error reported in resolver
-                        Type::Unknown
-                    }
-                }
+                self.infer_enum_expr(def, variant, expr, span, map)
             }
             hir::Expr::RecordLiteral { def, fields } => {
-                let inferred_def = self.db.resolve_named_type(self.file, def.item);
-
-                let mut subst = HashMap::new();
-
-                match inferred_def.clone() {
-                    Type::Poly(vars, inner) => {
-                        match &*inner {
-                            Type::Class {
-                                name: class_name,
-                                fields: field_types,
-                                methods,
-                                ..
-                            } => {
-                                for (var, (_, expr)) in vars.iter().zip(fields.iter()) {
-                                    let inferred_expr = self.infer_expr(map, expr);
-
-                                    subst.insert(*var, inferred_expr.clone());
-                                }
-
-                                let mut instance_fields = field_types.clone();
-
-                                for (field, expr) in fields {
-                                    let inferred_expr = self.infer_expr(map, expr);
-
-                                    if let Some(ty) = field_types.get(&field.item) {
-                                        match ty {
-                                            Type::Var(tv) => {
-                                                subst.insert(*tv, inferred_expr.clone());
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-
-                                    let expected = self.subst(
-                                        field_types.get(&field.item).unwrap_or(&Type::Unknown),
-                                        &mut subst,
-                                    );
-
-                                    self.unify(
-                                        &expected,
-                                        &inferred_expr,
-                                        field.as_reporter_span(),
-                                        None,
-                                        true,
-                                    );
-
-                                    instance_fields.insert(field.item, inferred_expr);
-                                }
-
-                                let instance_ty = Type::Poly(
-                                    vars.clone(),
-                                    Box::new(Type::Class {
-                                        name: *class_name,
-                                        fields: instance_fields,
-                                        methods: methods.clone(),
-                                    }),
-                                );
-
-                                // inferred_def
-
-                                self.subst(&instance_ty, &mut subst)
-                            }
-
-                            _ => {
-                                // Error reported in resolver
-                                Type::Unknown
-                            }
-                        }
-                    }
-                    _ => {
-                        // Error reported in resolver
-                        Type::Unknown
-                    }
-                }
+                self.infer_record_expr(def, fields, span, map)
             }
-            hir::Expr::Field(fields) => {
-                let record = self.infer_expr(map, &fields[0]);
-
-                match record {
-                    Type::Poly(_, inner) => match &*inner {
-                        ty @ Type::Class { .. } => {
-                            // resolve method chain
-                            self.infer_field_exprs(&fields[1..], ty, map)
-                        }
-                        Type::Unknown => Type::Unknown,
-                        ty => {
-                            let msg = format!(
-                                "Expected expression of type `class` instead found `{:?}`",
-                                ty
-                            );
-
-                            self.reporter.error(
-                                msg,
-                                "Field access only works on classes",
-                                fields[0].as_reporter_span(),
-                            );
-
-                            Type::Unknown
-                        }
-                    },
-
-                    ty @ Type::Tuple(_) => self.infer_field_exprs(&fields[1..], &ty, map),
-
-                    Type::Unknown => Type::Unknown,
-                    _ => {
-                        let msg = format!(
-                            "Expected expression of type `class` instead found `{:?}`",
-                            record
-                        );
-
-                        self.reporter.error(
-                            msg,
-                            "Field access only works on classes",
-                            fields[0].as_reporter_span(),
-                        );
-
-                        Type::Unknown
-                    }
-                }
-            }
-        };
-
-        let map = self.type_map.get_mut(&self.fn_name.unwrap()).unwrap();
-        map.insert_expr_type(id.item, ty.clone());
-
-        ty
+            hir::Expr::Field(fields) => self.infer_field_exprs(fields, span, map),
+        }
     }
 }

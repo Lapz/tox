@@ -1,6 +1,7 @@
 use crate::{
     hir::{BinOp, ExprId, FunctionAstMap},
     infer::{InferDataCollector, Type, TypeCon},
+    typed,
     util::Span,
     HirDatabase,
 };
@@ -15,32 +16,34 @@ where
         op: &BinOp,
         rhs: &Span<ExprId>,
         map: &FunctionAstMap,
-    ) -> Type {
+    ) -> typed::Typed<typed::Expr> {
         let inferred_lhs = self.infer_expr(map, lhs);
+        let lhs_ty = inferred_lhs.ty.clone();
         let inferred_rhs = self.infer_expr(map, rhs);
-
-        match op {
+        let rhs_ty = inferred_rhs.ty.clone();
+        //  TODO check if doing operations on ints and floats only
+        let ty = match op {
             BinOp::Plus | BinOp::Minus | BinOp::Mult | BinOp::Div => {
                 self.unify(
-                    &inferred_lhs,
-                    &inferred_rhs,
+                    &lhs_ty,
+                    &rhs_ty,
                     id.as_reporter_span(),
                     Some("`+`,`-`,`*`,`/` operators only works on i32 and f32".into()),
                     true,
                 );
-                inferred_lhs
+                lhs_ty
             }
             BinOp::And | BinOp::Or => {
                 self.unify(
                     &Type::Con(TypeCon::Bool),
-                    &inferred_lhs,
+                    &lhs_ty,
                     lhs.as_reporter_span(),
                     Some("Expected a bool".into()),
                     true,
                 );
                 self.unify(
                     &Type::Con(TypeCon::Bool),
-                    &inferred_rhs,
+                    &rhs_ty,
                     rhs.as_reporter_span(),
                     Some("Expected a bool".into()),
                     true,
@@ -53,8 +56,8 @@ where
             | BinOp::GreaterThanEqual
             | BinOp::LessThanEqual => {
                 self.unify(
-                    &inferred_lhs,
-                    &inferred_rhs,
+                    &lhs_ty,
+                    &rhs_ty,
                     id.as_reporter_span(),
                     Some("Comparison operators only work on numbers".into()),
                     true,
@@ -62,28 +65,26 @@ where
                 Type::Con(TypeCon::Bool)
             }
             BinOp::Equal => {
-                self.unify(
-                    &inferred_lhs,
-                    &inferred_rhs,
-                    id.as_reporter_span(),
-                    None,
-                    true,
-                );
+                self.unify(&lhs_ty, &rhs_ty, id.as_reporter_span(), None, true);
 
-                inferred_rhs
+                rhs_ty
             }
             BinOp::EqualEqual | BinOp::NotEqual => Type::Con(TypeCon::Bool),
             BinOp::PlusEqual | BinOp::MinusEqual | BinOp::MultEqual | BinOp::DivEqual => {
-                self.unify(
-                    &inferred_lhs,
-                    &inferred_rhs,
-                    id.as_reporter_span(),
-                    None,
-                    true,
-                );
+                self.unify(&lhs_ty, &rhs_ty, id.as_reporter_span(), None, true);
 
-                inferred_rhs
+                rhs_ty
             }
-        }
+        };
+
+        typed::Typed::new(
+            typed::Expr::Binary {
+                lhs: Box::new(inferred_lhs),
+                op: *op,
+                rhs: Box::new(inferred_rhs),
+            },
+            ty,
+            (id.start, id.end),
+        )
     }
 }

@@ -1,10 +1,12 @@
 use crate::{
     hir::{Expr, ExprId, FunctionAstMap, Literal},
     infer::{InferDataCollector, Type},
+    typed,
     util::Span,
     HirDatabase,
 };
 
+use syntax::TextUnit;
 use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -14,40 +16,124 @@ where
     #[instrument(skip(self, map))]
     pub(crate) fn infer_field_exprs(
         &mut self,
-        exprs: &[Span<ExprId>],
-        ty: &Type,
+        fields: &[Span<ExprId>],
+        span: (TextUnit, TextUnit),
         map: &FunctionAstMap,
-    ) -> Type {
-        if exprs.is_empty() {
-            return ty.clone();
+    ) -> typed::Typed<typed::Expr> {
+        let base = self.infer_expr(map, &fields[0]);
+
+        let ty = base.ty.clone();
+
+        let mut inferred_fields = vec![base];
+
+        match ty {
+            Type::Poly(_, ref inner) => match &**inner {
+                ty @ Type::Class { .. } => {}
+                ty => {
+                    let msg = format!(
+                        "Expected expression of type `class` instead found `{:?}`",
+                        ty
+                    );
+
+                    self.reporter.error(
+                        msg,
+                        "Field access only works on classes",
+                        fields[0].as_reporter_span(),
+                    );
+
+                    return typed::Typed::new(typed::Expr::Field(vec![]), Type::Unknown, span);
+                }
+            },
+
+            Type::Tuple(_) => {}
+
+            Type::Unknown => {
+                return typed::Typed::new(typed::Expr::Field(vec![]), Type::Unknown, span)
+            }
+            _ => {
+                let msg = format!(
+                    "Expected expression of type `class` instead found `{:?}`",
+                    ty
+                );
+
+                self.reporter.error(
+                    msg,
+                    "Field access only works on classes",
+                    fields[0].as_reporter_span(),
+                );
+
+                return typed::Typed::new(typed::Expr::Field(vec![]), Type::Unknown, span);
+            }
         }
 
-        let expr = map.expr(&exprs[0].item);
+        for field in fields.iter().skip(1) {
+            let expr = map.expr(&field.item);
 
-        match expr {
-            Expr::Call {
-                callee,
-                args,
-                type_args,
-            } => self.infer_call(callee, args, type_args, map),
+            match expr {
+                Expr::Call {
+                    callee,
+                    args,
+                    type_args,
+                } => inferred_fields.push(self.infer_call(callee, args, type_args, span, map)),
 
-            Expr::Field(exprs) => self.infer_field_exprs(exprs, ty, map),
-            Expr::Ident(ident) => match ty {
-                Type::Poly(_, inner) => match &**inner {
+                Expr::Field(exprs) => {
+                    inferred_fields.push(self.infer_field_exprs(
+                        exprs,
+                        (field.start, field.end),
+                        map,
+                    ));
+                    // Todo
+                }
+                Expr::Ident(ident) => match &ty {
+                    Type::Poly(_, ref inner) => match &**inner {
+                        Type::Class { fields, .. } => {
+                            if let Some(ty) = fields.get(&ident.item) {
+                                inferred_fields.push(typed::Typed::new(
+                                    typed::Expr::Ident(*ident),
+                                    ty.clone(),
+                                    (field.start, field.end),
+                                ));
+
+                                // self.infer_field_exprs(&exprs[1..], ty, span, map)
+                            } else {
+                                let msg = format!(
+                                    "Unknown record field `{}`",
+                                    self.db.lookup_intern_name(ident.item),
+                                );
+
+                                self.reporter.error(msg, "", field.as_reporter_span());
+
+                                break;
+                            }
+                        }
+                        ty => {
+                            let msg = format!(
+                                "`{}` does not exist on `{:?}`",
+                                self.db.lookup_intern_name(ident.item),
+                                ty
+                            );
+
+                            self.reporter.error(msg, "", field.as_reporter_span());
+
+                            break;
+                        }
+                    },
+
                     Type::Class { fields, .. } => {
                         if let Some(ty) = fields.get(&ident.item) {
-                            self.infer_field_exprs(&exprs[1..], ty, map)
+                            // self.infer_field_exprs(&exprs[1..], ty, map)
                         } else {
                             let msg = format!(
                                 "Unknown record field `{}`",
                                 self.db.lookup_intern_name(ident.item),
                             );
 
-                            self.reporter.error(msg, "", exprs[0].as_reporter_span());
+                            self.reporter.error(msg, "", field.as_reporter_span());
 
-                            Type::Unknown
+                            break;
                         }
                     }
+
                     ty => {
                         let msg = format!(
                             "`{}` does not exist on `{:?}`",
@@ -55,91 +141,67 @@ where
                             ty
                         );
 
-                        self.reporter.error(msg, "", exprs[0].as_reporter_span());
+                        self.reporter.error(msg, "", field.as_reporter_span());
 
-                        Type::Unknown
+                        break;
                     }
                 },
 
-                Type::Class { fields, .. } => {
-                    if let Some(ty) = fields.get(&ident.item) {
-                        self.infer_field_exprs(&exprs[1..], ty, map)
-                    } else {
-                        let msg = format!(
-                            "Unknown record field `{}`",
-                            self.db.lookup_intern_name(ident.item),
-                        );
+                Expr::Literal(literal) => {
+                    let lit = self.db.lookup_intern_literal(*literal);
+                    match lit {
+                        Literal::Int(int) => {
+                            let index: usize = int.parse().expect("Couldn't parse to i32");
 
-                        self.reporter.error(msg, "", exprs[0].as_reporter_span());
+                            match ty {
+                                Type::Tuple(ref types) => {
+                                    if let Some(ty) = types.get(index) {
+                                    } else {
+                                        let msg = format!("Unknown tuple field `{}`", index);
 
-                        Type::Unknown
-                    }
-                }
+                                        self.reporter.error(msg, "", field.as_reporter_span());
 
-                ty => {
-                    let msg = format!(
-                        "`{}` does not exist on `{:?}`",
-                        self.db.lookup_intern_name(ident.item),
-                        ty
-                    );
+                                        break;
+                                    }
+                                }
+                                _ => {
+                                    let msg = format!("`{}` does not exist on `{:?}`", index, ty);
 
-                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
+                                    self.reporter.error(
+                                        msg,
+                                        "Numbered field access can only be used on tuples",
+                                        field.as_reporter_span(),
+                                    );
 
-                    Type::Unknown
-                }
-            },
-
-            Expr::Literal(literal) => {
-                let lit = self.db.lookup_intern_literal(*literal);
-                match lit {
-                    Literal::Int(int) => {
-                        let index: usize = int.parse().expect("Couldn't parse to i32");
-
-                        match ty {
-                            Type::Tuple(types) => {
-                                if let Some(ty) = types.get(index) {
-                                    self.infer_field_exprs(&exprs[1..], ty, map)
-                                } else {
-                                    let msg = format!("Unknown tuple field `{}`", index);
-
-                                    self.reporter.error(msg, "", exprs[0].as_reporter_span());
-
-                                    Type::Unknown
+                                    break;
                                 }
                             }
-                            _ => {
-                                let msg = format!("`{}` does not exist on `{:?}`", index, ty);
+                        }
+                        _ => {
+                            let msg = format!("`{:?}` is not a valid tuple field ", lit);
 
-                                self.reporter.error(
-                                    msg,
-                                    "Numbered field access can only be used on tuples",
-                                    exprs[0].as_reporter_span(),
-                                );
+                            self.reporter.error(
+                                msg,
+                                "Tuple fields can only be numbers",
+                                field.as_reporter_span(),
+                            );
 
-                                Type::Unknown
-                            }
+                            break;
                         }
                     }
-                    _ => {
-                        let msg = format!("`{:?}` is not a valid tuple field ", lit);
+                }
 
-                        self.reporter.error(
-                            msg,
-                            "Tuple fields can only be numbers",
-                            exprs[0].as_reporter_span(),
-                        );
+                _ => {
+                    self.reporter
+                        .error("Unknown field".to_string(), "", field.as_reporter_span());
 
-                        Type::Unknown
-                    }
+                    break;
                 }
             }
-
-            _ => {
-                self.reporter
-                    .error("Unknown field".to_string(), "", exprs[0].as_reporter_span());
-
-                Type::Unknown
-            }
         }
+
+        let ty = inferred_fields.last().unwrap().ty.clone();
+
+        typed::Typed::new(typed::Expr::Field(inferred_fields), ty, span)
     }
 }

@@ -1,18 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    error::Error,
-    fmt::Display,
-    fs::File,
-    io::Write,
-    sync::Arc,
-    usize,
-};
+use std::{collections::HashMap, fmt::Display, fs::File, io::Write, usize};
 
 use errors::{FileId, WithError};
 use semant::{
-    hir::{BinOp, Expr, ExprId, FunctionAstMap, FunctionId, Literal, NameId, Stmt, StmtId},
-    infer::{self},
-    Resolver, SmolStr, Span, Type, TypeCon,
+    hir::{BinOp, Literal, NameId},
+    typed::{self, Expr, Stmt},
+    Function, Program, Span, Type, TypeCon, Typed,
 };
 
 use crate::db::CodegenDatabase;
@@ -78,7 +70,7 @@ impl<'a, DB> Codegen<&'a DB>
 where
     DB: CodegenDatabase,
 {
-    fn get_frame_info(&mut self, function: &infer::Function) -> Frame {
+    fn get_frame_info(&mut self, function: &Typed<Function>) -> Frame {
         // If a function has many parameters, some parameters are
         // inevitably passed by stack rather than by register.
         // The first passed-by-stack parameter resides at RBP+16.
@@ -88,18 +80,18 @@ where
         let gp = 0;
         let bp = 0;
 
-        for (_, ty) in &function.params {
+        for param in &function.item.params {
             top = align_to(top, 8);
 
-            top += ty.size();
+            top += param.ty.size();
         }
 
-        for (_, ty) in &function.params {
+        for param in &function.item.params {
             // AMD64 System V ABI has a special alignment rule for an array of
             // length at least 16 bytes. We need to align such array to at least
             // 16-byte boundaries. See p.14 of
             // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
-            let alignment = match ty {
+            let alignment = match &param.ty {
                 ty @ Type::Con(semant::TypeCon::Array { .. }) => {
                     if ty.size() >= 16 {
                         std::cmp::max(16, ty.align())
@@ -110,7 +102,7 @@ where
                 ty => ty.align(),
             };
 
-            bottom += ty.size();
+            bottom += param.ty.size();
 
             bottom = align_to(bottom, alignment);
         }
@@ -120,10 +112,10 @@ where
         }
     }
 
-    pub fn generate_function(&mut self, function: &infer::Function) -> std::io::Result<()> {
+    pub fn generate_function(&mut self, function: &Typed<Function>) -> std::io::Result<()> {
         emit!(self, ".text")?;
 
-        let name = self.db.lookup_intern_name(function.name.item);
+        let name = self.db.lookup_intern_name(function.item.name.item);
         // emit!(
         //     self,
         //     ".type {}, %function",
@@ -143,10 +135,8 @@ where
         let frame = self.get_frame_info(function);
         emit!(self, "\tsub ${}, %rsp", frame.stack_size);
 
-        if let Some(body) = &function.body {
-            for stmt in body {
-                self.generate_statement(stmt, &function.ast_map)?;
-            }
+        for stmt in &function.item.body {
+            self.generate_statement(stmt)?;
         }
 
         self.emit("popq %rbp")?;
@@ -162,22 +152,16 @@ where
         Ok(())
     }
 
-    pub fn generate_statement(
-        &mut self,
-        id: &Span<StmtId>,
-        map: &FunctionAstMap,
-    ) -> std::io::Result<()> {
-        let stmt = map.stmt(&id.item);
-
-        emit!(self, "# span {:?}", id.as_reporter_span());
-        match stmt {
+    pub fn generate_statement(&mut self, stmt: &Typed<Stmt>) -> std::io::Result<()> {
+        emit!(self, "# span {:?}", stmt.span);
+        match &stmt.item {
             Stmt::Let {
                 pat,
                 ascribed_type,
                 initializer,
             } => Ok(()),
-            Stmt::Expr(id) => {
-                let _ = self.generate_expr(id, map);
+            Stmt::Expr(expr) => {
+                self.generate_expr(expr)?;
 
                 Ok(())
             }
@@ -185,7 +169,7 @@ where
         }
     }
 
-    pub fn compare_zero(ty: &Type) -> Result<(), std::io::Error> {
+    pub fn compare_zero(&mut self, ty: &Type) -> std::io::Result<()> {
         match ty {
             Type::Con(TypeCon::Float) => {
                 emit!(self, "xorps %%xmm1, %%xmm1")?;
@@ -199,10 +183,8 @@ where
         }
     }
 
-    pub fn generate_expr(&mut self, id: &Span<ExprId>, map: &FunctionAstMap) {
-        let expr = map.expr(&id.item);
-
-        match expr {
+    pub fn generate_expr(&mut self, expr: &Typed<Expr>) -> std::io::Result<()> {
+        match &expr.item {
             Expr::Tuple(_)
             | Expr::Return(_)
             | Expr::Match { .. }
@@ -222,7 +204,7 @@ where
             | Expr::While { .. } => unimplemented!(),
             Expr::Unary { expr, op } => match op {
                 semant::hir::UnaryOp::Minus => {
-                    self.generate_expr(expr, map)?;
+                    self.generate_expr(expr)?;
                     let ty = Type::Unknown;
 
                     match ty {
@@ -232,20 +214,25 @@ where
                             emit!(self, "movq %raq, %xmm1")?;
                             emit!(self, "xorps %xmm1, %xmm0");
                         }
-                        _ => emit!(self, "neg %rax"),
+                        _ => {
+                            emit!(self, "neg %rax");
+                        }
                     }
                 }
                 semant::hir::UnaryOp::Excl => {
-                    self.generate_expr(expr, expr)?;
+                    // self.generate_expr(expr, expr)?;
+                    unimplemented!()
                 }
             },
-            Expr::Paren(expr) => self.generate_expr(expr, map),
+            Expr::Paren(expr) => {
+                self.generate_expr(expr)?;
+            }
             Expr::Binary { lhs, op, rhs } => match op {
                 BinOp::Plus | BinOp::Minus => {
-                    let lhs = self.generate_expr(lhs, map);
+                    let lhs = self.generate_expr(lhs);
                     self.emit("pushq %rax")?;
 
-                    let rhs = self.generate_expr(rhs, map);
+                    let rhs = self.generate_expr(rhs);
 
                     self.emit("popq %rdx")?;
                     self.emit(format!(
@@ -265,19 +252,19 @@ where
                     ))?;
                 }
                 BinOp::Mult => {
-                    let lhs = self.generate_expr(lhs, map);
+                    let lhs = self.generate_expr(lhs);
                     self.emit("pushq %rax")?;
 
-                    let rhs = self.generate_expr(rhs, map);
+                    let rhs = self.generate_expr(rhs);
                     self.emit("popq %rdx")?;
                     self.emit("mulq %rdx")?;
                 }
 
                 BinOp::Div => {
-                    let _ = self.generate_expr(rhs, map);
+                    let _ = self.generate_expr(rhs);
                     self.emit("pushq %rax")?;
 
-                    let _ = self.generate_expr(lhs, map);
+                    let _ = self.generate_expr(lhs);
 
                     self.emit("popq %rdi")?;
 
@@ -329,7 +316,9 @@ where
                     }
                 }
             }
-        }
+        };
+
+        Ok(())
     }
 }
 
@@ -341,8 +330,6 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithErro
     let name = format!("{}.asm", db.name(file));
 
     let file = File::create(&name).expect("couldn't generate file");
-
-    println!("{:#?}", resolver);
 
     let mut builder = Codegen {
         db,
