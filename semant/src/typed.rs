@@ -55,7 +55,7 @@ pub enum Expr {
         op: BinOp,
         rhs: Box<Typed<Expr>>,
     },
-    Block(Vec<Stmt>, bool),
+    Block(Vec<Typed<Stmt>>, bool),
     Break,
     Call {
         callee: Box<Typed<Expr>>,

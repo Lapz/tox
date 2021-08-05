@@ -28,7 +28,7 @@ where
 
         match ty {
             Type::Poly(_, ref inner) => match &**inner {
-                ty @ Type::Class { .. } => {}
+                _ty @ Type::Class { .. } => {}
                 ty => {
                     let msg = format!(
                         "Expected expression of type `class` instead found `{:?}`",
@@ -120,7 +120,7 @@ where
                     },
 
                     Type::Class { fields, .. } => {
-                        if let Some(ty) = fields.get(&ident.item) {
+                        if let Some(_ty) = fields.get(&ident.item) {
                             // self.infer_field_exprs(&exprs[1..], ty, map)
                         } else {
                             let msg = format!(
@@ -155,7 +155,7 @@ where
 
                             match ty {
                                 Type::Tuple(ref types) => {
-                                    if let Some(ty) = types.get(index) {
+                                    if let Some(_ty) = types.get(index) {
                                     } else {
                                         let msg = format!("Unknown tuple field `{}`", index);
 

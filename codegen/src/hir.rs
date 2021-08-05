@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display, fs::File, io::Write, usize};
 use errors::{FileId, WithError};
 use semant::{
     hir::{BinOp, Literal, NameId},
-    typed::{self, Expr, Stmt},
+    typed::{self, Expr, Pattern, Stmt},
     Function, Program, Span, Type, TypeCon, Typed,
 };
 
@@ -20,13 +20,21 @@ union FloatParts {
 #[derive(Debug)]
 struct Frame {
     /// The total space on the stack
-    stack_size: usize,
+    stack_size: isize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct VarInfo {
+    local: bool,
+    offset: isize,
 }
 #[derive(Debug)]
 pub(crate) struct Codegen<DB> {
     db: DB,
     file: File,
     frame_info: HashMap<NameId, Frame>,
+    offsets: HashMap<NameId, VarInfo>,
+    current_name: Option<NameId>,
 }
 
 macro_rules! emit {
@@ -44,38 +52,34 @@ macro_rules! emit {
 
 }
 
-const fn align_to(n: usize, align: usize) -> usize {
+const fn align_to(n: isize, align: isize) -> isize {
     (n + align - 1) / align * align
 }
-
-const REGS: [Register; 6] = [RDI, RSI, RDX, RCX, R8, R9];
-
-pub enum Register {
-    Offset(usize),
-    RAX,
-    RDI,
-    RSI,
-    RDX,
-    RCX,
-    R8,
-    R9,
-    RSP,
-    RBP,
-    Label(usize),
-}
-
-use Register::*;
 
 impl<'a, DB> Codegen<&'a DB>
 where
     DB: CodegenDatabase,
 {
+    fn assign_offset_for_pat(&mut self, pat: &Typed<Pattern>, offset: isize, local: bool) {
+        match &pat.item {
+            Pattern::Bind { name } => {
+                self.offsets.insert(name.item, VarInfo { offset, local });
+            }
+            Pattern::Placeholder => {}
+            Pattern::Tuple(pats) => {
+                for p in pats {
+                    self.assign_offset_for_pat(p, offset, local);
+                }
+            }
+            Pattern::Literal(_) => {}
+        }
+    }
     fn get_frame_info(&mut self, function: &Typed<Function>) -> Frame {
         // If a function has many parameters, some parameters are
         // inevitably passed by stack rather than by register.
         // The first passed-by-stack parameter resides at RBP+16.
-        let mut top = 16;
-        let mut bottom = 0;
+        let mut top = 16isize;
+        let mut bottom = 0isize;
 
         let gp = 0;
         let bp = 0;
@@ -83,28 +87,37 @@ where
         for param in &function.item.params {
             top = align_to(top, 8);
 
+            self.assign_offset_for_pat(&param.item.pat, top, false);
+
             top += param.ty.size();
         }
 
-        for param in &function.item.params {
-            // AMD64 System V ABI has a special alignment rule for an array of
-            // length at least 16 bytes. We need to align such array to at least
-            // 16-byte boundaries. See p.14 of
-            // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
-            let alignment = match &param.ty {
-                ty @ Type::Con(semant::TypeCon::Array { .. }) => {
-                    if ty.size() >= 16 {
-                        std::cmp::max(16, ty.align())
-                    } else {
-                        ty.align()
-                    }
+        for stmt in &function.item.body {
+            match &stmt.item {
+                Stmt::Let { pat, .. } => {
+                    // AMD64 System V ABI has a special alignment rule for an array of
+                    // length at least 16 bytes. We need to align such array to at least
+                    // 16-byte boundaries. See p.14 of
+                    // https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-draft.pdf.
+                    let alignment = match &stmt.ty {
+                        ty @ Type::Con(semant::TypeCon::Array { .. }) => {
+                            if ty.size() >= 16 {
+                                std::cmp::max(16, ty.align())
+                            } else {
+                                ty.align()
+                            }
+                        }
+                        ty => ty.align(),
+                    };
+
+                    bottom += stmt.ty.size();
+
+                    bottom = align_to(bottom, alignment);
+
+                    self.assign_offset_for_pat(pat, -bottom, true);
                 }
-                ty => ty.align(),
-            };
-
-            bottom += param.ty.size();
-
-            bottom = align_to(bottom, alignment);
+                _ => {}
+            }
         }
 
         Frame {
@@ -114,6 +127,8 @@ where
 
     pub fn generate_function(&mut self, function: &Typed<Function>) -> std::io::Result<()> {
         emit!(self, ".text")?;
+
+        self.current_name = Some(function.item.name.item);
 
         let name = self.db.lookup_intern_name(function.item.name.item);
         // emit!(
@@ -139,6 +154,8 @@ where
             self.generate_statement(stmt)?;
         }
 
+        emit!(self, ".L.return.{}:", name);
+        self.emit("mov %rbp, %rsp")?;
         self.emit("popq %rbp")?;
         self.emit("ret")?;
         Ok(())
@@ -152,6 +169,9 @@ where
         Ok(())
     }
 
+    pub fn push(&mut self) -> std::io::Result<()> {
+        emit!(self, "push %rax")
+    }
     pub fn generate_statement(&mut self, stmt: &Typed<Stmt>) -> std::io::Result<()> {
         emit!(self, "# span {:?}", stmt.span);
         match &stmt.item {
@@ -159,7 +179,20 @@ where
                 pat,
                 ascribed_type,
                 initializer,
-            } => Ok(()),
+            } => {
+                self.get_addr(pat)?;
+
+                self.push()?;
+
+                if let Some(init) = initializer {
+                    self.generate_expr(init)?;
+                    self.store(&init.ty)?;
+                } else {
+                    self.store(&stmt.ty)?;
+                }
+
+                Ok(())
+            }
             Stmt::Expr(expr) => {
                 self.generate_expr(expr)?;
 
@@ -183,10 +216,68 @@ where
         }
     }
 
+    pub fn get_addr(&mut self, pat: &Typed<Pattern>) -> std::io::Result<()> {
+        match &pat.item {
+            Pattern::Bind { name } => {
+                let info = self.offsets.get(&name.item).unwrap();
+
+                if info.local {
+                    emit!(self, "lea {}(%rbp), %rax", info.offset)?;
+                } else {
+                }
+                Ok(())
+            }
+            Pattern::Placeholder => todo!(),
+            Pattern::Tuple(_) => todo!(),
+            Pattern::Literal(_) => todo!(),
+        }
+    }
+
+    pub fn load(&mut self, ty: &Type) -> std::io::Result<()> {
+        match ty {
+            Type::Con(TypeCon::Float) => {
+                emit!(self, "movss %rax, %xmm0")?;
+            }
+
+            _ => {}
+        }
+
+        match ty.size() {
+            1 => emit!(self, "movsbl (%rax), %eax"),
+            2 => emit!(self, "movswl  (%rax), %eax"),
+            4 => emit!(self, "mov (%rax), %rax"),
+            _ => {
+                emit!(self, "mov (%rax), %rax")
+            }
+        }
+    }
+
+    pub fn store(&mut self, ty: &Type) -> std::io::Result<()> {
+        emit!(self, "pop %rdi");
+
+        match ty {
+            Type::Con(TypeCon::Float) => {
+                emit!(self, "movss %xmm0, (%rdi)")?;
+            }
+
+            _ => {}
+        }
+
+        println!("{:?}", ty);
+
+        match ty.size() {
+            1 => emit!(self, " mov %al, (%rdi)"),
+            2 => emit!(self, "mov %ax, (%rdi)"),
+            4 => emit!(self, " mov %rax, (%rdi)"),
+            _ => {
+                emit!(self, "mov %rax, (%rdi)")
+            }
+        }
+    }
+
     pub fn generate_expr(&mut self, expr: &Typed<Expr>) -> std::io::Result<()> {
         match &expr.item {
             Expr::Tuple(_)
-            | Expr::Return(_)
             | Expr::Match { .. }
             | Expr::Enum { .. }
             | Expr::RecordLiteral { .. }
@@ -199,9 +290,28 @@ where
             | Expr::Closure { .. }
             | Expr::Continue
             | Expr::If { .. }
-            | Expr::Ident(_)
             | Expr::Index { .. }
             | Expr::While { .. } => unimplemented!(),
+
+            Expr::Return(expr) => {
+                if let Some(e) = expr {
+                    self.generate_expr(e)?;
+                }
+
+                let name = self.db.lookup_intern_name(self.current_name.unwrap());
+
+                emit!(self, "jmp .L.return.{}", name)?;
+            }
+            Expr::Ident(ident) => {
+                let info = self.offsets.get(&ident.item).unwrap();
+
+                if info.local {
+                    emit!(self, "lea {}(%rbp), %rax", info.offset)?;
+                    self.load(&expr.ty)?;
+                } else {
+                    // TODO handle params and global variables
+                }
+            }
             Expr::Unary { expr, op } => match op {
                 semant::hir::UnaryOp::Minus => {
                     self.generate_expr(expr)?;
@@ -335,11 +445,15 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithErro
         db,
         file,
         frame_info: HashMap::default(),
+        offsets: HashMap::default(),
+        current_name: None,
     };
 
     for function in &typed_program.functions {
         builder.generate_function(function).unwrap()
     }
+
+    println!("{:#?}", builder.offsets);
     // builder.generate_constants().unwrap();
 
     WithError((), vec![])

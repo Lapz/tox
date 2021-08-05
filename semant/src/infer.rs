@@ -13,19 +13,16 @@ mod ty;
 mod unify;
 
 use crate::{
-    hir::{ExprId, FunctionAstMap, NameId, ParamId, StmtId},
-    typed, HirDatabase, Resolver, Span,
+    hir::{ExprId, NameId, StmtId},
+    typed, HirDatabase, Resolver,
 };
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
 use indexmap::IndexMap;
 pub use stacked_map::StackedMap;
-use syntax::TextRange;
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 pub use ty::{Type, TypeCon, TypeVar, Variant};
-
-pub type TypeMap = HashMap<NameId, InferDataMap>;
 
 #[derive(Debug)]
 pub(crate) struct InferDataCollector<DB> {
@@ -37,7 +34,6 @@ pub(crate) struct InferDataCollector<DB> {
     fn_name: Option<NameId>,
     env: StackedMap<NameId, Type>,
     file: FileId,
-    type_map: TypeMap,
 }
 
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
@@ -72,7 +68,6 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<typed::Prog
         returns: None,
         env: StackedMap::new(),
         fn_name: None,
-        type_map: HashMap::new(),
     };
 
     let mut program = typed::Program { functions: vec![] };

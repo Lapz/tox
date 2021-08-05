@@ -46,7 +46,7 @@ where
                             inferred_fields.insert(*name, inferred_expr);
                         }
 
-                        for (field, expr) in fields {
+                        for (field, _expr) in fields {
                             let inferred_expr = inferred_fields.get(field).unwrap();
 
                             if let Some(ty) = field_types.get(&field.item) {

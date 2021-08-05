@@ -1,6 +1,8 @@
+use indexmap::IndexMap;
+
 use crate::hir::NameId;
 
-use std::collections::HashMap;
+use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -10,7 +12,7 @@ pub struct TypeVar(pub(crate) u32);
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Unique(pub(crate) u32);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TypeCon {
     Bool,
     Float,
@@ -34,23 +36,74 @@ pub enum Type {
     Poly(Vec<TypeVar>, Box<Type>),
     Var(TypeVar),
     Con(TypeCon),
-    Enum(NameId, HashMap<NameId, Variant>),
+    Enum(NameId, IndexMap<NameId, Variant>),
     Class {
         name: NameId,
-        fields: HashMap<NameId, Type>,
-        methods: HashMap<NameId, Type>,
+        fields: IndexMap<NameId, Type>,
+        methods: IndexMap<NameId, Type>,
     },
     Unknown,
 }
 
 impl std::hash::Hash for Type {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        todo!()
+        match self {
+            Type::App(types) => types.iter().for_each(|ty| ty.hash(state)),
+            Type::Tuple(types) => types.iter().for_each(|ty| ty.hash(state)),
+            Type::Poly(vars, inner) => {
+                vars.iter().for_each(|ty| ty.hash(state));
+                inner.hash(state)
+            }
+            Type::Var(var) => var.hash(state),
+            Type::Con(con) => con.hash(state),
+            Type::Enum(name, fields) => {
+                name.hash(state);
+
+                state.write_u64(
+                    fields
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                )
+            }
+            Type::Class {
+                name,
+                fields,
+                methods,
+            } => {
+                name.hash(state);
+                state.write_u64(
+                    fields
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                );
+                state.write_u64(
+                    methods
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                )
+            }
+            Type::Unknown => std::mem::discriminant(&Type::Unknown).hash(state),
+        }
     }
 }
 
 impl Type {
-    pub fn size(&self) -> usize {
+    pub fn size(&self) -> isize {
         match self {
             Type::Con(con) => match con {
                 TypeCon::Bool => 1,
@@ -60,14 +113,14 @@ impl Type {
                 TypeCon::Void => 1,
                 TypeCon::Array { ty, size } => {
                     if let Some(len) = size {
-                        ty.size() * len
+                        ty.size() * (*len as isize)
                     } else {
                         16
                     }
                 }
             },
             Type::App(..) => 8,
-            Type::Tuple(length) => 8,
+            Type::Tuple(_length) => 8,
             Type::Enum(_, fields) => {
                 4 + fields.iter().fold(0, |acc, (_, variant)| {
                     acc + variant.ty.as_ref().map_or(4, |ty| ty.size())
@@ -91,7 +144,7 @@ impl Type {
 
     // We treat a tuple like a struct
 
-    pub fn align(&self) -> usize {
+    pub fn align(&self) -> isize {
         match self {
             Type::Con(con) => match con {
                 TypeCon::Bool => 1,
@@ -104,13 +157,13 @@ impl Type {
             Type::App(..) => 8,
             Type::Poly(_, inner) => inner.align(),
             Type::Unknown => panic!("Unsized types"),
-            Type::Tuple(length) => 8,
+            Type::Tuple(_length) => 8,
             Type::Enum(_, _) => 4,
             Type::Var(_) => panic!("Unsized type"),
             Type::Class {
-                name,
+                name: _,
                 fields,
-                methods,
+                methods: _,
             } => {
                 if fields.is_empty() {
                     1
@@ -130,7 +183,7 @@ impl Type {
 ///  }
 /// ```
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Variant {
     pub tag: usize,
     pub ty: Option<Type>,

@@ -1,3 +1,5 @@
+use indexmap::IndexMap;
+
 use super::{
     data::{ItemKind, ResolverDataCollector},
     TypeKind,
@@ -31,14 +33,14 @@ where
                 poly_tvs.clone(),
                 Box::new(Type::Class {
                     name: class.name.item,
-                    fields: HashMap::new(),
-                    methods: HashMap::new(),
+                    fields: IndexMap::default(),
+                    methods: IndexMap::default(),
                 }),
             ),
             TypeKind::Class,
         );
 
-        let mut fields = HashMap::new();
+        let mut fields = IndexMap::default();
 
         for field in &class.fields {
             if fields.contains_key(&field.item.property.item) {
@@ -59,7 +61,7 @@ where
             fields.insert(field.item.property.item, ty);
         }
 
-        let mut methods = HashMap::new();
+        let mut methods = IndexMap::default();
 
         // forward declare methods
 

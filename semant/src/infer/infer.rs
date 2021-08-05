@@ -1,4 +1,3 @@
-use super::InferDataMap;
 use crate::{
     hir::{
         self, ExprId, Function, FunctionAstMap, Literal, LiteralId, PatId, StmtId, UnaryOp,
@@ -22,10 +21,6 @@ where
 
     #[instrument(skip(self, function))]
     pub(crate) fn infer_function(&mut self, function: &Function) -> typed::Typed<typed::Function> {
-        let map = InferDataMap::default();
-
-        self.type_map.insert(function.name.item, map);
-
         let expected = self.db.resolve_named_type(self.file, function.name.item);
 
         self.returns = Some(expected.clone());
@@ -54,8 +49,6 @@ where
             body.iter()
                 .for_each(|stmt| inferred_body.push(self.infer_statement(stmt, &function.ast_map)))
         }
-
-        let map = self.type_map.remove(&function.name.item).unwrap();
 
         typed::Typed::new(
             typed::Function {
@@ -259,7 +252,7 @@ where
             }
             hir::Expr::Binary { lhs, op, rhs } => self.infer_binary(id, lhs, op, rhs, map),
 
-            hir::Expr::Block(block, has_value) => self.infer_block(map, block, *has_value),
+            hir::Expr::Block(block, has_value) => self.infer_block(block, *has_value, span, map),
             hir::Expr::Break => {
                 typed::Typed::new(typed::Expr::Break, Type::Con(TypeCon::Void), span)
             }
@@ -395,7 +388,7 @@ where
                     true,
                 );
 
-                let body = self.infer_block(map, body, false);
+                let body = self.infer_block(body, false, span, map);
 
                 typed::Typed::new(
                     typed::Expr::While {
