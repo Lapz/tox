@@ -108,7 +108,7 @@ impl Type {
             Type::Con(con) => match con {
                 TypeCon::Bool => 1,
                 TypeCon::Float => 4,
-                TypeCon::Int => 4,
+                TypeCon::Int => 8, // todo implement 32 bit floats
                 TypeCon::Str => 4, // TODO fix
                 TypeCon::Void => 1,
                 TypeCon::Array { ty, size } => {
@@ -149,7 +149,7 @@ impl Type {
             Type::Con(con) => match con {
                 TypeCon::Bool => 1,
                 TypeCon::Float => 4,
-                TypeCon::Int => 4,
+                TypeCon::Int => 8,
                 TypeCon::Str => 4, // TODO fix
                 TypeCon::Void => 1,
                 TypeCon::Array { ty, .. } => ty.align(),

@@ -1,3 +1,6 @@
-fn main((a,b):i32) {
-  10.0;
+fn main() ->bool{
+  let a = 10;
+  let b = 20;
+
+  return 5 <= 5;
 }
