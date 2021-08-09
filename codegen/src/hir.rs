@@ -3,6 +3,7 @@ use std::{
 };
 
 use errors::{FileId, WithError};
+
 use semant::{
     hir::{BinOp, Literal, NameId},
     typed::{Expr, Pattern, Stmt},
@@ -35,6 +36,7 @@ struct Block {
 pub(crate) struct Codegen<DB> {
     db: DB,
     file: File,
+    file_id: FileId,
     frame_info: HashMap<NameId, Frame>,
     offsets: HashMap<NameId, VarInfo>,
     current_name: Option<NameId>,
@@ -60,10 +62,18 @@ macro_rules! emit {
 
     };
 
-      ($self:expr, $fmt:expr) => {
+    ($self:expr, $fmt:expr) => {
         write!(&mut $self,"\t");
          writeln!(&mut $self,$fmt)
-     }
+     };
+
+      ($self:expr,$fmt:expr,$($arg:tt)+) => {
+   {
+       write!(&mut $self,"\t");
+        writeln!(&mut $self,$fmt,$($arg)+)
+    }
+
+    };
 
 }
 
@@ -219,10 +229,16 @@ where
 
     pub fn popf(&mut self, reg: usize) -> std::io::Result<()> {
         emit!(self, "movsd (%rsp), %xmm{}", reg)?;
-        emit!(self, "add $8, %%rsp")
+        emit!(self, "add $8, %rsp")
     }
     pub fn generate_statement(&mut self, stmt: &Typed<Stmt>) -> std::io::Result<()> {
-        emit!(self, "# span {:?}", stmt.span);
+        // emit!(
+        //     self,
+        //     ".loc {} {} {}",
+        //     self.file_id.as_intern_id().as_u32(),
+        //     stmt.span.0.to_usize(),
+        //     stmt.span.1.to_usize()
+        // );
         match &stmt.item {
             Stmt::Let {
                 pat, initializer, ..
@@ -248,20 +264,6 @@ where
                 Ok(())
             }
             Stmt::Error => self.emit("nop"),
-        }
-    }
-
-    pub fn compare_zero(&mut self, ty: &Type) -> std::io::Result<()> {
-        match ty {
-            Type::Con(TypeCon::Float) => {
-                emit!(self, "xorps %%xmm1, %%xmm1")?;
-                emit!(self, "ucomiss %%xmm1, %%xmm0")
-            }
-
-            Type::Con(TypeCon::Float) if ty.size() <= 4 => emit!(self, "cmp $0,%eax"),
-            _ => {
-                emit!(self, "cmp $0,%rax")
-            }
         }
     }
 
@@ -322,7 +324,22 @@ where
         }
     }
 
-    pub fn new_label(&mut self) -> String {
+    fn cmp_zero(&mut self, ty: &Type) -> std::io::Result<()> {
+        match ty {
+            Type::Con(TypeCon::Float) => {
+                emit!(self, "xorps %xmm1, %xmm1")?;
+                emit!(self, "ucomiss %xmm1, %xmm0")
+            }
+            ty if ty.size() <= 4 => {
+                emit!(self, "cmp $0, %eax")
+            }
+            _ => {
+                emit!(self, "cmp $0, %rax")
+            }
+        }
+    }
+
+    fn new_label(&mut self) -> String {
         let count = self.label_count;
 
         self.label_count += 1;
@@ -338,13 +355,18 @@ where
             | Expr::RecordLiteral { .. }
             | Expr::Field(_)
             | Expr::Array(_)
-            | Expr::Block(_, _)
             | Expr::Break
             | Expr::Call { .. }
             | Expr::Cast { .. }
             | Expr::Closure { .. }
             | Expr::Continue
-            | Expr::Index { .. } => unimplemented!(),
+            | Expr::Index { .. } => unimplemented!("{:?}", expr.item),
+
+            Expr::Block(stmts, _) => {
+                for stmt in stmts {
+                    self.generate_statement(stmt)?;
+                }
+            }
 
             Expr::If {
                 cond,
@@ -435,8 +457,11 @@ where
                     }
                 }
                 semant::hir::UnaryOp::Excl => {
-                    // self.generate_expr(expr, expr)?;
-                    unimplemented!()
+                    self.generate_expr(expr)?;
+                    self.cmp_zero(&expr.ty)?;
+
+                    emit!(self, "sete %al")?;
+                    emit!(self, "movzx %al, %rax")?;
                 }
             },
             Expr::Paren(expr) => {
@@ -450,7 +475,7 @@ where
                     (BinOp::PlusEqual, _) => {}
                     (BinOp::MultEqual, _) => {}
                     (BinOp::DivEqual, _) => {}
-                    (op, Type::Con(TypeCon::Int)) => {
+                    (op, Type::Con(TypeCon::Int) | Type::Con(TypeCon::Bool)) => {
                         match op {
                             BinOp::Plus | BinOp::Minus => {
                                 self.generate_expr(lhs)?;
@@ -551,7 +576,7 @@ where
                     }
                     (op, Type::Con(TypeCon::Float)) => {
                         self.generate_expr(lhs)?;
-                        self.push()?;
+                        self.pushf()?;
                         self.generate_expr(rhs)?;
                         self.popf(1)?;
 
@@ -570,25 +595,31 @@ where
 
                                 match op {
                                     BinOp::LessThan => {
-                                        emit!(self, "setl %al")?;
+                                        emit!(self, "ucomiss %xmm1, %xmm0")?;
+                                        emit!(self, "seta %al")?;
                                     }
                                     BinOp::LessThanEqual => {
-                                        emit!(self, "setle %al")?;
+                                        emit!(self, "ucomiss %xmm1, %xmm0")?;
+                                        emit!(self, "setae %al")?;
                                     }
 
                                     BinOp::GreaterThan => {
-                                        emit!(self, "setg %al")?;
+                                        emit!(self, "seta %al")?;
                                     }
                                     BinOp::GreaterThanEqual => {
-                                        emit!(self, "setge %al")?;
+                                        emit!(self, "setae %al")?;
                                     }
 
                                     BinOp::NotEqual => {
                                         emit!(self, "setne %al")?;
+                                        emit!(self, "setp %cl")?;
+                                        emit!(self, "orb %cl, %al")?;
                                     }
 
                                     BinOp::EqualEqual => {
-                                        emit!(self, "sete %al")?;
+                                        emit!(self, "setne %al")?;
+                                        emit!(self, "setp %cl")?;
+                                        emit!(self, "and %cl, %al")?;
                                     }
                                     _ => unreachable!(),
                                 }
@@ -603,19 +634,51 @@ where
                         }
                     }
 
-                    (op, Type::Con(TypeCon::Bool)) => match op {
-                        BinOp::LessThan
-                        | BinOp::LessThanEqual
-                        | BinOp::EqualEqual
-                        | BinOp::GreaterThan
-                        | BinOp::GreaterThanEqual
-                        | BinOp::NotEqual => {}
+                    (BinOp::And, _) => {
+                        let skip = self.new_label();
+                        let after = self.new_label();
 
-                        _ => unreachable!(),
-                    },
+                        self.generate_expr(lhs)?;
+                        self.cmp_zero(&lhs.ty)?;
+
+                        emit!(self, "je {}", skip)?;
+
+                        self.generate_expr(rhs)?;
+                        self.cmp_zero(&rhs.ty)?;
+
+                        emit!(self, "je {}", skip)?;
+
+                        emit!(self, "movq $1, %rax")?;
+
+                        emit!(self, "jmp {}", after)?;
+                        emit!(self, "{}:", skip)?;
+                        emit!(self, "movq $0, %rax")?;
+                        emit!(self, "{}:", after)?;
+                    }
+                    (BinOp::Or, _) => {
+                        let after = self.new_label();
+                        let true_part = self.new_label();
+
+                        self.generate_expr(lhs)?;
+                        self.cmp_zero(&lhs.ty)?;
+
+                        emit!(self, "jne {}", after)?;
+
+                        self.generate_expr(rhs)?;
+                        self.cmp_zero(&rhs.ty)?;
+
+                        emit!(self, "jne {}", after)?;
+
+                        emit!(self, "movq $0, %rax")?;
+
+                        emit!(self, "jmp {}", after)?;
+                        emit!(self, "{}:", true_part)?;
+                        emit!(self, "movq $1, %rax")?;
+                        emit!(self, "{}:", after)?;
+                    }
 
                     _ => {
-                        unimplemented!()
+                        unreachable!()
                     }
                 }
             }
@@ -665,24 +728,27 @@ where
     }
 }
 
-pub fn compile_to_asm_query(db: &impl CodegenDatabase, file: FileId) -> WithError<()> {
-    let WithError(program, mut errors) = db.lower(file);
-    let WithError(resolver, _) = db.resolve_source_file(file);
-    let WithError(typed_program, error) = db.infer(file);
+pub fn compile_to_asm_query(db: &impl CodegenDatabase, file_id: FileId) -> WithError<()> {
+    let WithError(program, mut errors) = db.lower(file_id);
+    let WithError(resolver, _) = db.resolve_source_file(file_id);
+    let WithError(typed_program, error) = db.infer(file_id);
     errors.extend(error);
-    let name = format!("{}.s", db.name(file));
+    let name = format!("{}.s", db.name(file_id));
 
     let file = File::create(&name).expect("couldn't generate file");
 
     let mut builder = Codegen {
         db,
         file,
+        file_id,
         frame_info: HashMap::default(),
         offsets: HashMap::default(),
         current_name: None,
         current_block: None,
         label_count: 0,
     };
+
+    emit!(builder.file, ".file 1 \"{}\"", db.name(file_id)).unwrap();
 
     for function in &typed_program.functions {
         builder.generate_function(function).unwrap()
