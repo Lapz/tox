@@ -29,8 +29,9 @@ struct VarInfo {
     offset: isize,
 }
 #[derive(Debug)]
-struct Block {
+struct LoopInfo {
     start: String,
+    after: String,
 }
 #[derive(Debug)]
 pub(crate) struct Codegen<DB> {
@@ -40,7 +41,7 @@ pub(crate) struct Codegen<DB> {
     frame_info: HashMap<NameId, Frame>,
     offsets: HashMap<NameId, VarInfo>,
     current_name: Option<NameId>,
-    current_block: Option<Block>,
+    current_loop: Option<LoopInfo>,
     label_count: usize,
 }
 
@@ -354,19 +355,41 @@ where
             | Expr::Enum { .. }
             | Expr::RecordLiteral { .. }
             | Expr::Field(_)
-            | Expr::Array(_)
-            | Expr::Break
             | Expr::Call { .. }
             | Expr::Cast { .. }
-            | Expr::Closure { .. }
-            | Expr::Continue
-            | Expr::Index { .. } => unimplemented!("{:?}", expr.item),
+            | Expr::Closure { .. } => unimplemented!("{:?}", expr.item),
 
             Expr::Block(stmts, _) => {
                 for stmt in stmts {
                     self.generate_statement(stmt)?;
                 }
             }
+
+            Expr::Index { base, index } => {
+                self.generate_expr(base)?;
+
+                self.load(&base.ty)?;
+
+                self.push()?;
+
+                self.generate_expr(index)?;
+
+                emit!(self, "popq $rdx")?; // base address
+
+                emit!(self, "movq (%rdx, %rax,{}) , %rax ", base.ty.size())
+            }
+
+            Expr::Break => match &self.current_loop {
+                Some(LoopInfo { after, .. }) => emit!(self, "jmp {}", after)?,
+                None => {}
+            },
+
+            Expr::Continue => match &self.current_loop {
+                Some(LoopInfo { start, .. }) => emit!(self, "jmp {}", start)?,
+                None => {}
+            },
+
+            Expr::Array(items) => {}
 
             Expr::If {
                 cond,
@@ -407,6 +430,11 @@ where
             Expr::While { cond, body } => {
                 let start = self.new_label();
                 let after = self.new_label();
+                let outer_loop = self.current_loop.take();
+                self.current_loop = Some(LoopInfo {
+                    start: start.clone(),
+                    after: after.clone(),
+                });
 
                 emit!(self, "{}:", start);
 
@@ -419,6 +447,8 @@ where
                 emit!(self, "jmp {}", start)?;
 
                 emit!(self, "{}:", after)?;
+
+                self.current_loop = outer_loop;
             }
             Expr::Return(expr) => {
                 if let Some(e) = expr {
@@ -744,7 +774,7 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file_id: FileId) -> WithE
         frame_info: HashMap::default(),
         offsets: HashMap::default(),
         current_name: None,
-        current_block: None,
+        current_loop: None,
         label_count: 0,
     };
 
@@ -756,7 +786,7 @@ pub fn compile_to_asm_query(db: &impl CodegenDatabase, file_id: FileId) -> WithE
 
     emit!(builder.file, "format: .asciz \"%d\n\"");
 
-    assert!(builder.current_block.is_none()); // TODO debug mode this
+    assert!(builder.current_loop.is_none()); // TODO debug mode this
 
     println!("{:#?}", builder.offsets);
     // builder.generate_constants().unwrap();
