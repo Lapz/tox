@@ -4,13 +4,12 @@ use std::{
 
 use errors::{FileId, WithError};
 
+use crate::db::CodegenDatabase;
 use semant::{
     hir::{BinOp, Literal, NameId},
     typed::{Expr, Pattern, Stmt},
     Function, Type, TypeCon, Typed,
 };
-
-use crate::db::CodegenDatabase;
 
 #[repr(C)]
 union FloatParts {
@@ -22,6 +21,9 @@ struct Frame {
     /// The total space on the stack
     stack_size: isize,
 }
+
+const GP_MAX: isize = 6;
+const FP_MAX: isize = 8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct VarInfo {
@@ -348,6 +350,54 @@ where
         format!("L.{}", count)
     }
 
+    fn load_fn_args(&mut self, args: &[Typed<Expr>]) -> std::io::Result<isize> {
+        let mut stack = 0;
+        let mut gp = 0;
+        let mut fp = 0;
+
+        let mut pass_by_stack = vec![false; args.len()];
+
+        for (index, arg) in args.iter().enumerate() {
+            let size = arg.ty.size();
+            let calc_size = |ty: &Type| {
+                match ty {
+                    Type::App(_) => todo!(),
+                    Type::Tuple(_) => todo!(),
+                    Type::Poly(_, inner) => calc_size(inner),
+
+                    Type::Con(TypeCon::Float) => {
+                        fp += 1;
+                        if fp >= FP_MAX {
+                            pass_by_stack[index] = true;
+                        }
+
+                        stack += 1;
+                    }
+                    Type::Con(_) => {
+                        gp += 1;
+                        if gp >= FP_MAX {
+                            pass_by_stack[index] = true;
+                        }
+
+                        stack += 1;
+                    }
+                    Type::Enum(_, _) | Type::Class { .. } => {
+                        if size > 16 {
+                        } else {
+                            pass_by_stack[index] = true;
+
+                            stack += align_to(size, 8) / 8;
+                        }
+                    }
+                    Type::Unknown => {}
+                    Type::Var(_) => {}
+                };
+            };
+        }
+
+        Ok(stack)
+    }
+
     pub fn generate_expr(&mut self, expr: &Typed<Expr>) -> std::io::Result<()> {
         match &expr.item {
             Expr::Tuple(_)
@@ -356,13 +406,18 @@ where
             | Expr::RecordLiteral { .. }
             | Expr::Field(_)
             | Expr::Call { .. }
-            | Expr::Cast { .. }
             | Expr::Closure { .. } => unimplemented!("{:?}", expr.item),
 
             Expr::Block(stmts, _) => {
                 for stmt in stmts {
                     self.generate_statement(stmt)?;
                 }
+            }
+
+            Expr::Call { callee, args, .. } => {
+                self.generate_expr(callee)?;
+                let mut gp = 0;
+                let mut fp = 0;
             }
 
             Expr::Index { base, index } => {
@@ -682,7 +737,7 @@ where
 
                         emit!(self, "jmp {}", after)?;
                         emit!(self, "{}:", skip)?;
-                        emit!(self, "movq $0, %rax")?;
+                        emit!(self, "movq , %rax")?;
                         emit!(self, "{}:", after)?;
                     }
                     (BinOp::Or, _) => {
@@ -752,6 +807,7 @@ where
                     }
                 }
             }
+            Expr::Index { base, index } => todo!(),
         };
 
         Ok(())
