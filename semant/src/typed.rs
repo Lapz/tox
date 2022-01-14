@@ -1,3 +1,4 @@
+use std::ops::{Deref, DerefMut};
 use syntax::TextUnit;
 
 use crate::{
@@ -119,5 +120,21 @@ pub struct MatchArm {
 impl<T> Typed<T> {
     pub fn new(item: T, ty: Type, span: (TextUnit, TextUnit)) -> Typed<T> {
         Typed { item, ty, span }
+    }
+}
+
+impl <T> Deref for Typed<T> {
+    type Target =T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.item
+    }
+}
+
+
+impl <T> DerefMut for Typed<T> {
+
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.item
     }
 }

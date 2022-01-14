@@ -103,6 +103,18 @@ impl std::hash::Hash for Type {
 }
 
 impl Type {
+
+    // If a function returns a struct, it is caller's responsibility
+    // to allocate a space for the return value.
+    // If the return type is a large struct/union, the caller passes
+    // a pointer to a buffer as if it were the first argument.
+    pub fn allocates(&self) -> bool {
+        match self {
+            Type::Class {..} => true,
+            Type::Poly(_,inner) => inner.allocates(),
+            _ => false
+        }
+    }
     pub fn size(&self) -> isize {
         match self {
             Type::Con(con) => match con {

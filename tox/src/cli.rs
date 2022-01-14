@@ -74,9 +74,12 @@ impl Cli {
 
             db.emit(&mut errors)?;
 
+
+            println!("{:#?}",_type_map)
+
             // Codegen here
 
-            let WithError(_, _) = db.compile_to_asm(handle);
+            // let WithError(_, _) = db.compile_to_asm(handle);
         }
 
         Ok(exit)

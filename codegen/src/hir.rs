@@ -306,6 +306,47 @@ where
         }
     }
 
+    pub fn push_args(&mut self, args: &[Typed<Expr>],ret:&Type) -> std::io::Result<()> {
+        // let mut stack = 0;
+        // let mut gp = 0;
+        // let mut fp = 0;
+        //
+        // // If the return type is a large struct/union, the caller passes
+        // // a pointer to a buffer as if it were the first argument.
+        //
+        // if ret.allocates()  && ret.size() > 16 {
+        //     gp += 1;
+        // }
+        //
+        // for arg in args {
+        //     let ty = &arg.ty;
+        //
+        //     match ty {
+        //         Type::App(_) => {}
+        //         Type::Tuple(_) => {}
+        //         Type::Poly(_, _) => {}
+        //         Type::Var(_) => {}
+        //         Type::Con(_) => {}
+        //         Type::Enum(_, _) => {}
+        //
+        //         Type::Unknown => {}
+        //     }
+        // }
+        //
+        //
+        //
+
+
+
+
+        Ok(())
+
+
+
+
+
+    }
+
     pub fn store(&mut self, ty: &Type) -> std::io::Result<()> {
         emit!(self, "pop %rdi");
 
@@ -350,53 +391,53 @@ where
         format!("L.{}", count)
     }
 
-    fn load_fn_args(&mut self, args: &[Typed<Expr>]) -> std::io::Result<isize> {
-        let mut stack = 0;
-        let mut gp = 0;
-        let mut fp = 0;
-
-        let mut pass_by_stack = vec![false; args.len()];
-
-        for (index, arg) in args.iter().enumerate() {
-            let size = arg.ty.size();
-            let calc_size = |ty: &Type| {
-                match ty {
-                    Type::App(_) => todo!(),
-                    Type::Tuple(_) => todo!(),
-                    Type::Poly(_, inner) => calc_size(inner),
-
-                    Type::Con(TypeCon::Float) => {
-                        fp += 1;
-                        if fp >= FP_MAX {
-                            pass_by_stack[index] = true;
-                        }
-
-                        stack += 1;
-                    }
-                    Type::Con(_) => {
-                        gp += 1;
-                        if gp >= FP_MAX {
-                            pass_by_stack[index] = true;
-                        }
-
-                        stack += 1;
-                    }
-                    Type::Enum(_, _) | Type::Class { .. } => {
-                        if size > 16 {
-                        } else {
-                            pass_by_stack[index] = true;
-
-                            stack += align_to(size, 8) / 8;
-                        }
-                    }
-                    Type::Unknown => {}
-                    Type::Var(_) => {}
-                };
-            };
-        }
-
-        Ok(stack)
-    }
+    // fn load_fn_args(&mut self, args: &[Typed<Expr>]) -> std::io::Result<isize> {
+    //     let mut stack = 0;
+    //     let mut gp = 0;
+    //     let mut fp = 0;
+    //
+    //     let mut pass_by_stack = vec![false; args.len()];
+    //
+    //     for (index, arg) in args.iter().enumerate() {
+    //         let size = arg.ty.size();
+    //         let calc_size = |ty: &Type| {
+    //             match ty {
+    //                 Type::App(_) => todo!(),
+    //                 Type::Tuple(_) => todo!(),
+    //                 Type::Poly(_, inner) =>inner.size(),
+    //
+    //                 Type::Con(TypeCon::Float) => {
+    //                     fp += 1;
+    //                     if fp >= FP_MAX {
+    //                         pass_by_stack[index] = true;
+    //                     }
+    //
+    //                     stack += 1;
+    //                 }
+    //                 Type::Con(_) => {
+    //                     gp += 1;
+    //                     if gp >= FP_MAX {
+    //                         pass_by_stack[index] = true;
+    //                     }
+    //
+    //                     stack += 1;
+    //                 }
+    //                 Type::Enum(_, _) | Type::Class { .. } => {
+    //                     if size > 16 {
+    //                     } else {
+    //                         pass_by_stack[index] = true;
+    //
+    //                         stack += align_to(size, 8) / 8;
+    //                     }
+    //                 }
+    //                 Type::Unknown => {}
+    //                 Type::Var(_) => {}
+    //             };
+    //         };
+    //     }
+    //
+    //     Ok(stack)
+    // }
 
     pub fn generate_expr(&mut self, expr: &Typed<Expr>) -> std::io::Result<()> {
         match &expr.item {
@@ -405,9 +446,8 @@ where
             | Expr::Enum { .. }
             | Expr::RecordLiteral { .. }
             | Expr::Field(_)
-            | Expr::Call { .. }
+            | Expr::Cast { .. }
             | Expr::Closure { .. } => unimplemented!("{:?}", expr.item),
-
             Expr::Block(stmts, _) => {
                 for stmt in stmts {
                     self.generate_statement(stmt)?;
@@ -415,6 +455,8 @@ where
             }
 
             Expr::Call { callee, args, .. } => {
+                // self.push_args(args)?;
+
                 self.generate_expr(callee)?;
                 let mut gp = 0;
                 let mut fp = 0;
@@ -431,7 +473,7 @@ where
 
                 emit!(self, "popq $rdx")?; // base address
 
-                emit!(self, "movq (%rdx, %rax,{}) , %rax ", base.ty.size())
+                emit!(self, "movq (%rdx, %rax,{}) , %rax ", base.ty.size())?;
             }
 
             Expr::Break => match &self.current_loop {

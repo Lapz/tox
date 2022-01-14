@@ -2,5 +2,5 @@ fn main() ->bool{
   let a = 10;
   let b = 20;
 
-  return 5 <= 5;
+  return a <= b;
 }
