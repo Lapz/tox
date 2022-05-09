@@ -9,5 +9,5 @@ pub trait IrDatabase: HirDatabase {
     fn escape_analysis(&self,file:FileId) -> WithError<HashMap<NameId,>>;
     */
     #[salsa::invoke(crate::builder::build_ir_query)]
-    fn build_ir(&self, file: FileId) -> WithError<Vec<Instruction>>;
+    fn build_ir(&self, file: FileId) -> WithError<()>;
 }

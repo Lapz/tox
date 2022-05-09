@@ -6,6 +6,7 @@ use syntax::{
     ast, ArgListOwner, AstNode, LoopBodyOwner, NameOwner, TypeAscriptionOwner, TypeParamsOwner,
     TypesOwner, VisibilityOwner,
 };
+use crate::hir::BinOp;
 
 #[derive(Debug)]
 pub(crate) struct FunctionDataCollector<DB> {
@@ -213,10 +214,31 @@ where
             ast::Expr::BinExpr(ref bin_expr) => {
                 let lhs = self.lower_expr(bin_expr.lhs().unwrap());
                 let rhs = self.lower_expr(bin_expr.rhs().unwrap());
-
                 let op = hir::BinOp::from_kind(bin_expr.op_kind().unwrap()).unwrap(); // TODO fix the unwraps
 
-                hir::Expr::Binary { lhs, op, rhs }
+                match op {
+                    op @ hir::BinOp::PlusEqual | op @ hir::BinOp::DivEqual |   op @hir::BinOp::MinusEqual | op @ hir::BinOp::DivEqual => {
+                        let desugared_rhs  =util::Span::from_ast(self.add_expr( hir::Expr::Binary {
+                            lhs,
+                            op:match op {
+                                BinOp::PlusEqual => BinOp::Plus,
+                                BinOp::MinusEqual => BinOp::Minus,
+                                BinOp::MultEqual => BinOp::Mult,
+                                BinOp::DivEqual => BinOp::Div,
+                                _ => unreachable!()
+                            },
+                            rhs
+                        }),&bin_expr.rhs().unwrap());
+
+                        hir::Expr::Binary { lhs, op:BinOp::Equal, rhs:desugared_rhs}
+
+                    },
+                    _ => {
+                        hir::Expr::Binary { lhs, op, rhs }
+                    }
+                }
+
+
             }
             ast::Expr::BlockExpr(ref block) => {
                 let has_value = block.has_value();

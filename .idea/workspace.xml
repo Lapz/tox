@@ -5,22 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dc260a7f-31ea-4d0e-ba26-33f8f20d3c39" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ir/src/block.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/lexer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/lexer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/ir/src/printer.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/codegen/src/hir.rs" beforeDir="false" afterPath="$PROJECT_DIR$/codegen/src/hir.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foo.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ir/src/builder.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/builder.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ir/src/ir.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/ir.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ir/src/db.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/db.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ir/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/ir/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/semant/src/infer/ty.rs" beforeDir="false" afterPath="$PROJECT_DIR$/semant/src/infer/ty.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/semant/src/typed.rs" beforeDir="false" afterPath="$PROJECT_DIR$/semant/src/typed.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/t.ast" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.tast" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tox/src/cli.rs" beforeDir="false" afterPath="$PROJECT_DIR$/tox/src/cli.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/semant/src/lower/function.rs" beforeDir="false" afterPath="$PROJECT_DIR$/semant/src/lower/function.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tox/src/test.tox" beforeDir="false" afterPath="$PROJECT_DIR$/tox/src/test.tox" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -89,11 +79,24 @@
       <option name="presentableId" value="Default" />
       <updated>1642020196352</updated>
       <workItem from="1642020202332" duration="963000" />
-      <workItem from="1642154131173" duration="9782000" />
+      <workItem from="1642154131173" duration="10718000" />
+      <workItem from="1642186186847" duration="1184000" />
     </task>
+    <task id="LOCAL-00001" summary="Work on lowering to BB">
+      <created>1642164702071</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1642164702071</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Work on lowering to BB" />
+    <option name="LAST_COMMIT_MESSAGE" value="Work on lowering to BB" />
   </component>
 </project>

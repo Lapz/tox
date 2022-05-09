@@ -265,14 +265,13 @@ impl<'a, 'map, DB> IrBuilder<'map, &'a DB>
 
                 self.start_block(other);
 
-                let otherwise =  if let Some(expr) = else_branch {
-                    self.expr(expr)
+               if let Some(expr) = else_branch {
+                    self.expr(expr)l;
                 }else {
 
                     let rhs = self.register();
 
                     self.emit_store_immediate(rhs,Value::Nil);
-                    rhs
                 };
 
                 self.end_block(BlockEnd::Jump(after));
@@ -282,11 +281,7 @@ impl<'a, 'map, DB> IrBuilder<'map, &'a DB>
             },
             Expr::Binary { lhs, op, rhs } => {
                 match (op,&expr.ty) {
-                    (hir::BinOp::Equal, _) |
-                    (hir::BinOp::MinusEqual, _) |
-                    (hir::BinOp::PlusEqual, _) |
-                    (hir::BinOp::MultEqual, _)|
-                    (hir::BinOp::DivEqual, _) => {
+                    (hir::BinOp::Equal | hir::BinOp::EqualEqual, _) => {
                         let lhs = self.expr(lhs);
 
                         let rhs = self.expr(rhs);

@@ -3,3 +3,4 @@ mod db;
 mod frame;
 mod ir;
 mod block;
+mod printer;
