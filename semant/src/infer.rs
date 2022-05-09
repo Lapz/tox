@@ -2,9 +2,11 @@ mod binary;
 mod block;
 mod call;
 mod ctx;
+mod enum_expr;
 mod field;
 mod infer;
 mod pattern_matrix;
+mod record;
 mod stacked_map;
 mod subst;
 mod ty;
@@ -12,17 +14,15 @@ mod unify;
 
 use crate::{
     hir::{ExprId, NameId, StmtId},
-    resolver::Resolver,
-    HirDatabase,
+    typed, HirDatabase, Resolver,
 };
 pub use ctx::Ctx;
 use errors::{FileId, Reporter, WithError};
 use indexmap::IndexMap;
 pub use stacked_map::StackedMap;
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 pub use ty::{Type, TypeCon, TypeVar, Variant};
-pub type TypeMap = HashMap<NameId, InferDataMap>;
 
 #[derive(Debug)]
 pub(crate) struct InferDataCollector<DB> {
@@ -34,8 +34,8 @@ pub(crate) struct InferDataCollector<DB> {
     fn_name: Option<NameId>,
     env: StackedMap<NameId, Type>,
     file: FileId,
-    type_map: TypeMap,
 }
+
 #[derive(Debug, Default, Eq, PartialEq, Clone)]
 pub struct InferDataMap {
     pub expr_to_type: IndexMap<ExprId, Type>,
@@ -51,8 +51,8 @@ impl InferDataMap {
     }
 }
 
-pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<TypeMap> {
-    let WithError(program, mut errors) = db.lower(file);
+pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<typed::Program> {
+    let WithError(source, mut errors) = db.lower(file);
     let WithError(resolver, error) = db.resolve_source_file(file);
     let reporter = Reporter::new(file);
     errors.extend(error);
@@ -68,16 +68,17 @@ pub fn infer_query(db: &impl HirDatabase, file: FileId) -> WithError<TypeMap> {
         returns: None,
         env: StackedMap::new(),
         fn_name: None,
-        type_map: HashMap::new(),
     };
 
-    for function in &program.functions {
-        collector.infer_function(function);
+    let mut program = typed::Program { functions: vec![] };
+
+    for function in &source.functions {
+        program.functions.push(collector.infer_function(function));
     }
 
-    let (type_map, reporter) = collector.finish();
+    let reporter = collector.finish();
 
     errors.extend(reporter.finish());
 
-    WithError(type_map, errors)
+    WithError(program, errors)
 }

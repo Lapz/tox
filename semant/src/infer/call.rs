@@ -3,11 +3,13 @@ use std::collections::HashMap;
 use crate::{
     hir::{ExprId, FunctionAstMap, TypeId},
     infer::{InferDataCollector, Type, TypeCon},
+    typed,
     util::Span,
     HirDatabase,
 };
 
 use super::TypeVar;
+use syntax::TextUnit;
 use tracing::instrument;
 
 impl<'a, DB> InferDataCollector<&'a DB>
@@ -22,8 +24,9 @@ where
         type_args: &Span<Vec<Span<TypeId>>>,
         arg_types: &[Type],
         vars: &[TypeVar],
+        span: (TextUnit, TextUnit),
         map: &FunctionAstMap,
-    ) -> Type {
+    ) -> typed::Typed<typed::Expr> {
         let ret = arg_types
             .last()
             .unwrap_or(&Type::Con(TypeCon::Void))
@@ -77,14 +80,14 @@ where
                 let inferred_expr = self.infer_expr(map, expr);
                 callee_exprs.push(inferred_expr.clone());
 
-                subst.insert(*var, inferred_expr);
+                subst.insert(*var, inferred_expr.ty.clone());
             }
         }
 
         for (i, arg) in args.iter().enumerate() {
             let inferred = self.infer_expr(map, arg);
 
-            let inferred_expr = self.subst(&inferred, &mut subst);
+            let inferred_expr = self.subst(&inferred.ty, &mut subst);
 
             let ty = self.subst(arg_types.get(i).unwrap_or(&Type::Unknown), &mut subst);
 
@@ -97,7 +100,23 @@ where
             )
         }
 
-        self.subst(&ret, &mut subst)
+        typed::Typed::new(
+            typed::Expr::Call {
+                callee: Box::new(self.infer_expr(map, callee)),
+                args: args.iter().map(|expr| self.infer_expr(map, expr)).collect(),
+                type_args: type_args
+                    .item
+                    .iter()
+                    .map(|type_arg| {
+                        self.resolver
+                            .lookup_intern_type(&type_arg.item)
+                            .unwrap_or(Type::Unknown)
+                    })
+                    .collect(),
+            },
+            self.subst(&ret, &mut subst),
+            span,
+        )
     }
 
     #[instrument(skip(self))]
@@ -106,14 +125,15 @@ where
         callee: &Span<ExprId>,
         args: &[Span<ExprId>],
         type_args: &Span<Vec<Span<TypeId>>>,
+        span: (TextUnit, TextUnit),
         map: &FunctionAstMap,
-    ) -> Type {
+    ) -> typed::Typed<typed::Expr> {
         let inferred_callee = self.infer_expr(map, callee);
-
-        match inferred_callee {
+        let ty = inferred_callee.ty.clone();
+        match ty {
             Type::Poly(vars, inner) => match &*inner {
                 Type::App(arg_types) => {
-                    self.infer_call_expr(callee, args, type_args, arg_types, &vars, map)
+                    self.infer_call_expr(callee, args, type_args, arg_types, &vars, span, map)
                 }
                 ty => {
                     match ty {
@@ -129,11 +149,27 @@ where
                         }
                     }
 
-                    Type::Unknown
+                    typed::Typed::new(
+                        typed::Expr::Call {
+                            callee: Box::new(inferred_callee),
+                            args: args.iter().map(|expr| self.infer_expr(map, expr)).collect(),
+                            type_args: type_args
+                                .item
+                                .iter()
+                                .map(|type_arg| {
+                                    self.resolver
+                                        .lookup_intern_type(&type_arg.item)
+                                        .unwrap_or(Type::Unknown)
+                                })
+                                .collect(),
+                        },
+                        Type::Unknown,
+                        span,
+                    )
                 }
             },
             Type::App(arg_types) => {
-                self.infer_call_expr(callee, args, type_args, &arg_types, &vec![], map)
+                self.infer_call_expr(callee, args, type_args, &arg_types, &vec![], span, map)
             }
 
             ty => {
@@ -150,7 +186,23 @@ where
                     }
                 }
 
-                Type::Unknown
+                typed::Typed::new(
+                    typed::Expr::Call {
+                        callee: Box::new(inferred_callee),
+                        args: args.iter().map(|expr| self.infer_expr(map, expr)).collect(),
+                        type_args: type_args
+                            .item
+                            .iter()
+                            .map(|type_arg| {
+                                self.resolver
+                                    .lookup_intern_type(&type_arg.item)
+                                    .unwrap_or(Type::Unknown)
+                            })
+                            .collect(),
+                    },
+                    Type::Unknown,
+                    span,
+                )
             }
         }
     }

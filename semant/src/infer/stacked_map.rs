@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 #[derive(Default, Debug, Clone)]
 pub struct StackedMap<K: Hash + Eq, V: Clone> {
-    table: HashMap<K, Vec<V>>,
+    pub table: HashMap<K, Vec<V>>,
     scopes: Vec<Option<K>>,
 }
 

@@ -39,6 +39,12 @@
       <sourceFolder url="file://$MODULE_DIR$/backend/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/backend/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/backend/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/codegen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/errors/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/parser/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/semant/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tools/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tox-wasm/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/backend/target" />
       <excludeFolder url="file://$MODULE_DIR$/frontend/target" />
       <excludeFolder url="file://$MODULE_DIR$/interpreter/target" />
@@ -48,6 +54,7 @@
       <excludeFolder url="file://$MODULE_DIR$/tox/target" />
       <excludeFolder url="file://$MODULE_DIR$/util/target" />
       <excludeFolder url="file://$MODULE_DIR$/vm/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

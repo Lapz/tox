@@ -1,10 +1,11 @@
+use indexmap::IndexMap;
+
 use super::{data::ResolverDataCollector, TypeKind};
 use crate::{
     hir::Enum,
     infer::{Type, Variant},
     HirDatabase,
 };
-use std::collections::HashMap;
 
 impl<'a, DB> ResolverDataCollector<&'a DB>
 where
@@ -24,7 +25,7 @@ where
             poly_tvs.push(tv);
         }
 
-        let mut variants = HashMap::new();
+        let mut variants = IndexMap::default();
 
         for (tag, variant) in enum_def.variants.iter().enumerate() {
             if variants.contains_key(&variant.item.name) {

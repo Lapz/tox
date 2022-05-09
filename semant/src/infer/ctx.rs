@@ -1,3 +1,5 @@
+use indexmap::IndexMap;
+
 use super::stacked_map::StackedMap;
 use crate::resolver::TypeKind;
 use crate::{
@@ -42,7 +44,7 @@ impl Ctx {
         types.insert(print_name, Type::App(vec![]));
         kind.insert(print_name, TypeKind::Function);
 
-        let mut result_variants = HashMap::new();
+        let mut result_variants = IndexMap::default();
 
         result_variants.insert(
             db.intern_name(Name::new("Ok")),

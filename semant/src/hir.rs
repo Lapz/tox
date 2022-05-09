@@ -56,7 +56,7 @@ pub struct Segment {
 pub struct Function {
     pub exported: bool,
     pub name: util::Span<NameId>,
-    pub ast_map: FunctionAstMap,
+    pub ast_map: Arc<FunctionAstMap>,
     pub params: Vec<util::Span<ParamId>>,
     pub type_params: Vec<util::Span<TypeParamId>>,
     pub body: Option<Vec<util::Span<StmtId>>>,

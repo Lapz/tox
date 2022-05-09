@@ -1,5 +1,8 @@
+use indexmap::IndexMap;
+
 use crate::hir::NameId;
-use std::collections::HashMap;
+
+use std::{collections::hash_map::DefaultHasher, hash::Hasher};
 
 /// A type var represent a variable that could be a type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -9,7 +12,7 @@ pub struct TypeVar(pub(crate) u32);
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Unique(pub(crate) u32);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TypeCon {
     Bool,
     Float,
@@ -33,16 +36,156 @@ pub enum Type {
     Poly(Vec<TypeVar>, Box<Type>),
     Var(TypeVar),
     Con(TypeCon),
-    Enum(NameId, HashMap<NameId, Variant>),
+    Enum(NameId, IndexMap<NameId, Variant>),
     Class {
         name: NameId,
-        fields: HashMap<NameId, Type>,
-        methods: HashMap<NameId, Type>,
+        fields: IndexMap<NameId, Type>,
+        methods: IndexMap<NameId, Type>,
     },
     Unknown,
 }
 
-impl Type {}
+impl std::hash::Hash for Type {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Type::App(types) => types.iter().for_each(|ty| ty.hash(state)),
+            Type::Tuple(types) => types.iter().for_each(|ty| ty.hash(state)),
+            Type::Poly(vars, inner) => {
+                vars.iter().for_each(|ty| ty.hash(state));
+                inner.hash(state)
+            }
+            Type::Var(var) => var.hash(state),
+            Type::Con(con) => con.hash(state),
+            Type::Enum(name, fields) => {
+                name.hash(state);
+
+                state.write_u64(
+                    fields
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                )
+            }
+            Type::Class {
+                name,
+                fields,
+                methods,
+            } => {
+                name.hash(state);
+                state.write_u64(
+                    fields
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                );
+                state.write_u64(
+                    methods
+                        .values()
+                        .map(|kv| {
+                            let mut h = DefaultHasher::new();
+                            kv.hash(&mut h);
+                            h.finish()
+                        })
+                        .fold(0, u64::wrapping_add),
+                )
+            }
+            Type::Unknown => std::mem::discriminant(&Type::Unknown).hash(state),
+        }
+    }
+}
+
+impl Type {
+
+    // If a function returns a struct, it is caller's responsibility
+    // to allocate a space for the return value.
+    // If the return type is a large struct/union, the caller passes
+    // a pointer to a buffer as if it were the first argument.
+    pub fn allocates(&self) -> bool {
+        match self {
+            Type::Class {..} => true,
+            Type::Poly(_,inner) => inner.allocates(),
+            _ => false
+        }
+    }
+    pub fn size(&self) -> isize {
+        match self {
+            Type::Con(con) => match con {
+                TypeCon::Bool => 1,
+                TypeCon::Float => 4,
+                TypeCon::Int => 8, // todo implement 32 bit floats
+                TypeCon::Str => 4, // TODO fix
+                TypeCon::Void => 1,
+                TypeCon::Array { ty, size } => {
+                    if let Some(len) = size {
+                        ty.size() * (*len as isize)
+                    } else {
+                        16
+                    }
+                }
+            },
+            Type::App(..) => 8,
+            Type::Tuple(_length) => 8,
+            Type::Enum(_, fields) => {
+                4 + fields.iter().fold(0, |acc, (_, variant)| {
+                    acc + variant.ty.as_ref().map_or(4, |ty| ty.size())
+                })
+            }
+            Type::Class { fields, .. } => {
+                let mut size = 0;
+
+                for (_, ty) in fields {
+                    size += ty.size()
+                }
+
+                size
+            }
+
+            Type::Poly(_, inner) => inner.size(),
+            Type::Var(_) => panic!("Found type var during code generation, this is a bug"),
+            Type::Unknown => panic!("Found unknown type during code generation"),
+        }
+    }
+
+    // We treat a tuple like a struct
+
+    pub fn align(&self) -> isize {
+        match self {
+            Type::Con(con) => match con {
+                TypeCon::Bool => 1,
+                TypeCon::Float => 4,
+                TypeCon::Int => 8,
+                TypeCon::Str => 4, // TODO fix
+                TypeCon::Void => 1,
+                TypeCon::Array { ty, .. } => ty.align(),
+            },
+            Type::App(..) => 8,
+            Type::Poly(_, inner) => inner.align(),
+            Type::Unknown => panic!("Unsized types"),
+            Type::Tuple(_length) => 8,
+            Type::Enum(_, _) => 4,
+            Type::Var(_) => panic!("Unsized type"),
+            Type::Class {
+                name: _,
+                fields,
+                methods: _,
+            } => {
+                if fields.is_empty() {
+                    1
+                } else {
+                    4
+                }
+            }
+        }
+    }
+}
 
 /// Represent an enum variant
 /// ```ignore
@@ -52,7 +195,7 @@ impl Type {}
 ///  }
 /// ```
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Variant {
     pub tag: usize,
     pub ty: Option<Type>,

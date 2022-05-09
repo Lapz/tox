@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use semant::hir::{BinOp, FunctionId, UnaryOp};
+use semant::hir::{ FunctionId};
+
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Register(pub u32);
 
@@ -12,7 +14,16 @@ pub enum Value {
     Nil,
     Bool(bool),
     Int(i64),
-    Float(Box<[u8; std::mem::size_of::<f64>()]>),
+    Float {
+        f_bits: f32,
+        i_bits: i32,
+    }
+}
+
+#[repr(C)]
+pub union FloatParts {
+    pub f_bits: f32,
+    pub i_bits: i32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,11 +54,16 @@ pub enum Instruction {
     StoreI(Register, Value),
     /// $dest = val
     Store(Register, Register),
-    /// goto %label
-    Jump(Label),
-    /// Label: %label
-    Label(Label),
-    // if $cond then $val jump %label
-    Branch(Register, Register, Label),
     Illegal,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BinOp {
+    Plus,
+    Minus,
+    Mul,
+    Div,
+    Gt,
+    Lt,
+    Equal
 }
